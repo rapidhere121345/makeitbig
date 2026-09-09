@@ -1,0 +1,71 @@
+name: desktop-build
+
+on:
+  push:
+  pull_request:
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  test-and-export:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot and export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          curl -fL "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          sudo install -m 0755 "/tmp/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          curl -fL "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o /tmp/templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          unzip -q /tmp/templates.tpz -d /tmp/templates
+          cp -R /tmp/templates/templates/. "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
+
+      - name: Headless checks
+        run: ./scripts/test.sh
+
+      - name: Export Linux and Windows
+        run: ./scripts/export_all.sh
+
+      - name: Linux smoke boot
+        run: ./build/linux/make-it-big.x86_64 --headless -- --smoke
+
+      - name: Linux golden automation replay
+        run: ./build/linux/make-it-big.x86_64 --headless -- --auto-smoke --state-hash-out="$GITHUB_WORKSPACE/build/golden-state.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: make-it-big-desktop
+          path: build/
+
+  windows-smoke:
+    needs: test-and-export
+    runs-on: windows-2022
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: make-it-big-desktop
+          path: build
+
+      - name: Windows smoke boot
+        shell: pwsh
+        run: |
+          & "build/windows/make-it-big.exe" --headless -- --smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Windows golden automation replay
+        shell: pwsh
+        run: |
+          $windowsHashPath = Join-Path $env:GITHUB_WORKSPACE "build/windows-state.sha256"
+          & "build/windows/make-it-big.exe" --headless -- --auto-smoke "--state-hash-out=$windowsHashPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $linuxHash = (Get-Content "build/golden-state.sha256" -Raw).Trim()
+          $windowsHash = (Get-Content "build/windows-state.sha256" -Raw).Trim()
+          if ($linuxHash -ne $windowsHash) {
+            throw "Replay hash mismatch: Linux=$linuxHash Windows=$windowsHash"
+          }

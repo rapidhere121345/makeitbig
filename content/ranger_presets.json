@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "source": "docs/GAME_DESIGN_FINAL_v1.0.md chapters 4.1 and 19.1",
+  "shared_parameters": {
+    "shared_lifetime": 16.0,
+    "distance": 180.0,
+    "speed": 600.0,
+    "minimum_turn_time": 0.12
+  },
+  "prototype_equipped_parameters": {
+    "shared_lifetime": 34.0,
+    "distance": 150.0,
+    "speed": 620.0,
+    "minimum_turn_time": 0.18,
+    "note": "The arena diagnostic loadout includes duration and speed equipment to reach g=80; shared_parameters are the first-stage baseline."
+  },
+  "presets": [
+    { "id": "convergent", "name": "收敛", "p": 0.49 },
+    { "id": "critical", "name": "临界", "p": 0.50 },
+    { "id": "exponential", "name": "指数", "p": 0.61 }
+  ]
+}

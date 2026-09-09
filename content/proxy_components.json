@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "source": "docs/GAME_DESIGN_FINAL_v1.0.md chapter 14",
+  "note": "Pure data slice: stable English ids, Chinese names, slot/category, fixed-protocol summaries. No embedded scripts.",
+  "cores": [
+    { "id": "near_enemy_horizon", "name": "近敌视界", "slot": "perception", "protocol": "每 1 秒识别最近的 1 个可见合法敌人", "numeric_slots": 3 },
+    { "id": "marking_prism", "name": "标记棱镜", "slot": "perception", "protocol": "区分标记、精英、Boss，并保留 2 个候选", "numeric_slots": 3 },
+    { "id": "state_parser", "name": "状态解析器", "slot": "perception", "protocol": "每 0.25 秒读取当前目标的 2 个公开状态", "numeric_slots": 3 },
+    { "id": "crisis_omen", "name": "危机预兆", "slot": "perception", "protocol": "识别 1 个可见危险区或前摇，提前 0.6 秒报告", "numeric_slots": 3 },
+    { "id": "direct_gait", "name": "直趋步足", "slot": "movement", "protocol": "走最短可行路径，在技能槽 1 的射程内停步", "numeric_slots": 3 },
+    { "id": "distance_keeping_gait", "name": "维距步足", "slot": "movement", "protocol": "保持预设近/中/远距离带，基础误差 ±1.5 米", "numeric_slots": 3 },
+    { "id": "orbit_gait", "name": "环猎步足", "slot": "movement", "protocol": "围绕当前单目标沿固定方向移动", "numeric_slots": 3 },
+    { "id": "evasion_gait", "name": "规避步足", "slot": "movement", "protocol": "对最高优先可见危险执行闪避，并含基础脱困", "numeric_slots": 3 },
+    { "id": "single_key_execution", "name": "单键执行", "slot": "execution", "protocol": "目标、资源与冷却合法时施放技能槽 1", "numeric_slots": 3 },
+    { "id": "alternating_execution", "name": "交替执行", "slot": "execution", "protocol": "按固定 A→B 顺序调用技能槽 1、2", "numeric_slots": 3 },
+    { "id": "sustain_execution", "name": "维持执行", "slot": "execution", "protocol": "维持 1 个持续效果，在基础安全余量内刷新", "numeric_slots": 3 },
+    { "id": "cashout_execution", "name": "兑现执行", "slot": "execution", "protocol": "最多 3 步并读取 1 个公开阈值，再调用兑现技能", "numeric_slots": 3 },
+    { "id": "short_trace_memory", "name": "短痕记忆", "slot": "memory", "protocol": "保存当前目标与上一个已提交动作", "numeric_slots": 3 },
+    { "id": "dual_timer_memory", "name": "双时记忆", "slot": "memory", "protocol": "保存 2 个计时器，单次最长 8 秒", "numeric_slots": 3 },
+    { "id": "cycle_register", "name": "循环寄存器", "slot": "memory", "protocol": "保存 4 个步骤与 2 个资源字段", "numeric_slots": 3 },
+    { "id": "lineage_cache", "name": "谱系缓存", "slot": "memory", "protocol": "保存 1 条事件谱系、1 个结算快照及消费回执", "numeric_slots": 3 }
+  ],
+  "attachments": [
+    { "id": "wish_picker", "name": "愿望拾取器", "category": "scavenging", "protocol": "按命运镜愿望单排列拾取优先级，并将物品送入结算箱", "numeric_slots": 3 },
+    { "id": "destiny_sieve", "name": "命运筛", "category": "scavenging", "protocol": "区分当前好/可塑且便宜/拆解，按预设保留", "numeric_slots": 3 },
+    { "id": "fork_compass", "name": "岔路罗盘", "category": "navigation", "protocol": "按法则、骰子、代理组件等公开标签选择分支", "numeric_slots": 3 },
+    { "id": "renewal_relay", "name": "续约继电器", "category": "navigation", "protocol": "结算后按预设长度、难度与标签开启下一份契约", "numeric_slots": 3 },
+    { "id": "distance_gauge", "name": "距离规尺", "category": "tactics", "protocol": "为三个主动技能分别保存近/中/远距离偏好", "numeric_slots": 3 },
+    { "id": "boss_playbook", "name": "首领预案库", "category": "tactics", "protocol": "识别已经击败过的 Boss 阶段信号与公开交互", "numeric_slots": 3 },
+    { "id": "refresh_metronome", "name": "续杯节拍器", "category": "cycle_tempo", "protocol": "协调印记、培养皿等持续状态与主循环的刷新窗口", "numeric_slots": 3 },
+    { "id": "cashout_monitor", "name": "兑现监护器", "category": "cycle_tempo", "protocol": "在即将断链、过热或目标离场前建议提前兑现", "numeric_slots": 3 },
+    { "id": "evasion_safeguard", "name": "规避保险栓", "category": "stability", "protocol": "处理闪避、药剂、打断恢复；不朽后转为抗沉默与防断环", "numeric_slots": 3 },
+    { "id": "cycle_resetter", "name": "循环复位器", "category": "stability", "protocol": "检测卡路、无目标、无伤害或无效重复施法并执行固定复位", "numeric_slots": 3 }
+  ],
+  "firmwares": [
+    { "id": "marker_priority", "name": "标记者优先", "compatible_slot": "perception", "semantics": "合法范围内优先选择带指定公开标记的目标" },
+    { "id": "target_continuation", "name": "目标延续", "compatible_slot": "perception", "semantics": "当前目标的关键状态尚未结束时不主动换目标" },
+    { "id": "danger_override", "name": "危险覆盖", "compatible_slot": "perception", "semantics": "严重危险识别结果可覆盖普通目标选择" },
+    { "id": "post_dodge_return", "name": "闪避后归位", "compatible_slot": "movement", "semantics": "闪避完成后返回此前距离带或任务区域" },
+    { "id": "orbit_chain_keep", "name": "环行不断链", "compatible_slot": "movement", "semantics": "环行时优先选择不会令持续链超时的可行路径" },
+    { "id": "cast_anchor", "name": "施法锚定", "compatible_slot": "movement", "semantics": "指定技能前摇期间停止主动位移" },
+    { "id": "strict_alternation", "name": "严格交替", "compatible_slot": "execution", "semantics": "上一步没有成功回执时不得推进 A→B 序列" },
+    { "id": "invalid_cast_suppression", "name": "无效施法抑制", "compatible_slot": "execution", "semantics": "资源、目标或射程不合法时不提交技能动作" },
+    { "id": "safe_refresh", "name": "安全续杯", "compatible_slot": "execution", "semantics": "依据剩余时间与自身误差计算最迟刷新时刻" },
+    { "id": "threshold_cashout", "name": "阈值兑现", "compatible_slot": "execution", "semantics": "达到玩家设定的热量、毒链或快照档位后兑现" },
+    { "id": "timer_inheritance", "name": "计时继承", "compatible_slot": "memory", "semantics": "换目标或闪避不会清除仍有效的计时器" },
+    { "id": "per_target_ledger", "name": "分目标记账", "compatible_slot": "memory", "semantics": "状态、命中历史与刷新时间按目标分别保存" },
+    { "id": "lineage_continuation", "name": "谱系续接", "compatible_slot": "memory", "semantics": "后继动作只消费指定来源且已确认的结算快照" },
+    { "id": "wishlist_override", "name": "愿望单压倒", "compatible_slot": "attachment", "semantics": "愿望目标出现时覆盖普通拾取优先级" },
+    { "id": "risk_weighted_fork", "name": "风险加权岔路", "compatible_slot": "attachment", "semantics": "收益标签相同时选择预测中断风险更低的分支" },
+    { "id": "consecutive_contract", "name": "连续契约", "compatible_slot": "attachment", "semantics": "通过全部停止检查后才开启下一份契约" }
+  ]
+}
