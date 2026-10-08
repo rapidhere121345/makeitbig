@@ -2,15 +2,26 @@ extends SceneTree
 
 const TEST_SCRIPTS: Array[Script] = [
 	preload("res://tests/test_big_value.gd"),
+	preload("res://tests/test_application_state.gd"),
+	preload("res://tests/test_scene_router.gd"),
+	preload("res://tests/test_contract_plan.gd"),
+	preload("res://tests/test_game_root.gd"),
+	preload("res://tests/test_base_hub_screen.gd"),
 	preload("res://tests/test_systems.gd"),
 	preload("res://tests/test_piercing_arrow.gd"),
 	preload("res://tests/test_persistence.gd"),
 	preload("res://tests/test_content.gd"),
 	preload("res://tests/test_fixed_tick_clock.gd"),
+	preload("res://tests/test_prototype_debug_directives.gd"),
+	preload("res://tests/test_prototype_debug_runtime.gd"),
 ]
 
 
 func _initialize() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
 	var failures: Array[String] = []
 	for test_script in TEST_SCRIPTS:
 		var suite: Object = test_script.new()

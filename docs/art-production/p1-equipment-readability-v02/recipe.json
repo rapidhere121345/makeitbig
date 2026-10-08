@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "sprites": [
+    {
+      "id": "equipment.lineage_quiver",
+      "source": "sources/lineage_quiver.png",
+      "source_rect": [
+        0,
+        0,
+        1240,
+        1269
+      ],
+      "palette": [
+        "#111820",
+        "#342c29",
+        "#544032",
+        "#7f5131",
+        "#aa713e",
+        "#cc9862",
+        "#a69882",
+        "#d3cbb5",
+        "#f0e4cb",
+        "#69777b",
+        "#8c322c",
+        "#b7513d"
+      ],
+      "colorkey": "#ff00ff",
+      "key_scope": "all",
+      "tolerance": 100
+    },
+    {
+      "id": "equipment.farwatch_quiver",
+      "source": "sources/farwatch_quiver.png",
+      "source_rect": [
+        0,
+        0,
+        1218,
+        1292
+      ],
+      "palette": [
+        "#111820",
+        "#342c29",
+        "#544032",
+        "#7f5131",
+        "#aa713e",
+        "#cc9862",
+        "#a69882",
+        "#d3cbb5",
+        "#f0e4cb",
+        "#69777b",
+        "#8c322c",
+        "#b7513d"
+      ],
+      "colorkey": "#ff00ff",
+      "key_scope": "all",
+      "tolerance": 100
+    },
+    {
+      "id": "equipment.turnfeather_gloves",
+      "source": "sources/turnfeather_gloves.png",
+      "source_rect": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "palette": [
+        "#111820",
+        "#342c29",
+        "#544032",
+        "#7f5131",
+        "#aa713e",
+        "#cc9862",
+        "#a69882",
+        "#d3cbb5",
+        "#f0e4cb",
+        "#69777b",
+        "#8c322c",
+        "#b7513d"
+      ],
+      "colorkey": "#ff00ff",
+      "key_scope": "all",
+      "tolerance": 100
+    },
+    {
+      "id": "equipment.piercer_gloves",
+      "source": "sources/piercer_gloves.png",
+      "source_rect": [
+        0,
+        0,
+        1215,
+        1295
+      ],
+      "palette": [
+        "#111820",
+        "#342c29",
+        "#544032",
+        "#7f5131",
+        "#aa713e",
+        "#cc9862",
+        "#a69882",
+        "#d3cbb5",
+        "#f0e4cb",
+        "#69777b",
+        "#8c322c",
+        "#b7513d"
+      ],
+      "colorkey": "#ff00ff",
+      "key_scope": "all",
+      "tolerance": 100
+    },
+    {
+      "id": "equipment_slot.off_hand",
+      "source": "sources/slot_off_hand.png",
+      "source_rect": [
+        0,
+        0,
+        1240,
+        1269
+      ],
+      "palette": [
+        "#2d3943",
+        "#697d83",
+        "#b6c3bf"
+      ],
+      "colorkey": "#ff00ff",
+      "key_scope": "all",
+      "tolerance": 100
+    },
+    {
+      "id": "equipment_slot.gloves",
+      "source": "sources/slot_gloves.png",
+      "source_rect": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "palette": [
+        "#2d3943",
+        "#697d83",
+        "#b6c3bf"
+      ],
+      "colorkey": "#ff00ff",
+      "key_scope": "all",
+      "tolerance": 100
+    }
+  ]
+}

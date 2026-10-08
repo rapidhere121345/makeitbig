@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "resource_prefix": "res://art/production/p1/ranger_actions_v01",
+  "native_view": [640, 360],
+  "palette": [
+    "#111820", "#e9ddc3", "#5b4036", "#1d2731", "#d3cbb5", "#eead56",
+    "#bd4653", "#896043", "#bb713d", "#aaafab", "#46515a", "#71808a"
+  ],
+  "sources": {
+    "raw_actions": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/ranger_actions_raw.png",
+    "legacy_idle": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/ranger.png"
+  },
+  "background": {
+    "raw_actions": {"mode": "color_key", "colors": ["#00ff00"], "tolerance": 60, "scope": "all"}
+  },
+  "cell_size": [48, 48],
+  "anchor": [24, 44],
+  "columns": 4,
+  "frames": [
+    {
+      "id": "ranger.south.idle.0",
+      "source": "legacy_idle",
+      "crop": [0, 0, 32, 48],
+      "source_anchor": [16, 44],
+      "scale": 1,
+      "action": "idle",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.north.idle.0",
+      "source": "legacy_idle",
+      "crop": [32, 0, 32, 48],
+      "source_anchor": [16, 44],
+      "scale": 1,
+      "action": "idle",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.east.idle.0",
+      "source": "legacy_idle",
+      "crop": [64, 0, 32, 48],
+      "source_anchor": [16, 44],
+      "scale": 1,
+      "action": "idle",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.west.idle.0",
+      "source": "legacy_idle",
+      "crop": [96, 0, 32, 48],
+      "source_anchor": [16, 44],
+      "scale": 1,
+      "action": "idle",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.east.attack.0",
+      "source": "raw_actions",
+      "crop": [0, 0, 48, 48],
+      "source_anchor": [24, 44],
+      "scale": 1,
+      "action": "attack",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.attack.1",
+      "source": "raw_actions",
+      "crop": [48, 0, 48, 48],
+      "source_anchor": [24, 44],
+      "scale": 1,
+      "action": "attack",
+      "facing": "east"
+    }
+  ],
+  "animations": {
+    "ranger.south.idle": {"frames": ["ranger.south.idle.0"], "fps": 4, "loop": true},
+    "ranger.north.idle": {"frames": ["ranger.north.idle.0"], "fps": 4, "loop": true},
+    "ranger.east.idle": {"frames": ["ranger.east.idle.0"], "fps": 4, "loop": true},
+    "ranger.west.idle": {"frames": ["ranger.west.idle.0"], "fps": 4, "loop": true},
+    "ranger.east.attack": {"frames": ["ranger.east.attack.0", "ranger.east.attack.1"], "fps": 8, "loop": false}
+  },
+  "disclosure": {
+    "legacy_idle": "frames ranger.<facing>.idle.0 are copied verbatim from the accepted scene_rework_v01/ranger.png idle sheet (crop 32x48 per facing, source_anchor 16,44, unified scale 1); the source file is read-only input and was not modified"
+  }
+}
+

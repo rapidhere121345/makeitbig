@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "sprites": [
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_steady_string",
+      "id": "talent.ranger_steady_string",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_long_breath",
+      "id": "talent.ranger_long_breath",
+      "rect": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_keen_eye",
+      "id": "talent.ranger_keen_eye",
+      "rect": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_light_step",
+      "id": "talent.ranger_light_step",
+      "rect": [
+        96,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_recovery_pose",
+      "id": "talent.ranger_recovery_pose",
+      "rect": [
+        128,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_close_turn",
+      "id": "talent.ranger_close_turn",
+      "rect": [
+        160,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_continuation_calibration",
+      "id": "talent.ranger_continuation_calibration",
+      "rect": [
+        192,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_defocused_tracking",
+      "id": "talent.ranger_defocused_tracking",
+      "rect": [
+        224,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_wind_slice_stance",
+      "id": "talent.ranger_wind_slice_stance",
+      "rect": [
+        256,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_lineage_sense",
+      "id": "talent.ranger_lineage_sense",
+      "rect": [
+        288,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_last_generation_loading",
+      "id": "talent.ranger_last_generation_loading",
+      "rect": [
+        320,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_three_skill_rhythm",
+      "id": "talent.ranger_three_skill_rhythm",
+      "rect": [
+        352,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_wind_walker",
+      "id": "talent.ranger_wind_walker",
+      "rect": [
+        384,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_critical_hunter",
+      "id": "talent.ranger_critical_hunter",
+      "rect": [
+        416,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "ranger_near_far_hunting",
+      "id": "talent.ranger_near_far_hunting",
+      "rect": [
+        448,
+        0,
+        32,
+        32
+      ],
+      "texture": "ranger_talents.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "inscribe",
+      "id": "law_token.inscribe",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "law_tokens.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "rewrite",
+      "id": "law_token.rewrite",
+      "rect": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "texture": "law_tokens.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "refine",
+      "id": "law_token.refine",
+      "rect": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "texture": "law_tokens.png",
+      "type": "ui_icon"
+    }
+  ],
+  "textures": [
+    {
+      "dimensions": [
+        480,
+        32
+      ],
+      "file": "ranger_talents.png"
+    },
+    {
+      "dimensions": [
+        96,
+        32
+      ],
+      "file": "law_tokens.png"
+    }
+  ]
+}

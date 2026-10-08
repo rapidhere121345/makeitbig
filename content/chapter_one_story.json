@@ -1,0 +1,817 @@
+{
+  "schema_version": 1,
+  "chapter_id": "chapter_one_remaining_warmth",
+  "title": "第一幕：余温",
+  "campaign_nodes": [
+    "tutorial_ranger_basics",
+    "mainline_01_first_hunt",
+    "mainline_02_priority_under_pressure",
+    "mainline_03_first_elite",
+    "mainline_04_hazard_and_forge",
+    "mainline_05_growth_gate",
+    "threshold_colossus",
+    "auto_certification"
+  ],
+  "npcs": [
+    {
+      "id": "mira",
+      "name": "米拉",
+      "reveal_node": "tutorial_ranger_basics"
+    },
+    {
+      "id": "leia",
+      "name": "莱娅",
+      "reveal_node": "tutorial_ranger_basics"
+    },
+    {
+      "id": "taren",
+      "name": "塔伦",
+      "reveal_node": "mainline_01_first_hunt"
+    },
+    {
+      "id": "oren",
+      "name": "奥伦",
+      "reveal_node": "mainline_02_priority_under_pressure"
+    },
+    {
+      "id": "iven",
+      "name": "伊文",
+      "reveal_node": "mainline_03_first_elite"
+    }
+  ],
+  "units": [
+    {
+      "id": "p00_place_by_the_door",
+      "stage": 0,
+      "requires": {
+        "completed_nodes": [
+          "tutorial_ranger_basics"
+        ]
+      },
+      "title": "门边的位置",
+      "objective": {
+        "id": "clear_outer_road",
+        "text": "沿寒原旧路清通外段，带回能用的材料与装备",
+        "campaign_node": "mainline_01_first_hunt"
+      },
+      "journal": {
+        "id": "journal_p00_place_by_the_door",
+        "entry_type": "主线",
+        "pages": [
+          "共炉厅的门缝漏着风。莱娅把凳子拖向塔侧，原处只留下一道磨痕；那里曾够人坐下暖手，如今暖不到了。",
+          "旧路的货签早已磨平，深处却还站着挡路的巨像。旧世界没能留下完整的解释，只留下一些仍在工作的东西，和靠它们过冬的人。",
+          "米拉照旧轮班，莱娅跟着看接头。流浪者带弓去外段，先找能用的材料与装备；回来时，门内还留着歇脚的位置。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p00_mira_door",
+          "npc": "mira",
+          "title": "先把门带上",
+          "pages": [
+            "米拉：流浪者，把门带上。风进来了。门边已经暖不到，莱娅把凳子搬去塔侧；搬货的人回来，总得有地方坐。",
+            "流浪者：练过弓，也认得出镇的方向了。可旧路那头究竟有什么，值得你们一班接一班地守着？",
+            "米拉：旧件一天天少下去，塔里的东西却还在转。谁也讲不清从前出了什么事。巨像挡着深处，先从外段找起，捡回还能用的。",
+            "米拉：我守住厅里的火，你去争一段能走的路。出门前把弓看好，回来带什么都能商量，人得先回来。"
+          ]
+        },
+        {
+          "id": "talk_p00_leia_stool",
+          "npc": "leia",
+          "title": "凳子放哪",
+          "pages": [
+            "莱娅：我以前坐在门边，听旧路上的脚步声。如今风比人先到，连这张等人歇脚的凳子也得往里搬。",
+            "米拉：门边的位置留着。来塔侧跟我看接头吧；等路上的人回来，我们总得有热饭，也得有人接下一班。",
+            "莱娅：那我跟你学。流浪者，你去找能带回来的东西，我学着照看留下的人；这张凳子还要给人坐。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p00_door_position",
+          "title": "门边换位",
+          "description": "凳子移到塔侧，门边的位置留着；米拉守住厅里的暖，莱娅开始跟她看接头。"
+        }
+      ]
+    },
+    {
+      "id": "p01_outer_road",
+      "stage": 1,
+      "requires": {
+        "completed_nodes": [
+          "mainline_01_first_hunt"
+        ]
+      },
+      "title": "旧路外段",
+      "objective": {
+        "id": "learn_priority_and_dodge",
+        "text": "进入旧货道的装卸区，清通下一段回收路",
+        "campaign_node": "mainline_02_priority_under_pressure"
+      },
+      "journal": {
+        "id": "journal_p01_outer_road",
+        "entry_type": "主线",
+        "pages": [
+          "流浪者从旧路外段归来，这一段重新能够往返。磨平的货签和过大的装卸空间，还留下从前货运生活的轮廓。",
+          "塔伦认得往里的货道，也愿意听弓在路上哪里不顺手。接下来的搜寻要让装备更合用，让回程少些险处。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p01_taren_route",
+          "npc": "taren",
+          "title": "先把外段看清",
+          "pages": [
+            "塔伦：你从旧路外段回来了，弓也还在手里。以前我试弓只想着射得准，现在得想，它能不能护你走回来。",
+            "塔伦：往里是装卸区，旧货道还认得出来。别急着奔巨像去，先把这段路走熟，回来告诉我弓哪里不顺手。",
+            "流浪者：这一趟让我知道，旧路还走得进去。我想找些合用的装备，再试试这把弓能把我带到多远。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p01_outer_road_open",
+          "title": "外段可往返",
+          "description": "回收路外段重新能走，搬运少绕一次；塔伦能沿这段货道说明更深处的来路。"
+        }
+      ]
+    },
+    {
+      "id": "p02_unexpected_find",
+      "stage": 2,
+      "requires": {
+        "completed_nodes": [
+          "tutorial_ranger_basics"
+        ],
+        "flags": [
+          "equipment_discovered"
+        ]
+      },
+      "title": "一件不在计划里的东西",
+      "objective": {
+        "id": "compare_first_real_find",
+        "text": "比较带回的装备，准备深入旧路的下一趟",
+        "campaign_node": "mainline_03_first_elite"
+      },
+      "journal": {
+        "id": "journal_p02_unexpected_find",
+        "entry_type": "发现",
+        "pages": [
+          "带回的装备还带着寒意，已经放进背包。它不在预先的清单上；旧世界散了，这些东西却仍能在人手里起作用。",
+          "奥伦先问它还能用在哪里。与身上的装备放在一起看，才知道能补什么缺口；也可以先留着。下一趟走得回来，比一眼看着亮更要紧。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p02_oren_unlisted",
+          "npc": "oren",
+          "title": "不在清单上",
+          "pages": [
+            "奥伦：刚从外头带回的？先暖暖手。清单没写它，不代表没用。从前用它的人不在眼前了，还能做什么，得放到你手里看。",
+            "奥伦：先留着，和身上的比一比。这镇里没有几件东西是新的，我总先找还能用的那一处。能护你回来，就值得留下。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p02_return_shelf",
+          "title": "归货棚添一格",
+          "description": "归货棚留着暂放和比较的地方，奥伦接住流浪者带回的旧物。"
+        }
+      ]
+    },
+    {
+      "id": "p03_more_then_no_more",
+      "stage": 3,
+      "requires": {
+        "completed_nodes": [
+          "tutorial_ranger_basics"
+        ],
+        "flags": [
+          "growth_observed"
+        ]
+      },
+      "title": "把结果记下来",
+      "objective": {
+        "id": "inspect_growth_report",
+        "text": "试清当前接法的长处，沿旧路继续寻找缺口",
+        "campaign_node": "mainline_04_hazard_and_forge"
+      },
+      "journal": {
+        "id": "journal_p03_more_then_no_more",
+        "entry_type": "训练",
+        "pages": [
+          "第一次增长观察留下了结果，属于当时的装备、天赋与接法。伊文像记路况一样保留它，让下一次尝试有可比较的来处。",
+          "知道自己看见了什么，才知道下一趟要问什么。流浪者可以带着这个问题继续上路，训练与阅读都不是出征的门票。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p03_iven_where_stopped",
+          "npc": "iven",
+          "title": "先留着结果",
+          "pages": [
+            "伊文：这次见到的结果留下了。走旧路时我也这样，记清脚下那一段，下一次才知道是路变了，还是自己走偏。",
+            "流浪者：我会把当时带的装备和接法一起留下。只带着一个好看的结果出门，遇见不同的东西就没了主意。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p03_record_desk",
+          "title": "续记桌开页",
+          "description": "伊文留下首次实际观察的接法与结果，和旧路上的见闻一起供下次对照。"
+        }
+      ]
+    },
+    {
+      "id": "p04_knowing_where_to_look",
+      "stage": 4,
+      "requires": {
+        "completed_nodes": [
+          "mainline_04_hazard_and_forge"
+        ]
+      },
+      "title": "知道该往哪找",
+      "objective": {
+        "id": "choose_targeted_contract",
+        "text": "按装备缺口选择来源，为巨像前的旧路做准备",
+        "campaign_node": "mainline_05_growth_gate"
+      },
+      "journal": {
+        "id": "journal_p04_knowing_where_to_look",
+        "entry_type": "主线",
+        "pages": [
+          "走过旧路上的险处，下一趟的目标可以更明确。塔伦从试弓的习惯出发，帮流浪者把当前接法的缺口与货物来源对照。",
+          "契台旁的小牌记着来源类别、风雪、塌口与回头路。知道去哪里找，不等于知道这次一定会带回哪一件。",
+          "米拉维持外段值守，莱娅把凉饭放在台边，等有人来接手。旧路上的搜寻与镇里的轮班，托住同一场漫长寒冬。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p04_taren_source",
+          "npc": "taren",
+          "title": "哪一类，不是哪一件",
+          "pages": [
+            "塔伦：我试弓时，总先找最不顺的那一处。你挑装备也可以这样想：现在这套接法，究竟少了什么？",
+            "流浪者：我想沿着缺口去找，而不是见到亮眼的东西就换。旧路上的每一趟，总得给下一趟留下些什么。",
+            "塔伦：契台记着哪类旧货常从哪里来，也记着塌口和回头路。具体带回哪件得看这一趟，我能帮你少走些盲路。"
+          ]
+        },
+        {
+          "id": "talk_p04_mira_watch",
+          "npc": "mira",
+          "title": "值守照旧",
+          "pages": [
+            "米拉：这趟还往旧路去？你肯往里找，归货棚就多些盼头；可镇里这点暖，仍得我们自己一班班守。",
+            "米拉：伊文带消息，塔伦帮你看弓，奥伦接住带回的旧物。别把整座镇子的担子都背上，今天走好今天这一段。"
+          ]
+        },
+        {
+          "id": "talk_p04_leia_cold_meal",
+          "npc": "leia",
+          "title": "台边的饭",
+          "pages": [
+            "莱娅：饭放在台边，已经凉了。我以前只盯着门口，怕错过回来的人；现在守着接头，才知道米拉一直在等人替班。",
+            "莱娅：我还不能一个人接下整班，但能把这一会儿看清楚。等米拉来，我把读数说给她听，再去把饭暖热。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p04_route_board",
+          "title": "契台标注来源",
+          "description": "契台的来处小牌记下货物类别、风险和回头路，值守的人仍按原班照看外段。"
+        }
+      ]
+    },
+    {
+      "id": "p05_what_to_keep",
+      "stage": 5,
+      "requires": {
+        "completed_nodes": [
+          "mainline_04_hazard_and_forge"
+        ]
+      },
+      "title": "留下与拆掉",
+      "objective": {
+        "id": "make_keep_or_salvage_choice",
+        "text": "决定哪些旧物留用、改铸或拆解，准备继续开路",
+        "campaign_node": "mainline_05_growth_gate"
+      },
+      "journal": {
+        "id": "journal_p05_what_to_keep",
+        "entry_type": "选择",
+        "pages": [
+          "回火砧旁能留物，也能拆解。奥伦看重旧物还能承担的用途；保留、改铸或拆成材料，都要由流浪者想清后决定。",
+          "米拉去接莱娅的班，让她把饭暖热。莱娅学着说清刚才看过的读数，也问清拿不准的地方，才离开操作台。",
+          "弓上的增长办法不能直接当成塔里的修补方案。奥伦先照看认得的外侧，流浪者则准备适合自己下一趟的装备。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p05_oren_keep",
+          "npc": "oren",
+          "title": "这件先不拆",
+          "pages": [
+            "奥伦：别急着拆。完整的未必合你的手，旧的也未必该丢；我这张砧上，好些东西都是多看一眼才留下的。",
+            "流浪者：我先想清它能接进哪一套，再决定留还是改。要拆也得知道失去什么，总不能每次回来都从头找起。",
+            "奥伦：这就对了。想改的先看落锤会变成什么。能继续陪你上路的留下，其余的拆成材料，也还能补别的缺口。"
+          ]
+        },
+        {
+          "id": "talk_p05_mira_dry_gloves",
+          "npc": "mira",
+          "title": "手套先晾着",
+          "pages": [
+            "米拉：湿手套先晾在炉旁，别戴着冻硬的东西出门。你在这里慢慢挑装备，我去替莱娅看一会儿接头。",
+            "米拉：她总怕自己少看一眼就误了事。你带回的东西让奥伦有得修，我替她这一班，让她有空把饭吃热。"
+          ]
+        },
+        {
+          "id": "talk_p05_leia_handoff",
+          "npc": "leia",
+          "title": "问清再走",
+          "pages": [
+            "莱娅：米拉来替我了。我把刚才那处读数告诉她，也把拿不准的地方问清；原来交班不是说一句没事就能走。",
+            "莱娅：你在旧路上找合用的东西，我在这儿学着接住别人留下的活。等会儿去暖饭，这回我知道为什么能离开台边。"
+          ]
+        },
+        {
+          "id": "talk_p05_oren_local_part",
+          "npc": "oren",
+          "title": "认得这一截",
+          "pages": [
+            "奥伦：旧接头的外侧我认得，磨坏了还能慢慢修。你那把弓的接法倒让我想起，旧东西总得找着合用的地方。",
+            "奥伦：可弓上能用的办法，不能就往塔里装。里面怎么接的还没看清；先把我认得的这一截补好，也是在帮你守住回来的地方。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p05_salvage_corner",
+          "title": "拆解角成型",
+          "description": "回火砧旁留下待拆物和记录，奥伦看用途，流浪者决定怎样留拆；莱娅问清后交班。"
+        }
+      ]
+    },
+    {
+      "id": "p06_first_real_difference",
+      "stage": 6,
+      "requires": {
+        "completed_nodes": [
+          "tutorial_ranger_basics"
+        ],
+        "flags": [
+          "exponential_observed"
+        ]
+      },
+      "title": "第一次真正不同",
+      "objective": {
+        "id": "challenge_threshold_colossus",
+        "text": "挑战堵住回收路的阈门巨像，按实际瓶颈调整装备",
+        "campaign_node": "threshold_colossus"
+      },
+      "journal": {
+        "id": "journal_p06_first_real_difference",
+        "entry_type": "成长",
+        "pages": [
+          "箭的后代在已观察的条件下一代多过一代，出现了指数增长。这是整套装备与接法共同的结果，共享寿命仍在倒数。",
+          "伊文留下整套条件，也保留残缺的旧记号。这次发现给流浪者更多上路的底气，还不能说明完整灾变的来由。",
+          "米拉把饭留在厅里，塔上仍照旧轮班。战斗里见到的增长与镇中的供热各有条件，开路与守镇仍需要不同的人。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p06_iven_last_piece",
+          "npc": "iven",
+          "title": "前面的也得在",
+          "pages": [
+            "伊文：这回箭的后代一代多过一代了。我看旧路的岔口，总想着多一条出口；你这一套接法，却让下一代自己多了起来。",
+            "流浪者：是整套装备和接法一起起了作用。单拿最后一件出来不够；我想带着它上路，看它能替我打开多少空间。",
+            "伊文：把整套留下。我会把看得见的险处告诉你，你把弓准备好；再大的增长，也得有个人把脚下的路走过去。"
+          ]
+        },
+        {
+          "id": "talk_p06_mira_meal",
+          "npc": "mira",
+          "title": "饭留在厅里",
+          "pages": [
+            "米拉：饭给你留在厅里了。听说你看见了箭越接越多，我也多了些盼头；但一顿热饭不用等路全通了才吃。",
+            "米拉：先坐一会儿。你照看自己的弓，我们照旧轮班守塔，莱娅也在学。下一趟出门，你身后有人接着这点暖。"
+          ]
+        },
+        {
+          "id": "talk_p06_iven_blank",
+          "npc": "iven",
+          "title": "空白留下",
+          "pages": [
+            "伊文：旧路上的记号只剩日期末位，和你这次的结果摆在一起，确实让人想猜：从前的人是不是也见过这种增长？",
+            "伊文：可我没找到能接上的那一段。两张都留着，空白也留着；眼下先拿你亲眼见过的办法走路，别拿猜想押命。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p06_warm_meal",
+          "title": "热饭多一份",
+          "description": "米拉给回收者留一份热饭；看见战斗增长后，居民仍照原班守塔。"
+        }
+      ]
+    },
+    {
+      "id": "p07_threshold_colossus",
+      "stage": 7,
+      "requires": {
+        "completed_nodes": [
+          "threshold_colossus"
+        ]
+      },
+      "title": "阈门巨像",
+      "objective": {
+        "id": "configure_first_auto",
+        "text": "巨像已倒下；整理四枚白色核心，准备起步代行",
+        "campaign_node": ""
+      },
+      "journal": {
+        "id": "journal_p07_threshold_colossus",
+        "entry_type": "首杀",
+        "pages": [
+          "阈门巨像倒下了。门上的加固痕迹一层压着一层，早已没人能说清当初要挡住什么；如今，深处的回收路确实能走了。",
+          "首杀结算带来四枚白色核心，提供起步代行的条件。眼下先整理所得，路已经打开，接下来的安排仍由流浪者决定。",
+          "回到厅里，风仍从门缝钻进来。米拉继续值守，莱娅去问这一班的读数，凳子还在塔侧。搬货的人能少绕一段，塔却不会因此自己修好。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p07_taren_door",
+          "npc": "taren",
+          "title": "到门后了",
+          "pages": [
+            "塔伦：到门后了？我记得那门加固过好几层，巨像还守在那里。如今它倒了，至少这段回收路不用再绕。",
+            "流浪者：到了。门后的旧痕还在，我说不清从前发生过什么。沿路找来的装备接住了这一趟，路是确实走通了。",
+            "塔伦：那我把来处牌改好。少绕一段，搬货的人就少在风里站一阵。你先去暖手，货单我来写。"
+          ]
+        },
+        {
+          "id": "talk_p07_mira_route",
+          "npc": "mira",
+          "title": "路先通了",
+          "pages": [
+            "米拉：旧路深处终于不再由巨像守着了。消息送到厅里，我先想到的，是搬货的人能少在风里绕多久。",
+            "米拉：你替镇子争到了通路，我们得把它接住。接头还要照看，今晚仍有人值守；这是我能答应你的事。",
+            "米拉：回来就坐下吧。开路的人也该有人替他端一碗饭，不能每次进门，先问的都是下一趟什么时候走。"
+          ]
+        },
+        {
+          "id": "talk_p07_oren_leave_closed",
+          "npc": "oren",
+          "title": "先别拆它",
+          "pages": [
+            "奥伦：路通了，能接近守冬塔的外壳，这已经够我忙一阵。看清哪处还能修，总比一口气把旧东西全撬开强。",
+            "奥伦：里面的接法没摸清，先别拆塔。普通装备你照自己的用途留拆；我会守着这张砧，让带回来的旧物继续有用。"
+          ]
+        },
+        {
+          "id": "talk_p07_leia_stool_wait",
+          "npc": "leia",
+          "title": "凳子先放这",
+          "pages": [
+            "莱娅：听说巨像倒了，我第一眼还是去看这张凳子。以前盼有人从路上回来，今天你真把挡路的东西搬开了。",
+            "莱娅：门边还冷，凳子先放塔侧。我去问米拉这一班的读数；路通不通靠你，回来能不能暖手，我们也得出力。",
+            "莱娅：等有人再走进这扇门，我想先告诉他哪里能坐，而不是只问他外面怎么样。现在我也有能照看的地方了。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p07_recovery_road",
+          "title": "回收路可通",
+          "description": "巨像阻隔消失，回收路可以直达；接头仍需照看，凳子暂留塔侧。"
+        }
+      ]
+    },
+    {
+      "id": "p08_let_it_follow_the_plan",
+      "stage": 8,
+      "requires": {
+        "completed_nodes": [
+          "threshold_colossus"
+        ],
+        "flags": [
+          "proxy_unlocked"
+        ]
+      },
+      "title": "让它照着做",
+      "objective": {
+        "id": "finish_contemporary_recovery",
+        "text": "安排一号槽的接法，完成一次基础 Auto 考核",
+        "campaign_node": "auto_certification"
+      },
+      "journal": {
+        "id": "journal_p08_let_it_follow_the_plan",
+        "entry_type": "Auto",
+        "pages": [
+          "巨像后的四枚白色核心已能用于起步代行，四白执行只使用一号槽。流浪者可以选合用的接法，完成一次基础 Auto 考核。",
+          "塔伦希望反复的往返少些盲走，奥伦照看舱架，伊文等待实际结果。让代行照着做，仍要知道这一次它能够做什么。",
+          "莱娅学着对照眼前情况与上一班读数，不合时叫米拉。无论出征还是交班，主动接住一段事，都从看清这一段开始。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p08_iven_which_step",
+          "npc": "iven",
+          "title": "先做它能做的",
+          "pages": [
+            "伊文：四枚白色核心能让代行起步，可旧路上的事得一段段试。先把这次能执行的安排给它，别一口气让它替人探完所有岔口。",
+            "流浪者：我先安排一号槽，选基础考核。开路时试过的接法，能不能照着做成，还得等这一趟的实际结果。"
+          ]
+        },
+        {
+          "id": "talk_p08_leia_compare",
+          "npc": "leia",
+          "title": "照着也要核",
+          "pages": [
+            "莱娅：你让代行照着做，我也拿着上一班的读数去看接头。以前只怕记错，现在会想，眼前的情况有没有变。",
+            "莱娅：对不上就叫米拉，不硬照旧数填下去。我能接住一点活，还不够接整班；但不用一直站在旁边等别人开口了。"
+          ]
+        },
+        {
+          "id": "talk_p08_oren_proxy_mount",
+          "npc": "oren",
+          "title": "舱架与接法",
+          "pages": [
+            "奥伦：舱架的松紧我能看，装进去的接法得你来定。你在旧路上挑过的装备，到了这里也不能只看外壳结不结实。",
+            "奥伦：先让它做能做的那一段。若能替人省一次来回，我们就多些工夫照看镇里；架子摆在这儿，我把能看住的地方看住。"
+          ]
+        },
+        {
+          "id": "talk_p08_taren_short_route",
+          "npc": "taren",
+          "title": "先选短路",
+          "pages": [
+            "塔伦：试新弓，我不会第一箭就去最远的靶。代行也先选能做的短路，回来看看，它到底把你的安排做成了多少。",
+            "塔伦：我盼的是以后运货少一段盲走，不是又添一件得人追着收拾的东西。巨像倒了，这条路还得慢慢走熟。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p08_proxy_bay",
+          "title": "代行舱起步",
+          "description": "四枚白色核心安置在代行舱架上，居民各看住自己熟悉的一段，执行安排留给流浪者。"
+        }
+      ]
+    },
+    {
+      "id": "p09_open_again",
+      "stage": 9,
+      "requires": {
+        "completed_nodes": [
+          "auto_certification"
+        ],
+        "flags": [
+          "early_game_complete"
+        ]
+      },
+      "title": "重新通行",
+      "objective": {
+        "id": "chapter_one_epilogue",
+        "text": "回收路重新通行，外段暂稳；回厅里吃一顿热饭",
+        "campaign_node": ""
+      },
+      "journal": {
+        "id": "journal_p09_open_again",
+        "entry_type": "生活",
+        "pages": [
+          "基础 Auto 考核已经完成，归货棚写下本次可直送。巨像阻隔的路打开了，外段暖流暂稳，搬货的人少受一程风。",
+          "凳子往门边挪回一点，那处仍比塔侧冷。米拉还在值守，莱娅去盛热饭；她从等待脚步声，走到了能接住一点活的地方。",
+          "伊文留下走过的条件，塔伦收好货单，奥伦仍留着工具。整座塔并未修好，但这条回收路已重新把大家的日常连起来。",
+          "流浪者找到了能继续上路的办法，也在归来的厅里有了位置。首章停在这一顿热饭上，今晚先坐下，听人把话说完。"
+        ]
+      },
+      "conversations": [
+        {
+          "id": "talk_p09_mira_steady",
+          "npc": "mira",
+          "title": "先吃饭",
+          "pages": [
+            "米拉：考核完成，归货棚也能写下本次可直送了。外段这一截暂时稳住，今晚搬货的人回来，可以少受一程风。",
+            "米拉：门边还是冷，整座塔也还没修好。可你把路打开，大家把手里的活接起来，这顿饭就比从前坐得踏实。",
+            "米拉：先吃饭吧。今晚不用把每一句话都说成下一件差事；你从寒原回来，也是这张桌边该有的人。"
+          ]
+        },
+        {
+          "id": "talk_p09_leia_stool_nearer",
+          "npc": "leia",
+          "title": "挪回一点",
+          "pages": [
+            "莱娅：凳子能往门边挪回一点了，那里还冷，先停在这儿。以前我守着它等人回来，现在也会看哪里够暖。",
+            "莱娅：米拉还在台边，我去盛热饭，再把这一班听明白。轮到我能做的那一会儿，就不用大家一直替我惦记。",
+            "莱娅：你去旧路找回能用的东西，我也找到了自己能做的事。这张凳子不只用来等了；来，先坐下吧。"
+          ]
+        },
+        {
+          "id": "talk_p09_iven_small_record",
+          "npc": "iven",
+          "title": "只记这一段",
+          "pages": [
+            "伊文：这次考核的结果收好了，旧路的来处也比起初清楚。以前大家问我能不能走，我只能指着风雪里的一小段。",
+            "伊文：现在可以把你走过、试过的那段告诉后来的人。没走过的先空着，但这点实在的消息，已经能让人少绕路。",
+            "伊文：今晚我也去厅里坐一会儿。记录留在桌上，人不必一直守着纸；有人回来把话说清，比独自猜一夜强。"
+          ]
+        },
+        {
+          "id": "talk_p09_taren_direct_note",
+          "npc": "taren",
+          "title": "本次可直送",
+          "pages": [
+            "塔伦：棚上写了本次可直送，货单总算有了一条短些的路。往后仍要逐批看，但今天能少绕，就记今天这一笔。",
+            "塔伦：我试过不少弓，最记得的却是你带着装备一次次回来的样子。合用的东西留在人手里，才能把靶上的本事带上路。"
+          ]
+        },
+        {
+          "id": "talk_p09_oren_temporary",
+          "npc": "oren",
+          "title": "工具还留着",
+          "pages": [
+            "奥伦：外段暂稳，工具先留着，再对几班读数。旧物还得慢慢照看；能继续用的东西，不会因为庆祝一晚就自己变牢。",
+            "奥伦：你带回的东西，我会按能用的地方看。旧路找来的，砧上留下的，都是让人再走一趟的底气。今晚先去吃饭。"
+          ]
+        }
+      ],
+      "town_changes": [
+        {
+          "id": "town_p09_direct_delivery",
+          "title": "本次可直送",
+          "description": "归货棚新增本次可直送的说明，外段供热暂稳；凳子稍近门边，工具和值守仍留着。"
+        }
+      ]
+    }
+  ],
+  "objectives": [
+    {
+      "requires": {
+        "completed_nodes": [
+          "tutorial_ranger_basics"
+        ]
+      },
+      "objective": {
+        "id": "clear_outer_road",
+        "text": "沿寒原旧路清通外段，带回能用的材料与装备",
+        "campaign_node": "mainline_01_first_hunt"
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "mainline_01_first_hunt"
+        ]
+      },
+      "objective": {
+        "id": "learn_priority_and_dodge",
+        "text": "进入旧货道的装卸区，清通下一段回收路",
+        "campaign_node": "mainline_02_priority_under_pressure"
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "mainline_02_priority_under_pressure"
+        ]
+      },
+      "objective": {
+        "id": "compare_first_real_find",
+        "text": "比较带回的装备，准备深入旧路的下一趟",
+        "campaign_node": "mainline_03_first_elite"
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "mainline_03_first_elite"
+        ]
+      },
+      "objective": {
+        "id": "inspect_growth_report",
+        "text": "试清当前接法的长处，沿旧路继续寻找缺口",
+        "campaign_node": "mainline_04_hazard_and_forge"
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "mainline_04_hazard_and_forge"
+        ]
+      },
+      "objective": {
+        "id": "choose_targeted_contract",
+        "text": "按装备缺口选择来源，为巨像前的旧路做准备",
+        "campaign_node": "mainline_05_growth_gate"
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "mainline_04_hazard_and_forge"
+        ]
+      },
+      "objective": {
+        "id": "make_keep_or_salvage_choice",
+        "text": "决定哪些旧物留用、改铸或拆解，准备继续开路",
+        "campaign_node": "mainline_05_growth_gate"
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "mainline_05_growth_gate"
+        ]
+      },
+      "objective": {
+        "id": "challenge_threshold_colossus",
+        "text": "挑战堵住回收路的阈门巨像，按实际瓶颈调整装备",
+        "campaign_node": "threshold_colossus"
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "threshold_colossus"
+        ]
+      },
+      "objective": {
+        "id": "configure_first_auto",
+        "text": "巨像已倒下；整理四枚白色核心，准备起步代行",
+        "campaign_node": ""
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "threshold_colossus"
+        ],
+        "flags": [
+          "proxy_unlocked"
+        ]
+      },
+      "objective": {
+        "id": "finish_contemporary_recovery",
+        "text": "安排一号槽的接法，完成一次基础 Auto 考核",
+        "campaign_node": "auto_certification"
+      }
+    },
+    {
+      "requires": {
+        "completed_nodes": [
+          "auto_certification"
+        ],
+        "flags": [
+          "early_game_complete"
+        ]
+      },
+      "objective": {
+        "id": "chapter_one_epilogue",
+        "text": "回收路重新通行，外段暂稳；回厅里吃一顿热饭",
+        "campaign_node": ""
+      }
+    }
+  ],
+  "growth_reactions": {
+    "convergent": {
+      "title": "多了，然后停了",
+      "journal_pages": [
+        "第一次观察里，箭的分支多了一阵，随后衰减停下。这套接法在当时条件下呈现收敛，结果已经留下，不能当成越接越多。",
+        "伊文记下停在何处，像记下一段走不通的旧路。这个发现让下一次搜寻有了问题：哪一处接法还没能撑住后续分支。"
+      ],
+      "conversation_pages": [
+        "伊文：这次多了一阵，后来停下了。我在旧路上碰见断口，也先记在哪儿，不能因为想过去就把它画成通路。",
+        "流浪者：那我就知道要找什么了。先把这套接法留下，换过合用的装备再试，看停下的地方会不会跟着变。",
+        "伊文：能带回一个明确的问题，也算这一趟没有白走。停在哪一步写清楚，下一次才知道自己往前走了多少。"
+      ]
+    },
+    "critical": {
+      "title": "刚好接住",
+      "journal_pages": [
+        "第一次观察里，每一代刚好接住上一代，没有越来越少，也没有越来越快。这是当时接法留下的临界结果，不是指数增长。",
+        "伊文把这次条件与结果一起留下。流浪者看到了接续能够维持的边缘，下一趟可以据此寻找还缺的那一处。"
+      ],
+      "conversation_pages": [
+        "伊文：这次刚好接住了，没变少，也没越接越多。像旧路上一处窄桥，脚下能站住，还不等于有余地搬更多货。",
+        "流浪者：我先记住这条边缘。它比凭感觉换装备清楚；下一趟找来的东西，得看看能不能让后面多接住一些。"
+      ]
+    },
+    "exponential": {
+      "title": "这一段接上了",
+      "journal_pages": [
+        "第一次观察里，箭的后代一代多过一代，在共享寿命内出现了指数增长。这个结果来自当时整套装备、天赋与接法。",
+        "这次增长给继续开路带来底气。伊文保留当时条件，流浪者可以带着整套办法应战，换了场地仍要看实际结果。"
+      ],
+      "conversation_pages": [
+        "伊文：这次每一代都比上一代多了。沿路找来的东西，终于在这套接法里互相接住；这就是你亲眼见到的指数增长。",
+        "流浪者：我想带着整套再走一趟。共享寿命还在倒数，路上的敌人也各不一样；但现在我知道，这个办法确实发生过。",
+        "伊文：把它发生时的条件写下。我继续记路上的险处，你准备上路的弓；我们各看清一段，下一趟就少些盲走。"
+      ]
+    }
+  }
+}

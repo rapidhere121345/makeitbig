@@ -1,0 +1,45 @@
+{
+  "repository_url": "https://github.com/morbeo/ai-skills",
+  "commit": "548d3d22eb58eb3ec1f4ab526f317e48b753298a",
+  "package_path": "game-design",
+  "license_spdx": "CC0-1.0",
+  "collection": "Unmodified selected skill directory plus original repository license/notices. No router, installer, plugin, unrelated skill, example, binary asset or download cache included.",
+  "files": [
+    {
+      "local_path": "SKILL.md",
+      "upstream_path": "game-design/SKILL.md",
+      "source_url": "https://github.com/morbeo/ai-skills/blob/548d3d22eb58eb3ec1f4ab526f317e48b753298a/game-design/SKILL.md",
+      "raw_url": "https://raw.githubusercontent.com/morbeo/ai-skills/548d3d22eb58eb3ec1f4ab526f317e48b753298a/game-design/SKILL.md",
+      "bytes": 10207,
+      "sha256": "5d50a744bc5af80af0fc3383753bb0502ed58dee7e7e67d88b21e1564a3cf2ea",
+      "git_blob_sha1": "b27ed04d0a2f9ae79c34e7fa0f19e91a5d3bab6a"
+    },
+    {
+      "local_path": "references/narrative-structures.md",
+      "upstream_path": "game-design/references/narrative-structures.md",
+      "source_url": "https://github.com/morbeo/ai-skills/blob/548d3d22eb58eb3ec1f4ab526f317e48b753298a/game-design/references/narrative-structures.md",
+      "raw_url": "https://raw.githubusercontent.com/morbeo/ai-skills/548d3d22eb58eb3ec1f4ab526f317e48b753298a/game-design/references/narrative-structures.md",
+      "bytes": 3279,
+      "sha256": "e3c35a616c97e27c0d52a73e50269ca3a64bb726d9fa61c85844381d32e69735",
+      "git_blob_sha1": "72fc32bc4cd8f57020f0396252c7abf9f3149bf3"
+    },
+    {
+      "local_path": "references/motivation-models.md",
+      "upstream_path": "game-design/references/motivation-models.md",
+      "source_url": "https://github.com/morbeo/ai-skills/blob/548d3d22eb58eb3ec1f4ab526f317e48b753298a/game-design/references/motivation-models.md",
+      "raw_url": "https://raw.githubusercontent.com/morbeo/ai-skills/548d3d22eb58eb3ec1f4ab526f317e48b753298a/game-design/references/motivation-models.md",
+      "bytes": 3843,
+      "sha256": "1fbed076ba9b9a0e0dad9cb214ab9c32f389e303495a6576c40b0b1fb4ae978e",
+      "git_blob_sha1": "eb029ce063abd83c9a8a4572a45c48686fbb1b47"
+    },
+    {
+      "local_path": "LICENSE",
+      "upstream_path": "LICENSE",
+      "source_url": "https://github.com/morbeo/ai-skills/blob/548d3d22eb58eb3ec1f4ab526f317e48b753298a/LICENSE",
+      "raw_url": "https://raw.githubusercontent.com/morbeo/ai-skills/548d3d22eb58eb3ec1f4ab526f317e48b753298a/LICENSE",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "git_blob_sha1": "0e259d42c996742e9e3cba14c677129b2c1b6311"
+    }
+  ]
+}

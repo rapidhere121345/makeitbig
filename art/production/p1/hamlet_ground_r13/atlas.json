@@ -1,0 +1,19 @@
+{
+  "animations": {},
+  "native_view": [640, 360],
+  "schema_version": 1,
+  "sprites": {
+    "hamlet.ground": {
+      "anchor": [512, 640],
+      "rect": [0, 0, 1024, 640],
+      "texture": "ground"
+    }
+  },
+  "textures": {
+    "ground": {
+      "height": 640,
+      "path": "res://art/production/p1/hamlet_ground_r13/ground.png",
+      "width": 1024
+    }
+  }
+}

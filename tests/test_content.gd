@@ -7,6 +7,7 @@ func run() -> Array[String]:
 	var failures: Array[String] = []
 	_test_real_files_load_and_validate(failures)
 	_test_expected_census(failures)
+	_test_proxy_v2_contract(failures)
 	_test_sample_ids_and_names(failures)
 	_test_ranger_presets(failures)
 	_test_attachment_preset_rules(failures)
@@ -18,8 +19,22 @@ func _test_real_files_load_and_validate(failures: Array[String]) -> void:
 	var registry = ContentRegistry.new()
 	var errors: Array[String] = registry.load_all()
 	_expect(errors.is_empty(), "content: shipped JSON must load cleanly, got %s" % str(errors), failures)
+	_expect(registry.early_campaign_registry != null
+		and registry.early_campaign_registry.mainline_order().size() == 8,
+		"content: early campaign schema was not part of startup validation", failures)
+	_expect(registry.early_item_registry != null
+		and registry.early_item_registry.base_items.size() == 8
+		and registry.early_item_registry.equipment_slots.size() == 12,
+		"content: early item schema was not part of startup validation", failures)
+	_expect(registry.early_skill_registry != null
+		and registry.early_skill_registry.skills.size() == 4
+		and not registry.early_skill_registry.get_skill("piercing_arrow").is_empty(),
+		"content: early skill schema was not part of startup validation", failures)
 	var second_errors: Array[String] = registry.load_all()
-	_expect(second_errors.is_empty() and registry.preset_order.size() == 3,
+	_expect(second_errors.is_empty() and registry.preset_order.size() == 3
+		and registry.early_campaign_registry.mainline_order().size() == 8
+		and registry.early_item_registry.base_items.size() == 8
+		and registry.early_skill_registry.skills.size() == 4,
 		"content: reload must be idempotent", failures)
 
 
@@ -57,6 +72,65 @@ func _test_expected_census(failures: Array[String]) -> void:
 	_expect(int(compatible_counts.get("execution", 0)) == 4, "firmware: 4 for execution", failures)
 	_expect(int(compatible_counts.get("memory", 0)) == 3, "firmware: 3 for memory", failures)
 	_expect(int(compatible_counts.get("attachment", 0)) == 3, "firmware: 3 for attachment", failures)
+
+
+func _test_proxy_v2_contract(failures: Array[String]) -> void:
+	var registry = ContentRegistry.new()
+	var data := _load_proxy_data()
+	_expect(data.get("schema_version", 0) == 2, "proxy v2: shipped schema version must be 2", failures)
+	_expect(registry.validate_proxy_components(data).is_empty(), "proxy v2: shipped document must pass strict validation", failures)
+	var expected_core_fields := ["behavior_id", "capabilities", "observation_channels", "state_fields", "command_kinds"]
+	for core_value in data.get("cores", []):
+		var core: Dictionary = core_value
+		for field in expected_core_fields:
+			_expect(core.has(field), "proxy v2: core %s missing %s" % [core.get("id", "?"), field], failures)
+	var distance_core: Dictionary = {}
+	for core_value in data.cores:
+		if String(core_value.id) == "distance_keeping_gait":
+			distance_core = core_value
+	_expect(distance_core.get("default_settings", {}) == {"distance_band": "mid"},
+		"proxy v2: distance-keeping default must be mid", failures)
+	_expect(JSON.stringify(distance_core.get("capabilities", {})).contains("targeting_distance"),
+		"proxy v2: distance bands must be expressed relative to targeting_distance", failures)
+	var marking: Dictionary = {}
+	for core_value in data.cores:
+		if String(core_value.id) == "marking_prism":
+			marking = core_value
+	var marking_channels: Array = marking.get("observation_channels", [])
+	_expect("enemy.basic" in marking_channels and "enemy.public_classification_tags" in marking_channels,
+		"proxy v2: marking prism must expose basic enemy data and public classification tags", failures)
+	for forbidden in ["status", "hazard", "telegraph"]:
+		_expect(not JSON.stringify(marking_channels).contains(forbidden),
+			"proxy v2: marking prism exposed forbidden %s observations" % forbidden, failures)
+
+	var unknown_top := data.duplicate(true)
+	unknown_top["future"] = true
+	_expect(_has_substring(registry.validate_proxy_components(unknown_top), "unknown field 'future'"),
+		"proxy v2: unknown top-level fields must be rejected", failures)
+	var missing_core_field := data.duplicate(true)
+	missing_core_field.cores[0].erase("behavior_id")
+	_expect(_has_substring(registry.validate_proxy_components(missing_core_field), "missing field 'behavior_id'"),
+		"proxy v2: missing core machine fields must be rejected", failures)
+	var wrong_core_type := data.duplicate(true)
+	wrong_core_type.cores[0].capabilities = "nearest"
+	_expect(_has_substring(registry.validate_proxy_components(wrong_core_type), "capabilities must be a non-empty object"),
+		"proxy v2: wrong core machine-field types must be rejected", failures)
+	var unknown_attachment_field := data.duplicate(true)
+	unknown_attachment_field.attachments[0]["future"] = true
+	_expect(_has_substring(registry.validate_proxy_components(unknown_attachment_field), "unknown field 'future'"),
+		"proxy v2: attachment structure must remain strict", failures)
+	var bad_settings_schema := data.duplicate(true)
+	bad_settings_schema.cores[5].settings_schema["additional_properties"] = true
+	_expect(_has_substring(registry.validate_proxy_components(bad_settings_schema), "additional_properties must be false"),
+		"proxy v2: configurable core schemas must reject extra settings", failures)
+
+
+func _load_proxy_data() -> Dictionary:
+	var file := FileAccess.open(ContentRegistry.PROXY_PATH, FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	return parsed if parsed is Dictionary else {}
 
 
 func _test_sample_ids_and_names(failures: Array[String]) -> void:
@@ -102,6 +176,17 @@ func _test_ranger_presets(failures: Array[String]) -> void:
 		if registry.presets.has(id):
 			_expect(_near(registry.presets[id].get("p"), float(expected_p[id])),
 				"presets: %s must use p=%s" % [id, expected_p[id]], failures)
+			var preset: Dictionary = registry.presets[id]
+			_expect(preset.skills == [{"id": "piercing_arrow", "name": "穿刺箭"}],
+				"presets: %s must expose the formal Piercing Arrow skill" % id, failures)
+			_expect(String(preset.runes[0].id) == "breeding_split" and String(preset.runes[0].name) == "孳生分裂",
+				"presets: %s must expose the semantic split rune" % id, failures)
+			_expect(String(preset.laws[0].id) == "pack_hunt_mark" and String(preset.laws[0].name) == "群猎印记",
+				"presets: %s must expose the pack-hunt law" % id, failures)
+			_expect(String(preset.equipment.parameter_source) == "prototype_equipped_parameters"
+				and not String(preset.equipment.description).is_empty()
+				and not String(preset.equipment.calibration).is_empty(),
+				"presets: %s equipment description/calibration is incomplete" % id, failures)
 
 
 func _test_attachment_preset_rules(failures: Array[String]) -> void:
@@ -197,9 +282,9 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 	_expect(_has_substring(preset_errors, "out of range"), "validator: p<=0 must be rejected", failures)
 	_expect(_has_substring(preset_errors, "duplicate preset id"), "validator: duplicate preset id must be rejected", failures)
 	_expect(_has_substring(preset_errors, "p must be a number"), "validator: non-numeric p must be rejected", failures)
-	var bad_proxy_schema := {"schema_version": 2, "cores": [], "attachments": [], "firmwares": []}
-	_expect(_has_substring(registry.validate_proxy_components(bad_proxy_schema), "schema_version must be 1"),
-		"validator: proxy component schema version must be 1", failures)
+	var bad_proxy_schema := {"schema_version": 1, "cores": [], "attachments": [], "firmwares": []}
+	_expect(_has_substring(registry.validate_proxy_components(bad_proxy_schema), "schema_version must be integer 2"),
+		"validator: proxy component schema version must be 2", failures)
 	var missing_shared := {"schema_version": 1, "shared_parameters": {}, "presets": []}
 	_expect(not registry.validate_ranger_presets(missing_shared).is_empty(),
 		"validator: missing shared_parameters must be rejected", failures)
@@ -210,6 +295,27 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 	}
 	_expect(_has_substring(registry.validate_ranger_presets(missing_equipped), "missing prototype_equipped_parameters"),
 		"validator: missing equipped parameters must be rejected", failures)
+	var malformed_build := {
+		"schema_version": 1,
+		"shared_parameters": {"shared_lifetime": 16.0, "distance": 180.0, "speed": 600.0, "minimum_turn_time": 0.12},
+		"prototype_equipped_parameters": {"shared_lifetime": 34.0, "distance": 150.0, "speed": 620.0, "minimum_turn_time": 0.18},
+		"presets": [{
+			"id": "broken", "name": "损坏", "p": 0.5,
+			"skills": [{"id": "wrong", "name": "错误"}],
+			"runes": [{"id": "breeding_split", "name": "孳生分裂"}],
+			"laws": [],
+			"equipment": {"name": "装备", "description": "说明", "calibration": "校准", "parameter_source": "wrong"},
+		}],
+	}
+	var build_errors: Array[String] = registry.validate_ranger_presets(malformed_build)
+	_expect(_has_substring(build_errors, "skills must include 'piercing_arrow'"),
+		"validator: required ranger skill must be enforced", failures)
+	_expect(_has_substring(build_errors, "missing semantics"),
+		"validator: rune semantics must be enforced", failures)
+	_expect(_has_substring(build_errors, "laws must be a non-empty array"),
+		"validator: law list must be enforced", failures)
+	_expect(_has_substring(build_errors, "parameter_source must be prototype_equipped_parameters"),
+		"validator: equipment parameter source must be enforced", failures)
 
 
 func _near(value: Variant, expected: float) -> bool:

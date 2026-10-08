@@ -1,0 +1,37 @@
+{
+	"iven": {
+		"path": "res://art/production/p1/story_portraits_r14/iven.png",
+		"size": [
+			128,
+			160
+		]
+	},
+	"leia": {
+		"path": "res://art/production/p1/story_portraits_r14/leia.png",
+		"size": [
+			128,
+			160
+		]
+	},
+	"mira": {
+		"path": "res://art/production/p1/story_portraits_r14/mira.png",
+		"size": [
+			128,
+			160
+		]
+	},
+	"oren": {
+		"path": "res://art/production/p1/story_portraits_r14/oren.png",
+		"size": [
+			128,
+			160
+		]
+	},
+	"taren": {
+		"path": "res://art/production/p1/story_portraits_r14/taren.png",
+		"size": [
+			128,
+			160
+		]
+	}
+}

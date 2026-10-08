@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "groups": [
+    {
+      "id": "equipment_slots",
+      "key_scope": "all",
+      "source": "sources/equipment_slots_source.png",
+      "layout": {
+        "rows": 2,
+        "cols": 2
+      },
+      "colorkey": "#ff00ff",
+      "tolerance": 90,
+      "palette": [
+        "#111820",
+        "#2D3943",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5"
+      ],
+      "sprites": [
+        {
+          "id": "equipment_slot.main_hand",
+          "source_rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment_slot.off_hand",
+          "source_rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment_slot.gloves",
+          "source_rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment_slot.ring_1",
+          "source_rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        }
+      ]
+    },
+    {
+      "id": "equipment_bases",
+      "key_scope": "all",
+      "source": "sources/equipment_bases_source.png",
+      "layout": {
+        "rows": 2,
+        "cols": 4
+      },
+      "colorkey": "#ff00ff",
+      "tolerance": 90,
+      "palette": [
+        "#111820",
+        "#2D3943",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#729161"
+      ],
+      "sprites": [
+        {
+          "id": "equipment.ashwood_longbow",
+          "source_rect": [
+            0,
+            0,
+            396,
+            520
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment.swift_recurve_bow",
+          "source_rect": [
+            396,
+            0,
+            397,
+            520
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment.lineage_quiver",
+          "source_rect": [
+            793,
+            0,
+            396,
+            520
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment.farwatch_quiver",
+          "source_rect": [
+            1189,
+            0,
+            397,
+            520
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment.turnfeather_gloves",
+          "source_rect": [
+            0,
+            520,
+            396,
+            472
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment.piercer_gloves",
+          "source_rect": [
+            396,
+            520,
+            397,
+            472
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment.hawk_eye_ring",
+          "source_rect": [
+            793,
+            520,
+            396,
+            472
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "equipment.vitality_ring",
+          "source_rect": [
+            1189,
+            520,
+            397,
+            472
+          ],
+          "visible_bbox": null
+        }
+      ]
+    },
+    {
+      "id": "skills_actions",
+      "key_scope": "all",
+      "source": "sources/skills_actions_source.png",
+      "layout": {
+        "rows": 2,
+        "cols": 2
+      },
+      "colorkey": "#ff00ff",
+      "tolerance": 90,
+      "palette": [
+        "#111820",
+        "#2D3943",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#896043",
+        "#61A6A5",
+        "#70578D"
+      ],
+      "sprites": [
+        {
+          "id": "action.piercing_arrow",
+          "source_rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "action.hunter_mark",
+          "source_rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "action.dash",
+          "source_rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "action.basic_dodge",
+          "source_rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        }
+      ]
+    },
+    {
+      "id": "runes_law",
+      "key_scope": "all",
+      "source": "sources/runes_law_source.png",
+      "layout": {
+        "rows": 2,
+        "cols": 2
+      },
+      "colorkey": "#ff00ff",
+      "tolerance": 90,
+      "palette": [
+        "#111820",
+        "#2D3943",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#896043",
+        "#61A6A5",
+        "#B17CC4"
+      ],
+      "sprites": [
+        {
+          "id": "rune.breeding_split",
+          "source_rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "rune.branch_scale",
+          "source_rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "rune.afterimage_extension",
+          "source_rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "law.pack_hunt_mark",
+          "source_rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        }
+      ]
+    },
+    {
+      "id": "white_cores",
+      "key_scope": "all",
+      "source": "sources/white_cores_source.png",
+      "layout": {
+        "rows": 2,
+        "cols": 2
+      },
+      "colorkey": "#ff00ff",
+      "tolerance": 90,
+      "palette": [
+        "#111820",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#896043",
+        "#61A6A5"
+      ],
+      "sprites": [
+        {
+          "id": "core.near_enemy_horizon",
+          "source_rect": [
+            0,
+            0,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "core.direct_gait",
+          "source_rect": [
+            627,
+            0,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "core.single_key_execution",
+          "source_rect": [
+            0,
+            627,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        },
+        {
+          "id": "core.short_trace_memory",
+          "source_rect": [
+            627,
+            627,
+            627,
+            627
+          ],
+          "visible_bbox": null
+        }
+      ]
+    }
+  ]
+}

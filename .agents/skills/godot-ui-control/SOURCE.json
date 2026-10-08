@@ -1,0 +1,45 @@
+{
+  "repository_url": "https://github.com/gamedev-skills/awesome-gamedev-agent-skills",
+  "commit": "d4b0e35550c55ae70bdfcab4ef5a0e94610438a9",
+  "package_path": "skills/godot/godot-ui-control",
+  "license_spdx": "Apache-2.0",
+  "collection": "Unmodified selected skill directory plus original repository license/notices. No router, installer, plugin, unrelated skill, example, binary asset or download cache included.",
+  "files": [
+    {
+      "local_path": "SKILL.md",
+      "upstream_path": "skills/godot/godot-ui-control/SKILL.md",
+      "source_url": "https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/d4b0e35550c55ae70bdfcab4ef5a0e94610438a9/skills/godot/godot-ui-control/SKILL.md",
+      "raw_url": "https://raw.githubusercontent.com/gamedev-skills/awesome-gamedev-agent-skills/d4b0e35550c55ae70bdfcab4ef5a0e94610438a9/skills/godot/godot-ui-control/SKILL.md",
+      "bytes": 5782,
+      "sha256": "9ac89920e74bbf8d939b4d565e350d53b07c9afbe0970345c97d4122f590cfd5",
+      "git_blob_sha1": "2623bd31cf09ede0cf5853edc617f72313668cb4"
+    },
+    {
+      "local_path": "references/layout-and-theming.md",
+      "upstream_path": "skills/godot/godot-ui-control/references/layout-and-theming.md",
+      "source_url": "https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/d4b0e35550c55ae70bdfcab4ef5a0e94610438a9/skills/godot/godot-ui-control/references/layout-and-theming.md",
+      "raw_url": "https://raw.githubusercontent.com/gamedev-skills/awesome-gamedev-agent-skills/d4b0e35550c55ae70bdfcab4ef5a0e94610438a9/skills/godot/godot-ui-control/references/layout-and-theming.md",
+      "bytes": 4107,
+      "sha256": "2b5a7d64f00709640385adda215aa3f9a839c2d461c53c886ba9c320723a9f3d",
+      "git_blob_sha1": "972e05db7b070170f8ab3fc4ce298e41c9ac2be1"
+    },
+    {
+      "local_path": "LICENSE",
+      "upstream_path": "LICENSE",
+      "source_url": "https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/d4b0e35550c55ae70bdfcab4ef5a0e94610438a9/LICENSE",
+      "raw_url": "https://raw.githubusercontent.com/gamedev-skills/awesome-gamedev-agent-skills/d4b0e35550c55ae70bdfcab4ef5a0e94610438a9/LICENSE",
+      "bytes": 11395,
+      "sha256": "6f82dcfeb95a1c0a0452180a3b16f21bf82111780018fed59d95a052b5b75f6c",
+      "git_blob_sha1": "c7fc0c6d59cb8129a0e30fe13f5a6118f3933c44"
+    },
+    {
+      "local_path": "NOTICE",
+      "upstream_path": "NOTICE",
+      "source_url": "https://github.com/gamedev-skills/awesome-gamedev-agent-skills/blob/d4b0e35550c55ae70bdfcab4ef5a0e94610438a9/NOTICE",
+      "raw_url": "https://raw.githubusercontent.com/gamedev-skills/awesome-gamedev-agent-skills/d4b0e35550c55ae70bdfcab4ef5a0e94610438a9/NOTICE",
+      "bytes": 883,
+      "sha256": "2dcb65b1c5be24e5ba11e937f3996100f4e980d8cf8ac5b30ba1d70dae6c40f8",
+      "git_blob_sha1": "d4204881c3f79f39151a53a6aae476b188a8c51f"
+    }
+  ]
+}

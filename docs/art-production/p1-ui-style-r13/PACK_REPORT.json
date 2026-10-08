@@ -1,0 +1,47 @@
+{
+  "source": "docs/art-production/p1-ui-style-r13/sources/hearth_material_atlas_v01.png",
+  "source_sha256": "d5dfab4edfc5560977e89cc91a3d65d2dc5aa59c6277c3e5ab5026ab55dad0b5",
+  "packing": "exact 512px grid crop; interior-only brightness grade; nearest 64px; unchanged icon alpha composite",
+  "grades": {
+    "panel": 0.5,
+    "button": 0.65,
+    "well": 0.9,
+    "paper": 0.32,
+    "hover": 0.4,
+    "selected": 0.5
+  },
+  "framed_icons": {
+    "skills_actions.png": {
+      "original": "art/production/p1/early_loop_v01/skills_actions.png",
+      "original_sha256": "1a83643b4ecc1f3af8d296958da905c77c7ab2a64121b0b60ee01f8c9097bcd1",
+      "opaque_pixels": 1182,
+      "preserved_opaque_pixels": 1182
+    },
+    "ranger_talents.png": {
+      "original": "art/production/p1/icon_expansion_v01/ranger_talents.png",
+      "original_sha256": "2cde9fb411589e69c0efc9906714ea1eb34bc271dd6577db0f9c8c85484523c3",
+      "opaque_pixels": 4203,
+      "preserved_opaque_pixels": 4203
+    },
+    "law_tokens.png": {
+      "original": "art/production/p1/icon_expansion_v01/law_tokens.png",
+      "original_sha256": "ae35691d50c95f02cda998e0d8c503eafaa09107e179b2327d78309f34571469",
+      "opaque_pixels": 1192,
+      "preserved_opaque_pixels": 1192
+    }
+  },
+  "outputs": {
+    "backdrop_cloth_v01.png": "8df15ef5f80fc78ce7743ad25ebf3939296bbbe445e0e61a2fe0207845add71e",
+    "button_v01.png": "a857e548f45dc448864aa557039a028a075e5fde9ce5eb3c365ea64cde6c090e",
+    "disabled_v01.png": "3b3b091797b5fe2da86ed4f78df0c16e68920ce132f36a10f48cf03d45e39c2e",
+    "hover_v01.png": "edfe89a6337fdbfab617db742ffa63b16d8f20001fbf18c6af275510b9273003",
+    "icon_well_v01.png": "9241b69034c68cb88d63ce00a3abb308e77ebaa18bb163dc799fc71c712e79f5",
+    "law_tokens.png": "a013c7cfa5cf633c4311b7adc8de900852c007bb506d5516bc5f98b4f3d8b361",
+    "panel_v01.png": "a1ecf596dde80a29904111eec04d722128118619be64329c2e7dc197bf55fe5a",
+    "paper_v01.png": "8d7d52522322621129f0ef024e43bdbd848c950da6be2e871a9c6aefa250e1fa",
+    "ranger_talents.png": "850496807fdc42db9530c323dc71d5dcf6a2c3949b82c5f9e45d8802763e7c2a",
+    "selected_v01.png": "8003dd6a7f3bab6276ae8587277cc3880530dc5cdd721b6086adb4d773662f05",
+    "skills_actions.png": "6d3f0406e8e5a1f4398539885a85739e9269f01dfeb48989c57d7430aa58e0b1",
+    "well_v01.png": "33bea063754f575679d16313d3830254efb04006ab1d19995ae8e002faa16107"
+  }
+}

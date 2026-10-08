@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-07",
+  "generator": "built-in image_gen.imagegen",
+  "accepted_production": "res://art/production/p1/combat_style_r13/v03/",
+  "sources": [
+    {
+      "asset": "ground",
+      "tool": "built-in image_gen.imagegen",
+      "generated_original": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a11619-9f48-7b12-9b94-e0bc27708b54/exec-33962d85-5aa0-4527-b387-654b86b57dc9.png",
+      "saved_original": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/sources/ground_original.png",
+      "sha256": "b7fac6fa4e24b5c235d3f91c9b668ceaaa8a54643294df708424cc83bcd65641",
+      "prompt": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/prompts/ground.txt",
+      "prompt_sha256": "d4640054d9673dd6f5c377344ce72780473c5203a5725f756a602b01d7e97a24",
+      "transparent_background": false,
+      "references": [
+        {
+          "path": "/data/repo/makeitbig/art/production/p1/ground_refine_v01/ground.png",
+          "sha256_at_handoff": "8dbb1de505a7c650b48d136b0e183455bb3f254de110d57fa7347231cf92669e"
+        },
+        {
+          "path": "/data/repo/makeitbig/docs/art-concepts/r13/hearthside-town-composition-v01.png",
+          "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
+        }
+      ]
+    },
+    {
+      "asset": "ruins",
+      "tool": "built-in image_gen.imagegen",
+      "generated_original": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a11619-9f48-7b12-9b94-e0bc27708b54/exec-67c543e9-0b6e-42c1-a8ce-0b87cae1aeab.png",
+      "saved_original": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/sources/ruins_original.png",
+      "sha256": "6478eb8605f60225f010b714311ecbb9e8b003f86d5c9d5d929a4f0fafcd066a",
+      "prompt": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/prompts/ruins.txt",
+      "prompt_sha256": "d6b38b60f3a34d819f2dc0f07d81d53d9957a9312c8bb02c0a2750de63c6de9e",
+      "transparent_background": true,
+      "references": [
+        {
+          "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/ruins.png",
+          "sha256_at_handoff": "380247cc2001037d716567ccd0d10b03fabf958c2f22aba5628f33f16456fd7f"
+        },
+        {
+          "path": "/data/repo/makeitbig/docs/art-concepts/r13/hearthside-town-composition-v01.png",
+          "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
+        }
+      ]
+    },
+    {
+      "asset": "tower",
+      "tool": "built-in image_gen.imagegen",
+      "generated_original": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a11619-9f48-7b12-9b94-e0bc27708b54/exec-3f7a650b-4fbd-4618-989e-e8a727c26aa0.png",
+      "saved_original": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/sources/tower_original.png",
+      "sha256": "af577e7de874a64426ef0ef703d02369b5948d80f02a8a7d2c4a7aac4e7cf565",
+      "prompt": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/prompts/tower.txt",
+      "prompt_sha256": "99cd8b7fd29eac20811ce0ea89200ec1d4320d06e02773d5327cf21ea3cf7195",
+      "transparent_background": true,
+      "references": [
+        {
+          "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/tower.png",
+          "sha256_at_handoff": "f7f3b8b91d54a14ead697ff9f322f22ce4795992fd40609bfbc1d8737ad57c31"
+        },
+        {
+          "path": "/data/repo/makeitbig/docs/art-concepts/r13/hearthside-town-composition-v01.png",
+          "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
+        }
+      ]
+    },
+    {
+      "asset": "actors",
+      "tool": "built-in image_gen.imagegen",
+      "generated_original": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a11619-9f48-7b12-9b94-e0bc27708b54/exec-1fc0a263-bcbe-403d-8654-57377b2b99dc.png",
+      "saved_original": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png",
+      "sha256": "9906033c41be98b24b41c3401049218af077ab5b045c24d654b8afc2c377c1c4",
+      "prompt": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/prompts/actors.txt",
+      "prompt_sha256": "9cb1fd08197182b55d6fc3c0f9638b9bab5a4ecdb47f7cbe814e838233e75bda",
+      "transparent_background": true,
+      "references": [
+        {
+          "path": "/data/repo/makeitbig/art/production/p1/ranger_actions_v01/ranger.png",
+          "sha256_at_handoff": "c0bd20d7767899db9a8319aca6dca68f034a47eb84c9d5016543a131802f888b"
+        },
+        {
+          "path": "/data/repo/makeitbig/art/production/p1/enemy_actions_v01/enemies.png",
+          "sha256_at_handoff": "f432816323740b26897ca84d30d734919ebcf559be263e9918e92ad30f4da011"
+        },
+        {
+          "path": "/data/repo/makeitbig/docs/art-concepts/r13/hearthside-town-composition-v01.png",
+          "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
+        }
+      ]
+    },
+    {
+      "asset": "boss",
+      "tool": "built-in image_gen.imagegen",
+      "generated_original": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a11619-9f48-7b12-9b94-e0bc27708b54/exec-9a42e00d-5527-44d5-901f-6f01ec462853.png",
+      "saved_original": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/sources/boss_body_original.png",
+      "sha256": "affdb00865b24bbc0f4088b21d5d495b9187fc2cc14767c9b976e0f476dc0da7",
+      "prompt": "/data/repo/makeitbig/docs/art-production/p1-combat-style-r13/prompts/boss.txt",
+      "prompt_sha256": "c07ead68d616f83082860e0afb5b8ae2303c5abe66428dc3462d7795c21988f7",
+      "transparent_background": true,
+      "references": [
+        {
+          "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/boss_body.png",
+          "sha256_at_handoff": "bab637220cda1d2f90dd6ec56005d2dbfebeab514e5220dd4734e70499d03de9"
+        },
+        {
+          "path": "/data/repo/makeitbig/docs/art-concepts/r13/hearthside-town-composition-v01.png",
+          "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
+        }
+      ]
+    }
+  ],
+  "style_reference": "docs/art-concepts/r13/hearthside-town-composition-v01.png",
+  "read_only_hamlet_material_reference": "docs/art-production/p1-hamlet-style-r13/sources/facilities.png",
+  "accepted_player_adjustment": "retain exact original e9ddc3 + d3cbb5 light-mass pixels and 111820 ink outline; generated winter colour samples only on secondary material colours",
+  "contract_source_atlases": {
+    "art/production/p1/ranger_actions_v01/atlas.json": "5f5aa176fd862ce896dd1c8b92141af6003bf3d37cde7dd5ba094e9bc0c5ed41",
+    "art/production/p1/enemy_actions_v01/atlas.json": "ec79c7330c2f562086329c797826e10b3b39ec75502bb772d49790d6c9f9b97a",
+    "art/production/p1/scene_rework_v01/atlas.json": "f615e7fc9b014a10d93d24476b5486deb824ca8d03e8b9011d1d95c972ba894c",
+    "art/production/p1/scene_rework_v01/layout.json": "1b92be84e39e690f925b50f3c9fb77df976d286a50d1ec6ce0bc36096694ce92",
+    "art/production/p1/calibration_v01/atlas.json": "776e6d251384e10011737f3a9cbf65645be1108c50816f85e0d1ee9f30c2fd5e"
+  }
+}

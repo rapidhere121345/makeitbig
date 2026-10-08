@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "source": "makeitbig GDD chapter 11 / appendix E",
+  "note": "Open talent trees. Only the ranger tree is implemented in the early battle runtime.",
+  "trees": [
+    {
+      "id": "ranger_hunting_arts",
+      "name": "猎场学",
+      "class_id": "ranger",
+      "layer_requirements": [0, 3, 8],
+      "implemented": true,
+      "nodes": [
+        {"id":"ranger_steady_string","name":"稳弦","layer":1,"is_key":false,"description":"投射物速度 +10%。箭矢更快到达目标；同一共享寿命内可容纳更多代分支，不直接增加续行概率。","effect":{"type":"parameter_multiply","parameter":"v","value":0.10}},
+        {"id":"ranger_long_breath","name":"长息","layer":1,"is_key":false,"description":"投射物共同寿命 +8%。按整条箭谱系的共享寿命计算有效代数；不会为子箭额外生成独立寿命。","effect":{"type":"parameter_multiply","parameter":"T","value":0.08}},
+        {"id":"ranger_keen_eye","name":"锐眼","layer":1,"is_key":false,"description":"猎人印记持续 +10%。施放印记时延长本印记的实际到期 tick；不改变印记冷却、伤害倍率或施放距离。","effect":{"type":"capability","id":"hunter_mark_duration_multiplier","value":0.10}},
+        {"id":"ranger_light_step","name":"轻步","layer":1,"is_key":false,"description":"突袭持续 +10%。本次突袭的总位移距离不变，按更长持续时间分摊为每 tick 位移；不改变冷却或免伤状态。","effect":{"type":"capability","id":"dash_duration_multiplier","value":0.10}},
+        {"id":"ranger_recovery_pose","name":"收势","layer":1,"is_key":false,"description":"闪避冷却恢复 +8%。闪避开始时按 35 tick 基础冷却缩短；闪避持续时间和闪避无敌帧不变。","effect":{"type":"capability","id":"dodge_cooldown_reduction","value":0.08}},
+        {"id":"ranger_close_turn","name":"近距回转","layer":2,"is_key":false,"description":"最短转向时间 -8%。降低一代分支所需的时间，因此可提高同寿命内的有效代数；不直接增加分支概率。需要本树第1层已投3点。","effect":{"type":"parameter_reduce","parameter":"turn","value":0.08}},
+        {"id":"ranger_continuation_calibration","name":"续行校准","layer":2,"is_key":false,"effect":{"type":"capability","id":"p_overflow_damage_efficiency_bonus","value":0.20},"description":"p 溢出转普通伤害效率 +20%。仅当装备把 p 推过 100%后生效：溢出每1点按1.2倍转入续行普通伤害；p 本身仍在100%封顶，不增加分支。需要本树第1层已投3点。"},
+        {"id":"ranger_defocused_tracking","name":"失焦追索","layer":2,"is_key":false,"description":"失去印记目标后保留候选0.5秒。印记到期或目标离开有效距离时，候选只作为穿刺箭优先目标延续15 tick；不恢复印记伤害倍率。需要本树第1层已投3点。","effect":{"type":"capability","id":"lost_mark_candidate_ticks","value":15}},
+        {"id":"ranger_wind_slice_stance","name":"风切架势","layer":2,"is_key":false,"implemented":false,"pending_reason":"基础规则尚不存在：需要受击打断压力、抗打断阈值和突袭后一次性触发窗口","description":"未实装：突袭后下一技能抗打断 +25%。本节点需要敌人打断压力、抗打断阈值和突袭后一次性触发窗口；当前战斗还没有这些规则，因此暂不可加点。"},
+        {"id":"ranger_lineage_sense","name":"谱系辨识","layer":2,"is_key":false,"description":"展开战报时显示每代耗时，以及完成整代后剩余的共享寿命，便于比较箭谱系的时间利用。只增加读数，不改变数值。需要本树第1层已投3点。","effect":{"type":"capability","id":"growth_snapshot_details","value":true}},
+        {"id":"ranger_last_generation_loading","name":"末代装填","layer":3,"is_key":false,"description":"到期未落地载荷保留15%。穿刺箭飞完冻结弹道仍未命中时，保留15%已结算箭事件，加入下一支命中箭的载荷；不直接伤害无敌目标，也不无限叠加上一场保留。需要本树第1+2层合计已投8点。","effect":{"type":"capability","id":"expiry_payload_retention","value":0.15}},
+        {"id":"ranger_three_skill_rhythm","name":"三式节拍","layer":3,"is_key":false,"effect":{"type":"capability","id":"three_skill_rhythm_windup_ticks","value":4},"description":"三槽依次成功后，下一支穿刺箭前摇从5 tick降为4 tick（-20%）。顺序为穿刺箭实际命中→猎人印记成功→突袭成功；下一支箭被接受时消费一次加速。落空、被屏障阻断、动作被打断或重新进入遭遇都会清空序列。需要本树第1+2层合计已投8点。"},
+        {"id":"ranger_wind_walker","name":"风行者","layer":3,"is_key":true,"description":"闪避与突袭不清除印记、箭谱系或三槽计时。闪避/突袭不打断已拉弓或已缓冲的穿刺箭；印记仍按原定时间到期，位移不会延长它。关键天赋，全构筑最多2个。","effect":{"type":"capability","id":"mobility_preserves_mark_and_lineage","value":true}},
+        {"id":"ranger_critical_hunter","name":"临界猎手","layer":3,"is_key":true,"description":"每场首支离弦的临界箭额外获得2代。仅当锁定构筑的有效繁殖数 R=1 时生效，增加真实箭事件与载荷；不改变续行概率，不在指数构筑生效。关键天赋，全构筑最多2个。","effect":{"type":"capability","id":"first_critical_bonus_generations","value":2}},
+        {"id":"ranger_near_far_hunting","name":"远近同猎","layer":3,"is_key":true,"effect":{"type":"stance_parameters","near":{"parameter":"turn","operation":"reduce_percent","value":0.10},"mid":{"parameter":"d","operation":"multiply_bonus","value":0.10},"far":{"parameter":"T","operation":"multiply_bonus","value":0.10}},"description":"契约前选择近/中/远姿态：近距最短转向时间-10%，中距寻敌距离+10%，远距投射物共同寿命+10%。同一契约内姿态锁定；三档均只改变对应参数，不叠加。关键天赋，全构筑最多2个。"}
+      ]
+    },
+    {
+      "id": "alchemist_inheritance",
+      "name": "传代学",
+      "class_id": "alchemist",
+      "layer_requirements": [0, 3, 8],
+      "implemented": false,
+      "pending_reason": "炼金职业战斗技能未实装",
+      "nodes": [
+        {"id":"alchemist_precise_inoculation","name":"精准接种","layer":1,"is_key":false,"description":"职业未实装。设计效果：毒针投射物速度 +10%。"},
+        {"id":"alchemist_long_strain","name":"长效菌株","layer":1,"is_key":false,"description":"职业未实装。设计效果：基础毒持续 +8%。"},
+        {"id":"alchemist_stable_dish","name":"稳定皿壁","layer":1,"is_key":false,"description":"职业未实装。设计效果：培养皿持续 +10%。"},
+        {"id":"alchemist_dense_pulse","name":"细密跳动","layer":1,"is_key":false,"description":"职业未实装。设计效果：毒跳频率 +8%。"},
+        {"id":"alchemist_thick_bottle","name":"厚底瓶","layer":1,"is_key":false,"description":"职业未实装。设计效果：爆瓶兑现时长 +0.5 秒。"},
+        {"id":"alchemist_break_warning","name":"断链预兆","layer":2,"is_key":false,"description":"职业未实装。设计效果：毒链结束前 0.8 秒独立预警。需要本树第1层已投3点。"},
+        {"id":"alchemist_single_strain_tracking","name":"单株追踪","layer":2,"is_key":false,"description":"职业未实装。设计效果：培养皿目标离场后保留 0.5 秒。需要本树第1层已投3点。"},
+        {"id":"alchemist_layer_record","name":"分层记录","layer":2,"is_key":false,"description":"职业未实装。设计效果：战报显示每层 x 快照与来源。需要本树第1层已投3点。"},
+        {"id":"alchemist_steady_bottle","name":"稳手投瓶","layer":2,"is_key":false,"description":"职业未实装。设计效果：爆瓶前摇抗打断 +25%。需要后续打断机制。需要本树第1层已投3点。"},
+        {"id":"alchemist_last_hop_protection","name":"末跳保护","layer":2,"is_key":false,"description":"职业未实装。设计效果：到期前已提交的最后毒跳保证结算。需要本树第1层已投3点。"},
+        {"id":"alchemist_preheat_culture","name":"预热培养","layer":3,"is_key":false,"description":"职业未实装。设计效果：每场首次培养皿获得 +1 个有限起始层序。需要本树第1+2层合计已投8点。"},
+        {"id":"alchemist_three_skill_fermentation","name":"三式发酵","layer":3,"is_key":false,"description":"职业未实装。设计效果：三槽依次成功后，下一毒层获一次等值固定注入。需要本树第1+2层合计已投8点。"},
+        {"id":"alchemist_living_bed","name":"活体温床","layer":3,"is_key":true,"description":"职业未实装。设计效果：培养皿目标死亡时皿转移到最近合法目标；原毒链不转移。关键天赋，全构筑最多2个。需要本树第1+2层合计已投8点。"},
+        {"id":"alchemist_gauge_blast","name":"刻度爆破","layer":3,"is_key":true,"description":"职业未实装。设计效果：契约前选短/中/长兑现窗；总伤严格来自被消费毒链。关键天赋，全构筑最多2个。需要本树第1+2层合计已投8点。"},
+        {"id":"alchemist_pure_ancestor_solution","name":"纯株祖液","layer":3,"is_key":true,"description":"职业未实装。设计效果：每场第一层毒获固定初始毒性；不继承上场结果、不重复。关键天赋，全构筑最多2个。需要本树第1+2层合计已投8点。"}
+      ]
+    },
+    {
+      "id": "mage_star_furnace",
+      "name": "星炉学",
+      "class_id": "mage",
+      "layer_requirements": [0, 3, 8],
+      "implemented": false,
+      "pending_reason": "法师职业战斗技能未实装",
+      "nodes": [
+        {"id":"mage_burning_flow","name":"焚流","layer":1,"is_key":false,"description":"职业未实装。设计效果：焚脉施法速度 +8%。"},
+        {"id":"mage_returning_light","name":"回光","layer":1,"is_key":false,"description":"职业未实装。设计效果：回辉施法速度 +8%。"},
+        {"id":"mage_furnace_capacity","name":"炉容","layer":1,"is_key":false,"description":"职业未实装。设计效果：热容量 +10%。"},
+        {"id":"mage_cold_wall","name":"冷壁","layer":1,"is_key":false,"description":"职业未实装。设计效果：每次施法热量 -5%。"},
+        {"id":"mage_star_aim","name":"星准","layer":1,"is_key":false,"description":"职业未实装。设计效果：终仪兑现率 +10 个百分点，不越既定上限。"},
+        {"id":"mage_phase_reading","name":"相位读数","layer":2,"is_key":false,"description":"职业未实装。设计效果：HUD 显示最后有效转化与下一合法相位。需要本树第1层已投3点。"},
+        {"id":"mage_break_memory","name":"断序记忆","layer":2,"is_key":false,"description":"职业未实装。设计效果：打断后保留最后成功相位 0.6 秒。需要本树第1层已投3点。"},
+        {"id":"mage_idle_warning","name":"空转警示","layer":2,"is_key":false,"description":"职业未实装。设计效果：无效施法前以图形与音效提示资源不匹配。需要本树第1层已投3点。"},
+        {"id":"mage_injection_calibration","name":"注入校准","layer":2,"is_key":false,"description":"职业未实装。设计效果：固定注入 c +15%。需要本树第1层已投3点。"},
+        {"id":"mage_anchor_chant","name":"定锚咏唱","layer":2,"is_key":false,"description":"职业未实装。设计效果：终仪可承受击退距离 +2 米。需要本树第1层已投3点。"},
+        {"id":"mage_first_ignite","name":"初燃","layer":3,"is_key":false,"description":"职业未实装。设计效果：每场第一次焚脉获得 +1c 固定注入。需要本树第1+2层合计已投8点。"},
+        {"id":"mage_three_skill_star","name":"三式点星","layer":3,"is_key":false,"description":"职业未实装。设计效果：三槽依次成功后，下一终仪获一颗固定星；每序列一次。需要本树第1+2层合计已投8点。"},
+        {"id":"mage_duality_focus","name":"双相专注","layer":3,"is_key":true,"description":"职业未实装。设计效果：一次普通控制不清已确认 A→B 或 B→A 相位；资源仍按实际动作算。关键天赋，全构筑最多2个。需要本树第1+2层合计已投8点。"},
+        {"id":"mage_furnace_master","name":"星炉司仪","layer":3,"is_key":true,"description":"职业未实装。设计效果：契约前指定自动终仪热阈；低阈减少递推轮数，不增兑现率。关键天赋，全构筑最多2个。需要本树第1+2层合计已投8点。"},
+        {"id":"mage_ordered_afterglow","name":"有序余辉","layer":3,"is_key":true,"description":"职业未实装。设计效果：提前终仪后保留最近成功回执，便于正确重启；不保留能量或热量。关键天赋，全构筑最多2个。需要本树第1+2层合计已投8点。"}
+      ]
+    }
+  ],
+  "global_limits": {
+    "points_per_node": 1,
+    "key_talents": 2,
+    "stances": ["near", "mid", "far"]
+  }
+}

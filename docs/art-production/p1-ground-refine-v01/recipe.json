@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "resource_prefix": "res://art/production/p1/ground_refine_v01",
+  "native_view": [
+    640,
+    360
+  ],
+  "palette": [
+    "#24303B",
+    "#2A3643",
+    "#303D48",
+    "#36414C",
+    "#3C4650",
+    "#424B55",
+    "#50565C",
+    "#444447"
+  ],
+  "sources": {
+    "ground": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-ground-refine-v01/sources/ground_source.png",
+      "grid": [
+        1,
+        1
+      ],
+      "background": {
+        "mode": "opaque"
+      }
+    }
+  },
+  "atlases": {
+    "ground": {
+      "cell_size": [
+        1024,
+        640
+      ],
+      "columns": 1,
+      "padding": 0
+    }
+  },
+  "sprites": [
+    {
+      "id": "scene.ground",
+      "source": "ground",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        1584,
+        990
+      ],
+      "atlas": "ground",
+      "anchor": [
+        512,
+        640
+      ],
+      "fit": [
+        1024,
+        640
+      ],
+      "palette": [
+        "#24303B",
+        "#2A3643",
+        "#303D48",
+        "#36414C",
+        "#3C4650",
+        "#424B55",
+        "#50565C",
+        "#444447"
+      ]
+    }
+  ],
+  "animations": {}
+}

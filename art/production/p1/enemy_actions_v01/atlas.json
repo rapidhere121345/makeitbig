@@ -1,0 +1,1032 @@
+{
+  "action_semantics": {
+    "charger.east.active": {
+      "action": "active",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "charger.east.death": {
+      "action": "death",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 3,
+      "facing": "east",
+      "fps": 6,
+      "frame_count": 3,
+      "loop": false
+    },
+    "charger.east.hit": {
+      "action": "hit",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "charger.east.idle": {
+      "action": "idle",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": true
+    },
+    "charger.east.recover": {
+      "action": "recover",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "charger.east.walk": {
+      "action": "walk",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 4,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 4,
+      "loop": true
+    },
+    "charger.east.windup": {
+      "action": "windup",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 2,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 2,
+      "loop": false
+    },
+    "melee.east.active": {
+      "action": "active",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "melee.east.death": {
+      "action": "death",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 3,
+      "facing": "east",
+      "fps": 6,
+      "frame_count": 3,
+      "loop": false
+    },
+    "melee.east.hit": {
+      "action": "hit",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "melee.east.idle": {
+      "action": "idle",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": true
+    },
+    "melee.east.recover": {
+      "action": "recover",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "melee.east.walk": {
+      "action": "walk",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 4,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 4,
+      "loop": true
+    },
+    "melee.east.windup": {
+      "action": "windup",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 2,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 2,
+      "loop": false
+    },
+    "ranged.east.active": {
+      "action": "active",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "ranged.east.death": {
+      "action": "death",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 3,
+      "facing": "east",
+      "fps": 6,
+      "frame_count": 3,
+      "loop": false
+    },
+    "ranged.east.hit": {
+      "action": "hit",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "ranged.east.idle": {
+      "action": "idle",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": true
+    },
+    "ranged.east.recover": {
+      "action": "recover",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 1,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "loop": false
+    },
+    "ranged.east.walk": {
+      "action": "walk",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 4,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 4,
+      "loop": true
+    },
+    "ranged.east.windup": {
+      "action": "windup",
+      "anchor": [
+        24,
+        44
+      ],
+      "cell_size": [
+        48,
+        48
+      ],
+      "distinct_pixel_frames": 2,
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 2,
+      "loop": false
+    }
+  },
+  "animations": {
+    "charger.east.active": {
+      "fps": 8,
+      "frames": [
+        "charger.east.active.0"
+      ],
+      "loop": false
+    },
+    "charger.east.death": {
+      "fps": 6,
+      "frames": [
+        "charger.east.death.0",
+        "charger.east.death.1",
+        "charger.east.death.2"
+      ],
+      "loop": false
+    },
+    "charger.east.hit": {
+      "fps": 8,
+      "frames": [
+        "charger.east.hit.0"
+      ],
+      "loop": false
+    },
+    "charger.east.idle": {
+      "fps": 8,
+      "frames": [
+        "charger.east.idle.0"
+      ],
+      "loop": true
+    },
+    "charger.east.recover": {
+      "fps": 8,
+      "frames": [
+        "charger.east.recover.0"
+      ],
+      "loop": false
+    },
+    "charger.east.walk": {
+      "fps": 8,
+      "frames": [
+        "charger.east.walk.0",
+        "charger.east.walk.1",
+        "charger.east.walk.2",
+        "charger.east.walk.3"
+      ],
+      "loop": true
+    },
+    "charger.east.windup": {
+      "fps": 8,
+      "frames": [
+        "charger.east.windup.0",
+        "charger.east.windup.1"
+      ],
+      "loop": false
+    },
+    "melee.east.active": {
+      "fps": 8,
+      "frames": [
+        "melee.east.active.0"
+      ],
+      "loop": false
+    },
+    "melee.east.death": {
+      "fps": 6,
+      "frames": [
+        "melee.east.death.0",
+        "melee.east.death.1",
+        "melee.east.death.2"
+      ],
+      "loop": false
+    },
+    "melee.east.hit": {
+      "fps": 8,
+      "frames": [
+        "melee.east.hit.0"
+      ],
+      "loop": false
+    },
+    "melee.east.idle": {
+      "fps": 8,
+      "frames": [
+        "melee.east.idle.0"
+      ],
+      "loop": true
+    },
+    "melee.east.recover": {
+      "fps": 8,
+      "frames": [
+        "melee.east.recover.0"
+      ],
+      "loop": false
+    },
+    "melee.east.walk": {
+      "fps": 8,
+      "frames": [
+        "melee.east.walk.0",
+        "melee.east.walk.1",
+        "melee.east.walk.2",
+        "melee.east.walk.3"
+      ],
+      "loop": true
+    },
+    "melee.east.windup": {
+      "fps": 8,
+      "frames": [
+        "melee.east.windup.0",
+        "melee.east.windup.1"
+      ],
+      "loop": false
+    },
+    "ranged.east.active": {
+      "fps": 8,
+      "frames": [
+        "ranged.east.active.0"
+      ],
+      "loop": false
+    },
+    "ranged.east.death": {
+      "fps": 6,
+      "frames": [
+        "ranged.east.death.0",
+        "ranged.east.death.1",
+        "ranged.east.death.2"
+      ],
+      "loop": false
+    },
+    "ranged.east.hit": {
+      "fps": 8,
+      "frames": [
+        "ranged.east.hit.0"
+      ],
+      "loop": false
+    },
+    "ranged.east.idle": {
+      "fps": 8,
+      "frames": [
+        "ranged.east.idle.0"
+      ],
+      "loop": true
+    },
+    "ranged.east.recover": {
+      "fps": 8,
+      "frames": [
+        "ranged.east.recover.0"
+      ],
+      "loop": false
+    },
+    "ranged.east.walk": {
+      "fps": 8,
+      "frames": [
+        "ranged.east.walk.0",
+        "ranged.east.walk.1",
+        "ranged.east.walk.2",
+        "ranged.east.walk.3"
+      ],
+      "loop": true
+    },
+    "ranged.east.windup": {
+      "fps": 8,
+      "frames": [
+        "ranged.east.windup.0",
+        "ranged.east.windup.1"
+      ],
+      "loop": false
+    }
+  },
+  "cell_size": [
+    48,
+    48
+  ],
+  "native_view": [
+    640,
+    360
+  ],
+  "schema_version": 1,
+  "sprites": {
+    "charger.east.active.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        336,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.death.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        480,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.death.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        528,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.death.2": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        576,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.hit.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        432,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.idle.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        0,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.recover.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        384,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.walk.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        48,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.walk.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        96,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.walk.2": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        144,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.walk.3": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        192,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.windup.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        240,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "charger.east.windup.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        288,
+        48,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.active.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        336,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.death.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        480,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.death.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        528,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.death.2": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        576,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.hit.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        432,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.idle.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        0,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.recover.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        384,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.walk.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        48,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.walk.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        96,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.walk.2": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        144,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.walk.3": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        192,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.windup.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        240,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "melee.east.windup.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        288,
+        0,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.active.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        336,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.death.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        480,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.death.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        528,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.death.2": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        576,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.hit.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        432,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.idle.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        0,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.recover.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        384,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.walk.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        48,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.walk.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        96,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.walk.2": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        144,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.walk.3": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        192,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.windup.0": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        240,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    },
+    "ranged.east.windup.1": {
+      "anchor": [
+        24,
+        44
+      ],
+      "rect": [
+        288,
+        96,
+        48,
+        48
+      ],
+      "texture": "enemies"
+    }
+  },
+  "textures": {
+    "enemies": {
+      "height": 144,
+      "path": "res://art/production/p1/enemy_actions_v01/enemies.png",
+      "width": 624
+    }
+  }
+}

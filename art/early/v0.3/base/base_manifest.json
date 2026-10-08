@@ -1,0 +1,336 @@
+{
+  "schema_version": 2,
+  "package": "base_v03_candidate",
+  "runtime_switched": false,
+  "palette": {
+    "colors": [
+      "#07080B",
+      "#12151B",
+      "#252A31",
+      "#59606B",
+      "#E6E0D2",
+      "#E3A447",
+      "#9E3036",
+      "#D95149",
+      "#41B7AE",
+      "#7450A6"
+    ],
+    "alpha": "production stations use 0/255 only",
+    "base_hub_forbidden_colors": [
+      "#7450A6"
+    ]
+  },
+  "production": {
+    "base_hub": {
+      "path": "art/early/v0.3/base/base_hub.png",
+      "kind": "base_hub",
+      "size": [
+        1280,
+        720
+      ],
+      "mode": "RGB",
+      "alpha": "opaque",
+      "sha256": "6dace5333710fd6fa1a238c056bc828d5050c9b76a6edb11eecdc08bdb4e17e8"
+    },
+    "stations": {
+      "contract_desk.png": {
+        "path": "art/early/v0.3/base/contract_desk.png",
+        "kind": "station",
+        "size": [
+          128,
+          128
+        ],
+        "mode": "RGBA",
+        "alpha": "binary_true_transparency",
+        "sha256": "3b08edb3389bac57b9187a1602108cf0f7f64dfea1c7a243caee1fc4c4ed8fbb"
+      },
+      "equipment_rune_desk.png": {
+        "path": "art/early/v0.3/base/equipment_rune_desk.png",
+        "kind": "station",
+        "size": [
+          128,
+          128
+        ],
+        "mode": "RGBA",
+        "alpha": "binary_true_transparency",
+        "sha256": "6194294756237b8c7c2ab2ec4a93380762006252d0ab3e967198267239c38cca"
+      },
+      "destiny_forge.png": {
+        "path": "art/early/v0.3/base/destiny_forge.png",
+        "kind": "station",
+        "size": [
+          128,
+          128
+        ],
+        "mode": "RGBA",
+        "alpha": "binary_true_transparency",
+        "sha256": "9f94a57694a9c376f7943c717ea6f2db9ffb2a15a4446c00e0f558952ca19387"
+      },
+      "training_report.png": {
+        "path": "art/early/v0.3/base/training_report.png",
+        "kind": "station",
+        "size": [
+          128,
+          128
+        ],
+        "mode": "RGBA",
+        "alpha": "binary_true_transparency",
+        "sha256": "5f263d21cfebf97011f2fd23dce4120f1b202ccbf57ed18fdde7f336a5bb4781"
+      }
+    }
+  },
+  "review_images": {
+    "base_hub_100.png": {
+      "path": "docs/art-concepts/v0.3/review/base_hub_100.png",
+      "kind": "review",
+      "size": [
+        1280,
+        720
+      ],
+      "mode": "RGB",
+      "alpha": "opaque",
+      "sha256": "6dace5333710fd6fa1a238c056bc828d5050c9b76a6edb11eecdc08bdb4e17e8"
+    },
+    "base_hub_25.png": {
+      "path": "docs/art-concepts/v0.3/review/base_hub_25.png",
+      "kind": "review",
+      "size": [
+        320,
+        180
+      ],
+      "mode": "RGB",
+      "alpha": "opaque",
+      "sha256": "7d082379c85462fdb19f63ee131eba3b3e2f396f2c03790910c9fc21e55cb73c"
+    },
+    "base_hub_25_gray.png": {
+      "path": "docs/art-concepts/v0.3/review/base_hub_25_gray.png",
+      "kind": "review",
+      "size": [
+        320,
+        180
+      ],
+      "mode": "L",
+      "alpha": "grayscale",
+      "sha256": "99d9adcfde5af21db876c269e4c8afa8bb90f64ef5d6aee5f9e8791718cd15f1"
+    },
+    "base_stations_100.png": {
+      "path": "docs/art-concepts/v0.3/review/base_stations_100.png",
+      "kind": "review",
+      "size": [
+        1280,
+        720
+      ],
+      "mode": "RGB",
+      "alpha": "opaque",
+      "sha256": "37ffabb614e98aa9b667b7d3cff2c61e6fb357e2dbcc177daf1b155b4051d921"
+    },
+    "base_stations_25.png": {
+      "path": "docs/art-concepts/v0.3/review/base_stations_25.png",
+      "kind": "review",
+      "size": [
+        320,
+        180
+      ],
+      "mode": "RGB",
+      "alpha": "opaque",
+      "sha256": "7df0e4ea0bd44d26b6d46add0c0502b709c6a1a9bfb4a4d9f451b6be584995d2"
+    },
+    "base_stations_25_gray.png": {
+      "path": "docs/art-concepts/v0.3/review/base_stations_25_gray.png",
+      "kind": "review",
+      "size": [
+        320,
+        180
+      ],
+      "mode": "L",
+      "alpha": "grayscale",
+      "sha256": "f485f44279016198d56981c3034494dab54195045ea50960d20b3d3823f9ae86"
+    },
+    "base_hotspots_100.png": {
+      "path": "docs/art-concepts/v0.3/review/base_hotspots_100.png",
+      "kind": "review",
+      "size": [
+        1280,
+        720
+      ],
+      "mode": "RGB",
+      "alpha": "opaque",
+      "sha256": "7a53a43e8bbfc8f5ab1010f0fc6f5cce4612f578325b5db042e86971417302d1"
+    }
+  },
+  "hotspots": {
+    "contract": {
+      "rect": [
+        520,
+        116,
+        240,
+        128
+      ],
+      "anchor": [
+        640,
+        205
+      ],
+      "radius": 72,
+      "marker_strip": [
+        520,
+        216,
+        240,
+        28
+      ],
+      "station_asset": "contract_desk.png"
+    },
+    "loadout": {
+      "rect": [
+        250,
+        174,
+        224,
+        136
+      ],
+      "anchor": [
+        392,
+        274
+      ],
+      "radius": 72,
+      "marker_strip": [
+        250,
+        282,
+        224,
+        28
+      ],
+      "station_asset": "equipment_rune_desk.png"
+    },
+    "forge": {
+      "rect": [
+        806,
+        174,
+        224,
+        136
+      ],
+      "anchor": [
+        888,
+        274
+      ],
+      "radius": 72,
+      "marker_strip": [
+        806,
+        282,
+        224,
+        28
+      ],
+      "station_asset": "destiny_forge.png"
+    },
+    "proxy": {
+      "rect": [
+        238,
+        378,
+        220,
+        150
+      ],
+      "anchor": [
+        405,
+        483
+      ],
+      "radius": 68,
+      "marker_strip": [
+        238,
+        500,
+        220,
+        28
+      ],
+      "station_asset": null
+    },
+    "immortality": {
+      "rect": [
+        520,
+        504,
+        240,
+        142
+      ],
+      "anchor": [
+        640,
+        566
+      ],
+      "radius": 72,
+      "marker_strip": [
+        520,
+        618,
+        240,
+        28
+      ],
+      "station_asset": null
+    },
+    "training": {
+      "rect": [
+        822,
+        386,
+        224,
+        150
+      ],
+      "anchor": [
+        875,
+        491
+      ],
+      "radius": 72,
+      "marker_strip": [
+        822,
+        508,
+        224,
+        28
+      ],
+      "station_asset": "training_report.png"
+    }
+  },
+  "ui_safe_zones": {
+    "top": [
+      0,
+      0,
+      1280,
+      110
+    ],
+    "bottom": [
+      0,
+      650,
+      1280,
+      70
+    ]
+  },
+  "central_open_area": [
+    416,
+    234,
+    449,
+    253
+  ],
+  "hero_start_safe_area": [
+    592,
+    362,
+    96,
+    96
+  ],
+  "generation": {
+    "script": "art/early/tools/generate_base_v03_assets.py",
+    "deterministic": true,
+    "logical_canvas": [
+      320,
+      180
+    ],
+    "upscale": "4x NEAREST",
+    "station_logical_canvas": [
+      32,
+      32
+    ]
+  },
+  "visual_statistics": {
+    "edge_density": 0.061883680556,
+    "minimum_edge_density": 0.05,
+    "bright_accent_ratio": 0.009079861111,
+    "source_old_edge_density": 0.122814670139,
+    "source_old_bright_accent_ratio": 0.016349826389
+  },
+  "source_sha256": {
+    "base_hub": "db6bb06c38ff81b60004273bd51bcfb8c06aa7cded0d1bf42f449f16fb84b0cc",
+    "contract_desk": "cf4a667ca32003bd7e4baff72d047580c1ccd0d0b8e7ec8d2d1dc3731cabedcf",
+    "destiny_forge": "38421b3740b3483fcd2799c03a19533e07618ca90566ed049d6224e4284b8470",
+    "equipment_rune_desk": "4ccf2d6272071679e070c85761d4950941df1030dc8d9584fc45ab8d90242525",
+    "training_report": "ef67f722240b495ba37186b607187d381af26422774878e596e60298f4d1d8b1"
+  }
+}

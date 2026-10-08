@@ -1,0 +1,1552 @@
+{
+  "anchor": [
+    24,
+    44
+  ],
+  "animations": {
+    "iven.south.work": {
+      "action": "work",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 2,
+      "frame_count": 4,
+      "frames": [
+        "iven.south.work.0",
+        "iven.south.work.1",
+        "iven.south.work.2",
+        "iven.south.work.3"
+      ],
+      "loop": true
+    },
+    "leia.south.work": {
+      "action": "work",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 2,
+      "frame_count": 4,
+      "frames": [
+        "leia.south.work.0",
+        "leia.south.work.1",
+        "leia.south.work.2",
+        "leia.south.work.3"
+      ],
+      "loop": true
+    },
+    "mira.south.work": {
+      "action": "work",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 3,
+      "frame_count": 4,
+      "frames": [
+        "mira.south.work.0",
+        "mira.south.work.1",
+        "mira.south.work.2",
+        "mira.south.work.3"
+      ],
+      "loop": true
+    },
+    "oren.south.work": {
+      "action": "work",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 4,
+      "frame_count": 4,
+      "frames": [
+        "oren.south.work.0",
+        "oren.south.work.1",
+        "oren.south.work.2",
+        "oren.south.work.3"
+      ],
+      "loop": true
+    },
+    "taren.south.work": {
+      "action": "work",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 2,
+      "frame_count": 4,
+      "frames": [
+        "taren.south.work.0",
+        "taren.south.work.1",
+        "taren.south.work.2",
+        "taren.south.work.3"
+      ],
+      "loop": true
+    }
+  },
+  "artifacts": [
+    {
+      "bytes": 16961,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/hamlet_life_v01/residents.png",
+      "sha256": "902af6ede321978d64fe953e4d39009dc3122a1ab8fa3cbdd1d55785d9bb5cb6",
+      "texture": "residents"
+    },
+    {
+      "bytes": 6836,
+      "kind": "atlas_contract",
+      "path": "/data/repo/makeitbig/art/production/p1/hamlet_life_v01/atlas.json",
+      "sha256": "9a5ede007ac1ff0bfd23be12074f7ee5908706226a303f9c4568da3393c2e363"
+    }
+  ],
+  "cell_size": [
+    48,
+    48
+  ],
+  "columns": 4,
+  "config_path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-life-v01/recipe.json",
+  "config_sha256": "7054f40bd7c7b6fff5469d3a5afe3dfef80f756eea72c6dc489dc61454b943e4",
+  "disclosure": {
+    "residents": "New built-in imagegen 20-pose sheet references approved v0.9 sheet03 and current residents.png. Uniform 0.14 nearest scale across all characters/frames; key green100 removes declared source backdrop only. No script painted art. Mira/Oren carried brazier/anvil are part of resident frame, not duplicate buildings."
+  },
+  "duplicate_pixel_frames": [],
+  "external_sources": [],
+  "frames": [
+    {
+      "action": "work",
+      "animations": [
+        "mira.south.work"
+      ],
+      "background_removed_enclosed_pixels": 673,
+      "background_removed_pixels": 13049,
+      "bbox": [
+        17,
+        13,
+        24,
+        31
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        53,
+        51,
+        171,
+        223
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        31
+      ],
+      "facing": "south",
+      "foreground_pixels": 489,
+      "id": "mira.south.work.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 489,
+      "paste": [
+        17,
+        13
+      ],
+      "placed_source_anchor": [
+        7,
+        31
+      ],
+      "rect": [
+        0,
+        0,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        24,
+        31
+      ],
+      "source": "residents",
+      "source_anchor": [
+        52,
+        222
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "mira.south.work"
+      ],
+      "background_removed_enclosed_pixels": 1282,
+      "background_removed_pixels": 13165,
+      "bbox": [
+        16,
+        13,
+        24,
+        31
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        327,
+        51,
+        172,
+        223
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        31
+      ],
+      "facing": "south",
+      "foreground_pixels": 486,
+      "id": "mira.south.work.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 486,
+      "paste": [
+        16,
+        13
+      ],
+      "placed_source_anchor": [
+        8,
+        31
+      ],
+      "rect": [
+        48,
+        0,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        24,
+        31
+      ],
+      "source": "residents",
+      "source_anchor": [
+        58,
+        222
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "mira.south.work"
+      ],
+      "background_removed_enclosed_pixels": 485,
+      "background_removed_pixels": 12701,
+      "bbox": [
+        16,
+        15,
+        25,
+        29
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        0
+      ],
+      "crop": [
+        607,
+        64,
+        177,
+        210
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        25,
+        29
+      ],
+      "facing": "south",
+      "foreground_pixels": 478,
+      "id": "mira.south.work.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 478,
+      "paste": [
+        16,
+        15
+      ],
+      "placed_source_anchor": [
+        8,
+        29
+      ],
+      "rect": [
+        96,
+        0,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        25,
+        29
+      ],
+      "source": "residents",
+      "source_anchor": [
+        60,
+        209
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "mira.south.work"
+      ],
+      "background_removed_enclosed_pixels": 696,
+      "background_removed_pixels": 13213,
+      "bbox": [
+        17,
+        13,
+        24,
+        31
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        0
+      ],
+      "crop": [
+        897,
+        51,
+        172,
+        223
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        31
+      ],
+      "facing": "south",
+      "foreground_pixels": 487,
+      "id": "mira.south.work.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 487,
+      "paste": [
+        17,
+        13
+      ],
+      "placed_source_anchor": [
+        7,
+        31
+      ],
+      "rect": [
+        144,
+        0,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        24,
+        31
+      ],
+      "source": "residents",
+      "source_anchor": [
+        52,
+        222
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "iven.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 14906,
+      "bbox": [
+        14,
+        11,
+        22,
+        33
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        58,
+        306,
+        158,
+        239
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        22,
+        33
+      ],
+      "facing": "south",
+      "foreground_pixels": 441,
+      "id": "iven.south.work.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 441,
+      "paste": [
+        14,
+        11
+      ],
+      "placed_source_anchor": [
+        10,
+        33
+      ],
+      "rect": [
+        0,
+        48,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        22,
+        33
+      ],
+      "source": "residents",
+      "source_anchor": [
+        71,
+        238
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "iven.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 14562,
+      "bbox": [
+        14,
+        11,
+        22,
+        33
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        341,
+        308,
+        156,
+        237
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        22,
+        33
+      ],
+      "facing": "south",
+      "foreground_pixels": 440,
+      "id": "iven.south.work.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 440,
+      "paste": [
+        14,
+        11
+      ],
+      "placed_source_anchor": [
+        10,
+        33
+      ],
+      "rect": [
+        48,
+        48,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        22,
+        33
+      ],
+      "source": "residents",
+      "source_anchor": [
+        69,
+        236
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "iven.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 15152,
+      "bbox": [
+        14,
+        11,
+        23,
+        33
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        1
+      ],
+      "crop": [
+        618,
+        310,
+        162,
+        235
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        23,
+        33
+      ],
+      "facing": "south",
+      "foreground_pixels": 455,
+      "id": "iven.south.work.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 455,
+      "paste": [
+        14,
+        11
+      ],
+      "placed_source_anchor": [
+        10,
+        33
+      ],
+      "rect": [
+        96,
+        48,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        23,
+        33
+      ],
+      "source": "residents",
+      "source_anchor": [
+        74,
+        234
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "iven.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 14671,
+      "bbox": [
+        14,
+        11,
+        22,
+        33
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        1
+      ],
+      "crop": [
+        905,
+        308,
+        156,
+        237
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        22,
+        33
+      ],
+      "facing": "south",
+      "foreground_pixels": 435,
+      "id": "iven.south.work.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 435,
+      "paste": [
+        14,
+        11
+      ],
+      "placed_source_anchor": [
+        10,
+        33
+      ],
+      "rect": [
+        144,
+        48,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        22,
+        33
+      ],
+      "source": "residents",
+      "source_anchor": [
+        71,
+        236
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "taren.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 12900,
+      "bbox": [
+        12,
+        9,
+        24,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        2
+      ],
+      "crop": [
+        45,
+        574,
+        170,
+        252
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        35
+      ],
+      "facing": "south",
+      "foreground_pixels": 585,
+      "id": "taren.south.work.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 585,
+      "paste": [
+        12,
+        9
+      ],
+      "placed_source_anchor": [
+        12,
+        35
+      ],
+      "rect": [
+        0,
+        96,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        24,
+        35
+      ],
+      "source": "residents",
+      "source_anchor": [
+        89,
+        251
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "taren.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 13607,
+      "bbox": [
+        11,
+        9,
+        25,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        2
+      ],
+      "crop": [
+        325,
+        573,
+        175,
+        253
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        25,
+        35
+      ],
+      "facing": "south",
+      "foreground_pixels": 601,
+      "id": "taren.south.work.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 601,
+      "paste": [
+        11,
+        9
+      ],
+      "placed_source_anchor": [
+        13,
+        35
+      ],
+      "rect": [
+        48,
+        96,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        25,
+        35
+      ],
+      "source": "residents",
+      "source_anchor": [
+        90,
+        252
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "taren.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 12425,
+      "bbox": [
+        11,
+        9,
+        23,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        2
+      ],
+      "crop": [
+        608,
+        574,
+        165,
+        252
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        23,
+        35
+      ],
+      "facing": "south",
+      "foreground_pixels": 564,
+      "id": "taren.south.work.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 564,
+      "paste": [
+        11,
+        9
+      ],
+      "placed_source_anchor": [
+        13,
+        35
+      ],
+      "rect": [
+        96,
+        96,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        23,
+        35
+      ],
+      "source": "residents",
+      "source_anchor": [
+        90,
+        251
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "taren.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 13423,
+      "bbox": [
+        11,
+        9,
+        24,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        2
+      ],
+      "crop": [
+        889,
+        573,
+        174,
+        253
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        35
+      ],
+      "facing": "south",
+      "foreground_pixels": 575,
+      "id": "taren.south.work.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 575,
+      "paste": [
+        11,
+        9
+      ],
+      "placed_source_anchor": [
+        13,
+        35
+      ],
+      "rect": [
+        144,
+        96,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        24,
+        35
+      ],
+      "source": "residents",
+      "source_anchor": [
+        91,
+        252
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "leia.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 10586,
+      "bbox": [
+        16,
+        9,
+        18,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        3
+      ],
+      "crop": [
+        70,
+        856,
+        132,
+        250
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        18,
+        35
+      ],
+      "facing": "south",
+      "foreground_pixels": 426,
+      "id": "leia.south.work.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 426,
+      "paste": [
+        16,
+        9
+      ],
+      "placed_source_anchor": [
+        8,
+        35
+      ],
+      "rect": [
+        0,
+        144,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        18,
+        35
+      ],
+      "source": "residents",
+      "source_anchor": [
+        60,
+        249
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "leia.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 14685,
+      "bbox": [
+        15,
+        9,
+        21,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        3
+      ],
+      "crop": [
+        351,
+        856,
+        151,
+        250
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        21,
+        35
+      ],
+      "facing": "south",
+      "foreground_pixels": 448,
+      "id": "leia.south.work.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 448,
+      "paste": [
+        15,
+        9
+      ],
+      "placed_source_anchor": [
+        9,
+        35
+      ],
+      "rect": [
+        48,
+        144,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        21,
+        35
+      ],
+      "source": "residents",
+      "source_anchor": [
+        64,
+        249
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "leia.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 9562,
+      "bbox": [
+        15,
+        9,
+        18,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        3
+      ],
+      "crop": [
+        636,
+        856,
+        126,
+        251
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        18,
+        35
+      ],
+      "facing": "south",
+      "foreground_pixels": 436,
+      "id": "leia.south.work.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 436,
+      "paste": [
+        15,
+        9
+      ],
+      "placed_source_anchor": [
+        9,
+        35
+      ],
+      "rect": [
+        96,
+        144,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        18,
+        35
+      ],
+      "source": "residents",
+      "source_anchor": [
+        62,
+        249
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "leia.south.work"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 9091,
+      "bbox": [
+        15,
+        9,
+        17,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        3
+      ],
+      "crop": [
+        916,
+        854,
+        120,
+        253
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        17,
+        35
+      ],
+      "facing": "south",
+      "foreground_pixels": 415,
+      "id": "leia.south.work.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 415,
+      "paste": [
+        15,
+        9
+      ],
+      "placed_source_anchor": [
+        9,
+        35
+      ],
+      "rect": [
+        144,
+        144,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        17,
+        35
+      ],
+      "source": "residents",
+      "source_anchor": [
+        64,
+        251
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "oren.south.work"
+      ],
+      "background_removed_enclosed_pixels": 1,
+      "background_removed_pixels": 14856,
+      "bbox": [
+        11,
+        15,
+        29,
+        30
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        4
+      ],
+      "crop": [
+        32,
+        1153,
+        207,
+        213
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        29,
+        30
+      ],
+      "facing": "south",
+      "foreground_pixels": 579,
+      "id": "oren.south.work.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 579,
+      "paste": [
+        11,
+        15
+      ],
+      "placed_source_anchor": [
+        13,
+        29
+      ],
+      "rect": [
+        0,
+        192,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        29,
+        30
+      ],
+      "source": "residents",
+      "source_anchor": [
+        95,
+        207
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "oren.south.work"
+      ],
+      "background_removed_enclosed_pixels": 62,
+      "background_removed_pixels": 17231,
+      "bbox": [
+        11,
+        13,
+        28,
+        32
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        4
+      ],
+      "crop": [
+        320,
+        1140,
+        200,
+        226
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        28,
+        32
+      ],
+      "facing": "south",
+      "foreground_pixels": 562,
+      "id": "oren.south.work.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 562,
+      "paste": [
+        11,
+        13
+      ],
+      "placed_source_anchor": [
+        13,
+        31
+      ],
+      "rect": [
+        48,
+        192,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        28,
+        32
+      ],
+      "source": "residents",
+      "source_anchor": [
+        90,
+        220
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "oren.south.work"
+      ],
+      "background_removed_enclosed_pixels": 48,
+      "background_removed_pixels": 20407,
+      "bbox": [
+        10,
+        11,
+        28,
+        34
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        4
+      ],
+      "crop": [
+        599,
+        1122,
+        198,
+        244
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        28,
+        34
+      ],
+      "facing": "south",
+      "foreground_pixels": 554,
+      "id": "oren.south.work.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 554,
+      "paste": [
+        10,
+        11
+      ],
+      "placed_source_anchor": [
+        14,
+        33
+      ],
+      "rect": [
+        96,
+        192,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        28,
+        34
+      ],
+      "source": "residents",
+      "source_anchor": [
+        98,
+        238
+      ]
+    },
+    {
+      "action": "work",
+      "animations": [
+        "oren.south.work"
+      ],
+      "background_removed_enclosed_pixels": 36,
+      "background_removed_pixels": 14575,
+      "bbox": [
+        10,
+        16,
+        30,
+        29
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        4
+      ],
+      "crop": [
+        876,
+        1161,
+        213,
+        205
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        30,
+        29
+      ],
+      "facing": "south",
+      "foreground_pixels": 578,
+      "id": "oren.south.work.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 578,
+      "paste": [
+        10,
+        16
+      ],
+      "placed_source_anchor": [
+        14,
+        28
+      ],
+      "rect": [
+        144,
+        192,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.14,
+      "scaled_crop_size": [
+        30,
+        29
+      ],
+      "source": "residents",
+      "source_anchor": [
+        97,
+        199
+      ]
+    }
+  ],
+  "native_view": [
+    640,
+    360
+  ],
+  "orphan_frames": [],
+  "palette": [
+    "#111820ff",
+    "#1d2731ff",
+    "#46515aff",
+    "#5b4036ff",
+    "#896043ff",
+    "#ad7950ff",
+    "#d3bda0ff",
+    "#e9ddc3ff",
+    "#b66b51ff",
+    "#d49776ff",
+    "#71808aff",
+    "#72533eff",
+    "#eead56ff",
+    "#f4ce77ff"
+  ],
+  "pipeline": "p1_ranger_actions_v01",
+  "resource_prefix": "res://art/production/p1/hamlet_life_v01",
+  "scale_by_source": {
+    "residents": 0.14
+  },
+  "schema_version": 1,
+  "sources": {
+    "residents": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "matched_pixels": 1059289,
+        "matched_ratio": 0.6734,
+        "mode": "color_key",
+        "scope": "all",
+        "tolerance": 100.0
+      },
+      "external_to_recipe_dir": false,
+      "height": 1402,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-life-v01/sources/residents_original.png",
+      "sha256": "5a9ffc74fc11394e79cdd7ff371542a6fc1218a3aa54d598b0766ef9b3c4a841",
+      "transparent_pixels": 0,
+      "width": 1122
+    }
+  },
+  "technical_verification": {
+    "checked_with": "tools/art_pipeline/p1_ranger_actions_v01/verify.py",
+    "scope": "mechanical output properties only; not visual approval",
+    "status": "verified_mechanical_only"
+  },
+  "texture": {
+    "columns": 4,
+    "height": 240,
+    "id": "residents",
+    "path": "res://art/production/p1/hamlet_life_v01/residents.png",
+    "rows": 5,
+    "width": 192
+  }
+}

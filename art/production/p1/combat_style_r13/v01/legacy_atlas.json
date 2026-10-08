@@ -1,0 +1,236 @@
+{
+	"native_view": [
+		640,
+		360
+	],
+	"schema_version": 1,
+	"source_atlas": "res://art/production/p1/calibration_v01/atlas.json",
+	"sprites": {
+		"enemy.charger.active": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				96.0,
+				48.0,
+				48.0,
+				48.0
+			],
+			"state": "active",
+			"texture": "enemies"
+		},
+		"enemy.charger.idle": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				0.0,
+				48.0,
+				48.0,
+				48.0
+			],
+			"state": "idle",
+			"texture": "enemies"
+		},
+		"enemy.charger.recover": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				144.0,
+				48.0,
+				48.0,
+				48.0
+			],
+			"state": "recover",
+			"texture": "enemies"
+		},
+		"enemy.charger.windup": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				48.0,
+				48.0,
+				48.0,
+				48.0
+			],
+			"state": "windup",
+			"texture": "enemies"
+		},
+		"enemy.melee.active": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				96.0,
+				0.0,
+				48.0,
+				48.0
+			],
+			"state": "active",
+			"texture": "enemies"
+		},
+		"enemy.melee.idle": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				0.0,
+				0.0,
+				48.0,
+				48.0
+			],
+			"state": "idle",
+			"texture": "enemies"
+		},
+		"enemy.melee.recover": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				144.0,
+				0.0,
+				48.0,
+				48.0
+			],
+			"state": "recover",
+			"texture": "enemies"
+		},
+		"enemy.melee.windup": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				48.0,
+				0.0,
+				48.0,
+				48.0
+			],
+			"state": "windup",
+			"texture": "enemies"
+		},
+		"enemy.ranged.active": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				96.0,
+				96.0,
+				48.0,
+				48.0
+			],
+			"state": "active",
+			"texture": "enemies"
+		},
+		"enemy.ranged.idle": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				0.0,
+				96.0,
+				48.0,
+				48.0
+			],
+			"state": "idle",
+			"texture": "enemies"
+		},
+		"enemy.ranged.recover": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				144.0,
+				96.0,
+				48.0,
+				48.0
+			],
+			"state": "recover",
+			"texture": "enemies"
+		},
+		"enemy.ranged.windup": {
+			"anchor": [
+				24.0,
+				44.0
+			],
+			"facing": "east",
+			"rect": [
+				48.0,
+				96.0,
+				48.0,
+				48.0
+			],
+			"state": "windup",
+			"texture": "enemies"
+		},
+		"tower.base": {
+			"anchor": [
+				64.0,
+				184.0
+			],
+			"keep_rows": [
+				148.0,
+				192.0
+			],
+			"rect": [
+				0.0,
+				0.0,
+				128.0,
+				192.0
+			],
+			"texture": "tower"
+		},
+		"tower.upper": {
+			"anchor": [
+				64.0,
+				184.0
+			],
+			"keep_rows": [
+				0.0,
+				148.0
+			],
+			"rect": [
+				128.0,
+				0.0,
+				128.0,
+				192.0
+			],
+			"texture": "tower"
+		}
+	},
+	"textures": {
+		"enemies": {
+			"height": 144.0,
+			"path": "res://art/production/p1/combat_style_r13/v01/legacy_enemies.png",
+			"width": 192.0
+		},
+		"tower": {
+			"height": 192.0,
+			"path": "res://art/production/p1/combat_style_r13/v01/tower.png",
+			"width": 256.0
+		}
+	}
+}

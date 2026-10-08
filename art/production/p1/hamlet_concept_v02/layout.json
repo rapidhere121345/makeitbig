@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "world": [
+    1024,
+    640
+  ],
+  "hero_start": [
+    548,
+    405
+  ],
+  "ground_sprite": "hamlet.ground",
+  "design_reference": "docs/art-concepts/v0.9-p1-complete/02_hamlet_facilities.png",
+  "placements": [
+    {
+      "id": "hearth",
+      "sprite": "hamlet.hearth",
+      "feet": [
+        584,
+        402
+      ],
+      "layer": "object",
+      "split_row": 176,
+      "label": "守冬塔与共炉棚"
+    },
+    {
+      "id": "contract",
+      "sprite": "facility.contract",
+      "feet": [
+        286,
+        316
+      ],
+      "layer": "object",
+      "split_row": 82,
+      "interaction": "contract",
+      "label": "行路契台"
+    },
+    {
+      "id": "loadout",
+      "sprite": "facility.loadout",
+      "feet": [
+        316,
+        474
+      ],
+      "layer": "object",
+      "split_row": 78,
+      "interaction": "loadout",
+      "label": "备行架"
+    },
+    {
+      "id": "forge",
+      "sprite": "facility.forge",
+      "feet": [
+        756,
+        468
+      ],
+      "layer": "object",
+      "split_row": 102,
+      "interaction": "forge",
+      "label": "回火砧"
+    },
+    {
+      "id": "training",
+      "sprite": "facility.training",
+      "feet": [
+        446,
+        584
+      ],
+      "layer": "object",
+      "split_row": 72,
+      "interaction": "training",
+      "label": "验律场"
+    },
+    {
+      "id": "proxy",
+      "sprite": "facility.proxy",
+      "feet": [
+        665,
+        576
+      ],
+      "layer": "object",
+      "split_row": 80,
+      "interaction": "proxy",
+      "label": "代行舱"
+    },
+    {
+      "id": "mira",
+      "sprite": "resident.mira",
+      "feet": [
+        655,
+        426
+      ],
+      "layer": "npc"
+    },
+    {
+      "id": "iven",
+      "sprite": "resident.iven",
+      "feet": [
+        322,
+        333
+      ],
+      "layer": "npc"
+    },
+    {
+      "id": "taren",
+      "sprite": "resident.taren",
+      "feet": [
+        330,
+        494
+      ],
+      "layer": "npc"
+    },
+    {
+      "id": "leia",
+      "sprite": "resident.leia",
+      "feet": [
+        459,
+        406
+      ],
+      "layer": "npc"
+    },
+    {
+      "id": "oren",
+      "sprite": "resident.oren",
+      "feet": [
+        763,
+        477
+      ],
+      "layer": "npc"
+    },
+    {
+      "id": "north_pier",
+      "sprite": "hamlet.pier",
+      "feet": [
+        348,
+        195
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "north_tree",
+      "sprite": "hamlet.tree",
+      "feet": [
+        431,
+        202
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "north_fence",
+      "sprite": "hamlet.fence",
+      "feet": [
+        570,
+        209
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "northeast_pier",
+      "sprite": "hamlet.pier",
+      "feet": [
+        772,
+        264
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "east_fence",
+      "sprite": "hamlet.fence",
+      "feet": [
+        884,
+        366
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "east_tree",
+      "sprite": "hamlet.tree",
+      "feet": [
+        885,
+        464
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "southeast_pier",
+      "sprite": "hamlet.pier",
+      "feet": [
+        862,
+        590
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "south_tree",
+      "sprite": "hamlet.tree",
+      "feet": [
+        585,
+        630
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "south_pier",
+      "sprite": "hamlet.pier",
+      "feet": [
+        308,
+        615
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "southwest_fence",
+      "sprite": "hamlet.fence",
+      "feet": [
+        183,
+        551
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "west_tree",
+      "sprite": "hamlet.tree",
+      "feet": [
+        182,
+        424
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "west_pier",
+      "sprite": "hamlet.pier",
+      "feet": [
+        122,
+        285
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "far_north_tree",
+      "sprite": "hamlet.tree",
+      "feet": [
+        690,
+        123
+      ],
+      "layer": "object"
+    },
+    {
+      "id": "far_west_fence",
+      "sprite": "hamlet.fence",
+      "feet": [
+        91,
+        169
+      ],
+      "layer": "object"
+    }
+  ]
+}

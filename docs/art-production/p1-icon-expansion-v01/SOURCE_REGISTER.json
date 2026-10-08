@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "mode": "built-in image_gen",
+  "sources": [
+    {
+      "id": "tally_rewrite",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-5f32052c-649d-40f0-ad08-e0117c7c28ff.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/tally_rewrite.png",
+      "sha256": "b759646bc289d3f6e35226e43d2939f6f925123de5a673ad24777c4588a087d7",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "tally_refine",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-6a7618e9-e0e9-45d2-b585-a826bf50f9aa.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/tally_refine.png",
+      "sha256": "15761f80bfd26b2fb18d415a969a9c3e5b2b691468ce8ee6c92775912bcc524d",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_steady_string",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-07d46b09-d6d1-4e40-9cb3-b87e5c2e7c66.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_steady_string.png",
+      "sha256": "bd8d034ab7f2beb7c7d5a448cec9067852466ce631635f21fea74d6989396ff7",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_long_breath",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-30cf9ac6-e661-4cb4-b913-8db565458cba.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_long_breath.png",
+      "sha256": "f05adcee613117a1e8dcf5f2cebeca2fa639c5491a3683442e81a8345f290599",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "tally_inscribe",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-831366bf-0b8c-4c81-8881-77b99a6c9a73.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/tally_inscribe.png",
+      "sha256": "bd670a6d312c3b39d61f01f0a5a3a43f548280c3c1a1929bb0eb0be8c6c5fb7e",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_keen_eye",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-17a274db-ec44-493a-955d-5ecc059d92b0.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_keen_eye.png",
+      "sha256": "270d231dc48dcee206d4e875050043c66f738e504cacc855e9fef3ade35e3c8d",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_light_step",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-92dfa27b-3b20-45b1-bada-ac2af56fa8e6.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_light_step.png",
+      "sha256": "89788fa1e436103a4e60e1fb0f1c839df0e584447fb1e3930ac8913e5da81ae0",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_recovery_pose",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-0f5700b3-b001-467b-80a5-c4a0665a6813.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_recovery_pose.png",
+      "sha256": "76a9ccbf69e4e1d75edb4991bfb3971e6f63210d600ff951d703f878dc2e373f",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_close_turn",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-a485a607-9c96-494d-af7c-920a7dfed69a.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_close_turn.png",
+      "sha256": "9f5d65facc250101564dac5f2a4bab6c9e581bfcaf0d79b9b14b555c0186f413",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_continuation_calibration",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-a63522ca-de00-4d78-995d-95e75166b69e.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_continuation_calibration.png",
+      "sha256": "db8129fa315415295e85c37836691e391dadec4a36c3796fdd7aecc3ff4edc63",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_defocused_tracking",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-d2022275-0e08-481f-b4d5-70e29f075092.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_defocused_tracking.png",
+      "sha256": "3ebd9e0e569c0f4456ed52f067b7d9b675ab3f97cc42239d8761a804ea24128b",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_wind_slice_stance",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-9d731839-3f71-44d9-9cef-81acc6150162.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_wind_slice_stance.png",
+      "sha256": "68b3632e68405a9e1961318764b003b4c7ddd5ee77773cc7672366730a69c61e",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_lineage_sense",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-facb4c86-a96d-4c13-813c-a7d9fed9d0a3.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_lineage_sense.png",
+      "sha256": "dd294ec53bfc6a5ba2ea48072b38c95a544ce47737c202a68286ddf6625378a4",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_last_generation_loading",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-9d701638-1536-480b-9834-8aaf5884acc8.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_last_generation_loading.png",
+      "sha256": "9baf4cce52f154135cf5b18ada0709dd69914abd455a4269a4f2b0ecdb86098a",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_three_skill_rhythm",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-6a4e462f-bc79-41e4-87e3-2e4aeef9e3c6.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_three_skill_rhythm.png",
+      "sha256": "5a9a8bceaf4d480f2eb967b7fe336fd0cfa7c678976da1b50718e9b3e1630ea2",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_wind_walker",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-ae048e44-a30d-4b78-a0a2-ee23a5071ccb.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_wind_walker.png",
+      "sha256": "41af6908a4be2d7e9e8c31ca953b53830fc9d7a0c4fef4accec42f2d73ec471f",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_critical_hunter",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-a3937064-07ec-432a-b392-938c01f3eca1.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_critical_hunter.png",
+      "sha256": "12856db563635d3695deca29c049a50a4a63eb1af6187771cd1f47d4fb003aa5",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "ranger_near_far_hunting",
+      "source": "/home/rapidhere/.codex/generated_images/01a0a0ab-87ce-7f83-b9ed-798dd2db74b0/exec-998fa53e-d853-4e6f-bc9b-9f7ed6301e00.png",
+      "saved": "docs/art-production/p1-icon-expansion-v01/sources/ranger_near_far_hunting.png",
+      "sha256": "57b1c57108bc348e03ba6fabc7a9a155da91999fb2d34cc5f1504c248873c356",
+      "size": [
+        1254,
+        1254
+      ]
+    }
+  ]
+}

@@ -1,0 +1,229 @@
+{
+  "schema_version": 1,
+  "equipment_slots": [
+    "head", "chest", "pants", "leg_armor", "gloves", "bracers",
+    "belt", "main_hand", "off_hand", "ring_1", "ring_2", "necklace"
+  ],
+  "prototype_open_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
+  "fixed_starting_loadout_id": "fixed_start",
+  "calibration_fixture_ids": ["calibration_convergent", "calibration_critical", "calibration_exponential"],
+  "base_items": [
+    {
+      "id": "ashwood_longbow", "name": "白蜡长弓", "slot": "main_hand",
+      "modifiers": [{"parameter": "damage", "operation": "multiply", "value": 1.12}]
+    },
+    {
+      "id": "swift_recurve_bow", "name": "迅弦反曲弓", "slot": "main_hand",
+      "modifiers": [{"parameter": "v", "operation": "multiply", "value": 1.10}]
+    },
+    {
+      "id": "lineage_quiver", "name": "谱系箭袋", "slot": "off_hand",
+      "modifiers": [{"parameter": "T", "operation": "multiply", "value": 1.12}]
+    },
+    {
+      "id": "farwatch_quiver", "name": "远望箭袋", "slot": "off_hand",
+      "modifiers": [{"parameter": "d", "operation": "multiply", "value": 1.10}]
+    },
+    {
+      "id": "turnfeather_gloves", "name": "导羽手套", "slot": "gloves",
+      "modifiers": [{"parameter": "turn", "operation": "multiply", "value": 0.94}]
+    },
+    {
+      "id": "piercer_gloves", "name": "穿弦手套", "slot": "gloves",
+      "modifiers": [{"parameter": "p", "operation": "add", "value": 0.06}]
+    },
+    {
+      "id": "hawk_eye_ring", "name": "鹰眼戒指", "slot": "ring_1",
+      "modifiers": [{"parameter": "critical_chance", "operation": "add", "value": 0.08}]
+    },
+    {
+      "id": "vitality_ring", "name": "生机戒指", "slot": "ring_1",
+      "modifiers": [{"parameter": "max_health", "operation": "multiply", "value": 1.12}]
+    }
+  ],
+  "affix_families": [
+    {
+      "id": "piercing_continuation", "name": "穿刺箭续行概率", "parameter": "p", "operation": "add",
+      "compatible_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
+      "tiers": [{"tier": 1, "value": 0.06}, {"tier": 2, "value": 0.07}, {"tier": 3, "value": 0.09}, {"tier": 4, "value": 0.12}]
+    },
+    {
+      "id": "projectile_lifetime", "name": "投射物持续时间", "parameter": "T", "operation": "multiply_bonus",
+      "compatible_slots": ["off_hand", "gloves", "ring_1"],
+      "tiers": [{"tier": 1, "value": 0.12}, {"tier": 2, "value": 0.18}, {"tier": 3, "value": 0.25}, {"tier": 4, "value": 0.35}]
+    },
+    {
+      "id": "projectile_speed", "name": "投射物速度", "parameter": "v", "operation": "multiply_bonus",
+      "compatible_slots": ["main_hand", "off_hand", "gloves"],
+      "tiers": [{"tier": 1, "value": 0.10}, {"tier": 2, "value": 0.16}, {"tier": 3, "value": 0.24}, {"tier": 4, "value": 0.34}]
+    },
+    {
+      "id": "seeking_distance", "name": "寻敌距离", "parameter": "d", "operation": "multiply_bonus",
+      "compatible_slots": ["main_hand", "off_hand", "ring_1"],
+      "tiers": [{"tier": 1, "value": 0.10}, {"tier": 2, "value": 0.15}, {"tier": 3, "value": 0.22}, {"tier": 4, "value": 0.30}]
+    },
+    {
+      "id": "turn_response", "name": "转向响应", "parameter": "turn", "operation": "reduce_percent",
+      "compatible_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
+      "tiers": [{"tier": 1, "value": 0.06}, {"tier": 2, "value": 0.09}, {"tier": 3, "value": 0.12}, {"tier": 4, "value": 0.16}]
+    },
+    {
+      "id": "carrier_power", "name": "载体基础威力", "parameter": "damage", "operation": "multiply_bonus",
+      "compatible_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
+      "tiers": [{"tier": 1, "value": 0.12}, {"tier": 2, "value": 0.18}, {"tier": 3, "value": 0.26}, {"tier": 4, "value": 0.36}]
+    },
+    {
+      "id": "critical_chance", "name": "暴击率", "parameter": "critical_chance", "operation": "add",
+      "compatible_slots": ["main_hand", "gloves", "ring_1"],
+      "tiers": [{"tier": 1, "value": 0.08}, {"tier": 2, "value": 0.12}, {"tier": 3, "value": 0.18}, {"tier": 4, "value": 0.25}]
+    },
+    {
+      "id": "maximum_health", "name": "最大生命", "parameter": "max_health", "operation": "multiply_bonus",
+      "compatible_slots": ["gloves", "ring_1"],
+      "tiers": [{"tier": 1, "value": 0.12}, {"tier": 2, "value": 0.20}, {"tier": 3, "value": 0.30}, {"tier": 4, "value": 0.45}]
+    }
+  ],
+  "runes": [
+    {
+      "id": "breeding_split", "name": "孳生分裂", "skill_id": "piercing_arrow",
+      "provides_interface": "breedable_event",
+      "semantics": "成功续行后生成一支可继续繁殖的子箭；母箭与子箭共享谱系到期时刻。"
+    },
+    {
+      "id": "branch_scale", "name": "分枝刻度", "skill_id": "hunter_mark",
+      "provides_interface": "branch_hit_counter",
+      "semantics": "按分支统计命中，并将溢出命中转为暴击层。"
+    },
+    {
+      "id": "afterimage_extension", "name": "掠影续时", "skill_id": "dash",
+      "provides_interface": "lineage_lifetime_pause",
+      "semantics": "突袭期间暂停已有箭谱系寿命。"
+    }
+  ],
+  "laws": [
+    {
+      "id": "pack_hunt_mark", "name": "群猎印记",
+      "requires_interfaces": ["breedable_event"],
+      "provides_interface": "branch_target_history",
+      "semantics": "仅对猎人印记目标按箭分支分别记录命中历史；不改变共同到期。"
+    }
+  ],
+  "item_instances": [
+    {
+      "instance_id": "fixed_start_main_hand", "base_item_id": "ashwood_longbow", "slot": "main_hand",
+      "affixes": [], "rune_id": "", "law_id": "",
+      "source": {"type": "fixed_start", "id": "tutorial"}, "law_seed": 1001
+    },
+    {
+      "instance_id": "fixed_start_off_hand", "base_item_id": "lineage_quiver", "slot": "off_hand",
+      "affixes": [], "rune_id": "", "law_id": "",
+      "source": {"type": "fixed_start", "id": "tutorial"}, "law_seed": 1002
+    },
+    {
+      "instance_id": "fixed_start_gloves", "base_item_id": "piercer_gloves", "slot": "gloves",
+      "affixes": [], "rune_id": "", "law_id": "",
+      "source": {"type": "fixed_start", "id": "tutorial"}, "law_seed": 1003
+    },
+    {
+      "instance_id": "fixed_start_ring_1", "base_item_id": "vitality_ring", "slot": "ring_1",
+      "affixes": [], "rune_id": "", "law_id": "",
+      "source": {"type": "fixed_start", "id": "tutorial"}, "law_seed": 1004
+    },
+    {
+      "instance_id": "reward_mainline_03_breeding_split_gloves", "base_item_id": "turnfeather_gloves", "slot": "gloves",
+      "affixes": [], "rune_id": "breeding_split", "law_id": "",
+      "source": {"type": "campaign_first_reward", "id": "mainline_03_first_elite"}, "law_seed": 3003
+    },
+    {
+      "instance_id": "reward_mainline_05_pack_hunt_mark_ring", "base_item_id": "hawk_eye_ring", "slot": "ring_1",
+      "affixes": [], "rune_id": "", "law_id": "pack_hunt_mark",
+      "source": {"type": "campaign_first_reward", "id": "mainline_05_growth_gate"}, "law_seed": 3005
+    },
+    {
+      "instance_id": "calibration_convergent_main_hand", "base_item_id": "ashwood_longbow", "slot": "main_hand",
+      "affixes": [{"family_id": "piercing_continuation", "tier": 1}], "rune_id": "", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_convergent"}, "law_seed": 2101
+    },
+    {
+      "instance_id": "calibration_convergent_off_hand", "base_item_id": "lineage_quiver", "slot": "off_hand",
+      "affixes": [], "rune_id": "", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_convergent"}, "law_seed": 2102
+    },
+    {
+      "instance_id": "calibration_convergent_gloves", "base_item_id": "piercer_gloves", "slot": "gloves",
+      "affixes": [], "rune_id": "breeding_split", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_convergent"}, "law_seed": 2103
+    },
+    {
+      "instance_id": "calibration_convergent_ring_1", "base_item_id": "vitality_ring", "slot": "ring_1",
+      "affixes": [{"family_id": "piercing_continuation", "tier": 4}], "rune_id": "", "law_id": "pack_hunt_mark",
+      "source": {"type": "calibration", "id": "calibration_convergent"}, "law_seed": 2104
+    },
+    {
+      "instance_id": "calibration_critical_main_hand", "base_item_id": "ashwood_longbow", "slot": "main_hand",
+      "affixes": [{"family_id": "piercing_continuation", "tier": 2}], "rune_id": "", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_critical"}, "law_seed": 2201
+    },
+    {
+      "instance_id": "calibration_critical_off_hand", "base_item_id": "lineage_quiver", "slot": "off_hand",
+      "affixes": [], "rune_id": "", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_critical"}, "law_seed": 2202
+    },
+    {
+      "instance_id": "calibration_critical_gloves", "base_item_id": "piercer_gloves", "slot": "gloves",
+      "affixes": [], "rune_id": "breeding_split", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_critical"}, "law_seed": 2203
+    },
+    {
+      "instance_id": "calibration_critical_ring_1", "base_item_id": "vitality_ring", "slot": "ring_1",
+      "affixes": [{"family_id": "piercing_continuation", "tier": 4}], "rune_id": "", "law_id": "pack_hunt_mark",
+      "source": {"type": "calibration", "id": "calibration_critical"}, "law_seed": 2204
+    },
+    {
+      "instance_id": "calibration_exponential_main_hand", "base_item_id": "ashwood_longbow", "slot": "main_hand",
+      "affixes": [{"family_id": "piercing_continuation", "tier": 3}], "rune_id": "", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_exponential"}, "law_seed": 2301
+    },
+    {
+      "instance_id": "calibration_exponential_off_hand", "base_item_id": "lineage_quiver", "slot": "off_hand",
+      "affixes": [{"family_id": "piercing_continuation", "tier": 3}], "rune_id": "", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_exponential"}, "law_seed": 2302
+    },
+    {
+      "instance_id": "calibration_exponential_gloves", "base_item_id": "piercer_gloves", "slot": "gloves",
+      "affixes": [], "rune_id": "breeding_split", "law_id": "",
+      "source": {"type": "calibration", "id": "calibration_exponential"}, "law_seed": 2303
+    },
+    {
+      "instance_id": "calibration_exponential_ring_1", "base_item_id": "vitality_ring", "slot": "ring_1",
+      "affixes": [{"family_id": "piercing_continuation", "tier": 4}], "rune_id": "", "law_id": "pack_hunt_mark",
+      "source": {"type": "calibration", "id": "calibration_exponential"}, "law_seed": 2304
+    }
+  ],
+  "build_fixtures": [
+    {
+      "id": "fixed_start", "skill_id": "piercing_arrow",
+      "base_parameters": {"p": 0.25, "T": 30.357142857142854, "v": 620.0, "d": 150.0, "turn": 0.18, "damage": 142.85714285714286, "critical_chance": 0.0, "max_health": 100.0},
+      "equipment": {"main_hand": "fixed_start_main_hand", "off_hand": "fixed_start_off_hand", "gloves": "fixed_start_gloves", "ring_1": "fixed_start_ring_1"},
+      "expected_growth": "convergent"
+    },
+    {
+      "id": "calibration_convergent", "skill_id": "piercing_arrow",
+      "base_parameters": {"p": 0.25, "T": 30.357142857142854, "v": 620.0, "d": 150.0, "turn": 0.18, "damage": 142.85714285714286, "critical_chance": 0.0, "max_health": 100.0},
+      "equipment": {"main_hand": "calibration_convergent_main_hand", "off_hand": "calibration_convergent_off_hand", "gloves": "calibration_convergent_gloves", "ring_1": "calibration_convergent_ring_1"},
+      "expected_growth": "convergent"
+    },
+    {
+      "id": "calibration_critical", "skill_id": "piercing_arrow",
+      "base_parameters": {"p": 0.25, "T": 30.357142857142854, "v": 620.0, "d": 150.0, "turn": 0.18, "damage": 142.85714285714286, "critical_chance": 0.0, "max_health": 100.0},
+      "equipment": {"main_hand": "calibration_critical_main_hand", "off_hand": "calibration_critical_off_hand", "gloves": "calibration_critical_gloves", "ring_1": "calibration_critical_ring_1"},
+      "expected_growth": "critical"
+    },
+    {
+      "id": "calibration_exponential", "skill_id": "piercing_arrow",
+      "base_parameters": {"p": 0.25, "T": 30.357142857142854, "v": 620.0, "d": 150.0, "turn": 0.18, "damage": 142.85714285714286, "critical_chance": 0.0, "max_health": 100.0},
+      "equipment": {"main_hand": "calibration_exponential_main_hand", "off_hand": "calibration_exponential_off_hand", "gloves": "calibration_exponential_gloves", "ring_1": "calibration_exponential_ring_1"},
+      "expected_growth": "exponential"
+    }
+  ]
+}

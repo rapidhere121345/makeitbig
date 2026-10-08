@@ -1,0 +1,1198 @@
+extends RefCounted
+## R13 snowy-outpost production skin. New ground, ruins, beacon and colossus
+## textures keep the original scene/legacy cells, layout and module anchors.
+##
+## The world fills the whole window: the camera shows exactly the approved native
+## 640x360 framing at an integer 2x, follows the hero and keeps world headroom
+## above it so a colossus is never cut by the frame or the HUD.
+##
+## This file is presentation only. It never writes gameplay state and never
+## derives damage, collision, AI or drop behaviour. The single size conversion in
+## this package is the invertible transform built in begin_frame():
+##
+##   world  = anchor + (gameplay - arena.position) * GAMEPLAY_TO_WORLD
+##   screen = clip.position + (world - camera_origin) * DISPLAY_SCALE
+##
+## so the playfield keeps its full geometry (uniform scale, no per-axis squeeze)
+## while the sprites are drawn at the fixed native 2x.
+
+const PaletteScript = preload("res://src/presentation/combat_palette.gd")
+const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
+const TOWER_LIGHT_FEET := Vector2(212.0, 394.0)
+const RUIN_LIGHT_FEET := Vector2(703.0, 220.0)
+const ATMOSPHERE_PRESET := "arena"
+
+const SCENE_ATLAS_PATH: String = "res://art/production/p1/combat_style_r13/v03/scene_atlas.json"
+const SCENE_LAYOUT_PATH: String = "res://art/production/p1/combat_style_r13/v03/layout.json"
+const LEGACY_ATLAS_PATH: String = "res://art/production/p1/combat_style_r13/v03/legacy_atlas.json"
+const APPROVED_GROUND_PATH: String = "res://art/production/p1/combat_style_r13/v03/ground.png"
+const APPROVED_GROUND_KEY: String = "approved_ground"
+const DISPLAY_SCALE: float = 2.0
+const GAMEPLAY_TO_WORLD: float = 0.72
+const WORLD_SIZE := Vector2(1024.0, 640.0)
+## The mapped playfield is centred on this world point, so the authored ruins and
+## tower end up along the walkable edges instead of on top of the fight.
+const WORLD_FOCUS := Vector2(512.0, 360.0)
+## Extra world headroom kept above the hero (native units) so a colossus head and
+## the boss target shape stay clear of the frame and the top HUD strip.
+const CAMERA_UP_OFFSET: float = 96.0
+const FORE_FADE: float = 0.45
+## Conservative cutaway: a ruin, the tower or the colossus that really covers the
+## hero keeps its authored alpha everywhere except the hero's own overlap window,
+## where the stack is capped so the hero's real source pixels survive the 0.20
+## per-channel visibility gate instead of being washed out by a whole-cell fade.
+## The window is the hero cell grown by CUTAWAY_WINDOW_PAD, so no drawn hero
+## pixel ever sits on the window edge. The window is a rectangle on the same
+## integer grid the rest of the arena draws on.
+const CUTAWAY_TOTAL_OPACITY: float = 0.16
+const CUTAWAY_WINDOW_PAD: float = 2.0
+## Index of the window inside the five tiling pieces (four solid bands first).
+const CUTAWAY_WINDOW_INDEX: int = 4
+const GROUND_SPRITE_ID: String = "scene.ground"
+## Only these calibration_v01 sprites are reused read-only; the reworked atlas
+## owns everything else, so a missing reworked sprite stays missing instead of
+## silently falling back to an older drawing.
+const LEGACY_SPRITE_IDS: Array[String] = [
+	"tower.upper", "tower.base",
+	"enemy.melee.idle", "enemy.melee.windup", "enemy.melee.active", "enemy.melee.recover",
+	"enemy.charger.idle", "enemy.charger.windup", "enemy.charger.active", "enemy.charger.recover",
+	"enemy.ranged.idle", "enemy.ranged.windup", "enemy.ranged.active", "enemy.ranged.recover",
+]
+const CELL_CONTRACTS := {
+	"scene.ground": {"size": Vector2i(1024, 640)},
+	"ground.snow_wedge": {"size": Vector2i(128, 96), "anchor": Vector2i(64, 90)},
+	"ground.snow_strip": {"size": Vector2i(128, 96), "anchor": Vector2i(64, 90)},
+	"ground.rubble_apron": {"size": Vector2i(128, 96), "anchor": Vector2i(64, 90)},
+	"ground.foundation": {"size": Vector2i(128, 96), "anchor": Vector2i(64, 90)},
+	"ruin.wall_corner": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
+	"ruin.gate": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
+	"ruin.low_pier": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
+	"ruin.broken_wall": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
+	"ranger.south.idle": {"size": Vector2i(32, 48), "anchor": Vector2i(16, 44)},
+	"ranger.north.idle": {"size": Vector2i(32, 48), "anchor": Vector2i(16, 44)},
+	"ranger.east.idle": {"size": Vector2i(32, 48), "anchor": Vector2i(16, 44)},
+	"ranger.west.idle": {"size": Vector2i(32, 48), "anchor": Vector2i(16, 44)},
+	"boss.body_phase1": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
+	"boss.body_phase2": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
+	"boss.hand_left": {"size": Vector2i(48, 64), "anchor": Vector2i(24, 56)},
+	"boss.hand_right": {"size": Vector2i(48, 64), "anchor": Vector2i(24, 56)},
+	"boss.core_phase1": {"size": Vector2i(32, 64), "anchor": Vector2i(16, 56)},
+	"boss.core_phase2": {"size": Vector2i(32, 64), "anchor": Vector2i(16, 56)},
+	"tower.upper": {"size": Vector2i(128, 192), "anchor": Vector2i(64, 184), "keep_rows": [0, 148]},
+	"tower.base": {"size": Vector2i(128, 192), "anchor": Vector2i(64, 184), "keep_rows": [148, 192]},
+	"enemy.melee.idle": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.melee.windup": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.melee.active": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.melee.recover": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.charger.idle": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.charger.windup": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.charger.active": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.charger.recover": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.ranged.idle": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.ranged.windup": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.ranged.active": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+	"enemy.ranged.recover": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
+}
+const BOSS_CORE_OFFSET := Vector2(0.0, -38.0)
+const BOSS_HAND_LEFT_OFFSET := Vector2(-68.0, -18.0)
+const BOSS_HAND_RIGHT_OFFSET := Vector2(68.0, -18.0)
+const TOWER_UPPER_FADE: float = 0.52
+
+## Room identities are visual aliases for the already-authoritative layout ids.
+## They deliberately describe landmarks instead of rules: the same room geometry,
+## spawns and reward stream continue to be owned by main.gd.
+const ROOM_CONCEPTS := {
+	"rectangle_arena": {"title": "破碎前哨", "landmark": "关隘残门"},
+	"ring": {"title": "回收环场", "landmark": "环形灯标"},
+	"corridor": {"title": "风切通道", "landmark": "峡口旗标"},
+}
+
+var pending_reason: String = ""
+
+var _sprites: Dictionary = {}
+var _textures: Dictionary = {}
+var _decals: Array[Dictionary] = []
+var _structures: Array[Dictionary] = []
+var _tower_feet := Vector2.ZERO
+var _clip := Rect2()
+var _arena := Rect2()
+var _anchor := Vector2.ZERO
+var _origin := Vector2.ZERO
+var _hero_world := Vector2.ZERO
+## One cutaway plan per hero position: every ruin, the tower and the colossus
+## share the same window and the same split of the local opacity budget, so no
+## combination of them can stack into an opaque wall over the hero.
+var _cutaway_hero := Vector2(INF, INF)
+var _cutaway_front: Array[Dictionary] = []
+var _cutaway_window := Rect2()
+var _cutaway_share := 1.0
+var _actor_cutaway_ready := false
+var _actor_occluders: Array[Dictionary] = []
+## The colossus is drawn by this file but its live position only exists at draw
+## time, so the report can only speak about the colossus of the frame that was
+## really drawn.
+var _boss_drawn := false
+var _boss_drawn_feet := Vector2(INF, INF)
+var _boss_drawn_local_alpha := 1.0
+var _boss_drawn_box := Rect2()
+var _ready := false
+var _atmosphere_drawn := false
+
+
+func is_ready() -> bool:
+	return _ready
+
+
+func world_size() -> Vector2:
+	return WORLD_SIZE
+
+
+func native_scale() -> float:
+	return DISPLAY_SCALE
+
+
+func gameplay_scale() -> float:
+	return GAMEPLAY_TO_WORLD
+
+
+func camera_up_offset() -> float:
+	return CAMERA_UP_OFFSET
+
+
+func clip_rect() -> Rect2:
+	return _clip
+
+
+func visible_world_size() -> Vector2:
+	return _clip.size / DISPLAY_SCALE
+
+
+func camera_origin() -> Vector2:
+	return _origin
+
+
+func hero_world() -> Vector2:
+	return _hero_world
+
+
+func decal_placements() -> Array[Dictionary]:
+	return _decals.duplicate(true)
+
+
+func structure_placements() -> Array[Dictionary]:
+	return _structures.duplicate(true)
+
+
+func structure_draw_list() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for placement in _structures:
+		result.append({
+			"sprite_id": String(placement.get("id", "")),
+			"feet_world": gameplay_to_world(_point(placement.get("feet", []))),
+		})
+	return result
+
+
+func tower_feet() -> Vector2:
+	return _tower_feet
+
+
+func tower_feet_world() -> Vector2:
+	return gameplay_to_world(_tower_feet)
+
+
+func load_assets() -> bool:
+	pending_reason = ""
+	_sprites.clear()
+	_textures.clear()
+	_decals.clear()
+	_structures.clear()
+	_ready = false
+	var scene_atlas := _read_json(SCENE_ATLAS_PATH)
+	var legacy_atlas := _read_json(LEGACY_ATLAS_PATH)
+	var layout := _read_json(SCENE_LAYOUT_PATH)
+	if scene_atlas.is_empty() or legacy_atlas.is_empty() or layout.is_empty():
+		return false
+	if not _select_union(scene_atlas, legacy_atlas):
+		return false
+	if not _load_textures(scene_atlas, legacy_atlas):
+		return false
+	if not _validate_cells():
+		return false
+	if not _read_layout(layout):
+		return false
+	_ready = true
+	return true
+
+
+func begin_frame(clip_rect: Rect2, focus_gameplay: Vector2, arena_rect: Rect2) -> void:
+	_clip = clip_rect
+	_arena = arena_rect
+	_anchor = WORLD_FOCUS - arena_rect.size * GAMEPLAY_TO_WORLD * 0.5
+	_hero_world = gameplay_to_world(focus_gameplay)
+	_origin = camera_origin_for(_hero_world)
+	_cutaway_hero = Vector2(INF, INF)
+	_atmosphere_drawn = false
+	_boss_drawn = false
+	_actor_cutaway_ready = false
+	_actor_occluders.clear()
+
+
+## Clamped follow camera: the hero keeps the 640x360 framing with world headroom
+## above it, and the window never leaves the authored world.
+func camera_origin_for(hero_world_point: Vector2) -> Vector2:
+	var visible := visible_world_size()
+	var wanted := hero_world_point - visible * 0.5 + Vector2(0.0, -CAMERA_UP_OFFSET)
+	var limit := Vector2(maxf(0.0, WORLD_SIZE.x - visible.x), maxf(0.0, WORLD_SIZE.y - visible.y))
+	return Vector2(roundf(clampf(wanted.x, 0.0, limit.x)), roundf(clampf(wanted.y, 0.0, limit.y)))
+
+
+func gameplay_to_world(gameplay_point: Vector2) -> Vector2:
+	return _anchor + (gameplay_point - _arena.position) * GAMEPLAY_TO_WORLD
+
+
+func world_to_gameplay(world_point: Vector2) -> Vector2:
+	return _arena.position + (world_point - _anchor) / GAMEPLAY_TO_WORLD
+
+
+func to_screen(world_point: Vector2) -> Vector2:
+	return _clip.position + (world_point - _origin) * DISPLAY_SCALE
+
+
+func to_world(screen_point: Vector2) -> Vector2:
+	return _origin + (screen_point - _clip.position) / DISPLAY_SCALE
+
+
+func gameplay_to_screen(gameplay_point: Vector2) -> Vector2:
+	return to_screen(gameplay_to_world(gameplay_point))
+
+
+## Viewport/screen coordinates -> authoritative gameplay coordinates. This is
+## the exact inverse of gameplay_to_screen() for the current begin_frame(), so
+## pointer targeting uses the same camera clamp and integer display scale as the
+## pixels the player sees.
+func screen_to_gameplay(screen_point: Vector2) -> Vector2:
+	return world_to_gameplay(to_world(screen_point))
+
+
+## Native art (world) coordinates -> screen. Draw world art under this matrix.
+func world_transform() -> Transform2D:
+	return Transform2D(0.0, Vector2(DISPLAY_SCALE, DISPLAY_SCALE), 0.0, _clip.position - _origin * DISPLAY_SCALE)
+
+
+## Gameplay (authoritative) coordinates -> screen. Draw telegraphs and status
+## overlays under this matrix so nothing has to convert a single point by hand.
+func gameplay_transform() -> Transform2D:
+	var scale := DISPLAY_SCALE * GAMEPLAY_TO_WORLD
+	return Transform2D(0.0, Vector2(scale, scale), 0.0, _clip.position + (_anchor - _arena.position * GAMEPLAY_TO_WORLD - _origin) * DISPLAY_SCALE)
+
+
+## Draws one authoritative Piercing Arrow snapshot under gameplay_transform().
+## The head is the projectile position; previous_position and origin supply only
+## the bounded wake, so render cadence cannot move or lengthen the flight.
+static func draw_piercing_arrow(
+	canvas: CanvasItem,
+	previous_position: Vector2,
+	position: Vector2,
+	direction: Vector2,
+	origin: Vector2 = Vector2.INF
+) -> void:
+	if canvas == null or direction.length_squared() <= 0.000001:
+		return
+	var geometry := piercing_arrow_geometry(previous_position, position, direction, origin)
+	var aim := geometry["aim"] as Vector2
+	var side := geometry["side"] as Vector2
+	var trail_start := geometry["trail_start"] as Vector2
+	var trail_mid := geometry["trail_mid"] as Vector2
+	var shaft_tail := geometry["shaft_tail"] as Vector2
+	var shaft_head := geometry["shaft_head"] as Vector2
+	canvas.draw_line(trail_start, trail_mid, Color(PaletteScript.COPPER, 0.10), 1.1, false)
+	canvas.draw_line(trail_mid, position, Color(PaletteScript.COPPER, 0.20), 1.5, false)
+	canvas.draw_line(shaft_tail, shaft_head, Color(PaletteScript.INK, 0.82), 3.1, false)
+	canvas.draw_line(shaft_tail, shaft_head, PaletteScript.BONE, 1.5, false)
+	canvas.draw_line(shaft_tail - side * 2.1, shaft_tail + aim * 2.4, PaletteScript.COPPER, 1.0, false)
+	canvas.draw_line(shaft_tail + side * 2.1, shaft_tail + aim * 2.4, PaletteScript.COPPER, 1.0, false)
+	canvas.draw_colored_polygon(PackedVector2Array([
+		position + aim * 4.8,
+		position - aim * 1.8 + side * 2.7,
+		position - aim * 1.8 - side * 2.7,
+	]), PaletteScript.COPPER)
+
+
+## Pure geometry for the in-flight arrow. The wake never runs behind its frozen
+## release origin and is capped at a short tail even after a long render frame.
+static func piercing_arrow_geometry(
+	previous_position: Vector2,
+	position: Vector2,
+	direction: Vector2,
+	origin: Vector2 = Vector2.INF
+) -> Dictionary:
+	var aim := direction.normalized()
+	var side := aim.rotated(PI * 0.5)
+	var travel_from_origin := position.distance_to(origin) if origin.is_finite() else position.distance_to(previous_position)
+	var previous_gap := position.distance_to(previous_position)
+	var wake_length := minf(10.0, minf(previous_gap, maxf(0.0, travel_from_origin)))
+	var trail_start := position - aim * wake_length
+	var trail_mid := position - aim * wake_length * 0.5
+	return {
+		"aim": aim,
+		"side": side,
+		"trail_start": trail_start,
+		"trail_mid": trail_mid,
+		"shaft_tail": position - aim * 11.0,
+		"shaft_head": position - aim * 1.8,
+	}
+
+
+func visible_world_region() -> Rect2:
+	return Rect2(_origin, visible_world_size())
+
+
+func draw_ground(canvas: CanvasItem) -> void:
+	var texture: Texture2D = _textures.get(APPROVED_GROUND_KEY)
+	if texture == null:
+		return
+	var region := visible_world_region().intersection(Rect2(Vector2.ZERO, WORLD_SIZE))
+	if region.size.x <= 0.0 or region.size.y <= 0.0:
+		return
+	canvas.draw_texture_rect_region(texture, Rect2(region.position.round(), region.size), region)
+	AtmosphereScript.draw_ground(
+		canvas,
+		region,
+		ATMOSPHERE_PRESET,
+		atmosphere_warm_lights(),
+		true
+	)
+	_atmosphere_drawn = true
+
+
+func room_concept_report(layout_id: String) -> Dictionary:
+	var concept: Dictionary = ROOM_CONCEPTS.get(layout_id, ROOM_CONCEPTS["rectangle_arena"])
+	return {
+		"layout_id": layout_id,
+		"title": String(concept.get("title", "战斗场")),
+		"landmark": String(concept.get("landmark", "边界标记")),
+		"presentation_only": true,
+	}
+
+
+## A low-contrast landmark pass gives each published layout a spatial identity.
+## It is drawn under actors and telegraphs, and reads only the fixed layout id plus
+## the already-running simulation tick for a bounded lantern pulse.
+func draw_room_concept(canvas: CanvasItem, layout_id: String, phase_ticks: int = 0) -> void:
+	if canvas == null:
+		return
+	var phase := fmod(float(phase_ticks), 60.0) / 60.0
+	match layout_id:
+		"ring":
+			_draw_ring_concept(canvas, phase)
+		"corridor":
+			_draw_corridor_concept(canvas, phase)
+		_:
+			_draw_outpost_concept(canvas, phase)
+
+
+func _draw_outpost_concept(canvas: CanvasItem, phase: float) -> void:
+	var gate := Vector2(806.0, 122.0)
+	var plinth := Rect2(gate - Vector2(62.0, 18.0), Vector2(124.0, 38.0))
+	canvas.draw_rect(plinth, Color(PaletteScript.SLATE_0, 0.36), true)
+	canvas.draw_line(plinth.position, Vector2(plinth.end.x, plinth.position.y), Color(PaletteScript.SLATE_3, 0.32), 2.0, false)
+	for index in 3:
+		var x := gate.x - 34.0 + float(index) * 34.0
+		canvas.draw_line(Vector2(x, gate.y - 13.0), Vector2(x, gate.y + 12.0), Color(PaletteScript.COPPER_DULL, 0.46), 2.0, false)
+	var lamp_alpha := 0.26 + 0.12 * (0.5 + 0.5 * sin(phase * TAU))
+	canvas.draw_circle(gate + Vector2(-50.0, 8.0), 4.0, Color(PaletteScript.COPPER, lamp_alpha))
+	canvas.draw_circle(gate + Vector2(50.0, 8.0), 4.0, Color(PaletteScript.COPPER, lamp_alpha))
+	for post in [Vector2(138.0, 518.0), Vector2(860.0, 504.0), Vector2(910.0, 250.0)]:
+		canvas.draw_line(post + Vector2(0.0, 8.0), post + Vector2(0.0, -12.0), Color(PaletteScript.COPPER_DULL, 0.42), 2.0, false)
+		canvas.draw_line(post + Vector2(0.0, -10.0), post + Vector2(10.0, -10.0), Color(PaletteScript.BONE_DIM, 0.26), 2.0, false)
+
+
+func _draw_ring_concept(canvas: CanvasItem, phase: float) -> void:
+	var center := WORLD_FOCUS
+	canvas.draw_circle(center, 156.0, Color(PaletteScript.SLATE_0, 0.18))
+	canvas.draw_arc(center, 126.0, 0.0, TAU, 48, Color(PaletteScript.COPPER_DULL, 0.38), 3.0, false)
+	canvas.draw_arc(center, 96.0, 0.0, TAU, 40, Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
+	for index in 8:
+		var angle := TAU * float(index) / 8.0
+		var point := center + Vector2(cos(angle), sin(angle)) * 126.0
+		canvas.draw_rect(Rect2(point - Vector2(5.0, 7.0), Vector2(10.0, 14.0)), Color(PaletteScript.SLATE_2, 0.54), true)
+		var glow := 0.18 + 0.11 * (0.5 + 0.5 * sin(phase * TAU + float(index) * 0.6))
+		canvas.draw_circle(point + Vector2(0.0, -5.0), 2.5, Color(PaletteScript.COPPER, glow))
+	canvas.draw_arc(center, 142.0, phase * TAU, phase * TAU + PI * 0.42, 12, Color(PaletteScript.COLD, 0.26), 2.0, false)
+
+
+func _draw_corridor_concept(canvas: CanvasItem, phase: float) -> void:
+	var center_y := WORLD_FOCUS.y
+	var left := 122.0
+	var right := WORLD_SIZE.x - 122.0
+	for side in [-1.0, 1.0]:
+		var y: float = center_y + float(side) * 112.0
+		var x := left
+		while x < right:
+			var segment := minf(22.0, right - x)
+			canvas.draw_line(Vector2(x, y), Vector2(x + segment, y), Color(PaletteScript.COLD, 0.24), 2.0, false)
+			x += 38.0
+	for index in 6:
+		var x := left + 86.0 + float(index) * 128.0
+		var y := center_y + sin(phase * TAU + float(index) * 0.55) * 3.0
+		canvas.draw_line(Vector2(x, y + 82.0), Vector2(x, y - 132.0), Color(PaletteScript.COPPER_DULL, 0.50), 2.0, false)
+		canvas.draw_line(Vector2(x, y - 126.0), Vector2(x + 14.0, y - 119.0), Color(PaletteScript.COLD, 0.34), 2.0, false)
+
+
+func draw_decals(canvas: CanvasItem) -> void:
+	for placement in _decals:
+		draw_sprite(canvas, String(placement.get("id", "")), gameplay_to_world(_point(placement.get("feet", []))))
+
+
+## Cold edge atmosphere stays in the same world matrix as the arena art, after
+## the decals and before gameplay ground effects. It is clipped to the visible
+## world region, so it cannot bleed into HUD or UI layers.
+func draw_atmosphere(canvas: CanvasItem) -> void:
+	var region := visible_world_region().intersection(Rect2(Vector2.ZERO, WORLD_SIZE))
+	if region.size.x <= 0.0 or region.size.y <= 0.0:
+		return
+	AtmosphereScript.draw_fore(canvas, region, ATMOSPHERE_PRESET)
+
+
+## Fixed-direction hard-edge contact shadows, drawn before every actor so they
+## read as grounding rather than as lighting.
+func draw_shadow(canvas: CanvasItem, feet_world: Vector2, width_world: float, depth_world: float, alpha: float) -> void:
+	if alpha <= 0.0:
+		return
+	var half := width_world * 0.5
+	var lift := depth_world
+	var polygon := PackedVector2Array([
+		feet_world + Vector2(-half + 3.0, -lift * 0.25),
+		feet_world + Vector2(half + 3.0, -lift * 0.25),
+		feet_world + Vector2(half + 7.0, 3.0),
+		feet_world + Vector2(-half + 7.0, 3.0),
+	])
+	var clip := visible_world_region()
+	for index in polygon.size():
+		polygon[index] = polygon[index].clamp(clip.position, clip.end)
+	canvas.draw_colored_polygon(polygon, Color(PaletteScript.CONTACT_SHADOW, alpha))
+
+
+func draw_structure_shadows(canvas: CanvasItem) -> void:
+	for placement in _structures:
+		var metadata := sprite(String(placement.get("id", "")))
+		var size := _cell_size(metadata)
+		draw_shadow(canvas, gameplay_to_world(_point(placement.get("feet", []))), size.x * 0.72, size.y * 0.28, 0.30)
+	draw_shadow(canvas, tower_feet_world(), 92.0, 26.0, 0.32)
+
+
+## Two fixed sources: holy light on the tower and a low ember reflection by the
+## eastern ruin. No live enemy or projectile position is consumed, so a light can
+## never expose or mask a gameplay object.
+func atmosphere_warm_lights() -> Array:
+	return [
+		AtmosphereScript.warm_light(TOWER_LIGHT_FEET, 44.0, 0.17),
+		AtmosphereScript.warm_light(RUIN_LIGHT_FEET, 30.0, 0.14),
+	]
+
+
+func atmosphere_report() -> Dictionary:
+	var report := AtmosphereScript.atmosphere_report(ATMOSPHERE_PRESET, visible_world_region(), atmosphere_warm_lights())
+	report["base_drawn_with_ground"] = _atmosphere_drawn
+	report["world_lights_clipped"] = (
+		Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(TOWER_LIGHT_FEET - Vector2.ONE * 44.0, Vector2.ONE * 88.0))
+		and Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(RUIN_LIGHT_FEET - Vector2.ONE * 30.0, Vector2.ONE * 60.0))
+	)
+	return report
+
+
+func draw_sprite(canvas: CanvasItem, sprite_id: String, feet_world: Vector2, flip_x: bool = false, modulate: Color = Color.WHITE, cut: Rect2 = Rect2(), cut_alpha: float = 1.0) -> void:
+	var metadata := sprite(sprite_id)
+	if metadata.is_empty():
+		return
+	_draw_cell(canvas, metadata, feet_world, flip_x, modulate, cut, cut_alpha)
+
+
+## ---------------------------------------------------------------- cutaway
+
+static func cutaway_window(cell: Rect2) -> Rect2:
+	## The hero cell plus its pad, kept on the integer pixel grid the arena draws
+	## on so a cut cell always lands on whole source pixels.
+	var grown := cell.grow(CUTAWAY_WINDOW_PAD)
+	return Rect2(grown.position.round(), grown.size.round())
+
+
+static func cutaway_alpha(count: int) -> float:
+	## Even split of the local opacity budget: the source-over stack of any subset
+	## of those cells never exceeds CUTAWAY_TOTAL_OPACITY, whatever the authored
+	## fade already leaves on top of them.
+	if count <= 0:
+		return 1.0
+	return clampf(1.0 - pow(1.0 - CUTAWAY_TOTAL_OPACITY, 1.0 / float(count)), 0.0, 1.0)
+
+
+static func cutaway_pieces(quad: Rect2, core: Rect2) -> Array[Rect2]:
+	## Four solid bands plus the window tile the drawn cell exactly once under
+	## source-over blending, in the order they are drawn.
+	var top := Rect2(quad.position, Vector2(quad.size.x, core.position.y - quad.position.y))
+	var bottom := Rect2(Vector2(quad.position.x, core.end.y), Vector2(quad.size.x, quad.end.y - core.end.y))
+	var left := Rect2(Vector2(quad.position.x, core.position.y), Vector2(core.position.x - quad.position.x, core.size.y))
+	var right := Rect2(Vector2(core.end.x, core.position.y), Vector2(quad.end.x - core.end.x, core.size.y))
+	return [top, bottom, left, right, core]
+
+
+## The world rect a cell really draws into: exactly the destination _draw_cell()
+## uses, including a keep_rows band, so a cutaway is measured on real art.
+func sprite_art_box(sprite_id: String, feet_world: Vector2) -> Rect2:
+	var metadata := sprite(sprite_id)
+	if metadata.is_empty():
+		return Rect2()
+	var region := _region_of(metadata)
+	if region.size.x <= 0.0 or region.size.y <= 0.0:
+		return Rect2()
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
+	return Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
+
+
+## Every ruin and the tower that really draws in front of the hero and reaches
+## into the hero's own window. Anything the feet sort already draws first cannot
+## hide the hero, and every other cell keeps its authored alpha untouched.
+func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
+	var window := cutaway_window(hero_cell_world(hero_world_point))
+	var found: Array[Dictionary] = []
+	for placement in _structures:
+		var sprite_id := String(placement.get("id", ""))
+		var feet := gameplay_to_world(_point(placement.get("feet", [])))
+		if feet.y <= hero_world_point.y:
+			continue
+		var box := sprite_art_box(sprite_id, feet)
+		if box.size.x <= 0.0 or not box.intersects(window):
+			continue
+		found.append({
+			"id": sprite_id,
+			"feet_world": feet,
+			"art_box": box,
+			"overlap": box.intersection(window),
+			"base_alpha": 1.0,
+		})
+	var tower_feet := tower_feet_world()
+	if tower_feet.y > hero_world_point.y:
+		var upper := sprite_art_box("tower.upper", tower_feet)
+		var base := sprite_art_box("tower.base", tower_feet)
+		var tower_box := upper.merge(base)
+		if tower_box.intersects(window):
+			found.append({
+				"id": "tower",
+				"feet_world": tower_feet,
+				"art_box": tower_box,
+				"overlap": tower_box.intersection(window),
+				"base_alpha": 1.0,
+			})
+	return found
+
+
+## Public, read-only cutaway lookup for the actor pass this file does not draw
+## itself (main.gd owns the enemies): the window, whether the actor draws in
+## front of the hero and the local alpha its own cell must use. An empty window
+## means the actor keeps its authored alpha for this frame.
+func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2) -> Dictionary:
+	var cell := hero_cell_world(hero_world_point)
+	var window := cutaway_window(cell)
+	if feet_world.y <= hero_world_point.y or not art_box.intersects(window):
+		return {"window": window, "local_alpha": 1.0, "in_front": false}
+	## The ruins and the tower keep the same budget this actor shares, so the
+	## whole foreground stack still composes under CUTAWAY_TOTAL_OPACITY.
+	var share := float(_cutaway_plan(hero_world_point)["alpha"]) if _actor_cutaway_ready else cutaway_alpha(cutaway_front(hero_world_point).size() + 1)
+	return {"window": window, "local_alpha": share, "in_front": true}
+
+
+## The actor pass supplies every live front-facing draw cell before drawing any
+## ruins. A single budget then covers static props, enemies and all Boss parts;
+## computing each group's budget independently would compound above the limit.
+func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2) -> void:
+	_actor_occluders.clear()
+	var window := cutaway_window(hero_cell_world(hero_world_point))
+	for cell: Dictionary in cells:
+		var box: Rect2 = cell["art_box"]
+		if box.intersects(window):
+			_actor_occluders.append(cell.duplicate())
+	_actor_cutaway_ready = true
+	_cutaway_hero = Vector2(INF, INF)
+
+
+func _tower_upper_faded(hero_world_point: Vector2) -> bool:
+	var feet := tower_feet_world()
+	if feet.y <= hero_world_point.y:
+		return false
+	return Rect2(feet + Vector2(-64.0, -184.0), Vector2(128.0, 148.0)).intersects(hero_cell_world(hero_world_point))
+
+
+func _cutaway_plan(hero_world_point: Vector2) -> Dictionary:
+	if _cutaway_hero != hero_world_point:
+		_cutaway_hero = hero_world_point
+		_cutaway_front = cutaway_front(hero_world_point)
+		_cutaway_window = cutaway_window(hero_cell_world(hero_world_point))
+		_cutaway_share = cutaway_alpha(_cutaway_front.size() + _actor_occluders.size())
+	return {"window": _cutaway_window, "alpha": _cutaway_share, "front": _cutaway_front}
+
+
+## The window and the share one placed cell of this frame's plan draws with. Empty
+## means that cell keeps its authored alpha for this frame: a ruin that stands
+## behind the hero is never cut, and only the instance that really sorts in front
+## of it shares the window, even when the arena places the same ruin twice.
+func _cutaway_for_cell(sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> Dictionary:
+	var plan := _cutaway_plan(hero_world_point)
+	for entry: Dictionary in plan["front"] as Array:
+		var entry_id := String(entry["id"])
+		## The tower is one occluder published as tower.base and tower.upper, so a
+		## band matches the occluder it belongs to.
+		if not (entry_id == sprite_id or sprite_id.begins_with(entry_id + ".")):
+			continue
+		if not (entry["feet_world"] as Vector2).is_equal_approx(feet_world):
+			continue
+		return {"window": plan["window"], "alpha": plan["alpha"]}
+	return {"window": Rect2(), "alpha": 1.0}
+
+
+## The colossus is one occluder drawn as four sprites: when it really stands in
+## front of the hero they all share a single split of the budget the ruins are not
+## already using, so body, core and both hands can never stack opaquely.
+func _boss_cutaway(sprite_ids: Array, feet_list: Array, feet_world: Vector2, hero_world_point: Vector2) -> Dictionary:
+	if feet_world.y < hero_world_point.y:
+		return {"window": Rect2(), "alpha": 1.0}
+	var plan := _cutaway_plan(hero_world_point)
+	var window: Rect2 = plan["window"]
+	var overlapping := 0
+	for index: int in sprite_ids.size():
+		if sprite_art_box(String(sprite_ids[index]), feet_list[index] as Vector2).intersects(window):
+			overlapping += 1
+	if overlapping <= 0:
+		return {"window": Rect2(), "alpha": 1.0}
+	if _actor_cutaway_ready:
+		return {"window": window, "alpha": plan["alpha"]}
+	return {"window": window, "alpha": cutaway_alpha((plan["front"] as Array).size() + overlapping)}
+
+
+## Read-only cutaway diagnostic for the external visibility harness: how many
+## foreground cells really cover the hero, the total local opacity they compose
+## to, and the window itself. Nothing here writes or re-sorts the arena.
+func occlusion_report(hero_world_point: Vector2) -> Dictionary:
+	var cell := hero_cell_world(hero_world_point)
+	var window := cutaway_window(cell)
+	var front := cutaway_front(hero_world_point)
+	var alpha := cutaway_alpha(front.size() + _actor_occluders.size())
+	var entries: Array[Dictionary] = []
+	var front_ids: Array[String] = []
+	var opacity := 0.0
+	for entry: Dictionary in front:
+		var local := alpha * float(entry["base_alpha"])
+		opacity = 1.0 - (1.0 - opacity) * (1.0 - local)
+		front_ids.append(String(entry["id"]))
+		entries.append({
+			"id": String(entry["id"]),
+			"sprite_id": String(entry["id"]),
+			"node": String(entry["id"]),
+			"feet_world": entry["feet_world"],
+			"art_box": entry["art_box"],
+			"local_alpha": local,
+			"overlap": entry["overlap"],
+		})
+	for actor: Dictionary in _actor_occluders:
+		var local := alpha * float(actor.get("base_alpha", 1.0))
+		opacity = 1.0 - (1.0 - opacity) * (1.0 - local)
+		var entry := actor.duplicate()
+		entry["local_alpha"] = local
+		entry["overlap"] = (entry["art_box"] as Rect2).intersection(window)
+		entries.append(entry)
+		front_ids.append(String(entry["id"]))
+	if not _actor_cutaway_ready and _boss_drawn and _hero_world == hero_world_point:
+		## The colossus covers the hero as well, so the total this report states is
+		## the total of the frame that was really drawn, never a guess.
+		var boss_local := _boss_drawn_local_alpha
+		opacity = 1.0 - (1.0 - opacity) * (1.0 - boss_local)
+		front_ids.append("boss")
+		entries.append({
+			"id": "boss",
+			"sprite_id": "boss",
+			"node": "boss",
+			"feet_world": _boss_drawn_feet,
+			"art_box": _boss_drawn_box,
+			"local_alpha": boss_local,
+			"overlap": _boss_drawn_box.intersection(window),
+		})
+	return {
+		"hero_world": hero_world_point,
+		"hero_cell_world": cell,
+		"window_world": window,
+		"window_pad": CUTAWAY_WINDOW_PAD,
+		"occluder_count": entries.size(),
+		"local_alpha_each": alpha,
+		"local_opacity_total": opacity,
+		"occluders": entries,
+		"front_ids": front_ids,
+		"front_nodes": front_ids.duplicate(),
+		"unchanged": entries.is_empty(),
+	}
+
+
+## Static ruins in front of the hero fade out instead of hiding it, the same
+## treatment the approved sample applies to the tower. Props behind the hero need
+## no fade because the y-sort already draws them first.
+func structure_fade(sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> float:
+	var metadata := sprite(sprite_id)
+	if metadata.is_empty():
+		return 1.0
+	if feet_world.y <= hero_world_point.y:
+		return 1.0
+	var cell := Rect2(feet_world - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+	return FORE_FADE if cell.intersects(hero_cell_world(hero_world_point)) else 1.0
+
+
+func hero_cell_world(hero_world_point: Vector2) -> Rect2:
+	# Actions can extend a bow/cape beyond the old 32px idle cell. This is only
+	# a conservative visual occlusion envelope, never a gameplay collision box.
+	return Rect2(hero_world_point - Vector2(24.0, 44.0), Vector2(48.0, 48.0))
+
+
+## Exactly the destination rectangle _draw_cell() uses, in screen pixels, so a
+## harness can compare real pixels against the real placement.
+func sprite_screen_rect(sprite_id: String, feet_world: Vector2) -> Rect2:
+	var metadata := sprite(sprite_id)
+	if metadata.is_empty():
+		return Rect2()
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
+	var region := rect
+	if metadata.has("keep_rows"):
+		var rows: Array = metadata["keep_rows"]
+		region = Rect2(rect.position.x, rect.position.y + float(rows[0]), rect.size.x, float(rows[1]) - float(rows[0]))
+	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
+	return Rect2(to_screen(destination.position), destination.size * DISPLAY_SCALE)
+
+
+## Headless occlusion report: which props would sit in front of the hero, which of
+## them are faded, and whether anything un-faded still covers the hero completely.
+func hero_cover_report(hero_world_point: Vector2) -> Dictionary:
+	var hero_cell := hero_cell_world(hero_world_point)
+	var in_front: Array[String] = []
+	var faded: Array[String] = []
+	var full_covers: Array[String] = []
+	for placement in _structures:
+		var sprite_id := String(placement.get("id", ""))
+		var feet := gameplay_to_world(_point(placement.get("feet", [])))
+		if feet.y <= hero_world_point.y:
+			continue
+		var metadata := sprite(sprite_id)
+		var cell := Rect2(feet - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+		if not cell.intersects(hero_cell):
+			continue
+		in_front.append(sprite_id)
+		if structure_fade(sprite_id, feet, hero_world_point) < 1.0:
+			faded.append(sprite_id)
+		elif Rect2(feet - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata)).encloses(hero_cell):
+			full_covers.append(sprite_id)
+	var tower_feet := tower_feet_world()
+	if tower_feet.y > hero_world_point.y:
+		var upper := Rect2(tower_feet + Vector2(-64.0, -184.0), Vector2(128.0, 148.0))
+		if upper.intersects(hero_cell):
+			in_front.append("tower.upper")
+			faded.append("tower.upper")
+	return {
+		"hero_cell": hero_cell,
+		"in_front": in_front,
+		"faded": faded,
+		"unfaded_full_covers": full_covers,
+		"hero_visible": full_covers.is_empty(),
+	}
+
+
+func draw_structure(canvas: CanvasItem, sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> void:
+	var alpha := structure_fade(sprite_id, feet_world, hero_world_point)
+	## The authored fade still says how solid the ruin is overall; the cutaway then
+	## keeps the hero's own window readable instead of washing the whole ruin out.
+	var cut := _cutaway_for_cell(sprite_id, feet_world, hero_world_point)
+	draw_sprite(canvas, sprite_id, feet_world, false, Color(1.0, 1.0, 1.0, alpha), cut["window"], cut["alpha"])
+
+
+func draw_tower(canvas: CanvasItem, hero_world_point: Vector2) -> void:
+	var feet := tower_feet_world()
+	var faded := _tower_upper_faded(hero_world_point)
+	var cut := _cutaway_for_cell("tower", feet, hero_world_point)
+	draw_sprite(canvas, "tower.base", feet, false, Color.WHITE, cut["window"], cut["alpha"])
+	draw_sprite(canvas, "tower.upper", feet, false, Color(1.0, 1.0, 1.0, TOWER_UPPER_FADE if faded else 1.0), cut["window"], cut["alpha"])
+
+
+## Colossus assembly. Like the ruins, a colossus standing in front of the hero
+## fades its body layer instead of hiding the hero completely; danger telegraphs
+## are drawn in another pass and stay opaque.
+func boss_draw_parts(feet_world: Vector2, phase: int, left_hand_delta_gameplay: Vector2, right_hand_delta_gameplay: Vector2, pose_frame: Dictionary = {}) -> Array[Dictionary]:
+	var phase_id := 2 if phase >= 2 else 1
+	return [
+		{"sprite_id": "boss.body_phase%d" % phase_id, "feet": feet_world + Vector2(pose_frame.get("body_offset_px", Vector2i.ZERO))},
+		{"sprite_id": "boss.core_phase%d" % phase_id, "feet": feet_world + BOSS_CORE_OFFSET + Vector2(pose_frame.get("core_offset_px", Vector2i.ZERO))},
+		{"sprite_id": "boss.hand_left", "feet": feet_world + BOSS_HAND_LEFT_OFFSET + left_hand_delta_gameplay * GAMEPLAY_TO_WORLD + Vector2(pose_frame.get("left_hand_offset_px", Vector2i.ZERO))},
+		{"sprite_id": "boss.hand_right", "feet": feet_world + BOSS_HAND_RIGHT_OFFSET + right_hand_delta_gameplay * GAMEPLAY_TO_WORLD + Vector2(pose_frame.get("right_hand_offset_px", Vector2i.ZERO))},
+	]
+
+
+## Both the cutaway prepass and the actual GPU pass consume boss_draw_parts(),
+## including this frame's pose; a moving fist cannot escape its opacity budget.
+func draw_boss(canvas: CanvasItem, feet_world: Vector2, phase: int, left_hand_delta_gameplay: Vector2, right_hand_delta_gameplay: Vector2, core_open: bool, hero_world_point: Vector2, pose_frame: Dictionary = {}) -> void:
+	var phase_id := 2 if phase >= 2 else 1
+	var alpha := boss_fade_alpha(feet_world, hero_world_point)
+	var modulate := Color(1.0, 1.0, 1.0, alpha)
+	var parts := boss_draw_parts(feet_world, phase, left_hand_delta_gameplay, right_hand_delta_gameplay, pose_frame)
+	var body_feet: Vector2 = parts[0]["feet"]
+	var core_feet: Vector2 = parts[1]["feet"]
+	var left_feet: Vector2 = parts[2]["feet"]
+	var right_feet: Vector2 = parts[3]["feet"]
+	var sprite_ids := ["boss.body_phase%d" % phase_id, "boss.core_phase%d" % phase_id, "boss.hand_left", "boss.hand_right"]
+	var feet_list := [body_feet, core_feet, left_feet, right_feet]
+	var cut := _boss_cutaway(sprite_ids, feet_list, feet_world, hero_world_point)
+	_boss_drawn = (cut["window"] as Rect2).size.x > 0.0
+	if _boss_drawn:
+		_boss_drawn_feet = feet_world
+		_boss_drawn_local_alpha = alpha * float(cut["alpha"])
+		_boss_drawn_box = Rect2()
+		for index: int in sprite_ids.size():
+			var box := sprite_art_box(String(sprite_ids[index]), feet_list[index] as Vector2)
+			_boss_drawn_box = box if _boss_drawn_box.size.x <= 0.0 else _boss_drawn_box.merge(box)
+	draw_sprite(canvas, String(sprite_ids[0]), body_feet, false, modulate, cut["window"], cut["alpha"])
+	draw_sprite(canvas, String(sprite_ids[1]), core_feet, false, modulate * Color(pose_frame.get("core_tint", Color.WHITE)), cut["window"], cut["alpha"])
+	draw_sprite(canvas, String(sprite_ids[2]), left_feet, false, modulate, cut["window"], cut["alpha"])
+	draw_sprite(canvas, String(sprite_ids[3]), right_feet, false, modulate, cut["window"], cut["alpha"])
+
+
+## Body, core and both hands in world units, in the order they are drawn.
+func boss_parts_world(feet_world: Vector2) -> Array[Rect2]:
+	var parts: Array[Rect2] = []
+	for entry in [["boss.body_phase2", Vector2.ZERO], ["boss.core_phase2", BOSS_CORE_OFFSET], ["boss.hand_left", BOSS_HAND_LEFT_OFFSET], ["boss.hand_right", BOSS_HAND_RIGHT_OFFSET]]:
+		var metadata := sprite(String(entry[0]))
+		if metadata.is_empty():
+			continue
+		parts.append(Rect2(feet_world + (entry[1] as Vector2) - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata)))
+	return parts
+
+
+## 1.0 when the colossus cannot hide the hero, FORE_FADE when it is in front of
+## and overlapping the hero's real cells.
+func boss_fade_alpha(feet_world: Vector2, hero_world_point: Vector2) -> float:
+	if feet_world.y <= hero_world_point.y:
+		return 1.0
+	var hero_cell := hero_cell_world(hero_world_point)
+	for part in boss_parts_world(feet_world):
+		if part.intersects(hero_cell):
+			return FORE_FADE
+	return 1.0
+
+
+## Colossus footprint in world units, used by the visibility checks so a boss
+## head that leaves the frame or slips under the HUD can never pass as "fine".
+func boss_body_rect_world(feet_world: Vector2) -> Rect2:
+	var metadata := sprite("boss.body_phase2")
+	if metadata.is_empty():
+		return Rect2()
+	return Rect2(feet_world - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+
+
+func boss_hand_rect_world(feet_world: Vector2, left: bool) -> Rect2:
+	var sprite_id := "boss.hand_left" if left else "boss.hand_right"
+	var metadata := sprite(sprite_id)
+	if metadata.is_empty():
+		return Rect2()
+	var offset := BOSS_HAND_LEFT_OFFSET if left else BOSS_HAND_RIGHT_OFFSET
+	return Rect2(feet_world + offset - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+
+
+func sprite(sprite_id: String) -> Dictionary:
+	return (_sprites.get(sprite_id, {}) as Dictionary).duplicate(true)
+
+
+func _draw_cell(canvas: CanvasItem, metadata: Dictionary, feet_world: Vector2, flip_x: bool, modulate: Color, cut: Rect2 = Rect2(), cut_alpha: float = 1.0) -> void:
+	var texture: Texture2D = _textures.get(String(metadata.get("texture", "")))
+	if texture == null:
+		return
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
+	var region := _region_of(metadata)
+	var size := region.size
+	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), size)
+	var visible := destination.intersection(visible_world_region())
+	if visible.size.x <= 0.0 or visible.size.y <= 0.0:
+		return
+	if flip_x:
+		var center := destination.position + destination.size * 0.5
+		var core := _cutaway_core(destination, cut, cut_alpha)
+		var pieces: Array[Dictionary] = [{"dest": visible, "alpha": modulate.a}]
+		if core.has_area():
+			pieces = cut_pieces(destination, region, core, modulate.a, cut_alpha)
+		# Compose with the active world transform; resetting to identity used to
+		# put subsequent actors in raw screen coordinates when an enemy faced left.
+		canvas.draw_set_transform_matrix(world_transform() * Transform2D(0.0, Vector2(-1.0, 1.0), 0.0, center))
+		for piece: Dictionary in pieces:
+			var dest: Rect2 = piece["dest"]
+			var mirrored_local := Rect2(Vector2(center.x - dest.end.x, dest.position.y - center.y), dest.size)
+			var mirrored_source := Rect2(region.position + Vector2(destination.size.x - (dest.end.x - destination.position.x), dest.position.y - destination.position.y), dest.size)
+			canvas.draw_texture_rect_region(texture, mirrored_local, mirrored_source, Color(modulate.r, modulate.g, modulate.b, float(piece["alpha"])))
+		canvas.draw_set_transform_matrix(world_transform())
+		return
+	if not flip_x:
+		var core := _cutaway_core(destination, cut, cut_alpha)
+		if core.size.x > 0.0 and core.size.y > 0.0:
+			_draw_cut_cell(canvas, texture, region, destination, core, modulate, cut_alpha)
+			return
+	var source := Rect2(region.position + (visible.position - destination.position), visible.size)
+	canvas.draw_texture_rect_region(texture, visible, source, modulate)
+
+
+static func _region_of(metadata: Dictionary) -> Rect2:
+	## The source band a cell keeps: the published rect, or the keep_rows slice the
+	## tower publishes so its upper body and its foot stay separate cells.
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	if not metadata.has("keep_rows"):
+		return rect
+	var rows: Array = metadata["keep_rows"]
+	return Rect2(rect.position.x, rect.position.y + float(rows[0]), rect.size.x, float(rows[1]) - float(rows[0]))
+
+
+func _cutaway_core(destination: Rect2, cut: Rect2, cut_alpha: float) -> Rect2:
+	## The window in destination-local units, on the integer grid so every piece
+	## reads whole source pixels. An empty result means the cell is drawn as
+	## authored, which is the whole-frame state whenever nothing covers the hero.
+	if cut.size.x <= 0.0 or cut.size.y <= 0.0 or cut_alpha >= 0.999:
+		return Rect2()
+	var local := Rect2((cut.position - destination.position).round(), cut.size.round())
+	return local.intersection(Rect2(Vector2.ZERO, destination.size))
+
+
+func _draw_cut_cell(canvas: CanvasItem, texture: Texture2D, region: Rect2, destination: Rect2, core: Rect2, modulate: Color, cut_alpha: float) -> void:
+	## Programmatic local alpha: the cell is split into the four bands that keep
+	## the authored alpha plus the hero's own window at the cutaway alpha, so the
+	## ruin keeps its whole form outside the hero and nothing is re-sorted.
+	for piece: Dictionary in cut_pieces(destination, region, core, modulate.a, cut_alpha, false):
+		_draw_cell_piece(canvas, texture, region, destination, piece["dest"], Color(modulate.r, modulate.g, modulate.b, float(piece["alpha"])))
+
+
+## The rectangles a cut cell is drawn from, in draw order. One source of truth for
+## the drawing and for the read-only geometry the visibility harness compares
+## against real pixels, so a reported window is always the drawn window.
+func cut_pieces(destination: Rect2, region: Rect2, core: Rect2, base_alpha: float, cut_alpha: float, clipped: bool = true) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var pieces := cutaway_pieces(Rect2(Vector2.ZERO, destination.size), core)
+	for index: int in pieces.size():
+		var piece: Rect2 = pieces[index]
+		if piece.size.x <= 0.0 or piece.size.y <= 0.0:
+			continue
+		var dest := Rect2(destination.position + piece.position, piece.size)
+		if clipped:
+			dest = dest.intersection(visible_world_region())
+			if dest.size.x <= 0.0 or dest.size.y <= 0.0:
+				continue
+		result.append({
+			"dest": dest,
+			"source": Rect2(region.position + (dest.position - destination.position), dest.size),
+			"alpha": base_alpha * cut_alpha if index == CUTAWAY_WINDOW_INDEX else base_alpha,
+			"window": index == CUTAWAY_WINDOW_INDEX,
+		})
+	return result
+
+
+## Read-only geometry of one cell for this frame: what it is drawn as, where, from
+## which source pixels and with which alpha. An empty list means the cell keeps its
+## authored single-rectangle drawing.
+func cutaway_geometry(sprite_id: String, feet_world: Vector2, hero_world_point: Vector2, base_alpha: float = 1.0) -> Array[Dictionary]:
+	var metadata := sprite(sprite_id)
+	if metadata.is_empty():
+		return []
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
+	var region := _region_of(metadata)
+	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
+	var cut := _cutaway_for_cell(sprite_id, feet_world, hero_world_point)
+	var core := _cutaway_core(destination, cut["window"] as Rect2, float(cut["alpha"]))
+	if core.size.x <= 0.0 or core.size.y <= 0.0:
+		return []
+	return cut_pieces(destination, region, core, base_alpha, float(cut["alpha"]))
+
+
+func _draw_cell_piece(canvas: CanvasItem, texture: Texture2D, region: Rect2, destination: Rect2, piece: Rect2, modulate: Color) -> void:
+	## One disjoint piece of a cell: clipped to the visible world exactly like the
+	## whole cell is, and read from the same source region so a cut never
+	## resamples the art.
+	var visible := piece.intersection(visible_world_region())
+	if visible.size.x <= 0.0 or visible.size.y <= 0.0:
+		return
+	var source := Rect2(region.position + (visible.position - destination.position), visible.size)
+	canvas.draw_texture_rect_region(texture, visible, source, modulate)
+
+
+func _cell_size(metadata: Dictionary) -> Vector2:
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	return rect.size
+
+
+func _select_union(scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
+	var scene_sprites := scene_atlas.get("sprites", {}) as Dictionary
+	var legacy_sprites := legacy_atlas.get("sprites", {}) as Dictionary
+	for sprite_id in scene_sprites.keys():
+		if LEGACY_SPRITE_IDS.has(String(sprite_id)):
+			pending_reason = "ASSETS PENDING: reworked atlas must not override %s" % sprite_id
+			return false
+		var normalized := _normalize_sprite(scene_sprites[sprite_id] as Dictionary)
+		if normalized.is_empty():
+			return false
+		_sprites[String(sprite_id)] = normalized
+	for sprite_id in LEGACY_SPRITE_IDS:
+		var raw: Variant = legacy_sprites.get(sprite_id, {})
+		if not raw is Dictionary:
+			pending_reason = "ASSETS PENDING: calibration atlas lacks %s" % sprite_id
+			return false
+		var normalized := _normalize_sprite(raw as Dictionary)
+		if normalized.is_empty():
+			return false
+		_sprites[sprite_id] = normalized
+	return true
+
+
+func _normalize_sprite(raw: Dictionary) -> Dictionary:
+	var rect: Array = raw.get("rect", [])
+	var anchor: Array = raw.get("anchor", [])
+	if rect.size() != 4 or anchor.size() != 2:
+		pending_reason = "ASSETS PENDING: malformed rect/anchor for %s" % String(raw.get("texture", ""))
+		return {}
+	var normalized := {
+		"texture": String(raw.get("texture", "")),
+		"rect": Rect2(float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3])),
+		"anchor": Vector2(float(anchor[0]), float(anchor[1])),
+	}
+	if raw.has("keep_rows"):
+		normalized["keep_rows"] = (raw.get("keep_rows") as Array).duplicate()
+	return normalized
+
+
+func _load_textures(scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
+	var sources: Dictionary = (scene_atlas.get("textures", {}) as Dictionary).duplicate(true)
+	var legacy_sources: Dictionary = legacy_atlas.get("textures", {})
+	for sprite_id: String in LEGACY_SPRITE_IDS:
+		var key := String(_sprites[sprite_id].get("texture", ""))
+		if not legacy_sources.has(key):
+			pending_reason = "ASSETS PENDING: reused sprite %s has no texture metadata" % sprite_id
+			return false
+		if sources.has(key) and sources[key] != legacy_sources[key]:
+			pending_reason = "ASSETS PENDING: conflicting texture key %s in composed atlas" % key
+			return false
+		sources[key] = legacy_sources[key]
+	for texture_key in sources.keys():
+		var metadata := sources[texture_key] as Dictionary
+		var path := _scoped_texture_path(String(texture_key), String(metadata.get("path", "")))
+		var texture := _load_texture(path)
+		if texture == null:
+			return false
+		if texture.get_width() != int(metadata.get("width", 0)) or texture.get_height() != int(metadata.get("height", 0)):
+			pending_reason = "ASSETS PENDING: %s size does not match its atlas entry" % path
+			return false
+		_textures[String(texture_key)] = texture
+	var ground := _load_texture(APPROVED_GROUND_PATH)
+	if ground == null:
+		return false
+	if ground.get_width() != int(WORLD_SIZE.x) or ground.get_height() != int(WORLD_SIZE.y):
+		pending_reason = "ASSETS PENDING: approved ground must be 1024x640"
+		return false
+	_textures[APPROVED_GROUND_KEY] = ground
+	return true
+
+
+## The reworked atlas ships its own ground; the approved ground_refine_v01 land
+## texture replaces it for every arena use, including any legacy lookup.
+func _scoped_texture_path(texture_key: String, path: String) -> String:
+	if texture_key == "ground" and String(_sprites.get(GROUND_SPRITE_ID, {}).get("texture", "")) == "ground":
+		return APPROVED_GROUND_PATH
+	return path
+
+
+func _validate_cells() -> bool:
+	for sprite_id in CELL_CONTRACTS.keys():
+		var metadata := sprite(String(sprite_id))
+		if metadata.is_empty():
+			pending_reason = "ASSETS PENDING: missing sprite %s" % sprite_id
+			return false
+		var contract: Dictionary = CELL_CONTRACTS[sprite_id]
+		var rect: Rect2 = metadata.get("rect", Rect2())
+		var expected_size: Vector2i = contract.get("size", Vector2i.ZERO)
+		if Vector2i(rect.size) != expected_size:
+			pending_reason = "ASSETS PENDING: %s violates its cell size contract" % sprite_id
+			return false
+		if contract.has("anchor"):
+			var expected_anchor: Vector2i = contract.get("anchor", Vector2i.ZERO)
+			if Vector2i(metadata.get("anchor", Vector2.ZERO)) != expected_anchor:
+				pending_reason = "ASSETS PENDING: %s violates its anchor contract" % sprite_id
+				return false
+	if _sprites.get(GROUND_SPRITE_ID, {}).get("texture", "") != "ground":
+		pending_reason = "ASSETS PENDING: scene.ground must come from the ground texture"
+		return false
+	return true
+
+
+func _read_layout(layout: Dictionary) -> bool:
+	var world := _point(layout.get("world_size", []))
+	if world != WORLD_SIZE:
+		pending_reason = "ASSETS PENDING: layout world_size must be 1024x640"
+		return false
+	_tower_feet = _point(layout.get("tower_feet", []))
+	for value in layout.get("decals", []) as Array:
+		_decals.append((value as Dictionary).duplicate(true))
+	for value in layout.get("structures", []) as Array:
+		_structures.append((value as Dictionary).duplicate(true))
+	if _decals.is_empty() or _structures.is_empty():
+		pending_reason = "ASSETS PENDING: layout must place decals and structures"
+		return false
+	for placement in _decals + _structures:
+		var metadata := sprite(String(placement.get("id", "")))
+		if metadata.is_empty():
+			pending_reason = "ASSETS PENDING: layout places %s without an atlas sprite" % String(placement.get("id", ""))
+			return false
+		var cell := Rect2(_point(placement.get("feet", [])) - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+		if not Rect2(Vector2.ZERO, WORLD_SIZE).encloses(cell):
+			pending_reason = "ASSETS PENDING: %s leaves the world" % String(placement.get("id", ""))
+			return false
+	return true
+
+
+func _read_json(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		pending_reason = "ASSETS PENDING: %s" % path
+		return {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		pending_reason = "ASSETS PENDING: cannot open %s" % path
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		pending_reason = "ASSETS PENDING: invalid JSON in %s" % path
+		return {}
+	return parsed as Dictionary
+
+
+func _load_texture(path: String) -> Texture2D:
+	# The approved PNG bytes are the source of truth: reading them directly keeps
+	# the arena on the exact approved art even when an import cache is stale.
+	# Exported builds fall back to the imported resource.
+	var absolute := ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(absolute):
+		var file := FileAccess.open(absolute, FileAccess.READ)
+		if file != null and file.get_length() > 0:
+			var image := Image.new()
+			if image.load_png_from_buffer(file.get_buffer(file.get_length())) == OK:
+				return ImageTexture.create_from_image(image)
+	if ResourceLoader.exists(path):
+		var resource: Variant = load(path)
+		if resource is Texture2D:
+			return resource
+	pending_reason = "ASSETS PENDING: missing %s" % path
+	return null
+
+
+func _point(value: Variant) -> Vector2:
+	if value is Vector2:
+		return value
+	if not value is Array or (value as Array).size() != 2:
+		return Vector2.ZERO
+	var array: Array = value
+	return Vector2(float(array[0]), float(array[1]))

@@ -1,0 +1,59 @@
+{
+  "artifacts": [
+    {
+      "atlas": "fire",
+      "bytes": 240,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/title_life_v01/fire.png",
+      "sha256": "c68f7f806fcd49ad6ad73a1e23490c344b3b229668f81545eaea7d1f2d840d2e"
+    },
+    {
+      "atlas": "steam",
+      "bytes": 264,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/title_life_v01/steam.png",
+      "sha256": "907921555df0cc57ce260e59611c9b79a93c707c82960ccb75bc9e77a925993f"
+    },
+    {
+      "bytes": 2114,
+      "kind": "atlas_contract",
+      "path": "/data/repo/makeitbig/art/production/p1/title_life_v01/atlas.json",
+      "sha256": "36387a4373f892a6dba92169f2e07f90ee244b91b27101114436da4de032f810"
+    },
+    {
+      "bytes": 827,
+      "kind": "contact_sheet",
+      "path": "/data/repo/makeitbig/art/production/p1/title_life_v01/contact_sheet.png",
+      "sha256": "3ea294738c3b445b685c794ee526291d8f4b70b80671129ba6908d8605034f78"
+    }
+  ],
+  "config_path": "/data/repo/makeitbig/docs/art-production/p1-title-life-v01/recipe.json",
+  "config_sha256": "93a65ed80808333e39c37d16cd4119d0f2456cd2d2e5f6f02a0dec469abd6134",
+  "resource_prefix": "res://art/production/p1/title_life_v01",
+  "schema_version": 1,
+  "sources": {
+    "life": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "mode": "color_key",
+        "tolerance": 120.0
+      },
+      "grid": [
+        4,
+        2
+      ],
+      "height": 1024,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-title-life-v01/sources/life_keyed.png",
+      "sha256": "68603550eae642472ae88873850cbfa60614ac153aa7795f7479487cc1b83910",
+      "width": 1536
+    }
+  },
+  "technical_verification": {
+    "error_count": 0,
+    "errors": [],
+    "scope": "mechanical output properties only; not visual approval",
+    "status": "pass"
+  }
+}

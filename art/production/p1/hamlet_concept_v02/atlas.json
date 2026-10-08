@@ -1,0 +1,237 @@
+{
+  "animations": {},
+  "native_view": [
+    640,
+    360
+  ],
+  "schema_version": 1,
+  "sprites": {
+    "facility.contract": {
+      "anchor": [
+        56,
+        104
+      ],
+      "rect": [
+        0,
+        0,
+        112,
+        112
+      ],
+      "texture": "facilities"
+    },
+    "facility.forge": {
+      "anchor": [
+        80,
+        136
+      ],
+      "rect": [
+        0,
+        0,
+        160,
+        144
+      ],
+      "texture": "forge"
+    },
+    "facility.loadout": {
+      "anchor": [
+        56,
+        104
+      ],
+      "rect": [
+        112,
+        0,
+        112,
+        112
+      ],
+      "texture": "facilities"
+    },
+    "facility.proxy": {
+      "anchor": [
+        56,
+        104
+      ],
+      "rect": [
+        336,
+        0,
+        112,
+        112
+      ],
+      "texture": "facilities"
+    },
+    "facility.training": {
+      "anchor": [
+        56,
+        104
+      ],
+      "rect": [
+        224,
+        0,
+        112,
+        112
+      ],
+      "texture": "facilities"
+    },
+    "hamlet.fence": {
+      "anchor": [
+        48,
+        88
+      ],
+      "rect": [
+        192,
+        0,
+        96,
+        96
+      ],
+      "texture": "edges"
+    },
+    "hamlet.ground": {
+      "anchor": [
+        512,
+        640
+      ],
+      "rect": [
+        0,
+        0,
+        1024,
+        640
+      ],
+      "texture": "ground"
+    },
+    "hamlet.hearth": {
+      "anchor": [
+        160,
+        212
+      ],
+      "rect": [
+        0,
+        0,
+        320,
+        224
+      ],
+      "texture": "hearth"
+    },
+    "hamlet.pier": {
+      "anchor": [
+        48,
+        88
+      ],
+      "rect": [
+        0,
+        0,
+        96,
+        96
+      ],
+      "texture": "edges"
+    },
+    "hamlet.tree": {
+      "anchor": [
+        48,
+        88
+      ],
+      "rect": [
+        96,
+        0,
+        96,
+        96
+      ],
+      "texture": "edges"
+    },
+    "resident.iven": {
+      "anchor": [
+        20,
+        44
+      ],
+      "rect": [
+        40,
+        0,
+        40,
+        48
+      ],
+      "texture": "residents"
+    },
+    "resident.leia": {
+      "anchor": [
+        20,
+        44
+      ],
+      "rect": [
+        120,
+        0,
+        40,
+        48
+      ],
+      "texture": "residents"
+    },
+    "resident.mira": {
+      "anchor": [
+        20,
+        44
+      ],
+      "rect": [
+        0,
+        0,
+        40,
+        48
+      ],
+      "texture": "residents"
+    },
+    "resident.oren": {
+      "anchor": [
+        20,
+        44
+      ],
+      "rect": [
+        160,
+        0,
+        40,
+        48
+      ],
+      "texture": "residents"
+    },
+    "resident.taren": {
+      "anchor": [
+        20,
+        44
+      ],
+      "rect": [
+        80,
+        0,
+        40,
+        48
+      ],
+      "texture": "residents"
+    }
+  },
+  "textures": {
+    "edges": {
+      "height": 96,
+      "path": "res://art/production/p1/hamlet_concept_v02/edges.png",
+      "width": 288
+    },
+    "facilities": {
+      "height": 112,
+      "path": "res://art/production/p1/hamlet_concept_v02/facilities.png",
+      "width": 448
+    },
+    "forge": {
+      "height": 144,
+      "path": "res://art/production/p1/hamlet_concept_v02/forge.png",
+      "width": 160
+    },
+    "ground": {
+      "height": 640,
+      "path": "res://art/production/p1/hamlet_concept_v02/ground.png",
+      "width": 1024
+    },
+    "hearth": {
+      "height": 224,
+      "path": "res://art/production/p1/hamlet_concept_v02/hearth.png",
+      "width": 320
+    },
+    "residents": {
+      "height": 48,
+      "path": "res://art/production/p1/hamlet_concept_v02/residents.png",
+      "width": 200
+    }
+  }
+}

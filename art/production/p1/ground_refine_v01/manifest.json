@@ -1,0 +1,48 @@
+{
+  "artifacts": [
+    {
+      "atlas": "ground",
+      "bytes": 150380,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/ground_refine_v01/ground.png",
+      "sha256": "8dbb1de505a7c650b48d136b0e183455bb3f254de110d57fa7347231cf92669e"
+    },
+    {
+      "bytes": 440,
+      "kind": "atlas_contract",
+      "path": "/data/repo/makeitbig/art/production/p1/ground_refine_v01/atlas.json",
+      "sha256": "6ffa936f4d6f01618421414c704d31a55cf12dabd45ffe420b3df05a47c01426"
+    },
+    {
+      "bytes": 299481,
+      "kind": "contact_sheet",
+      "path": "/data/repo/makeitbig/art/production/p1/ground_refine_v01/contact_sheet.png",
+      "sha256": "51010ef491d18a9e006f9303d6cb3bb43334973781b2a102181ce1f22579a331"
+    }
+  ],
+  "config_path": "/data/repo/makeitbig/docs/art-production/p1-ground-refine-v01/recipe.json",
+  "config_sha256": "9b7502e5d37c649469694e0a830193f29af3f7a390b20d207f761f783f91d1da",
+  "resource_prefix": "res://art/production/p1/ground_refine_v01",
+  "schema_version": 1,
+  "sources": {
+    "ground": {
+      "background": {
+        "colors": [],
+        "mode": "opaque",
+        "tolerance": 0.0
+      },
+      "grid": [
+        1,
+        1
+      ],
+      "height": 992,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-ground-refine-v01/sources/ground_source.png",
+      "sha256": "eee2e975543f5ee1bc07f79efc295366351cdb1e03258e850cd22dae9b95c8c4",
+      "width": 1586
+    }
+  },
+  "technical_verification": {
+    "scope": "mechanical output properties only; not visual approval",
+    "status": "pending_external_verify"
+  }
+}

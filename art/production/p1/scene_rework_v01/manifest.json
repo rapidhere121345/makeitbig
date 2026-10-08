@@ -1,0 +1,158 @@
+{
+  "artifacts": [
+    {
+      "atlas": "boss_body",
+      "bytes": 12635,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/boss_body.png",
+      "sha256": "bab637220cda1d2f90dd6ec56005d2dbfebeab514e5220dd4734e70499d03de9"
+    },
+    {
+      "atlas": "boss_core",
+      "bytes": 1114,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/boss_core.png",
+      "sha256": "51c70bb76dd2586aa8bdd299af6d6cdc2e490f27c2f00cd29e1e882381f56868"
+    },
+    {
+      "atlas": "boss_hands",
+      "bytes": 2949,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/boss_hands.png",
+      "sha256": "caf6250c67cf963b5ddb0bbab14d47d750efbb0288f8654755887eaf0e487a23"
+    },
+    {
+      "atlas": "decals",
+      "bytes": 9252,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/decals.png",
+      "sha256": "bf3f6c2e014f5cf550b2e791e6af83b4dd18fd394c969313ad545aabeeb499e8"
+    },
+    {
+      "atlas": "ground",
+      "bytes": 12129,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/ground.png",
+      "sha256": "c63f61f0dca48eb50556dc30561f829797018c8077321ed29146d81270563628"
+    },
+    {
+      "atlas": "ranger",
+      "bytes": 2917,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/ranger.png",
+      "sha256": "5614c464aa24b6f8d606f5b69f6a19b8356bf94f8b38d2b124290c869c77f4bc"
+    },
+    {
+      "atlas": "ruins",
+      "bytes": 13347,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/ruins.png",
+      "sha256": "380247cc2001037d716567ccd0d10b03fabf958c2f22aba5628f33f16456fd7f"
+    },
+    {
+      "bytes": 4707,
+      "kind": "atlas_contract",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/atlas.json",
+      "sha256": "f615e7fc9b014a10d93d24476b5486deb824ca8d03e8b9011d1d95c972ba894c"
+    },
+    {
+      "bytes": 130904,
+      "kind": "contact_sheet",
+      "path": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/contact_sheet.png",
+      "sha256": "cd56c7e27a03830e384cc08f42dce2eda73bfd60a70d86e900292d848bc0ab00"
+    }
+  ],
+  "config_path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/recipe.json",
+  "config_sha256": "14f47712ed7052d5fd605fa862e7e3606794424f72aa9b75dfca908ae1450ebd",
+  "resource_prefix": "res://art/production/p1/scene_rework_v01",
+  "schema_version": 1,
+  "sources": {
+    "boss": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "mode": "color_key",
+        "tolerance": 120.0
+      },
+      "grid": [
+        2,
+        3
+      ],
+      "height": 1536,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/boss_keyed.png",
+      "sha256": "afa758bcae27c455a33c8c7c8e3f49743550e7fd6d40068dda0cf33850ad1b51",
+      "width": 1024
+    },
+    "decals": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "mode": "color_key",
+        "tolerance": 120.0
+      },
+      "grid": [
+        2,
+        2
+      ],
+      "height": 1086,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/decals_keyed.png",
+      "sha256": "add83e642b6d3b430c6ead055935c73f423932e037730313192f8eb22dde3c9a",
+      "width": 1448
+    },
+    "ground": {
+      "background": {
+        "colors": [],
+        "mode": "opaque",
+        "tolerance": 0.0
+      },
+      "grid": [
+        1,
+        1
+      ],
+      "height": 992,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ground_original.png",
+      "sha256": "a504c521cb642c185ea7e975ccf694ef8704fcbbdcefdf249cc59e1d662a7c4c",
+      "width": 1586
+    },
+    "ranger": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "mode": "color_key",
+        "tolerance": 120.0
+      },
+      "grid": [
+        2,
+        2
+      ],
+      "height": 1536,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ranger_native_keyed.png",
+      "sha256": "137374b164c1ab68d7b0c95eda9eac8e1664f97f1c28e900c74ac927dd718267",
+      "width": 1024
+    },
+    "ruins": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "mode": "color_key",
+        "tolerance": 120.0
+      },
+      "grid": [
+        2,
+        2
+      ],
+      "height": 1024,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ruins_keyed.png",
+      "sha256": "a1dbccfda397774dbb38e7dec49986f9eb35c01e23cefdbe588f6d97deae5dd4",
+      "width": 1536
+    }
+  },
+  "technical_verification": {
+    "scope": "mechanical output properties only; not visual approval",
+    "status": "pending_external_verify"
+  }
+}

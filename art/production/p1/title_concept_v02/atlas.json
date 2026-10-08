@@ -1,0 +1,30 @@
+{
+  "animations": {},
+  "native_view": [
+    640,
+    360
+  ],
+  "schema_version": 1,
+  "sprites": {
+    "title.background": {
+      "anchor": [
+        320,
+        360
+      ],
+      "rect": [
+        0,
+        0,
+        640,
+        360
+      ],
+      "texture": "background"
+    }
+  },
+  "textures": {
+    "background": {
+      "height": 360,
+      "path": "res://art/production/p1/title_concept_v02/background.png",
+      "width": 640
+    }
+  }
+}

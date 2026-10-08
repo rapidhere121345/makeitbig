@@ -1,10 +1,8 @@
-# Agent continuation entrypoint
+# 开发入口
 
-新会话请按以下顺序读取：
+1. [HANDOFF](HANDOFF.md)：当前任务与已核实状态。
+2. [README](../README.md)：当前 Demo 范围、操作、测试与导出。
+3. [UI_GUIDE](../docs/design/UI_GUIDE.md)：已收集的公开技能与项目适配；原始技能及许可在本目录 `skills/`。
+4. [完整游戏系统规划](../docs/SYSTEMS_DESIGN.md)与[叙事索引](../docs/narrative/README.md)：长期系统模型、世界观和未来内容。
 
-1. [`HANDOFF.md`](HANDOFF.md)：当前快照、验证证据、风险和继续开发入口。
-2. [`../docs/GAME_DESIGN_FINAL_v1.0.md`](../docs/GAME_DESIGN_FINAL_v1.0.md)：冻结的第一版产品与系统设计基线。
-3. [`../README.md`](../README.md)：运行、测试和双平台导出命令。
-
-除非用户在新会话明确改变方向，否则以 GDD 为产品规则来源，以测试和实际源码为实现状态来源。不要把 GDD 中的规划内容误报为已经完成的功能。
-
+用户最新要求优先。当前功能以 content 和运行实现为准，不把规划误报为已实现。维护当前入口和唯一交付，删除失效方案、中间产物与未引用旧素材，不并排积累阶段版。

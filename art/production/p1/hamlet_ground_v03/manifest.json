@@ -1,0 +1,50 @@
+{
+  "artifacts": [
+    {
+      "atlas": "ground",
+      "bytes": 101961,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/hamlet_ground_v03/ground.png",
+      "sha256": "13951fe2610aa68951912fa6c3bb408e6f382968f67a2d69cdff2cc63c7a0758"
+    },
+    {
+      "bytes": 441,
+      "kind": "atlas_contract",
+      "path": "/data/repo/makeitbig/art/production/p1/hamlet_ground_v03/atlas.json",
+      "sha256": "a4134845bd321600ed0f1441ca92a2f3aac831814f8978b01fc5798d8237fbf4"
+    },
+    {
+      "bytes": 220423,
+      "kind": "contact_sheet",
+      "path": "/data/repo/makeitbig/art/production/p1/hamlet_ground_v03/contact_sheet.png",
+      "sha256": "31d6b0cad64b9e5d9aa8fd5cc164f59231ce6dd337ee03a530bc285326e258ed"
+    }
+  ],
+  "config_path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-ground-v03/recipe.json",
+  "config_sha256": "096915e6e679770a4ca99b63afd39594e367555e83a94ddc3634088b9b81733a",
+  "resource_prefix": "res://art/production/p1/hamlet_ground_v03",
+  "schema_version": 1,
+  "sources": {
+    "ground": {
+      "background": {
+        "colors": [],
+        "mode": "opaque",
+        "tolerance": 0.0
+      },
+      "grid": [
+        1,
+        1
+      ],
+      "height": 992,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-ground-v03/sources/ground_original.png",
+      "sha256": "b513780ba29d13f4b7fa33f0c7fa04a6637a609b7fec7c60089a0d364ce68ec6",
+      "width": 1586
+    }
+  },
+  "technical_verification": {
+    "error_count": 0,
+    "errors": [],
+    "scope": "mechanical output properties only; not visual approval",
+    "status": "pass"
+  }
+}

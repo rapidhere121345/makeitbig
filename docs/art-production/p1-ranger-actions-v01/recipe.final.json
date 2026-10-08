@@ -1,0 +1,1483 @@
+{
+  "schema_version": 1,
+  "resource_prefix": "res://art/production/p1/ranger_actions_v01",
+  "native_view": [
+    640,
+    360
+  ],
+  "palette": [
+    "#111820",
+    "#e9ddc3",
+    "#5b4036",
+    "#1d2731",
+    "#d3cbb5",
+    "#eead56",
+    "#bd4653",
+    "#896043",
+    "#bb713d",
+    "#aaafab",
+    "#46515a",
+    "#71808a"
+  ],
+  "sources": {
+    "south": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/south_original.png",
+    "north": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/north_original.png",
+    "east": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/east_original.png",
+    "west": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/west_original.png",
+    "north_shoot": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/north_shoot_fixed_original.png"
+  },
+  "background": {
+    "south": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    },
+    "north": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    },
+    "east": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    },
+    "west": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    },
+    "north_shoot": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    }
+  },
+  "cell_size": [
+    48,
+    48
+  ],
+  "anchor": [
+    24,
+    44
+  ],
+  "columns": 4,
+  "frames": [
+    {
+      "id": "ranger.south.idle.0",
+      "source": "south",
+      "crop": [
+        1006,
+        356,
+        162,
+        250
+      ],
+      "source_anchor": [
+        85,
+        247
+      ],
+      "scale": 0.15,
+      "action": "idle",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.walk.0",
+      "source": "south",
+      "crop": [
+        81,
+        57,
+        159,
+        256
+      ],
+      "source_anchor": [
+        81,
+        253
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.walk.1",
+      "source": "south",
+      "crop": [
+        388,
+        51,
+        164,
+        259
+      ],
+      "source_anchor": [
+        83,
+        256
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.walk.2",
+      "source": "south",
+      "crop": [
+        699,
+        54,
+        159,
+        259
+      ],
+      "source_anchor": [
+        86,
+        256
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.walk.3",
+      "source": "south",
+      "crop": [
+        1006,
+        54,
+        161,
+        256
+      ],
+      "source_anchor": [
+        87,
+        253
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.shoot.0",
+      "source": "south",
+      "crop": [
+        77,
+        357,
+        165,
+        249
+      ],
+      "source_anchor": [
+        84,
+        246
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.shoot.1",
+      "source": "south",
+      "crop": [
+        345,
+        362,
+        262,
+        255
+      ],
+      "source_anchor": [
+        127,
+        252
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.shoot.2",
+      "source": "south",
+      "crop": [
+        675,
+        359,
+        238,
+        258
+      ],
+      "source_anchor": [
+        110,
+        255
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.shoot.3",
+      "source": "south",
+      "crop": [
+        1006,
+        356,
+        162,
+        250
+      ],
+      "source_anchor": [
+        85,
+        247
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.dodge.0",
+      "source": "south",
+      "crop": [
+        63,
+        710,
+        189,
+        199
+      ],
+      "source_anchor": [
+        100,
+        196
+      ],
+      "scale": 0.15,
+      "action": "dodge",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.dodge.1",
+      "source": "south",
+      "crop": [
+        377,
+        700,
+        195,
+        206
+      ],
+      "source_anchor": [
+        94,
+        203
+      ],
+      "scale": 0.15,
+      "action": "dodge",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.dash.0",
+      "source": "south",
+      "crop": [
+        692,
+        662,
+        177,
+        252
+      ],
+      "source_anchor": [
+        92,
+        249
+      ],
+      "scale": 0.15,
+      "action": "dash",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.dash.1",
+      "source": "south",
+      "crop": [
+        1006,
+        661,
+        166,
+        243
+      ],
+      "source_anchor": [
+        88,
+        240
+      ],
+      "scale": 0.15,
+      "action": "dash",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.hit.0",
+      "source": "south",
+      "crop": [
+        72,
+        958,
+        177,
+        249
+      ],
+      "source_anchor": [
+        94,
+        246
+      ],
+      "scale": 0.15,
+      "action": "hit",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.death.0",
+      "source": "south",
+      "crop": [
+        388,
+        1004,
+        178,
+        189
+      ],
+      "source_anchor": [
+        84,
+        186
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.death.1",
+      "source": "south",
+      "crop": [
+        686,
+        1029,
+        179,
+        175
+      ],
+      "source_anchor": [
+        100,
+        172
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.south.death.2",
+      "source": "south",
+      "crop": [
+        964,
+        1029,
+        265,
+        187
+      ],
+      "source_anchor": [
+        137,
+        184
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "south"
+    },
+    {
+      "id": "ranger.north.idle.0",
+      "source": "north_shoot",
+      "crop": [
+        1026,
+        375,
+        140,
+        241
+      ],
+      "source_anchor": [
+        74,
+        238
+      ],
+      "scale": 0.15,
+      "action": "idle",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.walk.0",
+      "source": "north",
+      "crop": [
+        95,
+        48,
+        144,
+        250
+      ],
+      "source_anchor": [
+        71,
+        247
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.walk.1",
+      "source": "north",
+      "crop": [
+        404,
+        48,
+        158,
+        249
+      ],
+      "source_anchor": [
+        80,
+        246
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.walk.2",
+      "source": "north",
+      "crop": [
+        714,
+        51,
+        137,
+        248
+      ],
+      "source_anchor": [
+        71,
+        245
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.walk.3",
+      "source": "north",
+      "crop": [
+        1026,
+        51,
+        153,
+        250
+      ],
+      "source_anchor": [
+        76,
+        247
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.shoot.0",
+      "source": "north_shoot",
+      "crop": [
+        101,
+        334,
+        154,
+        285
+      ],
+      "source_anchor": [
+        73,
+        282
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.shoot.1",
+      "source": "north_shoot",
+      "crop": [
+        375,
+        352,
+        206,
+        266
+      ],
+      "source_anchor": [
+        104,
+        263
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.shoot.2",
+      "source": "north_shoot",
+      "crop": [
+        683,
+        375,
+        209,
+        242
+      ],
+      "source_anchor": [
+        114,
+        239
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.shoot.3",
+      "source": "north_shoot",
+      "crop": [
+        1026,
+        375,
+        140,
+        241
+      ],
+      "source_anchor": [
+        74,
+        238
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.dodge.0",
+      "source": "north",
+      "crop": [
+        82,
+        701,
+        176,
+        193
+      ],
+      "source_anchor": [
+        88,
+        190
+      ],
+      "scale": 0.15,
+      "action": "dodge",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.dodge.1",
+      "source": "north",
+      "crop": [
+        385,
+        689,
+        180,
+        217
+      ],
+      "source_anchor": [
+        98,
+        214
+      ],
+      "scale": 0.15,
+      "action": "dodge",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.dash.0",
+      "source": "north",
+      "crop": [
+        679,
+        693,
+        191,
+        220
+      ],
+      "source_anchor": [
+        109,
+        217
+      ],
+      "scale": 0.15,
+      "action": "dash",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.dash.1",
+      "source": "north",
+      "crop": [
+        1022,
+        661,
+        141,
+        241
+      ],
+      "source_anchor": [
+        71,
+        238
+      ],
+      "scale": 0.15,
+      "action": "dash",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.hit.0",
+      "source": "north",
+      "crop": [
+        70,
+        958,
+        199,
+        221
+      ],
+      "source_anchor": [
+        92,
+        218
+      ],
+      "scale": 0.15,
+      "action": "hit",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.death.0",
+      "source": "north",
+      "crop": [
+        401,
+        982,
+        171,
+        190
+      ],
+      "source_anchor": [
+        79,
+        187
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.death.1",
+      "source": "north",
+      "crop": [
+        671,
+        1012,
+        226,
+        176
+      ],
+      "source_anchor": [
+        121,
+        173
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.north.death.2",
+      "source": "north",
+      "crop": [
+        973,
+        1031,
+        233,
+        167
+      ],
+      "source_anchor": [
+        128,
+        164
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "north"
+    },
+    {
+      "id": "ranger.east.idle.0",
+      "source": "east",
+      "crop": [
+        1000,
+        380,
+        210,
+        253
+      ],
+      "source_anchor": [
+        108,
+        250
+      ],
+      "scale": 0.15,
+      "action": "idle",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.walk.0",
+      "source": "east",
+      "crop": [
+        74,
+        60,
+        191,
+        252
+      ],
+      "source_anchor": [
+        98,
+        249
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.walk.1",
+      "source": "east",
+      "crop": [
+        414,
+        63,
+        170,
+        250
+      ],
+      "source_anchor": [
+        89,
+        247
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.walk.2",
+      "source": "east",
+      "crop": [
+        697,
+        63,
+        185,
+        250
+      ],
+      "source_anchor": [
+        97,
+        247
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.walk.3",
+      "source": "east",
+      "crop": [
+        1008,
+        63,
+        181,
+        249
+      ],
+      "source_anchor": [
+        104,
+        246
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.shoot.0",
+      "source": "east",
+      "crop": [
+        57,
+        372,
+        234,
+        261
+      ],
+      "source_anchor": [
+        109,
+        258
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.shoot.1",
+      "source": "east",
+      "crop": [
+        367,
+        360,
+        236,
+        273
+      ],
+      "source_anchor": [
+        118,
+        270
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.shoot.2",
+      "source": "east",
+      "crop": [
+        688,
+        359,
+        221,
+        274
+      ],
+      "source_anchor": [
+        108,
+        271
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.shoot.3",
+      "source": "east",
+      "crop": [
+        1000,
+        380,
+        210,
+        253
+      ],
+      "source_anchor": [
+        108,
+        250
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.dodge.0",
+      "source": "east",
+      "crop": [
+        61,
+        734,
+        220,
+        198
+      ],
+      "source_anchor": [
+        110,
+        195
+      ],
+      "scale": 0.15,
+      "action": "dodge",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.dodge.1",
+      "source": "east",
+      "crop": [
+        379,
+        734,
+        208,
+        198
+      ],
+      "source_anchor": [
+        107,
+        195
+      ],
+      "scale": 0.15,
+      "action": "dodge",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.dash.0",
+      "source": "east",
+      "crop": [
+        662,
+        728,
+        248,
+        204
+      ],
+      "source_anchor": [
+        151,
+        201
+      ],
+      "scale": 0.15,
+      "action": "dash",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.dash.1",
+      "source": "east",
+      "crop": [
+        994,
+        695,
+        224,
+        237
+      ],
+      "source_anchor": [
+        135,
+        234
+      ],
+      "scale": 0.15,
+      "action": "dash",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.hit.0",
+      "source": "east",
+      "crop": [
+        54,
+        978,
+        218,
+        231
+      ],
+      "source_anchor": [
+        106,
+        228
+      ],
+      "scale": 0.15,
+      "action": "hit",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.death.0",
+      "source": "east",
+      "crop": [
+        382,
+        1027,
+        199,
+        182
+      ],
+      "source_anchor": [
+        100,
+        179
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.death.1",
+      "source": "east",
+      "crop": [
+        643,
+        1064,
+        259,
+        151
+      ],
+      "source_anchor": [
+        151,
+        148
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.east.death.2",
+      "source": "east",
+      "crop": [
+        944,
+        1100,
+        290,
+        118
+      ],
+      "source_anchor": [
+        155,
+        115
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "ranger.west.idle.0",
+      "source": "west",
+      "crop": [
+        996,
+        375,
+        210,
+        248
+      ],
+      "source_anchor": [
+        102,
+        245
+      ],
+      "scale": 0.15,
+      "action": "idle",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.walk.0",
+      "source": "west",
+      "crop": [
+        67,
+        54,
+        201,
+        249
+      ],
+      "source_anchor": [
+        95,
+        246
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.walk.1",
+      "source": "west",
+      "crop": [
+        380,
+        59,
+        196,
+        244
+      ],
+      "source_anchor": [
+        88,
+        241
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.walk.2",
+      "source": "west",
+      "crop": [
+        684,
+        59,
+        211,
+        244
+      ],
+      "source_anchor": [
+        98,
+        241
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.walk.3",
+      "source": "west",
+      "crop": [
+        1007,
+        54,
+        185,
+        249
+      ],
+      "source_anchor": [
+        86,
+        246
+      ],
+      "scale": 0.15,
+      "action": "walk",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.shoot.0",
+      "source": "west",
+      "crop": [
+        61,
+        360,
+        217,
+        263
+      ],
+      "source_anchor": [
+        100,
+        260
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.shoot.1",
+      "source": "west",
+      "crop": [
+        361,
+        357,
+        237,
+        266
+      ],
+      "source_anchor": [
+        117,
+        263
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.shoot.2",
+      "source": "west",
+      "crop": [
+        673,
+        368,
+        233,
+        255
+      ],
+      "source_anchor": [
+        117,
+        252
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.shoot.3",
+      "source": "west",
+      "crop": [
+        996,
+        375,
+        210,
+        248
+      ],
+      "source_anchor": [
+        102,
+        245
+      ],
+      "scale": 0.15,
+      "action": "shoot",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.dodge.0",
+      "source": "west",
+      "crop": [
+        59,
+        700,
+        217,
+        203
+      ],
+      "source_anchor": [
+        109,
+        200
+      ],
+      "scale": 0.15,
+      "action": "dodge",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.dodge.1",
+      "source": "west",
+      "crop": [
+        363,
+        691,
+        218,
+        212
+      ],
+      "source_anchor": [
+        114,
+        209
+      ],
+      "scale": 0.15,
+      "action": "dodge",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.dash.0",
+      "source": "west",
+      "crop": [
+        640,
+        696,
+        272,
+        207
+      ],
+      "source_anchor": [
+        118,
+        204
+      ],
+      "scale": 0.15,
+      "action": "dash",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.dash.1",
+      "source": "west",
+      "crop": [
+        1005,
+        672,
+        204,
+        234
+      ],
+      "source_anchor": [
+        89,
+        231
+      ],
+      "scale": 0.15,
+      "action": "dash",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.hit.0",
+      "source": "west",
+      "crop": [
+        66,
+        946,
+        206,
+        239
+      ],
+      "source_anchor": [
+        97,
+        236
+      ],
+      "scale": 0.15,
+      "action": "hit",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.death.0",
+      "source": "west",
+      "crop": [
+        369,
+        995,
+        187,
+        187
+      ],
+      "source_anchor": [
+        103,
+        184
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.death.1",
+      "source": "west",
+      "crop": [
+        631,
+        1030,
+        267,
+        158
+      ],
+      "source_anchor": [
+        141,
+        155
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "west"
+    },
+    {
+      "id": "ranger.west.death.2",
+      "source": "west",
+      "crop": [
+        940,
+        1064,
+        290,
+        127
+      ],
+      "source_anchor": [
+        150,
+        124
+      ],
+      "scale": 0.15,
+      "action": "death",
+      "facing": "west"
+    }
+  ],
+  "animations": {
+    "ranger.south.idle": {
+      "frames": [
+        "ranger.south.idle.0"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.south.walk": {
+      "frames": [
+        "ranger.south.walk.0",
+        "ranger.south.walk.1",
+        "ranger.south.walk.2",
+        "ranger.south.walk.3"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.south.shoot": {
+      "frames": [
+        "ranger.south.shoot.0",
+        "ranger.south.shoot.1",
+        "ranger.south.shoot.2",
+        "ranger.south.shoot.3"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.south.dodge": {
+      "frames": [
+        "ranger.south.dodge.0",
+        "ranger.south.dodge.1"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.south.dash": {
+      "frames": [
+        "ranger.south.dash.0",
+        "ranger.south.dash.1"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.south.hit": {
+      "frames": [
+        "ranger.south.hit.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "ranger.south.death": {
+      "frames": [
+        "ranger.south.death.0",
+        "ranger.south.death.1",
+        "ranger.south.death.2"
+      ],
+      "fps": 6,
+      "loop": false
+    },
+    "ranger.north.idle": {
+      "frames": [
+        "ranger.north.idle.0"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.north.walk": {
+      "frames": [
+        "ranger.north.walk.0",
+        "ranger.north.walk.1",
+        "ranger.north.walk.2",
+        "ranger.north.walk.3"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.north.shoot": {
+      "frames": [
+        "ranger.north.shoot.0",
+        "ranger.north.shoot.1",
+        "ranger.north.shoot.2",
+        "ranger.north.shoot.3"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.north.dodge": {
+      "frames": [
+        "ranger.north.dodge.0",
+        "ranger.north.dodge.1"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.north.dash": {
+      "frames": [
+        "ranger.north.dash.0",
+        "ranger.north.dash.1"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.north.hit": {
+      "frames": [
+        "ranger.north.hit.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "ranger.north.death": {
+      "frames": [
+        "ranger.north.death.0",
+        "ranger.north.death.1",
+        "ranger.north.death.2"
+      ],
+      "fps": 6,
+      "loop": false
+    },
+    "ranger.east.idle": {
+      "frames": [
+        "ranger.east.idle.0"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.east.walk": {
+      "frames": [
+        "ranger.east.walk.0",
+        "ranger.east.walk.1",
+        "ranger.east.walk.2",
+        "ranger.east.walk.3"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.east.shoot": {
+      "frames": [
+        "ranger.east.shoot.0",
+        "ranger.east.shoot.1",
+        "ranger.east.shoot.2",
+        "ranger.east.shoot.3"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.east.dodge": {
+      "frames": [
+        "ranger.east.dodge.0",
+        "ranger.east.dodge.1"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.east.dash": {
+      "frames": [
+        "ranger.east.dash.0",
+        "ranger.east.dash.1"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.east.hit": {
+      "frames": [
+        "ranger.east.hit.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "ranger.east.death": {
+      "frames": [
+        "ranger.east.death.0",
+        "ranger.east.death.1",
+        "ranger.east.death.2"
+      ],
+      "fps": 6,
+      "loop": false
+    },
+    "ranger.west.idle": {
+      "frames": [
+        "ranger.west.idle.0"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.west.walk": {
+      "frames": [
+        "ranger.west.walk.0",
+        "ranger.west.walk.1",
+        "ranger.west.walk.2",
+        "ranger.west.walk.3"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.west.shoot": {
+      "frames": [
+        "ranger.west.shoot.0",
+        "ranger.west.shoot.1",
+        "ranger.west.shoot.2",
+        "ranger.west.shoot.3"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.west.dodge": {
+      "frames": [
+        "ranger.west.dodge.0",
+        "ranger.west.dodge.1"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.west.dash": {
+      "frames": [
+        "ranger.west.dash.0",
+        "ranger.west.dash.1"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    "ranger.west.hit": {
+      "frames": [
+        "ranger.west.hit.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "ranger.west.death": {
+      "frames": [
+        "ranger.west.death.0",
+        "ranger.west.death.1",
+        "ranger.west.death.2"
+      ],
+      "fps": 6,
+      "loop": false
+    }
+  },
+  "disclosure": {
+    "south": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate.",
+    "north": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate.",
+    "east": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate.",
+    "west": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate.",
+    "north_shoot": "Targeted imagegen correction of north shooting poses, only row2 consumed. Lowered bow recovery reused for idle; original north other rows retained byte-identical as sources."
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "sprites": [
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "lineage_quiver",
+      "id": "equipment.lineage_quiver",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "overrides.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "farwatch_quiver",
+      "id": "equipment.farwatch_quiver",
+      "rect": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "texture": "overrides.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "turnfeather_gloves",
+      "id": "equipment.turnfeather_gloves",
+      "rect": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "texture": "overrides.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "piercer_gloves",
+      "id": "equipment.piercer_gloves",
+      "rect": [
+        0,
+        32,
+        32,
+        32
+      ],
+      "texture": "overrides.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "off_hand",
+      "id": "equipment_slot.off_hand",
+      "rect": [
+        32,
+        32,
+        32,
+        32
+      ],
+      "texture": "overrides.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "gloves",
+      "id": "equipment_slot.gloves",
+      "rect": [
+        64,
+        32,
+        32,
+        32
+      ],
+      "texture": "overrides.png",
+      "type": "ui_icon"
+    }
+  ],
+  "textures": [
+    {
+      "file": "overrides.png",
+      "id": "overrides"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "animations": {},
+  "native_view": [
+    640,
+    360
+  ],
+  "schema_version": 1,
+  "sprites": {
+    "return.background": {
+      "anchor": [
+        320,
+        360
+      ],
+      "rect": [
+        0,
+        0,
+        640,
+        360
+      ],
+      "texture": "background"
+    },
+    "return.bench": {
+      "anchor": [
+        32,
+        38
+      ],
+      "rect": [
+        0,
+        0,
+        64,
+        40
+      ],
+      "texture": "bench"
+    },
+    "return.leia": {
+      "anchor": [
+        24,
+        46
+      ],
+      "facing": "west",
+      "rect": [
+        48,
+        0,
+        48,
+        48
+      ],
+      "state": "record",
+      "texture": "workers"
+    },
+    "return.mira": {
+      "anchor": [
+        24,
+        46
+      ],
+      "facing": "east",
+      "rect": [
+        0,
+        0,
+        48,
+        48
+      ],
+      "state": "maintain",
+      "texture": "workers"
+    }
+  },
+  "textures": {
+    "background": {
+      "height": 360,
+      "path": "res://art/production/p1/hearth_return_v01/background.png",
+      "width": 640
+    },
+    "bench": {
+      "height": 40,
+      "path": "res://art/production/p1/hearth_return_v01/bench.png",
+      "width": 64
+    },
+    "workers": {
+      "height": 48,
+      "path": "res://art/production/p1/hearth_return_v01/workers.png",
+      "width": 96
+    }
+  }
+}

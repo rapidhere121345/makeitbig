@@ -1,0 +1,147 @@
+{
+  "animations": {
+    "life.fire": {
+      "fps": 4,
+      "frames": [
+        "life.fire.0",
+        "life.fire.1",
+        "life.fire.2",
+        "life.fire.3"
+      ],
+      "loop": true
+    },
+    "life.steam": {
+      "fps": 2,
+      "frames": [
+        "life.steam.0",
+        "life.steam.1",
+        "life.steam.2",
+        "life.steam.3"
+      ],
+      "loop": true
+    }
+  },
+  "native_view": [
+    640,
+    360
+  ],
+  "schema_version": 1,
+  "sprites": {
+    "life.fire.0": {
+      "anchor": [
+        4,
+        9
+      ],
+      "rect": [
+        0,
+        0,
+        8,
+        10
+      ],
+      "texture": "fire"
+    },
+    "life.fire.1": {
+      "anchor": [
+        4,
+        9
+      ],
+      "rect": [
+        8,
+        0,
+        8,
+        10
+      ],
+      "texture": "fire"
+    },
+    "life.fire.2": {
+      "anchor": [
+        4,
+        9
+      ],
+      "rect": [
+        16,
+        0,
+        8,
+        10
+      ],
+      "texture": "fire"
+    },
+    "life.fire.3": {
+      "anchor": [
+        4,
+        9
+      ],
+      "rect": [
+        24,
+        0,
+        8,
+        10
+      ],
+      "texture": "fire"
+    },
+    "life.steam.0": {
+      "anchor": [
+        6,
+        17
+      ],
+      "rect": [
+        0,
+        0,
+        12,
+        18
+      ],
+      "texture": "steam"
+    },
+    "life.steam.1": {
+      "anchor": [
+        6,
+        17
+      ],
+      "rect": [
+        12,
+        0,
+        12,
+        18
+      ],
+      "texture": "steam"
+    },
+    "life.steam.2": {
+      "anchor": [
+        6,
+        17
+      ],
+      "rect": [
+        24,
+        0,
+        12,
+        18
+      ],
+      "texture": "steam"
+    },
+    "life.steam.3": {
+      "anchor": [
+        6,
+        17
+      ],
+      "rect": [
+        36,
+        0,
+        12,
+        18
+      ],
+      "texture": "steam"
+    }
+  },
+  "textures": {
+    "fire": {
+      "height": 10,
+      "path": "res://art/production/p1/title_life_v01/fire.png",
+      "width": 32
+    },
+    "steam": {
+      "height": 18,
+      "path": "res://art/production/p1/title_life_v01/steam.png",
+      "width": 48
+    }
+  }
+}

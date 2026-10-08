@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "production_version": "r14-v03-crop01",
+  "generator": "built-in image_gen.imagegen",
+  "model_note": "The built-in tool did not expose its model version; no model name inferred.",
+  "references": [
+    {
+      "path": "docs/art-production/p1-hamlet-style-r13/sources/residents.png",
+      "role": "Existing costume / identity reference, five rows top to bottom: mira, iven, taren, leia, oren",
+      "actually_viewed": true,
+      "sha256": "8491083522931fd493cc4f98f75cd698551e3e293ba84a4290b0eb0615c54d3a"
+    },
+    {
+      "path": "build/final-20261007-r13/evidence/pack-check/linux-gpu/linux_base_1600x900.png",
+      "role": "Existing snowy hamlet palette, materials and warm side-light reference",
+      "actually_viewed": true,
+      "sha256": "1162fb7b0c15aa2141d1b9da7c26f436d23509258cefd6076c384628c03724d1"
+    },
+    {
+      "path": "docs/narrative/STORY_AND_EXPERIENCE_LOOTER_REWRITE_2026-09-13.md",
+      "role": "Section 3.1, lines 95-103: winter-tower watchkeeper / contemporary chronicler / travelling merchant / watch apprentice / relocated repairer",
+      "actually_read": true,
+      "sha256": "40b613db38a00b0ccb74ec6b2bafaff553cb010765931e15f5ee4e21eb4e47ba"
+    }
+  ],
+  "originals": [
+    {
+      "version": "v03",
+      "path": "docs/art-production/p1-story-portraits-r14/sources/portraits-v03-original.png",
+      "sha256": "386eb5595e3e64bab7c8d3c551c66845aef39db5252eceec150d53fe13fc09e4",
+      "size": [
+        1374,
+        1145
+      ],
+      "status": "accepted-after-Godot-rectangular-crop"
+    }
+  ],
+  "technical_pipeline": {
+    "engine": "Godot 4.7.2.stable.official.ed1daf0bf",
+    "recipe": "docs/art-production/p1-story-portraits-r14/recipe.json",
+    "script": "tools/art_pipeline/p1_story_portraits_r14/pack.gd",
+    "operations": [
+      "rectangular transparent crop",
+      "nearest-neighbor aspect-fit resize",
+      "fixed transparent canvas / grid packing"
+    ],
+    "alpha_modification": false,
+    "python_used": false,
+    "shared_project_import": false
+  },
+  "scope": [
+    "art/production/p1/story_portraits_r14/",
+    "docs/art-production/p1-story-portraits-r14/",
+    "tools/art_pipeline/p1_story_portraits_r14/"
+  ],
+  "art_direction_note": "Specific facial structure, age presentation, hair and gender presentation are visual design choices; narrative source establishes roles rather than detailed physical descriptions."
+}

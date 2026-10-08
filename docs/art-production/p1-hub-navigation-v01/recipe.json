@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "source": "sources/navigation_keyed.png",
+  "palette": [
+    "#273036",
+    "#59656a",
+    "#899396",
+    "#e0e2dc",
+    "#5b4036",
+    "#896043",
+    "#ad7950"
+  ],
+  "colorkey": "#FF00FF",
+  "tolerance": 100,
+  "key_scope": "all",
+  "sprites": [
+    {
+      "id": "contract",
+      "source_rect": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    {
+      "id": "loadout",
+      "source_rect": [
+        512,
+        0,
+        512,
+        512
+      ]
+    },
+    {
+      "id": "forge",
+      "source_rect": [
+        1024,
+        0,
+        512,
+        512
+      ]
+    },
+    {
+      "id": "training",
+      "source_rect": [
+        0,
+        512,
+        512,
+        512
+      ]
+    },
+    {
+      "id": "proxy",
+      "source_rect": [
+        512,
+        512,
+        512,
+        512
+      ]
+    }
+  ]
+}

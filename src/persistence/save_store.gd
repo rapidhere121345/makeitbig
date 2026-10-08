@@ -75,6 +75,37 @@ func load_latest() -> Dictionary:
 	}
 
 
+## Removes exactly this store's four save artifacts: save_a.json, save_b.json,
+## save_a.json.tmp, and save_b.json.tmp under directory_path.
+##
+## The wipe is deliberately narrow and safe: it never recurses, never removes
+## the directory itself, never touches any other file, and never accepts an
+## external path.  Missing targets are skipped, so the operation is idempotent.
+## Every per-file removal error is reported individually; the operation only
+## succeeds when nothing that needed removal failed to be removed.
+func delete_all() -> Dictionary:
+	var removed: Array[String] = []
+	var failed: Array[Dictionary] = []
+	var absolute_directory: String = ProjectSettings.globalize_path(directory_path)
+	for target_name in _delete_target_names():
+		var target_path: String = absolute_directory.path_join(target_name)
+		if not FileAccess.file_exists(target_path):
+			continue
+		var remove_error: Error = DirAccess.remove_absolute(target_path)
+		if remove_error != OK:
+			failed.append({"file": target_name, "error": error_string(remove_error)})
+		else:
+			removed.append(target_name)
+	if not failed.is_empty():
+		return {
+			"ok": false,
+			"error": "failed to remove %d save file(s)" % failed.size(),
+			"failed": failed,
+			"removed": removed,
+		}
+	return {"ok": true, "removed": removed}
+
+
 static func canonical_json(value: Variant) -> String:
 	var encoded: Dictionary = _encode_json(value)
 	return str(encoded.text) if bool(encoded.ok) else ""
@@ -177,6 +208,14 @@ func _write_slot(slot_name: String, contents: String) -> String:
 
 func _slot_path(slot_name: String) -> String:
 	return ProjectSettings.globalize_path(directory_path).path_join("save_%s.json" % slot_name)
+
+
+static func _delete_target_names() -> Array[String]:
+	var names: Array[String] = []
+	for slot_name in SLOT_NAMES:
+		names.append("save_%s.json" % slot_name)
+		names.append("save_%s.json.tmp" % slot_name)
+	return names
 
 
 static func _encode_json(value: Variant) -> Dictionary:

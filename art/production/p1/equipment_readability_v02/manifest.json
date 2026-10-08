@@ -1,0 +1,470 @@
+{
+  "inputs": {
+    "recipe": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/recipe.json",
+      "sha256": "169e16097e98b9a6a3ba2bafe733174804d71b0080b64f08a5aad116ff9c07d7"
+    },
+    "sources": [
+      {
+        "dimensions": [
+          1240,
+          1269
+        ],
+        "id": "equipment.lineage_quiver",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/lineage_quiver.png",
+        "sha256": "dbc8edbcf66e0114c6df79edfc8bc188ea0b6dec8bcabfdbc184615eb85aae32"
+      },
+      {
+        "dimensions": [
+          1218,
+          1292
+        ],
+        "id": "equipment.farwatch_quiver",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/farwatch_quiver.png",
+        "sha256": "6c359d54218f6e4ed097499db52025cc470d1957597671d6159f84021e2654cf"
+      },
+      {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "id": "equipment.turnfeather_gloves",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/turnfeather_gloves.png",
+        "sha256": "d4ef0e3c8df700d713723c6b0695521e96beab08876199f33a09f4c1275788c6"
+      },
+      {
+        "dimensions": [
+          1215,
+          1295
+        ],
+        "id": "equipment.piercer_gloves",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/piercer_gloves.png",
+        "sha256": "e733ffb4798544595ed57f3a4c64a17d2a88eb9dcdcdd89f9495e1a7b58eeeff"
+      },
+      {
+        "dimensions": [
+          1240,
+          1269
+        ],
+        "id": "equipment_slot.off_hand",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/slot_off_hand.png",
+        "sha256": "ae5468129893882a7142c5b5c37f8eca403514df881dcc071a7615f8a4b59651"
+      },
+      {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "id": "equipment_slot.gloves",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/slot_gloves.png",
+        "sha256": "96298616d6a6472dd10353425bcc5d1e1c276ca605f8f0deafa57a26ca5922e7"
+      }
+    ]
+  },
+  "outputs": {
+    "artifacts": [
+      {
+        "bytes": 2794,
+        "dimensions": [
+          96,
+          64
+        ],
+        "file": "overrides.png",
+        "sha256": "8260c37337097b8f9acacd135f26f2a4ba68b6bee92a80c76316129cce18075a"
+      },
+      {
+        "bytes": 1758,
+        "file": "atlas.json",
+        "sha256": "eca6e83a949fe66be20f839c611ac5bb896c7c578deb2f2325b9cf4405a565d9"
+      }
+    ],
+    "atlas": "atlas.json",
+    "atlas_sha256": "eca6e83a949fe66be20f839c611ac5bb896c7c578deb2f2325b9cf4405a565d9",
+    "sprite_ids": [
+      "equipment.lineage_quiver",
+      "equipment.farwatch_quiver",
+      "equipment.turnfeather_gloves",
+      "equipment.piercer_gloves",
+      "equipment_slot.off_hand",
+      "equipment_slot.gloves"
+    ],
+    "texture": {
+      "dimensions": [
+        96,
+        64
+      ],
+      "file": "overrides.png",
+      "id": "overrides"
+    }
+  },
+  "pipeline": "p1_equipment_readability_v02",
+  "review": {
+    "derivatives": [
+      {
+        "bytes": 2794,
+        "dimensions": [
+          96,
+          64
+        ],
+        "file": "overrides_native.png",
+        "label": "native",
+        "sha256": "8260c37337097b8f9acacd135f26f2a4ba68b6bee92a80c76316129cce18075a"
+      },
+      {
+        "bytes": 3255,
+        "dimensions": [
+          192,
+          128
+        ],
+        "file": "overrides_2x.png",
+        "label": "2x",
+        "sha256": "e75805b5e78f7f565b4cd96664ef426ef5c73b19bcac4c07d781659fb9346af6"
+      },
+      {
+        "bytes": 464,
+        "dimensions": [
+          24,
+          16
+        ],
+        "file": "overrides_25pct.png",
+        "label": "25pct",
+        "sha256": "90aa6b7a35f2e6d739a781e768fef503df00778645857aab4228096e67bb0ca9"
+      },
+      {
+        "bytes": 2548,
+        "dimensions": [
+          96,
+          64
+        ],
+        "file": "overrides_gray.png",
+        "label": "gray",
+        "sha256": "effb3e02eaad890df277faa659cbca606cfd7b5378391a41a4d2a9fe8f06c919"
+      },
+      {
+        "bytes": 679,
+        "dimensions": [
+          96,
+          64
+        ],
+        "file": "overrides_silhouette.png",
+        "label": "silhouette",
+        "sha256": "7cc7dbf4696dc31eb463b3a43bec3d1b8852d351324d356e1a6133130539ee5c"
+      }
+    ],
+    "directory": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/review"
+  },
+  "schema_version": 1,
+  "sprites": [
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "lineage_quiver",
+      "colorkey": "#ff00ff",
+      "id": "equipment.lineage_quiver",
+      "key_scope": "all",
+      "palette": [
+        "#111820",
+        "#342c29",
+        "#544032",
+        "#7f5131",
+        "#aa713e",
+        "#cc9862",
+        "#a69882",
+        "#d3cbb5",
+        "#f0e4cb",
+        "#69777b",
+        "#8c322c",
+        "#b7513d"
+      ],
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/lineage_quiver.png",
+      "source_dimensions": [
+        1240,
+        1269
+      ],
+      "source_rect": [
+        0,
+        0,
+        1240,
+        1269
+      ],
+      "source_sha256": "dbc8edbcf66e0114c6df79edfc8bc188ea0b6dec8bcabfdbc184615eb85aae32",
+      "tolerance": 100.0,
+      "visible_bbox": [
+        9,
+        2,
+        22,
+        30
+      ],
+      "visible_colors": 10
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "farwatch_quiver",
+      "colorkey": "#ff00ff",
+      "id": "equipment.farwatch_quiver",
+      "key_scope": "all",
+      "palette": [
+        "#111820",
+        "#342c29",
+        "#544032",
+        "#7f5131",
+        "#aa713e",
+        "#cc9862",
+        "#a69882",
+        "#d3cbb5",
+        "#f0e4cb",
+        "#69777b",
+        "#8c322c",
+        "#b7513d"
+      ],
+      "rect": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/farwatch_quiver.png",
+      "source_dimensions": [
+        1218,
+        1292
+      ],
+      "source_rect": [
+        0,
+        0,
+        1218,
+        1292
+      ],
+      "source_sha256": "6c359d54218f6e4ed097499db52025cc470d1957597671d6159f84021e2654cf",
+      "tolerance": 100.0,
+      "visible_bbox": [
+        9,
+        2,
+        22,
+        29
+      ],
+      "visible_colors": 12
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "turnfeather_gloves",
+      "colorkey": "#ff00ff",
+      "id": "equipment.turnfeather_gloves",
+      "key_scope": "all",
+      "palette": [
+        "#111820",
+        "#342c29",
+        "#544032",
+        "#7f5131",
+        "#aa713e",
+        "#cc9862",
+        "#a69882",
+        "#d3cbb5",
+        "#f0e4cb",
+        "#69777b",
+        "#8c322c",
+        "#b7513d"
+      ],
+      "rect": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/turnfeather_gloves.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "source_rect": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "source_sha256": "d4ef0e3c8df700d713723c6b0695521e96beab08876199f33a09f4c1275788c6",
+      "tolerance": 100.0,
+      "visible_bbox": [
+        4,
+        2,
+        27,
+        30
+      ],
+      "visible_colors": 11
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "piercer_gloves",
+      "colorkey": "#ff00ff",
+      "id": "equipment.piercer_gloves",
+      "key_scope": "all",
+      "palette": [
+        "#111820",
+        "#342c29",
+        "#544032",
+        "#7f5131",
+        "#aa713e",
+        "#cc9862",
+        "#a69882",
+        "#d3cbb5",
+        "#f0e4cb",
+        "#69777b",
+        "#8c322c",
+        "#b7513d"
+      ],
+      "rect": [
+        0,
+        32,
+        32,
+        32
+      ],
+      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/piercer_gloves.png",
+      "source_dimensions": [
+        1215,
+        1295
+      ],
+      "source_rect": [
+        0,
+        0,
+        1215,
+        1295
+      ],
+      "source_sha256": "e733ffb4798544595ed57f3a4c64a17d2a88eb9dcdcdd89f9495e1a7b58eeeff",
+      "tolerance": 100.0,
+      "visible_bbox": [
+        3,
+        2,
+        28,
+        30
+      ],
+      "visible_colors": 9
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "off_hand",
+      "colorkey": "#ff00ff",
+      "id": "equipment_slot.off_hand",
+      "key_scope": "all",
+      "palette": [
+        "#2d3943",
+        "#697d83",
+        "#b6c3bf"
+      ],
+      "rect": [
+        32,
+        32,
+        32,
+        32
+      ],
+      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/slot_off_hand.png",
+      "source_dimensions": [
+        1240,
+        1269
+      ],
+      "source_rect": [
+        0,
+        0,
+        1240,
+        1269
+      ],
+      "source_sha256": "ae5468129893882a7142c5b5c37f8eca403514df881dcc071a7615f8a4b59651",
+      "tolerance": 100.0,
+      "visible_bbox": [
+        10,
+        2,
+        22,
+        30
+      ],
+      "visible_colors": 3
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "gloves",
+      "colorkey": "#ff00ff",
+      "id": "equipment_slot.gloves",
+      "key_scope": "all",
+      "palette": [
+        "#2d3943",
+        "#697d83",
+        "#b6c3bf"
+      ],
+      "rect": [
+        64,
+        32,
+        32,
+        32
+      ],
+      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/slot_gloves.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "source_rect": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "source_sha256": "96298616d6a6472dd10353425bcc5d1e1c276ca605f8f0deafa57a26ca5922e7",
+      "tolerance": 100.0,
+      "visible_bbox": [
+        4,
+        2,
+        27,
+        30
+      ],
+      "visible_colors": 3
+    }
+  ],
+  "technical_contract": {
+    "alpha": "binary",
+    "anchor": [
+      16,
+      16
+    ],
+    "canvas": [
+      96,
+      64
+    ],
+    "cell": [
+      32,
+      32
+    ],
+    "columns": 3,
+    "downscale": "nearest",
+    "max_colors": 12,
+    "max_visible": [
+      28,
+      28
+    ],
+    "padding": 2,
+    "rows": 2,
+    "transparent_rgb": [
+      0,
+      0,
+      0
+    ]
+  }
+}

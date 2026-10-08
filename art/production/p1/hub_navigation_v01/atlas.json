@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "sprites": [
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "contract",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "icons",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "loadout",
+      "rect": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "texture": "icons",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "forge",
+      "rect": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "texture": "icons",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "training",
+      "rect": [
+        96,
+        0,
+        32,
+        32
+      ],
+      "texture": "icons",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "proxy",
+      "rect": [
+        128,
+        0,
+        32,
+        32
+      ],
+      "texture": "icons",
+      "type": "ui_icon"
+    }
+  ],
+  "textures": {
+    "icons": {
+      "height": 32,
+      "path": "res://art/production/p1/hub_navigation_v01/icons.png",
+      "width": 160
+    }
+  }
+}

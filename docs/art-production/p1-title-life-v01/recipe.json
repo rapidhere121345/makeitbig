@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "resource_prefix": "res://art/production/p1/title_life_v01",
+  "native_view": [
+    640,
+    360
+  ],
+  "palette": [
+    "#5B4036",
+    "#BB713D",
+    "#EEAD56",
+    "#F4CE77",
+    "#71808A",
+    "#8C9296",
+    "#AAAFAB"
+  ],
+  "sources": {
+    "life": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-title-life-v01/sources/life_keyed.png",
+      "grid": [
+        4,
+        2
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 120
+      }
+    }
+  },
+  "atlases": {
+    "fire": {
+      "cell_size": [
+        8,
+        10
+      ],
+      "columns": 4,
+      "padding": 1
+    },
+    "steam": {
+      "cell_size": [
+        12,
+        18
+      ],
+      "columns": 4,
+      "padding": 1
+    }
+  },
+  "sprites": [
+    {
+      "id": "life.fire.0",
+      "source": "life",
+      "cell": [
+        0,
+        0
+      ],
+      "atlas": "fire",
+      "anchor": [
+        4,
+        9
+      ],
+      "fit": [
+        6,
+        8
+      ],
+      "scale_group": "fire",
+      "palette": [
+        "#5B4036",
+        "#BB713D",
+        "#EEAD56",
+        "#F4CE77"
+      ]
+    },
+    {
+      "id": "life.fire.1",
+      "source": "life",
+      "cell": [
+        1,
+        0
+      ],
+      "atlas": "fire",
+      "anchor": [
+        4,
+        9
+      ],
+      "fit": [
+        6,
+        8
+      ],
+      "scale_group": "fire",
+      "palette": [
+        "#5B4036",
+        "#BB713D",
+        "#EEAD56",
+        "#F4CE77"
+      ]
+    },
+    {
+      "id": "life.fire.2",
+      "source": "life",
+      "cell": [
+        2,
+        0
+      ],
+      "atlas": "fire",
+      "anchor": [
+        4,
+        9
+      ],
+      "fit": [
+        6,
+        8
+      ],
+      "scale_group": "fire",
+      "palette": [
+        "#5B4036",
+        "#BB713D",
+        "#EEAD56",
+        "#F4CE77"
+      ]
+    },
+    {
+      "id": "life.fire.3",
+      "source": "life",
+      "cell": [
+        3,
+        0
+      ],
+      "atlas": "fire",
+      "anchor": [
+        4,
+        9
+      ],
+      "fit": [
+        6,
+        8
+      ],
+      "scale_group": "fire",
+      "palette": [
+        "#5B4036",
+        "#BB713D",
+        "#EEAD56",
+        "#F4CE77"
+      ]
+    },
+    {
+      "id": "life.steam.0",
+      "source": "life",
+      "cell": [
+        0,
+        1
+      ],
+      "atlas": "steam",
+      "anchor": [
+        6,
+        17
+      ],
+      "fit": [
+        10,
+        16
+      ],
+      "scale_group": "steam",
+      "palette": [
+        "#71808A",
+        "#8C9296",
+        "#AAAFAB"
+      ]
+    },
+    {
+      "id": "life.steam.1",
+      "source": "life",
+      "cell": [
+        1,
+        1
+      ],
+      "atlas": "steam",
+      "anchor": [
+        6,
+        17
+      ],
+      "fit": [
+        10,
+        16
+      ],
+      "scale_group": "steam",
+      "palette": [
+        "#71808A",
+        "#8C9296",
+        "#AAAFAB"
+      ]
+    },
+    {
+      "id": "life.steam.2",
+      "source": "life",
+      "cell": [
+        2,
+        1
+      ],
+      "atlas": "steam",
+      "anchor": [
+        6,
+        17
+      ],
+      "fit": [
+        10,
+        16
+      ],
+      "scale_group": "steam",
+      "palette": [
+        "#71808A",
+        "#8C9296",
+        "#AAAFAB"
+      ]
+    },
+    {
+      "id": "life.steam.3",
+      "source": "life",
+      "cell": [
+        3,
+        1
+      ],
+      "atlas": "steam",
+      "anchor": [
+        6,
+        17
+      ],
+      "fit": [
+        10,
+        16
+      ],
+      "scale_group": "steam",
+      "palette": [
+        "#71808A",
+        "#8C9296",
+        "#AAAFAB"
+      ]
+    }
+  ],
+  "animations": {
+    "life.fire": {
+      "frames": [
+        "life.fire.0",
+        "life.fire.1",
+        "life.fire.2",
+        "life.fire.3"
+      ],
+      "fps": 4,
+      "loop": true
+    },
+    "life.steam": {
+      "frames": [
+        "life.steam.0",
+        "life.steam.1",
+        "life.steam.2",
+        "life.steam.3"
+      ],
+      "fps": 2,
+      "loop": true
+    }
+  }
+}

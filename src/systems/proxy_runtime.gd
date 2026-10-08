@@ -3,6 +3,8 @@ extends RefCounted
 
 ## Deterministic, scene-free executor for automation proxy builds.
 
+const ProxyBuild := preload("res://src/systems/proxy_build.gd")
+
 const MODE_MANUAL := "manual"
 const MODE_AUTO := "auto"
 const PIPELINE := [&"perception", &"memory_update", &"tactics", &"movement_and_cast", &"confirmation", &"logistics"]
@@ -34,27 +36,25 @@ func end_contract() -> void:
 	mode_locked = false
 
 
-func equip_core(slot: String, core: Dictionary) -> bool:
-	var normalized := StringName(slot.to_lower())
-	if normalized not in CORE_SLOTS:
-		return false
-	cores[normalized] = core.duplicate(true)
-	return true
-
-
-func install_white_proxy(target_id: String, skill_1: String = "piercing_arrow") -> void:
+func install_resolved(resolved_build: Variant, target_id: String) -> Dictionary:
+	var normalized := ProxyBuild.normalize_resolved(resolved_build)
+	if not normalized.ok:
+		return {"ok": false, "error": String(normalized.error)}
+	if target_id.strip_edges().is_empty():
+		return {"ok": false, "error": "invalid_target_id"}
+	var candidate_cores := {}
+	var candidate_skill := ""
+	for core_value in normalized.value.cores:
+		var core: Dictionary = core_value
+		candidate_cores[StringName(String(core.slot))] = core.duplicate(true)
+		if String(core.slot) == "execution":
+			candidate_skill = String(core.capabilities.ability_id)
+	if candidate_skill != "piercing_arrow":
+		return {"ok": false, "error": "invalid_execution_capability"}
+	cores = candidate_cores
 	locked_target = target_id
-	locked_skill = skill_1
-	cores = make_white_cores()
-
-
-static func make_white_cores() -> Dictionary:
-	return {
-		&"perception": {"quality": "white", "capabilities": {"target_count": 1, "recognition": 1.0}},
-		&"movement": {"quality": "white", "capabilities": {"pathing": 1.0, "range_control": 1.0}},
-		&"execution": {"quality": "white", "capabilities": {"skill_count": 1, "timing": 1.0}},
-		&"memory": {"quality": "white", "capabilities": {"target_memory": 1, "rotation_steps": 1}},
-	}
+	locked_skill = candidate_skill
+	return {"ok": true, "cores": cores.duplicate(true)}
 
 
 func capability_check(requirements: Dictionary) -> Dictionary:
@@ -230,4 +230,3 @@ func _failure_record(stage: String, category: String, reason: String, required: 
 
 func _failed_result(stage: String, category: String, reason: String, required: Variant, actual: Variant) -> Dictionary:
 	return {"ok": false, "trace": [], "failure": _failure_record(stage, category, reason, required, actual)}
-

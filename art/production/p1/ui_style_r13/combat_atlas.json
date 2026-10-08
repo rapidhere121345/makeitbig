@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "sprites": [
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "piercing_arrow",
+      "id": "action.piercing_arrow",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "skills_actions.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "hunter_mark",
+      "id": "action.hunter_mark",
+      "rect": [
+        32,
+        0,
+        32,
+        32
+      ],
+      "texture": "skills_actions.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": "dash",
+      "id": "action.dash",
+      "rect": [
+        64,
+        0,
+        32,
+        32
+      ],
+      "texture": "skills_actions.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "canonical_id": null,
+      "id": "action.basic_dodge",
+      "rect": [
+        96,
+        0,
+        32,
+        32
+      ],
+      "texture": "skills_actions.png",
+      "type": "ui_icon"
+    }
+  ],
+  "textures": [
+    {
+      "dimensions": [
+        128,
+        32
+      ],
+      "file": "equipment_slots.png",
+      "id": "equipment_slots"
+    },
+    {
+      "dimensions": [
+        256,
+        32
+      ],
+      "file": "equipment_bases.png",
+      "id": "equipment_bases"
+    },
+    {
+      "dimensions": [
+        128,
+        32
+      ],
+      "file": "skills_actions.png",
+      "id": "skills_actions"
+    },
+    {
+      "dimensions": [
+        128,
+        32
+      ],
+      "file": "runes_law.png",
+      "id": "runes_law"
+    },
+    {
+      "dimensions": [
+        128,
+        32
+      ],
+      "file": "white_cores.png",
+      "id": "white_cores"
+    }
+  ]
+}

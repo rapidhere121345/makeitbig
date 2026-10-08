@@ -1,0 +1,10 @@
+# North shooting correction
+
+Builtin imagegen edit. Source: `sources/north_shoot_fixed_original.png`; original result `/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-815aa5c3-da06-4f5b-abf9-364c6d645de9.png`. Only row2 consumed; other poses remain from original source. Exact prompt:
+
+Use case: precise-object-edit. Edit target is Image1 (NORTH-facing4x4 animation sheet). Preserve rows1,3,4 and their geometry/design as closely as possible; fix ONLY row2 NORTH shooting. Same bone-white hooded slender ranger viewed from behind, back of hood/cape and quiver. Same cell size, same body scale, same planted boot baseline. Pure chroma green #00FF00, no text or shadows.
+Row2 c1: back toward camera, raise bow toward screen TOP, held by LEFT arm. Both shoulders visible from behind, right draw hand approaching cheek. Bow tilted about30degrees, two bow limbs clearly a single continuous wood curve. NO LONG VERTICAL POLE ON HEAD.
+Row2 c2: full draw toward TOP, bow held forward visible ABOVE SHOULDERS as a shallow WIDE HORIZONTAL CURVE, width roughly body shoulder width*1.7, left hand on CENTRAL bow grip toward top-left of head and drawing right hand at hood cheek; arrow tip points SCREEN TOP. The bow is one normal-sized wooden short longbow with a taut V-shaped string, not a glowing overhead hoop; arms aim FORWARD not raised celebratorily. View from high angle sees bow foreshortened horizontally.
+Row2 c3: release toward TOP with same bow orientation and left bow arm position as c2, right drawing hand opens near cheek; bowstring relaxed visibly (no arrow). Do NOT turn bow vertical between draw and release.
+Row2 c4: recovered NEUTRAL IDLE viewed from BACK; BOTH ARMS lowered at sides, wooden bow held low at LEFT SIDE of body extending from shoulder to knee just as row1 c1. Absolutely no bow or pole above head. Hood remains same size/position, boots planted. This pose is reused as idle and must read neutral.
+Everything else including all 16cell layout and green background unchanged. Crisp pixel-art with small hard clusters, no antialias gradients, no smooth modeling. Physical forearm lengths, not chibi.

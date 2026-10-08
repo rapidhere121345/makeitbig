@@ -1,0 +1,72 @@
+extends SceneTree
+
+const RegistryScript = preload("res://src/content/early_skill_registry.gd")
+const RulesScript = preload("res://src/systems/ranger_skill_rules.gd")
+
+
+func _initialize() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
+	var failures: Array[String] = []
+	var registry = RegistryScript.new()
+	var errors: Array[String] = registry.load_all()
+	_expect(errors.is_empty(), "early skill registry failed to load: %s" % str(errors), failures)
+	if not errors.is_empty():
+		_finish(failures)
+		return
+	_expect(registry.ticks_per_second == 30 and registry.skills.size() == 4, "skill registry must expose four skills at 30Hz", failures)
+	_expect(RegistryScript.REQUIRED_FACTS == RulesScript.CONTENT_FACTS,
+		"skill descriptions are no longer validated against the combat rules source", failures)
+	_expect(registry.skills.keys() == RegistryScript.SKILL_IDS, "skill order or ids changed", failures)
+	var arrow: Dictionary = registry.get_skill("piercing_arrow")
+	_expect(int(arrow.cooldown_ticks) == 13 and int(arrow.duration_ticks) == 10 and "有效的猎人印记" in String(arrow.target_rule) and "最近" in String(arrow.target_rule), "piercing arrow target/cooldown/action facts changed", failures)
+	_expect("真实箭矢" in String(arrow.full_effect) and "持弓手位" in String(arrow.full_effect) and "投射速度 v" in String(arrow.full_effect)
+		and "首次相交" in String(arrow.full_effect) and "载体伤害 × 本次箭事件数" in String(arrow.full_effect)
+		and "1.25" in String(arrow.full_effect) and "当前寻敌距离" in String(arrow.range_rule),
+		"piercing arrow projectile/damage/range facts changed", failures)
+	var arrow_limitations := "\n".join(arrow.limitations)
+	_expect("锁定箭矢方向" in arrow_limitations and "投射速度和伤害" in arrow_limitations
+		and "不会追踪或转向" in arrow_limitations and "受击范围" in arrow_limitations and "移出箭路或射程" in arrow_limitations,
+		"piercing arrow frozen-path miss rule is no longer explained to the player", failures)
+	var mark: Dictionary = registry.get_skill("hunter_mark")
+	_expect(int(mark.cooldown_ticks) == 240 and int(mark.duration_ticks) == 180 and "1.5 倍" in String(mark.range_rule), "hunter mark facts changed", failures)
+	var dash: Dictionary = registry.get_skill("dash")
+	_expect(int(dash.cooldown_ticks) == 90 and int(dash.duration_ticks) == 6 and float(dash.displacement_units) == 180.0 and not bool(dash.invulnerable), "dash facts changed", failures)
+	var dodge: Dictionary = registry.get_skill("basic_dodge")
+	_expect(int(dodge.cooldown_ticks) == 35 and int(dodge.duration_ticks) == 5 and float(dodge.speed_units_per_second) == 650.0 and bool(dodge.invulnerable), "dodge facts changed", failures)
+	var file := FileAccess.open("res://content/early_skills.json", FileAccess.READ)
+	var content: Dictionary = JSON.parse_string(file.get_as_text())
+	var missing: Dictionary = content.duplicate(true)
+	missing.skills[0].erase("limitations")
+	_expect(_contains(registry.validate_content(missing), "missing field 'limitations'"), "strict fields did not reject a missing player field", failures)
+	var extra: Dictionary = content.duplicate(true)
+	extra.skills[0]["formula"] = "hidden"
+	_expect(_contains(registry.validate_content(extra), "unknown field 'formula'"), "strict fields did not reject an unknown field", failures)
+	var drift: Dictionary = content.duplicate(true)
+	drift.skills[2].cooldown_ticks = 91
+	_expect(_contains(registry.validate_content(drift), "authoritative fact 'cooldown_ticks' changed"), "authoritative skill facts can drift silently", failures)
+	_finish(failures)
+
+
+func _contains(errors: Array[String], needle: String) -> bool:
+	for error in errors:
+		if error.contains(needle):
+			return true
+	return false
+
+
+func _expect(condition: bool, message: String, failures: Array[String]) -> void:
+	if not condition:
+		failures.append(message)
+
+
+func _finish(failures: Array[String]) -> void:
+	if failures.is_empty():
+		print("PASS  test_early_skills.gd")
+		quit(0)
+		return
+	for failure in failures:
+		printerr("- %s" % failure)
+	quit(1)

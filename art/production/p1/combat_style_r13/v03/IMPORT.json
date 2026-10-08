@@ -1,0 +1,869 @@
+{
+	"bounds": "new generated environmental drawings; unchanged actor silhouettes/alpha/timings/sockets; existing core identity retained",
+	"errors": [],
+	"generator": "built-in image_gen.imagegen",
+	"material_samples": {
+		"charger": {
+			"colors": [
+				{
+					"new": "171e28",
+					"old": "111820",
+					"pixel": [
+						1186,
+						144
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "a6b9c8",
+					"old": "e9ddc3",
+					"pixel": [
+						578,
+						132
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "493c36",
+					"old": "5b4036",
+					"pixel": [
+						1414,
+						440
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "293645",
+					"old": "1d2731",
+					"pixel": [
+						594,
+						126
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "87624a",
+					"old": "896043",
+					"pixel": [
+						1432,
+						426
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "8c9fb4",
+					"old": "d3cbb5",
+					"pixel": [
+						178,
+						576
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "a7714a",
+					"old": "bb713d",
+					"pixel": [
+						1488,
+						558
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "8194a7",
+					"old": "aaafab",
+					"pixel": [
+						552,
+						96
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "bd4653",
+					"old": "bd4653",
+					"protected": true
+				},
+				{
+					"new": "eead56",
+					"old": "eead56",
+					"protected": true
+				},
+				{
+					"new": "667b90",
+					"old": "71808a",
+					"pixel": [
+						666,
+						230
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "3d5165",
+					"old": "46515a",
+					"pixel": [
+						578,
+						136
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "d5deea",
+					"old": "e9ddc3 on alpha boundary",
+					"pixel": [
+						1172,
+						100
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				}
+			],
+			"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png",
+			"region": [
+				1086,
+				0,
+				543,
+				724
+			]
+		},
+		"melee": {
+			"colors": [
+				{
+					"new": "171e28",
+					"old": "111820",
+					"pixel": [
+						1186,
+						144
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "afbccc",
+					"old": "e9ddc3",
+					"pixel": [
+						1076,
+						548
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "4c3934",
+					"old": "5b4036",
+					"pixel": [
+						801,
+						388
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "2a3541",
+					"old": "1d2731",
+					"pixel": [
+						646,
+						182
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "875f48",
+					"old": "896043",
+					"pixel": [
+						967,
+						324
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "96a7b8",
+					"old": "d3cbb5",
+					"pixel": [
+						1224,
+						76
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "af774f",
+					"old": "bb713d",
+					"pixel": [
+						865,
+						254
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "8094a7",
+					"old": "aaafab",
+					"pixel": [
+						608,
+						328
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "bd4653",
+					"old": "bd4653",
+					"protected": true
+				},
+				{
+					"new": "eead56",
+					"old": "eead56",
+					"protected": true
+				},
+				{
+					"new": "64788c",
+					"old": "71808a",
+					"pixel": [
+						236,
+						632
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "405268",
+					"old": "46515a",
+					"pixel": [
+						1248,
+						636
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "d5deea",
+					"old": "e9ddc3 on alpha boundary",
+					"pixel": [
+						1172,
+						100
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				}
+			],
+			"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png",
+			"region": [
+				543,
+				0,
+				543,
+				724
+			]
+		},
+		"ranged": {
+			"colors": [
+				{
+					"new": "151d28",
+					"old": "111820",
+					"pixel": [
+						268,
+						278
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "a3b4c7",
+					"old": "e9ddc3",
+					"pixel": [
+						244,
+						270
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "453631",
+					"old": "5b4036",
+					"pixel": [
+						1919,
+						342
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "253243",
+					"old": "1d2731",
+					"pixel": [
+						634,
+						174
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "866048",
+					"old": "896043",
+					"pixel": [
+						1897,
+						266
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "92a5b9",
+					"old": "d3cbb5",
+					"pixel": [
+						1478,
+						228
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "a56e50",
+					"old": "bb713d",
+					"pixel": [
+						1999,
+						462
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "7b92a9",
+					"old": "aaafab",
+					"pixel": [
+						734,
+						392
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "bd4653",
+					"old": "bd4653",
+					"protected": true
+				},
+				{
+					"new": "eead56",
+					"old": "eead56",
+					"protected": true
+				},
+				{
+					"new": "5e758d",
+					"old": "71808a",
+					"pixel": [
+						620,
+						322
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "3d5165",
+					"old": "46515a",
+					"pixel": [
+						578,
+						136
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "d5deea",
+					"old": "e9ddc3 on alpha boundary",
+					"pixel": [
+						1172,
+						100
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				}
+			],
+			"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png",
+			"region": [
+				1629,
+				0,
+				543,
+				724
+			]
+		},
+		"ranger": {
+			"colors": [
+				{
+					"new": "111820",
+					"old": "111820",
+					"protected": true,
+					"reason": "continuous player light mass / dark silhouette"
+				},
+				{
+					"new": "e9ddc3",
+					"old": "e9ddc3",
+					"protected": true,
+					"reason": "continuous player light mass / dark silhouette"
+				},
+				{
+					"new": "4c3b35",
+					"old": "5b4036",
+					"pixel": [
+						266,
+						398
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "2a3543",
+					"old": "1d2731",
+					"pixel": [
+						1418,
+						68
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "895d44",
+					"old": "896043",
+					"pixel": [
+						418,
+						370
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "d3cbb5",
+					"old": "d3cbb5",
+					"protected": true,
+					"reason": "continuous player light mass / dark silhouette"
+				},
+				{
+					"new": "ad734d",
+					"old": "bb713d",
+					"pixel": [
+						358,
+						184
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png"
+				},
+				{
+					"new": "91a4b4",
+					"old": "aaafab",
+					"pixel": [
+						738,
+						312
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "bd4653",
+					"old": "bd4653",
+					"protected": true
+				},
+				{
+					"new": "eead56",
+					"old": "eead56",
+					"protected": true
+				},
+				{
+					"new": "6f8497",
+					"old": "71808a",
+					"pixel": [
+						742,
+						692
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "4c6279",
+					"old": "46515a",
+					"pixel": [
+						314,
+						506
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"old": "e9ddc3 on alpha boundary",
+					"new": "e9ddc3",
+					"protected": true,
+					"reason": "same continuous player light mass, not a separate rim ramp"
+				}
+			],
+			"reference": "res://docs/art-production/p1-combat-style-r13/sources/actors_material_reference.png",
+			"region": [
+				0,
+				0,
+				543,
+				724
+			]
+		},
+		"stone": {
+			"colors": [
+				{
+					"new": "17212b",
+					"old": "111820",
+					"pixel": [
+						476,
+						496
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "b3c1d1",
+					"old": "e9ddc3",
+					"pixel": [
+						1226,
+						72
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "514139",
+					"old": "5b4036",
+					"pixel": [
+						1360,
+						666
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "2d3a49",
+					"old": "1d2731",
+					"pixel": [
+						602,
+						180
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "8a5f3e",
+					"old": "896043",
+					"pixel": [
+						1466,
+						172
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "a7b8cb",
+					"old": "d3cbb5",
+					"pixel": [
+						602,
+						132
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "a66b43",
+					"old": "bb713d",
+					"pixel": [
+						1504,
+						516
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "899caf",
+					"old": "aaafab",
+					"pixel": [
+						1598,
+						746
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "bd4653",
+					"old": "bd4653",
+					"protected": true
+				},
+				{
+					"new": "eead56",
+					"old": "eead56",
+					"protected": true
+				},
+				{
+					"new": "70859a",
+					"old": "71808a",
+					"pixel": [
+						1536,
+						302
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "4c5f74",
+					"old": "46515a",
+					"pixel": [
+						1468,
+						342
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				},
+				{
+					"new": "d5deea",
+					"old": "e9ddc3 on alpha boundary",
+					"pixel": [
+						1172,
+						100
+					],
+					"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png"
+				}
+			],
+			"reference": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png",
+			"region": [
+				0,
+				0,
+				1774,
+				887
+			]
+		}
+	},
+	"sheets": [
+		{
+			"file": "ground.png",
+			"operation": "nearest native 1024x640; no colour filter",
+			"sha256": "eab9a80036a46ef97d1efac5ef8e5848a8809edf91206d450d252ba49a2e162b",
+			"size": [
+				1024,
+				640
+			],
+			"source": "res://docs/art-production/p1-combat-style-r13/sources/ground_original.png",
+			"source_sha256": "b7fac6fa4e24b5c235d3f91c9b668ceaaa8a54643294df708424cc83bcd65641"
+		},
+		{
+			"cells": [
+				{
+					"cell": 0,
+					"destination": [
+						9,
+						22,
+						109,
+						98
+					],
+					"source": [
+						26,
+						141,
+						508,
+						453
+					]
+				},
+				{
+					"cell": 1,
+					"destination": [
+						138,
+						22,
+						107,
+						98
+					],
+					"source": [
+						571,
+						134,
+						514,
+						467
+					]
+				},
+				{
+					"cell": 2,
+					"destination": [
+						269,
+						69,
+						102,
+						51
+					],
+					"source": [
+						1085,
+						348,
+						495,
+						252
+					]
+				},
+				{
+					"cell": 3,
+					"destination": [
+						389,
+						54,
+						118,
+						66
+					],
+					"source": [
+						1652,
+						340,
+						484,
+						273
+					]
+				}
+			],
+			"file": "ruins.png",
+			"operation": "opaque-body margin crop, native nearest fit inside old art bounds; generated alpha retained",
+			"sha256": "4cb43329e374e7d0e0d2ae98a725944b60345bcd22259a9bfce250abd9a4c060",
+			"size": [
+				512,
+				128
+			],
+			"source": "res://docs/art-production/p1-combat-style-r13/sources/ruins_original.png",
+			"source_sha256": "6478eb8605f60225f010b714311ecbb9e8b003f86d5c9d5d929a4f0fafcd066a"
+		},
+		{
+			"cells": [
+				{
+					"cell": 0,
+					"destination": [
+						14,
+						18,
+						100,
+						102
+					],
+					"source": [
+						80,
+						77,
+						733,
+						753
+					]
+				},
+				{
+					"cell": 1,
+					"destination": [
+						143,
+						7,
+						99,
+						113
+					],
+					"source": [
+						990,
+						19,
+						706,
+						811
+					]
+				}
+			],
+			"file": "boss_body.png",
+			"operation": "opaque-body margin crop, native nearest fit inside old art bounds; generated alpha retained",
+			"sha256": "e1f0586ff51a3bcd58e74210702e402ccb1c82b0616097cc3dba41e28f26f858",
+			"size": [
+				256,
+				128
+			],
+			"source": "res://docs/art-production/p1-combat-style-r13/sources/boss_body_original.png",
+			"source_sha256": "affdb00865b24bbc0f4088b21d5d495b9187fc2cc14767c9b976e0f476dc0da7"
+		},
+		{
+			"file": "tower.png",
+			"keep_rows": [
+				[
+					148,
+					192
+				],
+				[
+					0,
+					148
+				]
+			],
+			"operation": "one complete tower in both original cells; existing keep_rows split 0..148 / 148..192",
+			"sha256": "e02226a37f11b055db4fb47164768e64c7afb5f88787583a691653e4278f9caa",
+			"size": [
+				256,
+				192
+			],
+			"source": "res://docs/art-production/p1-combat-style-r13/sources/tower_original.png",
+			"source_crop": [
+				246,
+				72,
+				596,
+				1415
+			],
+			"source_sha256": "af577e7de874a64426ef0ef703d02369b5948d80f02a8a7d2c4a7aac4e7cf565"
+		},
+		{
+			"alpha_mismatches": 0,
+			"changed_pixels": 13761,
+			"file": "ranger.png",
+			"material_roles": [
+				"ranger"
+			],
+			"operation": "generated-reference material colours; fixed per-pixel silhouette; protected player bone-white light mass, hostile red and weapon amber",
+			"sha256": "9db9f18771f6ca1c2f14ab0f051deb674f2cc9c3b8e57c2ea9e8f7f8b22af4a0",
+			"size": [
+				192,
+				816
+			],
+			"source": "res://art/production/p1/ranger_actions_v01/ranger.png",
+			"source_sha256": "c0bd20d7767899db9a8319aca6dca68f034a47eb84c9d5016543a131802f888b",
+			"unmapped_colors": []
+		},
+		{
+			"alpha_mismatches": 0,
+			"changed_pixels": 18449,
+			"file": "enemies.png",
+			"material_roles": [
+				"melee",
+				"charger",
+				"ranged"
+			],
+			"operation": "generated-reference material colours; fixed per-pixel silhouette; protected player bone-white light mass, hostile red and weapon amber",
+			"sha256": "c76b8d181b2a65cc69844d3de4c6f8c4bd2f5470655519cbdde2918512c2292b",
+			"size": [
+				624,
+				144
+			],
+			"source": "res://art/production/p1/enemy_actions_v01/enemies.png",
+			"source_sha256": "f432816323740b26897ca84d30d734919ebcf559be263e9918e92ad30f4da011",
+			"unmapped_colors": []
+		},
+		{
+			"alpha_mismatches": 0,
+			"changed_pixels": 621,
+			"file": "ranger_idle.png",
+			"material_roles": [
+				"ranger"
+			],
+			"operation": "generated-reference material colours; fixed per-pixel silhouette; protected player bone-white light mass, hostile red and weapon amber",
+			"sha256": "d37a4ddb09b448a00b06704842ec2c0ba6622c70aa293a7ba5cd0f581c1e7e9f",
+			"size": [
+				128,
+				48
+			],
+			"source": "res://art/production/p1/scene_rework_v01/ranger.png",
+			"source_sha256": "5614c464aa24b6f8d606f5b69f6a19b8356bf94f8b38d2b124290c869c77f4bc",
+			"unmapped_colors": []
+		},
+		{
+			"alpha_mismatches": 0,
+			"changed_pixels": 4997,
+			"file": "legacy_enemies.png",
+			"material_roles": [
+				"melee",
+				"charger",
+				"ranged"
+			],
+			"operation": "generated-reference material colours; fixed per-pixel silhouette; protected player bone-white light mass, hostile red and weapon amber",
+			"sha256": "ba6b07fafce76a03b0fe42178cd13a6d72f6a503546c5fa632572569572d5114",
+			"size": [
+				192,
+				144
+			],
+			"source": "res://art/production/p1/calibration_v01/enemies.png",
+			"source_sha256": "a9de5b5c997247b48c742e2bd61f54d4599594f391523a46e42007b71036c2e2",
+			"unmapped_colors": []
+		},
+		{
+			"alpha_mismatches": 0,
+			"changed_pixels": 2260,
+			"file": "boss_hands.png",
+			"material_roles": [
+				"stone"
+			],
+			"operation": "generated-reference material colours; fixed per-pixel silhouette; protected player bone-white light mass, hostile red and weapon amber",
+			"sha256": "835a273c083c10b4effd0c8fbb117d50e640f19c725e9647fd10b8d2c0729b57",
+			"size": [
+				96,
+				64
+			],
+			"source": "res://art/production/p1/scene_rework_v01/boss_hands.png",
+			"source_sha256": "caf6250c67cf963b5ddb0bbab14d47d750efbb0288f8654755887eaf0e487a23",
+			"unmapped_colors": []
+		},
+		{
+			"alpha_mismatches": 0,
+			"changed_pixels": 6517,
+			"file": "decals.png",
+			"material_roles": [
+				"stone"
+			],
+			"operation": "generated-reference material colours; fixed per-pixel silhouette; protected player bone-white light mass, hostile red and weapon amber",
+			"sha256": "49be66c009099b7ffd0018d762c4386917b67957d308b9a92a7f2976e47b67e7",
+			"size": [
+				512,
+				96
+			],
+			"source": "res://art/production/p1/scene_rework_v01/decals.png",
+			"source_sha256": "bf3f6c2e014f5cf550b2e791e6af83b4dd18fd394c969313ad545aabeeb499e8",
+			"unmapped_colors": []
+		},
+		{
+			"file": "boss_core.png",
+			"operation": "retained purple phase signal; no palette transfer",
+			"sha256": "4ab3ed95a207381cec2b14ef0286a29c89af929278052cd582eb837619258cfe",
+			"size": [
+				64,
+				64
+			],
+			"source": "res://art/production/p1/scene_rework_v01/boss_core.png",
+			"source_sha256": "51c70bb76dd2586aa8bdd299af6d6cdc2e490f27c2f00cd29e1e882381f56868"
+		}
+	],
+	"status": "pass"
+}

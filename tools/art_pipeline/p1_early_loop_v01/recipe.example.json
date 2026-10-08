@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "groups": [
+    {
+      "id": "equipment_slots",
+      "source": "sources/equipment_slots_source.png",
+      "layout": {"rows": 2, "cols": 2},
+      "colorkey": "#ff00ff",
+      "key_scope": "all",
+      "tolerance": 80,
+      "palette": ["#273036", "#59656a", "#899396", "#b8bebd", "#e0e2dc"],
+      "sprites": [
+        {"id": "equipment_slot.main_hand", "source_rect": [0, 0, 32, 32], "visible_bbox": null},
+        {"id": "equipment_slot.off_hand", "source_rect": [32, 0, 32, 32], "visible_bbox": null},
+        {"id": "equipment_slot.gloves", "source_rect": [0, 32, 32, 32], "visible_bbox": null},
+        {"id": "equipment_slot.ring_1", "source_rect": [32, 32, 32, 32], "visible_bbox": null}
+      ]
+    },
+    {"id": "equipment_bases", "source": "sources/equipment_bases_source.png", "layout": {"rows": 2, "cols": 4}, "colorkey": "#ff00ff", "key_scope": "all", "tolerance": 80, "palette_quantization": 12, "sprites": []},
+    {"id": "skills_actions", "source": "sources/skills_actions_source.png", "layout": {"rows": 2, "cols": 2}, "colorkey": "#ff00ff", "key_scope": "all", "tolerance": 80, "palette_quantization": 12, "sprites": []},
+    {"id": "runes_law", "source": "sources/runes_law_source.png", "layout": {"rows": 2, "cols": 2}, "colorkey": "#ff00ff", "key_scope": "all", "tolerance": 80, "palette_quantization": 12, "sprites": []},
+    {"id": "white_cores", "source": "sources/white_cores_source.png", "layout": {"rows": 2, "cols": 2}, "colorkey": "#ff00ff", "key_scope": "all", "tolerance": 80, "palette_quantization": 12, "sprites": []}
+  ]
+}

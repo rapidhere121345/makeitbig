@@ -1,63 +1,83 @@
 # Make It Big
 
-A low-cost pixel-action looter prototype about discovering hidden growth laws and turning ordinary RPG equipment into exponential and power-tower Builds.
+Godot 4.7.2 制作的像素暗黑搜宝 demo。扮演持弓的流浪者，从炉边镇出征，收集装备、验证箭链增长，挑战堵住旧路的门槛巨像。
 
-## Current vertical slice
+公开源码仓库：[rapidhere121345/makeitbig](https://github.com/rapidhere121345/makeitbig)。自动检查与桌面构建见 [GitHub Actions](https://github.com/rapidhere121345/makeitbig/actions)。
 
-- Godot 4.7.2, GDScript, one project for Linux and Windows.
-- Manual and autonomous contract modes are mutually exclusive.
-- Ranger `Piercing Arrow` demonstrates the `R = 2p` branching threshold.
-- Huge event counts use symbolic values instead of spawning astronomical objects.
-- Diagnostic probabilities and equipped generation parameters are loaded from validated JSON content, not duplicated in scene code.
-- Manual input and the white proxy feed one command stream into a fixed 30-tick authority simulation.
-- Deterministic drops, visible Destiny Forge previews, explainable proxy refusals, and checksum-protected A/B saves are connected to the playable loop.
+当前实现游侠首章：教程、五位镇民、五段主线、重复搜宝契约、装备比较、天赋、验律训练、律筹锻造与击败巨像后的代行试用。中后期、另外两个职业及完整游戏终局仍属设计规划。
 
-The base screen offers convergent (`p=.49`), critical (`p=.50`) and exponential (`p=.61`) diagnostic Builds. The exponential preset currently defeats the symbolic `10^12` boss in roughly 63 simulated seconds; the other presets still deal positive damage but are intentionally impractical. Manual contracts have a deterministic 35% chance to award one extra Fate Die. There is no offline progress.
+## 当前版本
 
-## Design baseline
+首章已整合开场与契约页、28段镇民对白、首胜装备掉落、属性并排比较和完整雪镇场景。小镇使用实际居民、建筑碰撞、木桥通路和前景遮挡。
 
-- Local: [`docs/GAME_DESIGN_FINAL_v1.0.md`](docs/GAME_DESIGN_FINAL_v1.0.md)
-- Feishu: https://kcnyu4auynd5.feishu.cn/docx/XAwWdIXofoKb1Vx8hDtczQosnKd
+本轮继续完善刷宝与阅读：背包搜索保留输入焦点，高级筛选独立弹窗，显示命中数量并可一键重置；物品标明已装备或本次掉落，比较列出当前、换装后与具体差值。见闻默认聚焦未读内容，末页确认后记已读，支持中途退出、补读与回看；开场、首次发现和巨像返镇对白加强了寒冷、旧物与居民处境的联系。
 
-The local Markdown keeps the content appendices as native tables; the Feishu version stores those same catalogs in one searchable monospaced appendix to stay under Feishu's document-block limit.
+公开 UI 方法收集在 [UI_GUIDE.md](docs/design/UI_GUIDE.md)，Diablo IV、Grim Dawn、Path of Exile、Last Epoch 的六份官方资料和配图链接见 [UI_REFERENCES.md](docs/design/UI_REFERENCES.md)。三包原始 skill、参考文件及许可保存在 `.agents/skills/`。当前美术采用冷石、雪地、木材、旧铜与暖火；镇内建筑、居民和环境实体具有阻挡与沿边滑动。
 
-## Run
-
-Open the repository root in Godot 4.7.2 and run the main scene, or use:
+## 启动与操作
 
 ```bash
+git clone https://github.com/rapidhere121345/makeitbig.git
+cd makeitbig
 godot --path .
 ```
 
-Run headless checks:
+| 场景 | 操作 |
+| --- | --- |
+| 移动 | WASD / 方向键 |
+| 射击 | 空格辅助瞄准；鼠标左键锁定所点敌人 |
+| 闪避 | Shift / Ctrl / 鼠标右键 |
+| 技能 | Q 猎人印记、E 突袭（需解锁） |
+| 炉边镇 | 靠近居民按 E；C 成长；J 见闻 |
+| 阅读与菜单 | E / Enter 翻句，Esc 离开；F1 设置；战斗 Tab 战报 |
+
+手动与 Auto 在出征时选择，契约中不切换。随机装备先入背包，比较后由玩家决定穿戴。训练结论跟随具体构筑，换装后需要重新验证。免费锻造推演不消耗律筹，选择并落锤才提交结果。
+
+当前存档 schema 为10；不迁移早期原型档案。正式存档使用 Godot `user://saves`，试玩工具使用独立目录。
+
+## 检查与导出
 
 ```bash
-./scripts/test.sh
-```
+GODOT_BIN=godot ./scripts/test.sh
+# Windows: ./scripts/test.ps1
 
-On Windows use `./scripts/test.ps1`. In addition to six unit suites, both scripts replay the entire automated contract at 30, 60, and 144Hz and require identical comprehensive state hashes.
-
-Fast scene and end-to-end automation checks:
-
-```bash
 godot --headless --path . -- --smoke
 godot --headless --path . -- --auto-smoke
 ```
 
-The automation smoke prints a canonical semantic-state hash. The CI workflow repeats that replay in the exported Linux and Windows executables and rejects a cross-platform hash mismatch.
+全量脚本包括领域、界面、流程检查，以及30/60/144Hz和关闭表现层的确定性回放；四份语义状态应一致。修改玩法后允许状态哈希变化，要求同版本可重现。
 
-Build both desktop targets after installing matching export templates:
+安装匹配的 Godot 导出模板后：
 
 ```bash
-./scripts/export_all.sh
+GODOT_BIN=godot ./scripts/export_all.sh
+# Windows: ./scripts/export_all.ps1
 ```
 
-On Windows PowerShell:
+程序统一输出到 `build/current/linux/make-it-big.x86_64` 和 `build/current/windows/make-it-big.exe`。保留最新交付，不再堆叠按轮次编号的程序和截图副本。Linux交叉导出Windows不代表已完成Windows实机测试；CI配置提供独立Windows检查。
 
-```powershell
-./scripts/export_all.ps1
+## 开发入口
+
+- `src/game/application_state.gd`：档案、成长与设施操作。
+- `src/game/game_root.gd`：场景路由、整合与保存。
+- `src/game/main.gd`：共同的手动/Auto战斗权威。
+- `src/systems/`：构筑、动作、敌人、训练与锻造规则。
+- `src/presentation/`：只读快照驱动的界面与视觉。
+- `content/`：契约、装备、技能、天赋和首章对白。
+- [完整游戏系统规划](docs/SYSTEMS_DESIGN.md)、[当前世界观与完整剧情规划](docs/narrative/README.md)。
+
+调试版本可使用隔离的 `--mib-debug --mib-stage=pre_boss` 等入口；它们属于夹具，不计入自然试玩。`--mib-no-persist` 同时禁用调试存档和日志。实际试玩日志可用 `python3 tools/summarize_playtest_logs.py <日志目录> --output <报告路径>` 汇总。
+
+
+可重复的引擎输入试玩（Linux / 实际渲染）：
+
+```bash
+export MIB_PLAY_SESSION_DIR=/tmp/makeitbig-play
+godot --path . --fixed-fps 60 --script res://tools/play_session.gd
+# 另一个终端使用同一 MIB_PLAY_SESSION_DIR
+python3 tools/play_session.py '{"show":true}'
+python3 tools/play_session.py '{"keys":["D"],"frames":60}'
+python3 tools/play_session.py '{"quit":true}'
 ```
 
-The product design baseline is in `docs/GAME_DESIGN_FINAL_v1.0.md`.
-
-Generated desktop artifacts are placed at `build/linux/make-it-big.x86_64` and `build/windows/make-it-big.exe`. The Windows executable is built on Linux from the official matching template; the included CI workflow boots it again on a real Windows runner.
+它只发送键鼠事件并读取状态，保存一张不断更新的原始GPU画面。动作之间暂停游戏节点供审阅；这不是实时性能测试，也不替代真人对手感的判断。

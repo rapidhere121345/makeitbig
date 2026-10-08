@@ -1,0 +1,319 @@
+{
+	"operation": "transparent-margin crop, native nearest-neighbour fit, fixed cell packing",
+	"recipe": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/life-recipe-v02.json",
+	"recipe_sha256": "abd7331684077cbbb0bcba5c3916fc9b62974b5b5662b2519956e8fe853cb53e",
+	"sheets": [
+		{
+			"cells": [
+				{
+					"destination": [
+						17,
+						17,
+						24,
+						27
+					],
+					"index": 0,
+					"source": [
+						78,
+						77,
+						161,
+						184
+					]
+				},
+				{
+					"destination": [
+						64,
+						17,
+						24,
+						27
+					],
+					"index": 1,
+					"source": [
+						358,
+						77,
+						161,
+						185
+					]
+				},
+				{
+					"destination": [
+						112,
+						18,
+						25,
+						26
+					],
+					"index": 2,
+					"source": [
+						634,
+						86,
+						169,
+						176
+					]
+				},
+				{
+					"destination": [
+						161,
+						17,
+						24,
+						27
+					],
+					"index": 3,
+					"source": [
+						918,
+						77,
+						160,
+						185
+					]
+				},
+				{
+					"destination": [
+						14,
+						59,
+						21,
+						33
+					],
+					"index": 4,
+					"source": [
+						79,
+						322,
+						132,
+						205
+					]
+				},
+				{
+					"destination": [
+						62,
+						59,
+						21,
+						33
+					],
+					"index": 5,
+					"source": [
+						363,
+						321,
+						133,
+						206
+					]
+				},
+				{
+					"destination": [
+						111,
+						59,
+						21,
+						33
+					],
+					"index": 6,
+					"source": [
+						637,
+						321,
+						136,
+						206
+					]
+				},
+				{
+					"destination": [
+						158,
+						60,
+						22,
+						32
+					],
+					"index": 7,
+					"source": [
+						911,
+						321,
+						139,
+						206
+					]
+				},
+				{
+					"destination": [
+						12,
+						106,
+						24,
+						34
+					],
+					"index": 8,
+					"source": [
+						69,
+						575,
+						150,
+						213
+					]
+				},
+				{
+					"destination": [
+						59,
+						105,
+						24,
+						35
+					],
+					"index": 9,
+					"source": [
+						352,
+						570,
+						152,
+						215
+					]
+				},
+				{
+					"destination": [
+						107,
+						108,
+						23,
+						32
+					],
+					"index": 10,
+					"source": [
+						629,
+						574,
+						151,
+						211
+					]
+				},
+				{
+					"destination": [
+						155,
+						108,
+						24,
+						32
+					],
+					"index": 11,
+					"source": [
+						902,
+						574,
+						155,
+						213
+					]
+				},
+				{
+					"destination": [
+						16,
+						159,
+						18,
+						29
+					],
+					"index": 12,
+					"source": [
+						77,
+						848,
+						129,
+						208
+					]
+				},
+				{
+					"destination": [
+						63,
+						155,
+						21,
+						33
+					],
+					"index": 13,
+					"source": [
+						367,
+						848,
+						130,
+						208
+					]
+				},
+				{
+					"destination": [
+						111,
+						159,
+						18,
+						29
+					],
+					"index": 14,
+					"source": [
+						640,
+						848,
+						126,
+						208
+					]
+				},
+				{
+					"destination": [
+						159,
+						159,
+						17,
+						29
+					],
+					"index": 15,
+					"source": [
+						922,
+						848,
+						120,
+						208
+					]
+				},
+				{
+					"destination": [
+						13,
+						207,
+						25,
+						30
+					],
+					"index": 16,
+					"source": [
+						58,
+						1127,
+						174,
+						203
+					]
+				},
+				{
+					"destination": [
+						61,
+						206,
+						24,
+						31
+					],
+					"index": 17,
+					"source": [
+						352,
+						1115,
+						164,
+						214
+					]
+				},
+				{
+					"destination": [
+						107,
+						203,
+						26,
+						34
+					],
+					"index": 18,
+					"source": [
+						625,
+						1120,
+						162,
+						210
+					]
+				},
+				{
+					"destination": [
+						156,
+						209,
+						26,
+						28
+					],
+					"index": 19,
+					"source": [
+						893,
+						1129,
+						183,
+						200
+					]
+				}
+			],
+			"file": "residents.png",
+			"sha256": "05e7956be923418cfc4f23be7487145794352932fc9afb522a31e8d356a1a00b",
+			"size": [
+				192,
+				240
+			],
+			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
+			"source_sha256": "8491083522931fd493cc4f98f75cd698551e3e293ba84a4290b0eb0615c54d3a"
+		}
+	]
+}

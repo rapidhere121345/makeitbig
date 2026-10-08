@@ -1,18 +1,22 @@
 class_name ContentRegistry
 extends RefCounted
 
-## Loads the v1 proxy-component and ranger-preset content from plain JSON
+## Loads the v2 proxy-component and v1 ranger-preset content from plain JSON
 ## (docs/GAME_DESIGN_FINAL_v1.0.md chapter 14 and sections 4.1 / 19.1) and
 ## performs structural validation only. Content files are pure data: this
 ## registry never instantiates, compiles, or executes anything from them.
 
 const PROXY_PATH := "res://content/proxy_components.json"
 const PRESET_PATH := "res://content/ranger_presets.json"
+const EarlyCampaignRegistryScript = preload("res://src/content/early_campaign_registry.gd")
+const EarlyItemRegistryScript = preload("res://src/content/early_item_registry.gd")
+const EarlySkillRegistryScript = preload("res://src/content/early_skill_registry.gd")
 
 const CORE_SLOTS: Array[String] = ["perception", "movement", "execution", "memory"]
 const ATTACHMENT_CATEGORIES: Array[String] = ["scavenging", "navigation", "tactics", "cycle_tempo", "stability"]
 const FIRMWARE_COMPATIBLE_SLOTS: Array[String] = ["perception", "movement", "execution", "memory", "attachment"]
-const EXPECTED_SCHEMA_VERSION := 1
+const EXPECTED_PROXY_SCHEMA_VERSION := 2
+const EXPECTED_PRESET_SCHEMA_VERSION := 1
 const EXPECTED_CORES_PER_SLOT := 4
 const EXPECTED_ATTACHMENTS_PER_CATEGORY := 2
 const EXPECTED_FIRMWARE_COUNT := 16
@@ -25,6 +29,9 @@ const EXPECTED_FIRMWARE_PER_SLOT := {
 }
 const EXPECTED_NUMERIC_SLOTS := 3
 const ATTACHMENT_PRESET_SIZE := 3
+const REQUIRED_RANGER_SKILL := "piercing_arrow"
+const REQUIRED_RANGER_RUNE := "breeding_split"
+const REQUIRED_RANGER_LAW := "pack_hunt_mark"
 
 var cores := {}
 var attachments := {}
@@ -33,6 +40,9 @@ var preset_shared_parameters := {}
 var preset_equipped_parameters := {}
 var presets := {}
 var preset_order: Array[String] = []
+var early_campaign_registry: Variant
+var early_item_registry: Variant
+var early_skill_registry: Variant
 
 
 func load_all() -> Array[String]:
@@ -43,7 +53,13 @@ func load_all() -> Array[String]:
 	preset_equipped_parameters.clear()
 	presets.clear()
 	preset_order.clear()
+	early_campaign_registry = EarlyCampaignRegistryScript.new()
+	early_item_registry = EarlyItemRegistryScript.new()
+	early_skill_registry = EarlySkillRegistryScript.new()
 	var failures: Array[String] = []
+	failures.append_array(early_campaign_registry.load_campaign())
+	failures.append_array(early_item_registry.load_all())
+	failures.append_array(early_skill_registry.load_all())
 	var proxy_data := _read_json(PROXY_PATH)
 	if proxy_data.is_empty():
 		failures.append("registry: cannot read/parse %s" % PROXY_PATH)
@@ -63,14 +79,27 @@ func load_all() -> Array[String]:
 
 func validate_proxy_components(data: Dictionary) -> Array[String]:
 	var failures: Array[String] = []
-	if data.get("schema_version", null) != EXPECTED_SCHEMA_VERSION:
-		failures.append("proxy: schema_version must be %d" % EXPECTED_SCHEMA_VERSION)
-	var cores_list: Array = data.get("cores", [])
-	var attachments_list: Array = data.get("attachments", [])
-	var firmwares_list: Array = data.get("firmwares", [])
+	_check_exact_fields(data, ["schema_version", "source", "note", "cores", "attachments", "firmwares"], [], "proxy", failures)
+	if not _is_json_integer(data.get("schema_version", null)) or int(data.get("schema_version", -1)) != EXPECTED_PROXY_SCHEMA_VERSION:
+		failures.append("proxy: schema_version must be integer %d" % EXPECTED_PROXY_SCHEMA_VERSION)
+	_checked_text(data, "source", failures, "document", "proxy")
+	_checked_text(data, "note", failures, "document", "proxy")
+	var cores_value: Variant = data.get("cores", null)
+	var attachments_value: Variant = data.get("attachments", null)
+	var firmwares_value: Variant = data.get("firmwares", null)
+	if not cores_value is Array:
+		failures.append("proxy: cores must be an array")
+	if not attachments_value is Array:
+		failures.append("proxy: attachments must be an array")
+	if not firmwares_value is Array:
+		failures.append("proxy: firmwares must be an array")
+	var cores_list: Array = cores_value if cores_value is Array else []
+	var attachments_list: Array = attachments_value if attachments_value is Array else []
+	var firmwares_list: Array = firmwares_value if firmwares_value is Array else []
 	# No early exit on empty lists: the census checks below must still report
 	# every missing slot, category, and firmware shortfall.
 	var seen := {}
+	var seen_behaviors := {}
 	var per_slot := {}
 	for slot in CORE_SLOTS:
 		per_slot[slot] = 0
@@ -82,6 +111,9 @@ func validate_proxy_components(data: Dictionary) -> Array[String]:
 			failures.append("proxy: core entry must be an object")
 			continue
 		var entry_dict: Dictionary = entry
+		_check_exact_fields(entry_dict,
+			["id", "name", "slot", "protocol", "numeric_slots", "behavior_id", "capabilities", "observation_channels", "state_fields", "command_kinds"],
+			["settings_schema", "default_settings"], "core", failures)
 		var id := _checked_id(entry_dict, seen, failures, "core")
 		var slot := _checked_text(entry_dict, "slot", failures, id, "core")
 		if slot != "" and slot not in CORE_SLOTS:
@@ -91,11 +123,26 @@ func validate_proxy_components(data: Dictionary) -> Array[String]:
 		_checked_name(entry_dict, id, failures, "core")
 		_checked_text(entry_dict, "protocol", failures, id, "core")
 		_checked_numeric_slots(entry_dict, id, failures, "core")
+		var behavior_id := _checked_text(entry_dict, "behavior_id", failures, id, "core")
+		if not behavior_id.is_empty() and seen_behaviors.has(behavior_id):
+			failures.append("core %s: duplicate behavior_id '%s'" % [id, behavior_id])
+		seen_behaviors[behavior_id] = true
+		_checked_capabilities(entry_dict, failures, id)
+		_checked_string_array(entry_dict, "observation_channels", failures, id, "core")
+		_checked_string_array(entry_dict, "state_fields", failures, id, "core")
+		_checked_string_array(entry_dict, "command_kinds", failures, id, "core")
+		var has_schema := entry_dict.has("settings_schema")
+		var has_defaults := entry_dict.has("default_settings")
+		if has_schema != has_defaults:
+			failures.append("core %s: settings_schema and default_settings must appear together" % id)
+		elif has_schema:
+			_validate_settings_contract(entry_dict.settings_schema, entry_dict.default_settings, id, failures)
 	for entry in attachments_list:
 		if not (entry is Dictionary):
 			failures.append("proxy: attachment entry must be an object")
 			continue
 		var entry_dict: Dictionary = entry
+		_check_exact_fields(entry_dict, ["id", "name", "category", "protocol", "numeric_slots"], [], "attachment", failures)
 		var id := _checked_id(entry_dict, seen, failures, "attachment")
 		var category := _checked_text(entry_dict, "category", failures, id, "attachment")
 		if category != "" and category not in ATTACHMENT_CATEGORIES:
@@ -124,6 +171,7 @@ func validate_proxy_components(data: Dictionary) -> Array[String]:
 			failures.append("proxy: firmware entry must be an object")
 			continue
 		var entry_dict: Dictionary = entry
+		_check_exact_fields(entry_dict, ["id", "name", "compatible_slot", "semantics"], [], "firmware", failures)
 		var id := _checked_id(entry_dict, seen, failures, "firmware")
 		var compatible := _checked_text(entry_dict, "compatible_slot", failures, id, "firmware")
 		if compatible != "" and compatible not in FIRMWARE_COMPATIBLE_SLOTS:
@@ -142,8 +190,8 @@ func validate_proxy_components(data: Dictionary) -> Array[String]:
 
 func validate_ranger_presets(data: Dictionary) -> Array[String]:
 	var failures: Array[String] = []
-	if data.get("schema_version", null) != EXPECTED_SCHEMA_VERSION:
-		failures.append("presets: schema_version must be %d" % EXPECTED_SCHEMA_VERSION)
+	if data.get("schema_version", null) != EXPECTED_PRESET_SCHEMA_VERSION:
+		failures.append("presets: schema_version must be %d" % EXPECTED_PRESET_SCHEMA_VERSION)
 	var shared: Variant = data.get("shared_parameters", {})
 	if not (shared is Dictionary) or (shared as Dictionary).is_empty():
 		failures.append("presets: missing shared_parameters")
@@ -179,7 +227,49 @@ func validate_ranger_presets(data: Dictionary) -> Array[String]:
 			failures.append("preset %s: p must be a number" % id)
 		elif _as_float(p_value) <= 0.0 or _as_float(p_value) > 1.0:
 			failures.append("preset %s: p=%s out of range (0, 1]" % [id, str(p_value)])
+		_validate_ranger_feature_list(entry_dict, "skills", REQUIRED_RANGER_SKILL, id, failures)
+		_validate_ranger_feature_list(entry_dict, "runes", REQUIRED_RANGER_RUNE, id, failures, true)
+		_validate_ranger_feature_list(entry_dict, "laws", REQUIRED_RANGER_LAW, id, failures, true)
+		var equipment: Variant = entry_dict.get("equipment", null)
+		if not (equipment is Dictionary):
+			failures.append("preset %s: equipment must be an object" % id)
+		else:
+			for field in ["name", "description", "calibration", "parameter_source"]:
+				_checked_text(equipment, field, failures, id, "preset equipment")
+			if String((equipment as Dictionary).get("parameter_source", "")) != "prototype_equipped_parameters":
+				failures.append("preset %s: equipment.parameter_source must be prototype_equipped_parameters" % id)
 	return failures
+
+
+func _validate_ranger_feature_list(
+	entry: Dictionary,
+	field: String,
+	required_id: String,
+	preset_id: String,
+	failures: Array[String],
+	require_semantics: bool = false
+) -> void:
+	var value: Variant = entry.get(field, null)
+	if not (value is Array) or (value as Array).is_empty():
+		failures.append("preset %s: %s must be a non-empty array" % [preset_id, field])
+		return
+	var seen := {}
+	var found_required := false
+	for item_value in (value as Array):
+		if not (item_value is Dictionary):
+			failures.append("preset %s: %s entry must be an object" % [preset_id, field])
+			continue
+		var item: Dictionary = item_value
+		var item_id := _checked_text(item, "id", failures, preset_id, "preset %s" % field)
+		_checked_text(item, "name", failures, preset_id, "preset %s" % field)
+		if require_semantics:
+			_checked_text(item, "semantics", failures, preset_id, "preset %s" % field)
+		if seen.has(item_id):
+			failures.append("preset %s: duplicate %s id '%s'" % [preset_id, field, item_id])
+		seen[item_id] = true
+		found_required = found_required or item_id == required_id
+	if not found_required:
+		failures.append("preset %s: %s must include '%s'" % [preset_id, field, required_id])
 
 
 ## An attachment preset equips the three untyped attachment slots.
@@ -262,10 +352,11 @@ func _validate_parameter_block(block: Dictionary, block_name: String) -> Array[S
 
 
 func _checked_id(entry: Dictionary, seen: Dictionary, failures: Array[String], kind: String) -> String:
-	var id := String(entry.get("id", ""))
-	if id == "":
+	var raw_id: Variant = entry.get("id", null)
+	if not raw_id is String or String(raw_id).strip_edges().is_empty():
 		failures.append("%s entry without an id" % kind)
 		return kind + "??"
+	var id := String(raw_id)
 	if seen.has(id):
 		failures.append("duplicate id '%s' across proxy components" % id)
 		return id
@@ -274,8 +365,7 @@ func _checked_id(entry: Dictionary, seen: Dictionary, failures: Array[String], k
 
 
 func _checked_name(entry: Dictionary, id: String, failures: Array[String], kind: String) -> void:
-	if String(entry.get("name", "")) == "":
-		failures.append("%s %s: missing name" % [kind, id])
+	_checked_text(entry, "name", failures, id, kind)
 
 
 func _checked_text(entry: Dictionary, key: String, failures: Array[String], id: String, kind: String) -> String:
@@ -288,12 +378,193 @@ func _checked_text(entry: Dictionary, key: String, failures: Array[String], id: 
 
 func _checked_numeric_slots(entry: Dictionary, id: String, failures: Array[String], kind: String) -> void:
 	var value: Variant = entry.get("numeric_slots", null)
-	if not _is_number(value) or int(value) != EXPECTED_NUMERIC_SLOTS:
-		failures.append("%s %s: numeric_slots must be %d" % [kind, id, EXPECTED_NUMERIC_SLOTS])
+	if not _is_json_integer(value) or int(value) != EXPECTED_NUMERIC_SLOTS:
+		failures.append("%s %s: numeric_slots must be %d (integer)" % [kind, id, EXPECTED_NUMERIC_SLOTS])
+
+
+func _check_exact_fields(
+	entry: Dictionary,
+	required: Array,
+	optional: Array,
+	context: String,
+	failures: Array[String]
+) -> void:
+	for field_value in required:
+		var field := String(field_value)
+		if not entry.has(field):
+			failures.append("%s: missing field '%s'" % [context, field])
+	for raw_key in entry.keys():
+		if not raw_key is String:
+			failures.append("%s: field names must be strings" % context)
+			continue
+		var key := String(raw_key)
+		if key not in required and key not in optional:
+			failures.append("%s: unknown field '%s'" % [context, key])
+
+
+func _checked_string_array(
+	entry: Dictionary,
+	key: String,
+	failures: Array[String],
+	id: String,
+	kind: String,
+	require_non_empty: bool = false
+) -> void:
+	var value: Variant = entry.get(key, null)
+	if not value is Array:
+		failures.append("%s %s: %s must be an array" % [kind, id, key])
+		return
+	if require_non_empty and (value as Array).is_empty():
+		failures.append("%s %s: %s must not be empty" % [kind, id, key])
+	var seen_values := {}
+	for item in (value as Array):
+		if not item is String or String(item).strip_edges().is_empty():
+			failures.append("%s %s: %s entries must be non-empty strings" % [kind, id, key])
+			continue
+		if seen_values.has(item):
+			failures.append("%s %s: duplicate %s '%s'" % [kind, id, key, item])
+		seen_values[item] = true
+
+
+func _checked_capabilities(entry: Dictionary, failures: Array[String], id: String) -> void:
+	var value: Variant = entry.get("capabilities", null)
+	if not value is Dictionary or (value as Dictionary).is_empty():
+		failures.append("core %s: capabilities must be a non-empty object" % id)
+		return
+	for raw_key in (value as Dictionary).keys():
+		if not raw_key is String or String(raw_key).strip_edges().is_empty():
+			failures.append("core %s: capability names must be non-empty strings" % id)
+			continue
+		if not _is_valid_capability_value((value as Dictionary)[raw_key]):
+			failures.append("core %s: capability '%s' has an invalid value" % [id, String(raw_key)])
+
+
+func _is_valid_capability_value(value: Variant) -> bool:
+	if value is String:
+		return not String(value).strip_edges().is_empty()
+	if value is bool:
+		return true
+	if _is_number(value):
+		return is_finite(float(value))
+	if value is Array:
+		if (value as Array).is_empty():
+			return false
+		for item in (value as Array):
+			if not _is_valid_capability_value(item) or item is Array:
+				return false
+		return true
+	return false
+
+
+func _validate_settings_contract(schema_value: Variant, defaults_value: Variant, core_id: String, failures: Array[String]) -> void:
+	if not schema_value is Dictionary:
+		failures.append("core %s: settings_schema must be an object" % core_id)
+		return
+	if not defaults_value is Dictionary:
+		failures.append("core %s: default_settings must be an object" % core_id)
+		return
+	var schema: Dictionary = schema_value
+	var defaults: Dictionary = defaults_value
+	_check_exact_fields(schema, ["type", "additional_properties", "properties", "required"], [], "core %s settings_schema" % core_id, failures)
+	if schema.get("type", null) != "object":
+		failures.append("core %s: settings_schema.type must be 'object'" % core_id)
+	if not schema.get("additional_properties", null) is bool or bool(schema.get("additional_properties", true)):
+		failures.append("core %s: settings_schema.additional_properties must be false" % core_id)
+	var properties_value: Variant = schema.get("properties", null)
+	var required_value: Variant = schema.get("required", null)
+	if not properties_value is Dictionary:
+		failures.append("core %s: settings_schema.properties must be an object" % core_id)
+		return
+	if not required_value is Array:
+		failures.append("core %s: settings_schema.required must be an array" % core_id)
+		return
+	var properties: Dictionary = properties_value
+	var required: Array = required_value
+	var required_seen := {}
+	for field_value in required:
+		if not field_value is String or String(field_value).is_empty():
+			failures.append("core %s: settings_schema.required entries must be non-empty strings" % core_id)
+			continue
+		var field := String(field_value)
+		if required_seen.has(field):
+			failures.append("core %s: duplicate required setting '%s'" % [core_id, field])
+		required_seen[field] = true
+		if not properties.has(field):
+			failures.append("core %s: required setting '%s' has no property schema" % [core_id, field])
+	for field_value in properties.keys():
+		if not field_value is String or String(field_value).is_empty():
+			failures.append("core %s: setting names must be non-empty strings" % core_id)
+			continue
+		var field := String(field_value)
+		_validate_setting_rule(properties[field], core_id, field, failures)
+		if not defaults.has(field):
+			failures.append("core %s: default_settings missing '%s'" % [core_id, field])
+		elif not _setting_value_valid(defaults[field], properties[field]):
+			failures.append("core %s: default_settings.%s does not match settings_schema" % [core_id, field])
+	for raw_key in defaults.keys():
+		if not raw_key is String or not properties.has(raw_key):
+			failures.append("core %s: default_settings has unknown field '%s'" % [core_id, str(raw_key)])
+
+
+func _validate_setting_rule(rule_value: Variant, core_id: String, field: String, failures: Array[String]) -> void:
+	if not rule_value is Dictionary:
+		failures.append("core %s: setting '%s' schema must be an object" % [core_id, field])
+		return
+	var rule: Dictionary = rule_value
+	_check_exact_fields(rule, ["type"], ["enum", "minimum", "maximum"], "core %s setting %s" % [core_id, field], failures)
+	var setting_type := String(rule.get("type", ""))
+	if setting_type not in ["string", "integer", "number", "boolean"]:
+		failures.append("core %s: setting '%s' has unsupported type '%s'" % [core_id, field, setting_type])
+	if rule.has("enum"):
+		var enum_value: Variant = rule.enum
+		if not enum_value is Array or (enum_value as Array).is_empty():
+			failures.append("core %s: setting '%s' enum must be a non-empty array" % [core_id, field])
+		else:
+			for value in (enum_value as Array):
+				if not _setting_type_matches(value, setting_type):
+					failures.append("core %s: setting '%s' enum value has the wrong type" % [core_id, field])
+	for bound in ["minimum", "maximum"]:
+		if rule.has(bound) and (setting_type not in ["integer", "number"] or not _is_number(rule[bound])):
+			failures.append("core %s: setting '%s' %s must be numeric" % [core_id, field, bound])
+	if rule.has("minimum") and rule.has("maximum") and float(rule.minimum) > float(rule.maximum):
+		failures.append("core %s: setting '%s' minimum exceeds maximum" % [core_id, field])
+
+
+func _setting_value_valid(value: Variant, rule_value: Variant) -> bool:
+	if not rule_value is Dictionary:
+		return false
+	var rule: Dictionary = rule_value
+	var setting_type := String(rule.get("type", ""))
+	if not _setting_type_matches(value, setting_type):
+		return false
+	if rule.has("enum") and (not rule.enum is Array or value not in rule.enum):
+		return false
+	if rule.has("minimum") and float(value) < float(rule.minimum):
+		return false
+	if rule.has("maximum") and float(value) > float(rule.maximum):
+		return false
+	return true
+
+
+func _setting_type_matches(value: Variant, setting_type: String) -> bool:
+	match setting_type:
+		"string":
+			return value is String
+		"integer":
+			return _is_json_integer(value)
+		"number":
+			return value is int or value is float
+		"boolean":
+			return value is bool
+	return false
 
 
 func _is_number(value: Variant) -> bool:
 	return value is int or value is float
+
+
+func _is_json_integer(value: Variant) -> bool:
+	return _is_number(value) and is_finite(float(value)) and float(value) == floor(float(value))
 
 
 func _as_float(value: Variant) -> float:

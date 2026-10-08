@@ -1,0 +1,11 @@
+{
+  "version": "r14-v03-crop01",
+  "source": "docs/art-production/p1-story-portraits-r14/sources/portraits-v03-original.png",
+  "columns": 3,
+  "rows": 2,
+  "order": ["mira", "iven", "taren", "leia", "oren", null],
+  "source_rects": [[22,102,406,439],[464,102,431,440],[939,102,414,439],[22,660,403,430],[458,641,450,453]],
+  "method": "Godot reviewed rectangular transparent crop; get_used_rect; INTERPOLATE_NEAREST aspect fit into 120x152; blit into 128x160 transparent RGBA8. No alpha or color editing.",
+  "crop_note": "Built-in source has sub-8/255 alpha remnants in outer gutters and the nominal empty cell. Crop rectangles retain every pixel with alpha>=8 in each character cell plus padding. Low-alpha pixels inside crop rectangles are preserved verbatim. Outer empty gutters and sixth cell are discarded; final preview sixth cell is newly allocated alpha=0.",
+  "source_dimensions_note": "Requested 1536x1280; actual original 1374x1145. Output PNGs are technical reductions, not native 128x160 generations."
+}

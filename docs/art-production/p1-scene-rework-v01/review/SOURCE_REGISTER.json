@@ -1,0 +1,67 @@
+[
+  {
+    "id": "ground",
+    "path": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-68f717a1-b697-46fa-8430-f3bd09312f05.png",
+    "dest": "sources/ground_original.png",
+    "stage": "original",
+    "sha256": "a504c521cb642c185ea7e975ccf694ef8704fcbbdcefdf249cc59e1d662a7c4c",
+    "bytes": 943969,
+    "size": [
+      1586,
+      992
+    ],
+    "mode": "RGB"
+  },
+  {
+    "id": "decals",
+    "path": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-834e849d-2a16-4f45-b705-5e93ce54ae70.png",
+    "dest": "sources/decals_keyed.png",
+    "stage": "color_key_fix",
+    "sha256": "add83e642b6d3b430c6ead055935c73f423932e037730313192f8eb22dde3c9a",
+    "bytes": 1206826,
+    "size": [
+      1448,
+      1086
+    ],
+    "mode": "RGB"
+  },
+  {
+    "id": "ruins",
+    "path": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-d4ef8714-1b7e-4165-987d-c96891f2de38.png",
+    "dest": "sources/ruins_keyed.png",
+    "stage": "color_key_fix",
+    "sha256": "a1dbccfda397774dbb38e7dec49986f9eb35c01e23cefdbe588f6d97deae5dd4",
+    "bytes": 1545662,
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  {
+    "id": "boss",
+    "path": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-45eda139-dd86-49a4-80a5-007aac699fe6.png",
+    "dest": "sources/boss_keyed.png",
+    "stage": "color_key_fix",
+    "sha256": "afa758bcae27c455a33c8c7c8e3f49743550e7fd6d40068dda0cf33850ad1b51",
+    "bytes": 1557747,
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGB"
+  },
+  {
+    "id": "ranger_native",
+    "path": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-4cd6b373-0d84-4598-a12e-aaaad9b43577.png",
+    "dest": "sources/ranger_native_keyed.png",
+    "stage": "native_silhouette_fix",
+    "sha256": "137374b164c1ab68d7b0c95eda9eac8e1664f97f1c28e900c74ac927dd718267",
+    "bytes": 1331150,
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGB"
+  }
+]

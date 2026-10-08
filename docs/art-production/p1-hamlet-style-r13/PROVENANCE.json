@@ -1,0 +1,56 @@
+{
+  "generator": "built-in image_gen image editing",
+  "art_direction": "docs/art-concepts/r13/hearthside-town-composition-v01.png",
+  "prompts": "PROMPTS.json",
+  "sources": [
+    {
+      "id": "commons",
+      "source": "docs/art-production/p1-hamlet-style-r13/sources/commons.png",
+      "original_output": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a115fd-db75-7cb2-a2f1-aed4994c98f9/exec-4044d0d2-292a-405c-9fa2-28a4dd7cad33.png",
+      "sha256": "20dc1496cfbfbe75babd31d0451d4225d7376fecc25246cf2d2262eb89acbeb5"
+    },
+    {
+      "id": "lantern",
+      "source": "docs/art-production/p1-hamlet-style-r13/sources/lantern.png",
+      "original_output": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a115fd-db75-7cb2-a2f1-aed4994c98f9/exec-242d312e-2d97-44db-b58b-cf3c665d117e.png",
+      "sha256": "35668903adc5147af289f05289dfe1dcedfacaefa4c88f55cc0e98db1605ddc3"
+    },
+    {
+      "id": "facilities",
+      "source": "docs/art-production/p1-hamlet-style-r13/sources/facilities.png",
+      "original_output": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a115fd-db75-7cb2-a2f1-aed4994c98f9/exec-5ad50471-3ea6-4aee-9745-44d14e00e5c1.png",
+      "sha256": "e2cc7a16c26adb3b0d0945eee9d8fde9d9226ec2c11ac9f26d2caf5fa8c4b4df"
+    },
+    {
+      "id": "hearth",
+      "source": "docs/art-production/p1-hamlet-style-r13/sources/hearth.png",
+      "original_output": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a115fd-db75-7cb2-a2f1-aed4994c98f9/exec-2398be00-cb4e-411e-8f99-ad7cd2efede1.png",
+      "sha256": "55dea8493d9288b4a97cc58e96515de645373e9365712f96495baaa074117979"
+    },
+    {
+      "id": "forge",
+      "source": "docs/art-production/p1-hamlet-style-r13/sources/forge.png",
+      "original_output": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a115fd-db75-7cb2-a2f1-aed4994c98f9/exec-5e85f45c-3265-41af-82d7-35c140f74288.png",
+      "sha256": "a72c0ed23721e62460d0ef1ad70142f39eb9f40ea6673dd103eebbab678ca48c"
+    },
+    {
+      "id": "edges",
+      "source": "docs/art-production/p1-hamlet-style-r13/sources/edges.png",
+      "original_output": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a115fd-db75-7cb2-a2f1-aed4994c98f9/exec-fe559479-5a19-44fa-a1f7-bde8216ce90d.png",
+      "sha256": "126981db0233e354c5a31b55fc584a18b9798ecc12a29234feb453c59b5dae9b"
+    },
+    {
+      "id": "residents",
+      "source": "docs/art-production/p1-hamlet-style-r13/sources/residents.png",
+      "original_output": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a115fd-db75-7cb2-a2f1-aed4994c98f9/exec-54199c9c-4573-4d45-b2cc-0d3fd15bc2bc.png",
+      "sha256": "8491083522931fd493cc4f98f75cd698551e3e293ba84a4290b0eb0615c54d3a"
+    }
+  ],
+  "technical_import": "Godot transparent-margin crop, nearest native fit, fixed cell packing; no repaint/recolour",
+  "runtime_packages": [
+    "art/production/p1/hamlet_style_r13",
+    "art/production/p1/hamlet_life_r13",
+    "art/production/p1/hamlet_commons_r13"
+  ],
+  "legacy_assets": "Original PNGs and fourteen-colour life package preserved"
+}

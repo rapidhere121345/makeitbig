@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "method": "builtin_imagegen",
+  "user_authorized_technical_processing": true,
+  "source_count": 7,
+  "scope": "Current packing inputs preserved unchanged; processed production assets are separate derivatives.",
+  "entries": [
+    {
+      "repository_file": "sources/ranger_source_keyed.png",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-37586edc-c92a-4b43-b1a3-ed877831abd5.png",
+      "prompt": "KEYED_FIX_PROMPTS.md",
+      "sha256": "6e9b6f4309260d448d70bfd0036fe73613eb08103e3b81b47621fd765b6579b2",
+      "byte_identical_to_generated_source": true
+    },
+    {
+      "repository_file": "sources/enemies_source_keyed.png",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-4166998d-fc4c-4d0c-8ac0-35fd778766ae.png",
+      "prompt": "KEYED_FIX_PROMPTS.md",
+      "sha256": "03dade88c64583453e7d87c07db5dca6d14b2e9e806d4a23f8c6fe546a1b7175",
+      "byte_identical_to_generated_source": true
+    },
+    {
+      "repository_file": "sources/boss_source_keyed.png",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-4be2e665-a62c-4a5d-8559-73a2b256be30.png",
+      "prompt": "KEYED_FIX_PROMPTS.md",
+      "sha256": "16be5437bf6fe38703e55236d9ff97df0c1df804e9511880a7d488082242d029",
+      "byte_identical_to_generated_source": true
+    },
+    {
+      "repository_file": "sources/tower_source_keyed.png",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-8c9a8be1-f61d-4ca6-abd1-8edff4e4a63f.png",
+      "prompt": "KEYED_FIX_PROMPTS.md",
+      "sha256": "028fd45c078885e595b5775b39faa30d4f356a8dcde7e480c27cd3234c639dfa",
+      "byte_identical_to_generated_source": true
+    },
+    {
+      "repository_file": "sources/terrain_source_keyed.png",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-b12d71d8-992a-4ccb-abb3-584710a9ff9a.png",
+      "prompt": "KEYED_FIX_PROMPTS.md",
+      "sha256": "797e917681ae20871475bfb40fa4e904304fdb12c4234ff247ce9a6dbbdf5269",
+      "byte_identical_to_generated_source": true
+    },
+    {
+      "repository_file": "sources/ranger_vertical_shoot.png",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-cdfb8b50-2394-4e1c-a884-b131e018f15e.png",
+      "prompt": "VERTICAL_SHOOT_PROMPT.md",
+      "sha256": "b8377048c51e89ecc5eb2399f472c01575b0f39a751210b251b4e1e8559f005f",
+      "byte_identical_to_generated_source": true
+    },
+    {
+      "repository_file": "sources/ground_source_borderless.png",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-25d27087-d765-4816-907b-328b540bf401.png",
+      "prompt": "GROUND_FIX_PROMPT.md",
+      "sha256": "9abcde899a1d05a579905543d087ea7f2cc4848b572901ba6eb7814513d69fd7",
+      "byte_identical_to_generated_source": true
+    }
+  ]
+}

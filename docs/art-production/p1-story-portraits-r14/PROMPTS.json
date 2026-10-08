@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "tool": "image_gen.imagegen (built-in)",
+  "date": "2026-10-07",
+  "versions": [
+    {
+      "id": "v03",
+      "prompt_file": "prompts/v03.txt",
+      "prompt": "Use case: stylized-concept. Create a fresh production sprite atlas: five DISTINCT chest-up pixel-art residents of a snowy medieval working town, on a real transparent RGBA background.\nCanvas 1536x1280, exact regular 3 columns x 2 rows. IMPORTANT: each bust SMALL and centered inside its 512x640 cell, occupying ONLY about 340x420 pixels, leaving at least 80 pixels of empty transparent gutter on EACH side and 100 above/below. Three quarter view toward camera, neutral calm closed mouth, full head and FULL round shoulders, natural flat crop at lower chest. Bottom-right cell entirely empty. No objects around portraits.\nOrder and identities MUST be:\ntop left MIRA adult female winter-tower watchkeeper, dark brows, angular cheekbones, bone-white cloth hood framing a clear visible face and bone-white thick scarf, gray-blue padded coat, worn brown leather shoulders and copper clasp.\ntop middle IVEN adult male chronicler, narrow face, short dark brown uncovered hair, no hood, white scarf, gray-blue coat and thin leather shoulder strap.\ntop right TAREN mature male travelling merchant, broad weathered face and prominent nose, short dark brown beard, white travel hood, white scarf, gray-blue coat and thick diagonal brown satchel strap.\nbottom left LEIA young adult female watch apprentice, fine face distinctly younger than Mira, short uncovered pale blond hair, no hood, white scarf, gray-blue coat, simple brown leather shoulder panels.\nbottom middle OREN older male repairer, square lined face and heavy brow, gray stubble, white work hood, thick white scarf, dark gray-blue coat and brown leather apron straps.\nStyle: consistent authentic RPG pixel art, boldly separated square pixel clusters, crisp dark stair-step contour, simplified faces readable at 128x160, restrained cold slate grays, muted bone whites, old copper fasteners and worn brown leather. Warm amber side-light upper left and cool gray shadow. Grounded workers of a snowy town; not heroic fantasy glamour. No painterly or smooth rendered shading. Entire face and chest clothing fully opaque. Every point outside the silhouette MUST have alpha 0. No stray pixels or semitransparent noise in margins, no colored fringe (red/yellow/green/blue) along edges. No background checkerboard, no black fill, no white fill; actual transparency only.\nABSOLUTELY NO text, name labels, letters, watermarks, frame, border, background scenery, snow, hands, weapons, books, tools, quest symbols, floating effects, shadows or duplicate faces. All hair/hood and both shoulders must fit with wide transparent safety margin.",
+      "tool_arguments": {
+        "transparent_background": true
+      },
+      "input_note": "Fresh text-only built-in generation. Clothing and palette choices were based on references actually viewed before v01. No raster references attached to this v03 call.",
+      "original": "sources/portraits-v03-original.png",
+      "generated_source_path": "/data/paseo-6768/prodex-real/profiles/pro-5x/generated_images/01a11669-c490-7822-8f83-3d63c47f38af/exec-b2241386-0b32-413a-a363-5f50e8b4130a.png",
+      "status": "accepted-after-Godot-rectangular-crop",
+      "technical_version": "r14-v03-crop01",
+      "limitations": "Original gutters contain alpha below 8/255. Reviewed rectangular crops discard outer empty gutters, preserve all alpha>=8 character pixels plus padding, and retain original RGBA inside each crop. No alpha thresholding or color cleanup. Final canvases have at least four fully transparent pixels of exterior margin.",
+      "actual_original_size": [
+        1374,
+        1145
+      ],
+      "final_size": [
+        128,
+        160
+      ],
+      "original_sha256": "386eb5595e3e64bab7c8d3c551c66845aef39db5252eceec150d53fe13fc09e4",
+      "prompt_file_sha256": "7558f4d754524b4b42e7967a5d5f41de48bef49efb503bbb8efece83d85acd7f"
+    }
+  ]
+}

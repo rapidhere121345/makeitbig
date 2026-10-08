@@ -1,0 +1,1723 @@
+{
+  "schema_version": 1,
+  "resource_prefix": "res://art/production/p1/calibration_v01",
+  "native_view": [
+    640,
+    360
+  ],
+  "palette": [
+    "#111820",
+    "#1D2731",
+    "#2D3943",
+    "#46515A",
+    "#71808A",
+    "#AAAFAB",
+    "#D3CBB5",
+    "#E9DDC3",
+    "#7F94AD",
+    "#B0C4D8",
+    "#5B4036",
+    "#896043",
+    "#BB713D",
+    "#EEAD56",
+    "#70578D",
+    "#B17CC4",
+    "#BD4653",
+    "#ED7370",
+    "#61A6A5",
+    "#729161",
+    "#A2BC80",
+    "#29343E",
+    "#33404A",
+    "#202A33",
+    "#39262E",
+    "#76402F"
+  ],
+  "sources": {
+    "ranger": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/ranger_source_keyed.png",
+      "grid": [
+        4,
+        4
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 100
+      }
+    },
+    "enemies": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/enemies_source_keyed.png",
+      "grid": [
+        4,
+        3
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 100
+      }
+    },
+    "boss": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/boss_source_keyed.png",
+      "grid": [
+        2,
+        3
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 100
+      }
+    },
+    "tower": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/tower_source_keyed.png",
+      "grid": [
+        1,
+        1
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 100
+      }
+    },
+    "terrain": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/terrain_source_keyed.png",
+      "grid": [
+        2,
+        2
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 100
+      }
+    },
+    "ground": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/ground_source_borderless.png",
+      "grid": [
+        1,
+        1
+      ],
+      "background": {
+        "mode": "opaque"
+      }
+    },
+    "ranger_vertical": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/ranger_vertical_shoot.png",
+      "grid": [
+        1,
+        2
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 100
+      }
+    }
+  },
+  "atlases": {
+    "ranger": {
+      "cell_size": [
+        32,
+        48
+      ],
+      "columns": 4,
+      "padding": 2
+    },
+    "enemies": {
+      "cell_size": [
+        48,
+        48
+      ],
+      "columns": 4,
+      "padding": 2
+    },
+    "boss_body": {
+      "cell_size": [
+        96,
+        128
+      ],
+      "columns": 2,
+      "padding": 2
+    },
+    "boss_hands": {
+      "cell_size": [
+        48,
+        64
+      ],
+      "columns": 2,
+      "padding": 2
+    },
+    "boss_core": {
+      "cell_size": [
+        48,
+        112
+      ],
+      "columns": 2,
+      "padding": 2
+    },
+    "tower": {
+      "cell_size": [
+        128,
+        192
+      ],
+      "columns": 2,
+      "padding": 2
+    },
+    "terrain": {
+      "cell_size": [
+        64,
+        64
+      ],
+      "columns": 4,
+      "padding": 2
+    },
+    "ground": {
+      "cell_size": [
+        64,
+        64
+      ],
+      "columns": 1,
+      "padding": 0
+    }
+  },
+  "sprites": [
+    {
+      "id": "ranger.south.idle",
+      "source": "ranger",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        256,
+        400
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "south",
+      "state": "idle",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.south.walk_a",
+      "source": "ranger",
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        256,
+        0,
+        256,
+        400
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "south",
+      "state": "walk_a",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.south.walk_b",
+      "source": "ranger",
+      "cell": [
+        2,
+        0
+      ],
+      "crop": [
+        512,
+        0,
+        256,
+        400
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "south",
+      "state": "walk_b",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.south.shoot",
+      "source": "ranger_vertical",
+      "cell": [
+        0,
+        0
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        28
+      ],
+      "facing": "south",
+      "state": "shoot",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger_vertical",
+      "crop": [
+        0,
+        0,
+        1024,
+        710
+      ]
+    },
+    {
+      "id": "ranger.north.idle",
+      "source": "ranger",
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        0,
+        400,
+        256,
+        380
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "north",
+      "state": "idle",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.north.walk_a",
+      "source": "ranger",
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        256,
+        400,
+        256,
+        380
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "north",
+      "state": "walk_a",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.north.walk_b",
+      "source": "ranger",
+      "cell": [
+        2,
+        1
+      ],
+      "crop": [
+        512,
+        400,
+        236,
+        380
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "north",
+      "state": "walk_b",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.north.shoot",
+      "source": "ranger_vertical",
+      "cell": [
+        0,
+        1
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        33
+      ],
+      "facing": "north",
+      "state": "shoot",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger_vertical",
+      "crop": [
+        0,
+        710,
+        1024,
+        826
+      ]
+    },
+    {
+      "id": "ranger.west.idle",
+      "source": "ranger",
+      "cell": [
+        0,
+        2
+      ],
+      "crop": [
+        0,
+        780,
+        256,
+        370
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "west",
+      "state": "idle",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.west.walk_a",
+      "source": "ranger",
+      "cell": [
+        1,
+        2
+      ],
+      "crop": [
+        256,
+        780,
+        256,
+        370
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "west",
+      "state": "walk_a",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.west.walk_b",
+      "source": "ranger",
+      "cell": [
+        2,
+        2
+      ],
+      "crop": [
+        512,
+        780,
+        236,
+        370
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "west",
+      "state": "walk_b",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.west.shoot",
+      "source": "ranger",
+      "cell": [
+        3,
+        2
+      ],
+      "crop": [
+        748,
+        780,
+        276,
+        370
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "west",
+      "state": "shoot",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.east.idle",
+      "source": "ranger",
+      "cell": [
+        0,
+        3
+      ],
+      "crop": [
+        0,
+        1150,
+        256,
+        386
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "east",
+      "state": "idle",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.east.walk_a",
+      "source": "ranger",
+      "cell": [
+        1,
+        3
+      ],
+      "crop": [
+        256,
+        1150,
+        256,
+        386
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "east",
+      "state": "walk_a",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.east.walk_b",
+      "source": "ranger",
+      "cell": [
+        2,
+        3
+      ],
+      "crop": [
+        512,
+        1150,
+        256,
+        386
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "east",
+      "state": "walk_b",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "ranger.east.shoot",
+      "source": "ranger",
+      "cell": [
+        3,
+        3
+      ],
+      "crop": [
+        768,
+        1150,
+        256,
+        386
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "facing": "east",
+      "state": "shoot",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#39262E",
+        "#76402F"
+      ],
+      "scale_group": "ranger"
+    },
+    {
+      "id": "enemy.melee.idle",
+      "source": "enemies",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        362,
+        410
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        40,
+        36
+      ],
+      "state": "idle",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "melee"
+    },
+    {
+      "id": "enemy.melee.windup",
+      "source": "enemies",
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        362,
+        0,
+        362,
+        410
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        40,
+        36
+      ],
+      "state": "windup",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "melee"
+    },
+    {
+      "id": "enemy.melee.active",
+      "source": "enemies",
+      "cell": [
+        2,
+        0
+      ],
+      "crop": [
+        724,
+        0,
+        396,
+        410
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        40,
+        36
+      ],
+      "state": "active",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "melee"
+    },
+    {
+      "id": "enemy.melee.recover",
+      "source": "enemies",
+      "cell": [
+        3,
+        0
+      ],
+      "crop": [
+        1120,
+        0,
+        328,
+        410
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        40,
+        36
+      ],
+      "state": "recover",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "melee"
+    },
+    {
+      "id": "enemy.charger.idle",
+      "source": "enemies",
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        0,
+        410,
+        362,
+        280
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        42,
+        28
+      ],
+      "state": "idle",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "charger"
+    },
+    {
+      "id": "enemy.charger.windup",
+      "source": "enemies",
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        362,
+        410,
+        362,
+        280
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        42,
+        28
+      ],
+      "state": "windup",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "charger"
+    },
+    {
+      "id": "enemy.charger.active",
+      "source": "enemies",
+      "cell": [
+        2,
+        1
+      ],
+      "crop": [
+        724,
+        410,
+        362,
+        280
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        42,
+        28
+      ],
+      "state": "active",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "charger"
+    },
+    {
+      "id": "enemy.charger.recover",
+      "source": "enemies",
+      "cell": [
+        3,
+        1
+      ],
+      "crop": [
+        1086,
+        410,
+        362,
+        280
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        42,
+        28
+      ],
+      "state": "recover",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "charger"
+    },
+    {
+      "id": "enemy.ranged.idle",
+      "source": "enemies",
+      "cell": [
+        0,
+        2
+      ],
+      "crop": [
+        0,
+        690,
+        362,
+        396
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        40,
+        40
+      ],
+      "state": "idle",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "ranged"
+    },
+    {
+      "id": "enemy.ranged.windup",
+      "source": "enemies",
+      "cell": [
+        1,
+        2
+      ],
+      "crop": [
+        362,
+        690,
+        362,
+        396
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        40,
+        40
+      ],
+      "state": "windup",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "ranged"
+    },
+    {
+      "id": "enemy.ranged.active",
+      "source": "enemies",
+      "cell": [
+        2,
+        2
+      ],
+      "crop": [
+        724,
+        690,
+        362,
+        396
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        40,
+        40
+      ],
+      "state": "active",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "ranged"
+    },
+    {
+      "id": "enemy.ranged.recover",
+      "source": "enemies",
+      "cell": [
+        3,
+        2
+      ],
+      "crop": [
+        1086,
+        690,
+        362,
+        396
+      ],
+      "atlas": "enemies",
+      "anchor": [
+        24,
+        44
+      ],
+      "fit": [
+        40,
+        40
+      ],
+      "state": "recover",
+      "facing": "east",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#5B4036",
+        "#39262E",
+        "#BD4653"
+      ],
+      "scale_group": "ranged"
+    },
+    {
+      "id": "boss.body_phase1",
+      "source": "boss",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        512,
+        565
+      ],
+      "atlas": "boss_body",
+      "anchor": [
+        48,
+        120
+      ],
+      "fit": [
+        88,
+        112
+      ],
+      "scale_group": "boss_0",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D"
+      ]
+    },
+    {
+      "id": "boss.body_phase2",
+      "source": "boss",
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        512,
+        0,
+        512,
+        565
+      ],
+      "atlas": "boss_body",
+      "anchor": [
+        48,
+        120
+      ],
+      "fit": [
+        88,
+        112
+      ],
+      "scale_group": "boss_0",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D"
+      ]
+    },
+    {
+      "id": "boss.hand_left",
+      "source": "boss",
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        0,
+        565,
+        512,
+        425
+      ],
+      "atlas": "boss_hands",
+      "anchor": [
+        24,
+        56
+      ],
+      "fit": [
+        44,
+        52
+      ],
+      "scale_group": "boss_1",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D"
+      ]
+    },
+    {
+      "id": "boss.hand_right",
+      "source": "boss",
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        512,
+        565,
+        512,
+        425
+      ],
+      "atlas": "boss_hands",
+      "anchor": [
+        24,
+        56
+      ],
+      "fit": [
+        44,
+        52
+      ],
+      "scale_group": "boss_1",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D"
+      ]
+    },
+    {
+      "id": "boss.core_phase1",
+      "source": "boss",
+      "cell": [
+        0,
+        2
+      ],
+      "crop": [
+        0,
+        990,
+        512,
+        546
+      ],
+      "atlas": "boss_core",
+      "anchor": [
+        24,
+        104
+      ],
+      "fit": [
+        40,
+        100
+      ],
+      "scale_group": "boss_2",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#70578D",
+        "#B17CC4"
+      ]
+    },
+    {
+      "id": "boss.core_phase2",
+      "source": "boss",
+      "cell": [
+        1,
+        2
+      ],
+      "crop": [
+        512,
+        990,
+        512,
+        546
+      ],
+      "atlas": "boss_core",
+      "anchor": [
+        24,
+        104
+      ],
+      "fit": [
+        40,
+        100
+      ],
+      "scale_group": "boss_2",
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#70578D",
+        "#B17CC4"
+      ]
+    },
+    {
+      "id": "tower.base",
+      "source": "tower",
+      "cell": [
+        0,
+        0
+      ],
+      "atlas": "tower",
+      "anchor": [
+        64,
+        184
+      ],
+      "fit": [
+        120,
+        176
+      ],
+      "scale_group": "tower",
+      "keep_rows": [
+        148,
+        192
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#896043",
+        "#EEAD56",
+        "#B17CC4"
+      ]
+    },
+    {
+      "id": "tower.upper",
+      "source": "tower",
+      "cell": [
+        0,
+        0
+      ],
+      "atlas": "tower",
+      "anchor": [
+        64,
+        184
+      ],
+      "fit": [
+        120,
+        176
+      ],
+      "scale_group": "tower",
+      "keep_rows": [
+        0,
+        148
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#896043",
+        "#EEAD56",
+        "#B17CC4"
+      ]
+    },
+    {
+      "id": "terrain.snow",
+      "source": "terrain",
+      "cell": [
+        0,
+        0
+      ],
+      "atlas": "terrain",
+      "anchor": [
+        32,
+        60
+      ],
+      "fit": [
+        56,
+        48
+      ],
+      "palette": [
+        "#7F94AD",
+        "#B0C4D8"
+      ]
+    },
+    {
+      "id": "terrain.rubble",
+      "source": "terrain",
+      "cell": [
+        1,
+        0
+      ],
+      "atlas": "terrain",
+      "anchor": [
+        32,
+        60
+      ],
+      "fit": [
+        32,
+        28
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#5B4036",
+        "#896043",
+        "#AAAFAB"
+      ]
+    },
+    {
+      "id": "terrain.wall",
+      "source": "terrain",
+      "cell": [
+        0,
+        1
+      ],
+      "atlas": "terrain",
+      "anchor": [
+        32,
+        60
+      ],
+      "fit": [
+        60,
+        52
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#5B4036",
+        "#896043",
+        "#AAAFAB"
+      ]
+    },
+    {
+      "id": "terrain.fence",
+      "source": "terrain",
+      "cell": [
+        1,
+        1
+      ],
+      "atlas": "terrain",
+      "anchor": [
+        32,
+        60
+      ],
+      "fit": [
+        60,
+        52
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#5B4036",
+        "#896043",
+        "#AAAFAB"
+      ]
+    },
+    {
+      "id": "terrain.ground",
+      "source": "ground",
+      "cell": [
+        0,
+        0
+      ],
+      "atlas": "ground",
+      "anchor": [
+        32,
+        64
+      ],
+      "fit": [
+        64,
+        64
+      ],
+      "palette": [
+        "#29343E",
+        "#2D3943",
+        "#33404A",
+        "#202A33"
+      ]
+    }
+  ],
+  "animations": {
+    "ranger.south.walk": {
+      "frames": [
+        "ranger.south.walk_a",
+        "ranger.south.idle",
+        "ranger.south.walk_b",
+        "ranger.south.idle"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.north.walk": {
+      "frames": [
+        "ranger.north.walk_a",
+        "ranger.north.idle",
+        "ranger.north.walk_b",
+        "ranger.north.idle"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.west.walk": {
+      "frames": [
+        "ranger.west.walk_a",
+        "ranger.west.idle",
+        "ranger.west.walk_b",
+        "ranger.west.idle"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranger.east.walk": {
+      "frames": [
+        "ranger.east.walk_a",
+        "ranger.east.idle",
+        "ranger.east.walk_b",
+        "ranger.east.idle"
+      ],
+      "fps": 8,
+      "loop": true
+    }
+  }
+}

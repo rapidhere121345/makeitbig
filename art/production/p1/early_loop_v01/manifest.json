@@ -1,0 +1,186 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1750,
+      "dimensions": [
+        128,
+        32
+      ],
+      "file": "equipment_slots.png",
+      "sha256": "6c612cf68a5816e1c4af2d3cd3f53d04c83970eb9cc35077d6e58137c63fb101"
+    },
+    {
+      "bytes": 4675,
+      "dimensions": [
+        256,
+        32
+      ],
+      "file": "equipment_bases.png",
+      "sha256": "724a2d9db9904380648097bb232f5f79d19ffd459d27d12bc2e3ee44855b230f"
+    },
+    {
+      "bytes": 2150,
+      "dimensions": [
+        128,
+        32
+      ],
+      "file": "skills_actions.png",
+      "sha256": "1a83643b4ecc1f3af8d296958da905c77c7ab2a64121b0b60ee01f8c9097bcd1"
+    },
+    {
+      "bytes": 2029,
+      "dimensions": [
+        128,
+        32
+      ],
+      "file": "runes_law.png",
+      "sha256": "f5e7647103ef2336427869ac5946447d1b90a9ca67b5fa33cc8aef57e5e0b3d6"
+    },
+    {
+      "bytes": 2481,
+      "dimensions": [
+        128,
+        32
+      ],
+      "file": "white_cores.png",
+      "sha256": "e6eba7dbc798a75ab2dd1386e8834752559378c013282fff7984a848082c9db0"
+    },
+    {
+      "bytes": 7261,
+      "file": "atlas.json",
+      "sha256": "1ac7f70b3caaf17109533604a6e562c95081be4dca4c07407ff4a5cbd865403c"
+    },
+    {
+      "bytes": 12704,
+      "dimensions": [
+        256,
+        160
+      ],
+      "file": "contact_native.png",
+      "sha256": "e7aa1901f238c2148c6d896dfd9876ff530e7b6a9bbf575fd324c89c95416a64"
+    },
+    {
+      "bytes": 14656,
+      "dimensions": [
+        512,
+        320
+      ],
+      "file": "contact_2x.png",
+      "sha256": "ba6cc20590716a316e465db72b1eb051ea9bc36362b1ed6730fb021882298a6a"
+    },
+    {
+      "bytes": 1237,
+      "dimensions": [
+        64,
+        40
+      ],
+      "file": "contact_25pct.png",
+      "sha256": "1fb39de86159153592697eb949865c581faa66bc7be565ab7cc4fb4594f8d0ce"
+    },
+    {
+      "bytes": 12189,
+      "dimensions": [
+        256,
+        160
+      ],
+      "file": "contact_gray.png",
+      "sha256": "7fb3c0dd868175ba1797efcb3e2282d2990b507704ff5ada2b49a77930a1143c"
+    },
+    {
+      "bytes": 2969,
+      "dimensions": [
+        256,
+        160
+      ],
+      "file": "contact_silhouettes.png",
+      "sha256": "93053d679b72d7f868e96582108156e6460ce16524cdc21b8cccb4e80e137c30"
+    }
+  ],
+  "contact_qa": {
+    "25pct": "contact_25pct.png",
+    "2x": "contact_2x.png",
+    "gray": "contact_gray.png",
+    "native": "contact_native.png",
+    "silhouettes": "contact_silhouettes.png"
+  },
+  "inputs": {
+    "catalog": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/catalog.json",
+      "sha256": "99c0ff97af2dc7c168441730280f3d23c53e29cc65b3725b1da417fbbb9dceb8"
+    },
+    "recipe": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/recipe.json",
+      "sha256": "7ba78117b6cf4af8c7443efed674401195d723dc23157e9e1c6b266aa0033899"
+    },
+    "sources": [
+      {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "group": "equipment_slots",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/equipment_slots_source.png",
+        "sha256": "febaed2a9261f07dbb128c6e2b70b879f0957dcee002fcd75186846844d912c2"
+      },
+      {
+        "dimensions": [
+          1586,
+          992
+        ],
+        "group": "equipment_bases",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/equipment_bases_source.png",
+        "sha256": "429df59470b0551e6aeb60972f57a78be9f5b0f18538fcf0f711b825c1ed8966"
+      },
+      {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "group": "skills_actions",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/skills_actions_source.png",
+        "sha256": "f59ea2afe66a3aa9ef2b6033398574edebf23fab23ceba4be683ac38ef6c868f"
+      },
+      {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "group": "runes_law",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/runes_law_source.png",
+        "sha256": "7e0c9260cabfbf03dd37337ecc7bd2520538eee95a4f7d4328c0dee687fe37a0"
+      },
+      {
+        "dimensions": [
+          1254,
+          1254
+        ],
+        "group": "white_cores",
+        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/white_cores_source.png",
+        "sha256": "148fb5a03dd96c399923ecdeb2c4c435c1c240e6f1230992fcac6bb83df411f6"
+      }
+    ]
+  },
+  "schema_version": 1,
+  "technical_contract": {
+    "alpha": "binary",
+    "anchor": [
+      16,
+      16
+    ],
+    "cell": [
+      32,
+      32
+    ],
+    "max_colors": 12,
+    "max_visible": [
+      28,
+      28
+    ],
+    "padding": 2,
+    "transparent_rgb": [
+      0,
+      0,
+      0
+    ]
+  }
+}

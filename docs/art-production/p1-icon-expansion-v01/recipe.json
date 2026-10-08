@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "alpha_threshold": 128,
+  "palette": [
+    "#17222b",
+    "#435363",
+    "#71808a",
+    "#b2b9b2",
+    "#e9ddc3",
+    "#5b4036",
+    "#ad7950",
+    "#d7a46b"
+  ],
+  "groups": [
+    {
+      "id": "ranger_talents",
+      "texture": "ranger_talents.png",
+      "sprites": [
+        {
+          "id": "talent.ranger_steady_string",
+          "canonical_id": "ranger_steady_string",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_steady_string.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_long_breath",
+          "canonical_id": "ranger_long_breath",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_long_breath.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_keen_eye",
+          "canonical_id": "ranger_keen_eye",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_keen_eye.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_light_step",
+          "canonical_id": "ranger_light_step",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_light_step.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_recovery_pose",
+          "canonical_id": "ranger_recovery_pose",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_recovery_pose.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_close_turn",
+          "canonical_id": "ranger_close_turn",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_close_turn.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_continuation_calibration",
+          "canonical_id": "ranger_continuation_calibration",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_continuation_calibration.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_defocused_tracking",
+          "canonical_id": "ranger_defocused_tracking",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_defocused_tracking.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_wind_slice_stance",
+          "canonical_id": "ranger_wind_slice_stance",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_wind_slice_stance.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_lineage_sense",
+          "canonical_id": "ranger_lineage_sense",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_lineage_sense.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_last_generation_loading",
+          "canonical_id": "ranger_last_generation_loading",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_last_generation_loading.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_three_skill_rhythm",
+          "canonical_id": "ranger_three_skill_rhythm",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_three_skill_rhythm.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_wind_walker",
+          "canonical_id": "ranger_wind_walker",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_wind_walker.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_critical_hunter",
+          "canonical_id": "ranger_critical_hunter",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_critical_hunter.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "talent.ranger_near_far_hunting",
+          "canonical_id": "ranger_near_far_hunting",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/ranger_near_far_hunting.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        }
+      ]
+    },
+    {
+      "id": "law_tokens",
+      "texture": "law_tokens.png",
+      "sprites": [
+        {
+          "id": "law_token.inscribe",
+          "canonical_id": "inscribe",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/tally_inscribe.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "law_token.rewrite",
+          "canonical_id": "rewrite",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/tally_rewrite.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        },
+        {
+          "id": "law_token.refine",
+          "canonical_id": "refine",
+          "source": "/data/repo/makeitbig/docs/art-production/p1-icon-expansion-v01/sources/tally_refine.png",
+          "source_rect": [
+            0,
+            0,
+            1254,
+            1254
+          ]
+        }
+      ]
+    }
+  ]
+}

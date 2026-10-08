@@ -1,0 +1,70 @@
+{
+  "method": "builtin image_gen",
+  "sources": [
+    {
+      "group": "equipment_slots",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-58a86822-d39d-4cbc-b44e-1fe150cc2fb0.png",
+      "archive_name": "equipment_slots_source.png",
+      "status": "selected_keyed_source",
+      "archive": "docs/art-production/p1-early-loop-v01/sources/equipment_slots_source.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "sha256": "febaed2a9261f07dbb128c6e2b70b879f0957dcee002fcd75186846844d912c2"
+    },
+    {
+      "group": "equipment_bases",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-6dbe8c08-f82a-4b04-8148-ec38b56f1b1b.png",
+      "archive_name": "equipment_bases_source.png",
+      "status": "selected_keyed_source",
+      "archive": "docs/art-production/p1-early-loop-v01/sources/equipment_bases_source.png",
+      "size": [
+        1586,
+        992
+      ],
+      "mode": "RGB",
+      "sha256": "429df59470b0551e6aeb60972f57a78be9f5b0f18538fcf0f711b825c1ed8966"
+    },
+    {
+      "group": "skills_actions",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-df728103-9733-4855-becc-90a0676b0c16.png",
+      "archive_name": "skills_actions_source.png",
+      "status": "selected_keyed_source",
+      "archive": "docs/art-production/p1-early-loop-v01/sources/skills_actions_source.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "sha256": "f59ea2afe66a3aa9ef2b6033398574edebf23fab23ceba4be683ac38ef6c868f"
+    },
+    {
+      "group": "runes_law",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-e925a256-41b3-47fc-b405-6e85cc1654a7.png",
+      "archive_name": "runes_law_source.png",
+      "status": "selected_keyed_source",
+      "archive": "docs/art-production/p1-early-loop-v01/sources/runes_law_source.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "sha256": "7e0c9260cabfbf03dd37337ecc7bd2520538eee95a4f7d4328c0dee687fe37a0"
+    },
+    {
+      "group": "white_cores",
+      "generated_source": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-5d50cb6a-4cee-4b3a-9795-5d10ee279c1c.png",
+      "archive_name": "white_cores_source.png",
+      "status": "selected_keyed_source",
+      "archive": "docs/art-production/p1-early-loop-v01/sources/white_cores_source.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGB",
+      "sha256": "148fb5a03dd96c399923ecdeb2c4c435c1c240e6f1230992fcac6bb83df411f6"
+    }
+  ]
+}

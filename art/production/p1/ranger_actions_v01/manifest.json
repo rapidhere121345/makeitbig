@@ -1,0 +1,5225 @@
+{
+  "anchor": [
+    24,
+    44
+  ],
+  "animations": {
+    "ranger.east.dash": {
+      "action": "dash",
+      "distinct_pixel_frames": 2,
+      "duplicate_pixel_frames": [],
+      "facing": "east",
+      "fps": 12,
+      "frame_count": 2,
+      "frames": [
+        "ranger.east.dash.0",
+        "ranger.east.dash.1"
+      ],
+      "loop": false
+    },
+    "ranger.east.death": {
+      "action": "death",
+      "distinct_pixel_frames": 3,
+      "duplicate_pixel_frames": [],
+      "facing": "east",
+      "fps": 6,
+      "frame_count": 3,
+      "frames": [
+        "ranger.east.death.0",
+        "ranger.east.death.1",
+        "ranger.east.death.2"
+      ],
+      "loop": false
+    },
+    "ranger.east.dodge": {
+      "action": "dodge",
+      "distinct_pixel_frames": 2,
+      "duplicate_pixel_frames": [],
+      "facing": "east",
+      "fps": 12,
+      "frame_count": 2,
+      "frames": [
+        "ranger.east.dodge.0",
+        "ranger.east.dodge.1"
+      ],
+      "loop": false
+    },
+    "ranger.east.hit": {
+      "action": "hit",
+      "distinct_pixel_frames": 1,
+      "duplicate_pixel_frames": [],
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "frames": [
+        "ranger.east.hit.0"
+      ],
+      "loop": false
+    },
+    "ranger.east.idle": {
+      "action": "idle",
+      "distinct_pixel_frames": 1,
+      "duplicate_pixel_frames": [],
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 1,
+      "frames": [
+        "ranger.east.idle.0"
+      ],
+      "loop": true
+    },
+    "ranger.east.shoot": {
+      "action": "shoot",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "east",
+      "fps": 12,
+      "frame_count": 4,
+      "frames": [
+        "ranger.east.shoot.0",
+        "ranger.east.shoot.1",
+        "ranger.east.shoot.2",
+        "ranger.east.shoot.3"
+      ],
+      "loop": false
+    },
+    "ranger.east.walk": {
+      "action": "walk",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "east",
+      "fps": 8,
+      "frame_count": 4,
+      "frames": [
+        "ranger.east.walk.0",
+        "ranger.east.walk.1",
+        "ranger.east.walk.2",
+        "ranger.east.walk.3"
+      ],
+      "loop": true
+    },
+    "ranger.north.dash": {
+      "action": "dash",
+      "distinct_pixel_frames": 2,
+      "duplicate_pixel_frames": [],
+      "facing": "north",
+      "fps": 12,
+      "frame_count": 2,
+      "frames": [
+        "ranger.north.dash.0",
+        "ranger.north.dash.1"
+      ],
+      "loop": false
+    },
+    "ranger.north.death": {
+      "action": "death",
+      "distinct_pixel_frames": 3,
+      "duplicate_pixel_frames": [],
+      "facing": "north",
+      "fps": 6,
+      "frame_count": 3,
+      "frames": [
+        "ranger.north.death.0",
+        "ranger.north.death.1",
+        "ranger.north.death.2"
+      ],
+      "loop": false
+    },
+    "ranger.north.dodge": {
+      "action": "dodge",
+      "distinct_pixel_frames": 2,
+      "duplicate_pixel_frames": [],
+      "facing": "north",
+      "fps": 12,
+      "frame_count": 2,
+      "frames": [
+        "ranger.north.dodge.0",
+        "ranger.north.dodge.1"
+      ],
+      "loop": false
+    },
+    "ranger.north.hit": {
+      "action": "hit",
+      "distinct_pixel_frames": 1,
+      "duplicate_pixel_frames": [],
+      "facing": "north",
+      "fps": 8,
+      "frame_count": 1,
+      "frames": [
+        "ranger.north.hit.0"
+      ],
+      "loop": false
+    },
+    "ranger.north.idle": {
+      "action": "idle",
+      "distinct_pixel_frames": 1,
+      "duplicate_pixel_frames": [],
+      "facing": "north",
+      "fps": 8,
+      "frame_count": 1,
+      "frames": [
+        "ranger.north.idle.0"
+      ],
+      "loop": true
+    },
+    "ranger.north.shoot": {
+      "action": "shoot",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "north",
+      "fps": 12,
+      "frame_count": 4,
+      "frames": [
+        "ranger.north.shoot.0",
+        "ranger.north.shoot.1",
+        "ranger.north.shoot.2",
+        "ranger.north.shoot.3"
+      ],
+      "loop": false
+    },
+    "ranger.north.walk": {
+      "action": "walk",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "north",
+      "fps": 8,
+      "frame_count": 4,
+      "frames": [
+        "ranger.north.walk.0",
+        "ranger.north.walk.1",
+        "ranger.north.walk.2",
+        "ranger.north.walk.3"
+      ],
+      "loop": true
+    },
+    "ranger.south.dash": {
+      "action": "dash",
+      "distinct_pixel_frames": 2,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 12,
+      "frame_count": 2,
+      "frames": [
+        "ranger.south.dash.0",
+        "ranger.south.dash.1"
+      ],
+      "loop": false
+    },
+    "ranger.south.death": {
+      "action": "death",
+      "distinct_pixel_frames": 3,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 6,
+      "frame_count": 3,
+      "frames": [
+        "ranger.south.death.0",
+        "ranger.south.death.1",
+        "ranger.south.death.2"
+      ],
+      "loop": false
+    },
+    "ranger.south.dodge": {
+      "action": "dodge",
+      "distinct_pixel_frames": 2,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 12,
+      "frame_count": 2,
+      "frames": [
+        "ranger.south.dodge.0",
+        "ranger.south.dodge.1"
+      ],
+      "loop": false
+    },
+    "ranger.south.hit": {
+      "action": "hit",
+      "distinct_pixel_frames": 1,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 8,
+      "frame_count": 1,
+      "frames": [
+        "ranger.south.hit.0"
+      ],
+      "loop": false
+    },
+    "ranger.south.idle": {
+      "action": "idle",
+      "distinct_pixel_frames": 1,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 8,
+      "frame_count": 1,
+      "frames": [
+        "ranger.south.idle.0"
+      ],
+      "loop": true
+    },
+    "ranger.south.shoot": {
+      "action": "shoot",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 12,
+      "frame_count": 4,
+      "frames": [
+        "ranger.south.shoot.0",
+        "ranger.south.shoot.1",
+        "ranger.south.shoot.2",
+        "ranger.south.shoot.3"
+      ],
+      "loop": false
+    },
+    "ranger.south.walk": {
+      "action": "walk",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "south",
+      "fps": 8,
+      "frame_count": 4,
+      "frames": [
+        "ranger.south.walk.0",
+        "ranger.south.walk.1",
+        "ranger.south.walk.2",
+        "ranger.south.walk.3"
+      ],
+      "loop": true
+    },
+    "ranger.west.dash": {
+      "action": "dash",
+      "distinct_pixel_frames": 2,
+      "duplicate_pixel_frames": [],
+      "facing": "west",
+      "fps": 12,
+      "frame_count": 2,
+      "frames": [
+        "ranger.west.dash.0",
+        "ranger.west.dash.1"
+      ],
+      "loop": false
+    },
+    "ranger.west.death": {
+      "action": "death",
+      "distinct_pixel_frames": 3,
+      "duplicate_pixel_frames": [],
+      "facing": "west",
+      "fps": 6,
+      "frame_count": 3,
+      "frames": [
+        "ranger.west.death.0",
+        "ranger.west.death.1",
+        "ranger.west.death.2"
+      ],
+      "loop": false
+    },
+    "ranger.west.dodge": {
+      "action": "dodge",
+      "distinct_pixel_frames": 2,
+      "duplicate_pixel_frames": [],
+      "facing": "west",
+      "fps": 12,
+      "frame_count": 2,
+      "frames": [
+        "ranger.west.dodge.0",
+        "ranger.west.dodge.1"
+      ],
+      "loop": false
+    },
+    "ranger.west.hit": {
+      "action": "hit",
+      "distinct_pixel_frames": 1,
+      "duplicate_pixel_frames": [],
+      "facing": "west",
+      "fps": 8,
+      "frame_count": 1,
+      "frames": [
+        "ranger.west.hit.0"
+      ],
+      "loop": false
+    },
+    "ranger.west.idle": {
+      "action": "idle",
+      "distinct_pixel_frames": 1,
+      "duplicate_pixel_frames": [],
+      "facing": "west",
+      "fps": 8,
+      "frame_count": 1,
+      "frames": [
+        "ranger.west.idle.0"
+      ],
+      "loop": true
+    },
+    "ranger.west.shoot": {
+      "action": "shoot",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "west",
+      "fps": 12,
+      "frame_count": 4,
+      "frames": [
+        "ranger.west.shoot.0",
+        "ranger.west.shoot.1",
+        "ranger.west.shoot.2",
+        "ranger.west.shoot.3"
+      ],
+      "loop": false
+    },
+    "ranger.west.walk": {
+      "action": "walk",
+      "distinct_pixel_frames": 4,
+      "duplicate_pixel_frames": [],
+      "facing": "west",
+      "fps": 8,
+      "frame_count": 4,
+      "frames": [
+        "ranger.west.walk.0",
+        "ranger.west.walk.1",
+        "ranger.west.walk.2",
+        "ranger.west.walk.3"
+      ],
+      "loop": true
+    }
+  },
+  "artifacts": [
+    {
+      "bytes": 61503,
+      "kind": "texture",
+      "path": "/data/repo/makeitbig/art/production/p1/ranger_actions_v01/ranger.png",
+      "sha256": "c0bd20d7767899db9a8319aca6dca68f034a47eb84c9d5016543a131802f888b",
+      "texture": "ranger"
+    },
+    {
+      "bytes": 26720,
+      "kind": "atlas_contract",
+      "path": "/data/repo/makeitbig/art/production/p1/ranger_actions_v01/atlas.json",
+      "sha256": "5f5aa176fd862ce896dd1c8b92141af6003bf3d37cde7dd5ba094e9bc0c5ed41"
+    }
+  ],
+  "cell_size": [
+    48,
+    48
+  ],
+  "columns": 4,
+  "config_path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/recipe.final.json",
+  "config_sha256": "7e42724b4fbf3a1bb7f6f6cf0f7850a5055956ae506f88c024b48be966999c74",
+  "disclosure": {
+    "east": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate.",
+    "north": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate.",
+    "north_shoot": "Targeted imagegen correction of north shooting poses, only row2 consumed. Lowered bow recovery reused for idle; original north other rows retained byte-identical as sources.",
+    "south": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate.",
+    "west": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate."
+  },
+  "duplicate_pixel_frames": [
+    [
+      "ranger.south.idle.0",
+      "ranger.south.shoot.3"
+    ],
+    [
+      "ranger.north.idle.0",
+      "ranger.north.shoot.3"
+    ],
+    [
+      "ranger.east.idle.0",
+      "ranger.east.shoot.3"
+    ],
+    [
+      "ranger.west.idle.0",
+      "ranger.west.shoot.3"
+    ]
+  ],
+  "external_sources": [],
+  "frames": [
+    {
+      "action": "idle",
+      "animations": [
+        "ranger.south.idle"
+      ],
+      "background_removed_enclosed_pixels": 38,
+      "background_removed_pixels": 15246,
+      "bbox": [
+        11,
+        7,
+        24,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        1006,
+        356,
+        162,
+        250
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        38
+      ],
+      "facing": "south",
+      "foreground_pixels": 578,
+      "id": "ranger.south.idle.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 578,
+      "paste": [
+        11,
+        7
+      ],
+      "placed_source_anchor": [
+        13,
+        37
+      ],
+      "rect": [
+        0,
+        0,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        24,
+        38
+      ],
+      "source": "south",
+      "source_anchor": [
+        85,
+        247
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.south.walk"
+      ],
+      "background_removed_enclosed_pixels": 68,
+      "background_removed_pixels": 16540,
+      "bbox": [
+        12,
+        6,
+        24,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        81,
+        57,
+        159,
+        256
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        38
+      ],
+      "facing": "south",
+      "foreground_pixels": 550,
+      "id": "ranger.south.walk.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 550,
+      "paste": [
+        12,
+        6
+      ],
+      "placed_source_anchor": [
+        12,
+        38
+      ],
+      "rect": [
+        48,
+        0,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        24,
+        38
+      ],
+      "source": "south",
+      "source_anchor": [
+        81,
+        253
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.south.walk"
+      ],
+      "background_removed_enclosed_pixels": 43,
+      "background_removed_pixels": 17971,
+      "bbox": [
+        13,
+        6,
+        24,
+        39
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        0
+      ],
+      "crop": [
+        388,
+        51,
+        164,
+        259
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        24,
+        39
+      ],
+      "facing": "south",
+      "foreground_pixels": 571,
+      "id": "ranger.south.walk.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 571,
+      "paste": [
+        12,
+        6
+      ],
+      "placed_source_anchor": [
+        12,
+        38
+      ],
+      "rect": [
+        96,
+        0,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        25,
+        39
+      ],
+      "source": "south",
+      "source_anchor": [
+        83,
+        256
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.south.walk"
+      ],
+      "background_removed_enclosed_pixels": 54,
+      "background_removed_pixels": 16817,
+      "bbox": [
+        11,
+        6,
+        24,
+        39
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        0
+      ],
+      "crop": [
+        699,
+        54,
+        159,
+        259
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        39
+      ],
+      "facing": "south",
+      "foreground_pixels": 560,
+      "id": "ranger.south.walk.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 560,
+      "paste": [
+        11,
+        6
+      ],
+      "placed_source_anchor": [
+        13,
+        38
+      ],
+      "rect": [
+        144,
+        0,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        24,
+        39
+      ],
+      "source": "south",
+      "source_anchor": [
+        86,
+        256
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.south.walk"
+      ],
+      "background_removed_enclosed_pixels": 35,
+      "background_removed_pixels": 16915,
+      "bbox": [
+        11,
+        6,
+        24,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        1006,
+        54,
+        161,
+        256
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        38
+      ],
+      "facing": "south",
+      "foreground_pixels": 550,
+      "id": "ranger.south.walk.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 550,
+      "paste": [
+        11,
+        6
+      ],
+      "placed_source_anchor": [
+        13,
+        38
+      ],
+      "rect": [
+        0,
+        48,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        24,
+        38
+      ],
+      "source": "south",
+      "source_anchor": [
+        87,
+        253
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.south.shoot"
+      ],
+      "background_removed_enclosed_pixels": 217,
+      "background_removed_pixels": 16066,
+      "bbox": [
+        11,
+        7,
+        25,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        77,
+        357,
+        165,
+        249
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        25,
+        37
+      ],
+      "facing": "south",
+      "foreground_pixels": 571,
+      "id": "ranger.south.shoot.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 571,
+      "paste": [
+        11,
+        7
+      ],
+      "placed_source_anchor": [
+        13,
+        37
+      ],
+      "rect": [
+        48,
+        48,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        25,
+        37
+      ],
+      "source": "south",
+      "source_anchor": [
+        84,
+        246
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.south.shoot"
+      ],
+      "background_removed_enclosed_pixels": 296,
+      "background_removed_pixels": 41659,
+      "bbox": [
+        6,
+        6,
+        38,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        1
+      ],
+      "crop": [
+        345,
+        362,
+        262,
+        255
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        38,
+        38
+      ],
+      "facing": "south",
+      "foreground_pixels": 571,
+      "id": "ranger.south.shoot.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 571,
+      "paste": [
+        5,
+        6
+      ],
+      "placed_source_anchor": [
+        19,
+        38
+      ],
+      "rect": [
+        96,
+        48,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        39,
+        38
+      ],
+      "source": "south",
+      "source_anchor": [
+        127,
+        252
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.south.shoot"
+      ],
+      "background_removed_enclosed_pixels": 116,
+      "background_removed_pixels": 35433,
+      "bbox": [
+        7,
+        6,
+        36,
+        39
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        1
+      ],
+      "crop": [
+        675,
+        359,
+        238,
+        258
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        36,
+        39
+      ],
+      "facing": "south",
+      "foreground_pixels": 595,
+      "id": "ranger.south.shoot.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 595,
+      "paste": [
+        7,
+        6
+      ],
+      "placed_source_anchor": [
+        17,
+        38
+      ],
+      "rect": [
+        144,
+        48,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        36,
+        39
+      ],
+      "source": "south",
+      "source_anchor": [
+        110,
+        255
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.south.shoot"
+      ],
+      "background_removed_enclosed_pixels": 38,
+      "background_removed_pixels": 15246,
+      "bbox": [
+        11,
+        7,
+        24,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        2
+      ],
+      "crop": [
+        1006,
+        356,
+        162,
+        250
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        24,
+        38
+      ],
+      "facing": "south",
+      "foreground_pixels": 578,
+      "id": "ranger.south.shoot.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 578,
+      "paste": [
+        11,
+        7
+      ],
+      "placed_source_anchor": [
+        13,
+        37
+      ],
+      "rect": [
+        0,
+        96,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        24,
+        38
+      ],
+      "source": "south",
+      "source_anchor": [
+        85,
+        247
+      ]
+    },
+    {
+      "action": "dodge",
+      "animations": [
+        "ranger.south.dodge"
+      ],
+      "background_removed_enclosed_pixels": 186,
+      "background_removed_pixels": 17786,
+      "bbox": [
+        9,
+        15,
+        28,
+        30
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        2
+      ],
+      "crop": [
+        63,
+        710,
+        189,
+        199
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        28,
+        30
+      ],
+      "facing": "south",
+      "foreground_pixels": 450,
+      "id": "ranger.south.dodge.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 450,
+      "paste": [
+        9,
+        15
+      ],
+      "placed_source_anchor": [
+        15,
+        29
+      ],
+      "rect": [
+        48,
+        96,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        28,
+        30
+      ],
+      "source": "south",
+      "source_anchor": [
+        100,
+        196
+      ]
+    },
+    {
+      "action": "dodge",
+      "animations": [
+        "ranger.south.dodge"
+      ],
+      "background_removed_enclosed_pixels": 166,
+      "background_removed_pixels": 19702,
+      "bbox": [
+        10,
+        14,
+        28,
+        30
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top"
+        ]
+      },
+      "cell": [
+        2,
+        2
+      ],
+      "crop": [
+        377,
+        700,
+        195,
+        206
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        28,
+        30
+      ],
+      "facing": "south",
+      "foreground_pixels": 454,
+      "id": "ranger.south.dodge.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 454,
+      "paste": [
+        10,
+        14
+      ],
+      "placed_source_anchor": [
+        14,
+        30
+      ],
+      "rect": [
+        96,
+        96,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        29,
+        31
+      ],
+      "source": "south",
+      "source_anchor": [
+        94,
+        203
+      ]
+    },
+    {
+      "action": "dash",
+      "animations": [
+        "ranger.south.dash"
+      ],
+      "background_removed_enclosed_pixels": 102,
+      "background_removed_pixels": 20014,
+      "bbox": [
+        10,
+        7,
+        27,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        2
+      ],
+      "crop": [
+        692,
+        662,
+        177,
+        252
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        27,
+        38
+      ],
+      "facing": "south",
+      "foreground_pixels": 570,
+      "id": "ranger.south.dash.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 570,
+      "paste": [
+        10,
+        7
+      ],
+      "placed_source_anchor": [
+        14,
+        37
+      ],
+      "rect": [
+        144,
+        96,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        27,
+        38
+      ],
+      "source": "south",
+      "source_anchor": [
+        92,
+        249
+      ]
+    },
+    {
+      "action": "dash",
+      "animations": [
+        "ranger.south.dash"
+      ],
+      "background_removed_enclosed_pixels": 56,
+      "background_removed_pixels": 15117,
+      "bbox": [
+        11,
+        8,
+        25,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        3
+      ],
+      "crop": [
+        1006,
+        661,
+        166,
+        243
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        25,
+        36
+      ],
+      "facing": "south",
+      "foreground_pixels": 568,
+      "id": "ranger.south.dash.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 568,
+      "paste": [
+        11,
+        8
+      ],
+      "placed_source_anchor": [
+        13,
+        36
+      ],
+      "rect": [
+        0,
+        144,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        25,
+        36
+      ],
+      "source": "south",
+      "source_anchor": [
+        88,
+        240
+      ]
+    },
+    {
+      "action": "hit",
+      "animations": [
+        "ranger.south.hit"
+      ],
+      "background_removed_enclosed_pixels": 247,
+      "background_removed_pixels": 18615,
+      "bbox": [
+        10,
+        7,
+        26,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        3
+      ],
+      "crop": [
+        72,
+        958,
+        177,
+        249
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        26,
+        37
+      ],
+      "facing": "south",
+      "foreground_pixels": 579,
+      "id": "ranger.south.hit.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 579,
+      "paste": [
+        10,
+        7
+      ],
+      "placed_source_anchor": [
+        14,
+        37
+      ],
+      "rect": [
+        48,
+        144,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        27,
+        37
+      ],
+      "source": "south",
+      "source_anchor": [
+        94,
+        246
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.south.death"
+      ],
+      "background_removed_enclosed_pixels": 262,
+      "background_removed_pixels": 12179,
+      "bbox": [
+        12,
+        16,
+        26,
+        28
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        3
+      ],
+      "crop": [
+        388,
+        1004,
+        178,
+        189
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        26,
+        28
+      ],
+      "facing": "south",
+      "foreground_pixels": 481,
+      "id": "ranger.south.death.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 481,
+      "paste": [
+        11,
+        16
+      ],
+      "placed_source_anchor": [
+        13,
+        28
+      ],
+      "rect": [
+        96,
+        144,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        27,
+        28
+      ],
+      "source": "south",
+      "source_anchor": [
+        84,
+        186
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.south.death"
+      ],
+      "background_removed_enclosed_pixels": 37,
+      "background_removed_pixels": 11902,
+      "bbox": [
+        10,
+        18,
+        26,
+        26
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        3
+      ],
+      "crop": [
+        686,
+        1029,
+        179,
+        175
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        26,
+        26
+      ],
+      "facing": "south",
+      "foreground_pixels": 437,
+      "id": "ranger.south.death.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 437,
+      "paste": [
+        9,
+        18
+      ],
+      "placed_source_anchor": [
+        15,
+        26
+      ],
+      "rect": [
+        144,
+        144,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        27,
+        26
+      ],
+      "source": "south",
+      "source_anchor": [
+        100,
+        172
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.south.death"
+      ],
+      "background_removed_enclosed_pixels": 205,
+      "background_removed_pixels": 24713,
+      "bbox": [
+        3,
+        16,
+        40,
+        28
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        4
+      ],
+      "crop": [
+        964,
+        1029,
+        265,
+        187
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        40,
+        28
+      ],
+      "facing": "south",
+      "foreground_pixels": 574,
+      "id": "ranger.south.death.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 574,
+      "paste": [
+        3,
+        16
+      ],
+      "placed_source_anchor": [
+        21,
+        28
+      ],
+      "rect": [
+        0,
+        192,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        40,
+        28
+      ],
+      "source": "south",
+      "source_anchor": [
+        137,
+        184
+      ]
+    },
+    {
+      "action": "idle",
+      "animations": [
+        "ranger.north.idle"
+      ],
+      "background_removed_enclosed_pixels": 23,
+      "background_removed_pixels": 13984,
+      "bbox": [
+        13,
+        8,
+        21,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        4
+      ],
+      "crop": [
+        1026,
+        375,
+        140,
+        241
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        21,
+        36
+      ],
+      "facing": "north",
+      "foreground_pixels": 448,
+      "id": "ranger.north.idle.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 448,
+      "paste": [
+        13,
+        8
+      ],
+      "placed_source_anchor": [
+        11,
+        36
+      ],
+      "rect": [
+        48,
+        192,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        21,
+        36
+      ],
+      "source": "north_shoot",
+      "source_anchor": [
+        74,
+        238
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.north.walk"
+      ],
+      "background_removed_enclosed_pixels": 38,
+      "background_removed_pixels": 15120,
+      "bbox": [
+        13,
+        8,
+        22,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        4
+      ],
+      "crop": [
+        95,
+        48,
+        144,
+        250
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        22,
+        37
+      ],
+      "facing": "north",
+      "foreground_pixels": 491,
+      "id": "ranger.north.walk.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 491,
+      "paste": [
+        13,
+        7
+      ],
+      "placed_source_anchor": [
+        11,
+        37
+      ],
+      "rect": [
+        96,
+        192,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        22,
+        38
+      ],
+      "source": "north",
+      "source_anchor": [
+        71,
+        247
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.north.walk"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 18066,
+      "bbox": [
+        12,
+        8,
+        24,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        4
+      ],
+      "crop": [
+        404,
+        48,
+        158,
+        249
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        24,
+        36
+      ],
+      "facing": "north",
+      "foreground_pixels": 484,
+      "id": "ranger.north.walk.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 484,
+      "paste": [
+        12,
+        7
+      ],
+      "placed_source_anchor": [
+        12,
+        37
+      ],
+      "rect": [
+        144,
+        192,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        24,
+        37
+      ],
+      "source": "north",
+      "source_anchor": [
+        80,
+        246
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.north.walk"
+      ],
+      "background_removed_enclosed_pixels": 18,
+      "background_removed_pixels": 13857,
+      "bbox": [
+        13,
+        7,
+        21,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        5
+      ],
+      "crop": [
+        714,
+        51,
+        137,
+        248
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        21,
+        37
+      ],
+      "facing": "north",
+      "foreground_pixels": 463,
+      "id": "ranger.north.walk.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 463,
+      "paste": [
+        13,
+        7
+      ],
+      "placed_source_anchor": [
+        11,
+        37
+      ],
+      "rect": [
+        0,
+        240,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        21,
+        37
+      ],
+      "source": "north",
+      "source_anchor": [
+        71,
+        245
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.north.walk"
+      ],
+      "background_removed_enclosed_pixels": 33,
+      "background_removed_pixels": 17178,
+      "bbox": [
+        13,
+        7,
+        23,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right"
+        ]
+      },
+      "cell": [
+        1,
+        5
+      ],
+      "crop": [
+        1026,
+        51,
+        153,
+        250
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        23,
+        37
+      ],
+      "facing": "north",
+      "foreground_pixels": 487,
+      "id": "ranger.north.walk.3",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 487,
+      "paste": [
+        13,
+        7
+      ],
+      "placed_source_anchor": [
+        11,
+        37
+      ],
+      "rect": [
+        48,
+        240,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        23,
+        38
+      ],
+      "source": "north",
+      "source_anchor": [
+        76,
+        247
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.north.shoot"
+      ],
+      "background_removed_enclosed_pixels": 679,
+      "background_removed_pixels": 23018,
+      "bbox": [
+        13,
+        2,
+        23,
+        43
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        5
+      ],
+      "crop": [
+        101,
+        334,
+        154,
+        285
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        23,
+        43
+      ],
+      "facing": "north",
+      "foreground_pixels": 472,
+      "id": "ranger.north.shoot.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 472,
+      "paste": [
+        13,
+        2
+      ],
+      "placed_source_anchor": [
+        11,
+        42
+      ],
+      "rect": [
+        96,
+        240,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        23,
+        43
+      ],
+      "source": "north_shoot",
+      "source_anchor": [
+        73,
+        282
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.north.shoot"
+      ],
+      "background_removed_enclosed_pixels": 2171,
+      "background_removed_pixels": 31951,
+      "bbox": [
+        9,
+        5,
+        30,
+        40
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        5
+      ],
+      "crop": [
+        375,
+        352,
+        206,
+        266
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        30,
+        40
+      ],
+      "facing": "north",
+      "foreground_pixels": 518,
+      "id": "ranger.north.shoot.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 518,
+      "paste": [
+        8,
+        5
+      ],
+      "placed_source_anchor": [
+        16,
+        39
+      ],
+      "rect": [
+        144,
+        240,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        31,
+        40
+      ],
+      "source": "north_shoot",
+      "source_anchor": [
+        104,
+        263
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.north.shoot"
+      ],
+      "background_removed_enclosed_pixels": 1760,
+      "background_removed_pixels": 28033,
+      "bbox": [
+        7,
+        8,
+        31,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        6
+      ],
+      "crop": [
+        683,
+        375,
+        209,
+        242
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        31,
+        36
+      ],
+      "facing": "north",
+      "foreground_pixels": 500,
+      "id": "ranger.north.shoot.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 500,
+      "paste": [
+        7,
+        8
+      ],
+      "placed_source_anchor": [
+        17,
+        36
+      ],
+      "rect": [
+        0,
+        288,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        31,
+        36
+      ],
+      "source": "north_shoot",
+      "source_anchor": [
+        114,
+        239
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.north.shoot"
+      ],
+      "background_removed_enclosed_pixels": 23,
+      "background_removed_pixels": 13984,
+      "bbox": [
+        13,
+        8,
+        21,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        6
+      ],
+      "crop": [
+        1026,
+        375,
+        140,
+        241
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        21,
+        36
+      ],
+      "facing": "north",
+      "foreground_pixels": 448,
+      "id": "ranger.north.shoot.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 448,
+      "paste": [
+        13,
+        8
+      ],
+      "placed_source_anchor": [
+        11,
+        36
+      ],
+      "rect": [
+        48,
+        288,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        21,
+        36
+      ],
+      "source": "north_shoot",
+      "source_anchor": [
+        74,
+        238
+      ]
+    },
+    {
+      "action": "dodge",
+      "animations": [
+        "ranger.north.dodge"
+      ],
+      "background_removed_enclosed_pixels": 600,
+      "background_removed_pixels": 14198,
+      "bbox": [
+        11,
+        15,
+        26,
+        29
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        6
+      ],
+      "crop": [
+        82,
+        701,
+        176,
+        193
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        26,
+        29
+      ],
+      "facing": "north",
+      "foreground_pixels": 441,
+      "id": "ranger.north.dodge.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 441,
+      "paste": [
+        11,
+        15
+      ],
+      "placed_source_anchor": [
+        13,
+        29
+      ],
+      "rect": [
+        96,
+        288,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        26,
+        29
+      ],
+      "source": "north",
+      "source_anchor": [
+        88,
+        190
+      ]
+    },
+    {
+      "action": "dodge",
+      "animations": [
+        "ranger.north.dodge"
+      ],
+      "background_removed_enclosed_pixels": 923,
+      "background_removed_pixels": 17970,
+      "bbox": [
+        9,
+        12,
+        27,
+        33
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        6
+      ],
+      "crop": [
+        385,
+        689,
+        180,
+        217
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        27,
+        33
+      ],
+      "facing": "north",
+      "foreground_pixels": 487,
+      "id": "ranger.north.dodge.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 487,
+      "paste": [
+        9,
+        12
+      ],
+      "placed_source_anchor": [
+        15,
+        32
+      ],
+      "rect": [
+        144,
+        288,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        27,
+        33
+      ],
+      "source": "north",
+      "source_anchor": [
+        98,
+        214
+      ]
+    },
+    {
+      "action": "dash",
+      "animations": [
+        "ranger.north.dash"
+      ],
+      "background_removed_enclosed_pixels": 541,
+      "background_removed_pixels": 22118,
+      "bbox": [
+        8,
+        12,
+        29,
+        31
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "right"
+        ]
+      },
+      "cell": [
+        0,
+        7
+      ],
+      "crop": [
+        679,
+        693,
+        191,
+        220
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        29,
+        31
+      ],
+      "facing": "north",
+      "foreground_pixels": 447,
+      "id": "ranger.north.dash.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 447,
+      "paste": [
+        8,
+        11
+      ],
+      "placed_source_anchor": [
+        16,
+        33
+      ],
+      "rect": [
+        0,
+        336,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        29,
+        33
+      ],
+      "source": "north",
+      "source_anchor": [
+        109,
+        217
+      ]
+    },
+    {
+      "action": "dash",
+      "animations": [
+        "ranger.north.dash"
+      ],
+      "background_removed_enclosed_pixels": 0,
+      "background_removed_pixels": 13436,
+      "bbox": [
+        13,
+        8,
+        21,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        7
+      ],
+      "crop": [
+        1022,
+        661,
+        141,
+        241
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        21,
+        36
+      ],
+      "facing": "north",
+      "foreground_pixels": 453,
+      "id": "ranger.north.dash.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 453,
+      "paste": [
+        13,
+        8
+      ],
+      "placed_source_anchor": [
+        11,
+        36
+      ],
+      "rect": [
+        48,
+        336,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        21,
+        36
+      ],
+      "source": "north",
+      "source_anchor": [
+        71,
+        238
+      ]
+    },
+    {
+      "action": "hit",
+      "animations": [
+        "ranger.north.hit"
+      ],
+      "background_removed_enclosed_pixels": 551,
+      "background_removed_pixels": 20405,
+      "bbox": [
+        10,
+        11,
+        30,
+        33
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        7
+      ],
+      "crop": [
+        70,
+        958,
+        199,
+        221
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        30,
+        33
+      ],
+      "facing": "north",
+      "foreground_pixels": 537,
+      "id": "ranger.north.hit.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 537,
+      "paste": [
+        10,
+        11
+      ],
+      "placed_source_anchor": [
+        14,
+        33
+      ],
+      "rect": [
+        96,
+        336,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        30,
+        33
+      ],
+      "source": "north",
+      "source_anchor": [
+        92,
+        218
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.north.death"
+      ],
+      "background_removed_enclosed_pixels": 794,
+      "background_removed_pixels": 11684,
+      "bbox": [
+        12,
+        16,
+        26,
+        29
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        7
+      ],
+      "crop": [
+        401,
+        982,
+        171,
+        190
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        26,
+        29
+      ],
+      "facing": "north",
+      "foreground_pixels": 485,
+      "id": "ranger.north.death.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 485,
+      "paste": [
+        12,
+        16
+      ],
+      "placed_source_anchor": [
+        12,
+        28
+      ],
+      "rect": [
+        144,
+        336,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        26,
+        29
+      ],
+      "source": "north",
+      "source_anchor": [
+        79,
+        187
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.north.death"
+      ],
+      "background_removed_enclosed_pixels": 749,
+      "background_removed_pixels": 20824,
+      "bbox": [
+        6,
+        18,
+        34,
+        26
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        8
+      ],
+      "crop": [
+        671,
+        1012,
+        226,
+        176
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        34,
+        26
+      ],
+      "facing": "north",
+      "foreground_pixels": 428,
+      "id": "ranger.north.death.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 428,
+      "paste": [
+        6,
+        18
+      ],
+      "placed_source_anchor": [
+        18,
+        26
+      ],
+      "rect": [
+        0,
+        384,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        34,
+        26
+      ],
+      "source": "north",
+      "source_anchor": [
+        121,
+        173
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.north.death"
+      ],
+      "background_removed_enclosed_pixels": 651,
+      "background_removed_pixels": 18499,
+      "bbox": [
+        5,
+        19,
+        35,
+        25
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        8
+      ],
+      "crop": [
+        973,
+        1031,
+        233,
+        167
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        35,
+        25
+      ],
+      "facing": "north",
+      "foreground_pixels": 467,
+      "id": "ranger.north.death.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 467,
+      "paste": [
+        5,
+        19
+      ],
+      "placed_source_anchor": [
+        19,
+        25
+      ],
+      "rect": [
+        48,
+        384,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        35,
+        25
+      ],
+      "source": "north",
+      "source_anchor": [
+        128,
+        164
+      ]
+    },
+    {
+      "action": "idle",
+      "animations": [
+        "ranger.east.idle"
+      ],
+      "background_removed_enclosed_pixels": 1025,
+      "background_removed_pixels": 29065,
+      "bbox": [
+        8,
+        6,
+        32,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        8
+      ],
+      "crop": [
+        1000,
+        380,
+        210,
+        253
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        32,
+        38
+      ],
+      "facing": "east",
+      "foreground_pixels": 555,
+      "id": "ranger.east.idle.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 555,
+      "paste": [
+        8,
+        6
+      ],
+      "placed_source_anchor": [
+        16,
+        38
+      ],
+      "rect": [
+        96,
+        384,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        32,
+        38
+      ],
+      "source": "east",
+      "source_anchor": [
+        108,
+        250
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.east.walk"
+      ],
+      "background_removed_enclosed_pixels": 763,
+      "background_removed_pixels": 24744,
+      "bbox": [
+        9,
+        7,
+        29,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        8
+      ],
+      "crop": [
+        74,
+        60,
+        191,
+        252
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        29,
+        38
+      ],
+      "facing": "east",
+      "foreground_pixels": 536,
+      "id": "ranger.east.walk.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 536,
+      "paste": [
+        9,
+        7
+      ],
+      "placed_source_anchor": [
+        15,
+        37
+      ],
+      "rect": [
+        144,
+        384,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        29,
+        38
+      ],
+      "source": "east",
+      "source_anchor": [
+        98,
+        249
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.east.walk"
+      ],
+      "background_removed_enclosed_pixels": 586,
+      "background_removed_pixels": 22321,
+      "bbox": [
+        11,
+        7,
+        26,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        9
+      ],
+      "crop": [
+        414,
+        63,
+        170,
+        250
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        26,
+        38
+      ],
+      "facing": "east",
+      "foreground_pixels": 474,
+      "id": "ranger.east.walk.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 474,
+      "paste": [
+        11,
+        7
+      ],
+      "placed_source_anchor": [
+        13,
+        37
+      ],
+      "rect": [
+        0,
+        432,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        26,
+        38
+      ],
+      "source": "east",
+      "source_anchor": [
+        89,
+        247
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.east.walk"
+      ],
+      "background_removed_enclosed_pixels": 738,
+      "background_removed_pixels": 23473,
+      "bbox": [
+        10,
+        7,
+        27,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        9
+      ],
+      "crop": [
+        697,
+        63,
+        185,
+        250
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        27,
+        38
+      ],
+      "facing": "east",
+      "foreground_pixels": 528,
+      "id": "ranger.east.walk.2",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 528,
+      "paste": [
+        9,
+        7
+      ],
+      "placed_source_anchor": [
+        15,
+        37
+      ],
+      "rect": [
+        48,
+        432,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        28,
+        38
+      ],
+      "source": "east",
+      "source_anchor": [
+        97,
+        247
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.east.walk"
+      ],
+      "background_removed_enclosed_pixels": 766,
+      "background_removed_pixels": 24082,
+      "bbox": [
+        8,
+        7,
+        27,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        9
+      ],
+      "crop": [
+        1008,
+        63,
+        181,
+        249
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        27,
+        37
+      ],
+      "facing": "east",
+      "foreground_pixels": 469,
+      "id": "ranger.east.walk.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 469,
+      "paste": [
+        8,
+        7
+      ],
+      "placed_source_anchor": [
+        16,
+        37
+      ],
+      "rect": [
+        96,
+        432,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        27,
+        37
+      ],
+      "source": "east",
+      "source_anchor": [
+        104,
+        246
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.east.shoot"
+      ],
+      "background_removed_enclosed_pixels": 2815,
+      "background_removed_pixels": 33772,
+      "bbox": [
+        9,
+        5,
+        34,
+        39
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        9
+      ],
+      "crop": [
+        57,
+        372,
+        234,
+        261
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        34,
+        39
+      ],
+      "facing": "east",
+      "foreground_pixels": 606,
+      "id": "ranger.east.shoot.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 606,
+      "paste": [
+        8,
+        5
+      ],
+      "placed_source_anchor": [
+        16,
+        39
+      ],
+      "rect": [
+        144,
+        432,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        35,
+        39
+      ],
+      "source": "east",
+      "source_anchor": [
+        109,
+        258
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.east.shoot"
+      ],
+      "background_removed_enclosed_pixels": 4400,
+      "background_removed_pixels": 36785,
+      "bbox": [
+        6,
+        3,
+        34,
+        41
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        10
+      ],
+      "crop": [
+        367,
+        360,
+        236,
+        273
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        34,
+        41
+      ],
+      "facing": "east",
+      "foreground_pixels": 613,
+      "id": "ranger.east.shoot.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 613,
+      "paste": [
+        6,
+        3
+      ],
+      "placed_source_anchor": [
+        18,
+        41
+      ],
+      "rect": [
+        0,
+        480,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        35,
+        41
+      ],
+      "source": "east",
+      "source_anchor": [
+        118,
+        270
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.east.shoot"
+      ],
+      "background_removed_enclosed_pixels": 1980,
+      "background_removed_pixels": 32050,
+      "bbox": [
+        8,
+        4,
+        33,
+        40
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        10
+      ],
+      "crop": [
+        688,
+        359,
+        221,
+        274
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        33,
+        40
+      ],
+      "facing": "east",
+      "foreground_pixels": 644,
+      "id": "ranger.east.shoot.2",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 644,
+      "paste": [
+        8,
+        3
+      ],
+      "placed_source_anchor": [
+        16,
+        41
+      ],
+      "rect": [
+        48,
+        480,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        33,
+        41
+      ],
+      "source": "east",
+      "source_anchor": [
+        108,
+        271
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.east.shoot"
+      ],
+      "background_removed_enclosed_pixels": 1025,
+      "background_removed_pixels": 29065,
+      "bbox": [
+        8,
+        6,
+        32,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        10
+      ],
+      "crop": [
+        1000,
+        380,
+        210,
+        253
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        32,
+        38
+      ],
+      "facing": "east",
+      "foreground_pixels": 555,
+      "id": "ranger.east.shoot.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 555,
+      "paste": [
+        8,
+        6
+      ],
+      "placed_source_anchor": [
+        16,
+        38
+      ],
+      "rect": [
+        96,
+        480,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        32,
+        38
+      ],
+      "source": "east",
+      "source_anchor": [
+        108,
+        250
+      ]
+    },
+    {
+      "action": "dodge",
+      "animations": [
+        "ranger.east.dodge"
+      ],
+      "background_removed_enclosed_pixels": 681,
+      "background_removed_pixels": 20924,
+      "bbox": [
+        7,
+        15,
+        33,
+        30
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        10
+      ],
+      "crop": [
+        61,
+        734,
+        220,
+        198
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        33,
+        30
+      ],
+      "facing": "east",
+      "foreground_pixels": 521,
+      "id": "ranger.east.dodge.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 521,
+      "paste": [
+        7,
+        15
+      ],
+      "placed_source_anchor": [
+        17,
+        29
+      ],
+      "rect": [
+        144,
+        480,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        33,
+        30
+      ],
+      "source": "east",
+      "source_anchor": [
+        110,
+        195
+      ]
+    },
+    {
+      "action": "dodge",
+      "animations": [
+        "ranger.east.dodge"
+      ],
+      "background_removed_enclosed_pixels": 638,
+      "background_removed_pixels": 18899,
+      "bbox": [
+        8,
+        15,
+        31,
+        30
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        11
+      ],
+      "crop": [
+        379,
+        734,
+        208,
+        198
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        31,
+        30
+      ],
+      "facing": "east",
+      "foreground_pixels": 510,
+      "id": "ranger.east.dodge.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 510,
+      "paste": [
+        8,
+        15
+      ],
+      "placed_source_anchor": [
+        16,
+        29
+      ],
+      "rect": [
+        0,
+        528,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        31,
+        30
+      ],
+      "source": "east",
+      "source_anchor": [
+        107,
+        195
+      ]
+    },
+    {
+      "action": "dash",
+      "animations": [
+        "ranger.east.dash"
+      ],
+      "background_removed_enclosed_pixels": 606,
+      "background_removed_pixels": 26915,
+      "bbox": [
+        1,
+        15,
+        37,
+        30
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        11
+      ],
+      "crop": [
+        662,
+        728,
+        248,
+        204
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        37,
+        30
+      ],
+      "facing": "east",
+      "foreground_pixels": 540,
+      "id": "ranger.east.dash.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 540,
+      "paste": [
+        1,
+        14
+      ],
+      "placed_source_anchor": [
+        23,
+        30
+      ],
+      "rect": [
+        48,
+        528,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        37,
+        31
+      ],
+      "source": "east",
+      "source_anchor": [
+        151,
+        201
+      ]
+    },
+    {
+      "action": "dash",
+      "animations": [
+        "ranger.east.dash"
+      ],
+      "background_removed_enclosed_pixels": 801,
+      "background_removed_pixels": 28623,
+      "bbox": [
+        4,
+        10,
+        33,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        11
+      ],
+      "crop": [
+        994,
+        695,
+        224,
+        237
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        33,
+        35
+      ],
+      "facing": "east",
+      "foreground_pixels": 559,
+      "id": "ranger.east.dash.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 559,
+      "paste": [
+        4,
+        9
+      ],
+      "placed_source_anchor": [
+        20,
+        35
+      ],
+      "rect": [
+        96,
+        528,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        34,
+        36
+      ],
+      "source": "east",
+      "source_anchor": [
+        135,
+        234
+      ]
+    },
+    {
+      "action": "hit",
+      "animations": [
+        "ranger.east.hit"
+      ],
+      "background_removed_enclosed_pixels": 960,
+      "background_removed_pixels": 24858,
+      "bbox": [
+        8,
+        10,
+        33,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        11
+      ],
+      "crop": [
+        54,
+        978,
+        218,
+        231
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        33,
+        35
+      ],
+      "facing": "east",
+      "foreground_pixels": 588,
+      "id": "ranger.east.hit.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 588,
+      "paste": [
+        8,
+        10
+      ],
+      "placed_source_anchor": [
+        16,
+        34
+      ],
+      "rect": [
+        144,
+        528,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        33,
+        35
+      ],
+      "source": "east",
+      "source_anchor": [
+        106,
+        228
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.east.death"
+      ],
+      "background_removed_enclosed_pixels": 708,
+      "background_removed_pixels": 16574,
+      "bbox": [
+        9,
+        17,
+        30,
+        27
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        12
+      ],
+      "crop": [
+        382,
+        1027,
+        199,
+        182
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        30,
+        27
+      ],
+      "facing": "east",
+      "foreground_pixels": 439,
+      "id": "ranger.east.death.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 439,
+      "paste": [
+        9,
+        17
+      ],
+      "placed_source_anchor": [
+        15,
+        27
+      ],
+      "rect": [
+        0,
+        576,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        30,
+        27
+      ],
+      "source": "east",
+      "source_anchor": [
+        100,
+        179
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.east.death"
+      ],
+      "background_removed_enclosed_pixels": 477,
+      "background_removed_pixels": 18661,
+      "bbox": [
+        1,
+        22,
+        39,
+        22
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right"
+        ]
+      },
+      "cell": [
+        1,
+        12
+      ],
+      "crop": [
+        643,
+        1064,
+        259,
+        151
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        39,
+        22
+      ],
+      "facing": "east",
+      "foreground_pixels": 474,
+      "id": "ranger.east.death.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 474,
+      "paste": [
+        1,
+        22
+      ],
+      "placed_source_anchor": [
+        23,
+        22
+      ],
+      "rect": [
+        48,
+        576,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        39,
+        23
+      ],
+      "source": "east",
+      "source_anchor": [
+        151,
+        148
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.east.death"
+      ],
+      "background_removed_enclosed_pixels": 115,
+      "background_removed_pixels": 16393,
+      "bbox": [
+        1,
+        27,
+        43,
+        18
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        12
+      ],
+      "crop": [
+        944,
+        1100,
+        290,
+        118
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        43,
+        18
+      ],
+      "facing": "east",
+      "foreground_pixels": 413,
+      "id": "ranger.east.death.2",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 413,
+      "paste": [
+        1,
+        27
+      ],
+      "placed_source_anchor": [
+        23,
+        17
+      ],
+      "rect": [
+        96,
+        576,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        44,
+        18
+      ],
+      "source": "east",
+      "source_anchor": [
+        155,
+        115
+      ]
+    },
+    {
+      "action": "idle",
+      "animations": [
+        "ranger.west.idle"
+      ],
+      "background_removed_enclosed_pixels": 1068,
+      "background_removed_pixels": 27095,
+      "bbox": [
+        9,
+        8,
+        32,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        12
+      ],
+      "crop": [
+        996,
+        375,
+        210,
+        248
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        32,
+        36
+      ],
+      "facing": "west",
+      "foreground_pixels": 562,
+      "id": "ranger.west.idle.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 562,
+      "paste": [
+        9,
+        7
+      ],
+      "placed_source_anchor": [
+        15,
+        37
+      ],
+      "rect": [
+        144,
+        576,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        32,
+        37
+      ],
+      "source": "west",
+      "source_anchor": [
+        102,
+        245
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.west.walk"
+      ],
+      "background_removed_enclosed_pixels": 783,
+      "background_removed_pixels": 25558,
+      "bbox": [
+        11,
+        7,
+        29,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        13
+      ],
+      "crop": [
+        67,
+        54,
+        201,
+        249
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        29,
+        37
+      ],
+      "facing": "west",
+      "foreground_pixels": 554,
+      "id": "ranger.west.walk.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 554,
+      "paste": [
+        10,
+        7
+      ],
+      "placed_source_anchor": [
+        14,
+        37
+      ],
+      "rect": [
+        0,
+        624,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        30,
+        37
+      ],
+      "source": "west",
+      "source_anchor": [
+        95,
+        246
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.west.walk"
+      ],
+      "background_removed_enclosed_pixels": 715,
+      "background_removed_pixels": 24160,
+      "bbox": [
+        11,
+        8,
+        29,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        13
+      ],
+      "crop": [
+        380,
+        59,
+        196,
+        244
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        29,
+        37
+      ],
+      "facing": "west",
+      "foreground_pixels": 533,
+      "id": "ranger.west.walk.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 533,
+      "paste": [
+        11,
+        8
+      ],
+      "placed_source_anchor": [
+        13,
+        36
+      ],
+      "rect": [
+        48,
+        624,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        29,
+        37
+      ],
+      "source": "west",
+      "source_anchor": [
+        88,
+        241
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.west.walk"
+      ],
+      "background_removed_enclosed_pixels": 717,
+      "background_removed_pixels": 26701,
+      "bbox": [
+        9,
+        8,
+        32,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        13
+      ],
+      "crop": [
+        684,
+        59,
+        211,
+        244
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        32,
+        37
+      ],
+      "facing": "west",
+      "foreground_pixels": 572,
+      "id": "ranger.west.walk.2",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 572,
+      "paste": [
+        9,
+        8
+      ],
+      "placed_source_anchor": [
+        15,
+        36
+      ],
+      "rect": [
+        96,
+        624,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        32,
+        37
+      ],
+      "source": "west",
+      "source_anchor": [
+        98,
+        241
+      ]
+    },
+    {
+      "action": "walk",
+      "animations": [
+        "ranger.west.walk"
+      ],
+      "background_removed_enclosed_pixels": 685,
+      "background_removed_pixels": 22396,
+      "bbox": [
+        11,
+        7,
+        28,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        13
+      ],
+      "crop": [
+        1007,
+        54,
+        185,
+        249
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        28,
+        37
+      ],
+      "facing": "west",
+      "foreground_pixels": 542,
+      "id": "ranger.west.walk.3",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 542,
+      "paste": [
+        11,
+        7
+      ],
+      "placed_source_anchor": [
+        13,
+        37
+      ],
+      "rect": [
+        144,
+        624,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        28,
+        37
+      ],
+      "source": "west",
+      "source_anchor": [
+        86,
+        246
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.west.shoot"
+      ],
+      "background_removed_enclosed_pixels": 2907,
+      "background_removed_pixels": 29562,
+      "bbox": [
+        10,
+        5,
+        32,
+        38
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right"
+        ]
+      },
+      "cell": [
+        0,
+        14
+      ],
+      "crop": [
+        61,
+        360,
+        217,
+        263
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        32,
+        38
+      ],
+      "facing": "west",
+      "foreground_pixels": 619,
+      "id": "ranger.west.shoot.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 619,
+      "paste": [
+        9,
+        5
+      ],
+      "placed_source_anchor": [
+        15,
+        39
+      ],
+      "rect": [
+        0,
+        672,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        33,
+        39
+      ],
+      "source": "west",
+      "source_anchor": [
+        100,
+        260
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.west.shoot"
+      ],
+      "background_removed_enclosed_pixels": 4084,
+      "background_removed_pixels": 34983,
+      "bbox": [
+        7,
+        5,
+        35,
+        40
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        14
+      ],
+      "crop": [
+        361,
+        357,
+        237,
+        266
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        35,
+        40
+      ],
+      "facing": "west",
+      "foreground_pixels": 642,
+      "id": "ranger.west.shoot.1",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 642,
+      "paste": [
+        6,
+        5
+      ],
+      "placed_source_anchor": [
+        18,
+        39
+      ],
+      "rect": [
+        48,
+        672,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        36,
+        40
+      ],
+      "source": "west",
+      "source_anchor": [
+        117,
+        263
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.west.shoot"
+      ],
+      "background_removed_enclosed_pixels": 2491,
+      "background_removed_pixels": 29637,
+      "bbox": [
+        7,
+        6,
+        34,
+        37
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right"
+        ]
+      },
+      "cell": [
+        2,
+        14
+      ],
+      "crop": [
+        673,
+        368,
+        233,
+        255
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        34,
+        37
+      ],
+      "facing": "west",
+      "foreground_pixels": 670,
+      "id": "ranger.west.shoot.2",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 670,
+      "paste": [
+        6,
+        6
+      ],
+      "placed_source_anchor": [
+        18,
+        38
+      ],
+      "rect": [
+        96,
+        672,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        35,
+        38
+      ],
+      "source": "west",
+      "source_anchor": [
+        117,
+        252
+      ]
+    },
+    {
+      "action": "shoot",
+      "animations": [
+        "ranger.west.shoot"
+      ],
+      "background_removed_enclosed_pixels": 1068,
+      "background_removed_pixels": 27095,
+      "bbox": [
+        9,
+        8,
+        32,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        14
+      ],
+      "crop": [
+        996,
+        375,
+        210,
+        248
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        32,
+        36
+      ],
+      "facing": "west",
+      "foreground_pixels": 562,
+      "id": "ranger.west.shoot.3",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 562,
+      "paste": [
+        9,
+        7
+      ],
+      "placed_source_anchor": [
+        15,
+        37
+      ],
+      "rect": [
+        144,
+        672,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        32,
+        37
+      ],
+      "source": "west",
+      "source_anchor": [
+        102,
+        245
+      ]
+    },
+    {
+      "action": "dodge",
+      "animations": [
+        "ranger.west.dodge"
+      ],
+      "background_removed_enclosed_pixels": 636,
+      "background_removed_pixels": 20233,
+      "bbox": [
+        8,
+        14,
+        32,
+        30
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        15
+      ],
+      "crop": [
+        59,
+        700,
+        217,
+        203
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        32,
+        30
+      ],
+      "facing": "west",
+      "foreground_pixels": 543,
+      "id": "ranger.west.dodge.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 543,
+      "paste": [
+        8,
+        14
+      ],
+      "placed_source_anchor": [
+        16,
+        30
+      ],
+      "rect": [
+        0,
+        720,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        33,
+        30
+      ],
+      "source": "west",
+      "source_anchor": [
+        109,
+        200
+      ]
+    },
+    {
+      "action": "dodge",
+      "animations": [
+        "ranger.west.dodge"
+      ],
+      "background_removed_enclosed_pixels": 500,
+      "background_removed_pixels": 22066,
+      "bbox": [
+        7,
+        13,
+        33,
+        32
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        15
+      ],
+      "crop": [
+        363,
+        691,
+        218,
+        212
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        33,
+        32
+      ],
+      "facing": "west",
+      "foreground_pixels": 555,
+      "id": "ranger.west.dodge.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 555,
+      "paste": [
+        7,
+        13
+      ],
+      "placed_source_anchor": [
+        17,
+        31
+      ],
+      "rect": [
+        48,
+        720,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        33,
+        32
+      ],
+      "source": "west",
+      "source_anchor": [
+        114,
+        209
+      ]
+    },
+    {
+      "action": "dash",
+      "animations": [
+        "ranger.west.dash"
+      ],
+      "background_removed_enclosed_pixels": 533,
+      "background_removed_pixels": 28527,
+      "bbox": [
+        6,
+        13,
+        41,
+        31
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        15
+      ],
+      "crop": [
+        640,
+        696,
+        272,
+        207
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        41,
+        31
+      ],
+      "facing": "west",
+      "foreground_pixels": 621,
+      "id": "ranger.west.dash.0",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 621,
+      "paste": [
+        6,
+        13
+      ],
+      "placed_source_anchor": [
+        18,
+        31
+      ],
+      "rect": [
+        96,
+        720,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        41,
+        31
+      ],
+      "source": "west",
+      "source_anchor": [
+        118,
+        204
+      ]
+    },
+    {
+      "action": "dash",
+      "animations": [
+        "ranger.west.dash"
+      ],
+      "background_removed_enclosed_pixels": 643,
+      "background_removed_pixels": 23408,
+      "bbox": [
+        11,
+        9,
+        31,
+        35
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        15
+      ],
+      "crop": [
+        1005,
+        672,
+        204,
+        234
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        31,
+        35
+      ],
+      "facing": "west",
+      "foreground_pixels": 552,
+      "id": "ranger.west.dash.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 552,
+      "paste": [
+        11,
+        9
+      ],
+      "placed_source_anchor": [
+        13,
+        35
+      ],
+      "rect": [
+        144,
+        720,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        31,
+        35
+      ],
+      "source": "west",
+      "source_anchor": [
+        89,
+        231
+      ]
+    },
+    {
+      "action": "hit",
+      "animations": [
+        "ranger.west.hit"
+      ],
+      "background_removed_enclosed_pixels": 959,
+      "background_removed_pixels": 22841,
+      "bbox": [
+        9,
+        9,
+        30,
+        36
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "bottom"
+        ]
+      },
+      "cell": [
+        0,
+        16
+      ],
+      "crop": [
+        66,
+        946,
+        206,
+        239
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        30,
+        36
+      ],
+      "facing": "west",
+      "foreground_pixels": 598,
+      "id": "ranger.west.hit.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 598,
+      "paste": [
+        9,
+        9
+      ],
+      "placed_source_anchor": [
+        15,
+        35
+      ],
+      "rect": [
+        0,
+        768,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        31,
+        36
+      ],
+      "source": "west",
+      "source_anchor": [
+        97,
+        236
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.west.death"
+      ],
+      "background_removed_enclosed_pixels": 524,
+      "background_removed_pixels": 14343,
+      "bbox": [
+        10,
+        16,
+        27,
+        28
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        1,
+        16
+      ],
+      "crop": [
+        369,
+        995,
+        187,
+        187
+      ],
+      "crop_bbox": [
+        1,
+        0,
+        27,
+        28
+      ],
+      "facing": "west",
+      "foreground_pixels": 459,
+      "id": "ranger.west.death.0",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 459,
+      "paste": [
+        9,
+        16
+      ],
+      "placed_source_anchor": [
+        15,
+        28
+      ],
+      "rect": [
+        48,
+        768,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        28,
+        28
+      ],
+      "source": "west",
+      "source_anchor": [
+        103,
+        184
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.west.death"
+      ],
+      "background_removed_enclosed_pixels": 453,
+      "background_removed_pixels": 20886,
+      "bbox": [
+        3,
+        21,
+        40,
+        24
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "top",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        2,
+        16
+      ],
+      "crop": [
+        631,
+        1030,
+        267,
+        158
+      ],
+      "crop_bbox": [
+        0,
+        0,
+        40,
+        24
+      ],
+      "facing": "west",
+      "foreground_pixels": 488,
+      "id": "ranger.west.death.1",
+      "opaque_crop": true,
+      "palette_remapped_pixels": 488,
+      "paste": [
+        3,
+        21
+      ],
+      "placed_source_anchor": [
+        21,
+        23
+      ],
+      "rect": [
+        96,
+        768,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        40,
+        24
+      ],
+      "source": "west",
+      "source_anchor": [
+        141,
+        155
+      ]
+    },
+    {
+      "action": "death",
+      "animations": [
+        "ranger.west.death"
+      ],
+      "background_removed_enclosed_pixels": 108,
+      "background_removed_pixels": 17463,
+      "bbox": [
+        1,
+        26,
+        44,
+        18
+      ],
+      "border_touches": {
+        "cell": [],
+        "crop": [
+          "left",
+          "right",
+          "bottom"
+        ]
+      },
+      "cell": [
+        3,
+        16
+      ],
+      "crop": [
+        940,
+        1064,
+        290,
+        127
+      ],
+      "crop_bbox": [
+        0,
+        1,
+        44,
+        18
+      ],
+      "facing": "west",
+      "foreground_pixels": 437,
+      "id": "ranger.west.death.2",
+      "opaque_crop": false,
+      "palette_remapped_pixels": 437,
+      "paste": [
+        1,
+        25
+      ],
+      "placed_source_anchor": [
+        23,
+        19
+      ],
+      "rect": [
+        144,
+        768,
+        48,
+        48
+      ],
+      "reused_source": false,
+      "scale": 0.15,
+      "scaled_crop_size": [
+        44,
+        19
+      ],
+      "source": "west",
+      "source_anchor": [
+        150,
+        124
+      ]
+    }
+  ],
+  "native_view": [
+    640,
+    360
+  ],
+  "orphan_frames": [],
+  "palette": [
+    "#111820ff",
+    "#e9ddc3ff",
+    "#5b4036ff",
+    "#1d2731ff",
+    "#d3cbb5ff",
+    "#eead56ff",
+    "#bd4653ff",
+    "#896043ff",
+    "#bb713dff",
+    "#aaafabff",
+    "#46515aff",
+    "#71808aff"
+  ],
+  "pipeline": "p1_ranger_actions_v01",
+  "resource_prefix": "res://art/production/p1/ranger_actions_v01",
+  "scale_by_source": {
+    "east": 0.15,
+    "north": 0.15,
+    "north_shoot": 0.15,
+    "south": 0.15,
+    "west": 0.15
+  },
+  "schema_version": 1,
+  "sources": {
+    "east": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "matched_pixels": 1201189,
+        "matched_ratio": 0.7639,
+        "mode": "color_key",
+        "scope": "all",
+        "tolerance": 100.0
+      },
+      "external_to_recipe_dir": false,
+      "height": 1254,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/east_original.png",
+      "sha256": "eda1ef3ab9174594debc4f96905d99b39c85213d3a6ca218c6afb4143de3eb7e",
+      "transparent_pixels": 0,
+      "width": 1254
+    },
+    "north": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "matched_pixels": 1241812,
+        "matched_ratio": 0.7897,
+        "mode": "color_key",
+        "scope": "all",
+        "tolerance": 100.0
+      },
+      "external_to_recipe_dir": false,
+      "height": 1254,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/north_original.png",
+      "sha256": "b336dd583c8808cbcf2a3588ac879ae04049fdbc7ceefa114c1f2fc3423f9b2f",
+      "transparent_pixels": 0,
+      "width": 1254
+    },
+    "north_shoot": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "matched_pixels": 1239320,
+        "matched_ratio": 0.7881,
+        "mode": "color_key",
+        "scope": "all",
+        "tolerance": 100.0
+      },
+      "external_to_recipe_dir": false,
+      "height": 1254,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/north_shoot_fixed_original.png",
+      "sha256": "506a206c2e15d938001c341645480acac6fe3d5dcbd59c1d27e000d77b310416",
+      "transparent_pixels": 0,
+      "width": 1254
+    },
+    "south": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "matched_pixels": 1192497,
+        "matched_ratio": 0.7583,
+        "mode": "color_key",
+        "scope": "all",
+        "tolerance": 100.0
+      },
+      "external_to_recipe_dir": false,
+      "height": 1254,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/south_original.png",
+      "sha256": "ddce51ede6644f7e1042b5d0d02d9fcffd79e1711ddf3743f22c4d956edee2a5",
+      "transparent_pixels": 0,
+      "width": 1254
+    },
+    "west": {
+      "background": {
+        "colors": [
+          "#00ff00ff"
+        ],
+        "matched_pixels": 1177819,
+        "matched_ratio": 0.749,
+        "mode": "color_key",
+        "scope": "all",
+        "tolerance": 100.0
+      },
+      "external_to_recipe_dir": false,
+      "height": 1254,
+      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/west_original.png",
+      "sha256": "99d03ea215e74c7a7a7c8fc62232d3896fab6007f6e3fc61d14a0536dc5ae4ce",
+      "transparent_pixels": 0,
+      "width": 1254
+    }
+  },
+  "technical_verification": {
+    "scope": "mechanical output properties only; not visual approval",
+    "status": "pending_external_verify"
+  },
+  "texture": {
+    "columns": 4,
+    "height": 816,
+    "id": "ranger",
+    "path": "res://art/production/p1/ranger_actions_v01/ranger.png",
+    "rows": 17,
+    "width": 192
+  }
+}

@@ -1,0 +1,896 @@
+{
+  "schema_version": 1,
+  "resource_prefix": "res://art/production/p1/enemy_actions_v01",
+  "texture_key": "enemies",
+  "native_view": [
+    640,
+    360
+  ],
+  "palette": [
+    "#111820",
+    "#e9ddc3",
+    "#5b4036",
+    "#1d2731",
+    "#d3cbb5",
+    "#eead56",
+    "#bd4653",
+    "#896043",
+    "#bb713d",
+    "#aaafab",
+    "#46515a",
+    "#71808a"
+  ],
+  "sources": {
+    "melee": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/melee_original.png",
+    "charger": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/charger_original.png",
+    "ranged": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/ranged_original.png"
+  },
+  "background": {
+    "melee": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    },
+    "charger": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    },
+    "ranged": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    }
+  },
+  "cell_size": [
+    48,
+    48
+  ],
+  "anchor": [
+    24,
+    44
+  ],
+  "columns": 13,
+  "frames": [
+    {
+      "id": "melee.east.idle.0",
+      "source": "melee",
+      "crop": [
+        1167,
+        429,
+        233,
+        262
+      ],
+      "source_anchor": [
+        88,
+        259
+      ],
+      "scale": 0.125,
+      "action": "idle",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.walk.0",
+      "source": "melee",
+      "crop": [
+        48,
+        79,
+        275,
+        267
+      ],
+      "source_anchor": [
+        143,
+        264
+      ],
+      "scale": 0.125,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.walk.1",
+      "source": "melee",
+      "crop": [
+        447,
+        82,
+        220,
+        266
+      ],
+      "source_anchor": [
+        103,
+        263
+      ],
+      "scale": 0.125,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.walk.2",
+      "source": "melee",
+      "crop": [
+        775,
+        82,
+        272,
+        266
+      ],
+      "source_anchor": [
+        131,
+        263
+      ],
+      "scale": 0.125,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.walk.3",
+      "source": "melee",
+      "crop": [
+        1129,
+        82,
+        244,
+        266
+      ],
+      "source_anchor": [
+        126,
+        263
+      ],
+      "scale": 0.125,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.windup.0",
+      "source": "melee",
+      "crop": [
+        88,
+        410,
+        250,
+        281
+      ],
+      "source_anchor": [
+        103,
+        278
+      ],
+      "scale": 0.125,
+      "action": "windup",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.windup.1",
+      "source": "melee",
+      "crop": [
+        428,
+        406,
+        259,
+        285
+      ],
+      "source_anchor": [
+        122,
+        282
+      ],
+      "scale": 0.125,
+      "action": "windup",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.active.0",
+      "source": "melee",
+      "crop": [
+        776,
+        458,
+        348,
+        232
+      ],
+      "source_anchor": [
+        171,
+        229
+      ],
+      "scale": 0.125,
+      "action": "active",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.recover.0",
+      "source": "melee",
+      "crop": [
+        1167,
+        429,
+        233,
+        262
+      ],
+      "source_anchor": [
+        88,
+        259
+      ],
+      "scale": 0.125,
+      "action": "recover",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.hit.0",
+      "source": "melee",
+      "crop": [
+        60,
+        749,
+        254,
+        265
+      ],
+      "source_anchor": [
+        131,
+        262
+      ],
+      "scale": 0.125,
+      "action": "hit",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.death.0",
+      "source": "melee",
+      "crop": [
+        424,
+        808,
+        249,
+        206
+      ],
+      "source_anchor": [
+        126,
+        203
+      ],
+      "scale": 0.125,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.death.1",
+      "source": "melee",
+      "crop": [
+        751,
+        828,
+        267,
+        190
+      ],
+      "source_anchor": [
+        158,
+        187
+      ],
+      "scale": 0.125,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "melee.east.death.2",
+      "source": "melee",
+      "crop": [
+        1062,
+        906,
+        363,
+        118
+      ],
+      "source_anchor": [
+        185,
+        115
+      ],
+      "scale": 0.125,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.idle.0",
+      "source": "charger",
+      "crop": [
+        1112,
+        471,
+        302,
+        179
+      ],
+      "source_anchor": [
+        150,
+        176
+      ],
+      "scale": 0.125,
+      "action": "idle",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.walk.0",
+      "source": "charger",
+      "crop": [
+        38,
+        142,
+        298,
+        177
+      ],
+      "source_anchor": [
+        151,
+        174
+      ],
+      "scale": 0.125,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.walk.1",
+      "source": "charger",
+      "crop": [
+        394,
+        138,
+        295,
+        176
+      ],
+      "source_anchor": [
+        154,
+        173
+      ],
+      "scale": 0.125,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.walk.2",
+      "source": "charger",
+      "crop": [
+        737,
+        139,
+        309,
+        183
+      ],
+      "source_anchor": [
+        169,
+        180
+      ],
+      "scale": 0.125,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.walk.3",
+      "source": "charger",
+      "crop": [
+        1118,
+        138,
+        282,
+        178
+      ],
+      "source_anchor": [
+        144,
+        175
+      ],
+      "scale": 0.125,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.windup.0",
+      "source": "charger",
+      "crop": [
+        32,
+        476,
+        309,
+        174
+      ],
+      "source_anchor": [
+        157,
+        171
+      ],
+      "scale": 0.125,
+      "action": "windup",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.windup.1",
+      "source": "charger",
+      "crop": [
+        394,
+        469,
+        302,
+        181
+      ],
+      "source_anchor": [
+        154,
+        178
+      ],
+      "scale": 0.125,
+      "action": "windup",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.active.0",
+      "source": "charger",
+      "crop": [
+        725,
+        460,
+        356,
+        182
+      ],
+      "source_anchor": [
+        181,
+        179
+      ],
+      "scale": 0.125,
+      "action": "active",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.recover.0",
+      "source": "charger",
+      "crop": [
+        1112,
+        471,
+        302,
+        179
+      ],
+      "source_anchor": [
+        150,
+        176
+      ],
+      "scale": 0.125,
+      "action": "recover",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.hit.0",
+      "source": "charger",
+      "crop": [
+        32,
+        772,
+        275,
+        206
+      ],
+      "source_anchor": [
+        157,
+        203
+      ],
+      "scale": 0.125,
+      "action": "hit",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.death.0",
+      "source": "charger",
+      "crop": [
+        402,
+        814,
+        298,
+        167
+      ],
+      "source_anchor": [
+        146,
+        164
+      ],
+      "scale": 0.125,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.death.1",
+      "source": "charger",
+      "crop": [
+        745,
+        844,
+        295,
+        143
+      ],
+      "source_anchor": [
+        161,
+        140
+      ],
+      "scale": 0.125,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "charger.east.death.2",
+      "source": "charger",
+      "crop": [
+        1063,
+        879,
+        361,
+        104
+      ],
+      "source_anchor": [
+        184,
+        101
+      ],
+      "scale": 0.125,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.idle.0",
+      "source": "ranged",
+      "crop": [
+        1162,
+        438,
+        241,
+        278
+      ],
+      "source_anchor": [
+        94,
+        275
+      ],
+      "scale": 0.126,
+      "action": "idle",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.walk.0",
+      "source": "ranged",
+      "crop": [
+        64,
+        87,
+        278,
+        278
+      ],
+      "source_anchor": [
+        114,
+        275
+      ],
+      "scale": 0.126,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.walk.1",
+      "source": "ranged",
+      "crop": [
+        439,
+        87,
+        255,
+        278
+      ],
+      "source_anchor": [
+        103,
+        275
+      ],
+      "scale": 0.126,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.walk.2",
+      "source": "ranged",
+      "crop": [
+        780,
+        87,
+        274,
+        282
+      ],
+      "source_anchor": [
+        120,
+        279
+      ],
+      "scale": 0.126,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.walk.3",
+      "source": "ranged",
+      "crop": [
+        1155,
+        87,
+        249,
+        282
+      ],
+      "source_anchor": [
+        101,
+        279
+      ],
+      "scale": 0.126,
+      "action": "walk",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.windup.0",
+      "source": "ranged",
+      "crop": [
+        73,
+        393,
+        265,
+        326
+      ],
+      "source_anchor": [
+        105,
+        323
+      ],
+      "scale": 0.126,
+      "action": "windup",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.windup.1",
+      "source": "ranged",
+      "crop": [
+        421,
+        397,
+        266,
+        319
+      ],
+      "source_anchor": [
+        121,
+        316
+      ],
+      "scale": 0.126,
+      "action": "windup",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.active.0",
+      "source": "ranged",
+      "crop": [
+        788,
+        406,
+        277,
+        313
+      ],
+      "source_anchor": [
+        112,
+        310
+      ],
+      "scale": 0.126,
+      "action": "active",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.recover.0",
+      "source": "ranged",
+      "crop": [
+        1162,
+        438,
+        241,
+        278
+      ],
+      "source_anchor": [
+        94,
+        275
+      ],
+      "scale": 0.126,
+      "action": "recover",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.hit.0",
+      "source": "ranged",
+      "crop": [
+        60,
+        772,
+        251,
+        268
+      ],
+      "source_anchor": [
+        118,
+        265
+      ],
+      "scale": 0.126,
+      "action": "hit",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.death.0",
+      "source": "ranged",
+      "crop": [
+        418,
+        814,
+        258,
+        231
+      ],
+      "source_anchor": [
+        124,
+        228
+      ],
+      "scale": 0.126,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.death.1",
+      "source": "ranged",
+      "crop": [
+        713,
+        860,
+        344,
+        176
+      ],
+      "source_anchor": [
+        184,
+        173
+      ],
+      "scale": 0.126,
+      "action": "death",
+      "facing": "east"
+    },
+    {
+      "id": "ranged.east.death.2",
+      "source": "ranged",
+      "crop": [
+        1061,
+        914,
+        368,
+        130
+      ],
+      "source_anchor": [
+        186,
+        127
+      ],
+      "scale": 0.126,
+      "action": "death",
+      "facing": "east"
+    }
+  ],
+  "animations": {
+    "melee.east.idle": {
+      "frames": [
+        "melee.east.idle.0"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "melee.east.walk": {
+      "frames": [
+        "melee.east.walk.0",
+        "melee.east.walk.1",
+        "melee.east.walk.2",
+        "melee.east.walk.3"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "melee.east.windup": {
+      "frames": [
+        "melee.east.windup.0",
+        "melee.east.windup.1"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "melee.east.active": {
+      "frames": [
+        "melee.east.active.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "melee.east.recover": {
+      "frames": [
+        "melee.east.recover.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "melee.east.hit": {
+      "frames": [
+        "melee.east.hit.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "melee.east.death": {
+      "frames": [
+        "melee.east.death.0",
+        "melee.east.death.1",
+        "melee.east.death.2"
+      ],
+      "fps": 6,
+      "loop": false
+    },
+    "charger.east.idle": {
+      "frames": [
+        "charger.east.idle.0"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "charger.east.walk": {
+      "frames": [
+        "charger.east.walk.0",
+        "charger.east.walk.1",
+        "charger.east.walk.2",
+        "charger.east.walk.3"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "charger.east.windup": {
+      "frames": [
+        "charger.east.windup.0",
+        "charger.east.windup.1"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "charger.east.active": {
+      "frames": [
+        "charger.east.active.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "charger.east.recover": {
+      "frames": [
+        "charger.east.recover.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "charger.east.hit": {
+      "frames": [
+        "charger.east.hit.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "charger.east.death": {
+      "frames": [
+        "charger.east.death.0",
+        "charger.east.death.1",
+        "charger.east.death.2"
+      ],
+      "fps": 6,
+      "loop": false
+    },
+    "ranged.east.idle": {
+      "frames": [
+        "ranged.east.idle.0"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranged.east.walk": {
+      "frames": [
+        "ranged.east.walk.0",
+        "ranged.east.walk.1",
+        "ranged.east.walk.2",
+        "ranged.east.walk.3"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "ranged.east.windup": {
+      "frames": [
+        "ranged.east.windup.0",
+        "ranged.east.windup.1"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "ranged.east.active": {
+      "frames": [
+        "ranged.east.active.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "ranged.east.recover": {
+      "frames": [
+        "ranged.east.recover.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "ranged.east.hit": {
+      "frames": [
+        "ranged.east.hit.0"
+      ],
+      "fps": 8,
+      "loop": false
+    },
+    "ranged.east.death": {
+      "frames": [
+        "ranged.east.death.0",
+        "ranged.east.death.1",
+        "ranged.east.death.2"
+      ],
+      "fps": 6,
+      "loop": false
+    }
+  },
+  "disclosure": {}
+}

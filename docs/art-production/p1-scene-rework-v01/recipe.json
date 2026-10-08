@@ -1,0 +1,840 @@
+{
+  "schema_version": 1,
+  "resource_prefix": "res://art/production/p1/scene_rework_v01",
+  "native_view": [
+    640,
+    360
+  ],
+  "palette": [
+    "#25303B",
+    "#29343E",
+    "#2D3943",
+    "#303A46",
+    "#33404A",
+    "#39434D",
+    "#1D2731",
+    "#46515A",
+    "#71808A",
+    "#7F94AD",
+    "#B0C4D8",
+    "#D3DDE7",
+    "#5B4036",
+    "#111820",
+    "#AAAFAB",
+    "#896043",
+    "#D3CBB5",
+    "#E9DDC3",
+    "#BB713D",
+    "#EEAD56",
+    "#BD4653",
+    "#39264E",
+    "#52317B",
+    "#70578D",
+    "#B17CC4",
+    "#D3A3EA",
+    "#2A3643",
+    "#36414C",
+    "#424B55"
+  ],
+  "sources": {
+    "ground": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ground_original.png",
+      "grid": [
+        1,
+        1
+      ],
+      "background": {
+        "mode": "opaque"
+      }
+    },
+    "decals": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/decals_keyed.png",
+      "grid": [
+        2,
+        2
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 120
+      }
+    },
+    "ruins": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ruins_keyed.png",
+      "grid": [
+        2,
+        2
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 120
+      }
+    },
+    "ranger": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ranger_native_keyed.png",
+      "grid": [
+        2,
+        2
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 120
+      }
+    },
+    "boss": {
+      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/boss_keyed.png",
+      "grid": [
+        2,
+        3
+      ],
+      "background": {
+        "mode": "color_key",
+        "colors": [
+          "#00FF00"
+        ],
+        "tolerance": 120
+      }
+    }
+  },
+  "atlases": {
+    "ground": {
+      "cell_size": [
+        1024,
+        640
+      ],
+      "columns": 1,
+      "padding": 0
+    },
+    "decals": {
+      "cell_size": [
+        128,
+        96
+      ],
+      "columns": 4,
+      "padding": 2
+    },
+    "ruins": {
+      "cell_size": [
+        128,
+        128
+      ],
+      "columns": 4,
+      "padding": 2
+    },
+    "ranger": {
+      "cell_size": [
+        32,
+        48
+      ],
+      "columns": 4,
+      "padding": 2
+    },
+    "boss_body": {
+      "cell_size": [
+        128,
+        128
+      ],
+      "columns": 2,
+      "padding": 2
+    },
+    "boss_hands": {
+      "cell_size": [
+        48,
+        64
+      ],
+      "columns": 2,
+      "padding": 2
+    },
+    "boss_core": {
+      "cell_size": [
+        32,
+        64
+      ],
+      "columns": 2,
+      "padding": 2
+    }
+  },
+  "sprites": [
+    {
+      "id": "scene.ground",
+      "source": "ground",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        1584,
+        990
+      ],
+      "atlas": "ground",
+      "anchor": [
+        512,
+        640
+      ],
+      "fit": [
+        1024,
+        640
+      ],
+      "palette": [
+        "#2A3643",
+        "#36414C",
+        "#424B55"
+      ]
+    },
+    {
+      "id": "ground.snow_wedge",
+      "source": "decals",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        700,
+        560
+      ],
+      "atlas": "decals",
+      "anchor": [
+        64,
+        90
+      ],
+      "fit": [
+        124,
+        78
+      ],
+      "palette": [
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#7F94AD",
+        "#B0C4D8",
+        "#D3DDE7",
+        "#5B4036"
+      ]
+    },
+    {
+      "id": "ground.snow_strip",
+      "source": "decals",
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        700,
+        0,
+        748,
+        560
+      ],
+      "atlas": "decals",
+      "anchor": [
+        64,
+        90
+      ],
+      "fit": [
+        124,
+        64
+      ],
+      "palette": [
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#7F94AD",
+        "#B0C4D8",
+        "#D3DDE7",
+        "#5B4036"
+      ]
+    },
+    {
+      "id": "ground.rubble_apron",
+      "source": "decals",
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        0,
+        580,
+        700,
+        506
+      ],
+      "atlas": "decals",
+      "anchor": [
+        64,
+        90
+      ],
+      "fit": [
+        124,
+        64
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#5B4036",
+        "#896043"
+      ]
+    },
+    {
+      "id": "ground.foundation",
+      "source": "decals",
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        700,
+        580,
+        748,
+        506
+      ],
+      "atlas": "decals",
+      "anchor": [
+        64,
+        90
+      ],
+      "fit": [
+        124,
+        64
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#2D3943",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#5B4036",
+        "#896043"
+      ]
+    },
+    {
+      "id": "ruin.wall_corner",
+      "source": "ruins",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        768,
+        600
+      ],
+      "atlas": "ruins",
+      "anchor": [
+        64,
+        120
+      ],
+      "fit": [
+        120,
+        116
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043"
+      ],
+      "scale_group": "ruins"
+    },
+    {
+      "id": "ruin.gate",
+      "source": "ruins",
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        768,
+        0,
+        768,
+        600
+      ],
+      "atlas": "ruins",
+      "anchor": [
+        64,
+        120
+      ],
+      "fit": [
+        120,
+        116
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043"
+      ],
+      "scale_group": "ruins"
+    },
+    {
+      "id": "ruin.low_pier",
+      "source": "ruins",
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        0,
+        600,
+        768,
+        424
+      ],
+      "atlas": "ruins",
+      "anchor": [
+        64,
+        120
+      ],
+      "fit": [
+        120,
+        116
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043"
+      ],
+      "scale_group": "ruins"
+    },
+    {
+      "id": "ruin.broken_wall",
+      "source": "ruins",
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        768,
+        600,
+        768,
+        424
+      ],
+      "atlas": "ruins",
+      "anchor": [
+        64,
+        120
+      ],
+      "fit": [
+        120,
+        116
+      ],
+      "palette": [
+        "#111820",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#B0C4D8",
+        "#E9DDC3",
+        "#5B4036",
+        "#896043"
+      ],
+      "scale_group": "ruins"
+    },
+    {
+      "id": "ranger.south.idle",
+      "source": "ranger",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        512,
+        768
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#AAAFAB",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#EEAD56",
+        "#BD4653"
+      ],
+      "scale_group": "ranger",
+      "facing": "south",
+      "state": "idle"
+    },
+    {
+      "id": "ranger.north.idle",
+      "source": "ranger",
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        512,
+        0,
+        512,
+        768
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#AAAFAB",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#EEAD56",
+        "#BD4653"
+      ],
+      "scale_group": "ranger",
+      "facing": "north",
+      "state": "idle"
+    },
+    {
+      "id": "ranger.east.idle",
+      "source": "ranger",
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        512,
+        768,
+        512,
+        768
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#AAAFAB",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#EEAD56",
+        "#BD4653"
+      ],
+      "scale_group": "ranger",
+      "facing": "east",
+      "state": "idle"
+    },
+    {
+      "id": "ranger.west.idle",
+      "source": "ranger",
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        0,
+        768,
+        512,
+        768
+      ],
+      "atlas": "ranger",
+      "anchor": [
+        16,
+        44
+      ],
+      "fit": [
+        28,
+        40
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#AAAFAB",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#EEAD56",
+        "#BD4653"
+      ],
+      "scale_group": "ranger",
+      "facing": "west",
+      "state": "idle"
+    },
+    {
+      "id": "boss.body_phase1",
+      "source": "boss",
+      "cell": [
+        0,
+        0
+      ],
+      "crop": [
+        0,
+        0,
+        512,
+        630
+      ],
+      "atlas": "boss_body",
+      "anchor": [
+        64,
+        120
+      ],
+      "fit": [
+        124,
+        116
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#B0C4D8",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#EEAD56"
+      ],
+      "scale_group": "boss_body"
+    },
+    {
+      "id": "boss.hand_left",
+      "source": "boss",
+      "cell": [
+        0,
+        1
+      ],
+      "crop": [
+        0,
+        630,
+        512,
+        420
+      ],
+      "atlas": "boss_hands",
+      "anchor": [
+        24,
+        56
+      ],
+      "fit": [
+        44,
+        52
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#B0C4D8",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#EEAD56"
+      ],
+      "scale_group": "boss_hands"
+    },
+    {
+      "id": "boss.core_phase1",
+      "source": "boss",
+      "cell": [
+        0,
+        2
+      ],
+      "crop": [
+        0,
+        1050,
+        512,
+        486
+      ],
+      "atlas": "boss_core",
+      "anchor": [
+        16,
+        56
+      ],
+      "fit": [
+        28,
+        52
+      ],
+      "palette": [
+        "#111820",
+        "#39264E",
+        "#52317B",
+        "#70578D",
+        "#B17CC4",
+        "#D3A3EA"
+      ],
+      "scale_group": "boss_core"
+    },
+    {
+      "id": "boss.body_phase2",
+      "source": "boss",
+      "cell": [
+        1,
+        0
+      ],
+      "crop": [
+        512,
+        0,
+        512,
+        630
+      ],
+      "atlas": "boss_body",
+      "anchor": [
+        64,
+        120
+      ],
+      "fit": [
+        124,
+        116
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#B0C4D8",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#EEAD56"
+      ],
+      "scale_group": "boss_body"
+    },
+    {
+      "id": "boss.hand_right",
+      "source": "boss",
+      "cell": [
+        1,
+        1
+      ],
+      "crop": [
+        512,
+        630,
+        512,
+        420
+      ],
+      "atlas": "boss_hands",
+      "anchor": [
+        24,
+        56
+      ],
+      "fit": [
+        44,
+        52
+      ],
+      "palette": [
+        "#111820",
+        "#1D2731",
+        "#46515A",
+        "#71808A",
+        "#AAAFAB",
+        "#D3CBB5",
+        "#E9DDC3",
+        "#B0C4D8",
+        "#5B4036",
+        "#896043",
+        "#BB713D",
+        "#EEAD56"
+      ],
+      "scale_group": "boss_hands"
+    },
+    {
+      "id": "boss.core_phase2",
+      "source": "boss",
+      "cell": [
+        1,
+        2
+      ],
+      "crop": [
+        512,
+        1050,
+        512,
+        486
+      ],
+      "atlas": "boss_core",
+      "anchor": [
+        16,
+        56
+      ],
+      "fit": [
+        28,
+        52
+      ],
+      "palette": [
+        "#111820",
+        "#39264E",
+        "#52317B",
+        "#70578D",
+        "#B17CC4",
+        "#D3A3EA"
+      ],
+      "scale_group": "boss_core"
+    }
+  ],
+  "animations": {}
+}

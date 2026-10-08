@@ -1,0 +1,107 @@
+{
+  "status": "pass",
+  "operation": "Godot native import in isolated project; published CTEX/remaps stay inside new art pack",
+  "shared_editor_import": false,
+  "pngs_overwritten": false,
+  "textures": [
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/boss_body.png",
+      "source_sha256": "e1f0586ff51a3bcd58e74210702e402ccb1c82b0616097cc3dba41e28f26f858",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/boss_body.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/boss_body.png-bed8e3e10bb40924f6e5cb28cb9b4ce3.ctex",
+      "imported_sha256": "3e7bf46d999e26cb232a4636afafe5162c7ebabbc8c7300345698b5c0968c629",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/boss_body.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/boss_core.png",
+      "source_sha256": "4ab3ed95a207381cec2b14ef0286a29c89af929278052cd582eb837619258cfe",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/boss_core.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/boss_core.png-5aff7bf5a767fb721f9c800b02b2a3d2.ctex",
+      "imported_sha256": "001500cb37029aa5393a9ae2d34d9ed10d67bc60c63a659b2cb36f4f150c55d0",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/boss_core.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/boss_hands.png",
+      "source_sha256": "835a273c083c10b4effd0c8fbb117d50e640f19c725e9647fd10b8d2c0729b57",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/boss_hands.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/boss_hands.png-9b0db3dfb0fec91ae191e9f95d8563fb.ctex",
+      "imported_sha256": "8c9520a6105ec32fb53cf8737d245d1a153ef022d0beffe6a73566f27a813d41",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/boss_hands.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/decals.png",
+      "source_sha256": "49be66c009099b7ffd0018d762c4386917b67957d308b9a92a7f2976e47b67e7",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/decals.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/decals.png-24cfda95ce4ed48f573d485b2c765d4b.ctex",
+      "imported_sha256": "60a76955f907a6d5ea4e409ac012a056ef626f74835c31e106576b37e7406b39",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/decals.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/enemies.png",
+      "source_sha256": "c76b8d181b2a65cc69844d3de4c6f8c4bd2f5470655519cbdde2918512c2292b",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/enemies.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/enemies.png-de715b7cbc39db0b63e7e6e756cae46a.ctex",
+      "imported_sha256": "b14e893e85089f1ff7f05a273cab73f2596380ea514d7e92d9504556cb1813d2",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/enemies.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/ground.png",
+      "source_sha256": "eab9a80036a46ef97d1efac5ef8e5848a8809edf91206d450d252ba49a2e162b",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/ground.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/ground.png-8e0feed7f972b506fe92dfc1ba9beca7.ctex",
+      "imported_sha256": "59d39975195d084b89ab705808558f3ea842f29128cc958c48644c7cd79bd88c",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/ground.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/legacy_enemies.png",
+      "source_sha256": "ba6b07fafce76a03b0fe42178cd13a6d72f6a503546c5fa632572569572d5114",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/legacy_enemies.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/legacy_enemies.png-b97357598d364993227d058fe7c791b9.ctex",
+      "imported_sha256": "eeca3071c215cae8a452ccf055e9f48512a01433df91af08b787bafa2c3fbd63",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/legacy_enemies.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/ranger.png",
+      "source_sha256": "9db9f18771f6ca1c2f14ab0f051deb674f2cc9c3b8e57c2ea9e8f7f8b22af4a0",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/ranger.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/ranger.png-01adcd1ec4949eb783c0a9554a26cdc5.ctex",
+      "imported_sha256": "bb8337e7e5e8f0b22491dbd28b3e3571cbfd5b617f93381bbe5a5e229f8f8bd3",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/ranger.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/ranger_idle.png",
+      "source_sha256": "d37a4ddb09b448a00b06704842ec2c0ba6622c70aa293a7ba5cd0f581c1e7e9f",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/ranger_idle.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/ranger_idle.png-1649050d5678ed091df644a122cccd66.ctex",
+      "imported_sha256": "f492c691fb3b8485cff8f0a4ccd1df0f5c4d9f284656d128baccfe200aace177",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/ranger_idle.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/ruins.png",
+      "source_sha256": "4cb43329e374e7d0e0d2ae98a725944b60345bcd22259a9bfce250abd9a4c060",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/ruins.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/ruins.png-a19370135e71e1cc655098de6d131b51.ctex",
+      "imported_sha256": "a6991181d34c77372860801318ad8fcb2dcdd7039e396b8a1f24f244de061da4",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/ruins.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    },
+    {
+      "source_png": "res://art/production/p1/combat_style_r13/v03/tower.png",
+      "source_sha256": "e02226a37f11b055db4fb47164768e64c7afb5f88787583a691653e4278f9caa",
+      "godot_import_metadata": "res://art/production/p1/combat_style_r13/v03/tower.png.import",
+      "imported_texture": "res://art/production/p1/combat_style_r13/v03/imported/tower.png-9f63e16a4f2aeea4afbd6f454c22649c.ctex",
+      "imported_sha256": "3f6516665d33878d412b20762eac2764ae774fcc4bf1835d66e98d705dfd7f25",
+      "isolated_editor_import": "/data/tmp/mib-r13-combat-style-20261007-import-v03/import_project/art/production/p1/combat_style_r13/v03/tower.png.import",
+      "compression": "lossless, no mipmaps; original alpha retained"
+    }
+  ]
+}

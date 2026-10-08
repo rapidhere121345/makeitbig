@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "residents": [
+    {
+      "placement": "mira",
+      "clip": "mira.south.work",
+      "phase": 0
+    },
+    {
+      "placement": "iven",
+      "clip": "iven.south.work",
+      "phase": 0.37
+    },
+    {
+      "placement": "taren",
+      "clip": "taren.south.work",
+      "phase": 0.73
+    },
+    {
+      "placement": "leia",
+      "clip": "leia.south.work",
+      "phase": 1.11
+    },
+    {
+      "placement": "oren",
+      "clip": "oren.south.work",
+      "phase": 0.21
+    }
+  ],
+  "effects": [
+    {
+      "id": "hearth_cook_fire",
+      "owner": "hearth",
+      "clip": "life.fire",
+      "offset": [
+        -80,
+        -31
+      ],
+      "phase": 0,
+      "layer": "lower"
+    },
+    {
+      "id": "tower_exhaust",
+      "owner": "hearth",
+      "clip": "life.steam",
+      "offset": [
+        136,
+        -101
+      ],
+      "phase": 0.45,
+      "layer": "upper"
+    },
+    {
+      "id": "forge_fire",
+      "owner": "forge",
+      "clip": "life.fire",
+      "offset": [
+        28,
+        -34
+      ],
+      "phase": 0.28,
+      "layer": "upper"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "tool": "built-in image_gen",
+  "accepted": {
+    "prompt": "Use case: precise-object-edit. Asset type: final production source sprite sheet for five game navigation icons. Input images ordered contract scroll / satchel / smith hammer / crossed practice swords / hollow proxy hood are EDIT TARGETS. Preserve their exact silhouettes and restrained pixel forms; combine those five existing icons into ONE clean sheet, no new icons, no labels. IMPORTANT these source images accidentally have FAKE CHECKERBOARD backgrounds baked in. Replace ALL background, including the backpack handle hole and hollow hood center, with a perfectly solid chroma-key magenta #FF00FF. Do not draw checkerboard or transparency visualization. Preserve icon materials: bone white, muted stone grey, slate, dark ink; muted brown handles of hammer/swords. Reduce to flat solid colors and eliminate internal gradients or tiny surface noise while preserving shape. Use equal 3-column by 2-row cells: top row scroll, satchel, hammer; bottom row crossed swords, hood, EMPTY MAGENTA cell. Center every entire icon with very generous pure magenta margins within its cell, same apparent size. Canvas landscape 1536x1024 preferred. This is NOT a UI mockup; no frame, no buttons, no text, no lighting, no floor, no shadow beyond sprite dark outline, no colored accents other than muted brown handles. Render as crisp nearest-neighbor enlarged pixel art ready for explicit integer-grid downsample to 32px, 5 flat colors for monochrome icons and at most7 for wooden handles. Reference page not needed: preserve the FIVE supplied icon designs.",
+    "path": "/home/rapidhere/.codex/generated_images/01a08463-b359-7733-9c05-ef4a90c34aaa/exec-9c4c6880-1369-4d5b-b2fd-9955044ff430.png",
+    "archive": "sources/navigation_keyed.png"
+  },
+  "postprocessing": "existing deterministic pipeline, explicit magenta all-region key100, nearest32x32, fixed palette max7. No art drawing."
+}

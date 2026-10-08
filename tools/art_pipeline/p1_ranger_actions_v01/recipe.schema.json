@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "p1_ranger_actions_v01_recipe",
+  "title": "P1 ranger action packing recipe",
+  "type": "object",
+  "required": [
+    "schema_version", "resource_prefix", "native_view", "palette",
+    "sources", "cell_size", "anchor", "columns", "frames", "animations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "resource_prefix": {"type": "string", "pattern": "^res://"},
+    "texture_key": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
+      "description": "Texture id in atlas.json/manifest.json, written as <texture_key>.png. Defaults to 'ranger'."
+    },
+    "native_view": {"const": [640, 360]},
+    "palette": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"}
+    },
+    "sources": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "string", "pattern": "^/"},
+      "propertyNames": {"pattern": "^[^.]+$"}
+    },
+    "background": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["mode", "colors", "tolerance"],
+        "properties": {
+          "mode": {"enum": ["alpha", "color_key"]},
+          "colors": {
+            "type": "array",
+            "items": {"type": "string", "pattern": "^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"}
+          },
+          "tolerance": {"type": "number", "minimum": 0, "maximum": 255},
+          "scope": {"enum": ["all", "border"]}
+        }
+      },
+      "propertyNames": {"pattern": "^[^.]+$"}
+    },
+    "cell_size": {"const": [48, 48]},
+    "anchor": {"const": [24, 44]},
+    "columns": {"type": "integer", "minimum": 1},
+    "frames": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source", "crop", "source_anchor", "scale", "action", "facing"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "crop": {
+            "type": "array",
+            "prefixItems": [
+              {"type": "integer", "minimum": 0},
+              {"type": "integer", "minimum": 0},
+              {"type": "integer", "minimum": 1},
+              {"type": "integer", "minimum": 1}
+            ],
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "source_anchor": {
+            "type": "array",
+            "prefixItems": [{"type": "integer", "minimum": 0}, {"type": "integer", "minimum": 0}],
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "scale": {"type": "number", "exclusiveMinimum": 0, "maximum": 16},
+          "action": {"type": "string", "minLength": 1, "pattern": "^[^.]+$"},
+          "facing": {"type": "string", "minLength": 1, "pattern": "^[^.]+$"}
+        }
+      }
+    },
+    "animations": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["frames", "fps", "loop"],
+        "properties": {
+          "frames": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "fps": {"type": "integer", "minimum": 1},
+          "loop": {"type": "boolean"}
+        }
+      }
+    },
+    "disclosure": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "minLength": 1}
+    }
+  }
+}

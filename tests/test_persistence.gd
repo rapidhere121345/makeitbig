@@ -15,6 +15,11 @@ func run() -> Array[String]:
 	_test_corrupt_slot_fallback(failures)
 	_test_exit_time_has_no_offline_progress(failures)
 	_cleanup_test_directory()
+	_test_load_latest_no_valid_save_slot(failures)
+	_test_delete_all_removes_only_its_own_targets(failures)
+	_test_delete_all_spares_unrelated_files(failures)
+	_test_delete_all_is_idempotent(failures)
+	_cleanup_test_directory()
 	return failures
 
 
@@ -104,6 +109,73 @@ func _test_exit_time_has_no_offline_progress(failures: Array[String]) -> void:
 		_expect(int(loaded.payload.progress) == 37, "exit_time changed stored progress", failures)
 		_expect(int(loaded.payload.offline_progress) == 0, "persistence computed offline progress", failures)
 		_expect(int(loaded.payload.exit_time) == 1, "exit_time was interpreted instead of preserved", failures)
+
+
+func _test_load_latest_no_valid_save_slot(failures: Array[String]) -> void:
+	var store := SaveStore.new(TEST_DIRECTORY)
+	var loaded: Dictionary = store.load_latest()
+	_expect(not bool(loaded.get("ok", false)), "load_latest accepted an empty directory", failures)
+	_expect(str(loaded.get("error", "")) == "no valid save slot", "load_latest returned the wrong error for an empty directory: %s" % [loaded], failures)
+
+
+func _test_delete_all_removes_only_its_own_targets(failures: Array[String]) -> void:
+	var store := SaveStore.new(TEST_DIRECTORY)
+	_expect(bool(store.save({"progress": 1}).get("ok", false)), "could not prepare first save for delete_all", failures)
+	_expect(bool(store.save({"progress": 2}).get("ok", false)), "could not prepare second save for delete_all", failures)
+	var absolute_directory: String = ProjectSettings.globalize_path(TEST_DIRECTORY)
+	for temporary_name in ["save_a.json.tmp", "save_b.json.tmp"]:
+		_expect(_write_test_file(absolute_directory.path_join(temporary_name), "partial"), "could not prepare %s for delete_all" % temporary_name, failures)
+	var result: Dictionary = store.delete_all()
+	_expect(bool(result.get("ok", false)), "delete_all failed: %s" % [result], failures)
+	var removed: Array = result.get("removed", [])
+	removed.sort()
+	var expected: Array[String] = ["save_a.json", "save_a.json.tmp", "save_b.json", "save_b.json.tmp"]
+	_expect(removed == expected, "delete_all removed the wrong files: %s" % [removed], failures)
+	var loaded: Dictionary = store.load_latest()
+	_expect(not bool(loaded.get("ok", false)), "delete_all left a loadable save slot", failures)
+
+
+func _test_delete_all_spares_unrelated_files(failures: Array[String]) -> void:
+	var store := SaveStore.new(TEST_DIRECTORY)
+	var absolute_directory: String = ProjectSettings.globalize_path(TEST_DIRECTORY)
+	_expect(DirAccess.make_dir_recursive_absolute(absolute_directory) == OK, "could not create test directory", failures)
+	_expect(_write_test_file(absolute_directory.path_join("save_a.json"), "slot"), "could not prepare save_a.json", failures)
+	_expect(_write_test_file(absolute_directory.path_join("save_c.json"), "foreign slot"), "could not prepare save_c.json", failures)
+	_expect(_write_test_file(absolute_directory.path_join("notes.txt"), "keep me"), "could not prepare notes.txt", failures)
+	var nested_directory: String = absolute_directory.path_join("nested")
+	_expect(DirAccess.make_dir_recursive_absolute(nested_directory) == OK, "could not create nested directory", failures)
+	_expect(_write_test_file(nested_directory.path_join("save_a.json"), "nested slot"), "could not prepare nested save_a.json", failures)
+	var result: Dictionary = store.delete_all()
+	_expect(bool(result.get("ok", false)), "delete_all failed: %s" % [result], failures)
+	_expect(result.get("removed", []) == ["save_a.json"], "delete_all removed unexpected files: %s" % [result], failures)
+	_expect(FileAccess.file_exists(absolute_directory.path_join("save_c.json")), "delete_all removed an unrelated slot file", failures)
+	_expect(FileAccess.file_exists(absolute_directory.path_join("notes.txt")), "delete_all removed an unrelated file", failures)
+	_expect(FileAccess.file_exists(nested_directory.path_join("save_a.json")), "delete_all recursed into subdirectories", failures)
+	_expect(DirAccess.dir_exists_absolute(nested_directory), "delete_all removed the directory itself", failures)
+	for path in [nested_directory.path_join("save_a.json"), absolute_directory.path_join("save_c.json"), absolute_directory.path_join("notes.txt")]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
+	if DirAccess.dir_exists_absolute(nested_directory):
+		DirAccess.remove_absolute(nested_directory)
+
+
+func _test_delete_all_is_idempotent(failures: Array[String]) -> void:
+	var store := SaveStore.new(TEST_DIRECTORY)
+	var first: Dictionary = store.delete_all()
+	_expect(bool(first.get("ok", false)), "delete_all on an empty directory failed: %s" % [first], failures)
+	_expect(first.get("removed", []) == [], "delete_all on an empty directory reported removals: %s" % [first], failures)
+	var second: Dictionary = store.delete_all()
+	_expect(bool(second.get("ok", false)), "repeated delete_all failed: %s" % [second], failures)
+	_expect(second.get("removed", []) == [], "repeated delete_all was not idempotent: %s" % [second], failures)
+
+
+func _write_test_file(path: String, contents: String) -> bool:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(contents)
+	file.close()
+	return true
 
 
 func _cleanup_test_directory() -> void:

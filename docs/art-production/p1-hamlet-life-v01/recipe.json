@@ -1,0 +1,444 @@
+{
+  "schema_version": 1,
+  "resource_prefix": "res://art/production/p1/hamlet_life_v01",
+  "texture_key": "residents",
+  "native_view": [
+    640,
+    360
+  ],
+  "palette": [
+    "#111820",
+    "#1D2731",
+    "#46515A",
+    "#5B4036",
+    "#896043",
+    "#AD7950",
+    "#D3BDA0",
+    "#E9DDC3",
+    "#B66B51",
+    "#D49776",
+    "#71808A",
+    "#72533E",
+    "#EEAD56",
+    "#F4CE77"
+  ],
+  "sources": {
+    "residents": "/data/repo/makeitbig/docs/art-production/p1-hamlet-life-v01/sources/residents_original.png"
+  },
+  "background": {
+    "residents": {
+      "mode": "color_key",
+      "colors": [
+        "#00ff00"
+      ],
+      "tolerance": 100,
+      "scope": "all"
+    }
+  },
+  "cell_size": [
+    48,
+    48
+  ],
+  "anchor": [
+    24,
+    44
+  ],
+  "columns": 4,
+  "frames": [
+    {
+      "id": "mira.south.work.0",
+      "source": "residents",
+      "crop": [
+        53,
+        51,
+        171,
+        223
+      ],
+      "source_anchor": [
+        52,
+        222
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "mira.south.work.1",
+      "source": "residents",
+      "crop": [
+        327,
+        51,
+        172,
+        223
+      ],
+      "source_anchor": [
+        58,
+        222
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "mira.south.work.2",
+      "source": "residents",
+      "crop": [
+        607,
+        64,
+        177,
+        210
+      ],
+      "source_anchor": [
+        60,
+        209
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "mira.south.work.3",
+      "source": "residents",
+      "crop": [
+        897,
+        51,
+        172,
+        223
+      ],
+      "source_anchor": [
+        52,
+        222
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "iven.south.work.0",
+      "source": "residents",
+      "crop": [
+        58,
+        306,
+        158,
+        239
+      ],
+      "source_anchor": [
+        71,
+        238
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "iven.south.work.1",
+      "source": "residents",
+      "crop": [
+        341,
+        308,
+        156,
+        237
+      ],
+      "source_anchor": [
+        69,
+        236
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "iven.south.work.2",
+      "source": "residents",
+      "crop": [
+        618,
+        310,
+        162,
+        235
+      ],
+      "source_anchor": [
+        74,
+        234
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "iven.south.work.3",
+      "source": "residents",
+      "crop": [
+        905,
+        308,
+        156,
+        237
+      ],
+      "source_anchor": [
+        71,
+        236
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "taren.south.work.0",
+      "source": "residents",
+      "crop": [
+        45,
+        574,
+        170,
+        252
+      ],
+      "source_anchor": [
+        89,
+        251
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "taren.south.work.1",
+      "source": "residents",
+      "crop": [
+        325,
+        573,
+        175,
+        253
+      ],
+      "source_anchor": [
+        90,
+        252
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "taren.south.work.2",
+      "source": "residents",
+      "crop": [
+        608,
+        574,
+        165,
+        252
+      ],
+      "source_anchor": [
+        90,
+        251
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "taren.south.work.3",
+      "source": "residents",
+      "crop": [
+        889,
+        573,
+        174,
+        253
+      ],
+      "source_anchor": [
+        91,
+        252
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "leia.south.work.0",
+      "source": "residents",
+      "crop": [
+        70,
+        856,
+        132,
+        250
+      ],
+      "source_anchor": [
+        60,
+        249
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "leia.south.work.1",
+      "source": "residents",
+      "crop": [
+        351,
+        856,
+        151,
+        250
+      ],
+      "source_anchor": [
+        64,
+        249
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "leia.south.work.2",
+      "source": "residents",
+      "crop": [
+        636,
+        856,
+        126,
+        251
+      ],
+      "source_anchor": [
+        62,
+        249
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "leia.south.work.3",
+      "source": "residents",
+      "crop": [
+        916,
+        854,
+        120,
+        253
+      ],
+      "source_anchor": [
+        64,
+        251
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "oren.south.work.0",
+      "source": "residents",
+      "crop": [
+        32,
+        1153,
+        207,
+        213
+      ],
+      "source_anchor": [
+        95,
+        207
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "oren.south.work.1",
+      "source": "residents",
+      "crop": [
+        320,
+        1140,
+        200,
+        226
+      ],
+      "source_anchor": [
+        90,
+        220
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "oren.south.work.2",
+      "source": "residents",
+      "crop": [
+        599,
+        1122,
+        198,
+        244
+      ],
+      "source_anchor": [
+        98,
+        238
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    },
+    {
+      "id": "oren.south.work.3",
+      "source": "residents",
+      "crop": [
+        876,
+        1161,
+        213,
+        205
+      ],
+      "source_anchor": [
+        97,
+        199
+      ],
+      "scale": 0.14,
+      "action": "work",
+      "facing": "south"
+    }
+  ],
+  "animations": {
+    "mira.south.work": {
+      "frames": [
+        "mira.south.work.0",
+        "mira.south.work.1",
+        "mira.south.work.2",
+        "mira.south.work.3"
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "iven.south.work": {
+      "frames": [
+        "iven.south.work.0",
+        "iven.south.work.1",
+        "iven.south.work.2",
+        "iven.south.work.3"
+      ],
+      "fps": 2,
+      "loop": true
+    },
+    "taren.south.work": {
+      "frames": [
+        "taren.south.work.0",
+        "taren.south.work.1",
+        "taren.south.work.2",
+        "taren.south.work.3"
+      ],
+      "fps": 2,
+      "loop": true
+    },
+    "leia.south.work": {
+      "frames": [
+        "leia.south.work.0",
+        "leia.south.work.1",
+        "leia.south.work.2",
+        "leia.south.work.3"
+      ],
+      "fps": 2,
+      "loop": true
+    },
+    "oren.south.work": {
+      "frames": [
+        "oren.south.work.0",
+        "oren.south.work.1",
+        "oren.south.work.2",
+        "oren.south.work.3"
+      ],
+      "fps": 4,
+      "loop": true
+    }
+  },
+  "disclosure": {
+    "residents": "New built-in imagegen 20-pose sheet references approved v0.9 sheet03 and current residents.png. Uniform 0.14 nearest scale across all characters/frames; key green100 removes declared source backdrop only. No script painted art. Mira/Oren carried brazier/anvil are part of resident frame, not duplicate buildings."
+  }
+}

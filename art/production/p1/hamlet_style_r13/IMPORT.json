@@ -1,0 +1,304 @@
+{
+	"operation": "transparent-margin crop, native nearest-neighbour fit, fixed cell packing",
+	"recipe": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/style-recipe.json",
+	"recipe_sha256": "be588d940a3eccda8302ab11d190d635230f22aed1c0ce30418697d7639bfac4",
+	"sheets": [
+		{
+			"cells": [
+				{
+					"destination": [
+						13,
+						33,
+						85,
+						71
+					],
+					"index": 0,
+					"source": [
+						31,
+						221,
+						485,
+						405
+					]
+				},
+				{
+					"destination": [
+						125,
+						38,
+						85,
+						66
+					],
+					"index": 1,
+					"source": [
+						587,
+						235,
+						499,
+						387
+					]
+				},
+				{
+					"destination": [
+						242,
+						45,
+						76,
+						59
+					],
+					"index": 2,
+					"source": [
+						1086,
+						235,
+						493,
+						389
+					]
+				},
+				{
+					"destination": [
+						348,
+						49,
+						88,
+						55
+					],
+					"index": 3,
+					"source": [
+						1656,
+						327,
+						484,
+						305
+					]
+				}
+			],
+			"file": "facilities.png",
+			"sha256": "ca2ed9b89137e214e34f8b43589f1f9c249488e56cf96a02db16a3ead5492e30",
+			"size": [
+				448,
+				112
+			],
+			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/facilities.png",
+			"source_sha256": "e2cc7a16c26adb3b0d0945eee9d8fde9d9226ec2c11ac9f26d2caf5fa8c4b4df"
+		},
+		{
+			"cells": [
+				{
+					"destination": [
+						10,
+						61,
+						300,
+						151
+					],
+					"index": 0,
+					"source": [
+						43,
+						279,
+						1431,
+						722
+					]
+				}
+			],
+			"file": "hearth.png",
+			"sha256": "2e296ab1927af5bd2ba52102b67949b329f86463d9bd744bb609b19f58a0399b",
+			"size": [
+				320,
+				224
+			],
+			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/hearth.png",
+			"source_sha256": "55dea8493d9288b4a97cc58e96515de645373e9365712f96495baaa074117979"
+		},
+		{
+			"cells": [
+				{
+					"destination": [
+						10,
+						33,
+						140,
+						103
+					],
+					"index": 0,
+					"source": [
+						85,
+						273,
+						1152,
+						855
+					]
+				}
+			],
+			"file": "forge.png",
+			"sha256": "f47c32e8121291632861634e3c835eaa9c43f1e65bfdc89a416f4ea19948953c",
+			"size": [
+				160,
+				144
+			],
+			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/forge.png",
+			"source_sha256": "a72c0ed23721e62460d0ef1ad70142f39eb9f40ea6673dd103eebbab678ca48c"
+		},
+		{
+			"cells": [
+				{
+					"destination": [
+						11,
+						35,
+						74,
+						53
+					],
+					"index": 0,
+					"source": [
+						58,
+						249,
+						584,
+						415
+					]
+				},
+				{
+					"destination": [
+						115,
+						20,
+						57,
+						68
+					],
+					"index": 1,
+					"source": [
+						874,
+						101,
+						469,
+						559
+					]
+				},
+				{
+					"destination": [
+						208,
+						44,
+						63,
+						44
+					],
+					"index": 2,
+					"source": [
+						1533,
+						265,
+						582,
+						404
+					]
+				}
+			],
+			"file": "edges.png",
+			"sha256": "14ed83a816fce21a83ac7bc9fe1136941d6d09301ec6732b7970e80815045996",
+			"size": [
+				288,
+				96
+			],
+			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/edges.png",
+			"source_sha256": "126981db0233e354c5a31b55fc584a18b9798ecc12a29234feb453c59b5dae9b"
+		},
+		{
+			"cells": [
+				{
+					"destination": [
+						3,
+						1,
+						16,
+						50
+					],
+					"index": 0,
+					"source": [
+						343,
+						220,
+						357,
+						1070
+					]
+				}
+			],
+			"file": "lantern.png",
+			"sha256": "ca4a7c62a8606a4c6de82a05d8998243c869a39a6ba640aa13deeedf57ef3883",
+			"size": [
+				22,
+				52
+			],
+			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/lantern.png",
+			"source_sha256": "35668903adc5147af289f05289dfe1dcedfacaefa4c88f55cc0e98db1605ddc3"
+		},
+		{
+			"cells": [
+				{
+					"destination": [
+						8,
+						17,
+						24,
+						27
+					],
+					"index": 0,
+					"source": [
+						78,
+						77,
+						161,
+						184
+					]
+				},
+				{
+					"destination": [
+						50,
+						12,
+						21,
+						32
+					],
+					"index": 1,
+					"source": [
+						79,
+						322,
+						132,
+						205
+					]
+				},
+				{
+					"destination": [
+						88,
+						10,
+						24,
+						34
+					],
+					"index": 2,
+					"source": [
+						69,
+						575,
+						150,
+						213
+					]
+				},
+				{
+					"destination": [
+						131,
+						15,
+						18,
+						29
+					],
+					"index": 3,
+					"source": [
+						77,
+						848,
+						129,
+						208
+					]
+				},
+				{
+					"destination": [
+						167,
+						14,
+						26,
+						30
+					],
+					"index": 4,
+					"source": [
+						58,
+						1127,
+						174,
+						203
+					]
+				}
+			],
+			"file": "residents.png",
+			"sha256": "96d0448f187c56a6770073a5c7152eb64aa05ded58f286ceaa452365de18fd8d",
+			"size": [
+				200,
+				48
+			],
+			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
+			"source_sha256": "8491083522931fd493cc4f98f75cd698551e3e293ba84a4290b0eb0615c54d3a"
+		}
+	]
+}

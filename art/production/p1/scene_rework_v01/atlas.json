@@ -1,0 +1,302 @@
+{
+  "animations": {},
+  "native_view": [
+    640,
+    360
+  ],
+  "schema_version": 1,
+  "sprites": {
+    "boss.body_phase1": {
+      "anchor": [
+        64,
+        120
+      ],
+      "rect": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "texture": "boss_body"
+    },
+    "boss.body_phase2": {
+      "anchor": [
+        64,
+        120
+      ],
+      "rect": [
+        128,
+        0,
+        128,
+        128
+      ],
+      "texture": "boss_body"
+    },
+    "boss.core_phase1": {
+      "anchor": [
+        16,
+        56
+      ],
+      "rect": [
+        0,
+        0,
+        32,
+        64
+      ],
+      "texture": "boss_core"
+    },
+    "boss.core_phase2": {
+      "anchor": [
+        16,
+        56
+      ],
+      "rect": [
+        32,
+        0,
+        32,
+        64
+      ],
+      "texture": "boss_core"
+    },
+    "boss.hand_left": {
+      "anchor": [
+        24,
+        56
+      ],
+      "rect": [
+        0,
+        0,
+        48,
+        64
+      ],
+      "texture": "boss_hands"
+    },
+    "boss.hand_right": {
+      "anchor": [
+        24,
+        56
+      ],
+      "rect": [
+        48,
+        0,
+        48,
+        64
+      ],
+      "texture": "boss_hands"
+    },
+    "ground.foundation": {
+      "anchor": [
+        64,
+        90
+      ],
+      "rect": [
+        384,
+        0,
+        128,
+        96
+      ],
+      "texture": "decals"
+    },
+    "ground.rubble_apron": {
+      "anchor": [
+        64,
+        90
+      ],
+      "rect": [
+        256,
+        0,
+        128,
+        96
+      ],
+      "texture": "decals"
+    },
+    "ground.snow_strip": {
+      "anchor": [
+        64,
+        90
+      ],
+      "rect": [
+        128,
+        0,
+        128,
+        96
+      ],
+      "texture": "decals"
+    },
+    "ground.snow_wedge": {
+      "anchor": [
+        64,
+        90
+      ],
+      "rect": [
+        0,
+        0,
+        128,
+        96
+      ],
+      "texture": "decals"
+    },
+    "ranger.east.idle": {
+      "anchor": [
+        16,
+        44
+      ],
+      "facing": "east",
+      "rect": [
+        64,
+        0,
+        32,
+        48
+      ],
+      "state": "idle",
+      "texture": "ranger"
+    },
+    "ranger.north.idle": {
+      "anchor": [
+        16,
+        44
+      ],
+      "facing": "north",
+      "rect": [
+        32,
+        0,
+        32,
+        48
+      ],
+      "state": "idle",
+      "texture": "ranger"
+    },
+    "ranger.south.idle": {
+      "anchor": [
+        16,
+        44
+      ],
+      "facing": "south",
+      "rect": [
+        0,
+        0,
+        32,
+        48
+      ],
+      "state": "idle",
+      "texture": "ranger"
+    },
+    "ranger.west.idle": {
+      "anchor": [
+        16,
+        44
+      ],
+      "facing": "west",
+      "rect": [
+        96,
+        0,
+        32,
+        48
+      ],
+      "state": "idle",
+      "texture": "ranger"
+    },
+    "ruin.broken_wall": {
+      "anchor": [
+        64,
+        120
+      ],
+      "rect": [
+        384,
+        0,
+        128,
+        128
+      ],
+      "texture": "ruins"
+    },
+    "ruin.gate": {
+      "anchor": [
+        64,
+        120
+      ],
+      "rect": [
+        128,
+        0,
+        128,
+        128
+      ],
+      "texture": "ruins"
+    },
+    "ruin.low_pier": {
+      "anchor": [
+        64,
+        120
+      ],
+      "rect": [
+        256,
+        0,
+        128,
+        128
+      ],
+      "texture": "ruins"
+    },
+    "ruin.wall_corner": {
+      "anchor": [
+        64,
+        120
+      ],
+      "rect": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "texture": "ruins"
+    },
+    "scene.ground": {
+      "anchor": [
+        512,
+        640
+      ],
+      "rect": [
+        0,
+        0,
+        1024,
+        640
+      ],
+      "texture": "ground"
+    }
+  },
+  "textures": {
+    "boss_body": {
+      "height": 128,
+      "path": "res://art/production/p1/scene_rework_v01/boss_body.png",
+      "width": 256
+    },
+    "boss_core": {
+      "height": 64,
+      "path": "res://art/production/p1/scene_rework_v01/boss_core.png",
+      "width": 64
+    },
+    "boss_hands": {
+      "height": 64,
+      "path": "res://art/production/p1/scene_rework_v01/boss_hands.png",
+      "width": 96
+    },
+    "decals": {
+      "height": 96,
+      "path": "res://art/production/p1/scene_rework_v01/decals.png",
+      "width": 512
+    },
+    "ground": {
+      "height": 640,
+      "path": "res://art/production/p1/scene_rework_v01/ground.png",
+      "width": 1024
+    },
+    "ranger": {
+      "height": 48,
+      "path": "res://art/production/p1/scene_rework_v01/ranger.png",
+      "width": 128
+    },
+    "ruins": {
+      "height": 128,
+      "path": "res://art/production/p1/scene_rework_v01/ruins.png",
+      "width": 512
+    }
+  }
+}

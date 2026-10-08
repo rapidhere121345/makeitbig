@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "status": "FROZEN",
+  "version": "r14-v03-crop01",
+  "frozen_at_utc": "2026-10-07T13:09:27.681Z",
+  "pngs": [
+    {
+      "id": "mira",
+      "path": "art/production/p1/story_portraits_r14/mira.png",
+      "res_path": "res://art/production/p1/story_portraits_r14/mira.png",
+      "size": [
+        128,
+        160
+      ],
+      "png_color_type": 6,
+      "bit_depth": 8,
+      "sha256": "a97365e98b23d6c2f0da2f70f781edafaa1e09999ef3f72fc2e6490b3d17f0ec",
+      "transparent_margins_ltrb": [
+        4,
+        15,
+        4,
+        16
+      ]
+    },
+    {
+      "id": "iven",
+      "path": "art/production/p1/story_portraits_r14/iven.png",
+      "res_path": "res://art/production/p1/story_portraits_r14/iven.png",
+      "size": [
+        128,
+        160
+      ],
+      "png_color_type": 6,
+      "bit_depth": 8,
+      "sha256": "3ea0a610d42941ba6f994b7566798f67a4f3e931faafcc58ac4b8e2519b00906",
+      "transparent_margins_ltrb": [
+        4,
+        21,
+        4,
+        19
+      ]
+    },
+    {
+      "id": "taren",
+      "path": "art/production/p1/story_portraits_r14/taren.png",
+      "res_path": "res://art/production/p1/story_portraits_r14/taren.png",
+      "size": [
+        128,
+        160
+      ],
+      "png_color_type": 6,
+      "bit_depth": 8,
+      "sha256": "bd201a6bb323f0d12db0e4d03c8e88b7fb9bba63c266ee2a64a7e843c919c2c1",
+      "transparent_margins_ltrb": [
+        4,
+        16,
+        5,
+        17
+      ]
+    },
+    {
+      "id": "leia",
+      "path": "art/production/p1/story_portraits_r14/leia.png",
+      "res_path": "res://art/production/p1/story_portraits_r14/leia.png",
+      "size": [
+        128,
+        160
+      ],
+      "png_color_type": 6,
+      "bit_depth": 8,
+      "sha256": "850bedbd4d6a59dd3f1c2c326d37314f9c77e73ab13269d43a81c373a444a344",
+      "transparent_margins_ltrb": [
+        4,
+        16,
+        4,
+        16
+      ]
+    },
+    {
+      "id": "oren",
+      "path": "art/production/p1/story_portraits_r14/oren.png",
+      "res_path": "res://art/production/p1/story_portraits_r14/oren.png",
+      "size": [
+        128,
+        160
+      ],
+      "png_color_type": 6,
+      "bit_depth": 8,
+      "sha256": "ffb3279e155976720bc8b04c87a8eb586896f5d1b728661cb07a79cf0263062d",
+      "transparent_margins_ltrb": [
+        4,
+        20,
+        4,
+        20
+      ]
+    }
+  ],
+  "atlas": {
+    "path": "art/production/p1/story_portraits_r14/atlas.json",
+    "sha256": "83e166519c4de9e0270f9c6232e7307b109b9d4e79150c67869985accc0e59ba"
+  },
+  "source": {
+    "path": "docs/art-production/p1-story-portraits-r14/sources/portraits-v03-original.png",
+    "size": [
+      1374,
+      1145
+    ],
+    "sha256": "386eb5595e3e64bab7c8d3c551c66845aef39db5252eceec150d53fe13fc09e4"
+  },
+  "recipe_sha256": "73c49ec75d9683f8123e191b02a2595dfe851ed8f862981987036322e4aabc1a",
+  "checks": {
+    "native_png_header": true,
+    "Godot_RGBA_and_reconstruction": true,
+    "visible_crop_loss_zero": true,
+    "fully_transparent_outer_margin_at_least_4px": true,
+    "visual_review_all_five": true,
+    "no_text_or_head_shoulder_clipping": true,
+    "atlas_mapping": true,
+    "png_sha256_matches_report": true
+  },
+  "integration_owner": "Main thread: shared-project import and dialogue UI. This worker performs neither.",
+  "freeze_policy": "No further PNG modifications by this worker. Different existing raster bytes cannot be overwritten by pack.gd."
+}

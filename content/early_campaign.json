@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "campaign_id": "early_campaign",
+  "layouts": [
+    {"id": "rectangle_arena"},
+    {"id": "corridor"},
+    {"id": "ring"}
+  ],
+  "objectives": [
+    {"id": "clear"},
+    {"id": "hunt_elite"},
+    {"id": "timed_break", "timeout_rule": "bonus_only"}
+  ],
+  "hazards": [
+    {"id": "exposed_ground_zone"},
+    {"id": "moving_fireline"}
+  ],
+  "normal_enemies": [
+    {"id": "melee_pursuer", "role": "melee_chase"},
+    {"id": "charging_raider", "role": "telegraphed_charge"},
+    {"id": "fan_ranged", "role": "telegraphed_fan_ranged"}
+  ],
+  "elite_rules": [
+    {"id": "periodic_barrier", "rule": "periodic_barrier"},
+    {"id": "summon_reinforcements", "rule": "summon_reinforcements"}
+  ],
+  "bosses": [
+    {"id": "threshold_colossus", "phases": 2, "telegraphed_move_count": 3, "forbidden_mechanics": ["healing", "health_lock", "entry_ticket"]}
+  ],
+  "reward_tags": [
+    "starter_loadout",
+    "hunter_mark_skill",
+    "dash_skill",
+    "equipment_compare_unlock",
+    "breeding_split_item",
+    "pack_hunt_mark_item",
+    "law_forge_unlock",
+    "fixed_four_white_proxy_cores",
+    "early_campaign_complete"
+  ],
+  "drop_tags": [
+    "starter_fixed",
+    "equipment_general",
+    "main_hand",
+    "off_hand",
+    "gloves",
+    "ring",
+    "piercing_probability",
+    "shared_lifetime",
+    "projectile_speed",
+    "targeting_distance",
+    "turn_time",
+    "damage",
+    "critical",
+    "survival",
+    "inscribe_tally",
+    "rewrite_tally",
+    "refine_tally",
+    "proxy_core_fixed"
+  ],
+  "fixed_nodes": [
+    {
+      "id": "tutorial_ranger_basics",
+      "kind": "tutorial",
+      "unlock_prerequisites": [],
+      "room_sequence": [
+        {"id": "tutorial_movement", "layout_id": "rectangle_arena", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["starter_fixed"], "new_problem_id": "movement_dodge_and_auto_aim"}
+      ],
+      "first_reward_tags": ["starter_loadout"],
+      "drop_tags": ["starter_fixed"],
+      "allowed_modes": ["Manual"],
+      "repeatable": false
+    },
+    {
+      "id": "mainline_01_first_hunt",
+      "kind": "mainline",
+      "unlock_prerequisites": ["tutorial_ranger_basics"],
+      "room_sequence": [
+        {"id": "first_hunt_clear", "layout_id": "rectangle_arena", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "piercing_arrow_basics"},
+        {"id": "first_hunt_followup", "layout_id": "rectangle_arena", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""}
+      ],
+      "first_reward_tags": ["hunter_mark_skill", "equipment_compare_unlock"],
+      "drop_tags": ["equipment_general"],
+      "allowed_modes": ["Manual"],
+      "repeatable": false
+    },
+    {
+      "id": "mainline_02_priority_under_pressure",
+      "kind": "mainline",
+      "unlock_prerequisites": ["mainline_01_first_hunt"],
+      "room_sequence": [
+        {"id": "priority_charge", "layout_id": "corridor", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "telegraphed_charge"},
+        {"id": "priority_ranged", "layout_id": "ring", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "fan_ranged_pressure"}
+      ],
+      "first_reward_tags": ["dash_skill"],
+      "drop_tags": ["equipment_general"],
+      "allowed_modes": ["Manual"],
+      "repeatable": false
+    },
+    {
+      "id": "mainline_03_first_elite",
+      "kind": "mainline",
+      "unlock_prerequisites": ["mainline_02_priority_under_pressure"],
+      "room_sequence": [
+        {"id": "first_elite_barrier", "layout_id": "rectangle_arena", "objective_id": "hunt_elite", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": ["periodic_barrier"], "boss_id": "", "drop_tags": ["equipment_general", "main_hand", "gloves"], "new_problem_id": "periodic_barrier_window"}
+      ],
+      "first_reward_tags": ["breeding_split_item"],
+      "drop_tags": ["equipment_general", "main_hand", "gloves"],
+      "allowed_modes": ["Manual"],
+      "repeatable": false
+    },
+    {
+      "id": "mainline_04_hazard_and_forge",
+      "kind": "mainline",
+      "unlock_prerequisites": ["mainline_03_first_elite"],
+      "room_sequence": [
+        {"id": "ground_zone_break", "layout_id": "ring", "objective_id": "timed_break", "hazard_ids": ["exposed_ground_zone"], "enemy_ids": ["charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["inscribe_tally", "rewrite_tally"], "new_problem_id": "visible_ground_denial"},
+        {"id": "moving_fireline_clear", "layout_id": "corridor", "objective_id": "clear", "hazard_ids": ["moving_fireline"], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["refine_tally"], "new_problem_id": "moving_fireline_timing"}
+      ],
+      "first_reward_tags": ["law_forge_unlock"],
+      "drop_tags": ["inscribe_tally", "rewrite_tally", "refine_tally"],
+      "allowed_modes": ["Manual"],
+      "repeatable": false
+    },
+    {
+      "id": "mainline_05_growth_gate",
+      "kind": "mainline",
+      "unlock_prerequisites": ["mainline_04_hazard_and_forge"],
+      "room_sequence": [
+        {"id": "reinforcement_elite", "layout_id": "ring", "objective_id": "hunt_elite", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider", "fan_ranged"], "elite_rule_ids": ["summon_reinforcements"], "boss_id": "", "drop_tags": ["piercing_probability", "shared_lifetime"], "new_problem_id": "reinforcement_target_priority"},
+        {"id": "growth_check", "layout_id": "rectangle_arena", "objective_id": "timed_break", "hazard_ids": ["exposed_ground_zone"], "enemy_ids": ["charging_raider", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["projectile_speed", "targeting_distance", "turn_time"], "new_problem_id": "growth_bottleneck_validation"}
+      ],
+      "first_reward_tags": ["pack_hunt_mark_item"],
+      "drop_tags": ["piercing_probability", "shared_lifetime", "projectile_speed", "targeting_distance", "turn_time"],
+      "allowed_modes": ["Manual"],
+      "repeatable": false
+    },
+    {
+      "id": "threshold_colossus",
+      "kind": "boss",
+      "unlock_prerequisites": ["mainline_05_growth_gate"],
+      "room_sequence": [
+        {"id": "threshold_colossus_battle", "layout_id": "rectangle_arena", "objective_id": "hunt_elite", "hazard_ids": ["moving_fireline"], "enemy_ids": [], "elite_rule_ids": [], "boss_id": "threshold_colossus", "drop_tags": ["proxy_core_fixed"], "new_problem_id": "two_phase_threshold_boss"}
+      ],
+      "first_reward_tags": ["fixed_four_white_proxy_cores"],
+      "drop_tags": ["proxy_core_fixed"],
+      "allowed_modes": ["Manual"],
+      "repeatable": false
+    },
+    {
+      "id": "auto_certification",
+      "kind": "auto_certification",
+      "unlock_prerequisites": ["threshold_colossus"],
+      "room_sequence": [
+        {"id": "auto_certification_clear", "layout_id": "corridor", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""}
+      ],
+      "first_reward_tags": ["early_campaign_complete"],
+      "drop_tags": ["equipment_general"],
+      "allowed_modes": ["Auto"],
+      "repeatable": false
+    }
+  ],
+  "repeatable_templates": [
+    {
+      "id": "side_targeted_equipment",
+      "kind": "side_template",
+      "unlock_prerequisites": ["mainline_03_first_elite"],
+      "room_template": {
+        "room_count": 3,
+        "layout_ids": ["rectangle_arena", "corridor", "ring"],
+        "objective_ids": ["clear", "hunt_elite", "timed_break"],
+        "hazard_ids": ["exposed_ground_zone", "moving_fireline"],
+        "enemy_ids": ["melee_pursuer", "charging_raider", "fan_ranged"],
+        "elite_rule_ids": ["periodic_barrier", "summon_reinforcements"],
+        "drop_tags": ["main_hand", "off_hand", "gloves", "ring", "equipment_general"]
+      },
+      "first_reward_tags": ["equipment_compare_unlock"],
+      "drop_tags": ["main_hand", "off_hand", "gloves", "ring", "equipment_general"],
+      "allowed_modes": ["Manual", "Auto"],
+      "repeatable": true
+    },
+    {
+      "id": "side_affix_and_law_tallies",
+      "kind": "side_template",
+      "unlock_prerequisites": ["mainline_04_hazard_and_forge"],
+      "room_template": {
+        "room_count": 3,
+        "layout_ids": ["rectangle_arena", "corridor", "ring"],
+        "objective_ids": ["clear", "hunt_elite", "timed_break"],
+        "hazard_ids": ["exposed_ground_zone", "moving_fireline"],
+        "enemy_ids": ["melee_pursuer", "charging_raider", "fan_ranged"],
+        "elite_rule_ids": ["periodic_barrier", "summon_reinforcements"],
+        "drop_tags": ["piercing_probability", "shared_lifetime", "projectile_speed", "targeting_distance", "turn_time", "inscribe_tally", "rewrite_tally", "refine_tally"]
+      },
+      "first_reward_tags": ["law_forge_unlock"],
+      "drop_tags": ["piercing_probability", "shared_lifetime", "projectile_speed", "targeting_distance", "turn_time", "inscribe_tally", "rewrite_tally", "refine_tally"],
+      "allowed_modes": ["Manual", "Auto"],
+      "repeatable": true
+    }
+  ]
+}
