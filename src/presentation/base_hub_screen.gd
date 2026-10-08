@@ -1,6 +1,6 @@
 class_name BaseHubScreen
 extends Control
-## Town environment with a compact top band and five facility shortcuts.
+## Walkable town with a compact top band and five facility wayfinding buttons.
 ## Current objectives stay visible; narrative and settlement receipts open on
 ## demand. All routes, lock states, movement and conversations use existing APIs.
 
@@ -52,7 +52,7 @@ const PROMPT_CLEARANCE := 4.0
 ## The themed 18px floor of ShellTheme.MIN_FONT_SIZE holds for every relocated
 ## row; the live proximity badge keeps the 20px body step.
 const PROMPT_FONT_SIZE := 22
-const HELP_COPY_TEXT := "WASD / 方向键移动 · 靠近后 E 交互\n成长 C · 见闻 J · Tab 导航 · Esc 离开导航 · F1 设置"
+const HELP_COPY_TEXT := "WASD / 方向键移动 · 点击设施名指路 · 靠近后 E 交互\n成长 C · 见闻 J · Tab 导航 · Esc 离开导航 · F1 设置"
 const DETAIL_TITLE_TEXT := "镇中近况"
 const DETAIL_STATUS_EMPTY_TEXT := "本屏暂无新的状态提示。"
 ## Legacy design-space anchors of the pre-hamlet hub, kept for the hub entries
@@ -133,6 +133,10 @@ var _resident_markers: Dictionary = {}
 var _detail_objective_label: Label
 var _detail_story_label: Label
 var _header: PanelContainer
+var _destination_id := "contract"
+var _wayfinder: PanelContainer
+var _wayfinder_title: Label
+var _wayfinder_note: Label
 
 
 class TownToolbar extends HubNavigationBarScript:
@@ -162,9 +166,9 @@ class TownToolbar extends HubNavigationBarScript:
 			card.custom_minimum_size.y = 44
 			card.mouse_filter = Control.MOUSE_FILTER_STOP
 			card.set_meta("feature_id", id)
-			card.add_theme_stylebox_override("normal", _button_style(Color("111820d9"), ShellThemeScript.COPPER_DULL))
-			card.add_theme_stylebox_override("hover", _button_style(Color("28313ded"), ShellThemeScript.AMBER))
-			card.add_theme_stylebox_override("pressed", _button_style(Color("28313ded"), ShellThemeScript.AMBER))
+			card.add_theme_stylebox_override("normal", _material_button("button"))
+			card.add_theme_stylebox_override("hover", _material_button("hover"))
+			card.add_theme_stylebox_override("pressed", _material_button("selected"))
 			var focus := _button_style(Color.TRANSPARENT, ShellThemeScript.BONE)
 			focus.set_border_width_all(1)
 			card.add_theme_stylebox_override("focus", focus)
@@ -207,6 +211,14 @@ class TownToolbar extends HubNavigationBarScript:
 		style.bg_color = fill
 		style.border_color = edge
 		style.border_width_bottom = 1
+		style.content_margin_left = 10
+		style.content_margin_right = 10
+		style.content_margin_top = 2
+		style.content_margin_bottom = 2
+		return style
+
+	func _material_button(kind: String) -> StyleBoxTexture:
+		var style := ShellThemeScript.panel_style(kind)
 		style.content_margin_left = 10
 		style.content_margin_right = 10
 		style.content_margin_top = 2
@@ -319,7 +331,18 @@ func _derive_unlock_reasons() -> Dictionary:
 func move_hero(direction: Vector2, delta: float) -> void:
 	if not _built or delta <= 0.0 or is_dialogue_open():
 		return
+	var before := _view.hero_world_position()
 	_view.move_hero(direction.limit_length(1.0), delta)
+	if not before.is_equal_approx(_view.hero_world_position()): _update_nearby_feature()
+
+
+func travel_snapshot() -> Dictionary:
+	return _view.travel_snapshot() if _view != null else {}
+
+
+func restore_travel(snapshot: Dictionary) -> void:
+	_view.restore_travel(snapshot)
+	_destination_id = String(snapshot.get("destination", "contract"))
 	_update_nearby_feature()
 
 
@@ -341,8 +364,7 @@ func activate_nearby_feature() -> bool:
 	var feature_id := _view.nearby_feature_id()
 	if feature_id.is_empty():
 		return false
-	_on_hub_entry_pressed(feature_id)
-	return true
+	return navigation_card_activated(feature_id)
 
 
 func activate_nearby_interaction() -> bool:
@@ -384,6 +406,7 @@ func talk_to_resident(resident_id: String) -> bool:
 		_nearby_panel.hide()
 		_prompt_rect = Rect2()
 		_update_resident_markers()
+		_update_wayfinder()
 	return opened
 
 
@@ -450,8 +473,7 @@ func _update_resident_markers() -> void:
 
 func click_at_design_point(point: Vector2) -> bool:
 	if is_dialogue_open() or _details_expanded: return false
-	## A click inside a station cell, or within its interaction radius, selects it
-	## and leaves through the exact same signal as walking up and pressing E.
+	## Distant stations become destinations. Only a nearby station opens a page.
 	if _view == null:
 		return false
 	var world_point := _view.world_point_at_design(point, _design_canvas.position, _design_canvas.scale)
@@ -459,8 +481,7 @@ func click_at_design_point(point: Vector2) -> bool:
 	var feature_id := _view.hit_test(world_point)
 	if feature_id.is_empty():
 		return false
-	_on_hub_entry_pressed(feature_id)
-	return true
+	return navigation_card_activated(feature_id)
 
 
 func click_at_world_point(world_point: Vector2) -> bool:
@@ -473,8 +494,7 @@ func click_at_world_point(world_point: Vector2) -> bool:
 	var feature_id := _view.hit_test(world_point)
 	if feature_id.is_empty():
 		return false
-	_on_hub_entry_pressed(feature_id)
-	return true
+	return navigation_card_activated(feature_id)
 
 
 func get_feature_marker_text(feature_id: String) -> String:
@@ -550,6 +570,7 @@ func _build_ui() -> void:
 
 	_build_header()
 	_build_feedback()
+	_build_wayfinder()
 	_build_town_dialogue()
 	_unlock_reasons = _derive_unlock_reasons()
 	_update_progress_markers(_as_dictionary(_profile.get("progression", {})))
@@ -560,7 +581,10 @@ func _build_header() -> void:
 	_header = PanelContainer.new()
 	_header.name = "HubHeader"
 	_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_header.add_theme_stylebox_override("panel", _hotspot_style(Color("111820d9"), Color("46515a"), 0))
+	var header_style := ShellThemeScript.crafted_panel()
+	header_style.content_margin_top = 6
+	header_style.content_margin_bottom = 6
+	_header.add_theme_stylebox_override("panel", header_style)
 	_place_control(_header, HEADER_RECT)
 	_design_canvas.add_child(_header)
 	var row := HBoxContainer.new()
@@ -666,9 +690,52 @@ func _build_feedback() -> void:
 	scroll.get_v_scroll_bar().visibility_changed.connect(func(): _reflow_information_content.call_deferred())
 	_nav_bar = TownToolbar.new()
 	_nav_bar.name = "BaseNavigation"
-	_nav_bar.card_activated.connect(_on_hub_entry_pressed)
+	_nav_bar.card_activated.connect(navigation_card_activated)
 	_design_canvas.add_child(_nav_bar)
 	_nav_bar.setup()
+
+
+func _build_wayfinder() -> void:
+	_wayfinder = PanelContainer.new()
+	_wayfinder.name = "TownWayfinder"
+	_wayfinder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place_control(_wayfinder, Rect2(900, 98, 356, 76))
+	var wayfinder_style := ShellThemeScript.crafted_panel()
+	wayfinder_style.content_margin_top = 6
+	wayfinder_style.content_margin_bottom = 6
+	_wayfinder.add_theme_stylebox_override("panel", wayfinder_style)
+	_design_canvas.add_child(_wayfinder)
+	var body := VBoxContainer.new()
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_theme_constant_override("separation", 2)
+	_wayfinder.add_child(body)
+	_wayfinder_title = _copy_label("", "TownDestination", 22)
+	_wayfinder_title.add_theme_color_override("font_color", ShellThemeScript.AMBER)
+	body.add_child(_wayfinder_title)
+	_wayfinder_note = _copy_label("", "TownDirections", 18)
+	body.add_child(_wayfinder_note)
+	_view.set_destination(_destination_id)
+
+
+func wayfinding_report() -> Dictionary:
+	var entry := _view.entry_for(_destination_id) if _view != null else {}
+	if entry.is_empty(): return {}
+	var delta: Vector2 = entry.feet - _view.hero_world_position()
+	var arrived := delta.length() <= float(entry.radius)
+	var arrows := ["→", "↘", "↓", "↙", "←", "↖", "↑", "↗"]
+	return {"id": _destination_id, "arrived": arrived, "distance": delta.length(),
+		"direction": arrows[posmod(roundi(delta.angle() * 4.0 / PI), 8)]}
+
+
+func _update_wayfinder() -> void:
+	if _wayfinder == null: return
+	var report := wayfinding_report()
+	_wayfinder.visible = not report.is_empty() and not is_dialogue_open() and not _details_expanded
+	if not _wayfinder.visible: return
+	_wayfinder_title.text = "%s %s" % ["◆" if report.arrived else report.direction, _nav_title(_destination_id)]
+	var note := "已到达 · 点击设施或按 E" if report.arrived else "沿道路前往 · WASD 移动"
+	if report.arrived and _unlock_reasons.has(_destination_id): note = String(_unlock_reasons[_destination_id])
+	_wayfinder_note.text = note
 
 
 func _copy_label(text: String, node_name: String, font_size: int) -> Label:
@@ -715,9 +782,9 @@ func _compact_button(text: String, node_name: String) -> Button:
 	button.focus_mode = Control.FOCUS_NONE
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 22)
-	button.add_theme_stylebox_override("normal", _toggle_style(Color("111820d9"), ShellThemeScript.COPPER_DULL))
-	button.add_theme_stylebox_override("hover", _toggle_style(Color("28313ded"), ShellThemeScript.AMBER))
-	button.add_theme_stylebox_override("pressed", _toggle_style(Color("28313ded"), ShellThemeScript.AMBER))
+	button.add_theme_stylebox_override("normal", _toggle_style("button"))
+	button.add_theme_stylebox_override("hover", _toggle_style("hover"))
+	button.add_theme_stylebox_override("pressed", _toggle_style("selected"))
 	return button
 
 
@@ -792,6 +859,7 @@ func _layout_design_canvas() -> void:
 	_design_canvas.position = (size - DESIGN_SIZE * canvas_scale) * 0.5
 	if _view != null:
 		_view.set_world_scale(maxi(1, int(floorf(canvas_scale * float(WORLD_SCALE_BASE)))), size)
+		_update_nearby_feature()
 
 
 func _update_nearby_feature() -> void:
@@ -799,6 +867,7 @@ func _update_nearby_feature() -> void:
 	## placed beside the feet, never as a fixed band across the bottom of the frame.
 	if _nearby_panel == null or _view == null:
 		return
+	_update_wayfinder()
 	if _details_expanded or is_dialogue_open():
 		_nearby_panel.hide()
 		_prompt_rect = Rect2()
@@ -964,12 +1033,16 @@ func get_navigation_bar():
 
 
 func navigation_card_activated(feature_id: String) -> bool:
-	## The one gate a navigation card and the walk-up prompt share. A public
-	## method rather than a second signal path, so a card can never open a stand
-	## the world would not have offered, and no extra state is written on the way.
-	if feature_id.is_empty() or not HubNavigationBarScript.FEATURE_IDS.has(feature_id):
+	## A far click is a request for directions, not a remote facility opening.
+	if is_dialogue_open() or _details_expanded or not HubNavigationBarScript.FEATURE_IDS.has(feature_id):
 		return false
-	_on_hub_entry_pressed(feature_id)
+	_destination_id = feature_id
+	_view.set_destination(feature_id)
+	_update_wayfinder()
+	if _navigation_has_focus(): get_viewport().gui_get_focus_owner().release_focus()
+	var entry := _view.entry_for(feature_id)
+	if not entry.is_empty() and _view.hero_world_position().distance_to(entry.feet) <= float(entry.radius):
+		_on_hub_entry_pressed(feature_id)
 	return true
 
 
@@ -979,6 +1052,9 @@ func _update_navigation_state() -> void:
 	_nav_states = navigation_state()
 	_nav_bar.apply_states(_nav_states)
 	_nav_bar.set_current_feature(_view.nearby_feature_id() if _view != null else "")
+	for feature_id: String in _nav_bar.cards():
+		var card: Button = _nav_bar.cards()[feature_id]
+		card.tooltip_text += "\n点击指路；走近后点击或按 E 进入"
 
 
 func _update_progress_markers(progression: Dictionary) -> void:
@@ -1164,14 +1240,8 @@ func _prompt_style() -> StyleBox:
 	return style
 
 
-func _toggle_style(fill: Color, border: Color) -> StyleBoxFlat:
-	## Compact flat button of the information row: the shared 18px floor holds, so
-	## the stylebox keeps only the content margins the row can afford.
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = border
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(0)
+func _toggle_style(kind: String) -> StyleBoxTexture:
+	var style := ShellThemeScript.panel_style(kind)
 	style.content_margin_left = 8.0
 	style.content_margin_top = 1.0
 	style.content_margin_right = 8.0

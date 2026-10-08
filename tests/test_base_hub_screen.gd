@@ -122,7 +122,7 @@ func _test_initial_position(hub, failures: Array[String]) -> void:
 
 
 func _test_delta_movement(hub, failures: Array[String]) -> void:
-	var origin := Vector2(600.0, 400.0)
+	var origin := _uv_world(_town_layout().hero_start_uv, _view_of(hub).world_size()) * 2.0
 	hub.set_hero_position(origin)
 	hub.move_hero(Vector2.RIGHT, 0.1)
 	var short_move: Vector2 = hub.get_hero_position() - origin
@@ -137,15 +137,16 @@ func _test_concept_framing(hub, failures: Array[String]) -> void:
 	var view = _view_of(hub)
 	var layout := _town_layout()
 	var audit: Dictionary = view.render_audit()
-	_expect(audit.view_size == Vector2(1008, 567) and view.world_viewport.size == Vector2i(1008, 567), "base hub: formal observation range is wrong", failures)
+	_expect(audit.view_size == Vector2(640, 360) and view.world_viewport.size == Vector2i(640, 360), "base hub: close follow camera is wrong", failures)
 	_expect(view.hero_screen_anchor() == Vector2(layout.hero_screen_anchor[0], layout.hero_screen_anchor[1]), "base hub: formal camera anchor differs from the published layout", failures)
-	_expect(view.world_size() == Vector2(1024, 640), "base hub: world dimensions changed", failures)
+	_expect(view.world_size() == Vector2(1536, 960), "base hub: expanded town dimensions changed", failures)
+	_expect(audit.view_size.x < view.world_size().x * 0.5 and audit.view_size.y < view.world_size().y * 0.5, "base hub: the whole town is visible without walking", failures)
 	_expect(not view._collision.is_blocked(view.hero_world_position()), "base hub: published spawn intersects a footprint", failures)
 
 
 
 func _test_diagonal_normalization(hub, failures: Array[String]) -> void:
-	var origin := Vector2(600.0, 400.0)
+	var origin := _uv_world(_town_layout().hero_start_uv, _view_of(hub).world_size()) * 2.0
 	var delta := 0.1
 	hub.set_hero_position(origin)
 	hub.move_hero(Vector2.RIGHT, delta)
@@ -158,7 +159,7 @@ func _test_diagonal_normalization(hub, failures: Array[String]) -> void:
 
 
 func _test_configured_input_actions(hub, failures: Array[String]) -> void:
-	var origin := Vector2(600.0, 400.0)
+	var origin := _uv_world(_town_layout().hero_start_uv, _view_of(hub).world_size()) * 2.0
 	hub.set_hero_position(origin)
 	Input.action_press("move_right")
 	hub._process(0.1)
@@ -287,6 +288,10 @@ func _test_click_hotspot(hub, failures: Array[String]) -> void:
 	var forge_world: Vector2 = view.entry_for("forge").get("feet", Vector2.ZERO)
 	var forge_design: Vector2 = _design_of(hub, forge_world)
 	_expect(hub.click_at_design_point(forge_design), "base hub: clicking the forge station did not select it", failures)
+	_expect(events.is_empty() and hub.wayfinding_report().id == "forge", "base hub: a distant station opened instead of setting directions", failures)
+	hub.set_hero_position(forge_world * 2.0)
+	forge_design = _design_of(hub, forge_world)
+	_expect(hub.click_at_design_point(forge_design), "base hub: clicking the nearby forge did not activate", failures)
 	_expect(events == ["forge"], "base hub: clicking the forge station did not emit its feature_requested ID", failures)
 	var far_point := forge_design + Vector2(4000.0, 4000.0)
 	_expect(not hub.click_at_design_point(far_point), "base hub: a click on empty ground must not activate a station", failures)
@@ -889,6 +894,7 @@ func _test_nav_activation_routing(hub, failures: Array[String]) -> void:
 		var card: Button = _nav_card(hub, feature_id)
 		if card == null:
 			continue
+		hub.set_hero_position(hub.get_world_feature_position(feature_id))
 		card.emit_signal("pressed")
 		_expect(events.size() == before + 1, "base hub: BaseNav_%s emitted %d signals" % [feature_id, events.size() - before], failures)
 		_expect(events.back() == feature_id, "base hub: BaseNav_%s emitted %s" % [feature_id, events.back()], failures)
@@ -1059,6 +1065,7 @@ func _test_nav_keyboard_access(hub, failures: Array[String]) -> void:
 		if card == null:
 			continue
 		var before: int = events.size()
+		hub.set_hero_position(hub.get_world_feature_position(feature_id))
 		card.emit_signal("pressed")
 		_expect(events.size() == before + 1 and events.back() == feature_id, "base hub: explicit activation of BaseNav_%s did not route once" % feature_id, failures)
 	## The shared gate rejects anything the prototype does not have, so a stray id
@@ -1077,9 +1084,9 @@ func _test_nav_icon_slots_pending(hub, failures: Array[String]) -> void:
 		var card: Button = _nav_card(hub, id)
 		_expect(card.find_children("*", "TextureRect", true, false).is_empty(),
 			"base hub: decorative icon cells returned to the compact toolbar", failures)
-		var style := card.get_theme_stylebox("normal") as StyleBoxFlat
-		_expect(style != null and style.border_width_bottom == 1 and style.border_width_top == 0
-			and style.bg_color.a >= 0.7, "base hub: toolbar lost its local readable background/light edge", failures)
+		var style := card.get_theme_stylebox("normal") as StyleBoxTexture
+		_expect(style != null and style.texture == ShellThemeScript.material_texture("button")
+			and style.content_margin_left == 10, "base hub: toolbar lost its readable copper-and-wood material", failures)
 		_expect((card.get_node("Copy/Title") as Label).text == hub.get_navigation_state(id).title
 			and (card.get_node("Copy/Status") as Label).text == hub.get_navigation_state(id).status,
 			"base hub: shortcut lacks concrete identity/status without the icon pack", failures)

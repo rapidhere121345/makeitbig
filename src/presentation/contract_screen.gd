@@ -84,6 +84,7 @@ var _profile_label: Label
 var _build_label: Label
 var _contract_picker: OptionButton
 var _contract_info_label: Label
+var _reward_label: Label
 var _mode_picker: OptionButton
 var _auto_lock_label: Label
 var _seed_edit: LineEdit
@@ -161,6 +162,7 @@ func _build_ui() -> void:
 	_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(_workspace)
 	_contract_scroll = _workspace_scroll("ContractScroll")
+	_contract_scroll.size_flags_stretch_ratio = 3.0
 	var content := _workspace_card(_contract_scroll, "ContractPanel")
 	var board_heading := HBoxContainer.new()
 	content.add_child(board_heading)
@@ -169,7 +171,7 @@ func _build_ui() -> void:
 		if mark != null:
 			var icon := _create_station_icon(mark)
 			icon.name = "ContractMark"
-			icon.custom_minimum_size = Vector2(64, 64)
+			icon.custom_minimum_size = Vector2(40, 40)
 			board_heading.add_child(icon)
 	var source_title := _field_label("这趟去哪里")
 	source_title.name = "ContractSourceHeading"
@@ -177,11 +179,16 @@ func _build_ui() -> void:
 	source_title.add_theme_font_size_override("font_size", 22)
 	board_heading.add_child(source_title)
 	_build_scroll = _workspace_scroll("ContractBuildScroll")
+	_build_scroll.size_flags_stretch_ratio = 2.0
 	var build_content := VBoxContainer.new()
 	build_content.name = "ContractBuildContent"
 	build_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	build_content.add_theme_constant_override("separation", 18)
+	build_content.add_theme_constant_override("separation", 8)
 	_build_scroll.add_child(build_content)
+	var illustration := ShellThemeScript.illustration_panel("contract_road", 92)
+	illustration.name = "ContractRoadIllustration"
+	build_content.add_child(illustration)
+	resized.connect(func(): illustration.custom_minimum_size.y = clampf(size.y - 628.0, 92.0, 200.0))
 	var build_title := _field_label("随身整备")
 	build_title.add_theme_font_size_override("font_size", 22)
 	build_content.add_child(build_title)
@@ -205,23 +212,55 @@ func _build_ui() -> void:
 	_contract_picker.fit_to_longest_item = false
 	_contract_picker.item_selected.connect(_on_contract_selected)
 	content.add_child(_contract_picker)
+	var brief_panel := PanelContainer.new()
+	brief_panel.name = "ContractBriefPanel"
+	content.add_child(brief_panel)
+	var brief := VBoxContainer.new()
+	brief.name = "ContractBrief"
+	brief.add_theme_constant_override("separation", 6)
+	brief_panel.add_child(brief)
 	_objective_label = _field_label("")
 	_objective_label.name = "CombatObjective"
 	_objective_label.add_theme_font_size_override("font_size", 24)
 	_objective_label.add_theme_color_override("font_color", ShellThemeScript.BONE)
-	content.add_child(_objective_label)
+	brief.add_child(_objective_label)
 	_contract_info_label = Label.new()
 	_contract_info_label.name = "ContractInfoLabel"
 	_contract_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_contract_info_label.add_theme_font_size_override("font_size", 18)
-	content.add_child(_contract_info_label)
+	brief.add_child(_contract_info_label)
+	var reward_heading := _field_label("这趟可能带回")
+	reward_heading.name = "ContractRewardHeading"
+	reward_heading.add_theme_font_size_override("font_size", 22)
+	reward_heading.add_theme_color_override("font_color", ShellThemeScript.AMBER)
+	content.add_child(reward_heading)
+	_reward_label = Label.new()
+	_reward_label.name = "ContractRewardLabel"
+	_reward_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reward_label.add_theme_font_size_override("font_size", 18)
+	content.add_child(_reward_label)
 
-	content.add_child(_field_label("出征模式 · 出发后锁定"))
+	var mode_panel := PanelContainer.new()
+	mode_panel.name = "ContractModePanel"
+	mode_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var mode_style := ShellThemeScript.panel_style("well")
+	mode_style.content_margin_top = 4
+	mode_style.content_margin_bottom = 4
+	mode_panel.add_theme_stylebox_override("panel", mode_style)
+	var mode_content := VBoxContainer.new()
+	mode_content.name = "ContractModeContent"
+	mode_content.add_theme_constant_override("separation", 2)
+	mode_panel.add_child(mode_content)
+	var mode_heading := _field_label("出征模式 · 出发后锁定")
+	mode_heading.name = "ModeHeading"
+	mode_heading.add_theme_font_size_override("font_size", 18)
+	mode_heading.add_theme_color_override("font_color", ShellThemeScript.BONE)
+	mode_content.add_child(mode_heading)
 	_mode_picker = OptionButton.new()
 	_mode_picker.name = "ModePicker"
 	for mode: String in MODES:
 		_mode_picker.add_item("手动 / Manual" if mode == "Manual" else "代行 / Auto")
-	content.add_child(_mode_picker)
+	mode_content.add_child(_mode_picker)
 	_auto_lock_label = Label.new()
 	_auto_lock_label.name = "AutoLockLabel"
 	_auto_lock_label.text = "代行尚未解锁：先手动击败阈门巨像。"
@@ -247,10 +286,13 @@ func _build_ui() -> void:
 	actions.name = "ContractActions"
 	actions.add_theme_constant_override("separation", 12)
 	page.add_child(actions)
+	actions.add_child(mode_panel)
 	_cancel_button = Button.new()
 	_cancel_button.name = "CancelContractButton"
 	_cancel_button.text = "返回炉边镇"
 	_cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cancel_button.size_flags_stretch_ratio = 0.8
+	_cancel_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_cancel_button.pressed.connect(_on_cancel_pressed)
 	actions.add_child(_cancel_button)
 	_start_button = Button.new()
@@ -258,6 +300,8 @@ func _build_ui() -> void:
 	_start_button.text = "接下契约 · 出发"
 	_start_button.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
 	_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_start_button.size_flags_stretch_ratio = 1.2
+	_start_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_start_button.pressed.connect(_on_start_pressed)
 	actions.add_child(_start_button)
 func _workspace_scroll(node_name: String) -> ScrollContainer:
@@ -275,6 +319,7 @@ func _workspace_card(scroll: ScrollContainer, node_name: String) -> VBoxContaine
 	var panel := PanelContainer.new()
 	panel.name = node_name
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", ShellThemeScript.crafted_panel())
 	scroll.add_child(panel)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 8)
@@ -392,6 +437,7 @@ func _apply_selected_contract() -> void:
 	if node.is_empty():
 		_objective_label.text = "暂时没有可执行的契约"
 		_contract_info_label.text = "先回镇里整备。"
+		_reward_label.text = "当前没有可确认的回报记录。"
 		_start_button.disabled = true
 		return
 	var auto_unlocked := bool(_build_snapshot.get("auto_mode_unlocked", false))
@@ -414,7 +460,8 @@ func _apply_selected_contract() -> void:
 		_mode_picker.select(requested_index)
 	_auto_lock_label.visible = "Auto" in allowed_modes and not auto_unlocked
 	_objective_label.text = _combat_objective(node)
-	_contract_info_label.text = _contract_summary(node)
+	_contract_info_label.text = _contract_route_summary(node)
+	_reward_label.text = _contract_reward_summary(node)
 	_apply_suggested_seed(node)
 	_start_button.disabled = requested_index < 0
 
@@ -441,21 +488,25 @@ func _combat_objective(node: Dictionary) -> String:
 	return "%s · %d 个房间\n%s" % [prefix, maxi(1, int(node.get("room_count", 1))), " / ".join(objectives) if not objectives.is_empty() else "完成房间内标示的目标"]
 
 
-func _contract_summary(node: Dictionary) -> String:
+func _contract_route_summary(node: Dictionary) -> String:
 	var lines: Array[String] = []
 	var context := String(ROAD_CONTEXT.get(String(node.get("id", "")), "核对目标与整备，再决定是否出发。"))
 	lines.append(context)
-	lines.append("")
+	var progress := _repeatable_progress_text(node)
+	if not progress.is_empty():
+		lines.append(progress.trim_prefix("\n"))
+	if not bool(node.get("available", false)):
+		lines.append("解锁条件：%s" % _node_title_summary(node.get("unlock_prerequisites", [])))
+	return "\n".join(lines)
+
+
+func _contract_reward_summary(node: Dictionary) -> String:
+	var lines: Array[String] = []
 	lines.append("战利品方向：%s" % _tag_summary(node.get("drop_tags", [])))
 	if not bool(node.get("completed", false)):
 		lines.append("首通所得：%s" % _tag_summary(node.get("first_reward_tags", [])))
 	if node.has("experience_reward"):
 		lines.append("完成经验：%d%s" % [int(node.get("experience_reward", 0)), "（含首通）" if not bool(node.get("completed", false)) else ""])
-	if not bool(node.get("available", false)):
-		lines.append("解锁条件：%s" % _node_title_summary(node.get("unlock_prerequisites", [])))
-	var progress := _repeatable_progress_text(node)
-	if not progress.is_empty():
-		lines.append(progress.trim_prefix("\n"))
 	return "\n".join(lines)
 
 
@@ -766,7 +817,7 @@ func _build_summary(build: Dictionary) -> String:
 		var skill := _skill_registry.get_skill(String(value))
 		if not skill.is_empty():
 			skills.append(String(skill.get("name", "技能")))
-	var lines: Array[String] = ["已装技能：%s" % ("、".join(skills) if not skills.is_empty() else "无"), "基础动作：闪避", ""]
+	var lines: Array[String] = ["已装技能：%s" % ("、".join(skills) if not skills.is_empty() else "无"), "基础动作：闪避"]
 	if resolved.is_empty():
 		lines.append("当前构筑数据不可用")
 	else:
@@ -905,4 +956,3 @@ func _component_values(build: Dictionary, resolved: Dictionary, list_key: String
 	if resolved_value is String and not (resolved_value as String).strip_edges().is_empty():
 		return [resolved_value]
 	return []
-

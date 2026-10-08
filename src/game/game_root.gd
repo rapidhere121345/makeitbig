@@ -117,6 +117,8 @@ var last_contract: Dictionary:
 		return _last_contract.duplicate(true)
 
 var _current_screen: Node
+## Town browsing is transient presentation state, separate from the save schema.
+var _town_travel: Dictionary = {}
 var _pixel_stage: Control
 var _test_console: CanvasLayer
 var _session_menu: CanvasLayer
@@ -1800,6 +1802,8 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 		_session_menu.close_menu()
 		_session_menu.set_route(route)
 	_retire_current_screen()
+	if route in [SceneRouterScript.ROUTE_TITLE, SceneRouterScript.ROUTE_TUTORIAL]:
+		_town_travel.clear()
 	_apply_presentation_policy(route)
 	match route:
 		SceneRouterScript.ROUTE_TITLE:
@@ -1826,6 +1830,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			_current_screen = screen
 			_mount_screen(screen)
 			_present_base(_status_message)
+			if not _town_travel.is_empty(): screen.restore_travel(_town_travel)
 		SceneRouterScript.ROUTE_STORY:
 			var screen = StoryScreenScript.new()
 			screen.closed.connect(close_adventure_page)
@@ -2103,6 +2108,8 @@ func _retire_current_screen() -> void:
 	if _current_screen == null or not is_instance_valid(_current_screen):
 		_current_screen = null
 		return
+	if _current_screen is BaseHubScreenScript:
+		_town_travel = _current_screen.travel_snapshot()
 	if _current_screen is CanvasItem:
 		(_current_screen as CanvasItem).visible = false
 	_current_screen.process_mode = Node.PROCESS_MODE_DISABLED

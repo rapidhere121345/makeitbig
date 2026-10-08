@@ -112,7 +112,7 @@ func _test_formal_town_residents() -> void:
 	for resident: Dictionary in report.residents:
 		var id := String(resident.id)
 		var item: Dictionary = declared.get(id, {})
-		var feet := Vector2(float(item.feet_uv[0]), float(item.feet_uv[1])) * Vector2(1024, 640)
+		var feet := Vector2(float(item.feet_uv[0]), float(item.feet_uv[1])) * view.world_size()
 		_expect(resident.feet == feet and not view._collision.is_blocked(feet + Vector2(0, 16)), "town life: role placement is not approachable " + id)
 		_expect(resident.clip == "%s.south.work" % id and String(resident.texture).begins_with(HamletLifeAnimationScript.LIFE_DIR) and resident.frames == 4, "town life: resident uses a static ghost " + id)
 		var node := view._sprite_nodes.get(id) as Sprite2D
@@ -124,13 +124,15 @@ func _test_formal_town_residents() -> void:
 		if resident.frame != initial_frames[resident.id]: changed += 1
 	_expect(changed == 5, "town life: not every resident work cycle advanced")
 	var initial_camera := Rect2(view.camera_world_offset(), view.render_audit().view_size)
+	var distant_facilities := 0
 	for patch: Node2D in view._scene_patches:
 		if String(patch.get_meta("placement_id")) in ["contract", "loadout", "forge", "forge_chimney", "training_north", "training_south", "proxy"]:
 			for point: Vector2 in patch.world_polygon:
-				# The far-right tower access walkway touches the image boundary;
-				# its roof/body and all other facilities stay in the initial view.
-				if point.x < 1016.0:
-					_expect(initial_camera.grow(1).has_point(point), "town life: initial view crops facility " + String(patch.name))
+				_expect(Rect2(Vector2.ZERO, view.world_size()).grow(1).has_point(point), "town life: foreground extends outside the expanded town")
+				if not initial_camera.has_point(point):
+					distant_facilities += 1
+					break
+	_expect(distant_facilities >= 4, "town life: close camera still reveals all facilities at arrival")
 	view.configure(_fixture_atlas(), _fixture_layout())
 	_expect(view.world_viewport.size == Vector2i(640, 360) and view.render_audit().view_size == Vector2(640, 360), "town life: formal view leaked into legacy fixture")
 	_expect(view._scene_patches.is_empty() and not view._scene_mode(), "town life: formal foreground leaked into legacy fixture")

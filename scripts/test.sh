@@ -22,6 +22,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/run_all.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_pixel_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_game_root_stage.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_town_exploration.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_session_menu.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_character_progression.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_talent_build.gd
@@ -88,6 +89,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_item_forge.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_contract_screen.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_result_screen.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_contract_result_navigation.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_result_layout.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_result_evidence.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_settlement_route_view.gd

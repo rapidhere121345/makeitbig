@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "world": [1024, 640],
-  "view_size": [1008, 567],
+  "world": [1536, 960],
+  "view_size": [640, 360],
   "hero_start_uv": [0.375, 0.620117],
-  "hero_screen_anchor": [376, 377],
+  "hero_screen_anchor": [320, 222],
   "scene_texture": "res://art/production/p1/hamlet_town/town.png",
   "design_reference": "docs/art-concepts/r13/hearthside-town-composition-v01.png",
   "commons_uv": [0.514323, 0.481445],

@@ -29,6 +29,8 @@ if ($LASTEXITCODE -ne 0) { throw "Godot tests failed with exit code $LASTEXITCOD
 if ($LASTEXITCODE -ne 0) { throw "Pixel stage tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_game_root_stage.gd
 if ($LASTEXITCODE -ne 0) { throw "GameRoot stage tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_town_exploration.gd
+if ($LASTEXITCODE -ne 0) { throw "Town exploration tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_session_menu.gd
 if ($LASTEXITCODE -ne 0) { throw "Session menu tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_character_progression.gd
@@ -161,6 +163,8 @@ if ($LASTEXITCODE -ne 0) { throw "Item forge tests failed with exit code $LASTEX
 if ($LASTEXITCODE -ne 0) { throw "Contract screen tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_result_screen.gd
 if ($LASTEXITCODE -ne 0) { throw "Result screen tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_contract_result_navigation.gd
+if ($LASTEXITCODE -ne 0) { throw "Contract/result navigation tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_result_layout.gd
 if ($LASTEXITCODE -ne 0) { throw "Result layout tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_result_evidence.gd

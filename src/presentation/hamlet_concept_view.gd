@@ -137,8 +137,8 @@ var _scene_texture: Texture2D
 var _scene_patches: Array[Node2D] = []
 var _world_bounds := Rect2(Vector2(WORLD_MARGIN, WORLD_MARGIN), DEFAULT_WORLD_SIZE - Vector2(WORLD_MARGIN * 2.0, WORLD_MARGIN * 2.0))
 var _hero_position := DEFAULT_HERO_START
-## The authored screen anchor leaves room above the player for the complete
-## tower. It is still a fixed, snapped follow camera, not an adaptive zoom.
+## The follow anchor leaves more visible street ahead of the ranger. World and
+## view dimensions are separate: resizing a window never reveals the whole town.
 ## Old layouts/fixtures retain their centre anchor.
 var _hero_screen_anchor := Vector2(NATIVE_VIEW) * 0.5
 var _hero_facing := DEFAULT_HERO_FACING
@@ -146,6 +146,8 @@ var _walk_time := 0.0
 var _nearby_feature_id := ""
 var _world_dirty := true
 var _walking := false
+var _destination_marker: Polygon2D
+var _destination_id := ""
 
 var _hero_sprite: Sprite2D
 var _hero_shadow: Polygon2D
@@ -562,6 +564,34 @@ func hero_screen_anchor() -> Vector2:
 	return _hero_screen_anchor
 
 
+func travel_snapshot() -> Dictionary:
+	return {"position": _hero_position, "facing": _hero_facing, "destination": _destination_id}
+
+
+func restore_travel(snapshot: Dictionary) -> void:
+	if snapshot.get("position") is Vector2:
+		teleport_hero(snapshot.position)
+	if String(snapshot.get("facing", "")) in FACINGS:
+		_hero_facing = String(snapshot.facing)
+	set_destination(String(snapshot.get("destination", "contract")))
+	_update_hero_visual()
+	_sync_camera()
+
+
+func set_destination(feature_id: String) -> void:
+	var entry := entry_for(feature_id)
+	_destination_id = feature_id if not entry.is_empty() else ""
+	if _destination_marker == null:
+		_destination_marker = Polygon2D.new()
+		_destination_marker.name = "TownDestinationMarker"
+		_destination_marker.polygon = PackedVector2Array([Vector2(-6, -55), Vector2(6, -55), Vector2(0, -45)])
+		_destination_marker.color = Color("e5b67c")
+		_destination_marker.z_index = 10
+		world_root.add_child(_destination_marker)
+	_destination_marker.visible = not entry.is_empty()
+	if not entry.is_empty(): _destination_marker.position = entry.feet
+
+
 func _update_facing(direction: Vector2) -> void:
 	if absf(direction.x) > absf(direction.y):
 		_hero_facing = "east" if direction.x > 0.0 else "west"
@@ -801,7 +831,7 @@ func _attach_display(node: TextureRect) -> void:
 
 
 func set_world_scale(scale_multiple: int, available_size := Vector2(1280, 720)) -> void:
-	## The formal wide observation range fits the available logical canvas.
+	## Fit the close follow view, never the full map, to the available canvas.
 	## Legacy fixtures keep their integer pixel-stage scale and centering.
 	if world_display == null:
 		return
@@ -841,6 +871,8 @@ func _rebuild_world() -> void:
 	_draw_placements()
 	_draw_life()
 	_draw_hero()
+	if _destination_marker != null:
+		set_destination(_destination_id)
 
 
 func _draw_ground_field() -> void:
@@ -951,11 +983,11 @@ func _add_sprite(parent: Node2D, item: Dictionary, row_start: int, row_end: int,
 
 func _clip_band(feet: Vector2, rect: Array, anchor: Array, row_start: int, row_end: int) -> Dictionary:
 	## A composite station may stand with part of its cell outside the world
-	## field. Only the part that overlaps the 1024x640 band is drawn, so no cell
+	## field. Only the part that overlaps the authored world is drawn, so no cell
 	## is ever trusted to fit inside the world.
 	var cell := Rect2(feet - Vector2(float(anchor[0]), float(anchor[1])), Vector2(float(rect[2]), float(rect[3])))
 	var band := Rect2(cell.position + Vector2(0.0, float(row_start)), Vector2(cell.size.x, float(row_end - row_start)))
-	var visible := band.intersection(Rect2(Vector2.ZERO, GROUND_BAND_SIZE))
+	var visible := band.intersection(Rect2(Vector2.ZERO, _world_size if _scene_mode() else GROUND_BAND_SIZE))
 	if visible.size.x <= 0.0 or visible.size.y <= 0.0:
 		return {}
 	var cut := visible.position - band.position

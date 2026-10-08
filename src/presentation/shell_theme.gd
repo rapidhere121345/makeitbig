@@ -5,17 +5,22 @@ extends RefCounted
 ## away the established readable text and compact-window layout contracts.
 
 const MATERIAL_DIRECTORY := "res://art/production/p1/ui_style_r13"
+const EXPLORATION_ART := "res://art/production/p1/ui_exploration_v01"
 static var _materials: Dictionary = {}
 
 
 class MaterialBackdrop extends Control:
 	var cloth: Texture2D
+	var scenery: Texture2D
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		cloth = ShellTheme.material_texture("backdrop_cloth")
+		var motif := String(get_meta("motif", ""))
+		if motif in ["contract_screen", "result_screen"]:
+			scenery = ShellTheme.illustration_texture("contract_road" if motif == "contract_screen" else "settlement_table")
 		resized.connect(queue_redraw)
 		queue_redraw()
 
@@ -23,6 +28,9 @@ class MaterialBackdrop extends Control:
 		draw_rect(Rect2(Vector2.ZERO, size), ShellTheme.INK)
 		if cloth != null:
 			draw_texture_rect(cloth, Rect2(Vector2.ZERO, size), true, Color(0.46, 0.50, 0.54, 1.0))
+		if scenery != null:
+			var extent := scenery.get_size() * maxf(size.x / scenery.get_width(), size.y / scenery.get_height())
+			draw_texture_rect(scenery, Rect2((size - extent) * 0.5, extent), false, Color(0.30, 0.34, 0.40, 1))
 
 ## Packaged Simplified-Chinese UI font: the complete "Noto Sans CJK SC" Regular
 ## face, repacked from the locally installed Debian fonts-noto-cjk collection.
@@ -193,3 +201,42 @@ static func add_backdrop(host: Control, motif: String = "forge") -> Control:
 	host.add_child(backdrop)
 	host.move_child(backdrop, 0)
 	return backdrop
+
+
+static func illustration_texture(name: String) -> Texture2D:
+	var key := "illustration/" + name
+	if not _materials.has(key):
+		_materials[key] = load(EXPLORATION_ART.path_join(name + ".png")) as Texture2D
+	return _materials[key] as Texture2D
+
+
+## Hand-painted copper fittings frame the major surfaces. Small controls retain
+## their thinner edges so ornament does not compete with their labels.
+static func crafted_panel() -> StyleBoxTexture:
+	var box := StyleBoxTexture.new()
+	box.texture = illustration_texture("copper_frame")
+	box.modulate_color = Color(0.76, 0.78, 0.82, 1)
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		box.set_texture_margin(side, 20)
+	box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
+	box.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
+	box.content_margin_left = 16
+	box.content_margin_right = 16
+	box.content_margin_top = 12
+	box.content_margin_bottom = 12
+	return box
+
+
+static func illustration_panel(name: String, minimum_height: float) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", crafted_panel())
+	panel.custom_minimum_size.y = minimum_height
+	var art := TextureRect.new()
+	art.name = "Illustration"
+	art.texture = illustration_texture(name)
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(art)
+	return panel

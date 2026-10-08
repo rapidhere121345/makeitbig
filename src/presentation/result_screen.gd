@@ -225,12 +225,15 @@ var _report_detail_button: Button
 var _equipment_detail_overlay: Control
 var _equipment_detail_title: Label
 var _equipment_detail_body: Label
+var _equipment_detail_return_focus: Control = null
 var _core_rewards: GridContainer
 var _metrics_grid: GridContainer
 var _content: Control
+var _base_button: Button
 var _ending_button: Button
 var _contract_button: Button
 var _route_view: Control
+var _report_illustration: Control
 var _route_context: Label
 var _room_progress: ProgressBar
 var _room_progress_label: Label
@@ -242,6 +245,7 @@ var _evidence_marks := {}
 func _ready() -> void:
 	_build_ui()
 	_apply_presentation()
+	_focus_default_action.call_deferred()
 
 
 func present(result: Dictionary, contract: Dictionary = {}, current_profile: Dictionary = {}) -> void:
@@ -251,6 +255,7 @@ func present(result: Dictionary, contract: Dictionary = {}, current_profile: Dic
 	_equipment_model = EquipmentPresentationModelScript.new(_player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "未知装备")
 	if _built:
 		_apply_presentation()
+		_focus_default_action()
 
 
 func _build_ui() -> void:
@@ -309,6 +314,27 @@ func _layout_footer_against_body() -> void:
 
 
 func _build_header(root: Control) -> void:
+	var scenery := TextureRect.new()
+	scenery.name = "SettlementIllustration"
+	scenery.texture = ShellThemeScript.illustration_texture("settlement_table")
+	scenery.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	scenery.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	scenery.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	scenery.modulate = Color(0.72, 0.72, 0.72, 1)
+	root.add_child(scenery)
+	_place_section(scenery, 0, 0, 0, 107)
+	var shade := TextureRect.new()
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var gradient := Gradient.new()
+	gradient.colors = PackedColorArray([Color("111820f5"), Color("111820c9"), Color("11182052")])
+	gradient.offsets = PackedFloat32Array([0, 0.55, 1])
+	var fade := GradientTexture2D.new()
+	fade.gradient = gradient
+	fade.fill_from = Vector2(0, 0.5)
+	fade.fill_to = Vector2(1, 0.5)
+	shade.texture = fade
+	scenery.add_child(shade)
 	var header := VBoxContainer.new()
 	header.name = "ResultHeader"
 	header.add_theme_constant_override("separation", 6)
@@ -362,6 +388,7 @@ func _build_body(root: Control) -> void:
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.clip_contents = true
+	_content.add_theme_stylebox_override("panel", ShellThemeScript.crafted_panel())
 	root.add_child(_content)
 
 	var columns := HBoxContainer.new()
@@ -482,6 +509,7 @@ func _set_report_detail_visible(value: bool) -> void:
 		return
 	_metrics_grid.visible = not value
 	_evidence_grid.visible = value
+	if _report_illustration != null: _report_illustration.visible = not value
 	for body in _evidence_bodies.values():
 		(body as Label).visible = value
 	var scroll := find_child("CurrentRunScroll", true, false) as ScrollContainer
@@ -574,6 +602,21 @@ func _build_report_panel(parent: Control) -> void:
 		column.add_child(label)
 	_build_evidence_cards(column)
 	_evidence_grid.visible = false
+	_report_illustration = Control.new()
+	_report_illustration.name = "HearthReturnIllustration"
+	_report_illustration.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_report_illustration.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_report_illustration.clip_contents = true
+	column.add_child(_report_illustration)
+	var illustration := TextureRect.new()
+	illustration.texture = ShellThemeScript.illustration_texture("settlement_table")
+	illustration.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	illustration.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	illustration.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	illustration.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_report_illustration.add_child(illustration)
+	# Extra artwork uses spare space only; dense reports keep their full reading area.
+	_report_illustration.resized.connect(func(): illustration.visible = _report_illustration.size.y >= 80)
 
 
 func _build_evidence_cards(parent: Control) -> void:
@@ -724,21 +767,47 @@ func _build_footer(root: Control) -> void:
 	_contract_button = Button.new()
 	_contract_button.name = "ContractAgainButton"
 	_contract_button.text = CONTRACT_BUTTON_TEXT
+	_contract_button.size_flags_stretch_ratio = 0.75
 	_contract_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_contract_button.pressed.connect(_on_contract_pressed)
 	footer.add_child(_contract_button)
-	var base_button := Button.new()
-	base_button.name = "ReturnToBaseButton"
-	base_button.text = BASE_BUTTON_TEXT
-	base_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	base_button.pressed.connect(_on_base_pressed)
-	footer.add_child(base_button)
+	_base_button = Button.new()
+	_base_button.name = "ReturnToBaseButton"
+	_base_button.text = BASE_BUTTON_TEXT
+	_base_button.size_flags_stretch_ratio = 1.3
+	_base_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_base_button.pressed.connect(_on_base_pressed)
+	footer.add_child(_base_button)
 	_ending_button = Button.new()
 	_ending_button.name = "EndingButton"
 	_ending_button.text = ENDING_BUTTON_TEXT
+	_ending_button.size_flags_stretch_ratio = 1.3
 	_ending_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_ending_button.pressed.connect(_on_ending_pressed)
 	footer.add_child(_ending_button)
+
+
+func _set_button_primary(button: Button, primary: bool) -> void:
+	if primary:
+		button.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
+	else:
+		button.remove_theme_stylebox_override("normal")
+
+
+func _focus_default_action() -> void:
+	if not is_inside_tree(): return
+	if _ending_button != null and _ending_button.visible:
+		_ending_button.grab_focus()
+	elif _base_button != null and _base_button.visible:
+		_base_button.grab_focus()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _equipment_detail_overlay == null or not _equipment_detail_overlay.visible:
+		return
+	if event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):
+		accept_event()
+		_close_equipment_detail()
 
 
 func _apply_presentation() -> void:
@@ -765,6 +834,9 @@ func _apply_presentation() -> void:
 		_set_metric(key, reading if not reading.is_empty() else "—", _metric_color(key, outcome), not reading.is_empty())
 	_ending_button.visible = is_final_victory
 	_contract_button.visible = not is_final_victory
+	_base_button.size_flags_stretch_ratio = 0.75 if is_final_victory else 1.3
+	_set_button_primary(_base_button, not is_final_victory)
+	_set_button_primary(_ending_button, is_final_victory)
 
 	var diagnosis_text := _defeat_diagnosis_text()
 	_diagnosis_label.text = diagnosis_text
@@ -1315,6 +1387,8 @@ func _equipment_card(entry: Dictionary, entry_index: int = 0) -> PanelContainer:
 		review_button.disabled = equipment_state == "missing"
 		review_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		review_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		review_button.custom_minimum_size = Vector2(188.0, 0.0)
+		_set_button_primary(review_button, true)
 		review_button.tooltip_text = "%s；打开备行架查看这件%s装备" % [_equipment_status_text(entry), _player_readable.slot_label(slot)]
 		review_button.pressed.connect(_on_review_drop_pressed.bind(instance_id, slot))
 		body.add_child(review_button)
@@ -1389,6 +1463,9 @@ func _open_equipment_detail(entry_index: int) -> void:
 	var bounded := clampi(entry_index, 0, maxi(_equipment_drop_entries.size() - 1, 0))
 	if _equipment_drop_entries.is_empty():
 		return
+	if not _equipment_detail_overlay.visible:
+		var focus_owner := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+		_equipment_detail_return_focus = focus_owner if focus_owner is Control and is_ancestor_of(focus_owner) else null
 	var entry := _equipment_drop_entries[bounded] as Dictionary
 	_equipment_detail_title.text = _item_display_name(entry)
 	_equipment_detail_body.text = _equipment_full_text(entry)
@@ -1400,11 +1477,26 @@ func _open_equipment_detail(entry_index: int) -> void:
 	panel.offset_bottom = extent.y / 2.0
 	(_equipment_detail_overlay.find_child("EquipmentDetailScroll", true, false) as ScrollContainer).scroll_vertical = 0
 	_equipment_detail_overlay.visible = true
+	var close_button := _equipment_detail_overlay.find_child("EquipmentDetailClose", true, false) as Button
+	# The detail sheet has one action. Keep Tab inside it until it is dismissed.
+	close_button.focus_next = close_button.get_path_to(close_button)
+	close_button.focus_previous = close_button.get_path_to(close_button)
+	close_button.grab_focus()
 
 
 func _close_equipment_detail() -> void:
 	if _equipment_detail_overlay != null:
+		var current_focus: Control = get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+		if current_focus != null and is_ancestor_of(current_focus) \
+				and not _equipment_detail_overlay.is_ancestor_of(current_focus):
+			_equipment_detail_return_focus = current_focus
 		_equipment_detail_overlay.visible = false
+	var restored_focus := _equipment_detail_return_focus
+	_equipment_detail_return_focus = null
+	if restored_focus != null and is_instance_valid(restored_focus) and is_ancestor_of(restored_focus):
+		restored_focus.grab_focus()
+	else:
+		_focus_default_action()
 
 
 func _on_equipment_detail_pressed(entry_index: int) -> void:
@@ -1416,7 +1508,7 @@ func _on_equipment_detail_closed() -> void:
 
 
 func _on_previous_equipment_page() -> void:
-	_set_equipment_page(_equipment_page - 1)
+	_set_equipment_page(_equipment_page - 1, _previous_page_button)
 
 
 func focus_equipment(instance_id: String) -> void:
@@ -1427,11 +1519,12 @@ func focus_equipment(instance_id: String) -> void:
 
 
 func _on_next_equipment_page() -> void:
-	_set_equipment_page(_equipment_page + 1)
+	_set_equipment_page(_equipment_page + 1, _next_page_button)
 
 
-func _set_equipment_page(page: int) -> void:
+func _set_equipment_page(page: int, focus_after_render: Control = null) -> void:
 	_equipment_page = clampi(page, 0, _equipment_page_count() - 1)
+	_equipment_detail_return_focus = focus_after_render
 	_close_equipment_detail()
 	_loot_scroll.scroll_vertical = 0
 	_render_equipment_cards()

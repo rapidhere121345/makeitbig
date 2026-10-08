@@ -27,11 +27,18 @@ func _run() -> void:
 	var picker: OptionButton = screen.get("_contract_picker")
 	var mode_picker: OptionButton = screen.get("_mode_picker")
 	var info_label: Label = screen.get("_contract_info_label")
+	var reward_label: Label = screen.get("_reward_label")
 	_expect(picker != null and _selected_id(picker) == "mainline_01_first_hunt", "contract screen: next available mainline was not selected", failures)
 	_expect(_is_disabled(picker, "tutorial_ranger_basics") and _is_disabled(picker, "mainline_02_priority_under_pressure"), "contract screen: completed or locked fixed nodes stayed clickable", failures)
 	_expect(not _is_disabled(picker, "mainline_01_first_hunt") and not _is_disabled(picker, "side_targeted_equipment"), "contract screen: available mainline or repeatable side node was disabled", failures)
 	_expect(mode_picker != null and mode_picker.selected == 0 and mode_picker.is_item_disabled(1), "contract screen: pre-Boss node did not lock to Manual", failures)
-	_expect(info_label != null and "固定起步装" in info_label.text and "猎人印记" in info_label.text, "contract screen: authored drop/reward tags were not explained", failures)
+	_expect(reward_label != null and "固定起步装" in reward_label.text and "猎人印记" in reward_label.text,
+		"contract screen: authored drop/reward tags were not explained", failures)
+	_expect(info_label != null and "战利品方向" not in info_label.text,
+		"contract screen: route brief still mixed reward facts into its hierarchy", failures)
+	_expect(screen.find_child("ContractModePanel", true, false) != null
+		and screen.find_child("ModeHeading", true, false) != null,
+		"contract screen: mode selection was not grouped into its own decision block", failures)
 	_expect(String(screen.call("_tag_summary", ["breeding_split_item", "pack_hunt_mark_item"])).contains("获得后需在备行架装备"),
 		"contract screen: semantic item rewards omitted manual-equip guidance", failures)
 	screen.call("_on_start_pressed")
@@ -227,7 +234,7 @@ func _run() -> void:
 		_expect(build_scroll != null and build_scroll.get_v_scroll_bar().get_theme_stylebox("grabber") is StyleBoxEmpty,
 			"contract screen: build pane reintroduced passive scrollbar chrome", failures)
 		var mark: TextureRect = screen.find_child("ContractMark",true,false)
-		_expect(mark != null and mark.texture is AtlasTexture and mark.size == Vector2(64,64), "contract screen: published contract art at native size", failures)
+		_expect(mark != null and mark.texture is AtlasTexture and mark.size == Vector2(40,40), "contract screen: authored mark stays legible in its compact heading", failures)
 		var source_heading: Label = screen.find_child("ContractSourceHeading",true,false)
 		_expect(source_heading != null and source_heading.autowrap_mode != TextServer.AUTOWRAP_OFF
 			and source_heading.size.x <= (source_heading.get_parent() as Control).size.x,
@@ -246,7 +253,7 @@ func _run() -> void:
 	var experience: int = load("res://src/systems/character_progression.gd").contract_experience("mainline_01_first_hunt", true)
 	screen.present(app.profile, {}, "", real_snapshot)
 	var objective: Label = screen.find_child("CombatObjective", true, false)
-	_expect("清除敌人" in objective.text and "旧路外段" in info_label.text and "炉边镇" in info_label.text and "猎人印记" in info_label.text and ("完成经验：%d" % experience) in info_label.text,
+	_expect("清除敌人" in objective.text and "旧路外段" in info_label.text and "炉边镇" in info_label.text and "猎人印记" in reward_label.text and ("完成经验：%d" % experience) in reward_label.text,
 		"contract screen: fresh-save goal/reward not linked to town and road", failures)
 	_expect("猎人印记" not in build_label.text and "穿刺箭" in build_label.text,
 		"contract screen: first-clear skill reward impersonated an already equipped skill", failures)

@@ -95,7 +95,12 @@ func _live_collision() -> RefCounted:
 
 
 func _point_uv(pair: Array) -> Vector2:
-	return Vector2(float(pair[0]), float(pair[1])) * Vector2(1024, 640)
+	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ViewScript.DEFAULT_LAYOUT_PATH))
+	return Vector2(float(pair[0]), float(pair[1])) * Vector2(layout.world[0], layout.world[1])
+
+
+func _live_bounds() -> Rect2:
+	return Rect2(Vector2.ONE * ViewScript.WORLD_MARGIN, _point_uv([1, 1]) - Vector2.ONE * ViewScript.WORLD_MARGIN * 2.0)
 
 
 func _test_live_layout() -> void:
@@ -104,7 +109,7 @@ func _test_live_layout() -> void:
 	var spawn := _point_uv(layout.hero_start_uv)
 	_expect(not collision.is_blocked(spawn), "town: initial player is trapped")
 	for direction: Vector2 in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
-		_expect(collision.move(spawn, direction * 4.0, BOUNDS).distance_to(spawn + direction * 4.0) < 0.01,
+		_expect(collision.move(spawn, direction * 4.0, _live_bounds()).distance_to(spawn + direction * 4.0) < 0.01,
 			"town: spawn cannot move in every direction")
 	for shape: Dictionary in collision.footprints():
 		var point: Vector2
@@ -122,7 +127,7 @@ func _test_live_layout() -> void:
 		for pair: Array in layout.routes_uv[id]:
 			var target := _point_uv(pair)
 			_expect(not collision.is_blocked(target), "town route %s: waypoint blocked %s by %s" % [id, target, _blocked_ids(collision, target)])
-			var finish: Vector2 = collision.move(position, target - position, BOUNDS)
+			var finish: Vector2 = collision.move(position, target - position, _live_bounds())
 			_expect(finish.distance_to(target) < 0.02, "town route %s: interrupted at %s before %s" % [id, finish, target])
 			position = target
 		print("  town route %s: %d waypoints checked" % [id, layout.routes_uv[id].size()])
@@ -139,18 +144,19 @@ func _blocked_ids(collision, point: Vector2) -> Array[String]:
 func _test_waterfront(collision) -> void:
 	# Both sides of the one source bridge remain water; no old mirrored bridge.
 	for point: Vector2 in [Vector2(860, 596), Vector2(851, 534), Vector2(666, 564), Vector2(946, 496)]:
+		point = _point_uv([point.x / 1024.0, point.y / 640.0])
 		_expect(collision.is_blocked(point), "water: outside-deck water is walkable at %s" % point)
 	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ViewScript.DEFAULT_LAYOUT_PATH))
 	var deck: Array = layout.routes_uv.bridge
 	for index in range(5, deck.size() - 2):
 		var start := _point_uv(deck[index])
 		var finish := _point_uv(deck[index + 1])
-		_expect(collision.move(finish, start - finish, BOUNDS).distance_to(start) < 0.02, "bridge: return passage blocked")
+		_expect(collision.move(finish, start - finish, _live_bounds()).distance_to(start) < 0.02, "bridge: return passage blocked")
 		var tangent := (finish - start).normalized()
 		var normal := Vector2(-tangent.y, tangent.x)
 		for side in [-1.0, 1.0]:
-			var escaped: Vector2 = collision.move((start + finish) * 0.5, normal * side * 100.0, BOUNDS)
-			_expect(not collision.is_blocked(escaped) and escaped.distance_to((start + finish) * 0.5) < 40.0,
+			var escaped: Vector2 = collision.move((start + finish) * 0.5, normal * side * 150.0, _live_bounds())
+			_expect(not collision.is_blocked(escaped) and escaped.distance_to((start + finish) * 0.5) < 60.0,
 				"bridge: walking sideways leaves the deck at %s" % escaped)
 
 
@@ -159,7 +165,7 @@ func _test_live_view() -> void:
 	root.add_child(view)
 	_expect(view.load_default_assets(), "view: formal scene/characters failed to load: %s" % [view.pending_reasons()])
 	var audit: Dictionary = view.render_audit()
-	_expect(audit.view_size == Vector2(1008, 567) and view.world_viewport.size == Vector2i(1008, 567), "view: formal observation window reverted to close-up")
+	_expect(audit.view_size == Vector2(640, 360) and view.world_viewport.size == Vector2i(640, 360), "view: town lost its close follow camera")
 	_expect((view.world_display.size * view.world_display.scale).is_equal_approx(Vector2(1280, 720)), "view: formal canvas is not 1280x720")
 	_expect(audit.town_concept.source_size == Vector2(1536, 1024), "view: source dimensions not decoded")
 	_expect(audit.layers.ground == 0 and audit.layers.ground_layer == 0 and audit.layers.object_lower == 0, "view: legacy ground/objects still drawn")
@@ -172,10 +178,10 @@ func _test_live_view() -> void:
 		_expect(view.world_point_at_design(screen, Vector2.ZERO, Vector2.ONE).distance_to(entry.feet) < 0.001, "view: camera coordinate round trip failed " + id)
 	view.set_world_scale(2, Vector2(1600, 900))
 	_expect((view.world_display.size * view.world_display.scale).is_equal_approx(Vector2(1600, 900)), "view: resized town clips or stretches")
-	view.teleport_hero(Vector2(527, 310))
-	view.move_hero(Vector2.DOWN, 1.0)
+	view.teleport_hero(_point_uv([527.0 / 1024.0, 310.0 / 640.0]))
+	view.move_hero(Vector2.DOWN, 1.5)
 	_expect(not view._collision.is_blocked(view.hero_world_position()), "view: fire footprint escape failed")
-	view.move_hero(Vector2.UP, 1.0)
-	_expect(view.hero_world_position().y > 330, "view: fire remained exempt after escape")
+	view.move_hero(Vector2.UP, 1.5)
+	_expect(view.hero_world_position().y > _point_uv([0, 330.0 / 640.0]).y, "view: fire remained exempt after escape")
 	root.remove_child(view)
 	view.free()
