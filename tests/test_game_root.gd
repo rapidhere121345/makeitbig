@@ -111,15 +111,17 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	game.current_screen.call("_build_ui")
 	game.current_screen.call("_apply_presentation")
 	var build_label: Label = game.current_screen.get("_build_label")
+	var skill_label: Label = game.current_screen.find_child("SkillName_piercing_arrow", true, false)
+	var continuation: Label = game.current_screen.find_child("Departure_p", true, false)
 	var build_details: String = game.current_screen._components_summary(game.current_screen._active_build(), game.current_screen._resolved_build())
 	var growth_conclusion: String = game.current_screen._growth_conclusion(game.current_screen._resolved_build())
 	var mode_picker: OptionButton = game.current_screen.get("_mode_picker")
 	var contract_picker: OptionButton = game.current_screen.get("_contract_picker")
-	_expect(build_label != null and "已装技能：" in build_label.text and "穿刺箭续行概率：" in build_label.text
+	_expect(build_label != null and not build_label.visible and continuation != null and "%" in continuation.text
 		and "构筑指纹：" not in build_label.text and growth_conclusion == "未验证"
 		and "exponential" not in build_label.text.to_lower(),
 		"game root: contract did not present the real unverified Build safely", failures)
-	_expect(build_label != null and "穿刺箭" in build_label.text and "孳生分裂" in build_details and "群猎印记" in build_details, "game root: contract Build did not use the player-facing component names", failures)
+	_expect(skill_label != null and skill_label.text == "穿刺箭" and "孳生分裂" in build_details and "群猎印记" in build_details, "game root: contract Build did not use the player-facing component names", failures)
 	_expect(mode_picker != null and mode_picker.selected == 0 and mode_picker.is_item_disabled(1), "game root: fresh contract was not Manual with Auto disabled", failures)
 	_expect(contract_picker != null and _selected_contract_id(contract_picker) == "mainline_01_first_hunt", "game root: contract board did not select the first available authored node", failures)
 	game.set("_auto_smoke_session", true)

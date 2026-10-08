@@ -52,7 +52,7 @@ const TITLE_TEXT := "契约结算"
 const KICKER_TEXT := "CONTRACT REPORT"
 const SUBTITLE_TEXT := "先看收获，再比较构筑。"
 const REPORT_HEADING := "战斗记录"
-const DROP_HEADING := "本次掉落"
+const DROP_HEADING := "新物品与获得"
 const DETAIL_HEADING := "计算详情"
 const DETAIL_SHOW_TEXT := "展开计算详情"
 const DETAIL_HIDE_TEXT := "收起计算详情"
@@ -67,8 +67,12 @@ const NEXT_PAGE_TEXT := "下一页"
 const NO_PAGE_TEXT := "1 / 1"
 const REPORT_DETAIL_TEXT := "战报详情"
 const REPORT_HIDE_TEXT := "收起战报"
-const NO_REWARD_TEXT := "本次结算没有掉落记录。"
+const NO_REWARD_TEXT := "没有掉落记录。"
 const EMPTY_FACTS_TEXT := "本次结算没有报告字段；结果、用时与房间进度以上方指标为准。"
+const REWARD_DETAIL_SHOW_TEXT := "奖励明细"
+const REWARD_DETAIL_HIDE_TEXT := "收起明细"
+const PROXY_DETAIL_SHOW_TEXT := "协议详情"
+const PROXY_DETAIL_HIDE_TEXT := "收起协议"
 
 ## Header and value steps of the approved UI band: 28px Chinese title, 18px
 ## neutral subtitle and small copy, 28px metric values (VISUAL_BASELINE.md).
@@ -215,7 +219,10 @@ var _detail_button: Button
 var _diagnosis_label: Label
 var _report_label: Label
 var _reward_label: Label
+var _reward_detail_button: Button
+var _reward_detail_label: Label
 var _proxy_component_box: VBoxContainer
+var _proxy_detail_button: Button
 var _equipment_box: VBoxContainer
 var _equipment_pagination: HBoxContainer
 var _previous_page_button: Button
@@ -234,6 +241,7 @@ var _ending_button: Button
 var _contract_button: Button
 var _route_view: Control
 var _report_illustration: Control
+var _next_step_label: Label
 var _route_context: Label
 var _room_progress: ProgressBar
 var _room_progress_label: Label
@@ -485,6 +493,7 @@ func _build_metrics(parent: Control) -> void:
 		column.add_child(label)
 		var value := Label.new()
 		value.name = "MetricValue_%s" % key
+		value.theme_type_variation = "DataLabel"
 		value.text = "—"
 		value.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		value.add_theme_font_size_override("font_size", METRIC_VALUE_FONT_SIZE)
@@ -522,6 +531,13 @@ func _on_report_detail_pressed() -> void:
 	_set_report_detail_visible(not _evidence_grid.visible)
 
 
+func _on_reward_detail_pressed() -> void:
+	if _reward_detail_label == null or _reward_detail_button == null:
+		return
+	_reward_detail_label.visible = not _reward_detail_label.visible
+	_reward_detail_button.text = REWARD_DETAIL_HIDE_TEXT if _reward_detail_label.visible else REWARD_DETAIL_SHOW_TEXT
+
+
 func _sync_equipment_page_size() -> void:
 	var page_size := 1
 	if page_size == _equipment_page_size:
@@ -551,7 +567,12 @@ func _build_report_panel(parent: Control) -> void:
 	column.clip_contents = true
 	column.add_theme_constant_override("separation", 6)
 	scroll.add_child(column)
-	column.add_child(_heading("本轮经过"))
+	column.add_child(_heading("结果与下一步"))
+	_next_step_label = _report_note("")
+	_next_step_label.name = "NextStepLabel"
+	_next_step_label.add_theme_font_size_override("font_size", ShellThemeScript.BODY_FONT_SIZE)
+	_next_step_label.add_theme_color_override("font_color", ShellThemeScript.AMBER)
+	column.add_child(_next_step_label)
 	_route_context = _report_note("")
 	_route_context.name = "RunContext"
 	column.add_child(_route_context)
@@ -685,29 +706,47 @@ func _build_drop_panel(parent: Control) -> void:
 	var loot := VBoxContainer.new()
 	loot.name = "LootContent"
 	loot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	loot.add_theme_constant_override("separation", 8)
+	loot.add_theme_constant_override("separation", 10)
 	_loot_scroll.add_child(loot)
+	var summary_row := HBoxContainer.new()
+	summary_row.name = "RewardSummaryRow"
+	summary_row.add_theme_constant_override("separation", 8)
+	loot.add_child(summary_row)
 	_reward_label = Label.new()
 	_reward_label.name = "RewardSummary"
 	_reward_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reward_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_reward_label.add_theme_color_override("font_color", ShellThemeScript.BONE)
-	loot.add_child(_reward_label)
-	_core_rewards = GridContainer.new()
-	_core_rewards.name = "FirstKillCoreRewards"
-	_core_rewards.columns = 2
-	_core_rewards.add_theme_constant_override("h_separation", 8)
-	_core_rewards.add_theme_constant_override("v_separation", 8)
-	loot.add_child(_core_rewards)
-	loot.move_child(_core_rewards, 0)
-	_proxy_component_box = VBoxContainer.new()
-	_proxy_component_box.name = "ProxyComponentDrops"
-	_proxy_component_box.add_theme_constant_override("separation", 8)
-	loot.add_child(_proxy_component_box)
+	summary_row.add_child(_reward_label)
+	_reward_detail_button = Button.new()
+	_reward_detail_button.name = "RewardDetailButton"
+	_reward_detail_button.text = REWARD_DETAIL_SHOW_TEXT
+	_reward_detail_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_reward_detail_button.pressed.connect(_on_reward_detail_pressed)
+	summary_row.add_child(_reward_detail_button)
 	_equipment_box = VBoxContainer.new()
 	_equipment_box.name = "EquipmentCards"
 	_equipment_box.add_theme_constant_override("separation", 8)
 	_equipment_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	loot.add_child(_equipment_box)
+	_core_rewards = GridContainer.new()
+	_core_rewards.name = "FirstKillCoreRewards"
+	_core_rewards.columns = 2
+	_core_rewards.add_theme_constant_override("h_separation", 14)
+	_core_rewards.add_theme_constant_override("v_separation", 4)
+	loot.add_child(_core_rewards)
+	_proxy_component_box = VBoxContainer.new()
+	_proxy_component_box.name = "ProxyComponentDrops"
+	_proxy_component_box.add_theme_constant_override("separation", 8)
+	loot.add_child(_proxy_component_box)
+	_reward_detail_label = Label.new()
+	_reward_detail_label.name = "RewardDetailText"
+	_reward_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_reward_detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_reward_detail_label.add_theme_font_size_override("font_size", SUBTITLE_FONT_SIZE)
+	_reward_detail_label.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
+	_reward_detail_label.visible = false
+	loot.add_child(_reward_detail_label)
 	_equipment_pagination = HBoxContainer.new()
 	_equipment_pagination.name = "EquipmentPagination"
 	_equipment_pagination.add_theme_constant_override("separation", 8)
@@ -853,19 +892,15 @@ func _apply_presentation() -> void:
 	var proxy_component_entries := _proxy_component_entries()
 	_render_proxy_component_cards(proxy_component_entries)
 	_render_equipment_cards()
-	_reward_label.text = "\n".join(_reward_lines(rewards, _equipment_drop_entries, proxy_component_entries))
-	_reward_label.tooltip_text = _reward_label.text
-	_subtitle_label.text = SUBTITLE_TEXT
-	if not _equipment_drop_entries.is_empty() and not proxy_component_entries.is_empty():
-		# The component card already explains its inventory state. Keep that fact
-		# once, reserve the header for first-clear guidance and keep items in reach.
-		var concise: Array[String] = ["本次获得装备 %d 件" % _equipment_drop_entries.size()]
-		concise.append_array(_reward_field_lines(rewards))
-		var drop_line := _drop_line(rewards)
-		if not drop_line.is_empty(): concise.append(drop_line)
-		_reward_label.text = "\n".join(concise)
-		var first_reward := _first_reward_text()
-		if not first_reward.is_empty(): _subtitle_label.text = first_reward.replace("\n", " · ")
+	var full_reward_text := "\n".join(_reward_lines(rewards, _equipment_drop_entries, proxy_component_entries))
+	_reward_label.tooltip_text = full_reward_text
+	_reward_detail_label.text = full_reward_text
+	_reward_detail_label.visible = false
+	_reward_detail_button.text = REWARD_DETAIL_SHOW_TEXT
+	_reward_label.text = _compact_reward_text(rewards, _equipment_drop_entries, proxy_component_entries)
+	_reward_detail_button.visible = _reward_label.text != full_reward_text
+	_subtitle_label.text = _settlement_headline(outcome, _equipment_drop_entries.size(), proxy_component_entries.size())
+	_next_step_label.text = "下一步 · " + _next_step_text(outcome, _equipment_drop_entries.size(), proxy_component_entries.size())
 	_render_core_rewards(rewards)
 
 
@@ -943,6 +978,8 @@ func _render_core_rewards(rewards: Dictionary) -> void:
 	# Only the actual first-unlock record may display the fixed reward set.
 	# Explicit future/partial payloads are not padded to four granted objects.
 	var granted_names := _proxy_core_names(rewards)
+	var featured := _equipment_drop_entries.is_empty() and _proxy_component_entries().is_empty()
+	_core_rewards.add_theme_constant_override("v_separation", 12 if featured else 4)
 	for core_id in FIXED_CORE_IDS:
 		var core_name := String(PROXY_CORE_LABELS[core_id])
 		if not core_name in granted_names:
@@ -950,21 +987,25 @@ func _render_core_rewards(rewards: Dictionary) -> void:
 		var texture: Texture2D = _art.icon("core." + core_id)
 		if texture == null:
 			continue
-		var card := PanelContainer.new()
-		card.name = "CoreReward_" + core_id
-		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		_core_rewards.add_child(card)
+		var reward := PanelContainer.new()
+		reward.name = "CoreReward_" + core_id
+		reward.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		reward.add_theme_stylebox_override("panel", ShellThemeScript.panel_style("well") if featured else StyleBoxEmpty.new())
+		_core_rewards.add_child(reward)
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
-		card.add_child(row)
-		var icon := _icon_node(texture)
+		row.add_theme_constant_override("separation", 12 if featured else 6)
+		reward.add_child(row)
+		var icon := _icon_node(texture, featured)
+		if featured:
+			icon.custom_minimum_size = Vector2(96, 96)
 		icon.set_meta("canonical_id", "core." + core_id)
 		row.add_child(icon)
 		var label := Label.new()
 		label.text = core_name
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.add_theme_font_size_override("font_size", SUBTITLE_FONT_SIZE)
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", ShellThemeScript.BODY_FONT_SIZE if featured else SUBTITLE_FONT_SIZE)
 		row.add_child(label)
 
 
@@ -1115,6 +1156,70 @@ func _reward_lines(rewards: Dictionary, equipment_entries: Array, proxy_componen
 	return lines
 
 
+func _compact_reward_text(rewards: Dictionary, equipment_entries: Array, proxy_component_entries: Array) -> String:
+	var parts: Array[String] = []
+	if not equipment_entries.is_empty():
+		parts.append("新装备 %d 件" % equipment_entries.size())
+	if _is_first_proxy_unlock(rewards):
+		parts.append("代理核心 %d 枚" % _proxy_core_names(rewards).size())
+	if not proxy_component_entries.is_empty():
+		parts.append("代理组件 %d 件" % proxy_component_entries.size())
+	var first_rewards := _first_reward_text().split("\n")
+	if first_rewards.size() > 1:
+		parts.append("首通获得 %d 项" % (first_rewards.size() - 1))
+	var tally_delta := _as_dictionary(rewards.get("law_tallies_delta", {}))
+	var tally_total := 0
+	for operation in ["inscribe", "rewrite", "refine"]:
+		tally_total += _coerce_int(tally_delta.get(operation, 0))
+	if tally_total != 0:
+		parts.append("律筹 %+d" % tally_total)
+	var drop_line := _drop_line(rewards)
+	if not drop_line.is_empty():
+		parts.append(drop_line.split("：")[-1].strip_edges() if drop_line.contains("：") else drop_line)
+	return " · ".join(parts) if not parts.is_empty() else NO_REWARD_TEXT
+
+
+func _settlement_headline(outcome: String, equipment_count: int, proxy_component_count: int) -> String:
+	var outcome_text := _outcome_text(outcome)
+	var first_reward := _first_reward_headline()
+	var acquisition := ""
+	if equipment_count > 0:
+		acquisition = "新装备 %d 件" % equipment_count
+	elif proxy_component_count > 0:
+		acquisition = "代理组件 %d 件" % proxy_component_count
+	elif _is_first_proxy_unlock(_as_dictionary(_result.get("rewards", {}))):
+		acquisition = "代理舱已解锁"
+	if not first_reward.is_empty():
+		acquisition = first_reward if acquisition.is_empty() else "%s · %s" % [acquisition, first_reward]
+	if acquisition.is_empty():
+		return outcome_text
+	return "%s · %s" % [outcome_text, acquisition]
+
+
+func _next_step_text(outcome: String, equipment_count: int, proxy_component_count: int) -> String:
+	if equipment_count > 0:
+		return "先比较新装备，再返镇整备"
+	if proxy_component_count > 0:
+		return "代理组件已入库，返镇后再安装"
+	if _is_first_proxy_unlock(_as_dictionary(_result.get("rewards", {}))):
+		return "代理舱已解锁，返镇安装核心"
+	if outcome in ["defeat", "error"]:
+		return "查看战报后返镇调整"
+	if outcome == "final_victory":
+		return "可进入结尾回顾"
+	return "可返镇整理或再次出征"
+
+
+func _first_reward_headline() -> String:
+	var lines := _first_reward_text().split("\n")
+	if lines.size() <= 1:
+		return ""
+	if lines.size() == 2:
+		var line := String(lines[1])
+		return line.get_slice("（", 0)
+	return "首通获得 %d 项" % (lines.size() - 1)
+
+
 ## Known reward fields written as Chinese player copy. A zero delta stays out (it is
 ## not a reward), and the boolean bonus pair reports a real loss as 未获得.
 func _reward_field_lines(rewards: Dictionary) -> Array[String]:
@@ -1253,14 +1358,26 @@ func _render_proxy_component_cards(entries: Array) -> void:
 	_clear_children(_proxy_component_box)
 	_proxy_component_box.visible = not entries.is_empty()
 	if entries.is_empty():
+		_proxy_detail_button = null
 		return
+	var heading_row := HBoxContainer.new()
+	heading_row.name = "ProxyComponentHeadingRow"
+	heading_row.add_theme_constant_override("separation", 8)
+	_proxy_component_box.add_child(heading_row)
 	var heading := Label.new()
 	heading.name = "ProxyComponentDropHeading"
-	heading.text = "代理组件已入库 · 尚未安装"
+	heading.text = "代理组件 ×%d · 已入库未安装" % entries.size()
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.add_theme_font_size_override("font_size", ShellThemeScript.BODY_FONT_SIZE)
 	heading.add_theme_color_override("font_color", ShellThemeScript.PROXY)
-	_proxy_component_box.add_child(heading)
+	heading_row.add_child(heading)
+	_proxy_detail_button = Button.new()
+	_proxy_detail_button.name = "ProxyComponentDetailButton"
+	_proxy_detail_button.text = PROXY_DETAIL_SHOW_TEXT
+	_proxy_detail_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_proxy_detail_button.pressed.connect(_on_proxy_detail_pressed)
+	heading_row.add_child(_proxy_detail_button)
 	for entry_value in entries:
 		var entry := entry_value as Dictionary
 		var card := PanelContainer.new()
@@ -1283,13 +1400,21 @@ func _render_proxy_component_cards(entries: Array) -> void:
 		protocol.add_theme_font_size_override("font_size", SUBTITLE_FONT_SIZE)
 		protocol.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 		body.add_child(protocol)
-		if not _equipment_drop_entries.is_empty():
-			# Full protocol remains inspectable on hover without pushing the
-			# equipment comparison action below a small monitor's footer.
-			protocol.visible = false
-			card.tooltip_text = protocol.text
-			title.tooltip_text = protocol.text
-			card.mouse_filter = Control.MOUSE_FILTER_STOP
+		protocol.visible = false
+		card.tooltip_text = protocol.text
+		title.tooltip_text = protocol.text
+		card.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func _on_proxy_detail_pressed() -> void:
+	if _proxy_detail_button == null:
+		return
+	var expanded := _proxy_detail_button.text == PROXY_DETAIL_HIDE_TEXT
+	for card in _proxy_component_box.get_children():
+		var protocol := card.find_child("ProxyComponentProtocol", true, false) as Label
+		if protocol != null:
+			protocol.visible = not expanded
+	_proxy_detail_button.text = PROXY_DETAIL_SHOW_TEXT if expanded else PROXY_DETAIL_HIDE_TEXT
 
 
 func _proxy_component_entries() -> Array:
@@ -1432,11 +1557,18 @@ func _equipment_status_text(entry: Dictionary) -> String:
 
 func _equipment_summary_text(entry: Dictionary) -> String:
 	var affixes: Array[String] = _equipment_model.affix_labels(entry.get("affixes", []), true)
-	return "%s · 获得时已收入装备库存\n%s\n词条：%s\n完整属性见详情" % [
-		_player_readable.slot_label(String(entry.get("slot", ""))),
-		_equipment_status_text(entry),
+	return "%s\n词条：%s" % [
+		_equipment_status_summary(entry),
 		"、".join(affixes) if not affixes.is_empty() else "无记录",
 	]
+
+
+func _equipment_status_summary(entry: Dictionary) -> String:
+	match _equipment_state(entry):
+		"equipped": return "%s · 已装备" % _player_readable.slot_label(String(entry.get("slot", "")))
+		"owned": return "%s · 已入库，尚未装备" % _player_readable.slot_label(String(entry.get("slot", "")))
+		"missing": return "%s · 已不在行囊，获得记录保留" % _player_readable.slot_label(String(entry.get("slot", "")))
+	return "%s · 库存状态未读取" % _player_readable.slot_label(String(entry.get("slot", "")))
 
 
 func _equipment_full_text(entry: Dictionary) -> String:

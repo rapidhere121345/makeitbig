@@ -25,7 +25,7 @@ func _run() -> void:
 	# Selection never teleports the avatar or bypasses the actual facility.
 	hub.navigation_card_activated("loadout")
 	_expect(game.current_route == "base" and view.hero_world_position() == spawn,
-		"distant toolbar selection changed route or moved the player")
+		"distant landmark selection changed route or moved the player")
 	_expect(hub.wayfinding_report().id == "loadout" and not hub.wayfinding_report().arrived,
 		"distant selection did not show the selected direction")
 	_expect(not hub.activate_nearby_feature() and game.current_route == "base", "E opened a distant destination")
@@ -41,6 +41,8 @@ func _run() -> void:
 		_expect(view.hero_world_position().distance_to(target) < 0.05, "expanded road blocked before " + str(target))
 	_expect(view.camera_world_offset().distance_to(camera_before) > 150, "camera failed to follow the long walk")
 	_expect(hub.wayfinding_report().arrived, "arrival did not replace the direction with an interaction prompt")
+	_expect(hub.get_landmark("loadout").visible and hub.get_prompt_rect() != Rect2(),
+		"arrival did not reveal the loadout landmark and nearby action badge")
 	var saved: Dictionary = hub.travel_snapshot()
 	_expect(hub.activate_nearby_feature() and game.current_route == "loadout", "nearby E did not enter equipment")
 	_expect(game.leave_facility().ok and game.current_screen.travel_snapshot() == saved,
@@ -59,8 +61,13 @@ func _run() -> void:
 		_expect(view.world_viewport.size == Vector2i(640,360), "resizing exposed more town")
 		var visible_fraction: float = Vector2(view.world_viewport.size).x * view.world_viewport.size.y / (view.world_size().x * view.world_size().y)
 		_expect(visible_fraction < 0.2, "default view exposes the whole town")
-		var wayfinder := hub.find_child("TownWayfinder", true, false) as Control
-		_expect(Rect2(Vector2.ZERO, Vector2(1280,720)).encloses(wayfinder.get_rect()), "wayfinding panel escaped logical canvas")
+		_expect(hub.find_child("TownWayfinder", true, false) == null, "global wayfinding panel returned")
+		for feature_id: String in ["contract", "loadout", "forge", "training", "proxy"]:
+			var landmark: Button = hub.get_landmark(feature_id)
+			var expected: Rect2 = hub._landmark_design_rect(feature_id)
+			_expect(landmark.position == expected.position.floor(), "%s landmark was clamped at %s" % [feature_id, str(size)])
+			if landmark.visible:
+				_expect(Rect2(Vector2(12,92), Vector2(1256,616)).encloses(landmark.get_rect()), "%s landmark escaped logical canvas" % feature_id)
 		for point: Vector2 in [view.world_bounds().position, view.world_bounds().end, saved.position]:
 			view.teleport_hero(point)
 			var camera: Vector2 = view.camera_world_offset()

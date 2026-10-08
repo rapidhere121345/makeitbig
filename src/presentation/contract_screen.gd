@@ -7,6 +7,7 @@ signal cancel_requested
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const EarlyCampaignRegistryScript = preload("res://src/content/early_campaign_registry.gd")
 const FacilityArtScript = preload("res://src/presentation/facility_art.gd")
+const SkillIconsScript = preload("res://src/presentation/combat_skill_icons.gd")
 const EarlySkillRegistryScript = preload("res://src/content/early_skill_registry.gd")
 const PlayerReadableBuildScript = preload("res://src/presentation/player_readable_build.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
@@ -76,15 +77,24 @@ var _skill_registry = EarlySkillRegistryScript.new()
 var _player_readable = PlayerReadableBuildScript.new()
 var _status_message := ""
 var _objective_label: Label
+var _objective_meta: Label
+var _risk_label: Label
 var _details_button: Button
 var _details_dialog: AcceptDialog
 var _details_label: Label
 var _campaign_registry = EarlyCampaignRegistryScript.new()
 var _profile_label: Label
 var _build_label: Label
+var _skill_row: HBoxContainer
+var _parameter_grid: GridContainer
+var _parameter_values := {}
+var _skill_icons = SkillIconsScript.new()
 var _contract_picker: OptionButton
 var _contract_info_label: Label
 var _reward_label: Label
+var _first_reward_label: Label
+var _first_reward_card: Control
+var _contract_details_dialog: AcceptDialog
 var _mode_picker: OptionButton
 var _auto_lock_label: Label
 var _seed_edit: LineEdit
@@ -106,8 +116,6 @@ var _presentation_enabled_override: Variant = null
 
 
 func _ready() -> void:
-	_skill_registry.load_all()
-	_campaign_registry.load_campaign()
 	_build_ui()
 	_apply_presentation()
 	_contract_picker.grab_focus()
@@ -126,6 +134,9 @@ func present(profile: Dictionary, previous_config: Dictionary = {}, status_messa
 func _build_ui() -> void:
 	if _built:
 		return
+	_skill_registry.load_all()
+	_skill_icons.load_icons()
+	_campaign_registry.load_campaign()
 	_built = true
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	theme = ShellThemeScript.create()
@@ -152,7 +163,7 @@ func _build_ui() -> void:
 	_profile_label.add_theme_font_size_override("font_size", 18)
 	_profile_label.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 	title_header.add_child(_profile_label)
-	var subtitle := _field_label("看清这趟要做什么，带上准备好的弓。")
+	var subtitle := _field_label("选一条路，带回新的可能。")
 	subtitle.add_theme_font_size_override("font_size", 18)
 	subtitle.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 	page.add_child(subtitle)
@@ -188,7 +199,9 @@ func _build_ui() -> void:
 	var illustration := ShellThemeScript.illustration_panel("contract_road", 92)
 	illustration.name = "ContractRoadIllustration"
 	build_content.add_child(illustration)
-	resized.connect(func(): illustration.custom_minimum_size.y = clampf(size.y - 628.0, 92.0, 200.0))
+	var fit_illustration := func(): illustration.custom_minimum_size.y = clampf(size.y - 628.0, 92.0, 200.0)
+	resized.connect(fit_illustration)
+	fit_illustration.call_deferred()
 	var build_title := _field_label("随身整备")
 	build_title.add_theme_font_size_override("font_size", 22)
 	build_content.add_child(build_title)
@@ -197,13 +210,22 @@ func _build_ui() -> void:
 	_build_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_build_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	build_content.add_child(_build_label)
-	var build_note := _field_label("需调整装备？返回镇里的备行架。")
-	build_note.add_theme_font_size_override("font_size", 18)
-	build_note.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
-	build_content.add_child(build_note)
+	_skill_row = HBoxContainer.new()
+	_skill_row.name = "EquippedSkillIcons"
+	_skill_row.add_theme_constant_override("separation", 8)
+	build_content.add_child(_skill_row)
+	_parameter_grid = GridContainer.new()
+	_parameter_grid.name = "DepartureParameters"
+	_parameter_grid.columns = 3
+	_parameter_grid.add_theme_constant_override("h_separation", 8)
+	_parameter_grid.add_theme_constant_override("v_separation", 8)
+	build_content.add_child(_parameter_grid)
+	for spec in [["damage", "伤害"], ["max_health", "生命"], ["d", "射程"], ["p", "续行"], ["T", "谱系寿命"], ["training", "验律"]]:
+		_parameter_values[spec[0]] = _reading_tile(_parameter_grid, String(spec[1]), "Departure_" + String(spec[0]), 24)
 	_details_button = Button.new()
 	_details_button.name = "BuildDetailsButton"
-	_details_button.text = "查看技能与构筑详情"
+	_details_button.text = "技能与构筑详情"
+	_details_button.tooltip_text = "在备行架调整装备；这里核对当前技能与构筑。"
 	_details_button.pressed.connect(_open_build_details)
 	build_content.add_child(_details_button)
 
@@ -219,6 +241,11 @@ func _build_ui() -> void:
 	brief.name = "ContractBrief"
 	brief.add_theme_constant_override("separation", 6)
 	brief_panel.add_child(brief)
+	_objective_meta = _field_label("")
+	_objective_meta.name = "ContractScope"
+	_objective_meta.add_theme_font_size_override("font_size", 18)
+	_objective_meta.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
+	brief.add_child(_objective_meta)
 	_objective_label = _field_label("")
 	_objective_label.name = "CombatObjective"
 	_objective_label.add_theme_font_size_override("font_size", 24)
@@ -229,16 +256,29 @@ func _build_ui() -> void:
 	_contract_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_contract_info_label.add_theme_font_size_override("font_size", 18)
 	brief.add_child(_contract_info_label)
-	var reward_heading := _field_label("这趟可能带回")
+	_risk_label = _field_label("")
+	_risk_label.name = "ContractRisk"
+	_risk_label.add_theme_font_size_override("font_size", 18)
+	_risk_label.add_theme_color_override("font_color", ShellThemeScript.WARNING)
+	brief.add_child(_risk_label)
+	var reward_heading := _field_label("带回镇里")
 	reward_heading.name = "ContractRewardHeading"
 	reward_heading.add_theme_font_size_override("font_size", 22)
 	reward_heading.add_theme_color_override("font_color", ShellThemeScript.AMBER)
 	content.add_child(reward_heading)
-	_reward_label = Label.new()
-	_reward_label.name = "ContractRewardLabel"
-	_reward_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_reward_label.add_theme_font_size_override("font_size", 18)
-	content.add_child(_reward_label)
+	var reward_grid := GridContainer.new()
+	reward_grid.columns = 2
+	reward_grid.name = "ContractRewardChoices"
+	reward_grid.add_theme_constant_override("h_separation", 10)
+	content.add_child(reward_grid)
+	_reward_label = _reading_tile(reward_grid, "掉落方向", "ContractRewardLabel", 22)
+	_first_reward_label = _reading_tile(reward_grid, "首通所得", "ContractFirstRewardLabel", 22)
+	_first_reward_card = _first_reward_label.get_parent().get_parent()
+	var contract_details := Button.new()
+	contract_details.name = "ContractDetailsButton"
+	contract_details.text = "路况与奖励详情"
+	contract_details.pressed.connect(_open_contract_details)
+	content.add_child(contract_details)
 
 	var mode_panel := PanelContainer.new()
 	mode_panel.name = "ContractModePanel"
@@ -334,6 +374,67 @@ func _field_label(text: String) -> Label:
 	return label
 
 
+func _reading_tile(parent: Control, caption: String, value_name: String, value_size: int) -> Label:
+	var tile := PanelContainer.new()
+	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var material := ShellThemeScript.panel_style("well")
+	material.content_margin_left = 10
+	material.content_margin_right = 10
+	material.content_margin_top = 6
+	material.content_margin_bottom = 6
+	tile.add_theme_stylebox_override("panel", material)
+	parent.add_child(tile)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 2)
+	tile.add_child(body)
+	var title := _field_label(caption)
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
+	body.add_child(title)
+	var value := _field_label("—")
+	value.name = value_name
+	value.add_theme_font_size_override("font_size", value_size)
+	body.add_child(value)
+	return value
+
+
+## Presentation reads the resolved Build; it never recomputes equipment stats.
+func _present_departure_build(build: Dictionary) -> void:
+	for child in _skill_row.get_children():
+		_skill_row.remove_child(child)
+		child.queue_free()
+	var resolved := _resolved_build()
+	var skills := _component_values(build, resolved, "skills", "skill_id")
+	if not "basic_dodge" in skills: skills.append("basic_dodge")
+	for skill_id: String in skills:
+		var skill := _skill_registry.get_skill(skill_id)
+		if skill.is_empty(): continue
+		var cell := VBoxContainer.new()
+		cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_skill_row.add_child(cell)
+		var icon := _create_station_icon(_skill_icons.icon(skill_id))
+		icon.custom_minimum_size = Vector2(64, 64)
+		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		cell.add_child(icon)
+		var label := _field_label(String(skill.get("name", "")))
+		label.name = "SkillName_" + skill_id
+		label.add_theme_font_size_override("font_size", 18)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cell.add_child(label)
+	_build_label.text = "当前构筑数据不可用" if resolved.is_empty() else ""
+	_build_label.visible = resolved.is_empty()
+	_parameter_grid.visible = not resolved.is_empty()
+	var parameters: Dictionary = resolved.get("final_parameters", {}) if resolved.get("final_parameters", {}) is Dictionary else {}
+	for key: String in BUILD_PARAMETER_ORDER:
+		var label: Label = _parameter_values[key]
+		label.theme_type_variation = "DataLabel"
+		label.get_parent().get_parent().visible = parameters.has(key)
+		label.text = _player_readable.format_parameter_value(key, parameters.get(key)).trim_suffix(" 距离单位")
+		label.tooltip_text = _player_readable.format_parameter(key, parameters.get(key))
+	(_parameter_values.training as Label).text = _growth_conclusion(resolved)
+	(_parameter_values.training as Label).tooltip_text = "当前构筑的训练结论；换装后需要重新验证。"
+
+
 func _create_station_icon(texture: Texture2D) -> TextureRect:
 	var icon := TextureRect.new()
 	icon.custom_minimum_size = Vector2(112, 112)
@@ -349,9 +450,11 @@ func _apply_presentation() -> void:
 	var class_id := str(_profile.get("initial_class", "未建立"))
 	_profile_label.text = "当前档案：%s" % ("游侠" if class_id == "ranger" else class_id)
 	var active_build := _active_build()
-	_build_label.text = _build_summary(active_build)
+	_present_departure_build(active_build)
 	if _details_dialog != null:
 		_details_dialog.hide()
+	if _contract_details_dialog != null:
+		_contract_details_dialog.hide()
 	_campaign_nodes = _campaign_node_snapshot()
 	_populate_contract_picker()
 	_seed_edit.text = str(_previous_config.get("seed", 52969))
@@ -435,9 +538,12 @@ func _selected_contract() -> Dictionary:
 func _apply_selected_contract() -> void:
 	var node := _selected_contract()
 	if node.is_empty():
+		_objective_meta.text = ""
 		_objective_label.text = "暂时没有可执行的契约"
 		_contract_info_label.text = "先回镇里整备。"
+		_risk_label.text = ""
 		_reward_label.text = "当前没有可确认的回报记录。"
+		_first_reward_card.hide()
 		_start_button.disabled = true
 		return
 	var auto_unlocked := bool(_build_snapshot.get("auto_mode_unlocked", false))
@@ -459,11 +565,97 @@ func _apply_selected_contract() -> void:
 	if requested_index >= 0:
 		_mode_picker.select(requested_index)
 	_auto_lock_label.visible = "Auto" in allowed_modes and not auto_unlocked
-	_objective_label.text = _combat_objective(node)
-	_contract_info_label.text = _contract_route_summary(node)
-	_reward_label.text = _contract_reward_summary(node)
+	_objective_meta.text = "%d 个房间" % maxi(1, int(node.get("room_count", 1)))
+	if node.has("experience_reward"):
+		_objective_meta.text += "  ·  完成经验 %d%s" % [int(node.get("experience_reward", 0)), "（含首通）" if not bool(node.get("completed", false)) else ""]
+	_objective_label.text = _combat_objective(node).get_slice("\n", 1)
+	if bool(node.get("repeatable", false)):
+		_objective_label.text = "可能目标 · " + _objective_label.text
+	_contract_info_label.text = _contract_brief(node)
+	_risk_label.text = _route_risks(node)
+	_risk_label.visible = not _risk_label.text.is_empty()
+	_reward_label.text = _compact_tags(node.get("drop_tags", []))
+	_reward_label.tooltip_text = _tag_summary(node.get("drop_tags", []))
+	_first_reward_card.visible = not bool(node.get("completed", false)) and _tag_summary(node.get("first_reward_tags", [])) != "无"
+	_first_reward_label.text = _compact_tags(node.get("first_reward_tags", []))
+	_first_reward_label.tooltip_text = _tag_summary(node.get("first_reward_tags", []))
 	_apply_suggested_seed(node)
 	_start_button.disabled = requested_index < 0
+
+
+func _contract_brief(node: Dictionary) -> String:
+	var context := String(ROAD_CONTEXT.get(String(node.get("id", "")), "核对整备，再决定是否出发。"))
+	var lines: Array[String] = [context.get_slice("。", 0) + "。"]
+	var progress := _repeatable_progress_text(node).strip_edges()
+	if not progress.is_empty():
+		lines.append(progress.get_slice("\n", 0))
+		if "本次触发保底" in progress:
+			lines.append("本次触发定向装备保底")
+		elif "距保底还有" in progress:
+			lines.append(progress.get_slice("（", 1).trim_suffix("）"))
+	return "\n".join(lines)
+
+
+func _compact_tags(value: Variant) -> String:
+	if not value is Array or value.is_empty():
+		return "无"
+	var names: Array[String] = []
+	for tag: Variant in value:
+		var full := String(TAG_LABELS.get(String(tag), String(tag)))
+		names.append(full.get_slice("（", 0))
+	var brief := " · ".join(names.slice(0, 3))
+	if names.size() > 3:
+		brief += " · 另 %d 项" % (names.size() - 3)
+	return brief
+
+
+func _route_risks(node: Dictionary) -> String:
+	var definition := _campaign_registry.get_node(String(node.get("id", "")))
+	var rooms: Array = definition.get("room_sequence", []).duplicate()
+	if definition.get("room_template", {}) is Dictionary and not (definition.get("room_template", {}) as Dictionary).is_empty():
+		rooms.append(definition.room_template)
+	var names := {"exposed_ground_zone": "暴露地带", "moving_fireline": "移动火线", "periodic_barrier": "周期屏障", "summon_reinforcements": "召来援军"}
+	var risks: Array[String] = []
+	for room: Dictionary in rooms:
+		for field: String in ["hazard_ids", "elite_rule_ids"]:
+			for id: String in room.get(field, []):
+				var label := String(names.get(id, id))
+				if not label in risks: risks.append(label)
+	if risks.is_empty(): return ""
+	return ("可能遇到 · " if bool(node.get("repeatable", false)) else "留意 · ") + " / ".join(risks)
+
+
+func _open_contract_details() -> void:
+	if _start_transition_active: return
+	var button := find_child("ContractDetailsButton", true, false) as Button
+	if _contract_details_dialog == null:
+		_contract_details_dialog = AcceptDialog.new()
+		_contract_details_dialog.name = "ContractDetailsDialog"
+		_contract_details_dialog.title = "路况与奖励"
+		_contract_details_dialog.ok_button_text = "返回契约"
+		_contract_details_dialog.theme = theme
+		_contract_details_dialog.confirmed.connect(button.grab_focus)
+		_contract_details_dialog.canceled.connect(button.grab_focus)
+		add_child(_contract_details_dialog)
+		var scroll := ScrollContainer.new()
+		scroll.name = "ReadingScroll"
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		scroll.offset_left = 24
+		scroll.offset_top = 20
+		scroll.offset_right = -24
+		scroll.offset_bottom = -64
+		_contract_details_dialog.add_child(scroll)
+		var copy := _field_label("")
+		copy.name = "RouteAndRewards"
+		copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.add_child(copy)
+	var node := _selected_contract()
+	var copy := _contract_details_dialog.find_child("RouteAndRewards", true, false) as Label
+	copy.text = "%s\n\n%s\n%s\n\n%s" % [_contract_route_summary(node), _combat_objective(node), _route_risks(node), _contract_reward_summary(node)]
+	var available := get_viewport_rect().size
+	_contract_details_dialog.popup_centered(Vector2i(minf(780, available.x - 80), minf(540, available.y - 80)))
+	_contract_details_dialog.get_ok_button().grab_focus()
 
 
 ## Reads authored combat objectives. Repeatable routes show their possible tasks,
@@ -805,28 +997,6 @@ func _on_contract_selected(_index: int) -> void:
 func _active_build() -> Dictionary:
 	var nested: Variant = _build_snapshot.get("active_build", _build_snapshot)
 	return nested as Dictionary if nested is Dictionary else {}
-
-
-## The contract page only renders the authoritative resolved Build. It never
-## consumes available_builds or legacy preset presentations, and it never
-## recomputes a Build. Growth classification is gated behind verification.
-func _build_summary(build: Dictionary) -> String:
-	var resolved := _resolved_build()
-	var skills: Array[String] = []
-	for value: Variant in _component_values(build, resolved, "skills", "skill_id"):
-		var skill := _skill_registry.get_skill(String(value))
-		if not skill.is_empty():
-			skills.append(String(skill.get("name", "技能")))
-	var lines: Array[String] = ["已装技能：%s" % ("、".join(skills) if not skills.is_empty() else "无"), "基础动作：闪避"]
-	if resolved.is_empty():
-		lines.append("当前构筑数据不可用")
-	else:
-		var value: Variant = resolved.get("final_parameters", {})
-		var parameters: Dictionary = value if value is Dictionary else {}
-		for key: String in BUILD_PARAMETER_ORDER:
-			if parameters.has(key):
-				lines.append(_player_readable.format_parameter(key, parameters[key]))
-	return "\n".join(lines)
 
 
 func _open_build_details() -> void:

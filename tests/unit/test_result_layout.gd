@@ -70,6 +70,16 @@ func _test_mixed_rewards() -> void:
 	_expect(review != null and body.get_global_rect().encloses(review.get_global_rect()), "mixed equipment comparison is clipped")
 	var title: Label = screen.find_child("ProxyComponentName",true,false)
 	_expect(title.tooltip_text.contains("2 个候选") and title.tooltip_text.contains("当前代理构筑不变"), "compact component lost protocol/state")
+	var compact_summary: Label = screen.find_child("RewardSummary",true,false) as Label
+	_expect(compact_summary != null and compact_summary.text.contains("新装备 1 件")
+		and compact_summary.text.contains("代理组件 1 件")
+		and compact_summary.get_line_count() <= 2,
+		"mixed rewards did not collapse into a count-first summary")
+	var protocol: Label = screen.find_child("ProxyComponentProtocol",true,false) as Label
+	_expect(protocol != null and not protocol.is_visible_in_tree(), "mixed proxy protocol expanded by default")
+	var next_step: Label = screen.find_child("NextStepLabel",true,false) as Label
+	_expect(next_step != null and next_step.visible and next_step.text.contains("先比较新装备"),
+		"mixed settlement lost its pinned next-step decision")
 	_expect((screen.find_child("ResultSubtitle",true,false) as Label).text.contains("前期旅程完成"), "first-clear guidance not visible")
 	_close(host, screen)
 

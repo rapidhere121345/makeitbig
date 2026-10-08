@@ -1,8 +1,9 @@
 class_name BaseHubScreen
 extends Control
-## Walkable town with a compact top band and five facility wayfinding buttons.
-## Current objectives stay visible; narrative and settlement receipts open on
-## demand. All routes, lock states, movement and conversations use existing APIs.
+## Walkable town with a compact top band and facility labels attached to the
+## world landmarks. Current objectives stay visible; narrative and settlement
+## receipts open on demand. Routes, lock states, movement and conversations use
+## the existing APIs.
 
 signal contract_requested
 signal character_requested
@@ -13,7 +14,6 @@ signal feature_requested(feature_id: String)
 
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
-const HubNavigationBarScript = preload("res://src/presentation/hub_navigation_bar.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
 const TALK_RADIUS := 28.0
@@ -39,10 +39,12 @@ const HERO_SPEED := 96.0
 const HERO_ENTRY_FOOT_ANCHOR := Vector2(640.0, 520.0)
 const HEADER_RECT := Rect2(16.0, 12.0, 1248.0, 72.0)
 const INFO_DETAIL_RECT := Rect2(24.0, 96.0, 740.0, 420.0)
-const NAVIGATION_RECT := Rect2(16.0, 660.0, 1248.0, 44.0)
-## The proximity prompt is a minimal badge beside the avatar, resolved from the
-## live hero cell: under the feet while the world leaves it room, above the head
-## or against the navigation band only when it does not.
+const LANDMARK_FEATURE_IDS: Array[String] = ["contract", "loadout", "forge", "training", "proxy"]
+const LANDMARK_SIZE := Vector2(280.0, 72.0)
+const LANDMARK_GAP := 8.0
+const LANDMARK_SAFE_RECT := Rect2(12.0, 92.0, 1256.0, 616.0)
+## The proximity prompt is a minimal action badge beside the avatar. Facility
+## identity and state live on its landmark, so the badge never repeats them.
 const PROMPT_HEIGHT := 34.0
 const PROMPT_MIN_WIDTH := 200.0
 const PROMPT_MAX_WIDTH := 400.0
@@ -52,7 +54,7 @@ const PROMPT_CLEARANCE := 4.0
 ## The themed 18px floor of ShellTheme.MIN_FONT_SIZE holds for every relocated
 ## row; the live proximity badge keeps the 20px body step.
 const PROMPT_FONT_SIZE := 22
-const HELP_COPY_TEXT := "WASD / 方向键移动 · 点击设施名指路 · 靠近后 E 交互\n成长 C · 见闻 J · Tab 导航 · Esc 离开导航 · F1 设置"
+const HELP_COPY_TEXT := "WASD / 方向键移动 · 点击地标指路 · 靠近后 E 交互\n成长 C · 见闻 J · Tab 地标 · Esc 离开地标 · F1 设置"
 const DETAIL_TITLE_TEXT := "镇中近况"
 const DETAIL_STATUS_EMPTY_TEXT := "本屏暂无新的状态提示。"
 ## Legacy design-space anchors of the pre-hamlet hub, kept for the hub entries
@@ -123,7 +125,6 @@ var _details_expanded := false
 var _progress_label: Label
 var _design_canvas: Control
 var _view: HamletConceptViewScript
-var _nav_bar: HubNavigationBarScript
 var _nav_states: Array = []
 var _unlock_reasons: Dictionary = {}
 var _dialogue: TownDialogueScript
@@ -134,96 +135,17 @@ var _detail_objective_label: Label
 var _detail_story_label: Label
 var _header: PanelContainer
 var _destination_id := "contract"
-var _wayfinder: PanelContainer
-var _wayfinder_title: Label
-var _wayfinder_note: Label
+var _landmarks: Dictionary = {}
+var _landmark_styles: Dictionary = {}
 
 
-class TownToolbar extends HubNavigationBarScript:
-	func setup() -> void:
-		if _layers == null:
-			_build_layout()
+class TownLandmark extends Button:
+	var feature_id := ""
 
-	func _build_layout() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		position = BaseHubScreen.NAVIGATION_RECT.position
-		size = BaseHubScreen.NAVIGATION_RECT.size
-		var strip := Control.new()
-		strip.name = "BaseNavStrip"
-		strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(strip)
-		_layers = HBoxContainer.new()
-		_layers.name = "BaseNavCards"
-		_layers.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_layers.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_layers.add_theme_constant_override("separation", 4)
-		add_child(_layers)
-		for id: String in FEATURE_IDS:
-			var card := Button.new()
-			card.name = card_node_name(id)
-			card.toggle_mode = true
-			card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			card.custom_minimum_size.y = 44
-			card.mouse_filter = Control.MOUSE_FILTER_STOP
-			card.set_meta("feature_id", id)
-			card.add_theme_stylebox_override("normal", _material_button("button"))
-			card.add_theme_stylebox_override("hover", _material_button("hover"))
-			card.add_theme_stylebox_override("pressed", _material_button("selected"))
-			var focus := _button_style(Color.TRANSPARENT, ShellThemeScript.BONE)
-			focus.set_border_width_all(1)
-			card.add_theme_stylebox_override("focus", focus)
-			card.pressed.connect(_on_card_activated.bind(id))
-			card.gui_input.connect(_on_card_gui_input.bind(id))
-			_layers.add_child(card)
-			var copy := HBoxContainer.new()
-			copy.name = "Copy"
-			copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			card.add_child(copy)
-			copy.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-			copy.offset_left = 10
-			copy.offset_right = -10
-			copy.add_theme_constant_override("separation", 8)
-			for field: String in ["Title", "Status"]:
-				var label := Label.new()
-				label.name = field
-				label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-				label.clip_text = true
-				label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-				label.add_theme_font_size_override("font_size", 22 if field == "Title" else 18)
-				if field == "Status": label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-				copy.add_child(label)
-			_cards[id] = card
-		_wire_focus_neighbours()
 
-	func apply_states(states: Array) -> void:
-		super.apply_states(states)
-		for card: Button in _cards.values():
-			var title := card.get_node("Copy/Title") as Label
-			title.custom_minimum_size.x = ceilf(title.get_theme_font("font").get_string_size(title.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x)
-		# Keep layout synchronous for entry/proximity updates as well as rendering.
-		_layers.notification(Container.NOTIFICATION_SORT_CHILDREN)
-		for card: Button in _cards.values():
-			(card.get_node("Copy") as Container).notification(Container.NOTIFICATION_SORT_CHILDREN)
-
-	func _button_style(fill: Color, edge: Color) -> StyleBoxFlat:
-		var style := StyleBoxFlat.new()
-		style.bg_color = fill
-		style.border_color = edge
-		style.border_width_bottom = 1
-		style.content_margin_left = 10
-		style.content_margin_right = 10
-		style.content_margin_top = 2
-		style.content_margin_bottom = 2
-		return style
-
-	func _material_button(kind: String) -> StyleBoxTexture:
-		var style := ShellThemeScript.panel_style(kind)
-		style.content_margin_left = 10
-		style.content_margin_right = 10
-		style.content_margin_top = 2
-		style.content_margin_bottom = 2
-		return style
+	func _init(landmark_feature_id: String) -> void:
+		feature_id = landmark_feature_id
+		name = "TownLandmark_" + feature_id
 
 
 func _ready() -> void:
@@ -243,7 +165,10 @@ func _navigation_has_focus() -> bool:
 	if viewport == null:
 		return false
 	var owner := viewport.gui_get_focus_owner()
-	return _nav_bar != null and owner != null and _nav_bar.is_ancestor_of(owner)
+	for landmark: Control in _landmarks.values():
+		if owner != null and (owner == landmark or landmark.is_ancestor_of(owner)):
+			return true
+	return false
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -406,7 +331,7 @@ func talk_to_resident(resident_id: String) -> bool:
 		_nearby_panel.hide()
 		_prompt_rect = Rect2()
 		_update_resident_markers()
-		_update_wayfinder()
+		_update_landmarks()
 	return opened
 
 
@@ -467,7 +392,7 @@ func _update_resident_markers() -> void:
 		var point := _design_canvas.get_global_transform_with_canvas().affine_inverse() * global_point
 		marker.position = (point - Vector2(17, 28)).floor()
 		marker.size = Vector2(34, 28)
-		marker.visible = marker.position.y > HEADER_RECT.end.y and marker.position.y + 28 < NAVIGATION_RECT.position.y and marker.position.x > 12 and marker.position.x + 34 < 1268
+		marker.visible = marker.position.y > HEADER_RECT.end.y and marker.position.y + 28 < DESIGN_SIZE.y and marker.position.x > 12 and marker.position.x + 34 < DESIGN_SIZE.x - 12
 		marker.modulate.a = 0.55 if bool(_resident_conversations[id].get("is_read", false)) else 1.0
 
 
@@ -570,7 +495,7 @@ func _build_ui() -> void:
 
 	_build_header()
 	_build_feedback()
-	_build_wayfinder()
+	_build_landmarks()
 	_build_town_dialogue()
 	_unlock_reasons = _derive_unlock_reasons()
 	_update_progress_markers(_as_dictionary(_profile.get("progression", {})))
@@ -688,32 +613,42 @@ func _build_feedback() -> void:
 	_detail_panel.hide()
 	scroll.resized.connect(func(): _reflow_information_content.call_deferred())
 	scroll.get_v_scroll_bar().visibility_changed.connect(func(): _reflow_information_content.call_deferred())
-	_nav_bar = TownToolbar.new()
-	_nav_bar.name = "BaseNavigation"
-	_nav_bar.card_activated.connect(navigation_card_activated)
-	_design_canvas.add_child(_nav_bar)
-	_nav_bar.setup()
-
-
-func _build_wayfinder() -> void:
-	_wayfinder = PanelContainer.new()
-	_wayfinder.name = "TownWayfinder"
-	_wayfinder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_place_control(_wayfinder, Rect2(900, 98, 356, 76))
-	var wayfinder_style := ShellThemeScript.crafted_panel()
-	wayfinder_style.content_margin_top = 6
-	wayfinder_style.content_margin_bottom = 6
-	_wayfinder.add_theme_stylebox_override("panel", wayfinder_style)
-	_design_canvas.add_child(_wayfinder)
-	var body := VBoxContainer.new()
-	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body.add_theme_constant_override("separation", 2)
-	_wayfinder.add_child(body)
-	_wayfinder_title = _copy_label("", "TownDestination", 22)
-	_wayfinder_title.add_theme_color_override("font_color", ShellThemeScript.AMBER)
-	body.add_child(_wayfinder_title)
-	_wayfinder_note = _copy_label("", "TownDirections", 18)
-	body.add_child(_wayfinder_note)
+func _build_landmarks() -> void:
+	for feature_id: String in LANDMARK_FEATURE_IDS:
+		var landmark := TownLandmark.new(feature_id)
+		landmark.toggle_mode = false
+		landmark.focus_mode = Control.FOCUS_ALL
+		landmark.mouse_filter = Control.MOUSE_FILTER_STOP
+		landmark.clip_text = false
+		landmark.pressed.connect(navigation_card_activated.bind(feature_id))
+		landmark.gui_input.connect(_on_landmark_gui_input.bind(feature_id))
+		landmark.add_theme_stylebox_override("normal", _landmark_style(false, false))
+		landmark.add_theme_stylebox_override("hover", _landmark_style(true, false))
+		landmark.add_theme_stylebox_override("pressed", _landmark_style(true, true))
+		landmark.add_theme_stylebox_override("focus", _landmark_focus_style())
+		_design_canvas.add_child(landmark)
+		var copy := Control.new()
+		copy.name = "Copy"
+		copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		copy.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		copy.offset_left = 10.0
+		copy.offset_top = 4.0
+		copy.offset_right = -10.0
+		copy.offset_bottom = -4.0
+		landmark.add_child(copy)
+		var title := _copy_label("", "Title", 22)
+		title.clip_text = true
+		title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		title.position = Vector2.ZERO
+		title.size = Vector2(LANDMARK_SIZE.x - 20.0, 32.0)
+		copy.add_child(title)
+		var status := _copy_label("", "Status", 18)
+		status.clip_text = true
+		status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		status.position = Vector2(0.0, 36.0)
+		status.size = Vector2(LANDMARK_SIZE.x - 20.0, 28.0)
+		copy.add_child(status)
+		_landmarks[feature_id] = landmark
 	_view.set_destination(_destination_id)
 
 
@@ -727,15 +662,137 @@ func wayfinding_report() -> Dictionary:
 		"direction": arrows[posmod(roundi(delta.angle() * 4.0 / PI), 8)]}
 
 
-func _update_wayfinder() -> void:
-	if _wayfinder == null: return
-	var report := wayfinding_report()
-	_wayfinder.visible = not report.is_empty() and not is_dialogue_open() and not _details_expanded
-	if not _wayfinder.visible: return
-	_wayfinder_title.text = "%s %s" % ["◆" if report.arrived else report.direction, _nav_title(_destination_id)]
-	var note := "已到达 · 点击设施或按 E" if report.arrived else "沿道路前往 · WASD 移动"
-	if report.arrived and _unlock_reasons.has(_destination_id): note = String(_unlock_reasons[_destination_id])
-	_wayfinder_note.text = note
+func _on_landmark_gui_input(event: InputEvent, feature_id: String) -> void:
+	if not event is InputEventKey:
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	var key := key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
+	if key != KEY_E:
+		return
+	var landmark := get_landmark(feature_id)
+	if landmark == null:
+		return
+	landmark.accept_event()
+	navigation_card_activated(feature_id)
+
+
+func _landmark_style(hovered: bool, nearby: bool) -> StyleBoxFlat:
+	var key := "%s/%s" % [hovered, nearby]
+	if _landmark_styles.has(key):
+		return _landmark_styles[key]
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("111820d9" if nearby else "111820b8")
+	var amber := ShellThemeScript.AMBER
+	var grey := COOL_GREY
+	if hovered or nearby:
+		style.border_color = Color(amber.r, amber.g, amber.b, 0.95 if nearby else 0.72)
+	else:
+		style.border_color = Color(grey.r, grey.g, grey.b, 0.38)
+	style.border_width_top = 1 if hovered or nearby else 0
+	style.border_width_bottom = 1
+	style.set_corner_radius_all(0)
+	style.content_margin_left = 10.0
+	style.content_margin_top = 5.0
+	style.content_margin_right = 10.0
+	style.content_margin_bottom = 5.0
+	_landmark_styles[key] = style
+	return style
+
+
+func _landmark_focus_style() -> StyleBoxFlat:
+	var style := _landmark_style(false, true).duplicate() as StyleBoxFlat
+	var bone := ShellThemeScript.BONE
+	style.border_color = Color(bone.r, bone.g, bone.b, 0.9)
+	style.border_width_left = 1
+	style.border_width_right = 1
+	return style
+
+
+func _landmark_world_rect(feature_id: String) -> Rect2:
+	var entry := _feature_entry(feature_id)
+	if entry.is_empty():
+		return Rect2()
+	var feet: Vector2 = entry.get("feet", Vector2.ZERO)
+	var building := _view._drawn_rect(entry)
+	var building_top := feet.y - 112.0
+	if building.size != Vector2.ZERO:
+		building_top = building.position.y
+	var size := LANDMARK_SIZE * DESIGN_TO_WORLD
+	var position := Vector2(feet.x - size.x * 0.5, building_top - LANDMARK_GAP * DESIGN_TO_WORLD - size.y)
+	return Rect2(position, size)
+
+
+func _landmark_design_rect(feature_id: String) -> Rect2:
+	var world_rect := _landmark_world_rect(feature_id)
+	if world_rect == Rect2() or _view == null or _design_canvas == null:
+		return Rect2()
+	var screen_point := _view.design_point_for_world(world_rect.position, _design_canvas.position, _design_canvas.scale)
+	var canvas_point := _design_canvas.get_global_transform_with_canvas().affine_inverse() * screen_point
+	return Rect2(canvas_point, LANDMARK_SIZE)
+
+
+func get_landmark(feature_id: String) -> Button:
+	return _landmarks.get(feature_id, null) as Button
+
+
+func _update_landmarks() -> void:
+	if _view == null or _design_canvas == null:
+		return
+	var camera := Rect2(_view.camera_world_offset(), Vector2(_view.world_viewport.size))
+	var nearby_id := _view.nearby_feature_id()
+	_nav_states = navigation_state()
+	for state: Dictionary in _nav_states:
+		var feature_id := String(state.id)
+		var landmark := get_landmark(feature_id)
+		if landmark == null:
+			continue
+		var world_rect := _landmark_world_rect(feature_id)
+		var design_rect := _landmark_design_rect(feature_id)
+		landmark.visible = camera.encloses(world_rect) and LANDMARK_SAFE_RECT.encloses(design_rect) and not is_dialogue_open() and not _details_expanded
+		_place_control(landmark, Rect2(design_rect.position.floor(), LANDMARK_SIZE))
+		var title := landmark.get_node("Copy/Title") as Label
+		var status := landmark.get_node("Copy/Status") as Label
+		var nearby := feature_id == nearby_id
+		var selected := feature_id == _destination_id
+		title.text = String(state.get("title", feature_id))
+		status.text = String(state.get("status", ""))
+		title.add_theme_color_override("font_color", ShellThemeScript.BONE if nearby or selected else COOL_GREY)
+		status.add_theme_color_override("font_color", ShellThemeScript.AMBER if nearby or selected else COOL_GREY)
+		landmark.tooltip_text = "%s\n%s\n%s\n点击指路；走近后点击或按 E 进入" % [
+			title.text, status.text, String(state.get("detail", "")),
+		]
+		landmark.add_theme_stylebox_override("normal", _landmark_style(false, nearby))
+		landmark.add_theme_stylebox_override("hover", _landmark_style(true, nearby))
+		landmark.add_theme_stylebox_override("pressed", _landmark_style(true, nearby))
+		if not landmark.visible:
+			if landmark.has_focus():
+				landmark.release_focus()
+			continue
+	_wire_landmark_focus_neighbours()
+
+
+func _wire_landmark_focus_neighbours() -> void:
+	var visible_ids: Array[String] = []
+	for feature_id: String in LANDMARK_FEATURE_IDS:
+		var landmark := get_landmark(feature_id)
+		if landmark != null and landmark.is_visible():
+			visible_ids.append(feature_id)
+	for index in visible_ids.size():
+		var landmark := get_landmark(visible_ids[index])
+		landmark.focus_neighbor_right = NodePath("")
+		landmark.focus_neighbor_left = NodePath("")
+		landmark.focus_next = NodePath("")
+		landmark.focus_previous = NodePath("")
+		var right := get_landmark(visible_ids[posmod(index + 1, visible_ids.size())])
+		var left := get_landmark(visible_ids[posmod(index - 1, visible_ids.size())])
+		if landmark == null or right == null or left == null or visible_ids.size() < 2:
+			continue
+		landmark.focus_neighbor_right = landmark.get_path_to(right)
+		landmark.focus_next = landmark.focus_neighbor_right
+		landmark.focus_neighbor_left = landmark.get_path_to(left)
+		landmark.focus_previous = landmark.focus_neighbor_left
 
 
 func _copy_label(text: String, node_name: String, font_size: int) -> Label:
@@ -867,23 +924,19 @@ func _update_nearby_feature() -> void:
 	## placed beside the feet, never as a fixed band across the bottom of the frame.
 	if _nearby_panel == null or _view == null:
 		return
-	_update_wayfinder()
+	_update_navigation_state()
 	if _details_expanded or is_dialogue_open():
 		_nearby_panel.hide()
 		_prompt_rect = Rect2()
 		return
 	var feature_id := _view.nearby_feature_id()
 	_update_resident_markers()
-	_update_navigation_state()
 	var resident_id := nearby_resident_id()
 	if feature_id.is_empty() and resident_id.is_empty():
 		_nearby_panel.visible = false
 		_prompt_rect = Rect2()
 		return
-	var label := String(_feature_entry(feature_id).get("label", ""))
-	if label.is_empty():
-		label = feature_id
-	_nearby_label.text = "[E / Space] %s" % label
+	_nearby_label.text = "[E / Space] 打开"
 	if not resident_id.is_empty():
 		_nearby_label.text = "[E] 与%s交谈" % String(_resident_conversations[resident_id].get("npc_name", ""))
 	_nearby_label.tooltip_text = _nearby_label.text
@@ -982,18 +1035,17 @@ func _prompt_width() -> float:
 
 
 func _resolve_prompt_rect() -> Rect2:
-	## Under the feet while the world leaves room, above the head when it does not,
-	## and against the navigation band as the last resort: never inside the
-	## navigation itself, never over the avatar's own cell, never off the canvas.
+	## Under the feet while the world leaves room and above the head when it does
+	## not: never over the avatar's own cell and never off the canvas.
 	var foot := _hero_foot_design_point()
 	var cell := _hero_cell_design_rect()
-	var nav_top := NAVIGATION_RECT.position.y
+	var bottom_limit := DESIGN_SIZE.y - PROMPT_CLEARANCE
 	var width := _prompt_width()
 	var top := cell.end.y + PROMPT_GAP
-	if top + PROMPT_HEIGHT > nav_top - PROMPT_CLEARANCE:
+	if top + PROMPT_HEIGHT > bottom_limit:
 		var above := cell.position.y - PROMPT_GAP - PROMPT_HEIGHT
-		top = above if above >= HEADER_RECT.end.y + PROMPT_CLEARANCE else nav_top - PROMPT_CLEARANCE - PROMPT_HEIGHT
-	top = clampf(top, HEADER_RECT.end.y + PROMPT_CLEARANCE, nav_top - PROMPT_CLEARANCE - PROMPT_HEIGHT)
+		top = above if above >= HEADER_RECT.end.y + PROMPT_CLEARANCE else bottom_limit - PROMPT_HEIGHT
+	top = clampf(top, HEADER_RECT.end.y + PROMPT_CLEARANCE, bottom_limit - PROMPT_HEIGHT)
 	var left := clampf(foot.x - width * 0.5, PROMPT_MARGIN, DESIGN_SIZE.x - PROMPT_MARGIN - width)
 	## Snapped to the pixel grid like every other hub rectangle: the world is drawn
 	## at whole-number scale, so a half-pixel badge would soften its own edge.
@@ -1006,8 +1058,7 @@ func navigation_state() -> Array:
 	var progression := _as_dictionary(_profile.get("progression", {}))
 	var earned_rewards := _as_array(_campaign_snapshot.get("earned_reward_tags", []))
 	var states: Array = []
-	for index in HubNavigationBarScript.FEATURE_IDS.size():
-		var feature_id: String = HubNavigationBarScript.FEATURE_IDS[index]
+	for feature_id: String in LANDMARK_FEATURE_IDS:
 		states.append({
 			"id": feature_id,
 			"title": _nav_title(feature_id),
@@ -1028,17 +1079,17 @@ func get_navigation_state(feature_id: String) -> Dictionary:
 
 
 func get_navigation_bar():
-	## Test and main-thread access to the persistent bar without walking the tree.
-	return _nav_bar
+	## Legacy query method: the bottom bar was removed rather than hidden.
+	return null
 
 
 func navigation_card_activated(feature_id: String) -> bool:
 	## A far click is a request for directions, not a remote facility opening.
-	if is_dialogue_open() or _details_expanded or not HubNavigationBarScript.FEATURE_IDS.has(feature_id):
+	if is_dialogue_open() or _details_expanded or not LANDMARK_FEATURE_IDS.has(feature_id):
 		return false
 	_destination_id = feature_id
 	_view.set_destination(feature_id)
-	_update_wayfinder()
+	_update_landmarks()
 	if _navigation_has_focus(): get_viewport().gui_get_focus_owner().release_focus()
 	var entry := _view.entry_for(feature_id)
 	if not entry.is_empty() and _view.hero_world_position().distance_to(entry.feet) <= float(entry.radius):
@@ -1047,14 +1098,7 @@ func navigation_card_activated(feature_id: String) -> bool:
 
 
 func _update_navigation_state() -> void:
-	if _nav_bar == null:
-		return
-	_nav_states = navigation_state()
-	_nav_bar.apply_states(_nav_states)
-	_nav_bar.set_current_feature(_view.nearby_feature_id() if _view != null else "")
-	for feature_id: String in _nav_bar.cards():
-		var card: Button = _nav_bar.cards()[feature_id]
-		card.tooltip_text += "\n点击指路；走近后点击或按 E 进入"
+	_update_landmarks()
 
 
 func _update_progress_markers(progression: Dictionary) -> void:

@@ -32,11 +32,11 @@ class MaterialBackdrop extends Control:
 			var extent := scenery.get_size() * maxf(size.x / scenery.get_width(), size.y / scenery.get_height())
 			draw_texture_rect(scenery, Rect2((size - extent) * 0.5, extent), false, Color(0.30, 0.34, 0.40, 1))
 
-## Packaged Simplified-Chinese UI font: the complete "Noto Sans CJK SC" Regular
-## face, repacked from the locally installed Debian fonts-noto-cjk collection.
-## Provenance, licence and the regeneration command: art/fonts/PROVENANCE.md and
-## tools/art_pipeline/repack_ui_font.py.
-const FONT_PATH := "res://art/fonts/NotoSansCJKsc-Regular.mib-repack.otf"
+## Full Simplified-Chinese faces, bundled with their upstream OFL licences.
+## Serif carries the town's book/inscription character; medium sans keeps
+## controls and numerical comparisons easy to scan. See art/fonts/PROVENANCE.md.
+const FONT_PATH := "res://art/fonts/NotoSerifCJKsc-Medium.otf"
+const DATA_FONT_PATH := "res://art/fonts/NotoSansCJKsc-Medium.otf"
 
 ## The body step stays comfortably readable in a 1600x900 desktop window. Smaller
 ## 18px copy is reserved for secondary notes; ordinary labels no longer use it to
@@ -65,6 +65,7 @@ const ANOMALY := Color("7450a6")
 
 static var _ui_font: FontFile = null
 static var _ui_font_checked := false
+static var _data_font: FontFile
 
 
 ## The packaged UI font, or null when the project has not imported it yet.
@@ -83,6 +84,12 @@ static func ui_font() -> FontFile:
 	return _ui_font
 
 
+static func data_font() -> FontFile:
+	if _data_font == null:
+		_data_font = load(DATA_FONT_PATH) as FontFile
+	return _data_font
+
+
 static func create() -> Theme:
 	var theme := Theme.new()
 	theme.default_font = ui_font()
@@ -90,9 +97,14 @@ static func create() -> Theme:
 
 	theme.set_color("font_color", "Label", BONE)
 	theme.set_color("font_shadow_color", "Label", INK)
-	theme.set_constant("shadow_offset_x", "Label", 1)
-	theme.set_constant("shadow_offset_y", "Label", 2)
+	theme.set_constant("shadow_offset_x", "Label", 0)
+	theme.set_constant("shadow_offset_y", "Label", 1)
+	theme.set_constant("line_spacing", "Label", 4)
 	theme.set_font_size("font_size", "Label", BODY_FONT_SIZE)
+	theme.set_type_variation("DataLabel", "Label")
+	theme.set_font("font", "DataLabel", data_font())
+	for kind: String in ["Button", "OptionButton", "LineEdit", "PopupMenu", "TabBar", "Tree", "ItemList"]:
+		theme.set_font("font", kind, data_font())
 
 	theme.set_color("font_color", "Button", BONE)
 	theme.set_color("font_hover_color", "Button", Color("fff1ce"))
@@ -122,6 +134,7 @@ static func create() -> Theme:
 	theme.set_stylebox("panel", "AcceptDialog", panel_style())
 	theme.set_color("font_color", "RichTextLabel", BONE)
 	theme.set_color("default_color", "RichTextLabel", BONE)
+	theme.set_constant("line_separation", "RichTextLabel", 4)
 	theme.set_stylebox("background", "ProgressBar", _box(INK, Color("524c3e"), 1, 0))
 	theme.set_stylebox("fill", "ProgressBar", _box(Color("866c43"), Color("c4a76a"), 1, 0))
 	return theme

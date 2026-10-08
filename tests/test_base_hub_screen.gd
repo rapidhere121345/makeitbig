@@ -1,13 +1,10 @@
 extends RefCounted
-## Focused regression for the hamlet hub screen: the navigation the game
-## already relied on (movement, clamping, proximity activation, click, marker
-## copy) plus the visual contract of the live renderer (feet-anchored sprite
-## layers, ground field, split-row upper-body fade, snapped follow camera).
+## Focused regression for the hamlet hub screen: movement, collision, proximity
+## activation, landmark routing and marker copy plus the visual contract of the
+## live renderer (feet-anchored sprite layers, split-row fade, snapped camera).
 
 const BaseHubScreenScript = preload("res://src/presentation/base_hub_screen.gd")
 const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
-const HubNavigationBarScript = preload("res://src/presentation/hub_navigation_bar.gd")
-const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const ApplicationStateScript = preload("res://src/game/application_state.gd")
 
 ## The layout's five interaction routes. Immortality keeps its legacy API but has
@@ -58,7 +55,7 @@ func run() -> Array[String]:
 	_test_marker_copy(hub, failures)
 	_test_dynamic_progression(hub, failures)
 	_test_next_objective(hub, failures)
-	_test_nav_cards_follow_layout(hub, failures)
+	_test_landmarks_follow_world(hub, failures)
 	_test_nav_state_matches_cards(hub, failures)
 	_test_nav_activation_routing(hub, failures)
 	_test_nav_locked_copy(hub, failures)
@@ -71,7 +68,6 @@ func run() -> Array[String]:
 	_test_growth_story_and_settings(hub, failures)
 	_test_resident_prompt(hub, failures)
 	_test_nav_keyboard_access(hub, failures)
-	_test_nav_icon_slots_pending(hub, failures)
 	_test_world_display_scale(hub, failures)
 	_test_render_contract(hub, failures)
 	_test_playable_bounds(hub, failures)
@@ -227,7 +223,7 @@ func _test_bounded_live_camera(hub, failures: Array[String]) -> void:
 		var point: Vector2 = view.entry_for(id).feet
 		view.teleport_hero(point)
 		var screen: Vector2 = view.design_point_for_world(point, Vector2.ZERO, Vector2.ONE)
-		_expect(screen.y > hub._header.get_global_rect().end.y and screen.y < _nav_of(hub).get_global_rect().position.y, "base hub: authored approach is hidden by UI: " + id, failures)
+		_expect(screen.y > hub._header.get_global_rect().end.y and screen.y < 720.0, "base hub: authored approach is hidden by UI: " + id, failures)
 
 
 
@@ -522,18 +518,6 @@ func _test_framing_contract(hub, failures: Array[String]) -> void:
 			"base hub: malformed screen anchor must fail visibly and use the safe centre", failures)
 
 
-func _nav_of(hub):
-	return hub.get_navigation_bar()
-
-
-func _nav_card(hub, feature_id: String):
-	var nav = _nav_of(hub)
-	if nav == null:
-		return null
-	var cards: Dictionary = nav.cards()
-	return cards.get(feature_id, null)
-
-
 func _hero_foot_design_point(hub) -> Vector2:
 	## Where the entry foot point of the avatar actually lands on the 1280x720
 	## design canvas with the live camera and world scale of this screen.
@@ -587,13 +571,10 @@ func _point_rect_distance(rect: Rect2, point: Vector2) -> float:
 ## the published art instead of a hand-copied rectangle table.
 func _test_hub_info_keeps_world_visible(hub, failures: Array[String]) -> void:
 	var header: Rect2 = hub._header.get_global_rect()
-	var nav: Rect2 = _nav_of(hub).get_global_rect()
 	var canvas := Rect2(hub._design_canvas.global_position, hub._design_canvas.size * hub._design_canvas.scale)
-	_expect(canvas.encloses(header) and canvas.encloses(nav), "base hub: persistent UI left the town canvas", failures)
-	_expect(hub._header.size.y <= 80 and _nav_of(hub).size.y <= 48,
-		"base hub: persistent UI grew back into narrative rows/large facility cards", failures)
-	_expect((_nav_of(hub).position.y - hub._header.position.y - hub._header.size.y) / 720.0 >= 0.78,
-		"base hub: the environment no longer owns most of the town frame", failures)
+	_expect(canvas.encloses(header), "base hub: persistent UI left the town canvas", failures)
+	_expect(hub._header.size.y <= 80,
+		"base hub: the persistent header grew back into a narrative row", failures)
 	_expect(hub._header.is_ancestor_of(hub._objective_label) and hub._objective_label.is_visible_in_tree(),
 		"base hub: the current objective left the top band", failures)
 	_expect(hub._objective_label.get_theme_font_size("font_size") == 22
@@ -609,17 +590,13 @@ func _test_hub_info_keeps_world_visible(hub, failures: Array[String]) -> void:
 	_expect(hub.find_child("TownStoryCue", true, false) == null,
 		"base hub: a remote resident/title is still selected for a persistent narrative strip", failures)
 	var entry_foot := BaseHubScreenScript.HERO_ENTRY_FOOT_ANCHOR
-	_expect(not BaseHubScreenScript.HEADER_RECT.has_point(entry_foot)
-		and not BaseHubScreenScript.NAVIGATION_RECT.has_point(entry_foot), "base hub: persistent UI covers the entry foot", failures)
+	_expect(not BaseHubScreenScript.HEADER_RECT.has_point(entry_foot), "base hub: persistent UI covers the entry foot", failures)
 	_expect(hub.get_prompt_rect() == Rect2() and not hub._nearby_panel.visible,
 		"base hub: proximity prompt is visible before approaching a station", failures)
 
 
 func _test_hub_prompt_stays_minimal(hub, failures: Array[String]) -> void:
 	var view = _view_of(hub)
-	var nav = _nav_of(hub)
-	if nav == null:
-		return
 	for feature_id: String in FEATURE_IDS:
 		hub.set_hero_position(hub.get_world_feature_position(feature_id))
 		_expect(hub.get_nearby_feature_id() == feature_id, "base hub: standing on %s did not select the stand for its prompt" % feature_id, failures)
@@ -627,9 +604,9 @@ func _test_hub_prompt_stays_minimal(hub, failures: Array[String]) -> void:
 		_expect(prompt.size.x > 0.0 and prompt.size.y > 0.0, "base hub: %s has no proximity prompt" % feature_id, failures)
 		if prompt.size.x <= 0.0 or prompt.size.y <= 0.0:
 			continue
-		_expect(hub._nearby_label.text.contains(String(view.entry_for(feature_id).get("label", ""))), "base hub: the %s prompt does not name the stand" % feature_id, failures)
+		_expect(hub._nearby_label.text == "[E / Space] 打开", "base hub: the %s prompt repeats landmark identity/status" % feature_id, failures)
 		_expect(prompt.position.x >= 0.0 and prompt.end.x <= 1280.0, "base hub: the %s prompt left the canvas horizontally" % feature_id, failures)
-		_expect(prompt.end.y <= BaseHubScreenScript.NAVIGATION_RECT.position.y, "base hub: the %s prompt reached into the navigation band" % feature_id, failures)
+		_expect(prompt.end.y <= BaseHubScreenScript.DESIGN_SIZE.y, "base hub: the %s prompt left the canvas vertically" % feature_id, failures)
 		_expect(prompt.size.x <= BaseHubScreenScript.PROMPT_MAX_WIDTH and prompt.size.y <= BaseHubScreenScript.PROMPT_HEIGHT, "base hub: the %s prompt grew past its published badge" % feature_id, failures)
 		_expect(not prompt.has_point(BaseHubScreenScript.HERO_ENTRY_FOOT_ANCHOR), "base hub: the %s prompt covers the avatar foot point" % feature_id, failures)
 		_expect(_point_rect_distance(prompt, _hero_foot_design_point(hub)) <= 48.0, "base hub: the %s prompt drifted away from the avatar" % feature_id, failures)
@@ -640,7 +617,7 @@ func _test_hub_prompt_stays_minimal(hub, failures: Array[String]) -> void:
 		## The world art under it is whatever the follow camera has scrolled in, so the
 		## silhouette check belongs to the fresh entry frame, which the information test
 		## above measures directly against the published alpha of the stands.
-		_expect(prompt.position.y >= BaseHubScreenScript.HEADER_RECT.end.y and prompt.end.y <= BaseHubScreenScript.NAVIGATION_RECT.position.y, "base hub: the %s prompt left the safe vertical band" % feature_id, failures)
+		_expect(prompt.position.y >= BaseHubScreenScript.HEADER_RECT.end.y and prompt.end.y <= BaseHubScreenScript.DESIGN_SIZE.y, "base hub: the %s prompt left the safe vertical band" % feature_id, failures)
 	## Away from every stand the badge is gone again.
 	hub.set_hero_position(_view_of(hub).world_bounds().position)
 	_expect(hub.get_prompt_rect() == Rect2() and not hub._nearby_panel.visible, "base hub: the proximity prompt stayed on screen away from every stand", failures)
@@ -683,50 +660,47 @@ func _test_hub_information_copy_and_details(hub, failures: Array[String]) -> voi
 		_expect(label.get_theme_font_size("font_size") >= 18, "base hub: compact UI shrank annotation copy", failures)
 
 
-func _test_nav_cards_follow_layout(hub, failures: Array[String]) -> void:
-	var nav = _nav_of(hub)
-	_expect(nav != null and nav.FEATURE_IDS == FEATURE_IDS and nav.cards().size() == 5,
-		"base hub: compact toolbar lost the five ordered facilities", failures)
-	if nav == null: return
-	var previous_end := BaseHubScreenScript.NAVIGATION_RECT.position.x - 1.0
+func _test_landmarks_follow_world(hub, failures: Array[String]) -> void:
+	_expect(hub.get_navigation_bar() == null
+		and hub.find_child("TownToolbar", true, false) == null
+		and hub.find_child("BaseNavigation", true, false) == null
+		and hub.find_child("TownWayfinder", true, false) == null,
+		"base hub: an old bottom bar or global wayfinder remained in the tree", failures)
+	var visible_count := 0
 	for feature_id: String in FEATURE_IDS:
-		var card: Button = _nav_card(hub, feature_id)
-		_expect(card != null and not _view_of(hub).entry_for(feature_id).is_empty(),
-			"base hub: shortcut and published facility disagree: " + feature_id, failures)
-		if card == null: continue
-		var rect := _card_rect_in_canvas(card)
-		_expect(BaseHubScreenScript.NAVIGATION_RECT.encloses(rect) and rect.position.x > previous_end,
-			"base hub: toolbar shortcuts overlap or leave their bounded row: " + feature_id, failures)
-		_expect(rect.size.y <= 48 and rect.size.y >= card.get_combined_minimum_size().y,
-			"base hub: shortcut is thick or crops its readable content: " + feature_id, failures)
-		previous_end = rect.end.x
-		_expect(card.mouse_filter == Control.MOUSE_FILTER_STOP and nav.mouse_filter == Control.MOUSE_FILTER_IGNORE
-			and nav.get_node("BaseNavStrip").mouse_filter == Control.MOUSE_FILTER_IGNORE,
-			"base hub: shortcut lost mouse interaction or toolbar swallows ground clicks", failures)
-	_expect(is_equal_approx(_card_rect_in_canvas(_nav_card(hub, "contract")).position.x,
-		1280.0 - _card_rect_in_canvas(_nav_card(hub, "proxy")).end.x),
-		"base hub: toolbar lost equal screen-edge margins", failures)
-	_expect(nav.get_node_or_null("BaseNavCards/BaseNav_contract") != null and nav.cards().get("immortality") == null,
-		"base hub: toolbar lost stable route selectors or added an unpublished route", failures)
-	_expect(BaseHubScreenScript.INFO_DETAIL_RECT.end.y < BaseHubScreenScript.NAVIGATION_RECT.position.y,
-		"base hub: optional narrative covers the facility toolbar", failures)
-
-
-func _card_rect_in_canvas(card: Button) -> Rect2:
-	## The card's rectangle inside the 1280x720 design canvas: the sum of the
-	## Control positions between the card and the canvas, so the assertion keeps
-	## testing the design grid and not the current nesting depth or window scale.
-	var origin := Vector2.ZERO
-	var walker: Node = card
-	while walker != null and walker is Control:
-		var control := walker as Control
-		## The canvas itself is the origin: its own screen offset is not part of the
-		## design grid this helper measures against.
-		if control.custom_minimum_size == BaseHubScreenScript.DESIGN_SIZE:
-			break
-		origin += control.position
-		walker = walker.get_parent()
-	return Rect2(origin, card.size)
+		var landmark: Button = hub.get_landmark(feature_id)
+		var expected: Rect2 = hub._landmark_design_rect(feature_id)
+		_expect(landmark != null and not _view_of(hub).entry_for(feature_id).is_empty(),
+			"base hub: world landmark and published facility disagree: " + feature_id, failures)
+		if landmark == null: continue
+		if landmark.visible:
+			visible_count += 1
+			_expect(not landmark.get_global_rect().intersects(hub._header.get_global_rect()), "base hub: landmark overlaps top information", failures)
+		_expect(landmark.name == "TownLandmark_" + feature_id
+			and landmark.mouse_filter == Control.MOUSE_FILTER_STOP,
+			"base hub: %s landmark is not a clickable world label" % feature_id, failures)
+		_expect(landmark.size == BaseHubScreenScript.LANDMARK_SIZE
+			and landmark.position == expected.position.floor(),
+			"base hub: %s landmark was clamped instead of following its building" % feature_id, failures)
+		_expect(landmark.visible == BaseHubScreenScript.LANDMARK_SAFE_RECT.encloses(expected),
+			"base hub: %s landmark visibility disagrees with the live lens" % feature_id, failures)
+		var title := landmark.get_node("Copy/Title") as Label
+		var status := landmark.get_node("Copy/Status") as Label
+		var state: Dictionary = hub.get_navigation_state(feature_id)
+		_expect(title.get_theme_font_size("font_size") == 22
+			and status.get_theme_font_size("font_size") == 18,
+			"base hub: %s landmark changed its reading sizes" % feature_id, failures)
+		_expect(title.text == String(state.get("title", "")) and status.text == String(state.get("status", "")),
+			"base hub: %s landmark identity/status disagrees with the snapshot" % feature_id, failures)
+		_expect(not status.text.contains("\n") and status.text.length() <= 18,
+			"base hub: %s landmark grew a long status block" % feature_id, failures)
+	_expect(visible_count < FEATURE_IDS.size(), "base hub: all five landmarks leaked outside the live lens", failures)
+	for feature_id: String in FEATURE_IDS:
+		hub.set_hero_position(hub.get_world_feature_position(feature_id))
+		var landmark: Button = hub.get_landmark(feature_id)
+		_expect(landmark != null and landmark.visible
+			and Rect2(Vector2.ZERO, BaseHubScreenScript.DESIGN_SIZE).encloses(Rect2(landmark.position, landmark.size)),
+			"base hub: arriving did not reveal the %s landmark" % feature_id, failures)
 
 
 func _test_compact_ui_sizes(failures: Array[String]) -> void:
@@ -747,8 +721,7 @@ func _test_compact_ui_sizes(failures: Array[String]) -> void:
 		_sort_hub_ui(hub)
 		var bounds := Rect2(Vector2.ZERO, Vector2(dimensions))
 		_expect(hub.size == Vector2(dimensions), "base hub: host did not adopt " + str(dimensions), failures)
-		_expect(bounds.encloses(hub._header.get_global_rect()) and bounds.encloses(hub.get_navigation_bar().get_global_rect()),
-			"base hub: compact header/toolbar is offscreen at " + str(dimensions), failures)
+		_expect(bounds.encloses(hub._header.get_global_rect()), "base hub: compact header is offscreen at " + str(dimensions), failures)
 		_expect(hub._profile_label.text == "Lv.12 · 游侠" and hub._character_button.text == "成长 C · 24点"
 			and hub._story_button.text == "见闻 J · 2", "base hub: live level/growth/unread state is wrong", failures)
 		var previous: Rect2 = hub._objective_label.get_global_rect()
@@ -777,16 +750,18 @@ func _test_compact_ui_sizes(failures: Array[String]) -> void:
 				and label.size.x <= scroll.size.x and label.get_theme_font_size("font_size") == 22,
 				"base hub: long narrative text is cropped at %s: %s" % [dimensions, label.name], failures)
 		for id: String in FEATURE_IDS:
-			var card: Button = _nav_card(hub, id)
-			_expect(bounds.encloses(card.get_global_rect()) and card.is_visible_in_tree(),
-				"base hub: shortcut is hidden by narrative at " + str(dimensions), failures)
+			var landmark: Button = hub.get_landmark(id)
+			_expect(landmark != null and not landmark.is_visible_in_tree(),
+				"base hub: narrative did not hide the %s landmark at %s" % [id, str(dimensions)], failures)
 		host.free()
 
 
 func _sort_hub_ui(hub) -> void:
 	for _pass in 4:
 		hub._reflow_information_content()
-		for area: Control in [hub._header, hub._detail_panel, hub.get_navigation_bar()]:
+		var areas: Array[Control] = [hub._header, hub._detail_panel]
+		areas.append_array(hub._landmarks.values())
+		for area: Control in areas:
 			_sort_containers(area)
 
 
@@ -852,7 +827,7 @@ func _test_resident_prompt(hub, failures: Array[String]) -> void:
 	hub.present_adventure({}, before_story)
 
 
-## Every card draws the state the hub derived from the save, and the world marker
+## Every landmark draws the state the hub derived from the save, and the world marker
 ## of the same stand keeps the matching note. Neither one is allowed to invent a
 ## status the other does not have.
 func _test_nav_state_matches_cards(hub, failures: Array[String]) -> void:
@@ -863,12 +838,16 @@ func _test_nav_state_matches_cards(hub, failures: Array[String]) -> void:
 		var feature_id := String(state.get("id", ""))
 		seen.append(feature_id)
 		_expect(feature_id in FEATURE_IDS, "base hub: navigation_state published an unknown facility %s" % feature_id, failures)
-		var card: Button = _nav_card(hub, feature_id)
-		if card == null:
+		hub.set_hero_position(hub.get_world_feature_position(feature_id))
+		var landmark: Button = hub.get_landmark(feature_id)
+		if landmark == null:
 			continue
-		_expect(String(state.get("title", "")) == card.get_node("Copy/Title").text, "base hub: BaseNav_%s title is not the state title" % feature_id, failures)
-		_expect(String(state.get("status", "")) == card.get_node("Copy/Status").text, "base hub: BaseNav_%s status is not the state status" % feature_id, failures)
-		_expect(hub.get_navigation_state(feature_id) == state, "base hub: single-card lookup disagrees with the published list for %s" % feature_id, failures)
+		_expect(String(state.get("title", "")) == landmark.get_node("Copy/Title").text, "base hub: TownLandmark_%s title is not the state title" % feature_id, failures)
+		_expect(String(state.get("status", "")) == landmark.get_node("Copy/Status").text, "base hub: TownLandmark_%s status is not the state status" % feature_id, failures)
+		var lookup: Dictionary = hub.get_navigation_state(feature_id)
+		_expect(lookup.get("id", "") == state.get("id", "") and lookup.get("title", "") == state.get("title", "")
+			and lookup.get("status", "") == state.get("status", "") and lookup.get("detail", "") == state.get("detail", ""),
+			"base hub: single-landmark lookup disagrees with the published list for %s" % feature_id, failures)
 		_expect(hub.get_feature_marker_text(feature_id).contains(String(state.get("detail", ""))), "base hub: %s marker dropped the navigation note" % feature_id, failures)
 	_expect(seen == FEATURE_IDS, "base hub: navigation_state order drifted from the published order", failures)
 	## availability and the reason always agree: a locked card explains itself, an
@@ -882,8 +861,8 @@ func _test_nav_state_matches_cards(hub, failures: Array[String]) -> void:
 			_expect(not detail.contains("封印中") and not detail.contains("固定起步装"), "base hub: open %s still reads as locked" % String(state.get("id", "")), failures)
 
 
-## A click on a card must leave through exactly the same signal as walking up to
-## the stand and pressing E, carrying the card's own feature id and one signal
+## A click on a landmark must leave through exactly the same signal as walking up
+## to the stand and pressing E, carrying its feature id and one signal
 ## per action: no extra state write is allowed to reach the game root.
 func _test_nav_activation_routing(hub, failures: Array[String]) -> void:
 	var events: Array[String] = []
@@ -891,15 +870,15 @@ func _test_nav_activation_routing(hub, failures: Array[String]) -> void:
 	hub.feature_requested.connect(func(feature_id: String) -> void: events.append(feature_id))
 	for feature_id: String in FEATURE_IDS:
 		var before: int = events.size()
-		var card: Button = _nav_card(hub, feature_id)
-		if card == null:
-			continue
 		hub.set_hero_position(hub.get_world_feature_position(feature_id))
-		card.emit_signal("pressed")
-		_expect(events.size() == before + 1, "base hub: BaseNav_%s emitted %d signals" % [feature_id, events.size() - before], failures)
-		_expect(events.back() == feature_id, "base hub: BaseNav_%s emitted %s" % [feature_id, events.back()], failures)
-	_expect(events == ["contract", "loadout", "forge", "training", "proxy"], "base hub: card order no longer matches the signal order: %s" % str(events), failures)
-	## The hub routes every card through the one existing entry point, so a card
+		var landmark: Button = hub.get_landmark(feature_id)
+		if landmark == null:
+			continue
+		landmark.emit_signal("pressed")
+		_expect(events.size() == before + 1, "base hub: TownLandmark_%s emitted %d signals" % [feature_id, events.size() - before], failures)
+		_expect(events.back() == feature_id, "base hub: TownLandmark_%s emitted %s" % [feature_id, events.back()], failures)
+	_expect(events == ["contract", "loadout", "forge", "training", "proxy"], "base hub: landmark order no longer matches the signal order: %s" % str(events), failures)
+	## The hub routes every landmark through the one existing entry point, so a sign
 	## and its world stand can never disagree about which page opens.
 	for feature_id: String in FEATURE_IDS:
 		hub.set_hero_position(hub.get_world_feature_position(feature_id))
@@ -958,8 +937,8 @@ func _test_first_hunt_rack_availability(hub, failures: Array[String]) -> void:
 	var rack: Dictionary = hub.get_navigation_state("loadout")
 	_expect(not bool(rack.locked) and rack.reason == "" and rack.status == "比较已开放"
 		and hub.get_feature_marker_text("loadout").contains("比较已开放")
-		and _nav_card(hub, "loadout").get_node("Copy/Status").text == rack.status,
-		"base hub: real first-victory rack card and marker disagree with comparison availability", failures)
+		and hub.get_landmark("loadout").get_node("Copy/Status").text == rack.status,
+		"base hub: real first-victory rack landmark and marker disagree with comparison availability", failures)
 
 
 func _test_nav_boss_crossing(hub, failures: Array[String]) -> void:
@@ -981,56 +960,45 @@ func _test_nav_boss_crossing(hub, failures: Array[String]) -> void:
 	_expect(not bool(hub.get_navigation_state("forge").get("locked", false)) and not bool(hub.get_navigation_state("loadout").get("locked", false)), "base hub: the authored facility rewards did not open their cards", failures)
 	_expect(String(hub.get_navigation_state("contract").get("status", "")).is_empty() == false, "base hub: the contract card lost its copy after graduation", failures)
 	for feature_id: String in FEATURE_IDS:
-		var card: Button = _nav_card(hub, feature_id)
-		_expect(card != null and card.get_node("Copy/Status").text == String(hub.get_navigation_state(feature_id).get("status", "")), "base hub: BaseNav_%s did not repaint after the boss crossing" % feature_id, failures)
+		hub.set_hero_position(hub.get_world_feature_position(feature_id))
+		var landmark: Button = hub.get_landmark(feature_id)
+		_expect(landmark != null and landmark.get_node("Copy/Status").text == String(hub.get_navigation_state(feature_id).get("status", "")), "base hub: TownLandmark_%s did not repaint after the boss crossing" % feature_id, failures)
 
 
-## The badge and the two copy rows must fit the published 240x84 card on the
-## 1280 canvas, and a long status must give way to the layout instead of pushing
-## the copy outside the card.
+## The two landmark rows stay compact on the 1280 canvas. A long state clips to
+## one readable line while its full derivation remains in the tooltip.
 func _test_nav_long_status_and_bounds(hub, failures: Array[String]) -> void:
 	hub.present(_pre_boss_profile(), {}, "", {
 		"ok": true, "next_mainline_node_id": "mainline_02_priority_under_pressure",
 		"earned_reward_tags": ["starter_loadout"], "early_game_complete": false,
 	})
 	for state: Dictionary in hub.navigation_state():
-		var card: Button = _nav_card(hub, String(state.id))
-		var title := card.get_node("Copy/Title") as Label
-		var status := card.get_node("Copy/Status") as Label
+		var feature_id := String(state.id)
+		hub.set_hero_position(hub.get_world_feature_position(feature_id))
+		var landmark: Button = hub.get_landmark(feature_id)
+		if landmark == null:
+			continue
+		var title := landmark.get_node("Copy/Title") as Label
+		var status := landmark.get_node("Copy/Status") as Label
+		_sort_containers(landmark)
 		_expect(title.get_theme_font_size("font_size") == 22 and status.get_theme_font_size("font_size") == 18,
-			"base hub: compact toolbar changed its body/annotation reading sizes", failures)
-		_expect(title.text == state.title and status.text == state.status and card.tooltip_text.contains(state.status),
-			"base hub: compact toolbar shortened/guessed a real facility state", failures)
+			"base hub: landmark changed its body/annotation reading sizes", failures)
+		_expect(title.text == state.title and status.text == state.status and landmark.tooltip_text.contains(state.status),
+			"base hub: landmark shortened/guessed a real facility state", failures)
 		for label: Label in [title, status]:
 			var measured := label.get_theme_font("font").get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, label.get_theme_font_size("font_size"))
-			_expect(measured.x <= label.size.x + 0.5 and card.get_global_rect().encloses(label.get_global_rect()),
-				"base hub: one-line shortcut clips or spills text: %s / %s" % [state.id, label.text], failures)
-		_expect(title.get_global_rect().end.x <= status.get_global_rect().position.x,
-			"base hub: shortcut title and state overlap", failures)
+			_expect(measured.x <= label.size.x + 0.5 and landmark.get_global_rect().encloses(label.get_global_rect()),
+				"base hub: one-line landmark text spills: %s / %s" % [feature_id, label.text], failures)
+		_expect(title.get_global_rect().end.y <= status.get_global_rect().position.y,
+			"base hub: landmark title and state overlap", failures)
 
 
 func _test_nav_keyboard_access(hub, failures: Array[String]) -> void:
 	var events: Array[String] = []
 	hub.contract_requested.connect(func() -> void: events.append("contract"))
 	hub.feature_requested.connect(func(feature_id: String) -> void: events.append(feature_id))
-	var nav = _nav_of(hub)
-	for index in FEATURE_IDS.size():
-		var feature_id: String = FEATURE_IDS[index]
-		var card: Button = _nav_card(hub, feature_id)
-		if card == null:
-			continue
-		_expect(card.focus_mode == Control.FOCUS_ALL, "base hub: BaseNav_%s cannot take keyboard focus" % feature_id, failures)
-		var expected_right: Button = _nav_card(hub, FEATURE_IDS[(index + 1) % FEATURE_IDS.size()])
-		var expected_left: Button = _nav_card(hub, FEATURE_IDS[(index - 1 + FEATURE_IDS.size()) % FEATURE_IDS.size()])
-		## The ring itself is asserted through the resolved Button identity: an
-		## empty or dangling path can never satisfy this comparison.
-		if expected_right != null and expected_right != card:
-			_expect(not card.focus_neighbor_right.is_empty(), "base hub: Tab from BaseNav_%s has no next facility" % feature_id, failures)
-			_expect(card.get_node_or_null(card.focus_neighbor_right) == expected_right, "base hub: Tab from BaseNav_%s does not move to the next facility" % feature_id, failures)
-		if expected_left != null and expected_left != card:
-			_expect(not card.focus_neighbor_left.is_empty(), "base hub: reverse Tab from BaseNav_%s has no previous facility" % feature_id, failures)
-			_expect(card.get_node_or_null(card.focus_neighbor_left) == expected_left, "base hub: reverse Tab from BaseNav_%s does not move back" % feature_id, failures)
-	var focus_card: Button = _nav_card(hub, "forge")
+	hub.set_hero_position(hub.get_world_feature_position("forge"))
+	var focus_card: Button = hub.get_landmark("forge")
 	hub.set_hero_position(hub.get_world_feature_position("forge"))
 	if focus_card != null:
 		## Focus can only be taken while the screen owns a live window; the headless
@@ -1046,50 +1014,39 @@ func _test_nav_keyboard_access(hub, failures: Array[String]) -> void:
 			move_event.physical_keycode = keycode
 			move_event.pressed = true
 			hub._unhandled_key_input(move_event)
-		_expect(events.size() == before, "base hub: a focused navigation card turned a movement key into an entry", failures)
+		_expect(events.size() == before, "base hub: a focused landmark turned a movement key into an entry", failures)
 		_expect(hub.get_nearby_feature_id() == "forge", "base hub: keyboard focus changed the nearby stand", failures)
 		## Enter and Space reach the card through the stock Button activation, which
 		## needs a live viewport; the headless harness asserts the two gaps it could
 		## otherwise hide: the card is the focus owner after grab_focus, and a
 		## focused card never turns a movement key into a second world entry.
 		var viewport_focus: Control = focus_card.get_viewport().gui_get_focus_owner() if focus_card.is_inside_tree() else null
-		_expect(viewport_focus == null or viewport_focus == focus_card, "base hub: a navigation card could not take focus", failures)
-		_expect(not focus_card.focus_mode == Control.FOCUS_NONE, "base hub: a navigation card turned focus off", failures)
-		focus_card.pressed.emit()
-		_expect(events.size() == before + 1 and events.back() == "forge", "base hub: the focused card did not open exactly one facility", failures)
+		_expect(viewport_focus == null or viewport_focus == focus_card, "base hub: a landmark could not take focus", failures)
+		_expect(viewport_focus == null or hub._navigation_has_focus(), "base hub: focused landmark did not suspend world movement", failures)
+		_expect(not focus_card.focus_mode == Control.FOCUS_NONE, "base hub: a landmark turned focus off", failures)
+		_expect(focus_card.focus_neighbor_right.is_empty() == false, "base hub: a visible landmark has no Tab neighbour", failures)
+		var key_event := InputEventKey.new()
+		key_event.physical_keycode = KEY_E
+		key_event.pressed = true
+		hub._on_landmark_gui_input(key_event, "forge")
+		_expect(events.size() == before + 1 and events.back() == "forge", "base hub: focused E did not open exactly one facility", failures)
 		if focus_card.is_inside_tree():
 			focus_card.release_focus()
-	## Every other card also needs an explicit activation to pass the shared gate.
+	## Every other landmark also needs an explicit activation to pass the shared gate.
 	for feature_id: String in FEATURE_IDS:
-		var card: Button = _nav_card(hub, feature_id)
-		if card == null:
+		var landmark: Button = hub.get_landmark(feature_id)
+		if landmark == null:
 			continue
 		var before: int = events.size()
 		hub.set_hero_position(hub.get_world_feature_position(feature_id))
-		card.emit_signal("pressed")
-		_expect(events.size() == before + 1 and events.back() == feature_id, "base hub: explicit activation of BaseNav_%s did not route once" % feature_id, failures)
+		landmark.emit_signal("pressed")
+		_expect(events.size() == before + 1 and events.back() == feature_id, "base hub: explicit activation of TownLandmark_%s did not route once" % feature_id, failures)
 	## The shared gate rejects anything the prototype does not have, so a stray id
 	## can never open a sixth system.
 	for rejected: String in ["immortality", "everlife", "", "contract "]:
 		var before_rejected: int = events.size()
 		_expect(not hub.navigation_card_activated(rejected), "base hub: the navigation gate accepted %s" % rejected, failures)
 		_expect(events.size() == before_rejected, "base hub: the navigation gate opened %s" % rejected, failures)
-
-
-## The icon pack is optional and its absence is a reported state: cards keep
-## their text, the icon slot stays empty and no stand-in texture is borrowed.
-func _test_nav_icon_slots_pending(hub, failures: Array[String]) -> void:
-	# Text shortcuts need no decorative icon pack or replacement asset.
-	for id: String in FEATURE_IDS:
-		var card: Button = _nav_card(hub, id)
-		_expect(card.find_children("*", "TextureRect", true, false).is_empty(),
-			"base hub: decorative icon cells returned to the compact toolbar", failures)
-		var style := card.get_theme_stylebox("normal") as StyleBoxTexture
-		_expect(style != null and style.texture == ShellThemeScript.material_texture("button")
-			and style.content_margin_left == 10, "base hub: toolbar lost its readable copper-and-wood material", failures)
-		_expect((card.get_node("Copy/Title") as Label).text == hub.get_navigation_state(id).title
-			and (card.get_node("Copy/Status") as Label).text == hub.get_navigation_state(id).status,
-			"base hub: shortcut lacks concrete identity/status without the icon pack", failures)
 
 
 func _pre_boss_profile() -> Dictionary:

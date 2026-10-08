@@ -44,6 +44,10 @@ func _run() -> void:
 	for core_id in ["near_enemy_horizon", "direct_gait", "single_key_execution", "short_trace_memory"]:
 		_expect(screen.find_child("CoreReward_" + core_id, true, false) != null,
 			"result: first-unlock core icon missing: " + core_id, failures)
+	var compact_summary := screen.find_child("RewardSummary", true, false) as Label
+	_expect(compact_summary != null and compact_summary.text.contains("代理核心 4 枚")
+		and not compact_summary.text.contains("\n"),
+		"result: first-unlock summary stayed a long text wall", failures)
 	screen.present({"outcome": "victory", "unlock": {"proxy_unlocked": true,
 		"components": [{"id": "near_enemy_horizon", "name": "近敌视界"}]}})
 	_expect(core_rewards.get_child_count() == 1,
@@ -66,6 +70,11 @@ func _run() -> void:
 		and proxy_cards[1].contains("距离带跟随穿刺箭的实际射程")
 		and proxy_cards[0].contains("尚未安装，当前代理构筑不变"),
 		"result: proxy component cards lost Chinese name, slot, full protocol, or unchanged-build copy", failures)
+	var proxy_protocol := screen.find_child("ProxyComponentProtocol", true, false) as Label
+	var proxy_detail := screen.find_child("ProxyComponentDetailButton", true, false) as Button
+	_expect(proxy_protocol != null and not proxy_protocol.is_visible_in_tree()
+		and proxy_detail != null and proxy_detail.text == "协议详情",
+		"result: low-frequency proxy protocols were expanded into the main decision view", failures)
 	_expect(screen.get_equipment_card_count() == 1
 		and screen.find_child("ProxyComponentDrops", true, false) != screen.find_child("EquipmentCards", true, false)
 		and screen.find_child("ReviewDrop_marking_prism", true, false) == null,
@@ -133,7 +142,7 @@ func _run() -> void:
 		next_face = screen.get_equipment_card_summaries()
 	_expect(face.size() == 1 and next_face.size() == 1, "result: expected one card per page", failures)
 	if face.size() == 1 and next_face.size() == 1:
-		_expect(face[0].contains("收入装备库存") and face[0].contains("当前在行囊中，尚未装备") and face[0].contains("未识别词条 II 阶"),
+		_expect(face[0].contains("已入库，尚未装备") and face[0].contains("未识别词条 II 阶"),
 			"result: missing inventory state or readable affix: " + face[0], failures)
 		_expect(face[0].contains("未知装备") and not face[0].contains("oak_short_bow") and not face[0].contains("piercing_probability"),
 			"result: raw item IDs leaked onto card face", failures)
@@ -494,11 +503,17 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 		var footer := screen.find_child("ResultFooter", true, false) as Control
 		var panel := screen.find_child("DropPanel", true, false) as Control
 		var summary := screen.find_child("RewardSummary", true, false) as Label
+		var reward_detail_button := screen.find_child("RewardDetailButton", true, false) as Button
+		var reward_detail_text := screen.find_child("RewardDetailText", true, false) as Label
 		var footer_rect := footer.get_global_rect()
 		var pager_rect := pager.get_global_rect()
 		_expect((screen.find_child("ResultMetrics", true, false) as GridContainer).columns == 3,
 			"result: settlement metrics must retain three columns", failures)
-		_expect(summary.get_line_count() >= 5, "result: layout fixture lost the first-clear summary", failures)
+		_expect(summary.get_line_count() <= 2 and summary.text.contains("新装备 2 件"),
+			"result: first-clear summary remained a reading wall at %s" % logical_size, failures)
+		_expect(reward_detail_button != null and reward_detail_text != null and not reward_detail_text.visible
+			and reward_detail_button.text == "奖励明细",
+			"result: full reward copy lacked a clear collapsed entry at %s" % logical_size, failures)
 		_expect(pager.is_visible_in_tree() and not loot.is_ancestor_of(pager)
 			and panel.get_global_rect().encloses(pager_rect)
 			and Rect2(Vector2.ZERO, Vector2(logical_size)).encloses(pager_rect),
@@ -526,6 +541,13 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 			if page == 0:
 				(screen.find_child("EquipmentNextPage", true, false) as Button).pressed.emit()
 				await _frames(3)
+		if reward_detail_button != null:
+			reward_detail_button.pressed.emit()
+			await _frames(2)
+		_expect(reward_detail_text != null and reward_detail_text.visible
+			and reward_detail_text.text.contains("首通奖励")
+			and reward_detail_text.get_theme_font_size("font_size") >= FONT_FLOOR,
+			"result: reward detail entry did not reveal authoritative copy at %s" % logical_size, failures)
 		screen.present(receipt, {}, profile)
 		screen.focus_equipment(String(drops[1].instance_id))
 		await _frames(3)
@@ -534,7 +556,7 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 			"result: returning from item review did not restore that item's page", failures)
 		# Missing profile data must not be guessed from the historical receipt.
 		screen.present(receipt)
-		_expect(screen.get_equipment_card_summaries()[0].contains("当前装备状态未读取")
+		_expect(screen.get_equipment_card_summaries()[0].contains("库存状态未读取")
 			and not screen.get_equipment_card_summaries()[0].contains("当前构筑不变"),
 			"result: unavailable current state was fabricated from reward facts", failures)
 		screen.present(receipt, {}, {"inventory": {"equipment": []}, "active_build": {"equipped_item_ids": {}}})

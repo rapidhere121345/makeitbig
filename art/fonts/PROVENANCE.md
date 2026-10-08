@@ -1,4 +1,32 @@
-# 打包中文字体来源与许可
+# 中文字体与许可
+
+## 2026-10-08：标题、阅读与数值分层
+
+当前 `ShellTheme` 使用 **Noto Serif CJK SC Medium** 显示标题、叙事和普通正文，
+**Noto Sans CJK SC Medium** 显示按钮、选项、输入、数字卡片。正文仍为 22px、辅助文字最低 18px；
+统一行距与单像素阴影。两款均为官方完整 SC OTF，没有子集化、轮廓修改或合成加粗。
+旧 Regular 文件保留供既有资源/历史打包工具使用，不再作为共享主题默认字体。
+
+官方来源：[Noto CJK](https://github.com/notofonts/noto-cjk)，固定提交
+`f8d157532fbfaeda587e826d4cd5b21a49186f7c`。下载路径：
+
+- `Serif/OTF/SimplifiedChinese/NotoSerifCJKsc-Medium.otf`
+- `Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Medium.otf`
+- 同目录树的 `Serif/LICENSE`、`Sans/LICENSE` 原样保存为 `LICENSE-noto-serif.txt`、`LICENSE-noto-sans.txt`。
+
+| 文件 | 大小 | SHA-256 |
+| --- | --- | --- |
+| `NotoSerifCJKsc-Medium.otf` | 24,805,308 B | `19322be2ecf5dd2abd546db7a86cc83c286026cbd28593583bfcfd721e48c9fe` |
+| `NotoSansCJKsc-Medium.otf` | 16,523,632 B | `ca094f6b0001fb048ca39ddd797a0cdb0179e1e55c6561e111c49c3e6a61d7b7` |
+
+字体内置版权信息：Serif 为 “© 2017-2024 Adobe (http://www.adobe.com/).”；
+Sans 为 “© 2014-2021 Adobe (http://www.adobe.com/).”。
+许可为 SIL OFL 1.1，允许随游戏再分发；完整许可和字体内版权元数据一起保留。
+两平台导出均包含 `LICENSE-noto-*.txt`。Godot 导入关闭系统字体回退，避免开发机字体掩盖缺字；
+`tests/unit/test_ui_style_r13.gd` 检查正式源码与内容中的汉字覆盖及常用交互符号。
+
+## 原 Regular 字体的历史来源
+
 
 2026-09-14。本目录是正式非战斗界面共享主题的唯一字体来源。ShellTheme.create() 只从这里加载字体，
 不依赖开发机字体，也不使用 SystemFont。

@@ -21,6 +21,12 @@ func _run() -> void:
 	)
 	screen.present({
 		"outcome": "victory",
+		"proxy_component_drops": [{
+			"id": "navigation_prism",
+			"name": "导航棱镜",
+			"slot": "perception",
+			"protocol": "只用于验证协议详情展开。",
+		}],
 		"rewards": {
 			"equipment_drops": [{
 				"instance_id": "navigation_drop",
@@ -40,6 +46,12 @@ func _run() -> void:
 	var contract_button := screen.find_child("ContractAgainButton", true, false) as Button
 	var review_button := screen.find_child("ReviewDrop_navigation_drop", true, false) as Button
 	var detail_button := screen.find_child("EquipmentDetailButton", true, false) as Button
+	var reward_detail_button := screen.find_child("RewardDetailButton", true, false) as Button
+	var reward_detail_text := screen.find_child("RewardDetailText", true, false) as Label
+	var proxy_detail_button := screen.find_child("ProxyComponentDetailButton", true, false) as Button
+	var proxy_protocol := screen.find_child("ProxyComponentProtocol", true, false) as Label
+	var detail_toggles: Array[int] = [0]
+	reward_detail_button.pressed.connect(func() -> void: detail_toggles[0] += 1)
 	_expect(base_button != null and base_button.has_focus(), "result: initial keyboard focus is not on the primary return action")
 	_expect(base_button != null and base_button.has_theme_stylebox_override("normal")
 		and contract_button != null and not contract_button.has_theme_stylebox_override("normal"),
@@ -48,6 +60,14 @@ func _run() -> void:
 		"result: primary and secondary footer actions have equal visual weight")
 	_expect(review_button != null and review_button.has_theme_stylebox_override("normal"),
 		"result: equipment comparison is not the primary action on its drop card")
+	reward_detail_button.grab_focus()
+	await _press_accept()
+	_expect(detail_toggles[0] == 1 and reward_detail_text.visible and reward_detail_button.has_focus(),
+		"result: one Enter did not open reward details once while retaining focus")
+	proxy_detail_button.grab_focus()
+	await _press_accept()
+	_expect(proxy_protocol.is_visible_in_tree() and proxy_detail_button.has_focus(),
+		"result: keyboard proxy detail expansion lost focus or stayed collapsed")
 
 	review_button.grab_focus()
 	await _press_accept()

@@ -28,11 +28,12 @@ func _run() -> void:
 	var mode_picker: OptionButton = screen.get("_mode_picker")
 	var info_label: Label = screen.get("_contract_info_label")
 	var reward_label: Label = screen.get("_reward_label")
+	var first_reward: Label = screen.get("_first_reward_label")
 	_expect(picker != null and _selected_id(picker) == "mainline_01_first_hunt", "contract screen: next available mainline was not selected", failures)
 	_expect(_is_disabled(picker, "tutorial_ranger_basics") and _is_disabled(picker, "mainline_02_priority_under_pressure"), "contract screen: completed or locked fixed nodes stayed clickable", failures)
 	_expect(not _is_disabled(picker, "mainline_01_first_hunt") and not _is_disabled(picker, "side_targeted_equipment"), "contract screen: available mainline or repeatable side node was disabled", failures)
 	_expect(mode_picker != null and mode_picker.selected == 0 and mode_picker.is_item_disabled(1), "contract screen: pre-Boss node did not lock to Manual", failures)
-	_expect(reward_label != null and "固定起步装" in reward_label.text and "猎人印记" in reward_label.text,
+	_expect(reward_label != null and "固定起步装" in reward_label.text and "猎人印记" in first_reward.text,
 		"contract screen: authored drop/reward tags were not explained", failures)
 	_expect(info_label != null and "战利品方向" not in info_label.text,
 		"contract screen: route brief still mixed reward facts into its hierarchy", failures)
@@ -80,7 +81,7 @@ func _run() -> void:
 	var fate_index := _index_of(picker, "side_affix_and_law_tallies")
 	picker.select(fate_index)
 	screen.call("_on_contract_selected", fate_index)
-	_expect("每 3 次完成触发一次定向装备保底" in info_label.text and "本次触发保底" in info_label.text, "contract screen: third-attempt pity copy missing", failures)
+	_expect("本次触发定向装备保底" in info_label.text and "每 3 次完成触发一次定向装备保底" in String(screen.call("_repeatable_progress_text", screen.call("_selected_contract"))), "contract screen: third-attempt pity copy missing", failures)
 	_expect(seed_edit.text == "9001", "contract screen: switching node did not apply its suggested_seed", failures)
 	seed_edit.text = "4242"
 	screen.call("_on_start_pressed")
@@ -92,6 +93,18 @@ func _run() -> void:
 	seed_edit.text = "-9007199254740992"
 	screen.call("_on_start_pressed")
 	_expect(starts.size() == 3, "contract screen: an unsafe negative seed was emitted", failures)
+
+	# Full route/reward receipt is available on demand and restores focus.
+	var route_button := screen.find_child("ContractDetailsButton", true, false) as Button
+	_expect(screen.get("_contract_details_dialog") == null, "contract screen: full receipt created before requested", failures)
+	route_button.pressed.emit()
+	var route_dialog := screen.get("_contract_details_dialog") as AcceptDialog
+	var route_copy := route_dialog.find_child("RouteAndRewards", true, false) as Label
+	_expect(route_dialog.visible and "每 3 次完成触发一次定向装备保底" in route_copy.text and "战利品方向" in route_copy.text,
+		"contract screen: compact view discarded full reward/pity receipt", failures)
+	route_dialog.hide()
+	route_dialog.canceled.emit()
+	_expect(route_button.has_focus(), "contract screen: route receipt did not restore focus", failures)
 
 	# Non-multiple attempt shows remaining count instead of a trigger.
 	var pity_snapshot_2 := _snapshot(true, "auto_certification")
@@ -109,7 +122,7 @@ func _run() -> void:
 	var build_label: Label = screen.get("_build_label")
 	_expect(build_label != null and "当前构筑数据不可用" in build_label.text, "contract screen: legacy snapshot without resolved build did not degrade gracefully", failures)
 	_expect("方案" not in _all_text(screen), "contract screen: legacy snapshot leaked preset A/B/C naming", failures)
-	_expect("穿刺箭" in build_label.text and "猎人印记" in build_label.text and "突袭" in build_label.text and "闪避" in build_label.text, "contract screen: skill Chinese mapping missing", failures)
+	_expect("穿刺箭" in _all_text(screen.get("_skill_row")) and "猎人印记" in _all_text(screen.get("_skill_row")) and "突袭" in _all_text(screen.get("_skill_row")) and "闪避" in _all_text(screen.get("_skill_row")), "contract screen: skill Chinese mapping missing", failures)
 	_expect("核心技能说明" not in build_label.text and "tick" not in build_label.text,
 		"contract screen: full rules leaked into default view", failures)
 	var details_button: Button = screen.find_child("BuildDetailsButton", true, false)
@@ -147,8 +160,8 @@ func _run() -> void:
 	(unverified_snapshot["active_build"] as Dictionary)["runes"] = ["breeding_split"]
 	(unverified_snapshot["active_build"] as Dictionary)["laws"] = ["pack_hunt_mark"]
 	screen.present({"initial_class": "ranger"}, {"contract_id": "auto_certification"}, "", unverified_snapshot)
-	_expect(build_label != null and "穿刺箭续行概率：49%" in build_label.text and "共享谱系寿命：34 秒" in build_label.text
-		and "寻敌与穿刺箭射程：18" in build_label.text and "载体伤害：12.5" in build_label.text and "最大生命：100" in build_label.text,
+	_expect(_parameter_text(screen, "p") == "49%" and _parameter_text(screen, "T") == "34 秒"
+		and _parameter_text(screen, "d") == "18" and _parameter_text(screen, "damage") == "12.5" and _parameter_text(screen, "max_health") == "100",
 		"contract screen: five decision parameters were not rendered", failures)
 	_expect("投射物速度" not in build_label.text and "转向时间" not in build_label.text and "核心技能说明" not in build_label.text,
 		"contract screen: complete rule receipt remained in default view", failures)
@@ -161,7 +174,7 @@ func _run() -> void:
 	_expect("exponential" not in _all_text(screen), "contract screen: unverified build leaked growth classification", failures)
 	_expect("方案" not in _all_text(screen), "contract screen: resolved summary leaked preset A/B/C naming", failures)
 	_expect("符文：孳生分裂" in details_label.text and "法则：群猎印记" in details_label.text, "contract screen: rune/law Chinese mapping missing", failures)
-	_expect("备行架" in _all_text(screen) and "切换" not in build_label.text, "contract screen: read-only guidance did not point at real equipment", failures)
+	_expect("备行架" in details_button.tooltip_text and "切换" not in build_label.text, "contract screen: read-only guidance did not point at real equipment", failures)
 
 	# Verified fingerprint unlocks the real growth classification.
 	var verified_snapshot := _snapshot(true, "auto_certification")
@@ -191,8 +204,8 @@ func _run() -> void:
 	sparse_snapshot["resolved_build"] = _resolved_build(fingerprint, "convergent", {"p": 0.51}, [], [])
 	screen.present({"initial_class": "ranger"}, {"contract_id": "auto_certification"}, "", sparse_snapshot)
 	details_button.pressed.emit()
-	_expect("穿刺箭续行概率：51%" in build_label.text, "contract screen: sparse resolved build missed its parameter", failures)
-	_expect("共享谱系寿命：" not in build_label.text and "转向时间（数值越低越好）：" not in build_label.text and "最大生命：" not in build_label.text, "contract screen: absent parameters were rendered", failures)
+	_expect(_parameter_text(screen, "p") == "51%", "contract screen: sparse resolved build missed its parameter", failures)
+	_expect(not (screen.find_child("Departure_T", true, false) as Control).is_visible_in_tree() and not (screen.find_child("Departure_max_health", true, false) as Control).is_visible_in_tree(), "contract screen: absent parameters were rendered", failures)
 
 	# Missing or ok:false resolved Build degrades without re-leaking presets.
 	var broken_snapshot := _snapshot(true, "auto_certification")
@@ -253,16 +266,16 @@ func _run() -> void:
 	var experience: int = load("res://src/systems/character_progression.gd").contract_experience("mainline_01_first_hunt", true)
 	screen.present(app.profile, {}, "", real_snapshot)
 	var objective: Label = screen.find_child("CombatObjective", true, false)
-	_expect("清除敌人" in objective.text and "旧路外段" in info_label.text and "炉边镇" in info_label.text and "猎人印记" in reward_label.text and ("完成经验：%d" % experience) in reward_label.text,
+	_expect("清除敌人" in objective.text and "旧路外段" in info_label.text and "炉边镇" in info_label.text and "猎人印记" in first_reward.text and ("完成经验 %d" % experience) in (screen.get("_objective_meta") as Label).text,
 		"contract screen: fresh-save goal/reward not linked to town and road", failures)
-	_expect("猎人印记" not in build_label.text and "穿刺箭" in build_label.text,
+	_expect("猎人印记" not in _all_text(screen.get("_skill_row")) and "穿刺箭" in _all_text(screen.get("_skill_row")),
 		"contract screen: first-clear skill reward impersonated an already equipped skill", failures)
 	for viewport_size in [Vector2(1280,720), Vector2(1600,900)]:
 		screen.size = viewport_size
 		await _wait_frames(4)
 		_expect(objective.get_global_rect().end.y <= (scroll.get_global_rect().end.y) and info_label.get_global_rect().end.y <= scroll.get_global_rect().end.y,
 			"contract screen: fresh-save goals/rewards require scrolling at " + str(viewport_size), failures)
-		_expect(build_label.get_global_rect().end.y <= (screen.get("_build_scroll") as Control).get_global_rect().end.y,
+		_expect((screen.get("_parameter_grid") as Control).get_global_rect().end.y <= (screen.get("_build_scroll") as Control).get_global_rect().end.y,
 			"contract screen: decision build requires scrolling at " + str(viewport_size), failures)
 
 	# A visible transition locks every commitment control and emits the exact
@@ -449,3 +462,8 @@ func _finish(failures: Array[String]) -> void:
 func _expect(condition: bool, message: String, failures: Array[String]) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _parameter_text(screen: Control, key: String) -> String:
+	var label := screen.find_child("Departure_" + key, true, false) as Label
+	return label.text if label != null else ""

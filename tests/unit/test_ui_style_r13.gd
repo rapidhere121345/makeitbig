@@ -14,6 +14,9 @@ func _initialize() -> void:
 func _run() -> void:
 	var theme := Shell.create()
 	_expect(theme.default_font == Shell.ui_font(), "packaged Chinese face")
+	_expect(theme.get_font("font", "Button") == Shell.data_font()
+		and theme.get_font("font", "DataLabel") == Shell.data_font(), "controls and values use the bundled medium sans face")
+	_check_font_coverage()
 	_expect(theme.default_font_size == 22 and Shell.MIN_FONT_SIZE == 18, "22/18 reading contract")
 	_expect(Shell.WARNING == Color("d95149") and Shell.PROXY == Color("41b7ae")
 		and Shell.ANOMALY == Color("7450a6"), "semantic colours retained")
@@ -92,3 +95,27 @@ func _luma(color: Color) -> float:
 
 func _expect(ok: bool, message: String) -> void:
 	if not ok: errors.append(message)
+
+
+func _check_font_coverage() -> void:
+	var characters := {}
+	_collect_cjk("res://src", characters)
+	_collect_cjk("res://content", characters)
+	for character: String in "0123456789%+−×→←◆◇·：，。！？（）「」":
+		characters[character] = true
+	for font: FontFile in [Shell.ui_font(), Shell.data_font()]:
+		_expect(font != null and not font.allow_system_fallback, "bundled font does not rely on system fallback")
+		if font == null: continue
+		for character: String in characters:
+			_expect(font.has_char(character.unicode_at(0)), "%s missing %s" % [font.get_font_name(), character])
+	print("FONT_COVERAGE checked ", characters.size(), " project characters in both bundled faces")
+
+
+func _collect_cjk(path: String, characters: Dictionary) -> void:
+	var expression := RegEx.create_from_string("[\\x{3400}-\\x{9FFF}]")
+	for file: String in DirAccess.get_files_at(path):
+		if file.get_extension() not in ["gd", "json"]: continue
+		for match: RegExMatch in expression.search_all(FileAccess.get_file_as_string(path.path_join(file))):
+			characters[match.get_string()] = true
+	for directory: String in DirAccess.get_directories_at(path):
+		_collect_cjk(path.path_join(directory), characters)
