@@ -841,12 +841,20 @@ func _focus_default_action() -> void:
 		_base_button.grab_focus()
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if _equipment_detail_overlay == null or not _equipment_detail_overlay.visible:
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
 		return
-	if event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE):
-		accept_event()
+	var key_event := event as InputEventKey
+	var key := key_event.keycode if key_event.keycode != KEY_NONE else key_event.physical_keycode
+	if not key_event.pressed or key_event.echo or key != KEY_ESCAPE:
+		return
+	if _equipment_detail_overlay != null and _equipment_detail_overlay.visible:
 		_close_equipment_detail()
+		accept_event()
+		return
+	if _base_button != null and _base_button.is_visible_in_tree():
+		_on_base_pressed()
+		accept_event()
 
 
 func _apply_presentation() -> void:

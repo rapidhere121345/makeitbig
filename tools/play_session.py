@@ -39,7 +39,7 @@ for item in state['controls']:
     if brief and item.get('disabled') is not False and not item['text'].startswith(('HP','目标','第 ')): continue
     if item['text']:
         print(('BUTTON ' if item.get('disabled') is False else 'LOCKED ' if item.get('disabled') else '')+item['text'][:650]+' '+item['rect'])
-for field in ['tutorial','position','combat']:
+for field in ['tutorial','position','destination_guide','focus','combat']:
     if field in state: print(field, json.dumps(state[field],ensure_ascii=False))
 profile=state['profile']
 if brief: sys.exit(0)

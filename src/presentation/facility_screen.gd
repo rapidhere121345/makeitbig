@@ -279,6 +279,41 @@ func _ready() -> void:
 	resized.connect(_on_frame_resized)
 
 
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	var key := key_event.keycode if key_event.keycode != KEY_NONE else key_event.physical_keycode
+	if not key_event.pressed or key_event.echo or key != KEY_ESCAPE:
+		return
+	for dialog in [_salvage_dialog, _skill_detail_dialog, _item_detail_dialog]:
+		if dialog != null and dialog.visible:
+			return
+	var focus_owner := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	if focus_owner is LineEdit or focus_owner is TextEdit:
+		focus_owner.release_focus()
+		get_viewport().set_input_as_handled()
+		return
+	_on_base_pressed()
+	get_viewport().set_input_as_handled()
+
+
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	var key := key_event.keycode if key_event.keycode != KEY_NONE else key_event.physical_keycode
+	if not key_event.pressed or key_event.echo or key != KEY_ESCAPE:
+		return
+	for dialog in [_salvage_dialog, _skill_detail_dialog, _item_detail_dialog]:
+		if dialog != null and dialog.visible:
+			return
+	var focus_owner := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	if focus_owner is LineEdit or focus_owner is TextEdit:
+		focus_owner.release_focus()
+		get_viewport().set_input_as_handled()
+
+
 func _on_frame_resized() -> void:
 	if not _freeze_queued:
 		_freeze_queued = true

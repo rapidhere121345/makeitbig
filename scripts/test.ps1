@@ -31,6 +31,8 @@ if ($LASTEXITCODE -ne 0) { throw "Pixel stage tests failed with exit code $LASTE
 if ($LASTEXITCODE -ne 0) { throw "GameRoot stage tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_town_exploration.gd
 if ($LASTEXITCODE -ne 0) { throw "Town exploration tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_playtest_comfort.gd
+if ($LASTEXITCODE -ne 0) { throw "Playtest comfort tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_session_menu.gd
 if ($LASTEXITCODE -ne 0) { throw "Session menu tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_character_progression.gd

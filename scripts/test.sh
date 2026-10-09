@@ -23,6 +23,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_pixel_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_game_root_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_exploration.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_playtest_comfort.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_session_menu.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_character_progression.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_talent_build.gd

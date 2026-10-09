@@ -138,14 +138,14 @@ func _press_escape() -> void:
 		focus_owner = focus_owner.get_parent() as Control
 		screen = focus_owner as ResultScreenScript
 	if screen != null:
-		screen.call("_unhandled_input", key)
+		screen.call("_unhandled_key_input", key)
 	await _frames(1)
 	key = InputEventKey.new()
 	key.keycode = KEY_ESCAPE
 	key.physical_keycode = KEY_ESCAPE
 	key.pressed = false
 	if screen != null:
-		screen.call("_unhandled_input", key)
+		screen.call("_unhandled_key_input", key)
 	await _frames(2)
 
 

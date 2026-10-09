@@ -54,7 +54,7 @@ const PROMPT_CLEARANCE := 4.0
 ## The themed 18px floor of ShellTheme.MIN_FONT_SIZE holds for every relocated
 ## row; the live proximity badge keeps the 20px body step.
 const PROMPT_FONT_SIZE := 22
-const HELP_COPY_TEXT := "WASD / 方向键移动 · 点击地标指路 · 靠近后 E 交互\n成长 C · 见闻 J · Tab 地标 · Esc 离开地标 · F1 设置"
+const HELP_COPY_TEXT := "WASD / 方向键移动 · 目标箭头指路 · 靠近后 E 交互\nTab 选择可见地标 · 成长 C · 见闻 J · Esc 离开地标 · F1 设置"
 const DETAIL_TITLE_TEXT := "镇中近况"
 const DETAIL_STATUS_EMPTY_TEXT := "本屏暂无新的状态提示。"
 ## Legacy design-space anchors of the pre-hamlet hub, kept for the hub entries
@@ -192,6 +192,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if key == KEY_C: character_requested.emit()
 		else: story_requested.emit()
 		return
+	if key == KEY_TAB and _focus_visible_landmark(key_event.shift_pressed):
+		get_viewport().set_input_as_handled()
+		return
 	if _navigation_has_focus():
 		if key == KEY_ESCAPE:
 			get_viewport().gui_get_focus_owner().release_focus()
@@ -203,6 +206,44 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			var viewport := get_viewport()
 			if viewport != null:
 				viewport.set_input_as_handled()
+
+
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	var key := key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
+	if key != KEY_TAB or is_dialogue_open() or _details_expanded:
+		return
+	if _focus_visible_landmark(key_event.shift_pressed):
+		get_viewport().set_input_as_handled()
+
+
+func _focus_visible_landmark(reverse: bool) -> bool:
+	var visible_ids: Array[String] = []
+	for feature_id: String in LANDMARK_FEATURE_IDS:
+		var landmark := get_landmark(feature_id)
+		if landmark != null and landmark.is_visible_in_tree():
+			visible_ids.append(feature_id)
+	if visible_ids.is_empty():
+		return false
+	var current := -1
+	var focus_owner := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	for index: int in visible_ids.size():
+		var landmark := get_landmark(visible_ids[index])
+		if landmark != null and focus_owner != null and (focus_owner == landmark or landmark.is_ancestor_of(focus_owner)):
+			current = index
+			break
+	var target := 0
+	if current >= 0:
+		target = posmod(current + (-1 if reverse else 1), visible_ids.size())
+	var focused := get_landmark(visible_ids[target])
+	if focused == null:
+		return false
+	focused.grab_focus()
+	return true
 
 
 func _unhandled_input(event: InputEvent) -> void:

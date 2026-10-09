@@ -29,6 +29,7 @@ const DEFAULT_HERO_FACING := "south"
 const HERO_SPEED := 96.0
 const WORLD_MARGIN := 20.0
 const HOTSPOT := 72.0
+const DESTINATION_EDGE_MARGIN := Vector2(22.0, 96.0)
 const SPLIT_FADE_ALPHA := 0.52
 ## Conservative cutaway: a foreground band that covers the avatar keeps its
 ## authored alpha everywhere except the avatar's own overlap window, where the
@@ -147,7 +148,9 @@ var _nearby_feature_id := ""
 var _world_dirty := true
 var _walking := false
 var _destination_marker: Polygon2D
+var _destination_indicator: Polygon2D
 var _destination_id := ""
+var _destination_routes: Dictionary = {}
 
 var _hero_sprite: Sprite2D
 var _hero_shadow: Polygon2D
@@ -295,6 +298,7 @@ func _configure(atlases: Dictionary, layout: Dictionary) -> void:
 	_walk_time = 0.0
 	_nearby_feature_id = ""
 	_feature_entries = _build_feature_entries(layout)
+	_destination_routes = _build_destination_routes(layout)
 	_collision.configure(layout)
 	if town_layer != null:
 		town_layer.configure(_feature_entries, _world_size, layout, _scene_texture)
@@ -590,6 +594,92 @@ func set_destination(feature_id: String) -> void:
 		world_root.add_child(_destination_marker)
 	_destination_marker.visible = not entry.is_empty()
 	if not entry.is_empty(): _destination_marker.position = entry.feet
+	_update_destination_indicator()
+
+
+func _build_destination_routes(layout: Dictionary) -> Dictionary:
+	var result := {}
+	var routes: Variant = layout.get("routes_uv", {})
+	if not routes is Dictionary:
+		return result
+	for feature_id: String in INTERACTION_IDS:
+		var declared: Variant = (routes as Dictionary).get(feature_id, null)
+		if not declared is Array:
+			continue
+		var points: Array[Vector2] = []
+		for raw_point: Variant in declared:
+			if not raw_point is Array or (raw_point as Array).size() != 2:
+				continue
+			var pair := raw_point as Array
+			var point := Vector2(float(pair[0]), float(pair[1])) * _world_size
+			if point.is_finite():
+				points.append(point)
+		if points.size() >= 2:
+			result[feature_id] = points
+	return result
+
+
+func destination_guide_point() -> Vector2:
+	var entry := entry_for(_destination_id)
+	if entry.is_empty():
+		return Vector2.INF
+	var route: Variant = _destination_routes.get(_destination_id, null)
+	if not route is Array or (route as Array).size() < 2:
+		return entry.get("feet", Vector2.ZERO) as Vector2
+	var points := route as Array
+	var best_distance := INF
+	var guide := entry.get("feet", Vector2.ZERO) as Vector2
+	for index: int in points.size() - 1:
+		var start := points[index] as Vector2
+		var end := points[index + 1] as Vector2
+		var closest := Geometry2D.get_closest_point_to_segment(_hero_position, start, end)
+		var distance := _hero_position.distance_squared_to(closest)
+		if distance < best_distance:
+			best_distance = distance
+			guide = end
+	return guide
+
+
+func destination_guide_report() -> Dictionary:
+	var entry := entry_for(_destination_id)
+	if entry.is_empty():
+		return {"visible": false}
+	var guide := destination_guide_point()
+	var camera := camera_world_offset()
+	var guide_screen := guide - camera
+	var hero_screen := _hero_position - camera
+	return {
+		"id": _destination_id,
+		"guide": guide,
+		"screen": guide_screen,
+		"visible": _destination_indicator != null and _destination_indicator.visible,
+		"direction": guide_screen - hero_screen,
+	}
+
+
+func _update_destination_indicator() -> void:
+	if _destination_indicator == null:
+		_destination_indicator = Polygon2D.new()
+		_destination_indicator.name = "TownDestinationIndicator"
+		_destination_indicator.polygon = PackedVector2Array([Vector2(8, 0), Vector2(-5, 6), Vector2(-5, -6)])
+		_destination_indicator.color = Color("e5b67c")
+		_destination_indicator.z_index = 30
+		world_viewport.add_child(_destination_indicator)
+	var entry := entry_for(_destination_id)
+	if entry.is_empty():
+		_destination_indicator.visible = false
+		return
+	var camera := camera_world_offset()
+	var destination_screen := (entry.get("feet", Vector2.ZERO) as Vector2) - camera
+	var safe := Rect2(DESTINATION_EDGE_MARGIN, _view_size - DESTINATION_EDGE_MARGIN * 2.0)
+	_destination_indicator.visible = not safe.has_point(destination_screen)
+	if not _destination_indicator.visible:
+		return
+	var guide := destination_guide_point()
+	var guide_screen := guide - camera
+	var hero_screen := _hero_position - camera
+	_destination_indicator.position = guide_screen.clamp(safe.position, safe.end)
+	_destination_indicator.rotation = (guide_screen - hero_screen).angle()
 
 
 func _update_facing(direction: Vector2) -> void:
@@ -1158,6 +1248,7 @@ func _sync_camera() -> void:
 	if world_root == null:
 		return
 	world_root.position = -camera_world_offset()
+	_update_destination_indicator()
 	_world_dirty = false
 
 

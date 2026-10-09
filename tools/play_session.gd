@@ -33,6 +33,7 @@ func _start() -> void:
 			quit()
 			return
 		game.process_mode = Node.PROCESS_MODE_INHERIT
+		await process_frame
 		if command.has("size"):
 			var requested := Vector2i(int(command.size[0]), int(command.size[1]))
 			DisplayServer.window_set_size(requested)
@@ -110,12 +111,18 @@ func _snapshot(id: int) -> void:
 	_scan(game.current_screen, controls)
 	var result := {"id": id, "route": game.current_route, "controls": controls,
 		"profile": game.application_state.profile, "window": str(root.size)}
+	var focus_viewport: Viewport = game.current_screen.get_viewport() if game.current_screen != null else root
+	var focus_owner: Control = focus_viewport.gui_get_focus_owner()
+	result.focus = "" if focus_owner == null else str(focus_owner.get_path())
 	if game.current_screen.has_method("get_checklist_snapshot"):
 		result.tutorial = game.current_screen.get_checklist_snapshot()
 		result.position = str(game.current_screen.get_player_position())
 	if game.current_screen.has_method("get_hub_view"):
 		result.town = game.current_screen.get_hub_view().life_report()
 		result.position = str(game.current_screen.get_hub_view().hero_world_position())
+		var guide: Variant = game.current_screen.get_hub_view().destination_guide_report()
+		if guide is Dictionary:
+			result.destination_guide = guide
 	var mains: Array = game.current_screen.find_children("*", "Node2D", true, false)
 	if game.current_screen is Node2D: mains.push_front(game.current_screen)
 	for node in mains:
