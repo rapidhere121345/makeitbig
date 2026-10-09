@@ -1,7 +1,6 @@
 extends RefCounted
 
 const BigValue = preload("res://src/core/big_value.gd")
-const EventPacket = preload("res://src/core/event_packet.gd")
 
 
 func run() -> Array[String]:
@@ -10,7 +9,6 @@ func run() -> Array[String]:
 	_test_equivalent_representations_and_ordering(errors)
 	_test_arithmetic(errors)
 	_test_formatting(errors)
-	_test_event_packet(errors)
 	return errors
 
 
@@ -100,33 +98,6 @@ func _test_formatting(errors: Array[String]) -> void:
 	_check(trillion_text.begins_with("1") and trillion_text.ends_with("e12"), "large layer-0 values must use compact scientific notation, got %s" % trillion_text, errors)
 	_check(BigValue.from_power10(400.0).to_short_string().begins_with("1e"), "layer 1 must use exponent notation", errors)
 	_check(BigValue.from_tetration10(4).to_short_string().begins_with("10^^2"), "layer 2 must use tower notation", errors)
-
-
-func _test_event_packet(errors: Array[String]) -> void:
-	var first = EventPacket.new(BigValue.from_float(5.0), {"kind": "damage"}, ["linear", "combat"], "root/A", 3)
-	var second = EventPacket.new(BigValue.from_float(7.0), {"kind": "damage"}, ["combat", "linear"], "root/A", 3)
-	_check(first.try_visit_rule("armor"), "first rule visit must succeed", errors)
-	_check(not first.try_visit_rule("armor"), "same lineage must not revisit a rule", errors)
-	_check(second.try_visit_rule("armor"), "matching packet must build the same proof", errors)
-	_check(first.record_target("enemy-1") and second.record_target("enemy-1"), "target history must record", errors)
-	var copied = first.duplicate_packet()
-	_check(not copied.try_visit_rule("armor"), "a copied lineage must retain its visited-rule proof", errors)
-	_check(first.can_merge_with(second), "equal linear proof paths must be mergeable", errors)
-	var merged = first.merge_with(second)
-	_check(merged != null and _near(merged.quantity.magnitude, 12.0), "merge must add quantities", errors)
-	_check(merged != null and merged.remaining_lifetime == 3, "merge must preserve the shared lifetime", errors)
-	_check(merged != null and merged.proof_chain_summary().contains("armor"), "proof summary must include rules", errors)
-	var different_lifetime = second.duplicate_packet()
-	different_lifetime.remaining_lifetime = 2
-	_check(not first.can_merge_with(different_lifetime), "different remaining lifetimes must not merge", errors)
-
-	var fork = EventPacket.new(BigValue.from_float(1.0), {"kind": "damage"}, ["combat", "linear"], "root/B", 3)
-	fork.try_visit_rule("armor")
-	fork.record_target("enemy-1")
-	_check(not first.can_merge_with(fork), "different lineages must not merge", errors)
-	var anonymous_a = EventPacket.new(BigValue.from_float(1.0))
-	var anonymous_b = EventPacket.new(BigValue.from_float(1.0))
-	_check(not anonymous_a.can_merge_with(anonymous_b), "anonymous packets must receive distinct lineages", errors)
 
 
 func _check(condition: bool, message: String, errors: Array[String]) -> void:

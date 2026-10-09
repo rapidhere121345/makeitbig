@@ -16,4 +16,4 @@
 
 `hamlet_ground_r14` 的 atlas 没有记录原图映射，暂保留 `p1-hamlet-ground-v03/` 原图与配方以及炉边镇构图原图，待确认现行地面的重建链。概念参考图不直接代替运行贴图。字体来源和原许可位于 [PROVENANCE.md](../../art/fonts/PROVENANCE.md) 与 [LICENSE-noto-cjk.txt](../../art/fonts/LICENSE-noto-cjk.txt)；生成图的来源记录不视为第三方授权书。
 
-维护检查：`scripts/test.sh` 与 `scripts/test.ps1` 均调用 `tests/test_scene_atmosphere.gd` 和 `tests/test_workbench_layout.gd`。前者依赖场景光影、镇区、战场、返镇表现脚本及 `ground_refine_v01/ground.png`；后者依赖 `facility_screen.gd` 和 `tests/test_facility_screen.gd`。两份入口及其 UID 保留，生产资源与外部依赖未改。字体重打包脚本 `tools/art_pipeline/repack_ui_font.py` 保留；头像导入检查使用现行 FROZEN 清单。旧截图、GIF、复制项目、候选和验收报告不留在这些目录。
+维护检查：`scripts/test.sh` 与 `scripts/test.ps1` 均调用 `tests/test_scene_atmosphere.gd` 和 `tests/test_workbench_layout.gd`。前者依赖场景光影、镇区、战场、返镇表现脚本及 `ground_refine_v01/ground.png`；后者依赖 `facility_screen.gd` 和 `tests/test_facility_screen.gd`。两份入口及其 UID 保留，生产资源与外部依赖未改。现用字体来自固定上游 Medium 文件，旧 Regular 重打包脚本已随历史产物移除；头像导入检查使用现行 FROZEN 清单。旧截图、GIF、复制项目、候选和验收报告不留在这些目录。

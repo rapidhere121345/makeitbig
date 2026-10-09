@@ -772,32 +772,6 @@ func _build_drop_panel(parent: Control) -> void:
 	_equipment_pagination.add_child(_next_page_button)
 
 
-func _build_detail_panel(parent: Control) -> void:
-	## Collapsed by default: the screen shows the actual result, and the raw field
-	## table with the untruncated ids is one explicit step away.
-	_detail_panel = PanelContainer.new()
-	_detail_panel.name = "ResultDetailPanel"
-	_detail_panel.visible = false
-	parent.add_child(_detail_panel)
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 8)
-	_detail_panel.add_child(column)
-	column.add_child(_heading(DETAIL_HEADING))
-	_details_label = Label.new()
-	_details_label.name = "ResultDetailMeta"
-	_details_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_details_label.add_theme_font_size_override("font_size", SUBTITLE_FONT_SIZE)
-	column.add_child(_details_label)
-	_detail_instances_label = Label.new()
-	_detail_instances_label.name = "ResultDetailInstances"
-	## Opaque ids carry no break points, so this block may break inside a word; the
-	## full id is never shortened to fit.
-	_detail_instances_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-	_detail_instances_label.add_theme_font_size_override("font_size", SUBTITLE_FONT_SIZE)
-	_detail_instances_label.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
-	column.add_child(_detail_instances_label)
-
-
 func _build_footer(root: Control) -> void:
 	var footer := HBoxContainer.new()
 	footer.name = "ResultFooter"
@@ -1689,18 +1663,6 @@ func _item_display_name(entry: Dictionary) -> String:
 ## kept, which is the audit form. With them on, an explicit name field on the affix
 ## wins, then the published affix table, and an id neither covers stays raw. A drop
 ## that reports no tier states none instead of claiming T0.
-func _affix_lines(value: Variant, published_names: bool) -> Array[String]:
-	return _equipment_model.affix_labels(value, published_names)
-
-
-## One published name out of the content table this screen reads read-only, or the
-## id itself when the table does not cover it.
-func _published_name(table: String, id: String) -> String:
-	var row := _as_dictionary(_published_rows(table).get(id, null))
-	var published := String(row.get("name", "")).strip_edges()
-	return published if not published.is_empty() else id
-
-
 func _published_rows(table: String) -> Dictionary:
 	if _item_registry == null:
 		return {}
@@ -1710,10 +1672,6 @@ func _published_rows(table: String) -> Dictionary:
 ## The authoritative instance id, whole. A display that shortens an id hides the one
 ## field that identifies which drop this actually is, so nothing is cut here; the
 ## audit line and 计算详情 print it in full, and the detail block may break inside it.
-func _instance_id_text(value: Variant) -> String:
-	return _equipment_model.instance_id_text(value)
-
-
 func _registry_rows(table: String) -> Dictionary:
 	if _item_registry == null:
 		return {}
@@ -2111,11 +2069,6 @@ func _stable_node_token(value: String) -> String:
 		var legal := code >= 48 and code <= 57 or code >= 65 and code <= 90 or code >= 97 and code <= 122 or character in ["_", "-"]
 		token += character if legal else "_"
 	return token
-
-
-func _on_detail_pressed() -> void:
-	_detail_visible = not _detail_visible
-	_sync_detail_visibility()
 
 
 func _on_base_pressed() -> void:

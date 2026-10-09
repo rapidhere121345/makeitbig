@@ -1298,33 +1298,6 @@ func _workbench_region(stage: Control, node_name: String, rect: Rect2) -> VBoxCo
 
 ## Bounded columns: children never feed their content minimum back into the
 ## root page width. Each content lane scrolls locally if the text grows.
-func _workbench_columns(node_name: String, weights: Array) -> Array:
-	var stage := Control.new()
-	stage.name = node_name
-	stage.custom_minimum_size = Vector2(0, _layout_frame.y)
-	stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_cards.add_child(stage)
-	_facility_root = stage
-	var rectangles := FacilityLayoutScript.columns(_layout_frame,weights)
-	var result: Array = []
-	for index in weights.size():
-		var rect: Rect2 = rectangles[index]
-		var scroll := ScrollContainer.new()
-		scroll.name = node_name + "Column" + str(index)
-		scroll.position = rect.position
-		scroll.size = rect.size
-		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		ShellThemeScript.hide_passive_scrollbar_chrome(scroll)
-		stage.add_child(scroll)
-		var column := VBoxContainer.new()
-		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		column.add_theme_constant_override("separation", 8)
-		scroll.add_child(column)
-		result.append(column)
-	return result
-
-
 func _grid_cell_box() -> StyleBox:
 	var box := _recessed_panel_style("well")
 	box.content_margin_left = 8.0
@@ -1574,23 +1547,6 @@ func _build_slot_grid(parent: Container, equipment_slots: Array, open_slots: Arr
 		var slot := String(raw_slot)
 		if slot in equipment_slots:
 			row.add_child(_slot_cell(slot,equipped_ids,inventory,true,0,0))
-
-
-func _locked_slot_cell(slot: String, _cell_width: int, _cell_height: int) -> PanelContainer:
-	var cell := PanelContainer.new()
-	cell.name = "LoadoutSlotCell_" + _stable_node_token(slot)
-	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cell.add_theme_stylebox_override("panel", _grid_cell_box())
-	var label := _note_label(_slot_title(slot))
-	label.name = "SlotLabel_" + _stable_node_token(slot)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.tooltip_text = _slot_display_name(slot) + "：前期原型未开放"
-	var column := HBoxContainer.new()
-	column.add_theme_constant_override("separation",2)
-	cell.add_child(column)
-	column.add_child(LockedSlotMarkScript.new())
-	column.add_child(label)
-	return cell
 
 
 func _slot_cell(slot: String, equipped_ids: Dictionary, inventory: Array, _open_slot: bool, _cell_width: int, _cell_height: int) -> PanelContainer:
@@ -2246,49 +2202,6 @@ func _item_detail_text(item: Dictionary) -> String:
 ##
 ## options keys: summary_node_name, show_name, icon_canonical, icon_prefix,
 ## icon_name.
-func _add_item_summary(parent: Container, item: Dictionary, options: Dictionary) -> Label:
-	var summary_node_name := String(options.get("summary_node_name", "ItemSummary"))
-	var show_name := bool(options.get("show_name", true))
-	var icon_canonical := String(options.get("icon_canonical", ""))
-	var icon_prefix := String(options.get("icon_prefix", ""))
-	var icon_name := String(options.get("icon_name", ""))
-	var summary := _note_label(_item_summary_text(item, show_name))
-	summary.add_theme_color_override("font_color",ShellThemeScript.BONE)
-	summary.name = summary_node_name
-	if icon_canonical.is_empty():
-		parent.add_child(summary)
-	else:
-		_add_text_icon_row(parent, icon_canonical, summary, icon_prefix, icon_name)
-	return summary
-
-
-## One item's folded raw reference block: the reason line when the line is
-## genuinely long, the owner's own stable disclosure toggle, and the full raw field
-## line hidden until that toggle opens it. The full text is built either way and
-## stays in the tree, so folding reorganises the page and never drops a value;
-## opening it is presentation state that emits no action and changes no payload.
-func _add_item_raw_block(parent: Container, kind: String, owner_id: String, item: Dictionary, options: Dictionary) -> Label:
-	var detail_node_name := String(options.get("detail_node_name", "ItemDetail"))
-	var open := _field_block_open(kind, owner_id)
-	if not open and _raw_fields_are_long(item):
-		parent.tooltip_text = "原始字段已折叠：%s" % _raw_field_reason(item)
-	var toggle := _field_block_toggle(kind, owner_id)
-	toggle.tooltip_text = "原始字段已折叠：%s" % _raw_field_reason(item) if not open else "收起完整内部字段"
-	parent.add_child(toggle)
-	var detail := _body_label(_item_detail_text(item))
-	detail.name = detail_node_name
-	# The full line is built either way and stays in the tree, hidden until its own
-	# toggle opens it: folding hides reference data and never drops it, the node keeps
-	# its stable name, and an external reader still finds it by name.
-	detail.visible = open
-	parent.add_child(detail)
-	return detail
-
-
-## Whether a raw field block is genuinely long: an instance_id past the display
-## budget, or more internal modifier/affix entries than one readable line holds.
-## Every card folds its raw line by default; this only decides whether the fold
-## names its reason, so a long reference block never looks arbitrary.
 func _raw_fields_are_long(item: Dictionary) -> bool:
 	if String(item.get("instance_id", "")).length() > INSTANCE_ID_DISPLAY_LIMIT:
 		return true
@@ -2336,27 +2249,6 @@ func _candidate_inline_item_facts(item: Dictionary) -> String:
 
 ## The modal receives the complete authoritative comparison. The fixed pane shows
 ## the changed parameters plus a literal route to the remaining interface/tag facts.
-func _candidate_inline_decision_text(complete_text: String) -> String:
-	if complete_text.begins_with("变化未知") or complete_text == "参数与接口无变化":
-		return complete_text
-	var lines := complete_text.split("\n", false)
-	if lines.is_empty():
-		return "装备后参数关键变化：未知"
-	var parameter_line := String(lines[0]).trim_prefix("装备后参数：")
-	var first_change := parameter_line.split(" · ", false)[0]
-	return "装备后参数关键变化：%s" % first_change
-
-
-## One real modifier the way a player reads it: the parameter's published Chinese
-## name or its raw key, then × / + for the operations the item tables use. A
-## parameter or operation the tables do not cover keeps its raw key instead of a
-## guessed translation or symbol.
-func _player_modifier_text(modifier: Dictionary) -> String:
-	return _equipment_model.readable.format_modifier(modifier)
-
-
-## The player-facing name of one rune or law: the published Chinese name, or the raw
-## id with the page's standing note when the tables name no entry.
 func _player_modifier_name(modifier_id: String) -> String:
 	return _equipment_model.modifier_name(modifier_id)
 
@@ -2508,13 +2400,6 @@ func _slot_title(slot: String) -> String:
 
 ## The four open slot names as one player-facing list, for the locked-slot reason
 ## line. Raw ids stay on the locked lines that already name their own slot.
-func _slot_titles(slots: Array) -> String:
-	var titles: Array[String] = []
-	for raw_slot in slots:
-		titles.append(_slot_title(String(raw_slot)))
-	return " / ".join(titles)
-
-
 func _stable_node_token(value: String) -> String:
 	var token := ""
 	for index in value.length():
@@ -2525,28 +2410,6 @@ func _stable_node_token(value: String) -> String:
 	return token
 
 
-func _add_card_payload_action(parent: Container, label_text: String, action_id: String, payload: Dictionary, node_name: String) -> void:
-	var button := Button.new()
-	button.name = node_name
-	button.text = label_text
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.pressed.connect(_on_payload_action_pressed.bind(action_id, payload.duplicate(true)))
-	parent.add_child(button)
-
-
-## salvage_previews is the authoritative snapshot field keyed by item instance_id.
-## Each entry is already computed upstream:
-## {
-##   "ok": true,
-##   "operation": "inscribe" | "rewrite" | "refine",
-##   "amount": 1
-## }
-## A same-slot inventory candidate gets a salvage button only when its preview
-## entry is legal (ok:true, known operation, positive integer amount) and the item
-## itself is not marked protected. Equipped items are never candidates. This
-## screen never derives an operation or amount, never mutates the snapshot, and the
-## salvage copy stays neutral: it is not a recommendation or power judgment.
 func _salvage_action_for(item: Dictionary, instance_id: String) -> Dictionary:
 	return _equipment_model.salvage_action(item) if instance_id == String(item.get("instance_id", "")) else {}
 
@@ -2739,20 +2602,6 @@ func _forge_stage_columns(node_name: String, weights: Array, stages: Array) -> A
 		scroll.add_child(body)
 		result.append(body)
 	return result
-
-func _style_workbench_tabs(tabs: TabContainer) -> void:
-	tabs.add_theme_stylebox_override("panel",_grid_cell_box())
-	var bar := tabs.get_tab_bar()
-	bar.add_theme_font_size_override("font_size",18)
-	bar.add_theme_color_override("font_selected_color",ShellThemeScript.BONE)
-	bar.add_theme_color_override("font_unselected_color",ShellThemeScript.NEUTRAL)
-	for state in ["tab_selected","tab_unselected","tab_hovered","tab_disabled"]:
-		var box := ShellThemeScript.panel_style("selected" if state == "tab_selected" else "well")
-		box.content_margin_left = 12
-		box.content_margin_right = 12
-		box.content_margin_top = 6
-		box.content_margin_bottom = 6
-		bar.add_theme_stylebox_override(state,box)
 
 func _on_forge_operation_selected(operation: String) -> void:
 	if operation not in FORGE_TRACKS or operation == _forge_operation:
@@ -3319,16 +3168,6 @@ func _is_decimal_reading(text: String) -> bool:
 	return true
 
 
-func _shortened_fingerprint(fingerprint: String) -> String:
-	if fingerprint.is_empty():
-		return "未知"
-	var prefix := fingerprint.left(12)
-	return prefix if fingerprint.length() <= prefix.length() else prefix + "…"
-
-
-## The locked bay keeps the original four-core reward preview. Once unlocked,
-## the strip is the actual installed build and the inventory is the six-core
-## runtime catalog; catalog entries outside that contract never reach the page.
 func _build_proxy() -> void:
 	var proxy := _as_dictionary(_facility_data.get("proxy", {}))
 	var progression := _as_dictionary(_facility_data.get("progression", {}))
@@ -3511,16 +3350,6 @@ func _build_research() -> void:
 	_add_action("查看已发现结论", "inspect_discoveries")
 	_add_action("设为目标研究", "set_research_target")
 	_add_action("检查缺失接口", "inspect_missing_interfaces")
-
-
-func _forge_summary() -> String:
-	if _facility_data.is_empty():
-		return "锻造数据不可用"
-	return "目标：%s    操作：%s    状态：%s" % [
-		_forge_item_title(_as_dictionary(_facility_data.get("target_item", {}))),
-		String(FORGE_TRACK_TITLES.get(_forge_operation, "未知")),
-		"已解锁" if bool(_facility_data.get("unlocked", false)) else "未解锁",
-	]
 
 
 func _forge_session() -> Dictionary:
@@ -3761,29 +3590,6 @@ func _forge_build_change_text(candidate: Dictionary) -> String:
 	return "\n".join(lines)
 
 
-func _family_short_name(family: String) -> String:
-	var normalized := family.strip_edges().to_lower()
-	var names := {
-		"growth_probability": "续行概率 / GROWTH P",
-		"shared_lifetime": "共享寿命 / LIFETIME",
-		"branch_count": "分支数量 / BRANCH",
-		"payload": "载体威力 / PAYLOAD",
-		"flight_speed": "投射速度 / SPEED",
-		"turn_time": "转向时间 / TURN",
-		"power": "力量 / PWR",
-		"speed": "迅捷 / SPD",
-		"critical": "暴击 / CRIT",
-		"common": "通用 / COMMON",
-		"rare": "稀有 / RARE",
-		"utility": "功能 / UTIL",
-	}
-	if names.has(normalized):
-		return String(names[normalized])
-	if normalized.is_empty() or normalized == "unknown":
-		return "未知 / UNKNOWN"
-	return "法则 / %s" % normalized.to_upper()
-
-
 func _add_card(title_text: String, body_text: String, node_name: String = "") -> void:
 	var panel := PanelContainer.new()
 	if not node_name.is_empty():
@@ -3829,32 +3635,6 @@ func _add_payload_action(label_text: String, action_id: String, payload: Diction
 ## Same emitter as _add_payload_action, but the real button is wrapped in a named
 ## cell so a page can put one published icon beside it. The wrapper owns no
 ## input: the button keeps its own name, label, payload and disabled state.
-func _add_card_payload_action_after(
-	parent: Container,
-	label_text: String,
-	action_id: String,
-	payload: Dictionary,
-	button_name: String,
-	cell_name: String
-) -> void:
-	var button := Button.new()
-	button.name = button_name
-	button.text = label_text
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.pressed.connect(_on_payload_action_pressed.bind(action_id, payload.duplicate(true)))
-	var cell := HBoxContainer.new()
-	cell.name = cell_name
-	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cell.add_theme_constant_override("separation", 10)
-	cell.add_child(button)
-	parent.add_child(cell)
-
-
-func _forge_inventory_cell(instance_id: String) -> HBoxContainer:
-	return find_child("ForgeInventoryCell_%s" % _stable_node_token(instance_id), true, false) as HBoxContainer
-
-
 func get_visible_text() -> String:
 	var lines: Array[String] = []
 	_collect_label_text(self, lines)
@@ -3997,21 +3777,6 @@ func _format_value(value: Variant) -> String:
 	return _display_value(value)
 
 
-func _core_name(value: Variant) -> String:
-	var id := _display_value(value)
-	var labels := {
-		"near_enemy_horizon": "近敌视界（白）",
-		"nearest_enemy": "感知核心（白）", "perception": "感知核心（白）",
-		"direct_gait": "直趋步足（白）", "movement": "行动核心（白）", "action": "行动核心（白）",
-		"single_key_execution": "单键执行（白）", "execution": "执行核心（白）",
-		"short_trace_memory": "短痕记忆（白）", "memory": "记忆核心（白）",
-	}
-	return String(labels.get(id.to_lower(), "%s（白）" % id))
-
-
-## Accepts the stored core id and the legacy slot words the profile migration can
-## still carry. An unknown word maps to nothing, so the core stays text-only
-## instead of borrowing another core's icon.
 func _core_canonical_name(value: Variant) -> String:
 	var id := _display_value(value).strip_edges().to_lower()
 	var aliases := {
@@ -4041,10 +3806,6 @@ func _as_array(value: Variant) -> Array:
 
 func _on_base_pressed() -> void:
 	base_requested.emit()
-
-
-func _on_destination_pressed(route: String) -> void:
-	destination_requested.emit(route)
 
 
 func _on_action_pressed(action_id: String) -> void:

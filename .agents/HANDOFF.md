@@ -1,5 +1,11 @@
 # Make It Big 开发交接
 
+## 2026-10-09 第二阶段清理与重构（当前）
+
+第一阶段试玩改进已固定为 `b67812c`。随后按审计清单完成第二阶段：删除 124 个已核查的历史/重复/评审产物，保留现用 Medium 字体、许可、正式贴图、来源和回归基准；六份 D07 manifest、v03 `TEXTURE_IMPORTS.json` 与导出排除规则已同步。训练报告纯计算已移到 `src/systems/training_report_builder.gd`，战斗状态哈希编码已移到 `src/game/combat_state_codec.gd`，两项都注册了边界测试并保持旧行为。
+
+清理后的全新 `.godot` 导入、完整 Godot 回归、30/60/144Hz 与表现层关闭回放、Pillow 制作管线测试和 Linux/Windows 交叉导出均已通过；语义状态哈希仍为 `5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900`。Linux 正式包从空目录以 headless smoke 运行通过。明细见 [CLEANUP_2026-10-09.md](../docs/design/CLEANUP_2026-10-09.md) 与被忽略的 `build/current/validation.txt`。Windows 包未在 Windows 硬件上运行，硬件 GPU 性能仍未声明。
+
 更新：2026-10-08。最新一轮按用户追加意见移除小镇底部导航、改用建筑地标信息、减少首屏文字并更换字体。此前的近景探索、美术、刷宝与剧情改进保留。全部子线程已结束。
 
 ## 最新迭代：建筑地标、阅读减负与字体

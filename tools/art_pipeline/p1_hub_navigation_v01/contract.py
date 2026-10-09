@@ -5,11 +5,11 @@ It performs no image work and imports nothing from the sibling pipelines, so it
 can be imported by ``build``, ``verify``, ``review`` and the tests without any
 module-name collision.
 
-The published pack is a single 160x32 icon sheet read by
-``res://src/presentation/hub_navigation_bar.gd``: five 32x32 cells left to
-right, one ``ui_icon`` per cell on a (16,16) anchor, plus ``atlas.json``
-schema_version 1. Only the packaging is frozen here; the artwork itself is
-owned by the main thread.
+The published pack is a standalone 160x32 icon sheet: five 32x32 cells left
+to right, one ``ui_icon`` per cell on a (16,16) anchor, plus ``atlas.json``
+schema_version 1. The former runtime navigation component was retired; this
+contract remains for production verification and future reuse. Only the
+packaging is frozen here; the artwork itself is owned by the main thread.
 """
 
 from __future__ import annotations

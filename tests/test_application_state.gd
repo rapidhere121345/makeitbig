@@ -6,6 +6,7 @@ const EarlyItemRegistryScript = preload("res://src/content/early_item_registry.g
 const LawForgeScript = preload("res://src/systems/law_forge.gd")
 const ContractPlanScript = preload("res://src/game/contract_plan.gd")
 const SaveStoreScript = preload("res://src/persistence/save_store.gd")
+const TrainingReportBuilderScript = preload("res://src/systems/training_report_builder.gd")
 
 
 func run() -> Array[String]:
@@ -263,10 +264,10 @@ func _test_training_report_augmentation(failures: Array[String]) -> void:
 		"lineage_lifetime_pause": "谱系寿命暂停",
 	}
 	for interface_id in known_interface_names:
-		var known_action := state._training_action({"missing_interfaces": [interface_id]})
+		var known_action := TrainingReportBuilderScript.action({"missing_interfaces": [interface_id]})
 		_expect(known_action.contains(String(known_interface_names[interface_id])) and not known_action.contains(String(interface_id)),
 			"training augmentation: known interface %s leaked its raw id or lost its Chinese name" % interface_id, failures)
-	var fallback_action := state._training_action({"missing_interfaces": ["lineage_lifetime_pause", "experimental_link"]})
+	var fallback_action := TrainingReportBuilderScript.action({"missing_interfaces": ["lineage_lifetime_pause", "experimental_link"]})
 	_expect(fallback_action.contains("谱系寿命暂停") and fallback_action.contains("未收录接口（experimental_link）"),
 		"training augmentation: fallback interface guidance must use shared names and retain unknown ids", failures)
 

@@ -1277,10 +1277,6 @@ func _next_objective_text() -> String:
 	return "前往契约台查看当前可用节点"
 
 
-func _short_node_label(node_id: String) -> String:
-	return String(_SHORT_NODE_LABELS.get(node_id, "支线复测" if node_id.is_empty() else node_id))
-
-
 func _profile_training_complete() -> bool:
 	var training := _as_dictionary(_profile.get("training", {}))
 	var reports_by_fingerprint := _as_dictionary(training.get("reports_by_fingerprint", {}))

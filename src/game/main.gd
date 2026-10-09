@@ -14,6 +14,7 @@ const EnemyTacticsScript = preload("res://src/systems/enemy_tactics.gd")
 const WalkableGeometryScript = preload("res://src/systems/walkable_geometry.gd")
 const CombatEventStreamScript = preload("res://src/systems/combat_event_stream.gd")
 const SaveStoreScript = preload("res://src/persistence/save_store.gd")
+const CombatStateCodecScript = preload("res://src/game/combat_state_codec.gd")
 const ArenaHudScript = preload("res://src/presentation/arena_hud.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
@@ -1915,28 +1916,9 @@ func _player_authority_action_state() -> String:
 	return player_action_timeline.phase_at(sim_tick)
 
 
-func _public_enemy_telegraphs() -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
-	for enemy: EnemyData in enemies:
-		if enemy.action_state == "windup":
-			result.append({
-				"entity_id": enemy.entity_id,
-				"action_id": enemy.action_id,
-				"impact_tick": enemy.impact_tick,
-				"target_shape": enemy.target_shape.duplicate(true),
-			})
-	return result
-
-
 func _move_command(direction: Vector2, speed_scale: float) -> Dictionary:
 	var milli := _direction_to_milli(direction)
 	var result := CombatCommandProtocolScript.move(sim_tick, "ranger", command_sequence, milli.x, milli.y, clampi(roundi(speed_scale * 1000.0), 1, 1000))
-	command_sequence += 1
-	return result
-
-
-func _stop_command() -> Dictionary:
-	var result := CombatCommandProtocolScript.stop_move(sim_tick, "ranger", command_sequence)
 	command_sequence += 1
 	return result
 
@@ -3345,13 +3327,13 @@ func _semantic_state_hash(result: String) -> String:
 			"action_id": enemy.action_id,
 			"action_state": enemy.action_state,
 			"boss": enemy.is_boss,
-			"charge": _geometry_state(enemy.charge_origin, enemy.charge_direction, enemy.charge_length, enemy.charge_width),
+			"charge": CombatStateCodecScript.geometry_state(enemy.charge_origin, enemy.charge_direction, enemy.charge_length, enemy.charge_width),
 			"core_open": enemy.core_open,
 			"core_vulnerable": enemy.core_vulnerable,
 			"entity_id": enemy.entity_id,
 			"facing_x_milli": roundi(enemy.facing.x * 1000.0),
 			"facing_y_milli": roundi(enemy.facing.y * 1000.0),
-			"fan": _geometry_state(enemy.fan_origin, enemy.fan_direction, enemy.fan_radius, enemy.fan_half_angle),
+			"fan": CombatStateCodecScript.geometry_state(enemy.fan_origin, enemy.fan_direction, enemy.fan_radius, enemy.fan_half_angle),
 			"health_milli": roundi(enemy.health * 1000.0),
 			"hit_flash_until_tick": enemy.hit_flash_until_tick,
 			"impact_resolved": enemy.impact_resolved,
@@ -3371,7 +3353,7 @@ func _semantic_state_hash(result: String) -> String:
 			"state_started_tick": enemy.state_started_tick,
 			"tactic_reason": enemy.tactic_reason,
 			"tactic_state": enemy.tactic_state,
-			"target_shape": _target_shape_state(enemy.target_shape),
+			"target_shape": CombatStateCodecScript.target_shape_state(enemy.target_shape),
 			"x_millipixels": roundi(enemy.position.x * 1000.0),
 			"y_millipixels": roundi(enemy.position.y * 1000.0),
 		})
@@ -3431,7 +3413,7 @@ func _semantic_state_hash(result: String) -> String:
 			"payload_milli": roundi(projectile.payload * 1000.0),
 		})
 	var state := {
-		"arena_geometry": _hash_safe({
+		"arena_geometry": CombatStateCodecScript.hash_safe({
 			"player": _walkable_geometry(14.0),
 			"enemy": _walkable_geometry(16.0),
 		}),
@@ -3443,13 +3425,13 @@ func _semantic_state_hash(result: String) -> String:
 		"boss_x_millipixels": roundi(boss.position.x * 1000.0) if boss != null else 0,
 		"boss_y_millipixels": roundi(boss.position.y * 1000.0) if boss != null else 0,
 		"battle_victory": battle_victory,
-		"action_timeline": _hash_safe(player_action_timeline.snapshot() if player_action_timeline != null else {}),
-		"attack_origins": _hash_safe(attack_origins),
+		"action_timeline": CombatStateCodecScript.hash_safe(player_action_timeline.snapshot() if player_action_timeline != null else {}),
+		"attack_origins": CombatStateCodecScript.hash_safe(attack_origins),
 		"casts": shots,
 		"arrow_hits": arrow_hits,
 		"command_sequence": command_sequence,
-		"command_receipts": _hash_safe(last_command_receipts),
-		"combat_events": _hash_safe(combat_event_stream.snapshot() if combat_event_stream != null else {}),
+		"command_receipts": CombatStateCodecScript.hash_safe(last_command_receipts),
+		"combat_events": CombatStateCodecScript.hash_safe(combat_event_stream.snapshot() if combat_event_stream != null else {}),
 		"content_hash": _content_hash(),
 		"contract_wins": contract_wins,
 		"cooldowns": {
@@ -3466,7 +3448,7 @@ func _semantic_state_hash(result: String) -> String:
 		"dodge_direction_x_milli": roundi(dodge_direction.x * 1000.0),
 		"dodge_direction_y_milli": roundi(dodge_direction.y * 1000.0),
 		"dodge_started_tick": dodge_started_tick,
-		"mobility_input_buffer": _hash_safe(mobility_input_buffer),
+		"mobility_input_buffer": CombatStateCodecScript.hash_safe(mobility_input_buffer),
 		"defeated": defeated,
 		"enemies": enemy_state,
 		"elite_barrier_active": elite_barrier_active,
@@ -3476,7 +3458,7 @@ func _semantic_state_hash(result: String) -> String:
 		"last_drop": last_drop,
 		"last_drop_id": last_drop_id,
 		"last_loot_rng_state": last_loot_rng_state,
-		"last_attack_outcome": _hash_safe(last_attack_outcome),
+		"last_attack_outcome": CombatStateCodecScript.hash_safe(last_attack_outcome),
 		"last_proxy_failure": last_proxy_failure,
 		"hazards": hazard_state,
 		"layout_id": layout_id,
@@ -3514,7 +3496,7 @@ func _semantic_state_hash(result: String) -> String:
 		"proxy_mode": proxy_runtime.mode,
 		"proxy_mode_locked": proxy_runtime.mode_locked,
 		"proxy_build_fingerprint": String(framework_resolved_proxy_build.get("semantic_fingerprint", "")),
-		"proxy_decision_state": _hash_safe(proxy_decision_state),
+		"proxy_decision_state": CombatStateCodecScript.hash_safe(proxy_decision_state),
 		"proxy_prediction": proxy_prediction,
 		"projectiles": projectile_state,
 		"result": result,
@@ -3530,82 +3512,7 @@ func _semantic_state_hash(result: String) -> String:
 			"retained_arrow_damage": {"layer": retained_arrow_damage.layer, "magnitude": String.num(retained_arrow_damage.magnitude, 12)},
 			"retained_arrow_ordinary_damage": String.num(retained_arrow_ordinary_damage, 12),
 		}
-	var canonical := SaveStoreScript.canonical_json(state)
-	var context := HashingContext.new()
-	if context.start(HashingContext.HASH_SHA256) != OK:
-		return ""
-	if context.update(canonical.to_utf8_buffer()) != OK:
-		return ""
-	return context.finish().hex_encode()
-
-
-func _geometry_state(origin: Vector2, direction: Vector2, size_a: float, size_b: float) -> Dictionary:
-	return {
-		"direction_x_milli": roundi(direction.x * 1000.0),
-		"direction_y_milli": roundi(direction.y * 1000.0),
-		"origin_x_milli": roundi(origin.x * 1000.0),
-		"origin_y_milli": roundi(origin.y * 1000.0),
-		"size_a_milli": roundi(size_a * 1000.0),
-		"size_b_milli": roundi(size_b * 1000.0),
-	}
-
-
-func _target_shape_state(shape: Dictionary) -> Dictionary:
-	var type := String(shape.get("type", ""))
-	if type == "rect":
-		var rect: Rect2 = shape.get("rect", Rect2())
-		return {"type": type, "x_milli": roundi(rect.position.x * 1000.0), "y_milli": roundi(rect.position.y * 1000.0), "width_milli": roundi(rect.size.x * 1000.0), "height_milli": roundi(rect.size.y * 1000.0)}
-	if type == "fan":
-		return {"type": type, "geometry": _geometry_state(shape.get("origin", Vector2.ZERO), shape.get("direction", Vector2.RIGHT), float(shape.get("radius", 0.0)), float(shape.get("half_angle", 0.0)))}
-	if type == "lane":
-		return {"type": type, "geometry": _geometry_state(shape.get("origin", Vector2.ZERO), shape.get("direction", Vector2.RIGHT), float(shape.get("length", 0.0)), float(shape.get("width", 0.0)))}
-	if type == "circle":
-		var origin: Vector2 = shape.get("origin", Vector2.ZERO)
-		return {"type": type, "origin_x_milli": roundi(origin.x * 1000.0), "origin_y_milli": roundi(origin.y * 1000.0), "radius_milli": roundi(float(shape.get("radius", 0.0)) * 1000.0)}
-	return {}
-
-
-## Converts authority snapshots into SaveStore's strict JSON domain. Vector
-## values become integer millipixel records, so hashes are portable and never
-## depend on Variant's debug-string formatting.
-func _hash_safe(value: Variant) -> Variant:
-	match typeof(value):
-		TYPE_VECTOR2:
-			var vector: Vector2 = value
-			return {"x_milli": roundi(vector.x * 1000.0), "y_milli": roundi(vector.y * 1000.0)}
-		TYPE_VECTOR2I:
-			var vector_i: Vector2i = value
-			return {"x": vector_i.x, "y": vector_i.y}
-		TYPE_RECT2:
-			var rect: Rect2 = value
-			return {
-				"x_milli": roundi(rect.position.x * 1000.0),
-				"y_milli": roundi(rect.position.y * 1000.0),
-				"width_milli": roundi(rect.size.x * 1000.0),
-				"height_milli": roundi(rect.size.y * 1000.0),
-			}
-		TYPE_ARRAY:
-			var converted: Array = []
-			for item: Variant in value:
-				converted.append(_hash_safe(item))
-			return converted
-		TYPE_DICTIONARY:
-			var converted_dictionary := {}
-			var original_by_text := {}
-			var keys: Array[String] = []
-			for original_key: Variant in value.keys():
-				## Hash snapshots occasionally carry a structured diagnostic key. `String()`
-				## rejects that Variant at runtime; `str()` is the engine's total textual
-				## conversion and keeps this reporting serializer from changing simulation.
-				var text_key := str(original_key)
-				keys.append(text_key)
-				original_by_text[text_key] = original_key
-			keys.sort()
-			for text_key: String in keys:
-				converted_dictionary[text_key] = _hash_safe(value[original_by_text[text_key]])
-			return converted_dictionary
-		_:
-			return value
+	return CombatStateCodecScript.sha256_canonical(state)
 
 
 func _write_state_hash(state_hash: String) -> bool:

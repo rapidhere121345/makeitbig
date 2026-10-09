@@ -42,43 +42,11 @@ Exit codes: `0` pass, `1` verification failure with `ERROR:` lines on stderr.
 Scope note printed on success: mechanical output properties only, not visual
 approval.
 
-## archive.py
+## Boundary snapshots
 
-Instant-boundary hash snapshot of the protected paths that this batch must not
-touch: `src/**`, `content/**`, `project.godot`, `art/early/**`,
-`art/production/**`, `tools/art_preview/**`, `tools/art_pipeline/**`,
-`docs/art-production/**`.  Excluded: the new batch directories
-(`art/production/p1/base_facilities_v01/**`,
-`docs/art-production/p1-base-facilities-v01/**`,
-`tools/art_preview/p1_base_facilities_v01/**`,
-`tools/art_pipeline/p1_base_facilities_v01/**`), `docs/art-production/
-VISUAL_BASELINE.md`, and `__pycache__` caches.  Older calibration drops
-(`p1-calibration-v01/graphics_v01|v02`, `p1-calibration-v01/qa`) stay protected.
-
-```bash
-# capture a NEW baseline; refuses to overwrite an existing file
-python3 tools/art_pipeline/p1_base_facilities_v01/archive.py \
-  --root /data/repo/makeitbig snapshot \
-  --output docs/art-production/p1-base-facilities-v01 \
-  --filename BOUNDARY_HASHES_v02.json
-
-# report unchanged / missing / changed / added; changes nothing
-python3 tools/art_pipeline/p1_base_facilities_v01/archive.py \
-  --root /data/repo/makeitbig compare \
-  --baseline docs/art-production/p1-base-facilities-v01/BOUNDARY_HASHES_v02.json
-
-# inspect the exact capture set without writing anything
-python3 tools/art_pipeline/p1_base_facilities_v01/archive.py \
-  --root /data/repo/makeitbig list-paths
-```
-
-`--filename` picks the baseline file name when `--output` is a directory (a
-`*.json` `--output` is used verbatim).  `--protected`/`--exclude` are
-repeatable overrides, `--force` is the only way to replace a baseline.  A new
-batch's own new files show up as `ADDED:` in a comparison against an older
-baseline; that is expected drift and is never reported as damage to old files.
-`changed`/`missing` means a previously captured protected file no longer matches
-— the tool reports it and stops; it never rewrites anything.
+The one-off `archive.py` helper and its dedicated test were retired after the
+batch boundary was verified. The production verifier above remains the source
+of truth for this batch; no runtime or asset file depends on the retired helper.
 
 ## tests
 

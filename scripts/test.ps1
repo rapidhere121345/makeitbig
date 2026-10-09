@@ -25,6 +25,10 @@ foreach ($FilterMatch in $ExportFilters) {
 if ($LASTEXITCODE -ne 0) { throw "Godot import failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_all.gd
 if ($LASTEXITCODE -ne 0) { throw "Godot tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/run_training_report_builder.gd
+if ($LASTEXITCODE -ne 0) { throw "Training report builder tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/run_combat_state_codec.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat state codec tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_pixel_stage.gd
 if ($LASTEXITCODE -ne 0) { throw "Pixel stage tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_game_root_stage.gd

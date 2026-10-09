@@ -20,6 +20,8 @@ fi
 
 "$GODOT_BIN" --headless --path . --import
 "$GODOT_BIN" --headless --path . --script res://tests/run_all.gd
+"$GODOT_BIN" --headless --path . --script res://tests/run_training_report_builder.gd
+"$GODOT_BIN" --headless --path . --script res://tests/run_combat_state_codec.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_pixel_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_game_root_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_exploration.gd

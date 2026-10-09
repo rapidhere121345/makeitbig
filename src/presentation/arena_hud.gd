@@ -1144,11 +1144,6 @@ func _style_progress(bar: ProgressBar, fill_color: Color) -> void:
 	bar.add_theme_stylebox_override("fill", fill)
 
 
-func _progress_fill_color(bar: ProgressBar) -> Color:
-	var style := bar.get_theme_stylebox("fill") as StyleBoxFlat
-	return Color.TRANSPARENT if style == null else style.bg_color
-
-
 func _heading(text: String) -> Label:
 	var label := Label.new()
 	label.text = text

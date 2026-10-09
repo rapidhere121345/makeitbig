@@ -19,12 +19,6 @@
       "kind": "atlas_contract",
       "path": "/data/repo/makeitbig/art/production/p1/title_life_v01/atlas.json",
       "sha256": "36387a4373f892a6dba92169f2e07f90ee244b91b27101114436da4de032f810"
-    },
-    {
-      "bytes": 827,
-      "kind": "contact_sheet",
-      "path": "/data/repo/makeitbig/art/production/p1/title_life_v01/contact_sheet.png",
-      "sha256": "3ea294738c3b445b685c794ee526291d8f4b70b80671129ba6908d8605034f78"
     }
   ],
   "config_path": "/data/repo/makeitbig/docs/art-production/p1-title-life-v01/recipe.json",

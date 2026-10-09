@@ -15,7 +15,7 @@
 - `boot/title_fx_sheet.png`：`2560×448` RGBA 帧带，横向 8 帧，每帧 `320×448`。
 - FX 绘制位置：`(480, 96)`；播放速度：`6 fps`；循环。
 - 取帧区域：`Rect2(frame_index * 320, 0, 320, 448)`。
-- `boot/title_background_preview.gif`：`640×360` 循环预览，仅供评审，不作为 Godot 运行时资源。
+- `boot/title_background_preview.gif`：历史 `640×360` 循环预览，已从工作树移除；不作为 Godot 运行时资源。
 
 动效只包含阈门巨像中央门缝的紫色呼吸，不移动背景、游侠或 UI，因此可以随时关闭，也不会影响玩法状态。
 
@@ -35,7 +35,7 @@
 - `destiny_forge.png`
 - `training_report.png`
 
-它们可以用于工作台详情页、交互按钮或后续模块化基地。`base/stations_preview.png` 是四件素材的无文字总览，不应在运行时加载。
+它们可以用于工作台详情页、交互按钮或后续模块化基地。`base/stations_preview.png` 是四件素材的无文字总览，已从工作树移除，不应在运行时加载。
 
 ## 生产约束
 
