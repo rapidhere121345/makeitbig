@@ -8,8 +8,12 @@
 
 发布工作流固定为 `scripts/release.sh all`，页面和最近 20 个 build 统一写入被 git 忽略的 `build/releases/`；Tailscale 只校验并暴露这个静态根。发布规则见 `docs/RELEASE_WORKFLOW.md` 和 `deploy/tailscale/README.md`。
 
+当前发布页：<https://example-runtime.tail99c4e8.ts.net:8448>（tailnet-only）。
+
 图形化验收已记录：容器可连接宿主 X11，渲染回落到 `llvmpipe`；宿主机 `makeitbig-godot --editor` 使用 RTX 4080 SUPER。角色旁的黄色/铜色箭头是当前发射方向提示，不代表血量、能量或耐久。步骤和记录字段见 `docs/GRAPHICAL_VALIDATION.md`。
 
 文档入口是 `AGENTS.md`、`README.md`、`HANDOFF.md`；设计视觉资料在 `design/`，详细说明在 `docs/`。旧迭代记录、旧候选素材和生成缓存已清理。
 
 下一步：新改动先检查 `git status --short` 和本文件；发布改动完成后运行 `release.sh verify --deep`、`deploy/tailscale/validate.sh` 和 `stage_release_page.sh --check`，提交前保留完整构建证据。
+
+<!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->
