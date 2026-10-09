@@ -66,6 +66,8 @@ Linux 正式包位于 `build/current/linux/make-it-big.x86_64`，Windows 包位�
 
 发布根目录是被 git 忽略的 `build/releases/`，可直接由静态文件服务托管；每个 build 都有 Windows/Linux 下载路径、`build.json` 和 `SHA256SUMS`。发布页模板与构建命名见 [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md)。
 
+当前 Tailnet-only 发布页：<https://rapidhere-home.tail99c4e8.ts.net:8448>。
+
 需要通过 Tailscale 访问时，先在容器内运行 `./deploy/tailscale/stage_release_page.sh` 校验 `build/releases/`，再在宿主机运行目录中的 `serve_host.sh.example`。默认使用 tailnet-only `tailscale serve`；容器没有 tailscaled 或 TUN，宿主机步骤、端口和上线前检查见 [Tailscale 发布说明](deploy/tailscale/README.md)。
 
 ## 文档入口

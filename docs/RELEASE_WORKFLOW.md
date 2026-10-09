@@ -36,3 +36,8 @@
 若宿主机不能直接看到 bind mount，才考虑容器 HTTP 服务路径：容器服务绑定 8080，宿主机以 `127.0.0.1:8080:8080` 发布后再让 Tailscale serve 代理 `127.0.0.1`。这需要宿主机按 Paseo 的容器生命周期流程重建或更新端口映射；项目脚本不会执行这一步。
 
 上线前至少确认：`./deploy/tailscale/validate.sh` 和 `./deploy/tailscale/stage_release_page.sh --check` 通过、发布根不包含源码、宿主机 `tailscale serve status` 指向 `build/releases/`、tailnet 内能打开 `/` 并下载两个平台文件。发布页只提供下载，不承担账号鉴权；访问控制由 Tailscale tailnet/ACL 负责。
+# 当前发布入口
+
+Tailnet-only 发布页：<https://rapidhere-home.tail99c4e8.ts.net:8448>。
+
+静态发布根固定为 `build/releases/`，由宿主机 Tailscale Serve 暴露；容器内不运行 `tailscaled`。
