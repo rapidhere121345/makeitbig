@@ -31,6 +31,9 @@ const ROOM_FIELDS: Array[String] = [
 	"id", "layout_id", "objective_id", "hazard_ids", "enemy_ids", "elite_rule_ids", "boss_id",
 	"drop_tags", "new_problem_id",
 ]
+const LAYOUT_FIELDS: Array[String] = [
+	"id", "display_name", "concept", "landmark", "entry_hint", "exit_hint",
+]
 const TEMPLATE_FIELDS: Array[String] = [
 	"room_count", "layout_ids", "objective_ids", "hazard_ids", "enemy_ids", "elite_rule_ids", "drop_tags",
 ]
@@ -76,7 +79,7 @@ func validate_campaign(candidate: Dictionary) -> Array[String]:
 
 	var ids_by_catalog := {}
 	var global_ids := {}
-	_validate_object_catalog(candidate, "layouts", ["id"], ids_by_catalog, global_ids, failures)
+	_validate_object_catalog(candidate, "layouts", LAYOUT_FIELDS, ids_by_catalog, global_ids, failures)
 	_validate_object_catalog(candidate, "objectives", ["id", "timeout_rule"], ids_by_catalog, global_ids, failures)
 	_validate_object_catalog(candidate, "hazards", ["id"], ids_by_catalog, global_ids, failures)
 	_validate_object_catalog(candidate, "normal_enemies", ["id", "role"], ids_by_catalog, global_ids, failures)
@@ -103,6 +106,13 @@ func get_node(node_id: String) -> Dictionary:
 	if not _nodes.has(node_id):
 		return {}
 	return (_nodes[node_id] as Dictionary).duplicate(true)
+
+
+func layout_info(layout_id: String) -> Dictionary:
+	for value in (_data.get("layouts", []) as Array):
+		if value is Dictionary and String((value as Dictionary).get("id", "")) == layout_id:
+			return (value as Dictionary).duplicate(true)
+	return {}
 
 
 func is_unlocked(node_id: String, completed_node_ids: Array, mode: String) -> bool:
@@ -213,6 +223,13 @@ func _validate_string_catalog(candidate: Dictionary, field: String, ids_by_catal
 
 func _validate_catalog_semantics(candidate: Dictionary, failures: Array[String]) -> void:
 	_validate_exact_catalog_ids(candidate, "layouts", ["rectangle_arena", "corridor", "ring"], failures)
+	for layout_value in candidate.get("layouts", []):
+		if not layout_value is Dictionary:
+			continue
+		var layout: Dictionary = layout_value
+		for field in ["display_name", "concept", "landmark", "entry_hint", "exit_hint"]:
+			if String(layout.get(field, "")).strip_edges().is_empty():
+				failures.append("layout %s: %s must be a non-empty string" % [String(layout.get("id", "")), field])
 	_validate_exact_catalog_ids(candidate, "objectives", ["clear", "hunt_elite", "timed_break"], failures)
 	_validate_exact_catalog_ids(candidate, "hazards", ["exposed_ground_zone", "moving_fireline"], failures)
 	_validate_exact_catalog_ids(candidate, "normal_enemies", ["melee_pursuer", "charging_raider", "fan_ranged"], failures)

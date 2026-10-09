@@ -180,17 +180,36 @@ func present(snapshot: Dictionary) -> void:
 	_apply_resource_visibility()
 
 	var has_boss := bool(snapshot.get("has_boss", true))
-	_encounter_heading.text = "首领  阈门巨像" if has_boss else "目标  %s" % String(snapshot.get("objective_label", snapshot.get("objective_id", "clear")))
+	var objective_label := String(snapshot.get("objective_label", snapshot.get("objective_id", "clear")))
+	_encounter_heading.text = "首领  阈门巨像" if has_boss else "目标  %s" % objective_label
 	var has_room_progress := snapshot.has("room_count")
 	var room_count := maxi(1, int(snapshot.get("room_count", 1)))
 	var room_number := clampi(int(snapshot.get("room_index", 0)) + 1, 1, room_count)
+	var room_display_name := String(snapshot.get("room_display_name", "")).strip_edges()
+	var has_room_display_name := snapshot.has("room_display_name") and not room_display_name.is_empty()
+	if room_display_name.is_empty():
+		## Older diagnostic snapshots do not carry the authored room presentation
+		## fields. Keep their objective wording intact while live sessions use the
+		## content-authored scene name above.
+		room_display_name = String(snapshot.get("layout_id", snapshot.get("objective_label", "战斗场")))
+	var room_entry_hint := String(snapshot.get("room_entry_hint", "留意攻击预警"))
+	var room_concept := String(snapshot.get("room_concept", ""))
+	var room_landmark := String(snapshot.get("room_landmark", ""))
+	var room_exit_hint := String(snapshot.get("room_exit_hint", ""))
 	if has_room_progress:
-		_encounter_heading.text = "第 %d / %d 房 · %s" % [room_number, room_count,
-			"阈门巨像" if has_boss else String(snapshot.get("objective_label", "清理敌人"))]
+		var room_title := "阈门巨像" if has_boss else room_display_name
+		var room_objective := "首领" if has_boss else objective_label
+		if not has_boss and not has_room_display_name:
+			# Keep diagnostic snapshots and older callers on the compact contract;
+			# live embedded rooms publish the authored scene name explicitly.
+			_encounter_heading.text = "第 %d / %d 房 · %s" % [room_number, room_count, room_objective]
+		else:
+			_encounter_heading.text = "第 %d / %d 房 · %s · %s" % [room_number, room_count, room_title, room_objective]
 	_encounter_heading.tooltip_text = _encounter_heading.text
 	# A read-only entry cue uses the room's existing elapsed time and never delays input.
 	_room_start_label.visible = has_room_progress and not has_boss and not battle_over and float(snapshot.get("room_elapsed_seconds", 99.0)) < 1.8
-	_room_start_label.text = "进入第 %d 房 · 留意攻击预警" % room_number
+	_room_start_label.text = "进入第 %d 房 · %s" % [room_number, room_entry_hint]
+	_room_start_label.tooltip_text = room_entry_hint
 	_boss_state_label.visible = not _room_start_label.visible
 	_boss_name_label.text = "阈门巨像" if has_boss else "当前目标"
 	_boss_value_label.text = "%s / %s" % [String(snapshot.get("boss_remaining", "—")), String(snapshot.get("boss_maximum", "—"))] if has_boss else "目标 %s · 存活 %d" % [String(snapshot.get("objective_label", snapshot.get("objective_id", "clear"))), int(snapshot.get("living_targets", 0))]
@@ -206,7 +225,9 @@ func present(snapshot: Dictionary) -> void:
 	_boss_state_label.text = ("真实比例已知" if ratio_known else "比例不可比") if has_boss else "剩余目标  %d" % int(snapshot.get("living_targets", 0))
 	var hazards := String(snapshot.get("hazard_status", "无"))
 	var elites := String(snapshot.get("elite_status", "无"))
-	_summary_encounter_label.text = "危害：%s\n精英：%s" % [_encounter_status_text(hazards), _encounter_status_text(elites)]
+	_summary_encounter_label.text = "场域：%s · %s\n%s\n危害：%s\n精英：%s" % [room_display_name, room_landmark, room_concept, _encounter_status_text(hazards), _encounter_status_text(elites)]
+	if not room_exit_hint.is_empty():
+		_summary_encounter_label.text += "\n出口：%s" % room_exit_hint
 	# Mechanic windows come from authority, including their clearing on elite defeat.
 	# Keep them on screen even during the entry cue, without replacing room or life.
 	_elite_mechanic_label.text = "" if battle_over else _elite_mechanic_text(elites)
@@ -773,6 +794,8 @@ func _update_action_cells(snapshot: Dictionary, is_auto: bool, battle_over: bool
 
 func _skill_tooltip(skill_id: String, current_state: String, live_detail: String = "") -> String:
 	var detail := _player_readable.format_skill(_current_skill(skill_id))
+	if skill_id == "piercing_arrow":
+		detail += "\n场上铜色箭头：角色当前发射方向"
 	if skill_id == "basic_dodge":
 		detail += "\n操作键：SHIFT · CTRL · RMB"
 	if not live_detail.is_empty():

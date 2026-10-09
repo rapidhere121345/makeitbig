@@ -117,6 +117,9 @@ func _test_fixed_early_campaign_node(failures: Array[String]) -> void:
 	_expect(plan.source == "early_campaign" and plan.version == 2 and plan.room_count == 2, "early campaign: fixed-node plan envelope changed", failures)
 	_expect(plan.rooms[0].enemy_ids == ["melee_pursuer", "charging_raider"], "early campaign: first authored enemy mix was not preserved", failures)
 	_expect(plan.rooms[1].layout_id == "ring" and plan.rooms[1].objective_id == "clear", "early campaign: authored room semantics were not preserved", failures)
+	_expect(String(plan.rooms[0].display_name) == "风切通道" and not String(plan.rooms[0].entry_hint).is_empty()
+		and String(plan.rooms[1].display_name) == "回收环场" and not String(plan.rooms[1].exit_hint).is_empty(),
+		"early campaign: room presentation contract was not carried into the plan", failures)
 	_expect(_code(ContractPlan.build({"contract_id": "auto_certification", "seed": 1, "mode": "Manual"})) == "mode_not_allowed", "early campaign: mode gate was not enforced", failures)
 
 

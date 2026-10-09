@@ -99,12 +99,30 @@ const BOSS_HAND_RIGHT_OFFSET := Vector2(68.0, -18.0)
 const TOWER_UPPER_FADE: float = 0.52
 
 ## Room identities are visual aliases for the already-authoritative layout ids.
-## They deliberately describe landmarks instead of rules: the same room geometry,
-## spawns and reward stream continue to be owned by main.gd.
+## They describe the space the player is entering; spawns, collision and rewards
+## continue to be owned by main.gd.
 const ROOM_CONCEPTS := {
-	"rectangle_arena": {"title": "破碎前哨", "landmark": "关隘残门"},
-	"ring": {"title": "回收环场", "landmark": "环形灯标"},
-	"corridor": {"title": "风切通道", "landmark": "峡口旗标"},
+	"rectangle_arena": {
+		"title": "破碎前哨",
+		"landmark": "关隘残门",
+		"concept": "开阔的方形前庭，先读清敌群从哪一侧逼近。",
+		"entry_hint": "从南侧进入前庭，保持退路，先处理迎面敌群。",
+		"exit_hint": "清场后穿过东侧残门。",
+	},
+	"ring": {
+		"title": "回收环场",
+		"landmark": "环形灯标",
+		"concept": "围绕中央灯标的环带，内圈空井不可通行。",
+		"entry_hint": "沿外环绕行，不要把自己逼进中央空井。",
+		"exit_hint": "清场后沿东南环门离场。",
+	},
+	"corridor": {
+		"title": "风切通道",
+		"landmark": "峡口旗标",
+		"concept": "狭长风口，横向走位比直线后撤更重要。",
+		"entry_hint": "沿旗标横向走位，避开冲锋线和远程扇面。",
+		"exit_hint": "清场后穿过东侧风门。",
+	},
 }
 
 var pending_reason: String = ""
@@ -372,6 +390,9 @@ func room_concept_report(layout_id: String) -> Dictionary:
 		"layout_id": layout_id,
 		"title": String(concept.get("title", "战斗场")),
 		"landmark": String(concept.get("landmark", "边界标记")),
+		"concept": String(concept.get("concept", "")),
+		"entry_hint": String(concept.get("entry_hint", "")),
+		"exit_hint": String(concept.get("exit_hint", "")),
 		"presentation_only": true,
 	}
 
@@ -393,51 +414,80 @@ func draw_room_concept(canvas: CanvasItem, layout_id: String, phase_ticks: int =
 
 
 func _draw_outpost_concept(canvas: CanvasItem, phase: float) -> void:
-	var gate := Vector2(806.0, 122.0)
-	var plinth := Rect2(gate - Vector2(62.0, 18.0), Vector2(124.0, 38.0))
-	canvas.draw_rect(plinth, Color(PaletteScript.SLATE_0, 0.36), true)
-	canvas.draw_line(plinth.position, Vector2(plinth.end.x, plinth.position.y), Color(PaletteScript.SLATE_3, 0.32), 2.0, false)
-	for index in 3:
-		var x := gate.x - 34.0 + float(index) * 34.0
-		canvas.draw_line(Vector2(x, gate.y - 13.0), Vector2(x, gate.y + 12.0), Color(PaletteScript.COPPER_DULL, 0.46), 2.0, false)
-	var lamp_alpha := 0.26 + 0.12 * (0.5 + 0.5 * sin(phase * TAU))
-	canvas.draw_circle(gate + Vector2(-50.0, 8.0), 4.0, Color(PaletteScript.COPPER, lamp_alpha))
-	canvas.draw_circle(gate + Vector2(50.0, 8.0), 4.0, Color(PaletteScript.COPPER, lamp_alpha))
-	for post in [Vector2(138.0, 518.0), Vector2(860.0, 504.0), Vector2(910.0, 250.0)]:
-		canvas.draw_line(post + Vector2(0.0, 8.0), post + Vector2(0.0, -12.0), Color(PaletteScript.COPPER_DULL, 0.42), 2.0, false)
-		canvas.draw_line(post + Vector2(0.0, -10.0), post + Vector2(10.0, -10.0), Color(PaletteScript.BONE_DIM, 0.26), 2.0, false)
+	var field := Rect2(Vector2(92.0, 194.0), Vector2(840.0, 386.0))
+	canvas.draw_rect(field, Color(PaletteScript.SLATE_0, 0.25), true)
+	canvas.draw_rect(field.grow(-5.0), Color(PaletteScript.COPPER_DULL, 0.52), false, 3.0)
+	canvas.draw_rect(field.grow(-15.0), Color(PaletteScript.BONE_DIM, 0.12), false, 1.0)
+	for corner in [field.position, Vector2(field.end.x, field.position.y), field.end, Vector2(field.position.x, field.end.y)]:
+		canvas.draw_circle(corner, 5.0, Color(PaletteScript.COPPER, 0.42))
+	var lamp_alpha := 0.28 + 0.18 * (0.5 + 0.5 * sin(phase * TAU))
+	_draw_room_gate(canvas, Vector2(field.position.x + 8.0, field.get_center().y), Vector2.RIGHT, Color(PaletteScript.COLD, lamp_alpha), false)
+	_draw_room_gate(canvas, Vector2(field.end.x - 8.0, field.get_center().y), Vector2.LEFT, Color(PaletteScript.COPPER, lamp_alpha), true)
+	for x in range(190, 900, 140):
+		canvas.draw_line(Vector2(x, field.position.y + 24.0), Vector2(x + 38.0, field.position.y + 24.0), Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
+		canvas.draw_line(Vector2(x, field.end.y - 24.0), Vector2(x + 38.0, field.end.y - 24.0), Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
 
 
 func _draw_ring_concept(canvas: CanvasItem, phase: float) -> void:
 	var center := WORLD_FOCUS
-	canvas.draw_circle(center, 156.0, Color(PaletteScript.SLATE_0, 0.18))
-	canvas.draw_arc(center, 126.0, 0.0, TAU, 48, Color(PaletteScript.COPPER_DULL, 0.38), 3.0, false)
-	canvas.draw_arc(center, 96.0, 0.0, TAU, 40, Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
+	canvas.draw_circle(center, 164.0, Color(PaletteScript.SLATE_0, 0.31))
+	canvas.draw_circle(center, 70.0, Color(PaletteScript.INK, 0.38))
+	canvas.draw_arc(center, 152.0, 0.0, TAU, 64, Color(PaletteScript.COPPER_DULL, 0.66), 4.0, false)
+	canvas.draw_arc(center, 70.0, 0.0, TAU, 48, Color(PaletteScript.BONE_DIM, 0.34), 2.0, false)
 	for index in 8:
 		var angle := TAU * float(index) / 8.0
-		var point := center + Vector2(cos(angle), sin(angle)) * 126.0
+		var point := center + Vector2(cos(angle), sin(angle)) * 152.0
 		canvas.draw_rect(Rect2(point - Vector2(5.0, 7.0), Vector2(10.0, 14.0)), Color(PaletteScript.SLATE_2, 0.54), true)
 		var glow := 0.18 + 0.11 * (0.5 + 0.5 * sin(phase * TAU + float(index) * 0.6))
 		canvas.draw_circle(point + Vector2(0.0, -5.0), 2.5, Color(PaletteScript.COPPER, glow))
-	canvas.draw_arc(center, 142.0, phase * TAU, phase * TAU + PI * 0.42, 12, Color(PaletteScript.COLD, 0.26), 2.0, false)
+	canvas.draw_arc(center, 138.0, phase * TAU, phase * TAU + PI * 0.42, 12, Color(PaletteScript.COLD, 0.42), 3.0, false)
+	_draw_room_gate(canvas, center + Vector2(152.0, 0.0), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
+	_draw_room_gate(canvas, center + Vector2(107.0, 107.0), Vector2.UP, Color(PaletteScript.COLD, 0.48), false)
 
 
 func _draw_corridor_concept(canvas: CanvasItem, phase: float) -> void:
 	var center_y := WORLD_FOCUS.y
-	var left := 122.0
-	var right := WORLD_SIZE.x - 122.0
+	var left := 92.0
+	var right := WORLD_SIZE.x - 92.0
+	var lane := Rect2(Vector2(left, center_y - 62.0), Vector2(right - left, 124.0))
+	canvas.draw_rect(Rect2(Vector2(left, 80.0), Vector2(right - left, lane.position.y - 80.0)), Color(PaletteScript.INK, 0.24), true)
+	canvas.draw_rect(Rect2(Vector2(left, lane.end.y), Vector2(right - left, WORLD_SIZE.y - lane.end.y - 80.0)), Color(PaletteScript.INK, 0.24), true)
+	canvas.draw_rect(lane, Color(PaletteScript.SLATE_1, 0.28), true)
 	for side in [-1.0, 1.0]:
-		var y: float = center_y + float(side) * 112.0
+		var y: float = center_y + float(side) * 62.0
 		var x := left
 		while x < right:
-			var segment := minf(22.0, right - x)
-			canvas.draw_line(Vector2(x, y), Vector2(x + segment, y), Color(PaletteScript.COLD, 0.24), 2.0, false)
-			x += 38.0
+			var segment := minf(26.0, right - x)
+			canvas.draw_line(Vector2(x, y), Vector2(x + segment, y), Color(PaletteScript.COLD, 0.50), 3.0, false)
+			x += 42.0
 	for index in 6:
-		var x := left + 86.0 + float(index) * 128.0
+		var x := left + 90.0 + float(index) * 126.0
 		var y := center_y + sin(phase * TAU + float(index) * 0.55) * 3.0
-		canvas.draw_line(Vector2(x, y + 82.0), Vector2(x, y - 132.0), Color(PaletteScript.COPPER_DULL, 0.50), 2.0, false)
-		canvas.draw_line(Vector2(x, y - 126.0), Vector2(x + 14.0, y - 119.0), Color(PaletteScript.COLD, 0.34), 2.0, false)
+		canvas.draw_line(Vector2(x, y + 54.0), Vector2(x, y - 54.0), Color(PaletteScript.COPPER_DULL, 0.58), 3.0, false)
+		canvas.draw_line(Vector2(x, y - 50.0), Vector2(x + 14.0, y - 43.0), Color(PaletteScript.COLD, 0.48), 2.0, false)
+	_draw_room_gate(canvas, Vector2(left + 8.0, center_y), Vector2.RIGHT, Color(PaletteScript.COLD, 0.60), false)
+	_draw_room_gate(canvas, Vector2(right - 8.0, center_y), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
+	for index in 4:
+		var x := left + 210.0 + float(index) * 156.0
+		var y := center_y + 15.0 * sin(phase * TAU + float(index))
+		canvas.draw_line(Vector2(x - 8.0, y), Vector2(x + 8.0, y), Color(PaletteScript.BONE, 0.45), 2.0, false)
+		canvas.draw_line(Vector2(x + 8.0, y), Vector2(x + 2.0, y - 5.0), Color(PaletteScript.BONE, 0.45), 2.0, false)
+
+
+func _draw_room_gate(canvas: CanvasItem, point: Vector2, direction: Vector2, color: Color, exit_gate: bool) -> void:
+	var side := direction.rotated(PI * 0.5).normalized()
+	var span := 28.0 if exit_gate else 24.0
+	var depth := 18.0
+	var left_post := point + side * span - direction * depth
+	var right_post := point - side * span - direction * depth
+	canvas.draw_line(left_post, left_post + direction * (depth * 2.0), Color(PaletteScript.SLATE_0, 0.82), 7.0, false)
+	canvas.draw_line(right_post, right_post + direction * (depth * 2.0), Color(PaletteScript.SLATE_0, 0.82), 7.0, false)
+	canvas.draw_line(left_post, left_post + direction * (depth * 2.0), color, 2.0, false)
+	canvas.draw_line(right_post, right_post + direction * (depth * 2.0), color, 2.0, false)
+	canvas.draw_line(left_post + direction * depth, right_post + direction * depth, color, 2.0, false)
+	var arrow_tip := point + direction * (depth + 6.0)
+	canvas.draw_line(arrow_tip - direction * 8.0 + side * 5.0, arrow_tip, color, 2.0, false)
+	canvas.draw_line(arrow_tip - direction * 8.0 - side * 5.0, arrow_tip, color, 2.0, false)
 
 
 func draw_decals(canvas: CanvasItem) -> void:

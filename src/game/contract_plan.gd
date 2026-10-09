@@ -107,11 +107,18 @@ static func _build_early_campaign_contract(contract_id: String, seed: int, confi
 		var drop_tags_value: Variant = source.get("drop_tags", [])
 		var drop_tags_for_room: Array = (drop_tags_value as Array).duplicate() if drop_tags_value is Array else []
 		var boss_id := String(source.get("boss_id", ""))
+		var layout_id := String(source.get("layout_id", "rectangle_arena"))
+		var layout_info := registry.layout_info(layout_id)
 		rooms.append({
 			"index": index,
 			"room_id": room_id,
-			"layout": String(source.get("layout_id", "rectangle_arena")),
-			"layout_id": String(source.get("layout_id", "rectangle_arena")),
+			"layout": layout_id,
+			"layout_id": layout_id,
+			"display_name": String(layout_info.get("display_name", layout_id)),
+			"concept": String(layout_info.get("concept", "")),
+			"landmark": String(layout_info.get("landmark", "")),
+			"entry_hint": String(layout_info.get("entry_hint", "")),
+			"exit_hint": String(layout_info.get("exit_hint", "")),
 			"objective": String(source.get("objective_id", "clear")),
 			"objective_id": String(source.get("objective_id", "clear")),
 			"hazard_ids": (source.get("hazard_ids", []) as Array).duplicate(),

@@ -31,6 +31,10 @@ func _test_shipped_contract(failures: Array[String]) -> void:
 	var data := _read_shipped_data()
 	_expect(data.layouts.size() == 3 and data.objectives.size() == 3 and data.hazards.size() == 2,
 		"catalog: expected exactly 3 layouts, 3 objectives, and 2 hazards", failures)
+	for layout_value in data.layouts:
+		var layout: Dictionary = layout_value
+		for field in ["display_name", "concept", "landmark", "entry_hint", "exit_hint"]:
+			_expect(not String(layout.get(field, "")).strip_edges().is_empty(), "layout %s is missing readable %s" % [String(layout.get("id", "")), field], failures)
 	_expect(data.normal_enemies.size() == 3 and data.elite_rules.size() == 2 and data.bosses.size() == 1,
 		"catalog: expected exactly 3 normal enemies, 2 elite rules, and 1 boss", failures)
 	_expect(data.fixed_nodes.size() == 8 and data.repeatable_templates.size() == 2,
@@ -64,6 +68,8 @@ func _test_first_hunt_roster_plan(failures: Array[String]) -> void:
 	if not bool(built.get("ok", false)):
 		return
 	_expect(int(built.plan.room_count) == 2, "first hunt: expected two short rooms", failures)
+	_expect(built.plan.rooms[0].layout_id == "rectangle_arena" and built.plan.rooms[1].layout_id == "corridor",
+		"first hunt: the two authored rooms must demonstrate different spaces", failures)
 	var ids := {}
 	for room: Dictionary in built.plan.rooms:
 		_expect(room.enemy_ids == ["melee_pursuer", "melee_pursuer", "melee_pursuer"]

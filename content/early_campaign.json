@@ -2,9 +2,30 @@
   "schema_version": 1,
   "campaign_id": "early_campaign",
   "layouts": [
-    {"id": "rectangle_arena"},
-    {"id": "corridor"},
-    {"id": "ring"}
+    {
+      "id": "rectangle_arena",
+      "display_name": "破碎前哨",
+      "concept": "开阔的方形前庭，先读清敌群从哪一侧逼近。",
+      "landmark": "关隘残门",
+      "entry_hint": "从南侧进入前庭，保持退路，先处理迎面敌群。",
+      "exit_hint": "清场后穿过东侧残门。"
+    },
+    {
+      "id": "corridor",
+      "display_name": "风切通道",
+      "concept": "狭长风口，横向走位比直线后撤更重要。",
+      "landmark": "峡口旗标",
+      "entry_hint": "沿旗标横向走位，避开冲锋线和远程扇面。",
+      "exit_hint": "清场后穿过东侧风门。"
+    },
+    {
+      "id": "ring",
+      "display_name": "回收环场",
+      "concept": "围绕中央灯标的环带，内圈空井不可通行。",
+      "landmark": "环形灯标",
+      "entry_hint": "沿外环绕行，不要把自己逼进中央空井。",
+      "exit_hint": "清场后沿东南环门离场。"
+    }
   ],
   "objectives": [
     {"id": "clear"},
@@ -77,7 +98,7 @@
       "unlock_prerequisites": ["tutorial_ranger_basics"],
       "room_sequence": [
         {"id": "first_hunt_clear", "layout_id": "rectangle_arena", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "piercing_arrow_basics"},
-        {"id": "first_hunt_followup", "layout_id": "rectangle_arena", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""}
+        {"id": "first_hunt_followup", "layout_id": "corridor", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""}
       ],
       "first_reward_tags": ["hunter_mark_skill", "equipment_compare_unlock"],
       "drop_tags": ["equipment_general"],

@@ -233,6 +233,10 @@ const HAZARD_CYCLE_TICKS: int = 90
 const ELITE_BARRIER_PERIOD_TICKS: int = 60
 const ELITE_BARRIER_ACTIVE_TICKS: int = 20
 const TIMED_BREAK_BONUS_TICKS: int = 900
+## Presentation-only room arrival card. It is keyed to the authoritative room
+## index but never pauses or changes combat; the player can keep moving and
+## firing while the new room explains its space.
+const ROOM_ENTRY_DURATION_TICKS: int = SIM_TICKS_PER_SECOND * 6 / 5
 const VALID_LAYOUT_IDS: Array[String] = ["rectangle_arena", "corridor", "ring"]
 const VALID_OBJECTIVE_IDS: Array[String] = ["clear", "hunt_elite", "timed_break"]
 const VALID_ENEMY_IDS: Array[String] = ["melee_pursuer", "charging_raider", "fan_ranged"]
@@ -395,6 +399,7 @@ var framework_room: Dictionary = {}
 var room_id: String = "legacy_smoke"
 var layout_id: String = "rectangle_arena"
 var objective_id: String = "clear"
+var room_entry_start_tick: int = 0
 var room_drop_tags: Array = []
 var hazard_states: Array[Dictionary] = []
 var elite_rule_ids: Array[String] = []
@@ -1601,6 +1606,7 @@ func _enter_arena() -> void:
 	last_proxy_trace.clear()
 	automation_smoke_failure = ""
 	sim_tick = 0
+	room_entry_start_tick = 0
 	elapsed = 0.0
 	fixed_clock.reset()
 	shots = 0
@@ -3178,6 +3184,85 @@ func _quantize_position(value: Vector2) -> Vector2:
 	return Vector2(snappedf(value.x, 0.001), snappedf(value.y, 0.001))
 
 
+func _room_presentation_info() -> Dictionary:
+	var defaults := {
+		"rectangle_arena": {
+			"display_name": "破碎前哨",
+			"concept": "开阔的方形前庭，先读清敌群从哪一侧逼近。",
+			"landmark": "关隘残门",
+			"entry_hint": "从南侧进入前庭，保持退路，先处理迎面敌群。",
+			"exit_hint": "清场后穿过东侧残门。",
+		},
+		"corridor": {
+			"display_name": "风切通道",
+			"concept": "狭长风口，横向走位比直线后撤更重要。",
+			"landmark": "峡口旗标",
+			"entry_hint": "沿旗标横向走位，避开冲锋线和远程扇面。",
+			"exit_hint": "清场后穿过东侧风门。",
+		},
+		"ring": {
+			"display_name": "回收环场",
+			"concept": "围绕中央灯标的环带，内圈空井不可通行。",
+			"landmark": "环形灯标",
+			"entry_hint": "沿外环绕行，不要把自己逼进中央空井。",
+			"exit_hint": "清场后沿东南环门离场。",
+		},
+	}
+	var result: Dictionary = (defaults.get(layout_id, defaults["rectangle_arena"]) as Dictionary).duplicate(true)
+	for key in ["display_name", "concept", "landmark", "entry_hint", "exit_hint"]:
+		var authored := String(framework_room.get(key, "")).strip_edges()
+		if not authored.is_empty():
+			result[key] = authored
+	return result
+
+
+func _draw_room_entry_overlay(viewport_rect: Rect2) -> void:
+	if not presentation_enabled or not embedded_session or framework_room.is_empty() or battle_over:
+		return
+	var age_ticks := sim_tick - room_entry_start_tick
+	if age_ticks < 0 or age_ticks >= ROOM_ENTRY_DURATION_TICKS:
+		return
+	var progress := float(age_ticks) / float(ROOM_ENTRY_DURATION_TICKS)
+	var fade_in := clampf(progress / 0.18, 0.0, 1.0)
+	var fade_out := clampf((1.0 - progress) / 0.24, 0.0, 1.0)
+	var alpha := minf(fade_in, fade_out)
+	if alpha <= 0.01:
+		return
+	var room_info := _room_presentation_info()
+	var room_count := maxi(1, int(framework_room.get("room_count", 1)))
+	var room_number := clampi(int(framework_room.get("room_index", 0)) + 1, 1, room_count)
+	var panel_width := minf(900.0, maxf(520.0, viewport_rect.size.x - 96.0))
+	var panel := Rect2(Vector2((viewport_rect.size.x - panel_width) * 0.5, viewport_rect.size.y * 0.5 - 124.0), Vector2(panel_width, 248.0))
+	draw_rect(viewport_rect, Color(COLOR_INK, 0.38 * alpha), true)
+	draw_rect(panel, Color(COLOR_DEEP_BLUE, 0.94 * alpha), true)
+	draw_rect(panel, Color(COLOR_AMBER, 0.86 * alpha), false, 2.0)
+	draw_rect(Rect2(panel.position + Vector2(2.0, 2.0), Vector2(panel.size.x - 4.0, 6.0)), Color(COLOR_AMBER, 0.82 * alpha), true)
+	var font: Font = combat_feedback_font
+	if font == null:
+		return
+	var center_x := panel.get_center().x
+	var overline := "穿过出口 · 进入下一房" if room_number > 1 else "首章战斗 · 进入第一房"
+	var title := "第 %d / %d 房  ·  %s" % [room_number, room_count, String(room_info.get("display_name", "战斗场"))]
+	var concept := String(room_info.get("concept", ""))
+	var entry_hint := String(room_info.get("entry_hint", ""))
+	var objective := _objective_label()
+	var exit_hint := String(room_info.get("exit_hint", ""))
+	var title_width := font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 30).x
+	var overline_width := font.get_string_size(overline, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18).x
+	var concept_width := font.get_string_size(concept, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 19).x
+	var hint_width := font.get_string_size(entry_hint, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18).x
+	draw_string(font, Vector2(center_x - overline_width * 0.5, panel.position.y + 42.0), overline, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(COLOR_PROXY, alpha))
+	draw_string(font, Vector2(center_x - title_width * 0.5, panel.position.y + 82.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 30, Color(COLOR_BONE, alpha))
+	draw_string(font, Vector2(center_x - concept_width * 0.5, panel.position.y + 118.0), concept, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 19, Color(PaletteScript.BONE_DIM, alpha))
+	draw_string(font, Vector2(center_x - hint_width * 0.5, panel.position.y + 151.0), entry_hint, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(COLOR_AMBER, alpha))
+	var footer := "%s  ·  %s  ·  %s" % [String(room_info.get("landmark", "边界标记")), objective, exit_hint]
+	var footer_width := font.get_string_size(footer, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16).x
+	draw_string(font, Vector2(center_x - footer_width * 0.5, panel.position.y + 187.0), footer, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(COLOR_NEUTRAL, alpha))
+	var bar := Rect2(panel.position + Vector2(30.0, panel.size.y - 24.0), Vector2(panel.size.x - 60.0, 4.0))
+	draw_rect(bar, Color(COLOR_INK, 0.78 * alpha), true)
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * progress, bar.size.y)), Color(COLOR_AMBER, 0.90 * alpha), true)
+
+
 func _framework_room_error() -> String:
 	if not embedded_session or framework_room.is_empty():
 		return ""
@@ -3216,6 +3301,15 @@ func _layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
 		var start_offset := Vector2(-220.0, 100.0)
 		var angles := [-70.0, -35.0, 0.0] if room_id == "first_hunt_clear" else [-60.0, -25.0, 10.0]
 		for angle: float in angles:
+			result.append(start_offset + Vector2.from_angle(deg_to_rad(angle)) * 350.0)
+		return result
+	if id == "corridor" and count == 3 and room_id == "first_hunt_followup":
+		# The corridor clamps the ranger's opening position to its south lane edge
+		# (center.y + 72). Keep the same 350px approach promise as the first room,
+		# but place the three enemies on the far east side of that lane so the room
+		# reads as a long route instead of a cramped spawn pile.
+		var start_offset := Vector2(-220.0, 72.0)
+		for angle: float in [-24.0, -12.0, 0.0]:
 			result.append(start_offset + Vector2.from_angle(deg_to_rad(angle)) * 350.0)
 		return result
 	for index in count:
@@ -3637,11 +3731,17 @@ func _update_hud() -> void:
 	var mark_target := _enemy_by_entity_id(marked_entity_id)
 	var mark_range := locked_targeting_distance * HUNTER_MARK_RANGE_MULTIPLIER
 	var action_edge_occluded := _combat_focus_near_action_edge(nearest)
+	var room_presentation := _room_presentation_info()
 	hud_panel.present({
 		"room_id": room_id,
 		"room_index": int(framework_room.get("room_index", 0)),
 		"room_count": int(framework_room.get("room_count", 1)),
 		"room_elapsed_seconds": elapsed,
+		"room_display_name": String(room_presentation.get("display_name", "战斗场")),
+		"room_concept": String(room_presentation.get("concept", "")),
+		"room_landmark": String(room_presentation.get("landmark", "")),
+		"room_entry_hint": String(room_presentation.get("entry_hint", "")),
+		"room_exit_hint": String(room_presentation.get("exit_hint", "")),
 		"player_health": player_health,
 		"player_health_max": player_maximum_health,
 		"key_status": "闪避中" if dodge_remaining_ticks > 0 else ("受创警戒" if player_health < 35.0 else "稳定"),
@@ -4083,6 +4183,7 @@ func _draw() -> void:
 	draw_set_transform_matrix(world_view.gameplay_transform())
 	_draw_gameplay_status_overlays()
 	draw_set_transform_matrix(Transform2D.IDENTITY)
+	_draw_room_entry_overlay(viewport_rect)
 
 
 ## Flat-field fallback used only when the approved art is unavailable.
@@ -4719,9 +4820,18 @@ func _draw_player_status_overlay() -> void:
 		## corners: a closed box around the hero read as a hitbox he was standing in.
 		for segment in CombatMarksScript.corner_bracket_segments(dodge_frame, 10.0):
 			draw_line(segment[0], segment[1], COLOR_BONE, 2.0)
-	var aim_origin := player_position + Vector2(0.0, -26.0) if world_view != null else player_position
-	var aim_length := 19.0
-	draw_line(aim_origin, aim_origin + player_facing * aim_length, COLOR_AMBER, 3.0)
+	## This is the ranger's live firing direction, attached to the bow hand. The
+	## dark edge and arrowhead make it read as an aim marker rather than a stray
+	## yellow bar; it remains presentation-only and follows player_facing.
+	var aim_origin := player_position + Vector2(0.0, -24.0) if world_view != null else player_position
+	var aim_direction := player_facing.normalized() if player_facing.length_squared() > 0.0001 else Vector2.RIGHT
+	var aim_end := aim_origin + aim_direction * 18.0
+	var aim_side := aim_direction.rotated(PI * 0.5)
+	draw_line(aim_origin, aim_end, Color(COLOR_INK, 0.92), 5.0, false)
+	draw_line(aim_origin, aim_end, COLOR_AMBER, 2.0, false)
+	draw_line(aim_end - aim_direction * 6.0 + aim_side * 4.0, aim_end, COLOR_AMBER, 2.0, false)
+	draw_line(aim_end - aim_direction * 6.0 - aim_side * 4.0, aim_end, COLOR_AMBER, 2.0, false)
+	draw_circle(aim_origin, 2.5, COLOR_AMBER)
 
 
 ## A deterministic, independent player-damage channel. It exposes the source
