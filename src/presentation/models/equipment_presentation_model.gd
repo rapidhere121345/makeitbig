@@ -181,7 +181,12 @@ func current_inline_summary(item: Dictionary) -> String:
 	]
 
 
-func candidate_inline_facts(item: Dictionary) -> String:
+## comparison_note: "" keeps the bare facts; "included" extends the base line
+## with the standing clarification that the base-material multipliers are
+## already inside the authoritative comparison shown above; "no_preview" says
+## no valid preview exists instead of implying a comparison happened. The note
+## rides the existing base line so the standard facts stay three lines.
+func candidate_inline_facts(item: Dictionary, comparison_note: String = "") -> String:
 	var base_effects := _base_effect_labels(item)
 	var affix_identities := _affix_identities(item)
 	var extras: Array[String] = []
@@ -191,11 +196,17 @@ func candidate_inline_facts(item: Dictionary) -> String:
 		extras.append("含符文")
 	if not String(item.get("law_id", "")).is_empty():
 		extras.append("含法则")
-	return "%s\n底材属性：%s\n%s" % [
+	var base_text := "；".join(base_effects) if not base_effects.is_empty() else "无"
+	if comparison_note == "included" and not base_effects.is_empty():
+		base_text += " · 倍率已计入上方比较"
+	elif comparison_note == "no_preview":
+		base_text += " · 暂无有效预览，倍率未比较"
+	var lines: Array[String] = [
 		readable.slot_label(String(item.get("slot", ""))),
-		"；".join(base_effects) if not base_effects.is_empty() else "无",
+		"底材属性：%s" % base_text,
 		" · ".join(extras) if not extras.is_empty() else "无词缀 / 符文 / 法则",
 	]
+	return "\n".join(lines)
 
 
 func salvage_action(item: Dictionary) -> Dictionary:

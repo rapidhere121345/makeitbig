@@ -7,6 +7,10 @@ extends Control
 ## Information hierarchy (concept 05 COMBAT in 10_ui_screens.png, hierarchy only):
 ##  * default strip = three separated cards for hero life, the one important target,
 ##    and low-frequency controls. TopBar stays as a transparent compatibility carrier.
+##  * short input notices (blank-click hints, unavailable-skill reasons, assisted
+##    out-of-range cues) are the one transient strip, docked left of the action bar
+##    so they can never cover the four action icons or the opening-room banner.
+##    Routine attack/count feedback stays collapsed into the TAB summary.
 ##  * the strip numbers the concept makes prominent are the cells that already
 ##    existed: HeroHealthLabel above the hero bar and BossHpLabel above the target
 ##    bar. Raw scientific totals, cumulative damage, layout metadata and the
@@ -105,6 +109,8 @@ var _mode_label: Label
 var _mode_state_label: Label
 var _proxy_label: Label
 var _feedback_label: Label
+var _input_feedback_label: Label
+var _input_feedback_card: PanelContainer
 var _summary_panel: PanelContainer
 var _summary_toggle_button: Button
 var _summary_body: Control
@@ -128,8 +134,9 @@ var _cell_progress: Dictionary = {}
 var _cell_cooldown_remaining: Dictionary = {}
 var _cell_details: Dictionary = {}
 var _skill_overrides: Dictionary = {}
-## The complete authoritative feedback line. The strip shows the compact form above the
-## action bar and the summary panel carries this exact string, so nothing is dropped.
+## Routine feedback copy: authoritative, but only readable in the TAB summary or a
+## cell tooltip. The old always-on strip slot is retired to keep the default screen
+## low-clutter; short input notices use the dedicated transient strip instead.
 var _feedback_text: String = ""
 ## Last authoritative line the authority sent for the optional resource warning. The
 ## HUD never invents one; the default strip shows any authoritative non-empty value.
@@ -220,6 +227,13 @@ func present(snapshot: Dictionary) -> void:
 	_feedback_text = String(snapshot.get("feedback", "等待首次命中"))
 	_feedback_label.text = "战斗反馈  %s" % _compact_feedback(_feedback_text)
 	_feedback_label.tooltip_text = _feedback_text
+	var input_feedback := String(snapshot.get("input_feedback", ""))
+	## The whole card shows and hides with the notice: no permanent blank
+	## rectangle lingers over the battlefield.
+	_input_feedback_card.visible = not input_feedback.is_empty()
+	_input_feedback_label.text = input_feedback
+	_input_feedback_label.tooltip_text = input_feedback
+	_input_feedback_label.visible = not input_feedback.is_empty()
 	_update_action_cells(snapshot, is_auto, battle_over)
 	_apply_hero_health_state(hero_ratio)
 	_update_summary(snapshot)
@@ -243,6 +257,13 @@ func toggle_summary() -> void:
 ## The resource warning is a real combat state, so it stays on the default screen in the
 ## hero column: visible exactly when the authority sent a line, also while the summary is
 ## collapsed. An absent field is never turned into a warning and never fakes an absence.
+## The visible read for short input notices: the exact authoritative sentence,
+## visible exactly while the authority sends one, independent of summary or
+## occlusion state.
+func input_feedback_text() -> String:
+	return _input_feedback_label.text if _input_feedback_label != null else ""
+
+
 func _apply_resource_visibility() -> void:
 	if _resource_label == null:
 		return
@@ -548,6 +569,22 @@ func _build_interface() -> void:
 	_place(action_layout, action_row, Rect2(0.0, 0.0, ACTION_BAR_CONTENT_WIDTH, 100.0))
 	for slot in SKILL_SLOTS:
 		action_row.add_child(_build_skill_cell(slot))
+	## The one transient strip on the default screen: anchored bottom-left of the
+	## action dock, so an invalid-action hint is readable without ever covering
+	## the icons, the pause button, or the opening-room banner. The label sizes
+	## itself to the card's real inner box (512 outer minus 2x12 content margins).
+	var input_feedback_card := _card("InputFeedbackCard", Vector2(300.0, -122.0), Vector2(812.0, -90.0), 0.0, 1.0, 0.0, 1.0, 4.0, 0.78)
+	_input_feedback_card = input_feedback_card
+	_input_feedback_card.visible = false
+	var input_feedback_layout := _layout("InputFeedbackLayout", input_feedback_card)
+	_input_feedback_label = _named_label("InputFeedbackLabel")
+	_input_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_input_feedback_label.clip_text = true
+	_input_feedback_label.add_theme_color_override("font_color", COLOR_AMBER)
+	_input_feedback_label.add_theme_font_size_override("font_size", 18)
+	_input_feedback_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_input_feedback_label.visible = false
+	_place(input_feedback_layout, _input_feedback_label, Rect2(0.0, 0.0, 488.0, 24.0))
 	set_summary_visible(false)
 
 

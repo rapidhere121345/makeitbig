@@ -12,7 +12,7 @@
 | UI材质 | `p1-ui-style-r13/` 的原图、提示词和打包映射 |
 | 标题、循环与返镇 | `p1-title-concept-v02/`、`p1-title-life-v01/`、`p1-hearth-return-v01/` |
 | 五人对话头像 | `p1-story-portraits-r14/`：仅 v03 原图、提示词、当前裁切配方与 FROZEN 导入清单 |
-| 地面与视觉参考 | `p1-ground-refine-v01/`；`../art-concepts/` 中保留的生产参考原图和提示词 |
+| 地面与视觉参考 | `p1-ground-refine-v01/`；`../../design/visual/concepts/` 中保留的生产参考原图和提示词 |
 
 `hamlet_ground_r14` 的 atlas 没有记录原图映射，暂保留 `p1-hamlet-ground-v03/` 原图与配方以及炉边镇构图原图，待确认现行地面的重建链。概念参考图不直接代替运行贴图。字体来源和原许可位于 [PROVENANCE.md](../../art/fonts/PROVENANCE.md) 与 [LICENSE-noto-cjk.txt](../../art/fonts/LICENSE-noto-cjk.txt)；生成图的来源记录不视为第三方授权书。
 

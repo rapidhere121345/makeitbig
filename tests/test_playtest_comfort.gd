@@ -14,6 +14,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await _test_town_guidance_and_tab()
+	await _test_result_skill_cue()
 	await _test_facility_escape_context()
 	await _test_result_escape_context()
 	if failures.is_empty():
@@ -24,6 +25,34 @@ func _run() -> void:
 	for failure in failures:
 		printerr("- %s" % failure)
 	quit(1)
+
+
+func _test_result_skill_cue() -> void:
+	var screen := Result.new()
+	root.add_child(screen)
+	var ready_build := {"active_build": {"skills": ["piercing_arrow", "hunter_mark", ""]}}
+	screen.present({"outcome": "victory", "first_reward_tags": ["hunter_mark_skill", "equipment_compare_unlock"], "rewards": {}}, {}, ready_build)
+	await _frames(3)
+	var cue := screen.find_child("FirstSkillCue", true, false) as Label
+	var summary := screen.find_child("RewardSummary", true, false) as Label
+	_expect(cue != null and cue.visible and cue.text.contains("猎人印记") and cue.text.contains("战斗中按 Q"),
+		"first-clear skill cue did not name the granted skill and its key")
+	_expect(cue != null and not cue.text.contains("装配"),
+		"first-clear skill cue claimed a later equip step despite the resolved build")
+	_expect(summary != null and not summary.text.contains("新技能") and summary.get_line_count() <= 2,
+		"first-clear compact summary duplicated the skill cue or grew past two lines")
+	## An occupied or missing slot means the tag alone must not promise battle use.
+	screen.present({"outcome": "victory", "first_reward_tags": ["hunter_mark_skill"], "rewards": {}}, {}, {"active_build": {"skills": ["piercing_arrow", "", ""]}})
+	await _frames(3)
+	_expect(cue != null and cue.visible and cue.text.contains("可在备行架技能槽 2 装配"),
+		"skill cue promised battle use without the resolved build carrying the skill")
+	## A repeat completion carries no first_reward_tags: nothing re-announces it.
+	screen.present({"outcome": "victory", "first_reward_tags": [], "rewards": {}}, {}, ready_build)
+	await _frames(3)
+	_expect(cue != null and not cue.visible, "repeat settlement still showed the first-clear skill cue")
+	_expect(summary != null and not summary.text.contains("新技能"), "repeat settlement summary re-announced the skill")
+	screen.queue_free()
+	await _frames(2)
 
 
 func _test_town_guidance_and_tab() -> void:
@@ -37,6 +66,8 @@ func _test_town_guidance_and_tab() -> void:
 	await _frames(2)
 	var hub = game.current_screen
 	var view = hub.get_hub_view()
+	_expect(hub._objective_label.text.contains("行路契台") and hub._objective_label.text.contains("初次狩猎"),
+		"first-town goal does not name the contract stand and the first hunt")
 	var guide: Dictionary = view.destination_guide_report()
 	_expect(bool(guide.get("visible", false)), "off-screen destination has no local guide")
 	var indicator := view.world_viewport.get_node_or_null("TownDestinationIndicator") as Polygon2D

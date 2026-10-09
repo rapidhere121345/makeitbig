@@ -37,6 +37,14 @@ func _initialize() -> void:
 	_expect(model.compact_difference(inventory[2]).contains("穿刺箭续行概率") and not model.compact_difference(inventory[2]).contains("breeding_split"), "compact difference leaked a raw id", failures)
 	_expect(model.current_inline_summary(inventory[0]).contains("主手 · 底材 白蜡长弓") and model.current_inline_summary(inventory[0]).contains("载体伤害：×1.12"), "current inline summary lost slot/base/effect: " + model.current_inline_summary(inventory[0]), failures)
 	_expect(model.candidate_inline_facts(inventory[1]).contains("最大生命 III 阶"), "candidate inline facts lost named affix", failures)
+	var facts_default := model.candidate_inline_facts(inventory[1])
+	_expect(not facts_default.contains("已计入上方比较"), "candidate inline facts implied a comparison without being asked", failures)
+	_expect(model.candidate_inline_facts(inventory[1], "included").contains("倍率已计入上方比较"),
+		"candidate inline facts dropped the comparison-included clarification", failures)
+	_expect(model.candidate_inline_facts(inventory[1], "no_preview").contains("暂无有效预览"),
+		"candidate inline facts did not state the missing preview conditionally", failures)
+	_expect(model.candidate_inline_facts(inventory[3], "included").contains("无") and not model.candidate_inline_facts(inventory[3], "included").contains("倍率已计入"),
+		"candidate without base multipliers still carried the base clarification", failures)
 	var drop := inventory[2].duplicate(true)
 	drop["instance_id"] = "drop_full_id"
 	drop["current_parameters"] = {"damage": 100.0}

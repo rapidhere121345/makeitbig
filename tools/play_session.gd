@@ -41,6 +41,11 @@ func _start() -> void:
 		if command.has("click"):
 			var xy: Array = command.click
 			await _click(Vector2(float(xy[0]), float(xy[1])))
+		if command.has("mouse_down"):
+			var down_xy: Array = command.mouse_down
+			await _mouse_button(Vector2(float(down_xy[0]), float(down_xy[1])), true)
+		if command.has("mouse_up"):
+			await _mouse_button(pointer, false)
 		if command.has("node"):
 			var control: Control = root.get_node(NodePath(command.node))
 			await _click(_root_rect(control).get_center())
@@ -95,6 +100,20 @@ func _click(point: Vector2) -> void:
 		event.pressed = down
 		root.push_input(event, true)
 		await process_frame
+
+## A held button across commands: mouse_down presses at the point, mouse_up
+## releases at the remembered pointer. Lets a regression session exercise the
+## real held-fire path instead of only full clicks.
+func _mouse_button(point: Vector2, pressed: bool) -> void:
+	pointer = point
+	var event := InputEventMouseButton.new()
+	event.position = point
+	event.global_position = point
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.button_mask = MOUSE_BUTTON_MASK_LEFT if pressed else 0
+	event.pressed = pressed
+	root.push_input(event, true)
+	await process_frame
 
 func _root_rect(control: Control) -> Rect2:
 	var rect: Rect2 = control.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, control.size)

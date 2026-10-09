@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Contract for the concept-faithful combat HUD (docs/art-concepts/v0.9-p1-complete/
+## Contract for the concept-faithful combat HUD (design/visual/concepts/v0.9-p1-complete/
 ## ART_BIBLE.md section 12, panel 05 COMBAT of 10_ui_screens.png).
 ##
 ## Two states are asserted, not one:
@@ -87,6 +87,7 @@ func _run() -> void:
 	root.add_child(hud)
 	await process_frame
 	_test_room_progress(hud, failures)
+	_test_input_feedback_strip(hud, failures)
 
 	var required_nodes: Array[String] = [
 		"HeroFrame",
@@ -824,6 +825,58 @@ func _visible_copy(node: Node) -> String:
 			continue
 		parts.append(_visible_copy(child))
 	return "\n".join(parts)
+
+
+## The one transient strip: an authority notice shows on the real visible
+## control, clears when the authority stops sending it, never overlaps the
+## action dock, and coexists with the opening-room banner. Routine feedback
+## stays collapsed; the hidden FeedbackLabel keeps its retired slot only.
+func _test_input_feedback_strip(hud: Control, failures: Array[String]) -> void:
+	var frame := Rect2(Vector2.ZERO, Vector2(1280.0, 720.0))
+	var notice := hud.find_child("InputFeedbackLabel", true, false) as Label
+	var card := hud.find_child("InputFeedbackCard", true, false) as PanelContainer
+	var routine := hud.find_child("FeedbackLabel", true, false) as Label
+	_expect(notice != null and card != null, "input notice strip lost its stable nodes", failures)
+	if notice == null or card == null:
+		return
+	_expect(not notice.visible and notice.text.is_empty(), "input notice invented a notice without authority", failures)
+	_expect(routine != null and not routine.visible, "routine feedback strip is no longer collapsed", failures)
+	_expect(not card.visible, "the empty input notice card still drew a blank rectangle", failures)
+	var snapshot := _snapshot()
+	snapshot["input_feedback"] = "点击敌人射击 · 或按住空格辅助瞄准"
+	hud.present(snapshot)
+	_expect(notice.visible and notice.text == "点击敌人射击 · 或按住空格辅助瞄准",
+		"input notice did not show the exact authoritative sentence", failures)
+	_expect(card.visible and frame.encloses(card.get_global_rect()),
+		"input notice card left the 1280x720 frame: %s" % str(card.get_global_rect()), failures)
+	_expect(notice.get_theme_font_size("font_size") >= 18, "input notice fell below the 18px floor", failures)
+	## The longest authoritative sentences must fit the real inner box without
+	## clipping (the label clips text, so width is the only safe check).
+	var longest := "点击敌人射击 · 或按住空格辅助瞄准"
+	var skill_sentence := "猎人印记未装配在本场构筑 · 暂无法施放"
+	if skill_sentence.length() > longest.length():
+		longest = skill_sentence
+	var notice_font: Font = notice.get_theme_font("font")
+	var notice_width := float(notice_font.get_string_size(longest, HORIZONTAL_ALIGNMENT_LEFT, -1.0, float(notice.get_theme_font_size("font_size"))).x)
+	_expect(notice_width <= notice.size.x, "longest input notice clips: %.0fpx > %.0fpx" % [notice_width, notice.size.x], failures)
+	var action_bar := hud.find_child("ActionBar", true, false) as PanelContainer
+	_expect(action_bar == null or not card.get_global_rect().intersects(action_bar.get_global_rect()),
+		"input notice card overlaps the action dock", failures)
+	snapshot["input_feedback"] = "目标在射程外 · 靠近后再射"
+	snapshot["room_count"] = 2
+	snapshot["room_index"] = 0
+	snapshot["room_elapsed_seconds"] = 0.5
+	snapshot["has_boss"] = false
+	snapshot["battle_over"] = false
+	hud.present(snapshot)
+	var banner := hud.find_child("RoomStartLabel", true, false) as Label
+	_expect(banner != null and banner.visible, "room entry cue lost while an input notice showed", failures)
+	_expect(notice.visible and notice.text == "目标在射程外 · 靠近后再射",
+		"input notice was hidden during the opening-room banner", failures)
+	_expect(not card.get_global_rect().intersects(banner.get_global_rect()),
+		"input notice card overlaps the room banner", failures)
+	hud.present(_snapshot())
+	_expect(not notice.visible and not card.visible, "input notice stayed visible after the authority cleared it", failures)
 
 
 func _test_room_progress(hud: Control, failures: Array[String]) -> void:

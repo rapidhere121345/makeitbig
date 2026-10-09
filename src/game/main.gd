@@ -143,6 +143,10 @@ const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
 const SIM_TICKS_PER_SECOND: int = RangerSkillRulesScript.TICKS_PER_SECOND
 const SIM_STEP_SECONDS: float = 1.0 / float(SIM_TICKS_PER_SECOND)
+## 1.8 s of on-screen guidance for an input that legitimately did nothing
+## (blank-click hint, locked-skill notice): long enough to read the longest
+## sentence at a glance, short enough to stay out of the way. Presentation-only.
+const INPUT_FEEDBACK_DURATION_TICKS: int = SIM_TICKS_PER_SECOND * 18 / 10
 const PLAYER_SPEED: float = 245.0
 const AUTO_RANGE: float = 225.0
 const ATTACK_COOLDOWN_TICKS: int = RangerSkillRulesScript.PIERCING_ARROW_COOLDOWN_TICKS
@@ -351,6 +355,13 @@ var attack_action_request_ids: Dictionary = {}
 var combat_feedback_marks: Array[Dictionary] = []
 var combat_feedback_font: Font
 var combat_feedback_audio: Node
+
+## Presentation-only transient input feedback (blank-click hints, locked-skill
+## notices). It reaches the player only through the HUD snapshot's existing
+## "feedback" line; the command protocol, replay capture and semantic hashing
+## never read it, and it expires on the combat clock without touching authority.
+var _input_feedback_text: String = ""
+var _input_feedback_expires_tick: int = -1
 
 var fixed_clock
 var content_registry
@@ -911,10 +922,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	## be when they are dispatched.
 	if event.is_action_pressed("dodge") and (not (event is InputEventMouseButton) or not _pointer_is_over_hud()):
 		dodge_requested = true
-	elif event.is_action_pressed("skill_2") and _is_skill_equipped(1, "hunter_mark"):
-		hunter_mark_requested = true
-	elif event.is_action_pressed("skill_3") and _is_skill_equipped(2, "dash"):
-		dash_requested = true
+	elif event.is_action_pressed("skill_2"):
+		if _is_skill_equipped(1, "hunter_mark"):
+			hunter_mark_requested = true
+			_clear_input_feedback()
+		else:
+			## Truthful whether the skill is campaign-locked or merely unequipped:
+			## this authority only ever receives the equipped build, never an
+			## unlock record, so the wording claims no unlock timing.
+			_show_input_feedback("猎人印记未装配在本场构筑 · 暂无法施放")
+	elif event.is_action_pressed("skill_3"):
+		if _is_skill_equipped(2, "dash"):
+			dash_requested = true
+			_clear_input_feedback()
+		else:
+			_show_input_feedback("突袭未装配在本场构筑 · 暂无法施放")
 
 
 ## Attack is observed before GUI dispatch so releases cannot be swallowed by a
@@ -965,7 +987,14 @@ func _capture_pointer_attack(screen_point: Vector2) -> void:
 		manual_pointer_gameplay = _screen_to_gameplay(screen_point)
 		manual_pointer_status = POINTER_STATUS_NO_TARGET
 		battle_report = "鼠标未锁定目标；空白点击不会改为自动寻敌。"
+		## Immediate on press: the failed click is the moment the player needs
+		## the alternative. A normal release happens long before the 0.9 s
+		## duration ends, so the hint stays legible through it.
+		_show_input_feedback("点击敌人射击 · 或按住空格辅助瞄准")
 		return
+	## A resolved lock (in range or not) is a successful new intent: it replaces
+	## whatever stale input hint was on screen with the HUD's own lock states.
+	_clear_input_feedback()
 	manual_pointer_target_entity_id = int(resolved.get("target_entity_id", 0))
 	manual_pointer_target_anchor = resolved.get("target_anchor", Vector2.ZERO)
 	manual_pointer_target_radius = float(resolved.get("target_radius", 0.0))
@@ -975,6 +1004,10 @@ func _capture_pointer_attack(screen_point: Vector2) -> void:
 		battle_report = "指针已锁定目标。"
 	else:
 		battle_report = "指针已锁定目标，但目前在射程外。"
+		## Same read-only truth as the 射程外 cell, one actionable next step for a
+		## click that locked a real enemy it cannot reach yet. Cast, range and
+		## buffer behavior are unchanged: the lock simply never queues a shot.
+		_show_input_feedback("目标在射程外 · 靠近后再射")
 
 
 func _screen_to_gameplay(screen_point: Vector2) -> Vector2:
@@ -1060,6 +1093,8 @@ func _reset_manual_attack_intent() -> void:
 	attack_command_sources.clear()
 	attack_request_sources.clear()
 	attack_action_request_ids.clear()
+	_input_feedback_text = ""
+	_input_feedback_expires_tick = -1
 	if manual_combat_input != null:
 		manual_combat_input.reset()
 
@@ -1762,14 +1797,26 @@ func _manual_commands() -> Array[Dictionary]:
 		var attack_command := _cast_command("piercing_arrow", attack_target.entity_id, attack_direction)
 		attack_command_sources[int(attack_command.get("sequence", -1))] = attack_source
 		commands.append(attack_command)
+		_clear_input_feedback()
 	elif attack_requested and attack_source == ATTACK_SOURCE_ASSISTED:
 		## Assisted input retains the old explicit rejection receipt when no legal
 		## target exists; pointer input intentionally has no nearest-target fallback.
 		var rejected_command := _cast_command("piercing_arrow", 0, player_facing)
 		attack_command_sources[int(rejected_command.get("sequence", -1))] = attack_source
 		commands.append(rejected_command)
+		_show_assisted_rejection_feedback()
 	_clear_pending_attack_edge()
 	return commands
+
+
+## One actionable line when an assisted attempt cannot fire, using the same
+## read-only nearest-target state the HUD cells already show. The rejected
+## command receipt is unchanged: buffering, targeting and simulation are
+## untouched, and the hint cannot fire anything by itself. This branch only
+## runs when no living target exists; an out-of-range nearest target still
+## queues its cast and is cued where the authority rejects it.
+func _show_assisted_rejection_feedback() -> void:
+	_show_input_feedback("暂无目标 · 靠近敌人后按空格")
 
 
 ## A held source submits once when the next action can enter the shared four-tick
@@ -1991,6 +2038,10 @@ func _execute_cast_command(command: Dictionary) -> void:
 			var receipt := _request_piercing_arrow(int(command.get("target_entity_id", 0)), _direction_from_command(command), input_source)
 			accepted = bool(receipt.get("accepted", false))
 			reason = String(receipt.get("reason", "")) if not accepted else String(receipt.get("status", "accepted"))
+			if not accepted and reason == "target_out_of_range" and selected_mode == "Manual" and input_source != ATTACK_SOURCE_PROXY:
+				## The authority rejected this assist for range only here. Same
+				## read-only truth as the 射程外 cell, one actionable next step.
+				_show_input_feedback("目标在射程外 · 靠近后再射")
 	_emit_command_receipt(command, "accepted" if accepted else ("buffered" if reason == "mobility_buffered" else "rejected"), reason)
 
 
@@ -3641,6 +3692,7 @@ func _update_hud() -> void:
 		"mark_target_in_range": nearest != null and player_position.distance_to(nearest.position) <= mark_range,
 		"damage": boss_damage.to_short_string(4),
 		"feedback": _hud_feedback(),
+		"input_feedback": _active_input_feedback(),
 		"p": float(model["p"]),
 		"lifetime": lifetime,
 		"distance": targeting_distance,
@@ -3656,9 +3708,9 @@ func _update_hud() -> void:
 
 
 ## The skill cells live against the lower-right edge.  When a living actor reaches
-## that readout, only the nonessential card backing and feedback line fade; keys,
-## cooldowns and every authoritative HUD value remain available.  This is a
-## presentation-only camera query and never feeds combat, paths or replay state.
+## that readout, the dock backing dims; keys, cooldowns, every authoritative HUD
+## value and the input-notice strip remain available.  This is a presentation-only
+## camera query and never feeds combat, paths or replay state.
 func _combat_focus_near_action_edge(nearest: EnemyData) -> bool:
 	if world_view == null:
 		return false
@@ -3684,6 +3736,25 @@ func _enemy_public_label(enemy: EnemyData) -> String:
 		"charging_raider": return "冲锋掠袭者"
 		"fan_ranged": return "扇射游猎者"
 	return "敌人"
+
+
+func _show_input_feedback(text_value: String) -> void:
+	_input_feedback_text = text_value
+	_input_feedback_expires_tick = sim_tick + INPUT_FEEDBACK_DURATION_TICKS
+
+
+func _active_input_feedback() -> String:
+	if _input_feedback_expires_tick >= 0 and sim_tick >= _input_feedback_expires_tick:
+		_input_feedback_text = ""
+		_input_feedback_expires_tick = -1
+	return _input_feedback_text
+
+
+## A successful intent (resolved lock, fired shot, equipped skill) replaces or
+## clears the stale invalid-action hint so it can never mask real feedback.
+func _clear_input_feedback() -> void:
+	_input_feedback_text = ""
+	_input_feedback_expires_tick = -1
 
 
 func _hud_feedback() -> String:
@@ -4885,7 +4956,10 @@ func _draw_pointer_target_indicator() -> void:
 	if selected_mode != "Manual" or manual_aim_resolver == null:
 		return
 	var state := _attack_target_ui_state()
-	if String(state.get("source", "")) != ATTACK_SOURCE_POINTER or not bool(state.get("has_target", false)):
+	var source := String(state.get("source", ""))
+	if source != ATTACK_SOURCE_POINTER and source != ATTACK_SOURCE_ASSISTED:
+		return
+	if not bool(state.get("has_target", false)):
 		return
 	var center_gameplay: Vector2 = state.get("target_anchor", Vector2.ZERO)
 	var radius_gameplay := float(state.get("target_radius", 0.0))
@@ -4896,6 +4970,9 @@ func _draw_pointer_target_indicator() -> void:
 	if world_view != null:
 		center = world_view.gameplay_to_world(center_gameplay)
 		radius = center.distance_to(world_view.gameplay_to_world(center_gameplay + Vector2(radius_gameplay, 0.0)))
+	if source == ATTACK_SOURCE_ASSISTED:
+		_draw_assisted_target_circle(state, center, radius)
+		return
 	var bracket := Rect2(center - Vector2.ONE * radius, Vector2.ONE * radius * 2.0)
 	var color := Color(COLOR_NEUTRAL, 0.82) if String(state.get("status", "")) == POINTER_STATUS_OUT_OF_RANGE else Color(COLOR_PROXY, 0.96)
 	for segment in CombatMarksScript.corner_bracket_segments(bracket, clampf(radius * 0.34, 6.0, 18.0)):
@@ -4908,6 +4985,19 @@ func _draw_pointer_target_indicator() -> void:
 		center + Vector2(0.0, -4.0),
 	])
 	draw_polyline(diamond, color, 1.5)
+
+
+## Subtle assisted-aim ring over the same authoritative anchor the next shot
+## uses: a dashed circle with neither corners nor a diamond, so assist can
+## never be mistaken for the stronger explicit pointer lock. Read-only
+## presentation over the existing target UI snapshot.
+func _draw_assisted_target_circle(state: Dictionary, center: Vector2, radius: float) -> void:
+	var tint := Color(COLOR_PROXY, 0.55) if bool(state.get("in_range", false)) else Color(COLOR_NEUTRAL, 0.45)
+	var segments := 16
+	var sweep := TAU / float(segments) * 0.55
+	for index in range(segments):
+		var start := TAU * float(index) / float(segments)
+		draw_arc(center, radius, start, start + sweep, 4, tint, 1.5, false)
 
 
 func _enemy_role_id(enemy: EnemyData) -> String:

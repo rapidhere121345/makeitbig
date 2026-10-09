@@ -9,7 +9,7 @@
     405
   ],
   "ground_sprite": "hamlet.ground",
-  "design_reference": "docs/art-concepts/v0.9-p1-complete/02_hamlet_facilities.png",
+  "design_reference": "design/visual/concepts/v0.9-p1-complete/02_hamlet_facilities.png",
   "placements": [
     {
       "id": "hearth",

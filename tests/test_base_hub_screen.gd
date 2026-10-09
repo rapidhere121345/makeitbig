@@ -58,6 +58,7 @@ func run() -> Array[String]:
 	_test_landmarks_follow_world(hub, failures)
 	_test_nav_state_matches_cards(hub, failures)
 	_test_nav_activation_routing(hub, failures)
+	_test_goal_and_road_guide(hub, failures)
 	_test_nav_locked_copy(hub, failures)
 	_test_first_hunt_rack_availability(hub, failures)
 	_test_nav_boss_crossing(hub, failures)
@@ -604,7 +605,7 @@ func _test_hub_prompt_stays_minimal(hub, failures: Array[String]) -> void:
 		_expect(prompt.size.x > 0.0 and prompt.size.y > 0.0, "base hub: %s has no proximity prompt" % feature_id, failures)
 		if prompt.size.x <= 0.0 or prompt.size.y <= 0.0:
 			continue
-		_expect(hub._nearby_label.text == "[E / Space] 打开", "base hub: the %s prompt repeats landmark identity/status" % feature_id, failures)
+		_expect(hub._nearby_label.text == "[E / Space] 进入 %s" % hub._nav_title(feature_id), "base hub: the %s prompt no longer names the stand E opens" % feature_id, failures)
 		_expect(prompt.position.x >= 0.0 and prompt.end.x <= 1280.0, "base hub: the %s prompt left the canvas horizontally" % feature_id, failures)
 		_expect(prompt.end.y <= BaseHubScreenScript.DESIGN_SIZE.y, "base hub: the %s prompt left the canvas vertically" % feature_id, failures)
 		_expect(prompt.size.x <= BaseHubScreenScript.PROMPT_MAX_WIDTH and prompt.size.y <= BaseHubScreenScript.PROMPT_HEIGHT, "base hub: the %s prompt grew past its published badge" % feature_id, failures)
@@ -885,6 +886,42 @@ func _test_nav_activation_routing(hub, failures: Array[String]) -> void:
 		var before: int = events.size()
 		var activated: bool = hub.navigation_card_activated(feature_id)
 		_expect(activated and events.size() == before + 1 and events.back() == feature_id, "base hub: the shared entry point did not route %s" % feature_id, failures)
+
+
+## The first-hunt goal names the stand and the contract, and the local road guide
+## follows only explicit direction requests or the recommended departure.
+func _test_goal_and_road_guide(hub, failures: Array[String]) -> void:
+	var state = ApplicationStateScript.new()
+	state.start_new_profile("ranger")
+	state.complete_tutorial()
+	hub.present(state.profile, {}, "", state.campaign_progress_snapshot())
+	hub.present_adventure({}, {"current_objective": {"text": "沿寒原旧路清通外段，带回能用的材料与装备"}})
+	## The hub instance carries selections from earlier suites: start from the
+	## recommended departure, exactly like a fresh town arrival.
+	hub.restore_travel({"destination": "contract"})
+	_expect(hub._objective_label.text.contains("行路契台") and hub._objective_label.text.contains("初次狩猎"),
+		"base hub: the first-hunt goal does not name the contract stand and the first hunt", failures)
+	_expect(hub._objective_label.tooltip_text.contains("沿寒原旧路"),
+		"base hub: the story objective lost its tooltip context", failures)
+	_expect(hub.wayfinding_report().get("id", "") == "contract", "base hub: the recommended departure is not the contract desk", failures)
+	## Entering a stand within reach opens it and is not a destination choice.
+	var feature_events: Array[String] = []
+	hub.feature_requested.connect(func(feature_id: String) -> void: feature_events.append(feature_id))
+	hub.set_hero_position(hub.get_world_feature_position("loadout"))
+	_expect(hub.navigation_card_activated("loadout") and feature_events == ["loadout"],
+		"base hub: the nearby entry did not open the stand", failures)
+	_expect(hub.wayfinding_report().get("id", "") == "contract",
+		"base hub: a nearby entry silently retargeted the road guide", failures)
+	## A far landmark request is the explicit directions action.
+	hub.set_hero_position(hub.get_world_feature_position("contract"))
+	_expect(hub.navigation_card_activated("loadout") and hub.wayfinding_report().get("id", "") == "loadout",
+		"base hub: an explicit far request did not move the road guide", failures)
+	## Reaching an explicitly selected stand keeps it; the interaction prompt and
+	## the hidden guide take over at the interaction radius.
+	hub.set_hero_position(hub.get_world_feature_position("loadout"))
+	var arrived_report: Dictionary = hub.wayfinding_report()
+	_expect(String(arrived_report.get("id", "")) == "loadout" and bool(arrived_report.get("arrived", false)),
+		"base hub: an explicit selection lost its arrived state at the stand", failures)
 
 
 ## Locked copy is a projection of the save, not of the current picture: the same

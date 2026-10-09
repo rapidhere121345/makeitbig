@@ -79,6 +79,9 @@ const _SHORT_NODE_LABELS := {
 	"threshold_colossus": "阈门巨像",
 	"auto_certification": "AUTO 考核",
 }
+## While the first hunt is pending, the header goal names the stand and the
+## contract itself; the authored story line stays reachable as tooltip context.
+const FIRST_HUNT_OBJECTIVE_TEXT := "前往行路契台，接下「初次狩猎」"
 ## The authored reward a locked page is waiting for. Both the card and the world
 ## marker read this table, so "locked" always names the one real gate.
 const _UNLOCK_REASONS := {
@@ -797,6 +800,11 @@ func _update_landmarks() -> void:
 		var status := landmark.get_node("Copy/Status") as Label
 		var nearby := feature_id == nearby_id
 		var selected := feature_id == _destination_id
+		if selected:
+			## The label can be hidden while its world feet stay technically on
+			## screen (the top band, another stand's art): the local road guide
+			## must keep pointing until the stand's own interaction radius.
+			_view.set_destination_occluded(not (camera.encloses(world_rect) and LANDMARK_SAFE_RECT.encloses(design_rect)))
 		title.text = String(state.get("title", feature_id))
 		status.text = String(state.get("status", ""))
 		title.add_theme_color_override("font_color", ShellThemeScript.BONE if nearby or selected else COOL_GREY)
@@ -914,11 +922,12 @@ func _apply_presentation() -> void:
 	_character_button.text = "成长 C · %d点" % points if points > 0 else "成长 C"
 	_update_progress_markers(progression)
 	_progress_label.text = _early_progress_text(progression).replace("Build", "构筑").replace("Auto", "代行")
-	_objective_label.text = _next_objective_text()
-	var story_objective: Dictionary = _story_snapshot.get("current_objective", {})
-	if not story_objective.is_empty():
-		_objective_label.text = String(story_objective.get("text", _objective_label.text))
-	_objective_label.tooltip_text = _objective_label.text
+	_objective_label.text = _displayed_objective_text()
+	var story_text := String(_as_dictionary(_story_snapshot.get("current_objective", {})).get("text", ""))
+	if not story_text.is_empty() and story_text != _objective_label.text:
+		_objective_label.tooltip_text = "%s\n%s" % [_objective_label.text, story_text]
+	else:
+		_objective_label.tooltip_text = _objective_label.text
 	_detail_objective_label.text = "当前目标：" + _objective_label.text
 	var message := _localized_status(_status_message)
 	_detail_status_label.text = message if not message.is_empty() else DETAIL_STATUS_EMPTY_TEXT
@@ -977,7 +986,10 @@ func _update_nearby_feature() -> void:
 		_nearby_panel.visible = false
 		_prompt_rect = Rect2()
 		return
-	_nearby_label.text = "[E / Space] 打开"
+	## The badge names the stand, so the hint is what activate_nearby_interaction()
+	## actually opens. A resident in range still wins, exactly like the E priority:
+	## nearby_resident_id() only yields a resident who is closer than the stand.
+	_nearby_label.text = _facility_prompt_text(feature_id)
 	if not resident_id.is_empty():
 		_nearby_label.text = "[E] 与%s交谈" % String(_resident_conversations[resident_id].get("npc_name", ""))
 	_nearby_label.tooltip_text = _nearby_label.text
@@ -985,6 +997,14 @@ func _update_nearby_feature() -> void:
 	_place_control(_nearby_panel, _prompt_rect)
 	_place_control(_nearby_label, Rect2(Vector2.ZERO, _prompt_rect.size))
 	_nearby_panel.visible = true
+
+
+func _facility_prompt_text(feature_id: String) -> String:
+	var entry := _view.entry_for(feature_id) if _view != null else {}
+	var label := String(entry.get("label", ""))
+	if label.is_empty():
+		label = _nav_title(feature_id)
+	return "[E / Space] 进入 %s" % label
 
 
 func get_prompt_rect() -> Rect2:
@@ -1128,12 +1148,17 @@ func navigation_card_activated(feature_id: String) -> bool:
 	## A far click is a request for directions, not a remote facility opening.
 	if is_dialogue_open() or _details_expanded or not LANDMARK_FEATURE_IDS.has(feature_id):
 		return false
-	_destination_id = feature_id
-	_view.set_destination(feature_id)
+	var entry := _view.entry_for(feature_id)
+	var within_reach := not entry.is_empty() and _view.hero_world_position().distance_to(entry.feet) <= float(entry.radius)
+	if not within_reach:
+		## Only an explicit directions request moves the local road guide. Walking
+		## up to a stand and entering it is not a destination choice, so a mistaken
+		## visit (the baseline run entered loadout this way) cannot quietly stick.
+		_destination_id = feature_id
+		_view.set_destination(feature_id)
 	_update_landmarks()
 	if _navigation_has_focus(): get_viewport().gui_get_focus_owner().release_focus()
-	var entry := _view.entry_for(feature_id)
-	if not entry.is_empty() and _view.hero_world_position().distance_to(entry.feet) <= float(entry.radius):
+	if within_reach:
 		_on_hub_entry_pressed(feature_id)
 	return true
 
@@ -1259,9 +1284,9 @@ func _next_objective_text() -> String:
 		"tutorial_ranger_basics":
 			return "完成游侠基础教程"
 		"mainline_01_first_hunt":
-			return "前往契约台，开始初次狩猎"
+			return "前往行路契台，接下「初次狩猎」"
 		"mainline_02_priority_under_pressure":
-			return "前往契约台，应对冲锋与远程压力"
+			return "前往行路契台，应对冲锋与远程压力"
 		"mainline_03_first_elite":
 			return "挑战首个精英，取得孳生分裂装备"
 		"mainline_04_hazard_and_forge":
@@ -1274,7 +1299,24 @@ func _next_objective_text() -> String:
 			return "确认四白核心，完成一次 Auto 考核"
 	if bool(_campaign_snapshot.get("early_game_complete", false)):
 		return "前期毕业完成；可继续支线验证构筑"
-	return "前往契约台查看当前可用节点"
+	return "前往行路契台查看当前可用节点"
+
+
+func _first_hunt_pending() -> bool:
+	## The one window where the broad story objective used to hide the actual
+	## departure step. Completed or later nodes fall through to their own copy.
+	if String(_campaign_snapshot.get("next_mainline_node_id", "")) != "mainline_01_first_hunt":
+		return false
+	return not _as_array(_as_dictionary(_profile.get("progression", {})).get("completed_node_ids", [])).has("mainline_01_first_hunt")
+
+
+func _displayed_objective_text() -> String:
+	var story_text := String(_as_dictionary(_story_snapshot.get("current_objective", {})).get("text", ""))
+	if _first_hunt_pending():
+		return FIRST_HUNT_OBJECTIVE_TEXT
+	if not story_text.is_empty():
+		return story_text
+	return _next_objective_text()
 
 
 func _profile_training_complete() -> bool:

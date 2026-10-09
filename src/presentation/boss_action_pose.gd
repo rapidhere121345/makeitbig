@@ -28,7 +28,7 @@ extends RefCounted
 ##  * every motion step is quantized to a whole native pixel.
 ##
 ## The three moves read the approved
-## docs/art-concepts/v0.9-p1-complete/11_boss_vfx_language.png language:
+## design/visual/concepts/v0.9-p1-complete/11_boss_vfx_language.png language:
 ##   slam   both fists lift, one-tick drop, heavy return
 ##   sweep  the right fist pulls along the sim's own perpendicular axis, one-tick
 ##          sweep-through to the other side, then return

@@ -4,7 +4,7 @@
   "hero_start": [548, 464],
   "hero_screen_anchor": [320, 260],
   "ground_sprite": "hamlet.ground",
-  "design_reference": "docs/art-concepts/r13/hearthside-town-composition-v01.png",
+  "design_reference": "design/visual/concepts/r13/hearthside-town-composition-v01.png",
   "reuses_atlas": "res://art/production/p1/hamlet_style_r13/atlas.json",
   "collision": {
     "hero_radius": 6,

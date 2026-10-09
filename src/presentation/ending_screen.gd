@@ -2,7 +2,7 @@ class_name EndingScreen
 extends Control
 ## Early-game graduation ending: the calm warm frame and the honest summary.
 ##
-## Layout (docs/art-production/VISUAL_BASELINE.md "全界面同样适用"): one compact
+## Layout (design/visual/VISUAL_BASELINE.md "全界面同样适用"): one compact
 ## Chinese header, a body that is the only scrolling region, and a pinned footer
 ## holding both return actions. Nothing here scales Chinese copy under the approved
 ## 18px floor.

@@ -1,7 +1,7 @@
 {
   "tool": "built_in_image_gen",
   "references": [
-    "docs/art-concepts/v0.9-p1-complete/04_enemy_roster.png",
+    "design/visual/concepts/v0.9-p1-complete/04_enemy_roster.png",
     "art/production/p1/calibration_v01/enemies.png"
   ],
   "prompts": {

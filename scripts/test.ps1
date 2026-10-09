@@ -125,6 +125,8 @@ if ($LASTEXITCODE -ne 0) { throw "UI R13 style tests failed with exit code $LAST
 if ($LASTEXITCODE -ne 0) { throw "Hamlet collision tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_arena_hud.gd
 if ($LASTEXITCODE -ne 0) { throw "Arena HUD tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_input_feedback_transients.gd
+if ($LASTEXITCODE -ne 0) { throw "Input feedback transient tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_ranger_combat_skills.gd
 if ($LASTEXITCODE -ne 0) { throw "Ranger combat skill tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_ranger_animation.gd
@@ -139,6 +141,8 @@ if ($LASTEXITCODE -ne 0) { throw "Defeat presentation tests failed with exit cod
 if ($LASTEXITCODE -ne 0) { throw "Title screen tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_tutorial_screen.gd
 if ($LASTEXITCODE -ne 0) { throw "Tutorial screen tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_tutorial_pointer_cast.gd
+if ($LASTEXITCODE -ne 0) { throw "Tutorial pointer cast tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_facility_screen.gd
 if ($LASTEXITCODE -ne 0) { throw "Facility screen tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_inventory_flow.gd

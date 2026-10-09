@@ -151,6 +151,9 @@ var _destination_marker: Polygon2D
 var _destination_indicator: Polygon2D
 var _destination_id := ""
 var _destination_routes: Dictionary = {}
+## Set by the hub when the selected stand's label is hidden even though its feet
+## are on screen: the local road guide stays up until the interaction radius.
+var _destination_occluded := false
 
 var _hero_sprite: Sprite2D
 var _hero_shadow: Polygon2D
@@ -597,6 +600,13 @@ func set_destination(feature_id: String) -> void:
 	_update_destination_indicator()
 
 
+func set_destination_occluded(value: bool) -> void:
+	if _destination_occluded == value:
+		return
+	_destination_occluded = value
+	_update_destination_indicator()
+
+
 func _build_destination_routes(layout: Dictionary) -> Dictionary:
 	var result := {}
 	var routes: Variant = layout.get("routes_uv", {})
@@ -669,10 +679,15 @@ func _update_destination_indicator() -> void:
 	if entry.is_empty():
 		_destination_indicator.visible = false
 		return
+	if _hero_position.distance_to(entry.get("feet", Vector2.ZERO)) <= float(entry.get("radius", HOTSPOT)):
+		## Arrived: the authored road guide ends at the stand's own interaction
+		## area instead of pointing at a label the player can now open.
+		_destination_indicator.visible = false
+		return
 	var camera := camera_world_offset()
 	var destination_screen := (entry.get("feet", Vector2.ZERO) as Vector2) - camera
 	var safe := Rect2(DESTINATION_EDGE_MARGIN, _view_size - DESTINATION_EDGE_MARGIN * 2.0)
-	_destination_indicator.visible = not safe.has_point(destination_screen)
+	_destination_indicator.visible = _destination_occluded or not safe.has_point(destination_screen)
 	if not _destination_indicator.visible:
 		return
 	var guide := destination_guide_point()

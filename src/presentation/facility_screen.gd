@@ -1675,9 +1675,9 @@ func _refresh_candidate_results() -> void:
 	_loadout_backpack_detail.name = "BackpackDetailContent"
 	_loadout_backpack_detail.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_loadout_backpack_detail.offset_left = 8.0
-	_loadout_backpack_detail.offset_top = 6.0
+	_loadout_backpack_detail.offset_top = 4.0
 	_loadout_backpack_detail.offset_right = -8.0
-	_loadout_backpack_detail.offset_bottom = -6.0
+	_loadout_backpack_detail.offset_bottom = -4.0
 	_loadout_backpack_detail_region.add_child(_loadout_backpack_detail)
 	if _loadout_backpack_selection.is_empty():
 		_loadout_backpack_detail_region.visible = false
@@ -1942,7 +1942,10 @@ func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	cell.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	parent.add_child(cell)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 4)
+	## Two-point vertical gaps: the standard candidate block (name, actions,
+	## comparison and all three fact lines) must clear the fixed pane at 720p
+	## without shrinking the 18px fact text.
+	content.add_theme_constant_override("separation", 2)
 	cell.add_child(content)
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 8)
@@ -1977,7 +1980,13 @@ func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	_add_interface_changes(content, preview)
 	var comparison_scroll := ScrollContainer.new()
 	comparison_scroll.name = "CandidateFactsRow_%s" % token
-	comparison_scroll.custom_minimum_size.y = 54
+	## Sized to the 246px detail pane after the name and action rows: the standard
+	## three-line facts block fits, longer rune/law rows scroll deliberately, and
+	## the container takes keyboard focus so the arrows reach the overflow. Font
+	## sizes stay at the published 18px floor.
+	comparison_scroll.custom_minimum_size.y = 78
+	comparison_scroll.focus_mode = Control.FOCUS_ALL
+	comparison_scroll.follow_focus = true
 	comparison_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	comparison_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(comparison_scroll)
@@ -2244,7 +2253,11 @@ func _item_inline_summary_text(item: Dictionary) -> String:
 
 
 func _candidate_inline_item_facts(item: Dictionary) -> String:
-	return _equipment_model.candidate_inline_facts(item)
+	## The clarification follows the authoritative preview payload: with a valid
+	## preview the comparison above already contains the base multipliers; without
+	## one the note says so instead of implying a comparison happened.
+	var preview := _equip_preview_data(String(item.get("instance_id", "")))
+	return _equipment_model.candidate_inline_facts(item, "included" if not preview.is_empty() else "no_preview")
 
 
 ## The modal receives the complete authoritative comparison. The fixed pane shows

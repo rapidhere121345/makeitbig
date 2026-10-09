@@ -70,6 +70,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_hamlet_style_r13.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_hamlet_collision.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_hud.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_input_feedback_transients.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_ranger_combat_skills.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_ranger_animation.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_world_occlusion.gd
@@ -77,6 +78,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_defeat_presentation.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_title_screen.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_tutorial_screen.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_tutorial_pointer_cast.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_facility_screen.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_inventory_flow.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_equipment_backpack_paging.gd

@@ -170,6 +170,14 @@ const FIRST_REWARD_LABELS := {
 	"pack_hunt_mark_item": "群猎印记装备已入库存",
 	"early_campaign_complete": "前期旅程完成：已掌握手动战斗与代理出征",
 }
+## Skill grants get their own compact cue (name, authored battle key, slot and a
+## next-use hint), because the bare "首通获得 N 项" counter let the new skill go
+## unnoticed. It renders only from the settlement's own first_reward_tags, so a
+## repeat run never shows it; keys mirror the arena HUD slot keys.
+const FIRST_SKILL_CUES := {
+	"hunter_mark_skill": {"name": "猎人印记", "key": "Q", "slot": "技能槽 2", "skill_id": "hunter_mark", "slot_index": 1, "hint": "战斗中按 Q 标记目标"},
+	"dash_skill": {"name": "突袭", "key": "E", "slot": "技能槽 3", "skill_id": "dash", "slot_index": 2, "hint": "战斗中按 E 突进"},
+}
 
 ## The fixed four white cores, in the order the proxy bay grants them.
 const PROXY_CORE_LABELS := {
@@ -221,6 +229,7 @@ var _report_label: Label
 var _reward_label: Label
 var _reward_detail_button: Button
 var _reward_detail_label: Label
+var _skill_cue_label: Label
 var _proxy_component_box: VBoxContainer
 var _proxy_detail_button: Button
 var _equipment_box: VBoxContainer
@@ -724,6 +733,14 @@ func _build_drop_panel(parent: Control) -> void:
 	_reward_detail_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_reward_detail_button.pressed.connect(_on_reward_detail_pressed)
 	summary_row.add_child(_reward_detail_button)
+	_skill_cue_label = Label.new()
+	_skill_cue_label.name = "FirstSkillCue"
+	_skill_cue_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_skill_cue_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_skill_cue_label.add_theme_font_size_override("font_size", SECONDARY_FONT_SIZE)
+	_skill_cue_label.add_theme_color_override("font_color", ShellThemeScript.AMBER)
+	_skill_cue_label.visible = false
+	loot.add_child(_skill_cue_label)
 	_equipment_box = VBoxContainer.new()
 	_equipment_box.name = "EquipmentCards"
 	_equipment_box.add_theme_constant_override("separation", 8)
@@ -879,11 +896,54 @@ func _apply_presentation() -> void:
 	_reward_detail_label.text = full_reward_text
 	_reward_detail_label.visible = false
 	_reward_detail_button.text = REWARD_DETAIL_SHOW_TEXT
+	_apply_first_skill_cue()
 	_reward_label.text = _compact_reward_text(rewards, _equipment_drop_entries, proxy_component_entries)
 	_reward_detail_button.visible = _reward_label.text != full_reward_text
 	_subtitle_label.text = _settlement_headline(outcome, _equipment_drop_entries.size(), proxy_component_entries.size())
 	_next_step_label.text = "下一步 · " + _next_step_text(outcome, _equipment_drop_entries.size(), proxy_component_entries.size())
 	_render_core_rewards(rewards)
+
+
+func _first_skill_cues() -> Array[Dictionary]:
+	## Only tags the settlement itself granted this run; the payload is empty on
+	## repeat completions, so the cue can never re-announce an old reward.
+	var value: Variant = _result.get("first_reward_tags", [])
+	var cues: Array[Dictionary] = []
+	if not (value is Array):
+		return cues
+	for tag_value in (value as Array):
+		var tag := String(tag_value)
+		if FIRST_SKILL_CUES.has(tag):
+			cues.append(FIRST_SKILL_CUES[tag])
+	return cues
+
+
+func _apply_first_skill_cue() -> void:
+	if _skill_cue_label == null:
+		return
+	var lines: Array[String] = []
+	for cue in _first_skill_cues():
+		if _skill_ready_in_build(String(cue.skill_id), int(cue.slot_index)):
+			lines.append("首通解锁技能：%s（%s · %s）· %s" % [cue.name, cue.key, cue.slot, cue.hint])
+		else:
+			## The tag alone is not equip state: if the granted slot is occupied
+			## or absent in the resolved build, promise only the unlock.
+			lines.append("首通解锁技能：%s · 已解锁，可在备行架%s 装配" % [cue.name, cue.slot])
+	_skill_cue_label.text = "\n".join(lines)
+	_skill_cue_label.tooltip_text = _skill_cue_label.text
+	_skill_cue_label.visible = not lines.is_empty()
+
+
+func _skill_ready_in_build(skill_id: String, slot_index: int) -> bool:
+	## Readiness comes from the resolved loadout, not the reward tag: the skill
+	## must sit in its own hotkey slot (the grant can no-op when that slot is
+	## occupied), mirroring main.gd's _is_skill_equipped(slot_index, skill_id).
+	var active := _as_dictionary(_current_profile.get("active_build", {}))
+	var skills: Variant = active.get("skills", [])
+	if not (skills is Array):
+		return false
+	var slots := skills as Array
+	return slot_index >= 0 and slot_index < slots.size() and String(slots[slot_index]) == skill_id
 
 
 

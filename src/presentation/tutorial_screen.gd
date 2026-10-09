@@ -19,6 +19,15 @@ const MOVE_SPEED := 240.0
 const MOVE_REQUIRED_DISTANCE := 140.0
 const DODGE_DISTANCE := 92.0
 const CAST_RANGE := 280.0
+## Pointer picking mirrors the combat convention in ManualAimResolver: the aim
+## anchor sits 22px above the target's feet point and the pick radius equals
+## the combat body radius (34px). The drill must not invent its own hit rule.
+const TARGET_PICK_ANCHOR_OFFSET := Vector2(0.0, -22.0)
+const TARGET_PICK_RADIUS := 34.0
+## One actionable hint at a time; it expires back to the checklist status.
+const HINT_DURATION_SECONDS := 1.4
+## The arena's origin inside the design canvas; shared with _mouse_is_over_arena.
+const ARENA_ORIGIN := Vector2(32.0, 78.0)
 const TRACE_DURATION := 0.34
 ## Tutorial-local Piercing Arrow authority. Travel is exactly 24 arena units per
 ## 30 Hz tick; the 4-unit arrow circle sweeps against the normal target's
@@ -194,6 +203,7 @@ var _move_complete := false
 var _dodge_complete := false
 var _cast_complete := false
 var _completed_emitted := false
+var _hint_seconds := 0.0
 ## Presentation clock for the shared ranger reader (a forward-running tick), the
 ## movement flag of the current input frame, and the per-event sequence numbers
 ## the action latches key on. None of these feed the checklist or the tuning.
@@ -215,6 +225,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _arena != null and _arena.target_flash_time > 0.0:
 		_arena.target_flash_time = maxf(0.0, _arena.target_flash_time - maxf(0.0, delta))
+	if _hint_seconds > 0.0:
+		_hint_seconds = maxf(0.0, _hint_seconds - maxf(0.0, delta))
+		if _hint_seconds <= 0.0:
+			_update_checklist()
 	_anim_seconds += maxf(0.0, delta)
 	_anim_tick = int(_anim_seconds * float(RangerAnimationScript.SIM_TICKS_PER_SECOND))
 	_process_tutorial_action_events(_action_timeline.advance(_anim_tick))
@@ -244,7 +258,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			request_dodge()
 			_mark_input_handled()
 		elif mouse_event.button_index == MOUSE_BUTTON_LEFT:
-			request_cast()
+			_attempt_pointer_cast(mouse_event.position)
 			_mark_input_handled()
 
 
@@ -314,12 +328,54 @@ func request_cast() -> bool:
 		if _status_label != null:
 			_status_label.text = "正在收弓，稍等片刻再射。"
 		return false
+	## A successful shot is a newer intent than any standing input hint; the
+	## windup status below must replace it immediately.
+	_hint_seconds = 0.0
 	_process_tutorial_action_events(_action_timeline.advance(_anim_tick))
 	if String(receipt.get("status", "")) in ["buffered", "replaced"] and _status_label != null:
 		_status_label.text = "已准备接着射出下一箭。"
 	_sync_arena()
 	_update_checklist()
 	return true
+
+
+## Manual-combat-aligned pointer shot. The click must pick the real target
+## anchor; empty ground never casts and answers with one short, expiring hint.
+func _attempt_pointer_cast(viewport_position: Vector2) -> void:
+	var local_position := viewport_position
+	if _design_canvas != null:
+		local_position = _design_canvas.get_global_transform_with_canvas().affine_inverse() * viewport_position
+	pointer_cast_at_arena(local_position - ARENA_ORIGIN)
+
+
+## Arena-space picking half, kept public for input regressions. The return
+## value names why a click did nothing; the player-visible result is the cast
+## itself or the expiring hint.
+func pointer_cast_at_arena(arena_position: Vector2) -> Dictionary:
+	if not _pointer_hits_target(arena_position):
+		_show_hint("没点到训练靶 · 点亮靶上的圆圈，或按空格辅助瞄准")
+		return {"accepted": false, "reason": "empty"}
+	if request_cast():
+		return {"accepted": true, "reason": "hit"}
+	return {"accepted": false, "reason": "range"}
+
+
+func _pointer_hits_target(arena_position: Vector2) -> bool:
+	return arena_position.distance_to(TARGET_POSITION + TARGET_PICK_ANCHOR_OFFSET) <= TARGET_PICK_RADIUS
+
+
+func _show_hint(text_value: String) -> void:
+	if _status_label != null:
+		_status_label.text = text_value
+	_hint_seconds = HINT_DURATION_SECONDS
+
+
+func current_status_text() -> String:
+	return _status_label.text if _status_label != null else ""
+
+
+func hint_active() -> bool:
+	return _hint_seconds > 0.0
 
 
 func _process_tutorial_action_events(events: Array) -> void:
@@ -483,6 +539,10 @@ func _build_ui() -> void:
 		return
 	_built = true
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	## The screen itself stays transparent to mouse picks: with the default STOP
+	## it consumed every arena click at the subviewport's GUI stage, and
+	## _unhandled_input never saw it. The Enter button keeps its own hit area.
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	theme = ShellThemeScript.create()
 
 	var background := ColorRect.new()
@@ -496,6 +556,8 @@ func _build_ui() -> void:
 	_design_canvas.custom_minimum_size = DESIGN_SIZE
 	_design_canvas.size = DESIGN_SIZE
 	_design_canvas.clip_contents = true
+	## Full-screen STOP here consumed arena clicks before _unhandled_input.
+	_design_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_design_canvas)
 	resized.connect(_layout_design_canvas)
 	_layout_design_canvas()
@@ -549,7 +611,7 @@ func _build_ui() -> void:
 	_cast_label = _guide_label("", "")
 	guide.add_child(_cast_label)
 	var rule := Label.new()
-	rule.text = "三项顺序不限。右侧是敌人训练靶，本场不会攻击你。箭命中才算完成。"
+	rule.text = "三项顺序不限。右侧是敌人训练靶，本场不会攻击你。左键要点在靶上，空格可辅助瞄准，箭命中才算完成。"
 	rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rule.add_theme_font_size_override("font_size", 18)
 	rule.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
@@ -738,9 +800,13 @@ func _latch_ranger_event(kind: String, event_id: String) -> void:
 func _update_checklist() -> void:
 	if not _built or _enter_button == null:
 		return
+	## An active hint is the newest player-facing fact; checklist refreshes
+	## (movement, phases) must not erase it mid-sentence for up to 1.4 s.
+	if _hint_seconds > 0.0:
+		return
 	_move_label.text = "%s 走近训练靶\n%s" % [_mark(_move_complete), "步伐已熟悉" if _move_complete else "WASD / 方向键 · 在雪地里走一段"]
 	_dodge_label.text = "%s 试一次闪避\n%s" % [_mark(_dodge_complete), "闪避已完成" if _dodge_complete else "Shift / Ctrl / 鼠标右键 · 快速移开"]
-	_cast_label.text = "%s 穿刺箭命中\n%s" % [_mark(_cast_complete), "箭已命中敌人训练靶" if _cast_complete else "Space / 鼠标左键 · 射向射程内的靶"]
+	_cast_label.text = "%s 穿刺箭命中\n%s" % [_mark(_cast_complete), "箭已命中敌人训练靶" if _cast_complete else "Space 辅助瞄准 · 左键点靶射击"]
 	var was_locked := _enter_button.disabled
 	_enter_button.disabled = not _all_complete()
 	_enter_button.text = "进入炉边镇" if _all_complete() else "先完成三项练习"
@@ -779,7 +845,7 @@ func _mouse_is_over_arena(viewport_position: Vector2) -> bool:
 	if _design_canvas == null:
 		return false
 	var local_position := _design_canvas.get_global_transform_with_canvas().affine_inverse() * viewport_position
-	return Rect2(32.0, 78.0, ARENA_SIZE.x, ARENA_SIZE.y).has_point(local_position)
+	return Rect2(ARENA_ORIGIN, ARENA_SIZE).has_point(local_position)
 
 
 func _mark_input_handled() -> void:
