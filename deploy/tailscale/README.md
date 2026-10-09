@@ -56,3 +56,10 @@ MIB_RELEASE_HOST_ROOT=/paseo-makeitbig/project ./deploy/tailscale/serve_host.sh.
 - 宿主机确认发布根路径与 bind mount 一致，`tailscale serve status` 指向 `build/releases/`。
 - tailnet 内能打开首页、浏览历史 build，并下载两个平台文件。
 - 没有执行容器、宿主机、OCX 或 Jingwei 重启；本目录的容器脚本不会执行这些操作。
+# 当前发布地址
+
+Tailnet-only：<https://example-runtime.tail99c4e8.ts.net:8448>。
+
+该地址由宿主机 Tailscale Serve 指向项目的 `build/releases/`；容器内不运行 `tailscaled`。
+
+<!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->
