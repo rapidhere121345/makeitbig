@@ -20,6 +20,8 @@ const FOG := {
 	"hearth": Color(0.29, 0.40, 0.52, 0.22),
 }
 const WARM := Color(1.00, 0.67, 0.34)
+const FIRE_CORE := Color(1.00, 0.84, 0.44)
+const FIRE_TONGUE := Color(0.98, 0.55, 0.22)
 const COLD_SHAFT := Color(0.49, 0.66, 0.88)
 const GROUND_SHADE := Color(0.10, 0.14, 0.20)
 
@@ -70,6 +72,33 @@ static func draw_directional_shade_for_test(canvas: CanvasItem, rect: Rect2) -> 
 
 static func warm_light(position: Vector2, radius: float, strength: float = 0.20) -> Dictionary:
 	return {"position": position, "radius": maxf(4.0, radius), "strength": clampf(strength, 0.0, 0.32)}
+
+static func draw_fire(canvas: CanvasItem, sockets: Array, time: float) -> void:
+	## Presentation-only spark flicker over the authored fire sources: small
+	## integer-aligned warm sparks and a low-intensity glow. Deterministic from
+	## the render clock: no RNG and no gameplay state writes, so replay hashes
+	## and authoritative state stay untouched.
+	if canvas == null:
+		return
+	for socket: Variant in sockets:
+		if socket is not Dictionary:
+			continue
+		var point: Variant = socket.get("point", null)
+		if point is not Vector2:
+			continue
+		var origin: Vector2 = point
+		var seed := float(socket.get("seed", 0.0))
+		var height := maxf(8.0, float(socket.get("height", 24.0)))
+		var pulse := 0.5 + 0.5 * sin(time * 2.6 + seed * 1.7)
+		canvas.draw_circle(origin + Vector2(0.0, -height * 0.16), height * 0.40, Color(FIRE_TONGUE, 0.05 + 0.03 * pulse))
+		canvas.draw_circle(origin + Vector2(0.0, -height * 0.12), height * 0.20, Color(FIRE_CORE, 0.10 + 0.05 * pulse))
+		for index in 4:
+			var phase := fposmod(time * 0.62 + seed + float(index) * 0.27, 1.0)
+			var sway := sin(time * 2.4 + seed * 2.3 + float(index) * 2.1) * height * 0.12
+			var cell := Vector2.ONE * (2.0 - float(index % 2))
+			var position := (origin + Vector2(sway * phase + float(index - 1) * height * 0.10, -phase * height)).floor()
+			var color := FIRE_CORE.lerp(FIRE_TONGUE, phase)
+			canvas.draw_rect(Rect2(position, cell), Color(color, (1.0 - phase) * 0.42))
 
 static func atmosphere_report(preset: String, rect: Rect2, lights: Array = []) -> Dictionary:
 	var usable: Array[Dictionary] = []

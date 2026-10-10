@@ -16,7 +16,10 @@ const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
-const TALK_RADIUS := 28.0
+const TALK_RADIUS := 36.0
+## A resident standing at its own stand keeps E even when the hero is a step
+## closer to the facility feet: dialogue beats the facility badge up to this slack.
+const RESIDENT_PRIORITY_SLACK := 8.0
 const DESIGN_SIZE := Vector2(1280.0, 720.0)
 const DESIGN_TO_WORLD := 0.5
 ## Hub positions stay published in design space (1280x720); the live renderer
@@ -353,17 +356,22 @@ func dialogue_report() -> Dictionary:
 func nearby_resident_id() -> String:
 	if _view == null or is_dialogue_open(): return ""
 	var feet := _view.hero_world_position()
-	var distance := TALK_RADIUS
+	var facility_gap := INF
+	var best_distance := INF
 	var closest := ""
 	var feature := _view.entry_for(_view.nearby_feature_id())
 	if not feature.is_empty():
-		distance = minf(distance, feet.distance_to(feature.get("feet", Vector2(INF, INF))))
+		facility_gap = feet.distance_to(feature.get("feet", Vector2(INF, INF)))
 	for id: String in _resident_conversations:
 		if not _resident_positions.has(id): continue
 		var candidate := feet.distance_to(_resident_positions[id])
-		if candidate < distance:
-			distance = candidate
-			closest = id
+		## Strict nearest inside TALK_RADIUS: later/farther residents never
+		## overwrite an earlier nearer one, whatever the iteration order.
+		if candidate > TALK_RADIUS or candidate >= best_distance: continue
+		best_distance = candidate
+		closest = id
+	if closest.is_empty() or best_distance > facility_gap + RESIDENT_PRIORITY_SLACK:
+		return ""
 	return closest
 
 
@@ -400,6 +408,10 @@ func _refresh_town_conversations() -> void:
 	_resident_positions.clear()
 	for resident: Dictionary in _view.life_report().get("residents", []):
 		_resident_positions[String(resident.id)] = resident.feet
+	var layout_residents: Dictionary = _view.npc_placement_feet()
+	for id: String in layout_residents:
+		if not _resident_positions.has(id):
+			_resident_positions[id] = layout_residents[id]
 	_resident_conversations.clear()
 	for entry: Dictionary in _story_snapshot.get("available_conversations", []):
 		var id := String(entry.get("npc", ""))

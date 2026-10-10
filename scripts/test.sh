@@ -53,6 +53,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_manual_combat_input.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_manual_aim_resolver.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_walkable_geometry.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_arena_walkable_bounds.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_player_action_timeline.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_enemy_tactics.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_proxy_build.gd
@@ -73,6 +74,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_input_feedback_transients.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_ranger_combat_skills.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_ranger_animation.gd
+"$GODOT_BIN" --headless --path . --script res://tests/unit/test_ranger_motion_overlay.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_world_occlusion.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_scene_atmosphere.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_defeat_presentation.gd

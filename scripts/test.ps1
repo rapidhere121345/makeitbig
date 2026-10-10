@@ -89,6 +89,8 @@ if ($LASTEXITCODE -ne 0) { throw "Manual combat input tests failed with exit cod
 if ($LASTEXITCODE -ne 0) { throw "Manual aim resolver tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_walkable_geometry.gd
 if ($LASTEXITCODE -ne 0) { throw "Walkable geometry tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_arena_walkable_bounds.gd
+if ($LASTEXITCODE -ne 0) { throw "Arena walkable bounds tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_player_action_timeline.gd
 if ($LASTEXITCODE -ne 0) { throw "Player action timeline tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_enemy_tactics.gd
@@ -131,6 +133,8 @@ if ($LASTEXITCODE -ne 0) { throw "Input feedback transient tests failed with exi
 if ($LASTEXITCODE -ne 0) { throw "Ranger combat skill tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_ranger_animation.gd
 if ($LASTEXITCODE -ne 0) { throw "Ranger animation tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/unit/test_ranger_motion_overlay.gd
+if ($LASTEXITCODE -ne 0) { throw "Ranger motion overlay tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_world_occlusion.gd
 if ($LASTEXITCODE -ne 0) { throw "World occlusion tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_scene_atmosphere.gd

@@ -159,6 +159,7 @@ var _hero_sprite: Sprite2D
 var _hero_shadow: Polygon2D
 var _atmosphere_base: AtmosphereLayerScript
 var _atmosphere_light: AtmosphereLayerScript
+var _atmosphere_fire: AtmosphereLayerScript
 var _atmosphere_fore: AtmosphereLayerScript
 ## Action reader and its presentation clocks. The hub has no combat, so only the
 ## walk/idle cycle ever runs here, on the hub's own clock.
@@ -305,6 +306,10 @@ func _configure(atlases: Dictionary, layout: Dictionary) -> void:
 	_collision.configure(layout)
 	if town_layer != null:
 		town_layer.configure(_feature_entries, _world_size, layout, _scene_texture)
+	if _atmosphere_fire != null:
+		_atmosphere_fire.fire_sockets = _scene_fire_sockets(layout)
+		_atmosphere_fire.fire_time = 0.0
+		_atmosphere_fire.visible = _scene_mode() and not _atmosphere_fire.fire_sockets.is_empty()
 	# The full scene already owns its lighting and terrain. Keep the previous
 	# atmosphere and sockets only for explicit legacy fixtures.
 	for atmosphere: Node2D in [_atmosphere_base, _atmosphere_light, _atmosphere_fore]:
@@ -881,6 +886,17 @@ func _build_layers() -> void:
 	_atmosphere_light.light_only = true
 	_atmosphere_light.z_index = -5
 	world_root.add_child(_atmosphere_light)
+	_atmosphere_fire = AtmosphereLayerScript.new()
+	_atmosphere_fire.name = "AtmosphereFire"
+	_atmosphere_fire.preset = ATMOSPHERE_PRESET
+	_atmosphere_fire.bounds = ATMOSPHERE_BOUNDS
+	_atmosphere_fire.warm_lights = []
+	_atmosphere_fire.fire_only = true
+	_atmosphere_fire.additive = true
+	_atmosphere_fire.z_as_relative = false
+	_atmosphere_fire.z_index = 3
+	_atmosphere_fire.visible = false
+	world_root.add_child(_atmosphere_fire)
 	_atmosphere_fore = AtmosphereLayerScript.new()
 	_atmosphere_fore.name = "AtmosphereFore"
 	_atmosphere_fore.preset = ATMOSPHERE_PRESET
@@ -913,6 +929,20 @@ func atmosphere_warm_lights() -> Array:
 	]
 
 
+func _scene_fire_sockets(layout: Dictionary) -> Array:
+	## The two authored fires the live scene must keep visibly burning: the
+	## commons hearth flame and the forge anvil fire published by the layout.
+	var effects: Dictionary = layout.get("effects", {})
+	var sockets: Array = []
+	var commons: Variant = effects.get("embers_uv", null)
+	if commons is Array and (commons as Array).size() == 2:
+		sockets.append({"point": Vector2(float(commons[0]), float(commons[1])) * _world_size, "seed": 0.0, "height": 26.0})
+	var forge: Variant = effects.get("forge_fire_uv", null)
+	if forge is Array and (forge as Array).size() == 2:
+		sockets.append({"point": Vector2(float(forge[0]), float(forge[1])) * _world_size, "seed": 2.4, "height": 22.0})
+	return sockets
+
+
 func atmosphere_report() -> Dictionary:
 	var base_report: Dictionary = _atmosphere_base.atmosphere_report() if _atmosphere_base != null else {}
 	var fore_report: Dictionary = _atmosphere_fore.atmosphere_report() if _atmosphere_fore != null else {}
@@ -925,6 +955,8 @@ func atmosphere_report() -> Dictionary:
 		"base": base_report,
 		"fore": fore_report,
 		"warm_light_count": atmosphere_warm_lights().size(),
+		"fire_sockets": _atmosphere_fire.fire_sockets.size() if _atmosphere_fire != null else 0,
+		"fire_visible": _atmosphere_fire != null and _atmosphere_fire.visible,
 		"drawn_inside_subviewport": world_viewport != null,
 	}
 
@@ -1236,6 +1268,8 @@ func ranger_animation_report() -> Dictionary:
 
 
 func _process(delta: float) -> void:
+	if _atmosphere_fire != null and _atmosphere_fire.visible:
+		_atmosphere_fire.fire_time += maxf(0.0, delta)
 	if _world_dirty:
 		_sync_camera()
 	_update_hero_animation(delta)
@@ -1853,6 +1887,18 @@ func life_report() -> Dictionary:
 		"effects": effects,
 		"pending": life_pending_reasons(),
 	}
+
+
+func npc_placement_feet() -> Dictionary:
+	## Static feet for every layout resident: the talk/prompt fallback the hub
+	## uses when the published life package is absent or half-authored.
+	var result: Dictionary = {}
+	for placement: Dictionary in _layout.get("placements", []):
+		if String(placement.get("layer", "")) != LAYER_NPC or not placement.has("feet_uv"):
+			continue
+		var feet: Array = placement.feet_uv
+		result[String(placement.id)] = Vector2(float(feet[0]), float(feet[1])) * _world_size
+	return result
 
 
 func _life_node_report(record: Dictionary, entry_id: String) -> Dictionary:

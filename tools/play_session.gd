@@ -11,6 +11,12 @@ func _initialize() -> void:
 
 func _start() -> void:
 	DirAccess.make_dir_recursive_absolute(directory)
+	# Reusing the evidence directory must not replay the previous session's
+	# quit/button command. Commands arriving after startup still run normally.
+	if FileAccess.file_exists(directory + "/command.json"):
+		var previous: Variant = JSON.parse_string(FileAccess.get_file_as_string(directory + "/command.json"))
+		if previous is Dictionary:
+			last_id = int(previous.get("id", -1))
 	game = load("res://src/game/game_root.tscn").instantiate()
 	game.save_directory_path = directory + "/save"
 	game.playtest_log_directory = directory + "/log"

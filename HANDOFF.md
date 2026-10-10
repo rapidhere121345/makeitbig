@@ -2,14 +2,14 @@
 
 更新时间：2026-10-10
 
-首章 Demo 已覆盖教程、炉边镇、契约、装备、锻造、训练、手动/Auto 战斗和阈门巨像返镇；前两份合同提供破碎前哨、风切通道、回收环场三种战斗房间。当前事实以 `src/`、`content/`、`tests/` 和 `art/production/p1/` 为准。
+本轮改动：桥中心通道与栏杆/水域边界校准，补屋顶和塔体阻挡；NPC 近距 E 交谈优先级与位置回退；炉膛/篝火像素火星；回收环场按整张地图矩形边界通行；游侠像素装饰随左行步态变化，修复数组追加死循环；战斗 HUD 使用无衬线字体和 1px 描边。
 
-本轮完成游侠表现层：增加不对称斗篷、箭袋、肩甲、背带铜扣、兜帽冷边、拉弓线和闪避拖尾；投射物增加冷色 wake、铜色核心线和箭头高光。表现层只使用渲染时钟，不改变权威状态、脚点、碰撞或回放哈希。角色旁黄色/铜色条是发射方向提示，不是血量、能量或耐久。
+图形验收完成：单实例 Xvfb `127.0.0.1:99`、Godot 4.7.2、llvmpipe；桥双向、栏杆/墙体阻挡、NPC 对话、炉膛动画、左行步态、拉弓命中/闪避、1280×720 与 1600×900 HUD。窗口退出 0。证据在 `build/current/play-session-review/`，详见 `docs/GRAPHICAL_VALIDATION.md`。未验收宿主 NVIDIA 性能、Windows 实机或声音。
 
-真实图形试玩已走通：教程 → 炉边镇 → 契约 → 破碎前哨第一房；WASD 移动、空格射击、Shift+D 闪避均已验证，箭矢命中前可见飞行与尾迹，命中后才扣血。证据：[projectile-flight.png](/data/repo/makeitbig/build/current/play-session/projectile-flight.png)。容器窗口使用 Mesa `llvmpipe`；宿主机 `makeitbig-godot --editor` 已验证 RTX 4080 SUPER。
+验证：完整 `container_build.sh` 通过，Win/Linux 导出与 Linux 空目录 smoke 通过，日志无 GDScript 运行错误。30/60/144Hz 与关闭表现层回放哈希均为 `5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900`。旧环形断言和跨房间输入测试配置已校准；容器测试新增 `SCRIPT ERROR` 门禁，避免 Godot 退出 0 掩盖未执行断言。日志：`build/current/final-container-build.log`。
 
-定向测试、`source scripts/container_env.sh && ./scripts/container_build.sh`、双平台导出、回放、Linux smoke 和 `git diff --check` 均通过。发布页：<https://example-runtime.tail99c4e8.ts.net:8448>；发布规范使用 `./scripts/release.sh all`，默认保留最近 20 个 build，Tailscale 由宿主机暴露。
+固定流程：`source scripts/container_env.sh` → `./scripts/container_build.sh` → 审查并提交 → `./scripts/release.sh all --note '改动说明'` → 深度校验与线上核对。图形入口使用 `mib-prepare-display`，最多一个 Godot 图形实例；不重启部署服务。
 
-详细验收见 `docs/GRAPHICAL_VALIDATION.md`；视觉规则见 `design/visual/UI_GUIDE.md`。后续改动先检查本文件和 `git status --short`，发布改动完成后运行 `./scripts/release.sh verify --deep`、`./deploy/tailscale/validate.sh` 和 staging 检查。
+发布页：<https://example-runtime.tail99c4e8.ts.net:8448>，唯一发布根 `build/releases/`，Win/Linux 下载与 SHA256，保留最近 20 个有效 build，由宿主 Tailscale Serve 暴露。版本与下载校验以线上 `index.json` 最新条目为准。协作同步对象：`5ad53811-e299-4f42-8611-08c649e34e12`；不操作原会话。
 
 <!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->
