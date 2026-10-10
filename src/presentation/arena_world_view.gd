@@ -112,8 +112,11 @@ const ROOM_CONCEPTS := {
 	"ring": {
 		"title": "回收环场",
 		"landmark": "环形灯标",
-		"concept": "围绕中央灯标的环带，内圈空井不可通行。",
-		"entry_hint": "沿外环绕行，不要把自己逼进中央空井。",
+		## Mirrors the shipped ring copy in content/early_campaign.json: the room
+		## fights across the whole map rectangle, so no fallback may teach the
+		## retired central-well annulus.
+		"concept": "开阔回收场，整片地面都可通行，四周残壁就是场地边界。",
+		"entry_hint": "放心横穿中央灯标，用整片场地拉开距离，残壁边缘会真实阻挡。",
 		"exit_hint": "清场后沿东南环门离场。",
 	},
 	"corridor": {

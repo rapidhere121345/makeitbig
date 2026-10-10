@@ -819,12 +819,66 @@ func _test_resident_prompt(hub, failures: Array[String]) -> void:
 	hub.set_hero_position((resident.feet + Vector2(0, 10)) * 2.0)
 	_expect(hub.nearby_resident_id() == resident.id and hub._nearby_panel.visible
 		and hub._nearby_label.text == "[E] 与镇民交谈", "base hub: nearby resident has no explicit E prompt", failures)
+	var stand: Dictionary = {}
+	var stand_gap := INF
+	for entry: Dictionary in hub.get_hub_view().feature_entries():
+		var gap: float = Vector2(entry.feet).distance_to(Vector2(resident.feet))
+		if gap < stand_gap:
+			stand_gap = gap
+			stand = entry
+	if not stand.is_empty() and stand_gap <= hub.TALK_RADIUS:
+		## Dialogue beats the facility badge only while the resident is no
+		## farther than RESIDENT_PRIORITY_SLACK behind the facility feet, so the
+		## shared-stand probe is the midpoint: both gaps are equal and the
+		## resident legally keeps E without widening the runtime rule to the
+		## whole TALK_RADIUS.
+		var midpoint := (Vector2(resident.feet) + Vector2(stand.feet)) * 0.5
+		hub.set_hero_position(midpoint * 2.0)
+		_expect(hub.nearby_resident_id() == resident.id and String(hub._nearby_label.text).begins_with("[E] 与"),
+			"base hub: resident lost the E prompt to the co-located facility", failures)
+		_expect(hub.activate_nearby_interaction() and hub.is_dialogue_open(),
+			"base hub: E at a shared stand opened the facility instead of the resident", failures)
+		hub._dialogue.close_dialogue()
+		var facility_nearby: bool = not hub.get_hub_view().entry_for(hub.get_hub_view().nearby_feature_id()).is_empty()
+		if stand_gap > hub.RESIDENT_PRIORITY_SLACK and facility_nearby:
+			## The facility feet stay the facility's when the resident is beyond
+			## the slack; routing is decided by the empty resident id because
+			## activating the facility here would navigate away from the hub.
+			hub.set_hero_position(Vector2(stand.feet) * 2.0)
+			_expect(hub.nearby_resident_id().is_empty(),
+				"base hub: a beyond-slack resident stole the facility feet interaction", failures)
+		hub.set_hero_position((resident.feet + Vector2(0, 10)) * 2.0)
 	var event := InputEventKey.new()
 	event.physical_keycode = KEY_E
 	event.pressed = true
 	hub._unhandled_key_input(event)
 	_expect(hub.is_dialogue_open() and not hub._nearby_panel.visible, "base hub: E lost the real conversation entry", failures)
 	hub._dialogue.close_dialogue()
+	hub.get_hub_view().configure_life_for_test({}, {}, {})
+	hub.present_adventure({}, {"available_conversations": [{"npc": resident.id, "npc_name": "镇民", "stage": 1,
+		"title": "寒原失联的旧路", "pages": ["炉边镇还在等消息。"], "id": "hub_prompt_test"}]})
+	_expect(hub._resident_positions.has(resident.id) and hub.nearby_resident_id() == resident.id,
+		"base hub: static layout residents lost their talk position without life art", failures)
+	var far_id := ""
+	for id: String in hub._resident_positions:
+		if id != resident.id:
+			far_id = id
+			break
+	if not stand.is_empty() and not far_id.is_empty():
+		## Iteration-order regression: with two residents inside the facility
+		## slack window, the farther one iterated later must not overwrite the
+		## nearer one (the old OR-branch let it win whenever a facility was in
+		## range).
+		hub.present_adventure({}, {"available_conversations": [
+			{"npc": far_id, "npc_name": "远处居民", "stage": 1, "title": "远", "pages": ["远"], "id": "hub_prompt_far"},
+			{"npc": resident.id, "npc_name": "镇民", "stage": 1,
+				"title": "寒原失联的旧路", "pages": ["炉边镇还在等消息。"], "id": "hub_prompt_test"}]})
+		hub.set_hero_position(Vector2(stand.feet) * 2.0)
+		hub._resident_positions[far_id] = Vector2(stand.feet) + Vector2(7.0, 0.0)
+		hub._resident_positions[resident.id] = Vector2(stand.feet) + Vector2(5.0, 0.0)
+		_expect(hub.nearby_resident_id() == resident.id,
+			"base hub: farther resident iterated later overwrote the nearer one", failures)
+	hub.get_hub_view().life_animation.load_default_assets()
 	hub.present_adventure({}, before_story)
 
 

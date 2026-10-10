@@ -42,6 +42,11 @@ const COLOR_BLOOD: Color = PaletteScript.DANGER
 const COLOR_WARNING: Color = PaletteScript.DANGER_BRIGHT
 const COLOR_PROXY: Color = PaletteScript.COLD
 const COLOR_ANOMALY: Color = PaletteScript.PURPLE
+## Combat HUD text uses the bundled sans face used for numbers and controls. The
+## serif face remains appropriate for story and town copy, but its high contrast
+## strokes become visually uneven at the compact 18-20px combat scale.
+const HUD_TEXT_OUTLINE: Color = Color("10161c")
+const HUD_TEXT_OUTLINE_SIZE := 1
 
 const SKILL_ICON_DISPLAY: float = 40.0
 const SKILL_CELL_MINIMUM := Vector2(104.0, 100.0)
@@ -400,10 +405,20 @@ func _input(event: InputEvent) -> void:
 func _build_interface() -> void:
 	if not icons.load_icons():
 		icon_pending_reason = String(icons.pending_reason)
-	ui_font = ShellThemeScript.ui_font()
+	## Combat is a read-and-react surface: use the medium sans face for stable
+	## Chinese glyph fill, numeric widths and key labels. Story screens keep the
+	## serif shell font through ShellTheme.create().
+	ui_font = ShellThemeScript.data_font()
 	if ui_font != null:
 		var own_theme := Theme.new()
 		own_theme.default_font = ui_font
+		own_theme.default_font_size = ShellThemeScript.MIN_FONT_SIZE
+		own_theme.set_color("font_color", "Label", COLOR_BONE)
+		own_theme.set_color("font_outline_color", "Label", HUD_TEXT_OUTLINE)
+		own_theme.set_constant("outline_size", "Label", HUD_TEXT_OUTLINE_SIZE)
+		own_theme.set_color("font_color", "Button", COLOR_BONE)
+		own_theme.set_color("font_outline_color", "Button", HUD_TEXT_OUTLINE)
+		own_theme.set_constant("outline_size", "Button", HUD_TEXT_OUTLINE_SIZE)
 		theme = own_theme
 
 	# TopBar remains the stable full-width carrier, but has no visible backing. The
@@ -1208,25 +1223,31 @@ func _heading(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", 18)
-	label.add_theme_color_override("font_color", COLOR_BONE)
-	if ui_font != null:
-		label.add_theme_font_override("font", ui_font)
+	_apply_text_style(label, COLOR_BONE)
 	return label
 
 
 func _muted_label(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_color_override("font_color", COLOR_NEUTRAL)
-	if ui_font != null:
-		label.add_theme_font_override("font", ui_font)
+	_apply_text_style(label, COLOR_NEUTRAL)
 	return label
 
 
 func _named_label(node_name: String) -> Label:
 	var label := Label.new()
 	label.name = node_name
-	label.add_theme_color_override("font_color", COLOR_BONE)
+	_apply_text_style(label, COLOR_BONE)
+	return label
+
+
+func _apply_text_style(label: Label, color: Color) -> void:
+	## Keep fill, outline and face together so later labels cannot accidentally
+	## inherit the serif shell font or a soft shadow that muddies small CJK glyphs.
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", HUD_TEXT_OUTLINE)
+	label.add_theme_constant_override("outline_size", HUD_TEXT_OUTLINE_SIZE)
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 	if ui_font != null:
 		label.add_theme_font_override("font", ui_font)
-	return label

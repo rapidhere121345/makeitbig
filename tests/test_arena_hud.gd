@@ -12,6 +12,7 @@ extends SceneTree
 
 const ArenaHudScript := preload("res://src/presentation/arena_hud.gd")
 const MainScript := preload("res://src/game/main.gd")
+const ShellThemeScript := preload("res://src/presentation/shell_theme.gd")
 const SKILL_CELLS: Array[String] = ["Skill1Button", "Skill2Button", "Skill3Button", "DodgeButton"]
 ## Cells that carry the default strip. All of them must be visible, inside the top
 ## strip and disjoint, because the concept reads the strip as one band.
@@ -214,6 +215,8 @@ func _run() -> void:
 		var hud_font: Font = hero_status.get_theme_font("font")
 		_expect(hud_font != null and hud_font.has_char("游".unicode_at(0)), "HUD text is not drawn with the packaged SC font", failures)
 		_expect(not (hud_font is SystemFont), "HUD must not fall back to a SystemFont", failures)
+		_expect(hud_font == ShellThemeScript.data_font(), "combat HUD should use the medium sans data face", failures)
+		_expect(hero_status.get_theme_constant("outline_size") == 1, "combat HUD text lost its crisp one-pixel outline", failures)
 	_expect((hud.find_child("FeedbackLabel", true, false) as Label).get_theme_font_size("font_size") >= 18, "feedback text fell below the 18px floor", failures)
 	for utility_name in ["ReturnButton", "SummaryToggleButton"]:
 		var utility_button := hud.find_child(utility_name, true, false) as Button

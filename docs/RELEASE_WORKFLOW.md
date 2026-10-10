@@ -17,11 +17,19 @@
 
 ```bash
 ./scripts/container_build.sh
-./scripts/release.sh all
-./scripts/release.sh verify
+# 构建通过后审查差异并提交源码，让发布元数据对应实际交付提交。
+git diff --check
+git status --short
+# git add <本轮已审查文件> && git commit -m '<改动说明>'
+./scripts/release.sh all --note '本轮改动说明'
+./scripts/release.sh verify --deep
+./deploy/tailscale/validate.sh
+./deploy/tailscale/stage_release_page.sh --check
 ```
 
-`all` 按 package → prune → index → site → verify 执行。`prune` 默认保留最近 20 个带有效 `build.json` 且名称符合 build ID 规则的目录，只删除 `build/releases/` 的直接子目录；它不会递归清理其他路径。需要测试其他位置时显式设置 `MIB_RELEASE_ROOT`，并先确认该目录内容。
+`all` 按 package → prune → index → site → verify 执行。`prune` 默认保留最近 20 个带有效 `build.json` 且名称符合 build ID 规则的目录，只删除 `build/releases/builds/` 下符合条件的直接子目录；它不会清理其他路径。需要测试其他位置时显式设置 `MIB_RELEASE_ROOT`，并先确认该目录内容。
+
+发布前确认导出后没有再修改运行代码或素材；如有修改，重新构建。上线后读取发布地址的 `/index.json`，核对最新 build ID 与本地一致，并检查两个下载地址的 HTTP 状态、文件大小和 SHA256。导出成功不代表已经完成 Windows 实机验收。
 
 ## Tailscale 上线
 

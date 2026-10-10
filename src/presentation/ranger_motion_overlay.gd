@@ -1,47 +1,60 @@
 class_name RangerMotionOverlay
 extends RefCounted
-## A small, presentation-only layer for the ranger's silhouette.
+## Presentation-only motion layer for the ranger (2026-10 stride rework).
 ##
-## The action atlas remains the source of the character's authored poses. This
-## pass adds the pieces that are hard to communicate with a short pixel clip:
-## the uneven cloak edge, a strapped quiver, a shoulder guard and a few
-## restrained motion accents. It is drawn around the atlas frame, never feeds
-## back into gameplay, and only uses a render clock so 60/144 Hz windows do not
-## freeze between 30 Hz authority ticks.
+## The authored action atlas stays the sole source of the pose. This layer no
+## longer paints a smooth vector figure over the sprite: every accent is a
+## hard-edged, integer-aligned 1 px step drawn in colors the hero already
+## wears, and every walk accent is locked to the authored stride frame instead
+## of the wall clock, so cloak and gear answer the legs exactly when they pass.
+## The layer draws around feet_world, never writes gameplay state, never moves
+## the (24,44) foot anchor and never touches the authoritative arrow socket.
 
-const INK := Color("0b1117")
-const SLATE := Color("33434d")
-const SLATE_LIGHT := Color("71808a")
+## Palette lifted from the published ranger skin pixels (ranger_actions_v01 /
+## combat_style_r13 v03): cold slate cloth, bone cloth and hair, old copper
+## leather and gear, plus the approved cold teal reserved for motion.
+const INK := Color("111820")
+const SLATE := Color("2a3543")
+const SLATE_LIGHT := Color("91a4b4")
 const BONE := Color("e9ddc3")
-const COPPER := Color("bb713d")
-const COPPER_LIGHT := Color("e2ad6d")
+const BONE_SHADE := Color("d3cbb5")
+const COPPER := Color("ad734d")
+const COPPER_LIGHT := Color("eead56")
 const COLD := Color("61a6a5")
 
 
 static func motion_signature(action: String, facing: String, frame: int, time: float) -> Dictionary:
-	## Pure, bounded values make this layer easy to inspect without constructing a
-	## scene. The facing is part of the signature so a held foot point can never
-	## inherit a side-facing sway after a turn.
-	var phase := maxf(0.0, time) * TAU * 1.35 + float(frame) * 0.43
-	var rate := 1.0
-	var amplitude := 0.8
+	## Pure, bounded values make this layer easy to inspect without a scene.
+	## Movement actions are stride-locked: the authored frame decides the pose
+	## of the cloth, so a redraw or a 144 Hz window can never desync it from
+	## the legs. Wall time only drives the sub-pixel standing breath.
+	var f := clampi(frame, 0, 3)
+	var sway := 0.0
+	var bob := 0.0
+	var trail := 0.0
 	match action:
 		"walk":
-			rate = 1.8
-			amplitude = 1.8
+			## Authored cycle: frames 0 and 2 are foot contacts, frames 1 and
+			## 3 are the knee pass where the body rises and the hem kicks back.
+			if f == 1 or f == 3:
+				sway = 1.0
+				bob = -1.0
 		"shoot":
-			rate = 1.25
-			amplitude = 1.1
+			sway = -0.5 if f <= 1 else (1.0 if f == 2 else 0.25)
 		"dodge", "dash":
-			rate = 2.8
-			amplitude = 2.4
-	var wave := sin(phase * rate)
-	var secondary := cos(phase * rate * 0.63 + 0.7)
+			sway = 1.0
+			trail = 1.5 - 0.6 * float(f)
+		"hit":
+			sway = 1.25
+		_:
+			sway = 0.5 * sin(maxf(0.0, time) * 1.05)
+			bob = 0.4 * sin(maxf(0.0, time) * 1.6 + 0.8)
 	return {
 		"facing": facing if facing in ["north", "south", "east", "west"] else "south",
-		"sway": wave * amplitude,
-		"bob": secondary * (0.45 if action == "idle" else 0.75),
-		"trail": clampf(absf(wave) * (1.0 if action in ["idle", "walk"] else 1.35), 0.0, 1.5),
+		"sway": sway,
+		"bob": bob,
+		"trail": clampf(trail, 0.0, 1.5),
+		"kick": 1 if sway >= 0.999 else 0,
 	}
 
 
@@ -56,40 +69,24 @@ static func draw_back(
 	if canvas == null:
 		return
 	var signature := motion_signature(action, facing, frame, time)
-	var sway := float(signature["sway"])
-	var bob := float(signature["bob"])
-	var trail := float(signature["trail"])
-	var local_cloak := _cloak_points(facing, sway)
-	var cloak := PackedVector2Array()
-	for point: Vector2 in local_cloak:
-		cloak.append(feet_world + point + Vector2(0.0, bob))
-	canvas.draw_colored_polygon(cloak, Color(SLATE, 0.40))
-	canvas.draw_polyline(cloak, Color(INK, 0.72), 2.2, false)
-
-	var facing_axis := _facing_axis(facing)
-	var side_axis := Vector2(-facing_axis.y, facing_axis.x)
-	var quiver := feet_world + _quiver_offset(facing) + Vector2(0.0, bob)
-	canvas.draw_line(quiver + Vector2(-2.0, -16.0), quiver + Vector2(3.0, 2.0), Color(INK, 0.75), 4.0, false)
-	canvas.draw_line(quiver + Vector2(-2.0, -16.0), quiver + Vector2(3.0, 2.0), Color(COPPER, 0.72), 1.3, false)
-	for index in 3:
-		var arrow_x := float(index - 1) * 2.4
-		canvas.draw_line(
-			quiver + Vector2(arrow_x, -15.0),
-			quiver + Vector2(arrow_x - side_axis.x * 2.0, -21.0),
-			Color(BONE, 0.48),
-			1.0,
-			false
+	var facing_name := String(signature["facing"])
+	var bob := roundi(float(signature["bob"]))
+	var kick := int(signature["kick"])
+	## The cloth hem lags the body on purpose, so it ignores the pass-frame bob.
+	_draw_pixels(canvas, feet_world, _hem_seat_pixels(facing_name), INK, 0.5)
+	_draw_pixels(canvas, feet_world, _hem_tip_pixels(facing_name, kick), BONE, 0.95)
+	_draw_pixels(canvas, feet_world, _quiver_pixels(facing_name), BONE, 0.9, bob)
+	_draw_pixels(canvas, feet_world, _quiver_strap_pixels(facing_name), COPPER, 0.8, bob)
+	for rect: Rect2i in _pauldron_rects(facing_name):
+		canvas.draw_rect(
+			Rect2(Vector2(feet_world) + Vector2(rect.position) + Vector2(0.0, float(bob)), Vector2(rect.size)),
+			Color(INK, 0.7),
+			true
 		)
-
+	_draw_pixels(canvas, feet_world, _pauldron_edge_pixels(facing_name), COPPER, 0.8, bob)
 	if action in ["dodge", "dash"]:
-		var ribbon_origin := feet_world + Vector2(0.0, -17.0 + bob)
-		var ribbon_direction := -facing_axis
-		var length := 14.0 + trail * 11.0
-		canvas.draw_line(ribbon_origin + side_axis * 5.0, ribbon_origin + ribbon_direction * length + side_axis * 5.0, Color(COLD, 0.32), 2.0, false)
-		canvas.draw_line(ribbon_origin - side_axis * 4.0, ribbon_origin + ribbon_direction * (length - 4.0) - side_axis * 4.0, Color(COPPER_LIGHT, 0.34), 1.2, false)
-	elif action == "walk":
-		var hem := feet_world + Vector2(0.0, -7.0 + bob)
-		canvas.draw_line(hem - side_axis * 8.0, hem + side_axis * 8.0 + -facing_axis * (2.0 + sway * 0.55), Color(COPPER, 0.48), 1.2, false)
+		var count := clampi(int(round(float(signature["trail"]) * 4.0)), 0, 6)
+		_draw_pixels(canvas, feet_world, _trail_pixels(facing_name, count), COLD, 0.5)
 
 
 static func draw_front(
@@ -103,103 +100,200 @@ static func draw_front(
 	if canvas == null:
 		return
 	var signature := motion_signature(action, facing, frame, time)
-	var sway := float(signature["sway"])
-	var bob := float(signature["bob"])
-	var axis := _facing_axis(facing)
-	var side := Vector2(-axis.y, axis.x)
-
-	## The uneven shoulder plate and diagonal harness give the small sprite a
-	## readable identity at gameplay scale without repainting the source sheet.
-	var shoulder := feet_world + _shoulder_offset(facing) + Vector2(0.0, bob)
-	var pauldron := PackedVector2Array([
-		shoulder + Vector2(-6.0, -3.0),
-		shoulder + Vector2(1.0, -6.0),
-		shoulder + Vector2(7.0, -2.0),
-		shoulder + Vector2(4.0, 4.0),
-		shoulder + Vector2(-4.0, 3.0),
-	])
-	canvas.draw_colored_polygon(pauldron, Color(INK, 0.58))
-	canvas.draw_polyline(pauldron, Color(COPPER_LIGHT, 0.72), 1.1, false)
-
-	var strap_top := feet_world + side * 6.0 + Vector2(0.0, -35.0 + bob)
-	var strap_bottom := feet_world - side * 5.0 + Vector2(0.0, -10.0 + bob)
-	canvas.draw_line(strap_top, strap_bottom, Color(INK, 0.72), 3.0, false)
-	canvas.draw_line(strap_top, strap_bottom, Color(COPPER, 0.68), 1.0, false)
-	canvas.draw_circle(feet_world + side * 5.0 + Vector2(0.0, -20.0 + bob), 1.8, COPPER_LIGHT)
-
-	## A broken cold rim catches the hood and keeps the face readable against
-	## both the snow and the dark arena floor.
-	var hood := feet_world + Vector2(0.0, -35.0 + bob)
-	canvas.draw_arc(hood, 7.0, PI * 0.12, PI * 0.88, 7, Color(COLD, 0.58), 1.0, false)
-	canvas.draw_line(hood + side * 5.0, hood + side * 8.0 + axis * 2.0, Color(BONE, 0.42), 1.0, false)
-
-	if action == "shoot":
-		## The bow string is a short, high contrast accent during the pull and
-		## release frames. The actual arrow socket remains owned by authority.
-		var hand := feet_world + _hand_offset(facing, frame)
-		var bow_tip := feet_world + axis * 10.0 + Vector2(0.0, -30.0 + bob)
-		canvas.draw_line(hand - side * 6.0, hand + side * 6.0, Color(BONE, 0.52), 1.0, false)
-		canvas.draw_line(hand, bow_tip, Color(COPPER_LIGHT, 0.54), 1.1, false)
-		canvas.draw_circle(hand + axis * 2.0, 2.0, Color(COPPER_LIGHT, 0.50))
-	elif action in ["dodge", "dash"]:
-		var buckle := feet_world + Vector2(0.0, -15.0 + bob)
-		canvas.draw_circle(buckle + side * sway * 0.25, 2.2, Color(COPPER_LIGHT, 0.65))
-	else:
-		var clasp := feet_world + axis * 2.0 + Vector2(0.0, -25.0 + bob)
-		canvas.draw_circle(clasp, 1.7, Color(COPPER_LIGHT, 0.62))
+	var facing_name := String(signature["facing"])
+	var bob := roundi(float(signature["bob"]))
+	var f := clampi(frame, 0, 3)
+	## The diagonal harness stays one hard pixel wide so it reads as a strap,
+	## not as a vector decal.
+	var strap := _strap_points(facing_name)
+	canvas.draw_line(
+		Vector2(feet_world) + Vector2(strap[0]) + Vector2(0.0, float(bob)),
+		Vector2(feet_world) + Vector2(strap[1]) + Vector2(0.0, float(bob)),
+		Color(INK, 0.7),
+		1.0,
+		false
+	)
+	_draw_pixels(canvas, feet_world, _buckle_pixels(facing_name), COPPER, 0.75, bob)
+	_draw_pixels(canvas, feet_world, _hood_tick_pixels(facing_name), COLD, 0.55, bob)
+	if action == "walk":
+		if f == 0 or f == 2:
+			_draw_pixels(canvas, feet_world, [_foot_dust_pixel(facing_name, f)], SLATE_LIGHT, 0.55)
+		_draw_pixels(canvas, feet_world, [_grip_pixel(facing_name, f)], COPPER_LIGHT, 0.8)
+	elif action == "shoot":
+		if f == 2:
+			_draw_pixels(canvas, feet_world, _release_pixels(facing_name), BONE, 0.6)
+		_draw_pixels(canvas, feet_world, [_grip_pixel(facing_name, f)], COPPER_LIGHT, 0.7)
+	elif action != "death":
+		_draw_pixels(canvas, feet_world, _buckle_pixels(facing_name), COPPER_LIGHT, 0.8, bob)
 
 
-static func _facing_axis(facing: String) -> Vector2:
+static func _draw_pixels(
+	canvas: CanvasItem,
+	feet_world: Vector2,
+	points: Array[Vector2i],
+	color: Color,
+	alpha: float,
+	bob := 0
+) -> void:
+	for point: Vector2i in points:
+		canvas.draw_rect(
+			Rect2(Vector2(feet_world) + Vector2(point) + Vector2(0.0, float(bob)), Vector2.ONE),
+			Color(color, alpha),
+			true
+		)
+
+
+static func _behind_axis(facing: String) -> Vector2i:
 	match facing:
-		"north": return Vector2.UP
-		"east": return Vector2.RIGHT
-		"west": return Vector2.LEFT
-	return Vector2.DOWN
+		"east": return Vector2i(-1, 0)
+		"west": return Vector2i(1, 0)
+	## Vertical facings trail toward the camera foot of the sprite.
+	return Vector2i(0, 1)
 
 
-static func _cloak_points(facing: String, sway: float) -> PackedVector2Array:
+static func _mirror(points: Array[Vector2i]) -> Array[Vector2i]:
+	var mirrored: Array[Vector2i] = []
+	for point: Vector2i in points:
+		mirrored.append(Vector2i(-point.x, point.y))
+	return mirrored
+
+
+## One ink seat under the painted bone hem keeps the cloth grounded; the tip
+## pixels sit at the hem's painted lower edge (cell rows ~30-34) and gain one
+## further step behind on kick frames, so the cloak visibly answers the stride.
+static func _hem_seat_pixels(facing: String) -> Array[Vector2i]:
+	match facing:
+		"east": return [Vector2i(-13, -9)]
+		"west": return [Vector2i(13, -9)]
+		"north": return [Vector2i(5, -8), Vector2i(-5, -8)]
+	return [Vector2i(6, -9), Vector2i(-6, -9)]
+
+
+static func _hem_tip_pixels(facing: String, kick: int) -> Array[Vector2i]:
+	var base: Array[Vector2i]
+	match facing:
+		"east": base = [Vector2i(-14, -11), Vector2i(-13, -10)]
+		"west": base = [Vector2i(14, -11), Vector2i(13, -10)]
+		"north": base = [Vector2i(6, -9), Vector2i(-6, -9)]
+		_: base = [Vector2i(7, -10), Vector2i(-7, -10)]
+	if kick > 0:
+		var behind := _behind_axis(facing)
+		## Iterate a snapshot: appending to the array being iterated would
+		## extend the loop forever.
+		for point: Vector2i in base.duplicate():
+			base.append(point + behind)
+	return base
+
+
+## Quiver fletching as three hard pixels over the back shoulder, with the old
+## copper strap dot holding them down.
+static func _quiver_pixels(facing: String) -> Array[Vector2i]:
+	match facing:
+		"east": return [Vector2i(-9, -23), Vector2i(-11, -24), Vector2i(-13, -23)]
+		"west": return [Vector2i(9, -23), Vector2i(11, -24), Vector2i(13, -23)]
+		"north": return [Vector2i(6, -24), Vector2i(8, -25), Vector2i(10, -24)]
+	return [Vector2i(-8, -23), Vector2i(-6, -24), Vector2i(-4, -23)]
+
+
+static func _quiver_strap_pixels(facing: String) -> Array[Vector2i]:
+	match facing:
+		"east": return [Vector2i(-8, -20)]
+		"west": return [Vector2i(8, -20)]
+		"north": return [Vector2i(5, -21)]
+	return [Vector2i(-7, -20)]
+
+
+## Small stepped shoulder plate on the back shoulder: two ink rows and a
+## copper ridge, sized so it reads as gear, not as armor drawn over the pose.
+static func _pauldron_rects(facing: String) -> Array[Rect2i]:
+	match facing:
+		"east": return [Rect2i(-10, -31, 5, 2), Rect2i(-10, -29, 3, 2)]
+		"west": return [Rect2i(5, -31, 5, 2), Rect2i(7, -29, 3, 2)]
+		"north": return [Rect2i(1, -32, 7, 2), Rect2i(3, -30, 3, 2)]
+	return [Rect2i(-8, -32, 7, 2), Rect2i(-5, -30, 3, 2)]
+
+
+static func _pauldron_edge_pixels(facing: String) -> Array[Vector2i]:
+	match facing:
+		"east": return [Vector2i(-6, -32), Vector2i(-7, -32), Vector2i(-8, -32)]
+		"west": return [Vector2i(6, -32), Vector2i(7, -32), Vector2i(8, -32)]
+		"north": return [Vector2i(2, -33), Vector2i(3, -33), Vector2i(4, -33)]
+	return [Vector2i(-6, -33), Vector2i(-5, -33), Vector2i(-4, -33)]
+
+
+static func _strap_points(facing: String) -> Array[Vector2i]:
+	match facing:
+		"east": return [Vector2i(7, -31), Vector2i(-5, -13)]
+		"west": return [Vector2i(-7, -31), Vector2i(5, -13)]
+		"north": return [Vector2i(5, -31), Vector2i(-4, -14)]
+	return [Vector2i(-6, -31), Vector2i(5, -14)]
+
+
+static func _buckle_pixels(facing: String) -> Array[Vector2i]:
+	match facing:
+		"east": return [Vector2i(1, -22)]
+		"west": return [Vector2i(-1, -22)]
+		"north": return [Vector2i(0, -21)]
+	return [Vector2i(0, -23)]
+
+
+## The approved cold teal keeps its reserved motion role: three hard ticks
+## along the hood edge, replacing the old smooth arc.
+static func _hood_tick_pixels(facing: String) -> Array[Vector2i]:
+	match facing:
+		"north": return [Vector2i(-3, -35), Vector2i(0, -36), Vector2i(3, -35)]
+		"south": return [Vector2i(-3, -36), Vector2i(0, -36), Vector2i(3, -36)]
+	return [Vector2i(-4, -35), Vector2i(0, -36), Vector2i(4, -35)]
+
+
+## Stepped dodge/dash wake in the projectile wake family. Horizontal facings
+## trail two 1 px streaks behind the back; vertical facings leave a ground
+## speckle beside the feet so nothing is ever painted across the legs.
+static func _trail_pixels(facing: String, count: int) -> Array[Vector2i]:
+	var all_points: Array[Vector2i]
 	match facing:
 		"east":
-			return PackedVector2Array([
-				Vector2(-10.0, -34.0), Vector2(-20.0, -29.0 + sway), Vector2(-23.0, -12.0 + sway),
-				Vector2(-12.0, -5.0), Vector2(-3.0, -10.0), Vector2(-4.0, -27.0),
-			])
+			all_points = [
+				Vector2i(-14, -16), Vector2i(-10, -15), Vector2i(-6, -15),
+				Vector2i(-12, -19), Vector2i(-8, -18), Vector2i(-4, -18),
+			]
 		"west":
-			return PackedVector2Array([
-				Vector2(10.0, -34.0), Vector2(20.0, -29.0 - sway), Vector2(23.0, -12.0 - sway),
-				Vector2(12.0, -5.0), Vector2(3.0, -10.0), Vector2(4.0, -27.0),
-			])
-		"north":
-			return PackedVector2Array([
-				Vector2(-12.0, -35.0), Vector2(10.0, -35.0), Vector2(14.0, -20.0 + sway),
-				Vector2(6.0, -5.0), Vector2(-9.0, -6.0), Vector2(-15.0, -21.0 - sway),
-			])
-	return PackedVector2Array([
-		Vector2(-11.0, -34.0), Vector2(10.0, -34.0), Vector2(16.0, -19.0 + sway),
-		Vector2(8.0, -5.0), Vector2(-7.0, -4.0), Vector2(-16.0, -19.0 - sway),
-	])
+			all_points = [
+				Vector2i(14, -16), Vector2i(10, -15), Vector2i(6, -15),
+				Vector2i(12, -19), Vector2i(8, -18), Vector2i(4, -18),
+			]
+		_:
+			all_points = [
+				Vector2i(4, -1), Vector2i(-4, -1), Vector2i(4, -3),
+				Vector2i(-4, -3), Vector2i(4, -5), Vector2i(-4, -5),
+			]
+	return all_points.slice(0, clampi(count, 0, all_points.size()))
 
 
-static func _quiver_offset(facing: String) -> Vector2:
+## A dust speck at the striking foot on contact frames only: frame 0 strikes
+## with the front foot, frame 2 with the back foot.
+static func _foot_dust_pixel(facing: String, frame: int) -> Vector2i:
 	match facing:
-		"east": return Vector2(-10.0, -24.0)
-		"west": return Vector2(10.0, -24.0)
-		"north": return Vector2(9.0, -25.0)
-	return Vector2(-9.0, -24.0)
+		"east": return Vector2i(6, -2) if frame == 0 else Vector2i(-6, -2)
+		"west": return Vector2i(-6, -2) if frame == 0 else Vector2i(6, -2)
+	return Vector2i(-5, -2) if frame == 0 else Vector2i(5, -2)
 
 
-static func _shoulder_offset(facing: String) -> Vector2:
+## One copper glint on the bow grip; it rides the pass-frame body rise, so the
+## weapon visibly answers the stride without moving the authored pose.
+static func _grip_pixel(facing: String, frame: int) -> Vector2i:
+	var rise := -1 if (frame == 1 or frame == 3) else 0
 	match facing:
-		"east": return Vector2(8.0, -29.0)
-		"west": return Vector2(-8.0, -29.0)
-		"north": return Vector2(8.0, -30.0)
-	return Vector2(-8.0, -29.0)
+		"east": return Vector2i(11, -22 + rise)
+		"west": return Vector2i(-11, -22 + rise)
+		"north": return Vector2i(0, -29 + rise)
+	return Vector2i(3, -20 + rise)
 
 
-static func _hand_offset(facing: String, frame: int) -> Vector2:
-	var lift := float(clampi(frame, 0, 3)) * 0.8
+## Two bone pixels snapping off the string on the release frame.
+static func _release_pixels(facing: String) -> Array[Vector2i]:
 	match facing:
-		"east": return Vector2(12.0, -21.0 - lift)
-		"west": return Vector2(-12.0, -21.0 - lift)
-		"north": return Vector2(0.0, -28.0 - lift)
-	return Vector2(4.0, -18.0 - lift)
+		"east": return [Vector2i(13, -21), Vector2i(15, -20)]
+		"west": return [Vector2i(-13, -21), Vector2i(-15, -20)]
+		"north": return [Vector2i(0, -31), Vector2i(0, -33)]
+	return [Vector2i(-2, -20), Vector2i(-3, -18)]

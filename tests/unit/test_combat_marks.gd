@@ -127,7 +127,10 @@ func _test_draw_paths_use_the_clipped_marks() -> void:
 	_expect(ground.contains("_draw_boss_target_shape") and ground.contains("_draw_hazard"), "world telegraphs and hazards still draw")
 	_expect(ground.contains("_draw_walkable_layout_boundaries("), "true movement limits remain visible in approved world")
 	var boundary := _function_body(source, "_draw_walkable_layout_boundaries")
-	_expect(boundary.contains("arena.grow(-14.0)") and boundary.contains("0.20, 0.43") and boundary.contains("minf(72.0"), "quiet borders use current player clamp dimensions")
+	## 2026-10-10 playtest fix: ring rooms are bounded by the whole map
+	## rectangle, so the quiet border is the dashed rectangle edge, never the
+	## retired 0.20/0.43 annulus arcs. The corridor keeps its 72px strip.
+	_expect(boundary.contains("arena.grow(-14.0)") and boundary.contains("_draw_dashed_edge_rectangle(bounds") and boundary.contains("minf(72.0"), "quiet borders use current player clamp dimensions")
 	_expect(not boundary.contains("COLOR_AMBER") and boundary.contains("COLOR_NEUTRAL"), "movement boundaries do not masquerade as targets")
 	_expect(legacy.contains("_draw_layout_markers("), "the flat-field fallback keeps its legacy layout marks")
 	_expect(slam.contains("CombatMarksScript.diagonal_hatch_segments(rect"), "the slam windup hatches through the clipped helper on the authoritative rect")

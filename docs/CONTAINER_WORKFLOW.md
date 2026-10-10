@@ -20,7 +20,9 @@
 | 测试状态 | `build/test-state/`，由 `.gitignore` 排除 |
 | 实玩会话 | `build/current/play-session/`，由 `.gitignore` 排除 |
 
-容器内的 `godot` 和 `godot4` symlink 可以作为常规入口；项目脚本还保留固定路径 `/data/tools/godot-4.7.2/Godot_v4.7.2-stable_linux.x86_64` 作为回退。这样即使新开的 shell 没有继承 PATH，流程仍然使用同一版本。所有脚本都会拒绝其他 Godot 主版本、补丁版本或二进制 SHA256。
+项目统一使用 `source scripts/container_env.sh` 后的 `mib_godot` 或 `"$GODOT_BIN"`。`godot`、`godot4` 别名可能随容器重建消失；脚本会回退到 `/data/tools/godot-4.7.2/Godot_v4.7.2-stable_linux.x86_64`，并校验版本和二进制 SHA256。
+
+2026-10-10 重建后的容器使用普通 Docker bridge，内存上限 24 GiB、额外交换空间上限 8 GiB（合计 32 GiB）、进程上限 4096。Paseo 在容器内监听 `6767`，宿主映射端口是 `6769`。这些是部署环境事实，不由项目构建脚本设置。X11 认证挂载是可选项：容器正常运行不代表桌面连接可用，图形验收前必须检查实际 `DISPLAY` 与认证文件。
 
 Godot 的 `user://` 数据不写入源码目录，实际位于：
 
@@ -63,6 +65,8 @@ mib_godot --version
 2. `scripts/export_all.sh`：生成 Linux 与 Windows 正式包；
 3. `scripts/container_smoke.sh`：从新的 `/tmp` 空目录启动 Linux 正式包，并使用 `--headless -- --smoke`。
 
+`scripts/container_test.sh` 在原有退出码之外追加一道日志门禁：Godot 的 GDScript 运行错误可能让某个测试函数提前中断、跳过其余断言而整体仍返回 0（假 PASS）。`container_test.sh` 会把测试输出完整 tee 到 `build/current/container-test.log`，发现任何行首 `SCRIPT ERROR:` 即判失败并打印位置；`CAPTURE_FAIL`、`AUTO_SMOKE_FAIL` 等预期负向用例不匹配该标记，仍按原样通过。仅在 stub 验证门禁时才用 `MIB_TEST_RUNNER` 覆盖测试入口。
+
 需要单独运行某一阶段时使用：
 
 ```bash
@@ -88,14 +92,15 @@ build/current/linux/make-it-big.x86_64 --headless -- --smoke
 
 ## 实际渲染试玩
 
-需要 Xvfb 的真实窗口输入和截图时，仍在同一容器中运行：
+需要窗口输入和截图时，先确认可用的 X11 连接，仍在同一容器中运行：
 
 ```bash
 cd /data/repo/makeitbig
 source scripts/container_env.sh
 export MIB_PLAY_SESSION_DIR="$MIB_PROJECT_ROOT/build/current/play-session"
 mkdir -p "$MIB_PLAY_SESSION_DIR"
-mib_godot --path . --fixed-fps 60 --script res://tools/play_session.gd
+eval "$(mib-prepare-display)"
+mib_godot --display-driver x11 --rendering-method gl_compatibility --path . --fixed-fps 60 --script res://tools/play_session.gd
 ```
 
 另一个终端也先执行 `source scripts/container_env.sh`，再调用：
@@ -106,7 +111,7 @@ python3 tools/play_session.py '{"keys":["D"],"frames":60}'
 python3 tools/play_session.py '{"quit":true}'
 ```
 
-这是输入和画面检查，不是硬件性能测试。Xvfb、Mesa llvmpipe、虚拟音频和容器健康状态属于基础设施事实，报告中要单独记录，不能写成真实 GPU 性能或 Windows 实机验证。
+整轮只允许一个 Godot 图形实例；启动前检查已有进程，验收后退出。使用宿主 X11 或 Xvfb 时都要记录实际显示入口；Xvfb 是虚拟显示，不能写成宿主桌面试玩。Mesa llvmpipe 的输入和画面检查不能作为真实 GPU 性能或 Windows 实机验证。
 
 宿主机已提供直接使用 RTX 4080 SUPER 的原生窗口启动器 `makeitbig-godot --editor`，用于需要真实 GPU 的日常界面调试。容器通过宿主 X11 打开的窗口仍回落到 Mesa `llvmpipe`，适合简单图形化验收。入口、已验证的 OpenGL 输出和记录字段见[图形化验收环境](GRAPHICAL_VALIDATION.md)。
 

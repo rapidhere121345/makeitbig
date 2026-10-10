@@ -202,6 +202,14 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 		if scenario == "pointer":
 			# One real first-room target lets a continuously held explicit lock win the room.
 			scenario_config.room_plan.rooms[0].enemy_ids = ["melee_pursuer"]
+		elif scenario == "held":
+			## 2026-10-10 whole-map fix: this scenario proves input continuity, so
+			## room two keeps one real melee target. A fully stationary player can
+			## no longer out-trade a ring-room fan_ranged that now holds its
+			## preferred band steadily — the retired annulus perturbed enemy
+			## locomotion — and survival balance must not leak into an input
+			## routing assertion.
+			scenario_config.room_plan.rooms[1].enemy_ids = ["melee_pursuer"]
 		var started: Dictionary = controller.start_session(scenario_config)
 		_expect(bool(started.get("ok", false)), "continuous input: real mainline02 deployment failed", failures)
 		if not bool(started.get("ok", false)):

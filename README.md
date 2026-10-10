@@ -18,6 +18,7 @@ godot --path .
 
 ```bash
 cd /data/repo/makeitbig
+source scripts/container_env.sh
 ./scripts/container_build.sh
 ```
 

@@ -306,7 +306,10 @@ func _test_room_rosters_and_layouts(arena: Node, failures: Array[String]) -> voi
 	_expect(positions.rectangle_arena != positions.corridor and positions.corridor != positions.ring and positions.rectangle_arena != positions.ring, "layouts do not produce distinct deterministic spawn geometry", failures)
 	var center: Vector2 = arena._arena_rect().get_center()
 	var ring_clamp: Vector2 = arena._clamp_to_arena(center, 14.0)
-	_expect(ring_clamp.distance_to(center) > 0.0, "ring layout did not exclude its center", failures)
+	## 2026-10-10 playtest fix: ring rooms fight across the whole map rectangle,
+	## so the clamp must leave the exact center in place instead of pushing it
+	## onto the retired annulus.
+	_expect(Vector2(ring_clamp).is_equal_approx(center), "ring layout did not keep its whole-map center walkable", failures)
 
 
 func _test_public_proxy_geometry_snapshot(arena: Node, failures: Array[String]) -> void:
@@ -315,7 +318,7 @@ func _test_public_proxy_geometry_snapshot(arena: Node, failures: Array[String]) 
 	var snapshot: Dictionary = arena._public_proxy_snapshot()
 	var geometry: Dictionary = snapshot.get("walkable_geometry", {})
 	_expect(int(snapshot.get("snapshot_version", -1)) == arena.ProxyDecisionScript.SNAPSHOT_VERSION, "public proxy snapshot did not use ProxyDecision's version constant", failures)
-	_expect(not geometry.is_empty() and String(geometry.get("kind", "")) == "ring" and not geometry.has("layout_id"), "public proxy snapshot did not expose sanitized walkable geometry", failures)
+	_expect(not geometry.is_empty() and String(geometry.get("kind", "")) == "rectangle" and not geometry.has("layout_id"), "public proxy snapshot did not expose the sanitized whole-map rectangle", failures)
 	_expect(not snapshot.has("layout_id") and not snapshot.has("room_id") and not snapshot.has("hazards") and not snapshot.has("telegraphs"), "public proxy snapshot exposed route, room, or future state", failures)
 	for enemy: Dictionary in snapshot.get("visible_enemies", []):
 		_expect(enemy.has("targetable")
@@ -330,8 +333,9 @@ func _test_public_proxy_geometry_snapshot(arena: Node, failures: Array[String]) 
 
 func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 	# Preserve the authored six-entity crowd-control fixture. Its player remains
-	# at the inaccessible center for the fan/melee/stall controls only; charger
-	# launch authority is covered by the legal antipode test below.
+	# at the center — open ground since ring rooms fight across the whole map
+	# rectangle — for the fan/melee/stall controls only; charger launch authority
+	# is covered by the open-chord test below.
 	_configure_room(arena, "ring", "clear", ["charging_raider", "melee_pursuer", "melee_pursuer", "fan_ranged", "fan_ranged", "melee_pursuer"])
 	arena._spawn_wave()
 	arena.player_position = arena._arena_rect().get_center()
@@ -394,25 +398,34 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	arena._spawn_wave()
 	var player_geometry: Dictionary = arena._walkable_geometry(14.0)
 	var enemy_geometry: Dictionary = arena._walkable_geometry(16.0)
+	## 2026-10-10 playtest fix: ring rooms resolve to the whole-map rectangle, so
+	## the retired annulus radii stay zero and a direct chord across the open
+	## center is legal. The fixture proves the charger may launch across it
+	## immediately; the annulus geometry itself is still covered by
+	## tests/test_walkable_geometry.gd at the module level.
+	_expect(String(player_geometry.get("kind", "")) == "rectangle" and String(enemy_geometry.get("kind", "")) == "rectangle",
+		"ring runtime: ring rooms did not resolve to the whole-map rectangle", failures)
+	_expect(is_zero_approx(float(player_geometry.get("inner_radius", -1.0))) and is_zero_approx(float(player_geometry.get("outer_radius", -1.0))),
+		"ring runtime: annulus radii leaked into the whole-map rectangle", failures)
 	var center: Vector2 = enemy_geometry["center"]
-	var common_radius := maxf(float(player_geometry["inner_radius"]), float(enemy_geometry["inner_radius"]))
-	_expect(common_radius <= minf(float(player_geometry["outer_radius"]), float(enemy_geometry["outer_radius"])), "ring runtime: player/enemy padding bands have no common radius", failures)
+	var fixture_standoff: float = clampf(120.0, arena.EnemyTacticsScript.CHARGER_LAUNCH_MIN_RANGE, arena.EnemyTacticsScript.CHARGER_LAUNCH_MAX_RANGE)
 
 	var charger = arena.enemies[0]
-	charger.position = center - Vector2.RIGHT * common_radius
-	arena.player_position = center + Vector2.RIGHT * common_radius
+	charger.position = center + Vector2.RIGHT * fixture_standoff
+	arena.player_position = center
 	arena.player_health = 100.0
 	arena.dodge_remaining_ticks = 0
 	var player_projection: Dictionary = arena.WalkableGeometryScript.project(arena.player_position, player_geometry)
 	var charger_projection: Dictionary = arena.WalkableGeometryScript.project(charger.position, enemy_geometry)
-	_expect(bool(player_projection.ok) and Vector2(player_projection.position).is_equal_approx(arena.player_position), "ring runtime: antipodal player start is illegal under padding 14", failures)
-	_expect(bool(charger_projection.ok) and Vector2(charger_projection.position).is_equal_approx(charger.position), "ring runtime: antipodal charger start is illegal under padding 16", failures)
-	_expect((charger.position - center).normalized().dot((arena.player_position - center).normalized()) < -0.999999, "ring runtime: player and charger are not truly antipodal", failures)
+	_expect(bool(player_projection.ok) and Vector2(player_projection.position).is_equal_approx(arena.player_position), "ring runtime: center player start is illegal under padding 14", failures)
+	_expect(bool(charger_projection.ok) and Vector2(charger_projection.position).is_equal_approx(charger.position), "ring runtime: in-band charger start is illegal under padding 16", failures)
 	var initial_distance: float = charger.position.distance_to(arena.player_position)
-	_expect(initial_distance >= arena.EnemyTacticsScript.CHARGER_LAUNCH_MIN_RANGE and initial_distance <= arena.EnemyTacticsScript.CHARGER_LAUNCH_MAX_RANGE, "ring runtime: antipodal fixture is outside the charge band", failures)
+	_expect(initial_distance >= arena.EnemyTacticsScript.CHARGER_LAUNCH_MIN_RANGE and initial_distance <= arena.EnemyTacticsScript.CHARGER_LAUNCH_MAX_RANGE, "ring runtime: launch fixture is outside the charge band", failures)
+	var direct_chord: Dictionary = arena.WalkableGeometryScript.line_segment_walkable(charger.position, arena.player_position, enemy_geometry)
+	_expect(bool(direct_chord.ok) and bool(direct_chord.walkable), "ring runtime: the whole-map chord across the open center is not walkable", failures)
 	var initial_plan: Dictionary = arena.enemy_tactics.plan(arena._enemy_tactics_snapshot())
 	var initial_intent: Dictionary = initial_plan.intents[0]
-	_expect(String(initial_intent.request_action).is_empty() and String(initial_intent.reason) == "charger_path_blocked", "ring runtime: antipodal blocked chord started charge", failures)
+	_expect(String(initial_intent.request_action) == "charge" and String(initial_intent.reason) == "charger_launch_band", "ring runtime: a legal open-field chord did not launch immediately", failures)
 
 	var setup_displacement := 0.0
 	var launch_tick := -1
@@ -482,8 +495,8 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 			if String(event.get("type", "")) == "attack_resolved" and int(event.get("action_instance_id", -1)) == first_action_instance_id:
 				first_resolution = event
 				break
-	_expect(setup_displacement > 0.01, "ring runtime: blocked charger did not produce real setup displacement", failures)
-	_expect(launch_tick > 1 and launch_tick <= 600, "ring runtime: charger did not complete setup and launch within 600 ticks", failures)
+	_expect(is_zero_approx(setup_displacement), "ring runtime: an open-field launch produced unexpected setup movement", failures)
+	_expect(launch_tick >= 1 and launch_tick <= 600, "ring runtime: charger did not launch within 600 ticks", failures)
 	_expect(player_after_init_direct_moves == 0, "ring runtime: test moved the player after fixture initialization", failures)
 	_expect(launch_count == 1 and completed_cycles == 1 and charge_action_instance_ids.size() == 1, "ring runtime: first legal charge did not complete exactly one action cycle", failures)
 	_expect(active_steps == arena.CHARGE_ACTIVE_TICKS and active_nonzero_steps == active_steps, "ring runtime: first legal charge did not move on every active tick", failures)
@@ -492,7 +505,7 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	_expect(maximum_setup_stalled_run <= 4, "ring runtime: setup stalled for %d consecutive ticks" % maximum_setup_stalled_run, failures)
 	_expect(not first_resolution.is_empty() and String(first_resolution.get("source_id", "")) == "enemy/%d/charging_raider" % charger.entity_id and String(first_resolution.get("target_id", "")) == "ranger" and String(first_resolution.get("outcome", "")) == "damage", "ring runtime: first legal charger action lacked authoritative damage resolution", failures)
 	_expect(is_equal_approx(health_before_first_action - arena.player_health, 11.0), "ring runtime: first legal charger action did not apply exactly 11 HP damage", failures)
-	print("ENEMY_RUNTIME_RING_CHARGE_METRICS radius=%.3f initial_distance=%.3f launch_tick=%d launch_distance=%.3f launches=%d completed_cycles=%d first_action_instance=%d first_hp_delta=%.1f setup_displacement=%.3f max_setup_stalled=%d active_steps=%d active_nonzero=%d active_swallowed=%d frozen_distance_sum=%.3f active_displacement=%.3f hit=%s player_after_init_direct_moves=%d" % [common_radius, initial_distance, launch_tick, launch_distance, launch_count, completed_cycles, charge_action_instance_ids[0] if charge_action_instance_ids.size() >= 1 else -1, health_before_first_action - arena.player_health, setup_displacement, maximum_setup_stalled_run, active_steps, active_nonzero_steps, active_swallowed_steps, frozen_distance_sum, active_displacement, str(hit), player_after_init_direct_moves])
+	print("ENEMY_RUNTIME_RING_CHARGE_METRICS standoff=%.3f initial_distance=%.3f launch_tick=%d launch_distance=%.3f launches=%d completed_cycles=%d first_action_instance=%d first_hp_delta=%.1f setup_displacement=%.3f max_setup_stalled=%d active_steps=%d active_nonzero=%d active_swallowed=%d frozen_distance_sum=%.3f active_displacement=%.3f hit=%s player_after_init_direct_moves=%d" % [fixture_standoff, initial_distance, launch_tick, launch_distance, launch_count, completed_cycles, charge_action_instance_ids[0] if charge_action_instance_ids.size() >= 1 else -1, health_before_first_action - arena.player_health, setup_displacement, maximum_setup_stalled_run, active_steps, active_nonzero_steps, active_swallowed_steps, frozen_distance_sum, active_displacement, str(hit), player_after_init_direct_moves])
 
 
 func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) -> void:

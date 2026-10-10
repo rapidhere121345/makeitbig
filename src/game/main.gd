@@ -3210,13 +3210,17 @@ func _room_presentation_info() -> Dictionary:
 		},
 		"ring": {
 			"display_name": "回收环场",
-			"concept": "围绕中央灯标的环带，内圈空井不可通行。",
+			"concept": "开阔回收场，整片地面都可通行，四周残壁就是场地边界。",
 			"landmark": "环形灯标",
-			"entry_hint": "沿外环绕行，不要把自己逼进中央空井。",
+			"entry_hint": "放心横穿中央灯标，用整片场地拉开距离，残壁边缘会真实阻挡。",
 			"exit_hint": "清场后沿东南环门离场。",
 		},
 	}
 	var result: Dictionary = (defaults.get(layout_id, defaults["rectangle_arena"]) as Dictionary).duplicate(true)
+	## Copy is content-owned: contract_plan merges the campaign layout copy into
+	## every room, and the shipped ring copy teaches the same whole-map walkable
+	## law that _walkable_layout_id() enforces in code. These defaults are only
+	## the fallback for rooms assembled without content copy.
 	for key in ["display_name", "concept", "landmark", "entry_hint", "exit_hint"]:
 		var authored := String(framework_room.get(key, "")).strip_edges()
 		if not authored.is_empty():
@@ -4101,8 +4105,21 @@ func _arena_rect() -> Rect2:
 	))
 
 
+## 2026-10-10 playtest feedback: a battle room is bounded by the map's walkable
+## rectangle, never by a circular arena. "ring" stays a room identity (spawn
+## formation, names, rewards, route reporting), but its collision domain is the
+## same full-map rectangle as rectangle_arena, so the map edge is the only real
+## wall. Every bound in this arena resolves through _walkable_geometry: player
+## walk, dodge and dash, enemy locomotion and charges, Boss slam targets, enemy
+## tactics planning, the public proxy snapshot and the replay hash's
+## arena_geometry. The same mapping routes the room concept art away from the
+## retired central-well landmark.
+func _walkable_layout_id() -> String:
+	return "rectangle_arena" if layout_id == "ring" else layout_id
+
+
 func _walkable_geometry(padding: float) -> Dictionary:
-	var geometry_value: Variant = WalkableGeometryScript.from_layout(layout_id, _arena_rect(), padding)
+	var geometry_value: Variant = WalkableGeometryScript.from_layout(_walkable_layout_id(), _arena_rect(), padding)
 	var normalized: Dictionary = WalkableGeometryScript.normalize(geometry_value)
 	if not bool(normalized.get("ok", false)):
 		var generation_error := "walkable_geometry_generation_failed: %s" % String(normalized.get("error", "unknown"))
@@ -4179,7 +4196,9 @@ func _draw() -> void:
 	world_view.begin_frame(viewport_rect, player_position, arena)
 	draw_set_transform_matrix(world_view.world_transform())
 	world_view.draw_ground(self)
-	world_view.draw_room_concept(self, layout_id, sim_tick)
+	## Ring rooms share the outpost's rectangular field landmark: the concept pass
+	## must never redraw the retired central well or its circular walking band.
+	world_view.draw_room_concept(self, _walkable_layout_id(), sim_tick)
 	world_view.draw_decals(self)
 	world_view.draw_structure_shadows(self)
 	_draw_actor_shadows()
@@ -4217,9 +4236,7 @@ func _draw_layout_markers(rect: Rect2) -> void:
 		var corridor := Rect2(Vector2(rect.position.x, rect.get_center().y - 86.0), Vector2(rect.size.x, 172.0))
 		draw_rect(corridor, COLOR_AMBER, false, 2.0)
 	elif layout_id == "ring":
-		var radius := minf(rect.size.x, rect.size.y)
-		draw_circle(rect.get_center(), radius * 0.20, Color(COLOR_INK, 0.55))
-		draw_arc(rect.get_center(), radius * 0.43, 0.0, TAU, 48, COLOR_AMBER, 2.0)
+		_draw_walkable_edge_markers(rect)
 
 
 ## Hazard telegraphs stay in authoritative gameplay coordinates: the canvas is
@@ -4238,20 +4255,16 @@ func _draw_gameplay_ground_effects(arena: Rect2) -> void:
 		_draw_hazard(hazard)
 
 
-## Unlike a decoration, ring/corridor limits constrain real movement. Keep them
-## readable as quiet ash-coloured broken edges, not the old amber targeting rings.
+## Unlike a decoration, the corridor strip and the ring rooms' map edge constrain
+## real movement. Keep them readable as quiet ash-coloured broken edges, not the
+## old amber targeting rings.
 ## The 14px player inset is the same argument used by _move_player/_clamp_to_arena.
 func _draw_walkable_layout_boundaries(arena: Rect2) -> void:
 	var bounds := arena.grow(-14.0)
 	var edge := Color(COLOR_NEUTRAL, 0.60)
 	if layout_id == "ring":
-		var extent := minf(bounds.size.x, bounds.size.y)
-		for factor in [0.20, 0.43]:
-			var radius: float = extent * factor
-			for segment in range(32):
-				var start := TAU * float(segment) / 32.0
-				var finish := start + TAU * 0.55 / 32.0
-				draw_arc(bounds.get_center(), radius, start, finish, 3, edge, 1.5, false)
+		## The whole map rectangle is walkable; its edge is the room's real wall.
+		_draw_dashed_edge_rectangle(bounds, edge)
 	elif layout_id == "corridor":
 		var half_height := minf(72.0, bounds.size.y * 0.25)
 		for sign_value in [-1.0, 1.0]:
@@ -4260,6 +4273,26 @@ func _draw_walkable_layout_boundaries(arena: Rect2) -> void:
 			while x < bounds.end.x:
 				draw_line(Vector2(x, y), Vector2(minf(x + 18.0, bounds.end.x), y), edge, 1.5, false)
 				x += 32.0
+
+
+## Flat-field fallback for ring rooms: the same quiet rectangle edge the world
+## view draws, replacing the retired hole-and-band circles.
+func _draw_walkable_edge_markers(rect: Rect2) -> void:
+	_draw_dashed_edge_rectangle(rect.grow(-14.0), Color(COLOR_NEUTRAL, 0.60))
+
+
+func _draw_dashed_edge_rectangle(bounds: Rect2, edge: Color) -> void:
+	for sign_value in [-1.0, 1.0]:
+		var horizontal_y: float = bounds.position.y if sign_value < 0.0 else bounds.end.y
+		var x := bounds.position.x
+		while x < bounds.end.x:
+			draw_line(Vector2(x, horizontal_y), Vector2(minf(x + 18.0, bounds.end.x), horizontal_y), edge, 1.5, false)
+			x += 32.0
+		var vertical_x: float = bounds.position.x if sign_value < 0.0 else bounds.end.x
+		var y := bounds.position.y
+		while y < bounds.end.y:
+			draw_line(Vector2(vertical_x, y), Vector2(vertical_x, minf(y + 18.0, bounds.end.y)), edge, 1.5, false)
+			y += 32.0
 
 
 func _draw_gameplay_status_overlays() -> void:
