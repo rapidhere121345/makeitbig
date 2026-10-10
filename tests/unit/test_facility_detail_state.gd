@@ -485,8 +485,11 @@ func _check_focus_survives_a_reorder() -> void:
 		"detail state: the removed candidate still owns a backpack cell")
 	_expect(screen.get_action_button("Salvage_loot_extra_17") == null,
 		"detail state: the removed candidate still offers its destructive action")
-	_expect(_focus_owner_name(screen) == "none",
-		"detail state: removing the focused candidate handed focus to %s" % _focus_owner_name(screen))
+	## 2026-10-10 focus contract: a consumed or removed candidate no longer
+	## leaves the keyboard nowhere. The rebuild anchors focus on the semantic
+	## slot control the player was working in, so Tab keeps a place to continue.
+	_expect(_focus_owner_name(screen) == "SlotFocus_main_hand",
+		"detail state: removing the focused candidate left focus at %s instead of the slot anchor" % _focus_owner_name(screen))
 	await _end(screen)
 
 

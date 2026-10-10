@@ -31,6 +31,7 @@ func run() -> Array[String]:
 	_test_reward_settlement(failures)
 	_test_room_equipment_drop_settlement(failures)
 	_test_boss_defeat_bottleneck(failures)
+	_test_boss_departure_readiness(failures)
 	_test_abandon(failures)
 	_test_persistent_payload(failures)
 	_test_old_schema_rejected(failures)
@@ -1372,6 +1373,58 @@ func _boss_resolved_build(classification: String, distance: float, lifetime: flo
 			"max_health": 100.0,
 		},
 	}
+
+
+func _test_boss_departure_readiness(failures: Array[String]) -> void:
+	## The delivered kill chain (calibration_exponential) is the qualification
+	## reference; the exponential training verdict (R>1) is the authority. The
+	## readiness report names the chain's standing and lists first-reward
+	## equipment that is still sitting in the inventory.
+	var unequipped_rewards := [
+		{"instance_id": "reward_mainline_03_breeding_split_gloves", "base_item_id": "turnfeather_gloves", "rune_id": "breeding_split", "source": {"type": "campaign_first_reward", "id": "mainline_03_first_elite"}},
+		{"instance_id": "reward_mainline_05_pack_hunt_mark_ring", "base_item_id": "hawk_eye_ring", "rune_id": "", "source": {"type": "campaign_first_reward", "id": "mainline_05_growth_gate"}},
+	]
+	var starter_profile := {
+		"active_build": {"equipped_item_ids": {"gloves": "fixed_start_gloves", "main_hand": "fixed_start_main_hand"}},
+		"inventory": {"equipment": [
+			{"instance_id": "fixed_start_gloves", "base_item_id": "piercer_gloves", "rune_id": "", "source": {"type": "fixed_start"}},
+		] + unequipped_rewards,
+		},
+	}
+	var starter := ApplicationState.boss_departure_readiness(
+		{"ok": true, "growth_classification": "convergent", "final_parameters": {"p": 0.37, "T": 34.0, "d": 150.0}},
+		starter_profile, "convergent")
+	_expect(not bool(starter.ready), "boss readiness: convergent starter build passed calibration", failures)
+	_expect("growth_convergent" in starter.reasons and not starter.reasons.has("training_missing"),
+		"boss readiness: convergent build missed its named reasons %s" % [str(starter.reasons)], failures)
+	_expect(int(starter.unequipped_rewards.size()) == 2, "boss readiness: unequipped first rewards were not listed", failures)
+	# The same chain, worn and calibrated: ready, and no equipment nagging.
+	var calibrated_profile := {
+		"active_build": {"equipped_item_ids": {"gloves": "reward_mainline_03_breeding_split_gloves", "ring_1": "reward_mainline_05_pack_hunt_mark_ring"}},
+		"inventory": {"equipment": unequipped_rewards},
+	}
+	var calibrated := ApplicationState.boss_departure_readiness(
+		{"ok": true, "growth_classification": "exponential", "final_parameters": {"p": 0.61, "T": 34.0, "d": 150.0}},
+		calibrated_profile, "exponential")
+	_expect(bool(calibrated.ready) and int(calibrated.unequipped_rewards.size()) == 0,
+		"boss readiness: calibrated exponential build was not marked ready", failures)
+	# An exponential-looking build without a training verdict still waits.
+	var unverified := ApplicationState.boss_departure_readiness(
+		{"ok": true, "growth_classification": "exponential", "final_parameters": {"p": 0.61, "T": 34.0, "d": 150.0}}, {})
+	_expect(not bool(unverified.ready) and "training_missing" in unverified.reasons
+		and not unverified.reasons.has("growth_exponential") and unverified.steps.has("training"),
+		"boss readiness: unverified exponential build skipped the training gate", failures)
+	# The training verdict is the authority over the resolved classification.
+	var verdict_overrides := ApplicationState.boss_departure_readiness(
+		{"ok": true, "growth_classification": "exponential", "final_parameters": {"p": 0.61, "T": 34.0, "d": 150.0}},
+		{}, "convergent")
+	_expect(not bool(verdict_overrides.ready) and verdict_overrides.reasons.has("growth_convergent")
+		and not verdict_overrides.reasons.has("training_missing"),
+		"boss readiness: convergent training verdict was overridden by the classification", failures)
+	# Missing build data never counts as ready.
+	var unknown := ApplicationState.boss_departure_readiness({}, {})
+	_expect(not bool(unknown.ready) and "growth_unknown" in unknown.reasons,
+		"boss readiness: empty build data was marked ready", failures)
 
 
 func _boss_defeat_with_build(classification: String, distance: float, lifetime: float) -> Dictionary:

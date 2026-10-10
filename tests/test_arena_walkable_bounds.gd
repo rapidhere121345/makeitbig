@@ -7,6 +7,7 @@ extends SceneTree
 ## hash mechanism, spawn placement and the room presentation copy.
 
 const MainScript := preload("res://src/game/main.gd")
+const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.gd")
 
 var failures: Array[String] = []
 
@@ -32,6 +33,7 @@ func _run() -> void:
 	_test_spawns_inside_map_rectangle(arena)
 	_test_room_copy_and_concept_routing(arena)
 	_test_other_layouts_unchanged(arena)
+	_test_boundary_terrain_matches_geometry(arena)
 
 	root.remove_child(arena)
 	arena.free()
@@ -238,6 +240,104 @@ func _test_other_layouts_unchanged(arena: Node) -> void:
 	_configure_room(arena, "rectangle_arena", ["melee_pursuer"])
 	var rectangle: Dictionary = arena._walkable_geometry(14.0)
 	_expect(String(rectangle.get("kind", "")) == "rectangle" and Rect2(rectangle.get("bounds", Rect2())) == (arena._arena_rect() as Rect2).grow(-14.0), "rectangle: walkable geometry changed")
+
+
+func _test_boundary_terrain_matches_geometry(arena: Node) -> void:
+	## 2026-10-10: the boundary is solid terrain mapped from the raw walkable
+	## domain the clamp enforces. Every wall base must stand on or outside that
+	## domain, placements must be deterministic, and every relocated/kept solid
+	## (walls, kept ruins, the tower) must stay out of the domain the player can
+	## reach. No per-padding wall lines exist.
+	for layout in ["rectangle_arena", "ring", "corridor"]:
+		_configure_room(arena, layout, ["melee_pursuer"])
+		var geometry: Dictionary = arena._walkable_geometry(14.0)
+		var view = ArenaWorldViewScript.new()
+		_expect(view.load_assets(), "%s: boundary audit could not load the approved atlas/layout: %s" % [layout, String(view.pending_reason)])
+		## The audit must run on the real frame transform: gameplay_to_world()
+		## anchors to the live arena rect, and the authored structures only
+		## exist after load_assets() reads the shipped layout.
+		view.begin_frame(Rect2(Vector2.ZERO, Vector2(1280.0, 720.0)), arena._arena_rect().get_center(), arena._arena_rect())
+		var authored: Array = view.structure_placements()
+		_expect(not authored.is_empty(), "%s: boundary audit loaded an empty authored layout" % layout)
+		## One authored-style piece placed beyond the raw field makes the kept
+		## branch real: the shipped layout sits almost entirely inside the
+		## domain, so without it the kept path would stay a vacuous empty list.
+		view._structures.append({"id": "ruin.broken_wall", "feet": [1290.0, 400.0]})
+		view.note_boundary_terrain(arena._arena_rect(), geometry)
+		var walls: Array = view.boundary_terrain_walls()
+		_expect(not walls.is_empty(), "%s: boundary terrain produced no wall placements" % layout)
+		var domain: Rect2 = view._walkable_domain_world(arena._arena_rect(), geometry)
+		var unique := {}
+		for wall: Dictionary in walls:
+			var feet: Vector2 = wall["feet_world"]
+			var sprite_id := String(wall["sprite_id"])
+			## The audited solid is the six-pixel ground-contact band across the
+			## full cell width: a wall whose base band overlaps the walkable
+			## domain would read as passable ground with an invisible wall.
+			var band: Rect2 = wall["base_band"]
+			_expect(band is Rect2 and not band.intersects(domain),
+				"%s: boundary wall %s solid base %s overlaps the walkable domain" % [layout, sprite_id, str(band)])
+			_expect(sprite_id in ["ruin.broken_wall", "ruin.low_pier", "ruin.wall_corner", "ruin.gate"],
+				"%s: boundary piece %s is not an approved ruin wall sprite" % [layout, sprite_id])
+			unique[feet] = true
+		_expect(unique.size() == walls.size(), "%s: boundary walls stack onto one spot" % layout)
+		for kept: Dictionary in view.boundary_terrain_structures():
+			var kept_band: Rect2 = kept["base_band"]
+			_expect(not kept_band.intersects(domain),
+				"%s: a kept legacy ruin still bases inside the walkable domain" % layout)
+		## Kept/dropped classification must cover every authored piece with the
+		## exact predicate the plan uses, and both classes must occur: the
+		## shipped ruins base inside the domain (dropped), the synthetic
+		## out-of-domain piece is kept.
+		var expected_kept_feet: Array[Vector2] = []
+		var dropped_count := 0
+		for placement: Dictionary in authored:
+			var authored_feet: Array = placement["feet"]
+			var feet_world := view.gameplay_to_world(Vector2(float(authored_feet[0]), float(authored_feet[1])))
+			if view._boundary_base_band(feet_world).intersects(domain):
+				dropped_count += 1
+			else:
+				expected_kept_feet.append(feet_world)
+		_expect(dropped_count + expected_kept_feet.size() == authored.size(),
+			"%s: kept/dropped classification lost authored pieces" % layout)
+		_expect(dropped_count > 0, "%s: the authored layout produced no in-domain ruin to drop" % layout)
+		var kept_feet: Array = view.boundary_terrain_structures()
+		_expect(kept_feet.size() == expected_kept_feet.size(),
+			"%s: the plan kept %d ruins where the classification expected %d" % [layout, kept_feet.size(), expected_kept_feet.size()])
+		for index in mini(kept_feet.size(), expected_kept_feet.size()):
+			_expect((kept_feet[index]["feet_world"] as Vector2) == expected_kept_feet[index],
+				"%s: kept ruin %d does not match its classified feet" % [layout, index])
+		var tower_band: Rect2 = view._boundary_base_band(view.active_tower_feet_world())
+		_expect(not tower_band.intersects(domain),
+			"%s: the tower base stands inside the walkable domain" % layout)
+		## Determinism: the same geometry must produce the same wall field, so
+		## replays and screenshots never shuffle the boundary.
+		var second_view = ArenaWorldViewScript.new()
+		_expect(second_view.load_assets(), "%s: the determinism pass could not load assets: %s" % [layout, String(second_view.pending_reason)])
+		second_view.begin_frame(Rect2(Vector2.ZERO, Vector2(1280.0, 720.0)), arena._arena_rect().get_center(), arena._arena_rect())
+		second_view.note_boundary_terrain(arena._arena_rect(), geometry)
+		var again: Array = second_view.boundary_terrain_walls()
+		_expect(again.size() == walls.size(), "%s: boundary wall count drifted between identical plans" % layout)
+		for index in mini(again.size(), walls.size()):
+			_expect((again[index]["feet_world"] as Vector2) == (walls[index]["feet_world"] as Vector2)
+				and String(again[index]["sprite_id"]) == String(walls[index]["sprite_id"]),
+				"%s: boundary wall %d drifted between identical plans" % [layout, index])
+	## Padding variants must not change the terrain: the domain maps the raw
+	## rect, so 14/16/0 px paddings draw identical corridor walls. The synthetic
+	## small map forces the branch where 25% of the raw height clamps under the
+	## 72 px cap — the case a full-size authority rect can never reach.
+	var small_view = ArenaWorldViewScript.new()
+	var small_raw := Rect2(0.0, 0.0, 400.0, 200.0)
+	var domain_by_padding: Array[Rect2] = []
+	for padding: float in [14.0, 16.0, 0.0]:
+		## from_layout() applies the padding itself; pass the raw rect so the
+		## variant only varies the padding, not the rect the terrain maps.
+		var padded_geometry: Dictionary = arena.WalkableGeometryScript.from_layout("corridor", small_raw, padding)
+		domain_by_padding.append(small_view._walkable_domain_world(small_raw, padded_geometry))
+	_expect(domain_by_padding[0] == domain_by_padding[1] and domain_by_padding[1] == domain_by_padding[2],
+		"corridor: padded geometry variants changed the raw boundary domain")
+	_expect(is_equal_approx(domain_by_padding[0].size.y, 100.0 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD),
+		"corridor: the clamped 25 percent lane height was not taken from the raw rect")
 
 
 func _expect(condition: bool, message: String) -> void:
