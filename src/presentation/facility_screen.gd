@@ -155,6 +155,9 @@ var _status_message := ""
 ## The open slot whose current item is compared against its same-slot
 ## candidates. Presentation state only: switching it emits nothing.
 var _focus_slot := ""
+## Set by the compare entry; the deferred layout pass turns it into a real
+## keyboard anchor once the rebuilt body exists.
+var _pending_initial_loadout_focus := ""
 ## One settled drop the result screen asked this fresh loadout page to compare.
 ## It only changes the initial slot and candidate order; equipping remains an
 ## explicit action on the candidate card.
@@ -399,6 +402,7 @@ func _apply_initial_loadout_focus() -> void:
 		# A direct result action must reveal the requested item. Filters from a reused
 		# screen are presentation state and cannot hide the explicit review target.
 		_candidate_query = EquipmentFilterBarScript.default_query()
+		_pending_initial_loadout_focus = slot
 		return
 
 
@@ -821,20 +825,72 @@ func _named_control(anchor: Node, control_name: String) -> Control:
 ## The second half of the same restore, run once the rebuilt containers have sorted:
 ## a scrollbar whose range only exists after that sort clamps the saved offset itself,
 ## and the freed control has released the focus by then. Restoring it is what keeps Tab
-## moving from the control the player just used; a rebuilt page that no longer has that
-## control simply stays without one, exactly as it did before.
+## moving from the control the player just used. When that control no longer
+## exists, the rebuild anchors the keyboard on the current focus slot's strip
+## control — or the first semantic control of the same root — so the page never
+## hands back a dead end.
 func _restore_switched_place_late() -> void:
-	if _pending_focus_restore.is_empty() and _pending_scroll_restore.is_empty():
+	var wants_initial := not _pending_initial_loadout_focus.is_empty()
+	if _pending_focus_restore.is_empty() and _pending_scroll_restore.is_empty() and not wants_initial:
 		return
 	_restore_switched_place()
-	if _pending_focus_restore.is_empty():
-		return
 	var restored := _focused_control()
+	if restored == null and not _pending_focus_restore.is_empty():
+		## The control the player used did not survive this rebuild (for example
+		var root_name := String(_pending_focus_restore.get("root", ""))
+		## Prefer the slot the player was working in — the slot strip control of
+		## the current focus slot is the semantic home of this rebuild — and only
+		## then fall back to the first semantic control of the same root.
+		restored = _slot_anchor_control(_focus_slot)
+		if restored == null:
+			restored = _first_restorable_control(_cards if root_name == "cards" else self)
+	if restored == null and wants_initial:
+		restored = _initial_loadout_focus_control()
+	_pending_initial_loadout_focus = ""
 	if restored == null:
 		return
 	var viewport := get_viewport()
 	if viewport != null and viewport.gui_get_focus_owner() != restored:
 		restored.grab_focus()
+
+
+## The compare entry's keyboard anchor: the slot strip button for the reviewed
+## slot, so Tab starts from the thing the player asked to compare.
+func _initial_loadout_focus_control() -> Control:
+	if _pending_initial_loadout_focus.is_empty() or _facility_id != "loadout":
+		return null
+	return _slot_anchor_control(_pending_initial_loadout_focus)
+
+
+## The slot strip control for a slot: the semantic keyboard home of any loadout
+## rebuild that consumed the control the player was on.
+func _slot_anchor_control(slot: String) -> Control:
+	if slot.is_empty() or _facility_id != "loadout":
+		return null
+	var button := _facility_root.find_child("SlotFocus_%s" % _stable_node_token(slot), true, false) as Button
+	if button == null or not button.is_visible_in_tree() or button.disabled:
+		return null
+	return button
+
+
+## First control in tree order that carries a restorable semantic name, is
+## visible, enabled and focusable. Engine-generated positional names are skipped
+## exactly as _restorable_focus skips them.
+func _first_restorable_control(anchor: Node) -> Control:
+	if anchor == null:
+		return null
+	for child: Node in anchor.get_children():
+		var control := child as Control
+		if control == null:
+			continue
+		if not _restorable_focus(control).is_empty() and control.is_visible_in_tree() and control.focus_mode != Control.FOCUS_NONE:
+			var button := control as Button
+			if button == null or not button.disabled:
+				return control
+		var found := _first_restorable_control(control)
+		if found != null:
+			return found
+	return null
 
 
 ## Whether a frame change is worth rebuilding the body for: the decision the layout

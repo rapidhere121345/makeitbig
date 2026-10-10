@@ -440,6 +440,7 @@ func _refresh_town_conversations() -> void:
 
 
 func _update_resident_markers() -> void:
+	var prompt_resident := nearby_resident_id()
 	for id: String in _resident_markers:
 		var marker: Label = _resident_markers[id]
 		marker.visible = false
@@ -448,7 +449,9 @@ func _update_resident_markers() -> void:
 		var point := _design_canvas.get_global_transform_with_canvas().affine_inverse() * global_point
 		marker.position = (point - Vector2(17, 28)).floor()
 		marker.size = Vector2(34, 28)
-		marker.visible = marker.position.y > HEADER_RECT.end.y and marker.position.y + 28 < DESIGN_SIZE.y and marker.position.x > 12 and marker.position.x + 34 < DESIGN_SIZE.x - 12
+		var on_screen := marker.position.y > HEADER_RECT.end.y and marker.position.y + 28 < DESIGN_SIZE.y and marker.position.x > 12 and marker.position.x + 34 < DESIGN_SIZE.x - 12
+		## The E prompt already names this resident: one indicator, not two.
+		marker.visible = on_screen and prompt_resident != id
 		marker.modulate.a = 0.55 if bool(_resident_conversations[id].get("is_read", false)) else 1.0
 
 

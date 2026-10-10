@@ -27,7 +27,10 @@ class MaterialBackdrop extends Control:
 	func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), ShellTheme.INK)
 		if cloth != null:
-			draw_texture_rect(cloth, Rect2(Vector2.ZERO, size), true, Color(0.46, 0.50, 0.54, 1.0))
+			## 2026-10-10 playtest: the full-bright cloth weave out-competed the
+			## fine character art. A darker, cooler tint keeps the cold-woven
+			## identity while the reading surfaces own the contrast budget.
+			draw_texture_rect(cloth, Rect2(Vector2.ZERO, size), true, Color(0.32, 0.35, 0.40, 1.0))
 		if scenery != null:
 			var extent := scenery.get_size() * maxf(size.x / scenery.get_width(), size.y / scenery.get_height())
 			draw_texture_rect(scenery, Rect2((size - extent) * 0.5, extent), false, Color(0.30, 0.34, 0.40, 1))
@@ -169,14 +172,16 @@ static func panel_style(kind: String = "panel") -> StyleBoxTexture:
 	box.texture = material_texture(kind)
 	# Keep the authored material; recess reading surfaces and ordinary borders
 	# so text, selected controls and active copper remain the visual priorities.
+	## 2026-10-10: every tint steps one notch calmer — the weave stays, the
+	## high-frequency contrast goes. Relative recession order is unchanged.
 	if kind in ["paper", "well"]:
-		box.modulate_color = Color(0.52, 0.57, 0.61, 1.0)
+		box.modulate_color = Color(0.44, 0.48, 0.53, 1.0)
 	elif kind == "panel":
-		box.modulate_color = Color(0.64, 0.66, 0.69, 1.0)
+		box.modulate_color = Color(0.56, 0.58, 0.61, 1.0)
 	elif kind == "button":
-		box.modulate_color = Color(0.78, 0.79, 0.80, 1.0)
+		box.modulate_color = Color(0.68, 0.69, 0.71, 1.0)
 	elif kind == "disabled":
-		box.modulate_color = Color(0.58, 0.61, 0.65, 1.0)
+		box.modulate_color = Color(0.50, 0.53, 0.57, 1.0)
 	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
 		box.set_texture_margin(side, 12)
 	box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
@@ -228,7 +233,7 @@ static func illustration_texture(name: String) -> Texture2D:
 static func crafted_panel() -> StyleBoxTexture:
 	var box := StyleBoxTexture.new()
 	box.texture = illustration_texture("copper_frame")
-	box.modulate_color = Color(0.76, 0.78, 0.82, 1)
+	box.modulate_color = Color(0.68, 0.70, 0.75, 1)
 	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
 		box.set_texture_margin(side, 20)
 	box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE

@@ -1,15 +1,15 @@
 # Make It Big 工作记录
 
-更新时间：2026-10-10
+更新时间：2026-10-10；本轮以“Replace arena wireframes with terrain and polish progression UX”提交交付，具体提交与build以git及发布页index.json为准。
 
-本轮改动：桥中心通道与栏杆/水域边界校准，补屋顶和塔体阻挡；NPC 近距 E 交谈优先级与位置回退；炉膛/篝火像素火星；回收环场按整张地图矩形边界通行；游侠像素装饰随左行步态变化，修复数组追加死循环；战斗 HUD 使用无衬线字体和 1px 描边。
+已完成：线框边界改为连续残墙、低墩与门素材；整块墙基避开可走域，统一前景遮挡。游侠披风、箭羽与步态细节优化；面板降噪、换装焦点、HUD长提示裁剪、镇区火光和NPC提示去重。巨像契约给出单一准备建议，使用实际按钮术语“添铸”。
 
-图形验收完成：单实例 Xvfb `127.0.0.1:99`、Godot 4.7.2、llvmpipe；桥双向、栏杆/墙体阻挡、NPC 对话、炉膛动画、左行步态、拉弓命中/闪避、1280×720 与 1600×900 HUD。窗口退出 0。证据在 `build/current/play-session-review/`，详见 `docs/GRAPHICAL_VALIDATION.md`。未验收宿主 NVIDIA 性能、Windows 实机或声音。
+验证：单窗口Xvfb/llvmpipe真实输入覆盖地图四角、通道、闪避/突袭、三房结算、NPC与装备；正常戒指添铸+箭袋精炼后验律R=1.1、指数。最终完整构建通过（测试、双导出、Linux空目录smoke）；零SCRIPT ERROR/ERROR，30/60/144Hz及表现层关闭的回放哈希一致。证据在build/current/art-review/和final-container-build.log，详见docs/GRAPHICAL_VALIDATION.md。
 
-验证：完整 `container_build.sh` 通过，Win/Linux 导出与 Linux 空目录 smoke 通过，日志无 GDScript 运行错误。30/60/144Hz 与关闭表现层回放哈希均为 `5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900`。旧环形断言和跨房间输入测试配置已校准；容器测试新增 `SCRIPT ERROR` 门禁，避免 Godot 退出 0 掩盖未执行断言。日志：`build/current/final-container-build.log`。
+验收边界：巨像自然成长后的手动击杀、Windows实机、宿主NVIDIA性能及声音未完成；成长试玩quit后无残留，但数值退出码未采样。后续体验检查优先补巨像实战。
 
-固定流程：`source scripts/container_env.sh` → `./scripts/container_build.sh` → 审查并提交 → `./scripts/release.sh all --note '改动说明'` → 深度校验与线上核对。图形入口使用 `mib-prepare-display`，最多一个 Godot 图形实例；不重启部署服务。
+固定流程：source scripts/container_env.sh → ./scripts/container_build.sh → 审查提交 → ./scripts/release.sh all → verify --deep及线上双平台下载校验。图形最多一个实例，不重启部署服务。
 
-发布页：<https://example-runtime.tail99c4e8.ts.net:8448>，唯一发布根 `build/releases/`，Win/Linux 下载与 SHA256，保留最近 20 个有效 build，由宿主 Tailscale Serve 暴露。版本与下载校验以线上 `index.json` 最新条目为准。协作同步对象：`5ad53811-e299-4f42-8611-08c649e34e12`；不操作原会话。
+发布页：https://example-runtime.tail99c4e8.ts.net:8448 。唯一发布根build/releases/，Win/Linux下载、SHA256、最近20个有效build。项目入口AGENTS.md/README.md，细节docs/，设计design/，本记录滚动替换。完成后同步5ad53811-e299-4f42-8611-08c649e34e12，不操作原会话。
 
 <!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->

@@ -125,13 +125,13 @@ func _test_draw_paths_use_the_clipped_marks() -> void:
 	_expect(not ground.is_empty() and not legacy.is_empty() and not slam.is_empty() and not mark.is_empty() and not overlay.is_empty(), "the drawn entry points still exist")
 	_expect(not ground.contains("_draw_layout_markers("), "the approved world no longer draws the legacy floor layout decoration")
 	_expect(ground.contains("_draw_boss_target_shape") and ground.contains("_draw_hazard"), "world telegraphs and hazards still draw")
-	_expect(ground.contains("_draw_walkable_layout_boundaries("), "true movement limits remain visible in approved world")
-	var boundary := _function_body(source, "_draw_walkable_layout_boundaries")
-	## 2026-10-10 playtest fix: ring rooms are bounded by the whole map
-	## rectangle, so the quiet border is the dashed rectangle edge, never the
-	## retired 0.20/0.43 annulus arcs. The corridor keeps its 72px strip.
-	_expect(boundary.contains("arena.grow(-14.0)") and boundary.contains("_draw_dashed_edge_rectangle(bounds") and boundary.contains("minf(72.0"), "quiet borders use current player clamp dimensions")
-	_expect(not boundary.contains("COLOR_AMBER") and boundary.contains("COLOR_NEUTRAL"), "movement boundaries do not masquerade as targets")
+	## 2026-10-10 playtest fix: the movement limit is solid boundary terrain
+	## mapped from the same authoritative walkable geometry the clamp enforces;
+	## no dashed wire outlines remain over the walkable domain.
+	_expect(source.contains("note_boundary_terrain(arena, _walkable_geometry(14.0))"),
+		"the world pass maps boundary terrain from the authoritative walkable geometry")
+	_expect(not source.contains("_draw_dashed_edge_rectangle") and not source.contains("_draw_walkable_layout_boundaries"),
+		"the retired dashed boundary outlines are fully removed")
 	_expect(legacy.contains("_draw_layout_markers("), "the flat-field fallback keeps its legacy layout marks")
 	_expect(slam.contains("CombatMarksScript.diagonal_hatch_segments(rect"), "the slam windup hatches through the clipped helper on the authoritative rect")
 	_expect(slam.contains("draw_rect(rect, color)") and slam.contains("draw_rect(rect, color, false, 2.0)"), "active and recovery slam semantics are untouched")

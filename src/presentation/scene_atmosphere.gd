@@ -90,6 +90,8 @@ static func draw_fire(canvas: CanvasItem, sockets: Array, time: float) -> void:
 		var seed := float(socket.get("seed", 0.0))
 		var height := maxf(8.0, float(socket.get("height", 24.0)))
 		var pulse := 0.5 + 0.5 * sin(time * 2.6 + seed * 1.7)
+		var pool := Vector2(height * 3.4, height * 1.7)
+		canvas.draw_texture_rect(_soft_light(), Rect2(origin + Vector2(0.0, height * 0.14) - pool * 0.5, pool), false, Color(WARM, 0.05 + 0.035 * pulse), false)
 		canvas.draw_circle(origin + Vector2(0.0, -height * 0.16), height * 0.40, Color(FIRE_TONGUE, 0.05 + 0.03 * pulse))
 		canvas.draw_circle(origin + Vector2(0.0, -height * 0.12), height * 0.20, Color(FIRE_CORE, 0.10 + 0.05 * pulse))
 		for index in 4:
