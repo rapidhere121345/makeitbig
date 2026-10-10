@@ -324,17 +324,25 @@ static func draw_piercing_arrow(
 	var trail_mid := geometry["trail_mid"] as Vector2
 	var shaft_tail := geometry["shaft_tail"] as Vector2
 	var shaft_head := geometry["shaft_head"] as Vector2
-	canvas.draw_line(trail_start, trail_mid, Color(PaletteScript.COPPER, 0.10), 1.1, false)
-	canvas.draw_line(trail_mid, position, Color(PaletteScript.COPPER, 0.20), 1.5, false)
-	canvas.draw_line(shaft_tail, shaft_head, Color(PaletteScript.INK, 0.82), 3.1, false)
-	canvas.draw_line(shaft_tail, shaft_head, PaletteScript.BONE, 1.5, false)
+	var wake_length := float(geometry.get("wake_length", 0.0))
+	var glow_start := position - aim * minf(20.0, wake_length + 4.0)
+	## The broad, low-alpha wake is deliberately separate from the arrow shaft:
+	## it keeps a fast arrow readable against both snow and slate without changing
+	## its authoritative position or swept contact.
+	canvas.draw_line(glow_start, position, Color(PaletteScript.COLD, 0.13), 4.0, false)
+	canvas.draw_line(trail_start, trail_mid, Color(PaletteScript.COPPER, 0.20), 1.8, false)
+	canvas.draw_line(trail_mid, position, Color(PaletteScript.COPPER, 0.34), 2.2, false)
+	canvas.draw_line(shaft_tail, shaft_head, Color(PaletteScript.INK, 0.88), 3.8, false)
+	canvas.draw_line(shaft_tail, shaft_head, PaletteScript.BONE, 1.8, false)
 	canvas.draw_line(shaft_tail - side * 2.1, shaft_tail + aim * 2.4, PaletteScript.COPPER, 1.0, false)
 	canvas.draw_line(shaft_tail + side * 2.1, shaft_tail + aim * 2.4, PaletteScript.COPPER, 1.0, false)
 	canvas.draw_colored_polygon(PackedVector2Array([
-		position + aim * 4.8,
-		position - aim * 1.8 + side * 2.7,
-		position - aim * 1.8 - side * 2.7,
+		position + aim * 6.4,
+		position - aim * 2.2 + side * 3.4,
+		position - aim * 2.2 - side * 3.4,
 	]), PaletteScript.COPPER)
+	canvas.draw_circle(position, 2.8, Color(PaletteScript.BONE, 0.55))
+	canvas.draw_circle(position + aim * 1.0, 1.15, PaletteScript.BONE)
 
 
 ## Pure geometry for the in-flight arrow. The wake never runs behind its frozen
@@ -349,7 +357,7 @@ static func piercing_arrow_geometry(
 	var side := aim.rotated(PI * 0.5)
 	var travel_from_origin := position.distance_to(origin) if origin.is_finite() else position.distance_to(previous_position)
 	var previous_gap := position.distance_to(previous_position)
-	var wake_length := minf(10.0, minf(previous_gap, maxf(0.0, travel_from_origin)))
+	var wake_length := minf(18.0, minf(previous_gap, maxf(0.0, travel_from_origin)))
 	var trail_start := position - aim * wake_length
 	var trail_mid := position - aim * wake_length * 0.5
 	return {
@@ -359,6 +367,7 @@ static func piercing_arrow_geometry(
 		"trail_mid": trail_mid,
 		"shaft_tail": position - aim * 11.0,
 		"shaft_head": position - aim * 1.8,
+		"wake_length": wake_length,
 	}
 
 
