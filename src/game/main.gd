@@ -18,6 +18,7 @@ const CombatStateCodecScript = preload("res://src/game/combat_state_codec.gd")
 const ArenaHudScript = preload("res://src/presentation/arena_hud.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
+const RangerMotionOverlayScript = preload("res://src/presentation/ranger_motion_overlay.gd")
 const EnemyAnimationScript = preload("res://src/presentation/enemy_animation.gd")
 const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd")
 const CombatMarksScript = preload("res://src/presentation/combat_marks.gd")
@@ -449,6 +450,10 @@ var world_pending_reason: String = ""
 ## reports its pending fallback instead of substituting art for it.
 var ranger_animation
 var ranger_action_pending_reason: String = ""
+## Render-only clock for the ranger's cloak, harness and edge highlights. It is
+## deliberately separate from sim_tick: the overlay can breathe at display
+## cadence while movement, shots and replay state remain fixed at 30 Hz.
+var ranger_visual_time: float = 0.0
 ## Age of the death clip in seconds, advanced on the presentation clock because
 ## the simulation stops ticking once the battle is over. Kept in float and
 ## converted at read time: a per-frame int() rounds a 60/144Hz step to zero and
@@ -562,6 +567,7 @@ func _process(delta: float) -> void:
 
 func _presentation_update(delta: float) -> void:
 	if presentation_enabled:
+		ranger_visual_time = fmod(ranger_visual_time + maxf(0.0, delta), 10000.0)
 		_update_traces(delta)
 		_advance_combat_feedback(delta)
 		_update_ranger_action_events(delta)
@@ -1486,6 +1492,7 @@ func _choose_forge_candidate(choice_number: int) -> void:
 func _show_base() -> void:
 	in_arena = false
 	battle_over = false
+	ranger_visual_time = 0.0
 	_reset_combat_feedback_audio()
 	## Leaving the arena drops the detached corpses and every inferred record.
 	_reset_enemy_animation()
@@ -1562,6 +1569,7 @@ func _enter_arena() -> void:
 	in_arena = true
 	battle_over = false
 	battle_victory = false
+	ranger_visual_time = 0.0
 	base_panel.visible = false
 	systems_panel.visible = false
 	hud_panel.visible = presentation_enabled
@@ -4526,7 +4534,11 @@ func _draw_player() -> void:
 		if not frame.is_empty():
 			_draw_ranger_frame(frame)
 			return
-		world_view.draw_sprite(self, "ranger.%s.idle" % _player_facing_name(), world_view.gameplay_to_world(player_position))
+		var fallback_facing := _player_facing_name()
+		var fallback_feet: Vector2 = world_view.gameplay_to_world(player_position)
+		RangerMotionOverlayScript.draw_back(self, fallback_feet, fallback_facing, "idle", 0, ranger_visual_time)
+		world_view.draw_sprite(self, "ranger.%s.idle" % fallback_facing, fallback_feet)
+		RangerMotionOverlayScript.draw_front(self, fallback_feet, fallback_facing, "idle", 0, ranger_visual_time)
 	elif actors_atlas != null:
 		var facing_column := _player_facing_column()
 		var step_offset := 4 if _player_is_visually_moving() and int(sim_tick / 8) % 2 == 1 else 0
@@ -4709,7 +4721,12 @@ func _draw_ranger_frame(frame: Dictionary) -> void:
 	var anchor: Vector2i = frame.get("anchor", RangerAnimationScript.DEFAULT_ANCHOR)
 	var draw_offset: Vector2i = frame.get("draw_offset", Vector2i.ZERO)
 	var feet_world: Vector2 = world_view.gameplay_to_world(player_position)
+	var facing := String(frame.get("facing", _player_facing_name()))
+	var action := String(frame.get("action", "idle"))
+	var frame_index := int(frame.get("frame", 0))
+	RangerMotionOverlayScript.draw_back(self, feet_world, facing, action, frame_index, ranger_visual_time)
 	draw_texture_rect_region(texture, Rect2((feet_world - Vector2(anchor) + Vector2(draw_offset)).round(), Vector2(rect.size)), Rect2(rect))
+	RangerMotionOverlayScript.draw_front(self, feet_world, facing, action, frame_index, ranger_visual_time)
 
 
 ## Runtime integration diagnostic for the art pass: the frame the hero is drawn

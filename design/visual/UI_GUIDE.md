@@ -37,6 +37,12 @@
 
 新增 `tests/test_town_exploration.gd` 覆盖实际道路步行、镜头、距离门槛、页面往返、新档重置与只读边界；`tests/test_contract_result_navigation.gd` 使用Enter输入检查单次比较、详情关闭和焦点恢复。均注册于 Bash/PowerShell 检查入口。新美术可在 `build/current/town.png`、`contract.png`、`result.png` 查看，构建目录不纳入源码版本控制。
 
+## 游侠角色动作与投射物表现 · 2026-10-10
+
+游侠继续使用 `art/production/p1/ranger_actions_v01/ranger.png` 的动作图集，脚点、弓手 socket 和四向朝向仍由 `ranger_animation.gd` 读取。为增强小尺寸下的辨识度，战斗绘制在图集前后增加 `ranger_motion_overlay.gd`：后层负责不对称斗篷、箭袋与拖尾，前层负责肩甲、背带铜扣、兜帽冷边和拉弓弦线。它只消费渲染时钟与当前表现动作，脚点和权威状态不变。
+
+试玩时重点观察斗篷尾部是否随走路、闪避和拉弓发生连续摆动，肩带与铜色装备高光是否仍能和雪地、深色地面分开。投射物由 `arena_world_view.gd` 继续按权威 `previous_position`、`position` 和 `origin` 绘制；尾迹上限只影响可读性，新增冷色低透明 wake、铜色核心线和箭头头部高光，不参与移动、碰撞或伤害。
+
 
 ## 阅读减负与字体 · 2026-10-08
 
