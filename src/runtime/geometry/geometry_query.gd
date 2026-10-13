@@ -14,7 +14,10 @@ extends RefCounted
 ## ids, scene order, or rendering state.
 
 const EPSILON := 0.000001
-const CONTACT_EPSILON := 0.00001
+## Contact tolerance absorbs the sub-pixel rounding introduced when authored
+## UV vertices are scaled into world pixels.  It is only used to classify a
+## mathematically tangent contact; it never moves an actor or widens a shape.
+const CONTACT_EPSILON := 0.0001
 const TIME_EPSILON := 0.000001
 const MIN_SHAPE_SIZE := 0.000001
 

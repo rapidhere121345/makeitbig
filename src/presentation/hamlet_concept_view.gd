@@ -14,7 +14,8 @@ const RangerAnimationScript = preload("res://src/presentation/ranger_animation.g
 ## effects. The approved static residents stay the fallback while it is pending.
 const HamletLifeAnimationScript = preload("res://src/presentation/hamlet_life_animation.gd")
 const HamletTownLayerScript = preload("res://src/presentation/hamlet_town_layer.gd")
-const HamletCollisionScript = preload("res://src/presentation/hamlet_collision.gd")
+const ActorMotorScript = preload("res://src/runtime/geometry/actor_motor.gd")
+const LayoutBlockerLoaderScript = preload("res://src/runtime/geometry/layout_blocker_loader.gd")
 const ScenePatchScript = preload("res://src/presentation/hamlet_scene_patch.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
 const AtmosphereLayerScript = preload("res://src/presentation/scene_atmosphere_layer.gd")
@@ -117,7 +118,7 @@ var _ground_logged := false
 var _layout: Dictionary = {}
 var _layout_loaded := false
 var _feature_entries: Array[Dictionary] = []
-var _collision := HamletCollisionScript.new()
+var _actor_motor := ActorMotorScript.new(6.0)
 var _sprite_nodes: Dictionary = {}
 var _fade_targets: Array[Dictionary] = []
 ## Life art state: the resident and socket sprites the published package placed,
@@ -303,7 +304,10 @@ func _configure(atlases: Dictionary, layout: Dictionary) -> void:
 	_nearby_feature_id = ""
 	_feature_entries = _build_feature_entries(layout)
 	_destination_routes = _build_destination_routes(layout)
-	_collision.configure(layout)
+	var collision_result: Dictionary = LayoutBlockerLoaderScript.populate_motor(_actor_motor, layout)
+	if not bool(collision_result.get("ok", false)):
+		for error: String in collision_result.get("errors", []):
+			_pending_reasons.append("town collision: %s" % error)
 	if town_layer != null:
 		town_layer.configure(_feature_entries, _world_size, layout, _scene_texture)
 	if _atmosphere_fire != null:
@@ -515,7 +519,12 @@ func move_hero(direction: Vector2, delta: float) -> void:
 	if movement.length_squared() > 0.0001:
 		## Continuous float integration: identical distance covers 30, 60 and
 		## 144 Hz, and a short high-refresh step never rounds away to zero.
-		_hero_position = _collision.move(_hero_position, movement.normalized() * HERO_SPEED * delta, _world_bounds)
+		var movement_result: Dictionary = _actor_motor.move(
+			_hero_position,
+			movement.normalized() * HERO_SPEED * delta,
+			_movement_bounds(),
+		)
+		_hero_position = movement_result.get("position", _hero_position)
 		_update_facing(movement)
 		_walk_time += delta
 		_walking = true
@@ -543,6 +552,10 @@ func teleport_hero(point: Vector2) -> void:
 
 func hero_world_position() -> Vector2:
 	return _hero_position
+
+
+func hero_position_is_clear(point: Vector2) -> bool:
+	return _actor_motor.is_position_clear(point, _movement_bounds())
 
 
 func hero_snapped_position() -> Vector2i:
@@ -711,6 +724,10 @@ func _update_facing(direction: Vector2) -> void:
 
 func _clamped(candidate: Vector2) -> Vector2:
 	return candidate.clamp(_world_bounds.position, _world_bounds.end)
+
+
+func _movement_bounds() -> Rect2:
+	return _world_bounds.grow(float(_actor_motor.radius))
 
 
 ## -------------------------------------------------------------- interaction

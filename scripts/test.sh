@@ -73,7 +73,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_combat_style_r13.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_hamlet_life_animation.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_hamlet_style_r13.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_hamlet_collision.gd
+"$GODOT_BIN" --headless --path . --script res://tests/unit/test_town_geometry.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_hud.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_input_feedback_transients.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_ranger_combat_skills.gd

@@ -25,6 +25,16 @@ foreach ($FilterMatch in $ExportFilters) {
 if ($LASTEXITCODE -ne 0) { throw "Godot import failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_all.gd
 if ($LASTEXITCODE -ne 0) { throw "Godot tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_runtime_world.gd
+if ($LASTEXITCODE -ne 0) { throw "Runtime world tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_actor_motor.gd
+if ($LASTEXITCODE -ne 0) { throw "Actor motor tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_room_definition.gd
+if ($LASTEXITCODE -ne 0) { throw "Room definition tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_rebuild_samples.gd
+if ($LASTEXITCODE -ne 0) { throw "Rebuild sample tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_town_geometry_rebuild.gd
+if ($LASTEXITCODE -ne 0) { throw "Town geometry rebuild tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_training_report_builder.gd
 if ($LASTEXITCODE -ne 0) { throw "Training report builder tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_combat_state_codec.gd
@@ -121,10 +131,10 @@ if ($LASTEXITCODE -ne 0) { throw "Combat R13 style tests failed with exit code $
 if ($LASTEXITCODE -ne 0) { throw "Hamlet life tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_hamlet_style_r13.gd
 if ($LASTEXITCODE -ne 0) { throw "Hamlet R13 style tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/unit/test_town_geometry.gd
+if ($LASTEXITCODE -ne 0) { throw "Town geometry tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_ui_style_r13.gd
 if ($LASTEXITCODE -ne 0) { throw "UI R13 style tests failed with exit code $LASTEXITCODE" }
-& $GodotBin --headless --path . --script res://tests/unit/test_hamlet_collision.gd
-if ($LASTEXITCODE -ne 0) { throw "Hamlet collision tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_arena_hud.gd
 if ($LASTEXITCODE -ne 0) { throw "Arena HUD tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_input_feedback_transients.gd
