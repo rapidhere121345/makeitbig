@@ -4196,10 +4196,6 @@ func _draw() -> void:
 	world_view.begin_frame(viewport_rect, player_position, arena)
 	draw_set_transform_matrix(world_view.world_transform())
 	world_view.draw_ground(self)
-	## The solid boundary terrain maps from the same authoritative walkable
-	## geometry the clamp enforces, so the wall face the player sees is the
-	## edge the simulation stops at.
-	world_view.note_boundary_terrain(arena, _walkable_geometry(14.0))
 	## Ring rooms share the outpost's rectangular field landmark: the concept pass
 	## must never redraw the retired central well or its circular walking band.
 	world_view.draw_room_concept(self, _walkable_layout_id(), sim_tick)
@@ -4239,15 +4235,16 @@ func _draw_layout_markers(rect: Rect2) -> void:
 	if layout_id == "corridor":
 		var corridor := Rect2(Vector2(rect.position.x, rect.get_center().y - 86.0), Vector2(rect.size.x, 172.0))
 		draw_rect(corridor, COLOR_AMBER, false, 2.0)
-	## Ring keeps no markers in the legacy fallback: the approved path draws the
-	## solid boundary terrain, and a flat-field wire rectangle is just noise.
+	elif layout_id == "ring":
+		_draw_walkable_edge_markers(rect)
 
 
 ## Hazard telegraphs stay in authoritative gameplay coordinates: the canvas is
 ## already transformed, so their geometry is untouched.
 func _draw_gameplay_ground_effects(arena: Rect2) -> void:
-	## Art and the solid boundary terrain carry the room reading; no wire
-	## outlines are drawn over the walkable domain.
+	_draw_walkable_layout_boundaries(arena)
+	## Art carries the floor; the remaining movement limits use quiet broken edges.
+	## Keep the old amber debug-style layout marks only in the flat-field fallback.
 	for enemy: EnemyData in enemies:
 		if enemy.is_boss:
 			_draw_boss_transition_rings(enemy)
@@ -4256,6 +4253,46 @@ func _draw_gameplay_ground_effects(arena: Rect2) -> void:
 			_draw_normal_target_shape(enemy)
 	for hazard in hazard_states:
 		_draw_hazard(hazard)
+
+
+## Unlike a decoration, the corridor strip and the ring rooms' map edge constrain
+## real movement. Keep them readable as quiet ash-coloured broken edges, not the
+## old amber targeting rings.
+## The 14px player inset is the same argument used by _move_player/_clamp_to_arena.
+func _draw_walkable_layout_boundaries(arena: Rect2) -> void:
+	var bounds := arena.grow(-14.0)
+	var edge := Color(COLOR_NEUTRAL, 0.60)
+	if layout_id == "ring":
+		## The whole map rectangle is walkable; its edge is the room's real wall.
+		_draw_dashed_edge_rectangle(bounds, edge)
+	elif layout_id == "corridor":
+		var half_height := minf(72.0, bounds.size.y * 0.25)
+		for sign_value in [-1.0, 1.0]:
+			var y: float = bounds.get_center().y + half_height * sign_value
+			var x := bounds.position.x
+			while x < bounds.end.x:
+				draw_line(Vector2(x, y), Vector2(minf(x + 18.0, bounds.end.x), y), edge, 1.5, false)
+				x += 32.0
+
+
+## Flat-field fallback for ring rooms: the same quiet rectangle edge the world
+## view draws, replacing the retired hole-and-band circles.
+func _draw_walkable_edge_markers(rect: Rect2) -> void:
+	_draw_dashed_edge_rectangle(rect.grow(-14.0), Color(COLOR_NEUTRAL, 0.60))
+
+
+func _draw_dashed_edge_rectangle(bounds: Rect2, edge: Color) -> void:
+	for sign_value in [-1.0, 1.0]:
+		var horizontal_y: float = bounds.position.y if sign_value < 0.0 else bounds.end.y
+		var x := bounds.position.x
+		while x < bounds.end.x:
+			draw_line(Vector2(x, horizontal_y), Vector2(minf(x + 18.0, bounds.end.x), horizontal_y), edge, 1.5, false)
+			x += 32.0
+		var vertical_x: float = bounds.position.x if sign_value < 0.0 else bounds.end.x
+		var y := bounds.position.y
+		while y < bounds.end.y:
+			draw_line(Vector2(vertical_x, y), Vector2(vertical_x, minf(y + 18.0, bounds.end.y)), edge, 1.5, false)
+			y += 32.0
 
 
 func _draw_gameplay_status_overlays() -> void:
@@ -4409,16 +4446,10 @@ func _draw_arena_floor_legacy(rect: Rect2) -> void:
 func _draw_actors_ysorted() -> void:
 	var hero_world: Vector2 = world_view.gameplay_to_world(player_position)
 	var drawables: Array[Dictionary] = []
-	## Solid boundary walls first: they are the ground-level explanation of the
-	## clamp the same walkable geometry enforces. Kept legacy ruins stand
-	## outside the walkable domain; the tower base sits behind the top band.
-	for wall in world_view.boundary_terrain_walls():
-		var wall_feet: Vector2 = wall["feet_world"]
-		drawables.append({"y": wall_feet.y, "rank": 0, "kind": "structure", "sprite": String(wall["sprite_id"]), "world": wall_feet})
-	for entry in world_view.boundary_terrain_structures():
+	for entry in world_view.structure_draw_list():
 		var structure_feet: Vector2 = entry["feet_world"]
 		drawables.append({"y": structure_feet.y, "rank": 0, "kind": "structure", "sprite": String(entry["sprite_id"]), "world": structure_feet})
-	drawables.append({"y": world_view.active_tower_feet_world().y, "rank": 0, "kind": "tower", "sprite": "", "world": world_view.active_tower_feet_world()})
+	drawables.append({"y": world_view.tower_feet_world().y, "rank": 0, "kind": "tower", "sprite": "", "world": world_view.tower_feet_world()})
 	for enemy: EnemyData in enemies:
 		var enemy_world: Vector2 = world_view.gameplay_to_world(enemy.position)
 		drawables.append({"y": enemy_world.y, "rank": 3 if enemy.is_boss else 1, "kind": "boss" if enemy.is_boss else "enemy", "sprite": "", "world": enemy_world, "enemy": enemy})

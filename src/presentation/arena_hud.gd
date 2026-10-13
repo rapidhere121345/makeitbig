@@ -492,11 +492,6 @@ func _build_interface() -> void:
 	_room_start_label = _named_label("RoomStartLabel")
 	_room_start_label.add_theme_font_size_override("font_size", 18)
 	_room_start_label.add_theme_color_override("font_color", COLOR_AMBER)
-	## 2026-10-10 playtest: the ring entry sentence overran its card into the
-	## mode/exit cards at 1280 width. The world-space entry banner and the
-	## tooltip keep the full sentence; this label clips to its own slot.
-	_room_start_label.clip_text = true
-	_room_start_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_room_start_label.visible = false
 	_place(boss_layout, _room_start_label, Rect2(0.0, 42.0, 456.0, 21.0))
 	_boss_hp_label = _named_label("BossHpLabel")
@@ -853,12 +848,7 @@ func _apply_cell(node_name: String, text: String, detail: String, tone: String, 
 	state_label.text = _compact_cell_state(node_name, text)
 	state_label.add_theme_font_size_override("font_size", SKILL_STATE_FONT_SIZE)
 	state_label.add_theme_color_override("font_color", COLOR_AMBER if tone in ["ready", "active"] else (COLOR_PROXY if tone == "locked" else (COLOR_NEUTRAL if tone in ["unequipped", "blocked"] else COLOR_BONE)))
-	## Unequipped actions recede by their icon alone: the 18px state text and the
-	## key label keep full strength, so the dim never puts readability underwater.
-	if tone == "unequipped":
-		icon.modulate = Color(0.60, 0.62, 0.66, 0.55)
-	else:
-		icon.modulate = Color.WHITE if not disabled or tone == "active" else Color(0.55, 0.55, 0.58, 0.85)
+	icon.modulate = Color.WHITE if not disabled or tone == "active" else Color(0.55, 0.55, 0.58, 0.85)
 	_style_action_button(button, disabled, tone)
 	_apply_cooldown_progress(node_name, cooldown_remaining, tone)
 	_update_detail(node_name, detail)

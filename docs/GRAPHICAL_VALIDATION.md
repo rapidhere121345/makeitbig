@@ -73,22 +73,6 @@ makeitbig-godot --editor
 
 锻炉动态火点经截图校准回炉膛，移除铁砧旁地面的错误黄色光球，保留细小像素火星与低强度闪光。固定视角相隔 36 个渲染帧的炉膛局部有 952 个像素变化，动画不依赖人物移动。最终窗口退出码 0，显式使用 Dummy 音频。证据：`bridge-final-rail.png`、`npc-prompt.png`、`npc-dialogue.png`、`forge-final-0.png`、`forge-final-1.png`、`forge-flicker-pair.png` 与 `final-town-engine.log`，均在上述被忽略的验收目录。
 
-## 品质复验 · 2026-10-10
-
-在 `ceb573e6ffc3` 之后的品质迭代中，继续复用单个 Xvfb/llvmpipe 窗口，以 `tools/play_session.py` 发送真实键鼠事件。主线01–05的房间战斗、结算、比较装备与返镇流程已走通；首次巨像挑战约40秒战败，74次施放仍未推动可见血条。此记录是成长引导与伤害量级反馈问题，不能据此断言首章巨像不可通关。
-
-随后正常装备主线奖励的孳生分裂手套、群猎印记戒指和已掉落的IV阶续行弓，再步行进入验律场。结果为续行概率43%、R=0.86、g=95、总事件7.1429，分类“收敛”。该结果说明获得关键奖励不等于构筑合格；正式指数构筑的自动化击杀测试也不能代替自然成长路径试玩。
-
-镇区品质复验确认：塔伦附近只显示E交谈提示，不再叠加“…”气泡；按E打开对白并聚焦继续按钮。连续向左移动截图中腿部与衣摆变化可见；火盆光感贴合场景，未见地面黄色球。证据位于 `build/current/art-review/`：`quality-npc-single-prompt.png`、`quality-npc-dialogue.png`、`quality-west-strip.png`、`quality-training-convergent.png` 与 `quality-engine.log`。本次窗口退出码0，Dummy音频。先前后段试玩进程回收码143，不能计为正常退出。
-
-同目录的 `terrain-engine.log` 记录战斗地形复验：正常出征定向装备与词条律筹支线，经过回收环场、破碎前哨和风切通道，并完成三房结算。矩形房间持续向四角行走、斜向闪避或突袭，位置保持在 x=56–1224、y=204–664；通道上下边界为 y=362–506。前景残墙局部淡出后人物仍可见，危险区域与敌人保留可读性。结算→比较→换装的焦点落回副手槽位，证据为 `quality-equip-focus.json`。1280×720、1600×900均渲染检查；1024×768采用16:9留边、文字缩小，不能据此宣称全分辨率阅读体验相同。
-
-图形审查发现并修正两项边界表现：上下墙带中段缺口造成纯雪地前的不可见阻挡；线画门标仍像控件。最终复验使用连续墙带与已有门洞贴图，截图为 `final-boundary-south.png`、`final-boundary-east-gate.png`、`final-boundary-1024.png`，日志 `final-terrain-engine.log`；两次地形窗口均正常退出0。模型与地形的接触带回归、敌人冲锋、Boss目标夹取等由自动测试补充，不冒充逐项手动试玩。
-
-最终成长试玩通过真实按钮为群猎戒指添铸续行I阶（候选3，消耗3枚添铸律筹），再将箭袋续行I阶精炼到IV阶（消耗1枚精炼律筹）。步行返回验律场运行训练，结果从R=0.86收敛变为R=1.1、g=95、总事件94113.4365，判定“指数”；未使用定标方案赠装或直接修改存档。这证明本次存档的正常锻造路径可跨过增长门槛，不代表任意候选池均可直接达标，也不代表已完成巨像手动击杀。契约建议术语已与“添铸”按钮统一，最终全量测试覆盖该文案。
-
-成长证据为同目录 `final-growth-boss-card.png`、`final-growth-forge-done.png`、`final-growth-training-exponential.png`、`final-growth-base-end.png` 和 `final-growth-engine.log`。试玩发送quit后引擎退出且无图形进程残留，但工具未保留本次数值退出码，故不记为exit0；此前三轮父级窗口的exit0记录独立有效。本轮完整构建在最终文案落盘后再次通过，日志 `build/current/final-container-build.log`：测试门禁、双平台导出、Linux空目录smoke全部成功，运行源码diff在构建前后相同。未验证Windows实机、宿主NVIDIA性能及声音。
-
 ## 交付记录
 
 每次图形化验收至少记录日期、入口（容器 X11 或宿主机 GPU）、Godot 版本、渲染器、检查场景、输入流程和退出码。截图或临时录屏只作为本轮验收证据，放在被 git 忽略的 `build/` 下；需要长期保留的视觉方向资料放在 `design/visual/`，并写明来源。

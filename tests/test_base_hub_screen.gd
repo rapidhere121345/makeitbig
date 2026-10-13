@@ -819,10 +819,6 @@ func _test_resident_prompt(hub, failures: Array[String]) -> void:
 	hub.set_hero_position((resident.feet + Vector2(0, 10)) * 2.0)
 	_expect(hub.nearby_resident_id() == resident.id and hub._nearby_panel.visible
 		and hub._nearby_label.text == "[E] 与镇民交谈", "base hub: nearby resident has no explicit E prompt", failures)
-	var prompt_marker: Label = hub._resident_markers.get(resident.id, null)
-	_expect(prompt_marker != null and prompt_marker.position.y > hub.HEADER_RECT.end.y
-		and not prompt_marker.visible,
-		"base hub: prompted resident kept a second talk bubble beside the E prompt", failures)
 	var stand: Dictionary = {}
 	var stand_gap := INF
 	for entry: Dictionary in hub.get_hub_view().feature_entries():

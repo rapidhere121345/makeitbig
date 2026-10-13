@@ -919,23 +919,6 @@ func _test_room_progress(hud: Control, failures: Array[String]) -> void:
 		"room HUD: settled room still shows entry cue or loses its progress", failures)
 	hud.present(_snapshot())
 	_expect(not cue.visible, "room HUD: legacy snapshot invented a room entry", failures)
-	## 2026-10-10: the shipped ring entry sentence is longer than the 456px
-	## slot at 1280 width. The label must clip to its own card with an ellipsis
-	## — the full sentence stays in the entry banner and the tooltip.
-	snapshot["room_id"] = "bounds.ring.long_hint"
-	snapshot["room_index"] = 0
-	snapshot["room_count"] = 3
-	snapshot["room_elapsed_seconds"] = 0.0
-	snapshot["battle_over"] = false
-	snapshot["room_entry_hint"] = "放心横穿中央灯标，用整片场地拉开距离，残壁边缘会真实阻挡。"
-	hud.present(snapshot)
-	_expect(cue.visible, "room HUD: the long-hint entry cue did not show", failures)
-	_expect(cue.clip_text and cue.text_overrun_behavior == TextServer.OVERRUN_TRIM_ELLIPSIS,
-		"room HUD: entry cue lost its single-line ellipsis clip", failures)
-	_expect(cue.size.x <= 456.001 and cue.position.x + cue.size.x <= hud.size.x,
-		"room HUD: long entry cue overran its slot to %.0fpx wide at x=%.0f" % [cue.size.x, cue.position.x], failures)
-	_expect(String(cue.tooltip_text) == "放心横穿中央灯标，用整片场地拉开距离，残壁边缘会真实阻挡。",
-		"room HUD: the full entry sentence is no longer in the cue tooltip", failures)
 
 
 func _test_elite_feedback(hud: Control, failures: Array[String]) -> void:

@@ -228,7 +228,6 @@ func load_assets() -> bool:
 	_textures.clear()
 	_decals.clear()
 	_structures.clear()
-	clear_boundary_terrain()
 	_ready = false
 	var scene_atlas := _read_json(SCENE_ATLAS_PATH)
 	var legacy_atlas := _read_json(LEGACY_ATLAS_PATH)
@@ -427,11 +426,18 @@ func draw_room_concept(canvas: CanvasItem, layout_id: String, phase_ticks: int =
 
 
 func _draw_outpost_concept(canvas: CanvasItem, phase: float) -> void:
-	## 2026-10-10 playtest: the field box, corner dots and tick rows read as a
-	## debug wire frame over the snow. Room reading now comes from the solid
-	## boundary terrain with authored ruin-gate sprites at the doorways. This
-	## pass no longer draws marker geometry of its own.
-	phase = phase
+	var field := Rect2(Vector2(92.0, 194.0), Vector2(840.0, 386.0))
+	canvas.draw_rect(field, Color(PaletteScript.SLATE_0, 0.25), true)
+	canvas.draw_rect(field.grow(-5.0), Color(PaletteScript.COPPER_DULL, 0.52), false, 3.0)
+	canvas.draw_rect(field.grow(-15.0), Color(PaletteScript.BONE_DIM, 0.12), false, 1.0)
+	for corner in [field.position, Vector2(field.end.x, field.position.y), field.end, Vector2(field.position.x, field.end.y)]:
+		canvas.draw_circle(corner, 5.0, Color(PaletteScript.COPPER, 0.42))
+	var lamp_alpha := 0.28 + 0.18 * (0.5 + 0.5 * sin(phase * TAU))
+	_draw_room_gate(canvas, Vector2(field.position.x + 8.0, field.get_center().y), Vector2.RIGHT, Color(PaletteScript.COLD, lamp_alpha), false)
+	_draw_room_gate(canvas, Vector2(field.end.x - 8.0, field.get_center().y), Vector2.LEFT, Color(PaletteScript.COPPER, lamp_alpha), true)
+	for x in range(190, 900, 140):
+		canvas.draw_line(Vector2(x, field.position.y + 24.0), Vector2(x + 38.0, field.position.y + 24.0), Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
+		canvas.draw_line(Vector2(x, field.end.y - 24.0), Vector2(x + 38.0, field.end.y - 24.0), Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
 
 
 func _draw_ring_concept(canvas: CanvasItem, phase: float) -> void:
@@ -447,6 +453,8 @@ func _draw_ring_concept(canvas: CanvasItem, phase: float) -> void:
 		var glow := 0.18 + 0.11 * (0.5 + 0.5 * sin(phase * TAU + float(index) * 0.6))
 		canvas.draw_circle(point + Vector2(0.0, -5.0), 2.5, Color(PaletteScript.COPPER, glow))
 	canvas.draw_arc(center, 138.0, phase * TAU, phase * TAU + PI * 0.42, 12, Color(PaletteScript.COLD, 0.42), 3.0, false)
+	_draw_room_gate(canvas, center + Vector2(152.0, 0.0), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
+	_draw_room_gate(canvas, center + Vector2(107.0, 107.0), Vector2.UP, Color(PaletteScript.COLD, 0.48), false)
 
 
 func _draw_corridor_concept(canvas: CanvasItem, phase: float) -> void:
@@ -457,13 +465,41 @@ func _draw_corridor_concept(canvas: CanvasItem, phase: float) -> void:
 	canvas.draw_rect(Rect2(Vector2(left, 80.0), Vector2(right - left, lane.position.y - 80.0)), Color(PaletteScript.INK, 0.24), true)
 	canvas.draw_rect(Rect2(Vector2(left, lane.end.y), Vector2(right - left, WORLD_SIZE.y - lane.end.y - 80.0)), Color(PaletteScript.INK, 0.24), true)
 	canvas.draw_rect(lane, Color(PaletteScript.SLATE_1, 0.28), true)
-	## The lane edge is solid boundary terrain now; the ink veils above and
-	## below stay as the restrained mist over the unwalkable bands.
+	for side in [-1.0, 1.0]:
+		var y: float = center_y + float(side) * 62.0
+		var x := left
+		while x < right:
+			var segment := minf(26.0, right - x)
+			canvas.draw_line(Vector2(x, y), Vector2(x + segment, y), Color(PaletteScript.COLD, 0.50), 3.0, false)
+			x += 42.0
+	for index in 6:
+		var x := left + 90.0 + float(index) * 126.0
+		var y := center_y + sin(phase * TAU + float(index) * 0.55) * 3.0
+		canvas.draw_line(Vector2(x, y + 54.0), Vector2(x, y - 54.0), Color(PaletteScript.COPPER_DULL, 0.58), 3.0, false)
+		canvas.draw_line(Vector2(x, y - 50.0), Vector2(x + 14.0, y - 43.0), Color(PaletteScript.COLD, 0.48), 2.0, false)
+	_draw_room_gate(canvas, Vector2(left + 8.0, center_y), Vector2.RIGHT, Color(PaletteScript.COLD, 0.60), false)
+	_draw_room_gate(canvas, Vector2(right - 8.0, center_y), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
 	for index in 4:
 		var x := left + 210.0 + float(index) * 156.0
 		var y := center_y + 15.0 * sin(phase * TAU + float(index))
 		canvas.draw_line(Vector2(x - 8.0, y), Vector2(x + 8.0, y), Color(PaletteScript.BONE, 0.45), 2.0, false)
 		canvas.draw_line(Vector2(x + 8.0, y), Vector2(x + 2.0, y - 5.0), Color(PaletteScript.BONE, 0.45), 2.0, false)
+
+
+func _draw_room_gate(canvas: CanvasItem, point: Vector2, direction: Vector2, color: Color, exit_gate: bool) -> void:
+	var side := direction.rotated(PI * 0.5).normalized()
+	var span := 28.0 if exit_gate else 24.0
+	var depth := 18.0
+	var left_post := point + side * span - direction * depth
+	var right_post := point - side * span - direction * depth
+	canvas.draw_line(left_post, left_post + direction * (depth * 2.0), Color(PaletteScript.SLATE_0, 0.82), 7.0, false)
+	canvas.draw_line(right_post, right_post + direction * (depth * 2.0), Color(PaletteScript.SLATE_0, 0.82), 7.0, false)
+	canvas.draw_line(left_post, left_post + direction * (depth * 2.0), color, 2.0, false)
+	canvas.draw_line(right_post, right_post + direction * (depth * 2.0), color, 2.0, false)
+	canvas.draw_line(left_post + direction * depth, right_post + direction * depth, color, 2.0, false)
+	var arrow_tip := point + direction * (depth + 6.0)
+	canvas.draw_line(arrow_tip - direction * 8.0 + side * 5.0, arrow_tip, color, 2.0, false)
+	canvas.draw_line(arrow_tip - direction * 8.0 - side * 5.0, arrow_tip, color, 2.0, false)
 
 
 func draw_decals(canvas: CanvasItem) -> void:
@@ -501,26 +537,11 @@ func draw_shadow(canvas: CanvasItem, feet_world: Vector2, width_world: float, de
 
 
 func draw_structure_shadows(canvas: CanvasItem) -> void:
-	if _boundary_cache_key.is_empty():
-		## No live plan noted (legacy/inspection path): the authored layout casts
-		## exactly the shadows it always did.
-		for placement in _structures:
-			var metadata := sprite(String(placement.get("id", "")))
-			var size := _cell_size(metadata)
-			draw_shadow(canvas, gameplay_to_world(_point(placement.get("feet", []))), size.x * 0.72, size.y * 0.28, 0.30)
-		draw_shadow(canvas, tower_feet_world(), 92.0, 26.0, 0.32)
-		return
-	## The live plan casts shadows for the pieces that really draw: boundary
-	## walls, kept out-of-domain ruins and the relocated tower.
-	for wall in _boundary_walls:
-		var wall_metadata := sprite(String(wall.get("sprite_id", "")))
-		var wall_size := _cell_size(wall_metadata)
-		draw_shadow(canvas, wall.get("feet_world", Vector2.ZERO), wall_size.x * 0.72, wall_size.y * 0.24, 0.26)
-	for placement in _boundary_kept_structures:
-		var kept_metadata := sprite(String(placement.get("sprite_id", "")))
-		var kept_size := _cell_size(kept_metadata)
-		draw_shadow(canvas, placement.get("feet_world", Vector2.ZERO), kept_size.x * 0.72, kept_size.y * 0.28, 0.30)
-	draw_shadow(canvas, active_tower_feet_world(), 92.0, 26.0, 0.32)
+	for placement in _structures:
+		var metadata := sprite(String(placement.get("id", "")))
+		var size := _cell_size(metadata)
+		draw_shadow(canvas, gameplay_to_world(_point(placement.get("feet", []))), size.x * 0.72, size.y * 0.28, 0.30)
+	draw_shadow(canvas, tower_feet_world(), 92.0, 26.0, 0.32)
 
 
 ## Two fixed sources: holy light on the tower and a low ember reflection by the
@@ -528,7 +549,7 @@ func draw_structure_shadows(canvas: CanvasItem) -> void:
 ## never expose or mask a gameplay object.
 func atmosphere_warm_lights() -> Array:
 	return [
-		AtmosphereScript.warm_light(active_tower_feet_world(), 44.0, 0.17),
+		AtmosphereScript.warm_light(TOWER_LIGHT_FEET, 44.0, 0.17),
 		AtmosphereScript.warm_light(RUIN_LIGHT_FEET, 30.0, 0.14),
 	]
 
@@ -536,9 +557,8 @@ func atmosphere_warm_lights() -> Array:
 func atmosphere_report() -> Dictionary:
 	var report := AtmosphereScript.atmosphere_report(ATMOSPHERE_PRESET, visible_world_region(), atmosphere_warm_lights())
 	report["base_drawn_with_ground"] = _atmosphere_drawn
-	var tower_light := active_tower_feet_world()
 	report["world_lights_clipped"] = (
-		Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(tower_light - Vector2.ONE * 44.0, Vector2.ONE * 88.0))
+		Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(TOWER_LIGHT_FEET - Vector2.ONE * 44.0, Vector2.ONE * 88.0))
 		and Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(RUIN_LIGHT_FEET - Vector2.ONE * 30.0, Vector2.ONE * 60.0))
 	)
 	return report
@@ -599,25 +619,9 @@ func sprite_art_box(sprite_id: String, feet_world: Vector2) -> Rect2:
 func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
 	var window := cutaway_window(hero_cell_world(hero_world_point))
 	var found: Array[Dictionary] = []
-	## The live plan is the one source of solid pieces: boundary walls, kept
-	## out-of-domain ruins and the relocated tower. A ruin dropped from the plan
-	## stops occupying the hero's cutaway budget in the same frame it stops
-	## drawing; without a plan (inspection path) the authored layout applies.
-	var pieces: Array[Dictionary] = []
-	var plan_tower_feet := Vector2.INF
-	if not _boundary_cache_key.is_empty():
-		for wall in _boundary_walls:
-			pieces.append({"id": String(wall.get("sprite_id", "")), "feet_world": wall.get("feet_world", Vector2.ZERO)})
-		for kept in _boundary_kept_structures:
-			pieces.append({"id": String(kept.get("sprite_id", "")), "feet_world": kept.get("feet_world", Vector2.ZERO)})
-		plan_tower_feet = active_tower_feet_world()
-	else:
-		for placement in _structures:
-			pieces.append({"id": String(placement.get("id", "")), "feet_world": gameplay_to_world(_point(placement.get("feet", [])))})
-		plan_tower_feet = tower_feet_world()
-	for piece in pieces:
-		var sprite_id := String(piece["id"])
-		var feet: Vector2 = piece["feet_world"]
+	for placement in _structures:
+		var sprite_id := String(placement.get("id", ""))
+		var feet := gameplay_to_world(_point(placement.get("feet", [])))
 		if feet.y <= hero_world_point.y:
 			continue
 		var box := sprite_art_box(sprite_id, feet)
@@ -630,7 +634,7 @@ func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
 			"overlap": box.intersection(window),
 			"base_alpha": 1.0,
 		})
-	var tower_feet := plan_tower_feet
+	var tower_feet := tower_feet_world()
 	if tower_feet.y > hero_world_point.y:
 		var upper := sprite_art_box("tower.upper", tower_feet)
 		var base := sprite_art_box("tower.base", tower_feet)
@@ -676,9 +680,7 @@ func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2
 
 
 func _tower_upper_faded(hero_world_point: Vector2) -> bool:
-	## The fade reads the tower the frame really draws: the relocated base when a
-	## live boundary plan is noted, the authored one on the inspection path.
-	var feet := active_tower_feet_world()
+	var feet := tower_feet_world()
 	if feet.y <= hero_world_point.y:
 		return false
 	return Rect2(feet + Vector2(-64.0, -184.0), Vector2(128.0, 148.0)).intersects(hero_cell_world(hero_world_point))
@@ -827,11 +829,8 @@ func sprite_screen_rect(sprite_id: String, feet_world: Vector2) -> Rect2:
 	return Rect2(to_screen(destination.position), destination.size * DISPLAY_SCALE)
 
 
-## Headless occlusion report over the AUTHORED layout: which props would sit in
-## front of the hero, which of them are faded, and whether anything un-faded
-## still covers the hero completely. Inspection only — it never notes a live
-## boundary plan, so its piece list is not evidence about the drawn boundary
-## walls; use the placement audit for that.
+## Headless occlusion report: which props would sit in front of the hero, which of
+## them are faded, and whether anything un-faded still covers the hero completely.
 func hero_cover_report(hero_world_point: Vector2) -> Dictionary:
 	var hero_cell := hero_cell_world(hero_world_point)
 	var in_front: Array[String] = []
@@ -858,7 +857,6 @@ func hero_cover_report(hero_world_point: Vector2) -> Dictionary:
 			in_front.append("tower.upper")
 			faded.append("tower.upper")
 	return {
-		"boundary_plan_active": not _boundary_cache_key.is_empty(),
 		"hero_cell": hero_cell,
 		"in_front": in_front,
 		"faded": faded,
@@ -875,166 +873,8 @@ func draw_structure(canvas: CanvasItem, sprite_id: String, feet_world: Vector2, 
 	draw_sprite(canvas, sprite_id, feet_world, false, Color(1.0, 1.0, 1.0, alpha), cut["window"], cut["alpha"])
 
 
-## ---------------------------------------------------------------- boundary terrain
-
-## 2026-10-10 playtest: the walkable boundary read as a debug wire box. The
-## boundary is now solid terrain laid along the authoritative walkable domain's
-## RAW edge (no padding): wall pieces stand with their base on or outside the
-## line the clamp enforces, so the invisible clamp reads as the wall face. The
-## 14/16 px player/enemy pads stay pure collision margins — the terrain is drawn
-## once from the raw domain, never per padding level. Legacy ruins and the tower
-## that stood inside the field with no collision are dropped or relocated here,
-## so every drawn solid base is outside the walkable domain.
-const BOUNDARY_STEP: float = 92.0
-## Every ruin wall cell is 128x128 with its feet anchor at (64, 120): the art
-## reaches 64 px sideways and 120 px up from the feet, and 8 px of ground skirt
-## hangs below. The solid ground-contact band audited against the domain is the
-## six-pixel row directly above the feet line.
-const BOUNDARY_CELL_HALF_WIDTH: float = 64.0
-const BOUNDARY_BASE_BAND_HEIGHT: float = 6.0
-## Side wall runs stand this far outside the raw edge so the full 128 px wide
-## base band stays outside the walkable domain, not just the feet point.
-const BOUNDARY_SIDE_OFFSET: float = 70.0
-
-var _boundary_cache_key := ""
-var _boundary_walls: Array[Dictionary] = []
-var _boundary_kept_structures: Array[Dictionary] = []
-var _active_tower_feet_world := Vector2.INF
-
-
-func clear_boundary_terrain() -> void:
-	_boundary_cache_key = ""
-	_boundary_walls = []
-	_boundary_kept_structures = []
-	_active_tower_feet_world = Vector2.INF
-
-
-func note_boundary_terrain(arena_rect_gameplay: Rect2, geometry: Dictionary) -> void:
-	var key := "%s|%s|%s|%s" % [arena_rect_gameplay, String(geometry.get("kind", "")), geometry.get("bounds", Rect2()), geometry.get("corridor_half_height", 0.0)]
-	if key == _boundary_cache_key:
-		return
-	_boundary_cache_key = key
-	_boundary_walls = []
-	_boundary_kept_structures = []
-	_active_tower_feet_world = Vector2.INF
-	var domain := _walkable_domain_world(arena_rect_gameplay, geometry)
-	if domain.size.x <= 2.0 or domain.size.y <= 2.0:
-		return
-	_boundary_walls = _boundary_wall_placements(domain, geometry)
-	for placement in _structures:
-		var feet_world := gameplay_to_world(_point(placement.get("feet", [])))
-		## Keep an authored ruin only when its base stands outside the walkable
-		## domain; everything the player can reach must stay collision-honest.
-		var base_band := _boundary_base_band(feet_world)
-		if not base_band.intersects(domain):
-			_boundary_kept_structures.append({"sprite_id": String(placement.get("id", "")), "feet_world": feet_world, "base_band": base_band})
-	## The tower stays the skyline landmark but its base moves behind the top
-	## wall band, where the clamp makes it unreachable.
-	_active_tower_feet_world = Vector2(clampf(domain.get_center().x, 120.0, WORLD_SIZE.x - 120.0), domain.position.y - 92.0)
-
-
-func _walkable_domain_world(arena_rect_gameplay: Rect2, geometry: Dictionary) -> Rect2:
-	var domain := Rect2(gameplay_to_world(arena_rect_gameplay.position), gameplay_to_world(arena_rect_gameplay.end) - gameplay_to_world(arena_rect_gameplay.position))
-	if String(geometry.get("kind", "")) == "corridor":
-		## The lane half height maps the RAW rect: the padded geometry's half
-		## already shrank with the padding, and 14/16/0 px must draw identical
-		## walls. This includes the small-map branch where 25% of the raw
-		## height clamps under the 72 px cap.
-		var half: float = minf(72.0, arena_rect_gameplay.size.y * 0.25)
-		var center_gameplay: Vector2 = geometry.get("center", arena_rect_gameplay.get_center())
-		var top_world := gameplay_to_world(Vector2(arena_rect_gameplay.get_center().x, center_gameplay.y - half)).y
-		var bottom_world := gameplay_to_world(Vector2(arena_rect_gameplay.get_center().x, center_gameplay.y + half)).y
-		domain = Rect2(Vector2(domain.position.x, top_world), Vector2(domain.size.x, bottom_world - top_world))
-	return domain
-
-
-func _boundary_wall_placements(domain: Rect2, geometry: Dictionary) -> Array[Dictionary]:
-	var walls: Array[Dictionary] = []
-	var corridor := String(geometry.get("kind", "")) == "corridor"
-	## Top band: feet on the raw edge, the art rises away from the field.
-	## No gap on the top band: there is no door there, and a hole would be an
-	## invisible wall over plain snow.
-	_boundary_wall_run(walls, Vector2(domain.position.x, domain.position.y), Vector2(domain.end.x, domain.position.y), 0, false, [])
-	## Bottom band: low piers only, feet just outside so the base never reaches
-	## into the field; the cutaway budget keeps a hero standing there visible.
-	_boundary_wall_run(walls, Vector2(domain.position.x, domain.end.y + 10.0), Vector2(domain.end.x, domain.end.y + 10.0), 1, true, [])
-	if not corridor:
-		## Side bands with the recognised passage mid-edge: the ruin gate sprite
-		## is the doorway, so no chevron arrow is needed to point at it. The run
-		## stands BOUNDARY_SIDE_OFFSET outside so the whole 128 px base band
-		## clears the domain — feet outside alone would still leave the art's
-		## solid base hanging over walkable ground.
-		_boundary_wall_run(walls, Vector2(domain.position.x - BOUNDARY_SIDE_OFFSET, domain.position.y), Vector2(domain.position.x - BOUNDARY_SIDE_OFFSET, domain.end.y), 2, false, [domain.get_center()])
-		_boundary_wall_run(walls, Vector2(domain.end.x + BOUNDARY_SIDE_OFFSET, domain.position.y), Vector2(domain.end.x + BOUNDARY_SIDE_OFFSET, domain.end.y), 3, false, [domain.get_center()])
-		## The doorway itself carries the authored gate: a real closed-door
-		## sprite in the wall line marks the battle-sealed passage.
-		var entry_gate := Vector2(domain.position.x - BOUNDARY_SIDE_OFFSET, domain.get_center().y)
-		var exit_gate := Vector2(domain.end.x + BOUNDARY_SIDE_OFFSET, domain.get_center().y)
-		walls.append({"sprite_id": "ruin.gate", "feet_world": entry_gate, "base_band": _boundary_base_band(entry_gate)})
-		walls.append({"sprite_id": "ruin.gate", "feet_world": exit_gate, "base_band": _boundary_base_band(exit_gate)})
-	else:
-		## The corridor's walkable band meets the map edge at both lane ends;
-		## its sealed gates stand just outside those ends in the same line.
-		var lane_entry := Vector2(domain.position.x - BOUNDARY_SIDE_OFFSET, domain.get_center().y)
-		var lane_exit := Vector2(domain.end.x + BOUNDARY_SIDE_OFFSET, domain.get_center().y)
-		walls.append({"sprite_id": "ruin.gate", "feet_world": lane_entry, "base_band": _boundary_base_band(lane_entry)})
-		walls.append({"sprite_id": "ruin.gate", "feet_world": lane_exit, "base_band": _boundary_base_band(lane_exit)})
-		for corner_offset: Vector2 in [Vector2(-14.0, -6.0), Vector2(14.0, -6.0), Vector2(-14.0, 10.0), Vector2(14.0, 10.0)]:
-			var corner := Vector2(domain.position.x if corner_offset.x < 0.0 else domain.end.x, domain.position.y if corner_offset.y < 0.0 else domain.end.y + 10.0)
-			var corner_feet := corner + corner_offset
-			walls.append({"sprite_id": "ruin.wall_corner", "feet_world": corner_feet, "base_band": _boundary_base_band(corner_feet)})
-	return walls
-
-
-func _boundary_wall_run(walls: Array[Dictionary], from: Vector2, to: Vector2, edge_id: int, low: bool, gaps: Array[Vector2]) -> void:
-	var horizontal := is_equal_approx(from.y, to.y)
-	var length := (to.x - from.x) if horizontal else (to.y - from.y)
-	if length <= BOUNDARY_STEP:
-		return
-	var count := int(length / BOUNDARY_STEP)
-	for k in count:
-		var t := (float(k) + 0.5) / float(count)
-		var jitter := float((k * 7 + edge_id * 13) % 9) - 4.0
-		var position := from.lerp(to, t)
-		if horizontal:
-			position.x += jitter
-		else:
-			position.y += jitter
-		## Both orientations keep the recognised doorway clear: a piece too close
-		## to a gap point along the run axis would wall the passage shut.
-		var near_gate := false
-		for gap: Vector2 in gaps:
-			var along := position.x if horizontal else position.y
-			var gap_along := gap.x if horizontal else gap.y
-			near_gate = near_gate or absf(along - gap_along) < 96.0
-		if near_gate:
-			continue
-		var sprite_id := "ruin.low_pier" if low or (k + edge_id) % 3 == 2 else "ruin.broken_wall"
-		walls.append({"sprite_id": sprite_id, "feet_world": position, "base_band": _boundary_base_band(position)})
-
-
-## The solid ground-contact band of a wall piece: the six-pixel row directly
-## above its feet line across the full cell width. This is what the audit
-## intersects with the walkable domain; art hanging above ground level is
-## foreground visual only and goes through the cutaway budget.
-func _boundary_base_band(feet_world: Vector2) -> Rect2:
-	return Rect2(feet_world.x - BOUNDARY_CELL_HALF_WIDTH, feet_world.y - BOUNDARY_BASE_BAND_HEIGHT, BOUNDARY_CELL_HALF_WIDTH * 2.0, BOUNDARY_BASE_BAND_HEIGHT)
-
-
-func boundary_terrain_walls() -> Array[Dictionary]:
-	return _boundary_walls.duplicate(true)
-
-
-func boundary_terrain_structures() -> Array[Dictionary]:
-	return _boundary_kept_structures.duplicate(true)
-
-
-func active_tower_feet_world() -> Vector2:
-	return _active_tower_feet_world if _active_tower_feet_world != Vector2.INF else tower_feet_world()
-
-
 func draw_tower(canvas: CanvasItem, hero_world_point: Vector2) -> void:
-	var feet := active_tower_feet_world()
+	var feet := tower_feet_world()
 	var faded := _tower_upper_faded(hero_world_point)
 	var cut := _cutaway_for_cell("tower", feet, hero_world_point)
 	draw_sprite(canvas, "tower.base", feet, false, Color.WHITE, cut["window"], cut["alpha"])

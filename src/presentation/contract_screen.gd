@@ -79,7 +79,6 @@ var _status_message := ""
 var _objective_label: Label
 var _objective_meta: Label
 var _risk_label: Label
-var _boss_readiness_label: Label
 var _details_button: Button
 var _details_dialog: AcceptDialog
 var _details_label: Label
@@ -262,11 +261,6 @@ func _build_ui() -> void:
 	_risk_label.add_theme_font_size_override("font_size", 18)
 	_risk_label.add_theme_color_override("font_color", ShellThemeScript.WARNING)
 	brief.add_child(_risk_label)
-	_boss_readiness_label = _field_label("")
-	_boss_readiness_label.name = "BossReadinessLabel"
-	_boss_readiness_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_boss_readiness_label.visible = false
-	brief.add_child(_boss_readiness_label)
 	var reward_heading := _field_label("带回镇里")
 	reward_heading.name = "ContractRewardHeading"
 	reward_heading.add_theme_font_size_override("font_size", 22)
@@ -580,19 +574,6 @@ func _apply_selected_contract() -> void:
 	_contract_info_label.text = _contract_brief(node)
 	_risk_label.text = _route_risks(node)
 	_risk_label.visible = not _risk_label.text.is_empty()
-	var boss_route := false
-	var node_definition := _campaign_registry.get_node(String(node.get("id", "")))
-	for room: Dictionary in node_definition.get("room_sequence", []):
-		if String(room.get("boss_id", "")) == "threshold_colossus":
-			boss_route = true
-			break
-	_boss_readiness_label.visible = boss_route
-	if boss_route:
-		var resolved := _resolved_build()
-		var training_value: Variant = _build_snapshot.get("training", {})
-		var matched := _matched_training_report(training_value if training_value is Dictionary else {}, str(resolved.get("build_fingerprint", "")).strip_edges())
-		var readiness := ApplicationState.boss_departure_readiness(resolved, _profile, String(matched.get("state", "")))
-		_boss_readiness_label.text = _boss_readiness_text(readiness)
 	_reward_label.text = _compact_tags(node.get("drop_tags", []))
 	_reward_label.tooltip_text = _tag_summary(node.get("drop_tags", []))
 	_first_reward_card.visible = not bool(node.get("completed", false)) and _tag_summary(node.get("first_reward_tags", [])) != "无"
@@ -642,45 +623,6 @@ func _route_risks(node: Dictionary) -> String:
 				if not label in risks: risks.append(label)
 	if risks.is_empty(): return ""
 	return ("可能遇到 · " if bool(node.get("repeatable", false)) else "留意 · ") + " / ".join(risks)
-
-
-func _boss_readiness_text(report: Dictionary) -> String:
-	## Player-language departure advice for the sealed wall: one status line and
-	## exactly one next step, with the manual departure always stated open.
-	if bool(report.get("ready", false)):
-		return "出征建议 · 箭链已验证指数，可以出发。"
-	var reason_names := {
-		"growth_convergent": "箭链仍收敛",
-		"growth_critical": "箭链临近临界",
-		"growth_unknown": "构筑数据待确认",
-		"training_missing": "尚未验律",
-	}
-	var standing: Array[String] = []
-	for reason: Variant in report.get("reasons", []):
-		standing.append(String(reason_names.get(String(reason), String(reason))))
-	var lines: Array[String] = []
-	lines.append("出征建议 · " + ("；".join(standing) if not standing.is_empty() else "箭链状态待确认"))
-	var rewards: Array = report.get("unequipped_rewards", [])
-	if not rewards.is_empty():
-		var names: Array[String] = []
-		for reward: Variant in rewards:
-			names.append(_reward_item_name(reward if reward is Dictionary else {}))
-		lines.append("下一步 · 到备行架装备已获奖励：" + "、".join(names))
-	elif "growth_convergent" in report.get("reasons", []) or "growth_critical" in report.get("reasons", []):
-		lines.append("下一步 · 到回火砧为奖励装备添铸/精炼续行词条（词条律筹支线供筹），再验律复测")
-	else:
-		lines.append("下一步 · 到验律场运行训练，确认箭链增长")
-	lines.append("仍可手动出发。")
-	return "\n".join(lines)
-
-
-func _reward_item_name(reward: Dictionary) -> String:
-	if String(reward.get("rune_id", "")) == "breeding_split":
-		return "孳生分裂手套"
-	if "pack_hunt_mark" in String(reward.get("instance_id", "")):
-		return "群猎印记戒指"
-	var base := String(reward.get("base_item_id", ""))
-	return base if not base.is_empty() else "首通奖励装备"
 
 
 func _open_contract_details() -> void:
