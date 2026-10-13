@@ -138,7 +138,7 @@ func _test_concept_framing(hub, failures: Array[String]) -> void:
 	_expect(view.hero_screen_anchor() == Vector2(layout.hero_screen_anchor[0], layout.hero_screen_anchor[1]), "base hub: formal camera anchor differs from the published layout", failures)
 	_expect(view.world_size() == Vector2(1536, 960), "base hub: expanded town dimensions changed", failures)
 	_expect(audit.view_size.x < view.world_size().x * 0.5 and audit.view_size.y < view.world_size().y * 0.5, "base hub: the whole town is visible without walking", failures)
-	_expect(not view._collision.is_blocked(view.hero_world_position()), "base hub: published spawn intersects a footprint", failures)
+	_expect(view.hero_position_is_clear(view.hero_world_position()), "base hub: published spawn intersects a footprint", failures)
 
 
 
@@ -200,7 +200,7 @@ func _test_walk_to_external_stations(hub, failures: Array[String]) -> void:
 				var offset: Vector2 = target - view.hero_world_position()
 				hub.move_hero(offset, minf(1.0 / 60.0, offset.length() / view.HERO_SPEED))
 				steps += 1
-			_expect(view.hero_world_position().distance_to(target) <= 0.05 and not view._collision.is_blocked(view.hero_world_position()), "base hub: published route blocked: %s / %s" % [id, target], failures)
+			_expect(view.hero_world_position().distance_to(target) <= 0.05 and view.hero_position_is_clear(view.hero_world_position()), "base hub: published route blocked: %s / %s" % [id, target], failures)
 		_expect(hub.get_nearby_feature_id() == id, "base hub: authored approach did not select " + id, failures)
 		var before := events.size()
 		var event := InputEventKey.new()

@@ -1,6 +1,8 @@
 extends SceneTree
 
 const Game = preload("res://src/game/game_root.gd")
+const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
+const LayoutBlockerLoaderScript := preload("res://src/runtime/geometry/layout_blocker_loader.gd")
 var errors: Array[String] = []
 
 func _initialize() -> void: call_deferred("_run")
@@ -88,6 +90,10 @@ func _finish(game: Node) -> void:
 func _test_resident_approaches(view) -> Dictionary:
 	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://art/production/p1/hamlet_town/layout.json"))
 	var size: Vector2 = view.world_size()
+	var motor := ActorMotorScript.new(6.0)
+	var loaded: Dictionary = LayoutBlockerLoaderScript.populate_motor(motor, layout)
+	_expect(bool(loaded.ok), "resident approach geometry failed to load")
+	var bounds: Rect2 = view.world_bounds().grow(float(motor.radius))
 	var spawn := Vector2(layout.hero_start_uv[0], layout.hero_start_uv[1]) * size
 	var approaches := {}
 	var roles := {}
@@ -98,14 +104,14 @@ func _test_resident_approaches(view) -> Dictionary:
 		var position := spawn
 		for uv: Array in layout.routes_uv[role]:
 			var target := Vector2(float(uv[0]), float(uv[1])) * size
-			var reached: Vector2 = view._collision.move(position, target - position, view.world_bounds())
-			_expect(reached.distance_to(target) < 0.05 and not view._collision.is_blocked(reached), String(resident.id) + " authored approach blocked at " + str(reached))
+			var reached: Vector2 = motor.move(position, target - position, bounds).position
+			_expect(reached.distance_to(target) < 0.05 and motor.is_position_clear(reached, bounds), String(resident.id) + " authored approach blocked at " + str(reached))
 			position = reached
 		var found := false
 		for index in 32:
 			var target: Vector2 = resident.feet + Vector2.from_angle(TAU * float(index) / 32.0) * 22.0
-			if view._collision.is_blocked(target): continue
-			var reached: Vector2 = view._collision.move(position, target - position, view.world_bounds())
+			if not motor.is_position_clear(target, bounds): continue
+			var reached: Vector2 = motor.move(position, target - position, bounds).position
 			if reached.distance_to(target) >= 0.05: continue
 			var closest := true
 			for feature: String in ["contract", "loadout", "forge", "training", "proxy"]:

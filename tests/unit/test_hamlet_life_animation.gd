@@ -113,7 +113,7 @@ func _test_formal_town_residents() -> void:
 		var id := String(resident.id)
 		var item: Dictionary = declared.get(id, {})
 		var feet := Vector2(float(item.feet_uv[0]), float(item.feet_uv[1])) * view.world_size()
-		_expect(resident.feet == feet and not view._collision.is_blocked(feet + Vector2(0, 16)), "town life: role placement is not approachable " + id)
+		_expect(resident.feet == feet and view.hero_position_is_clear(feet + Vector2(0, 16)), "town life: role placement is not approachable " + id)
 		_expect(resident.clip == "%s.south.work" % id and String(resident.texture).begins_with(HamletLifeAnimationScript.LIFE_DIR) and resident.frames == 4, "town life: resident uses a static ghost " + id)
 		var node := view._sprite_nodes.get(id) as Sprite2D
 		_expect(node != null and node.get_parent() == view.actor_layer and node.scale == Vector2.ONE, "town life: resident detached from world feet-sort or enlarged " + id)
