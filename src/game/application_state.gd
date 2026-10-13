@@ -40,14 +40,14 @@ const PITY_TARGET_POWER := "carrier_power"
 const BOSS_BOTTLENECK_GROWTH_CONVERGENT := {
 	"id": "growth_convergent",
 	"title": "增长收敛，穿刺链未能成长",
-	"action": "到回火砧为奖励装备添铸并精炼续行词条（词条律筹支线供筹），验律复测后再挑战",
-	"destination": "forge",
+	"action": "去定向支线获取增长概率词条，让穿刺链持续成长后再挑战",
+	"destination": "mainline_05_growth_gate",
 }
 const BOSS_BOTTLENECK_GROWTH_CRITICAL := {
 	"id": "growth_critical",
 	"title": "增长停在临界，穿刺链无法扩张",
-	"action": "到回火砧添铸并精炼续行词条突破临界（词条律筹支线供筹），验律复测后再挑战",
-	"destination": "forge",
+	"action": "去定向支线获取增长概率词条，突破临界增长后再挑战",
+	"destination": "mainline_05_growth_gate",
 }
 const BOSS_BOTTLENECK_TARGETING_RANGE_SHORT := {
 	"id": "targeting_range_short",
@@ -2144,67 +2144,7 @@ func _classify_boss_bottleneck(resolved_build: Dictionary) -> Dictionary:
 	return BOSS_BOTTLENECK_BOSS_PATTERN_SURVIVAL.duplicate(true)
 
 
-static func boss_departure_readiness(resolved_build: Dictionary, profile: Dictionary, training_state: String = "") -> Dictionary:
-	## Read-only departure readiness for the chapter-one wall. The authority is
-	## the exponential verdict (R>1) as confirmed by the matched training report;
-	## drop farming alone keeps it convergent, so the guidance names the forge
-	## path. The sealed boss's bar hides sub-calibration damage, so the contract
-	## screen states where the arrow chain stands before departure. Nothing here
-	## writes the profile, gates the button, or gifts items.
-	var report := {
-		"ready": false, "reasons": [], "steps": [], "unequipped_rewards": [],
-	}
-	var reasons: Array = report.reasons
-	var effective_state := training_state.strip_edges().to_lower()
-	var classification := String(resolved_build.get("growth_classification", "")).to_lower()
-	if effective_state.is_empty():
-		effective_state = classification
-		reasons.append("training_missing")
-	if effective_state != "exponential":
-		reasons.append("growth_%s" % (effective_state if not effective_state.is_empty() else "unknown"))
-	if reasons.has("training_missing"):
-		report.steps.append("training")
-	if reasons.has("growth_convergent") or reasons.has("growth_critical"):
-		report.steps.append("continuation")
-	report.ready = reasons.is_empty()
-	if not report.ready:
-		report.unequipped_rewards = _unequipped_first_rewards(profile)
-	return report
-
-
-static func _unequipped_first_rewards(profile: Dictionary) -> Array:
-	var equipped_ids: Array = []
-	var active_value: Variant = profile.get("active_build", {})
-	var active: Dictionary = active_value if active_value is Dictionary else {}
-	var equipped_value: Variant = active.get("equipped_item_ids", {})
-	if equipped_value is Dictionary:
-		for value: Variant in (equipped_value as Dictionary).values():
-			equipped_ids.append(String(value))
-	var inventory_value: Variant = profile.get("inventory", {})
-	var inventory: Dictionary = inventory_value if inventory_value is Dictionary else {}
-	var equipment_value: Variant = inventory.get("equipment", [])
-	var equipment: Array = equipment_value if equipment_value is Array else []
-	var found: Array = []
-	for item: Variant in equipment:
-		if not item is Dictionary:
-			continue
-		var entry: Dictionary = item
-		var source_value: Variant = entry.get("source", {})
-		var source: Dictionary = source_value if source_value is Dictionary else {}
-		if String(source.get("type", "")) != "campaign_first_reward":
-			continue
-		var instance_id := String(entry.get("instance_id", ""))
-		if instance_id.is_empty() or instance_id in equipped_ids:
-			continue
-		found.append({
-			"instance_id": instance_id,
-			"base_item_id": String(entry.get("base_item_id", "")),
-			"rune_id": String(entry.get("rune_id", "")),
-		})
-	return found
-
-
-static func _boss_parameter(parameters: Dictionary, key: String, fallback: float) -> float:
+func _boss_parameter(parameters: Dictionary, key: String, fallback: float) -> float:
 	var value: Variant = parameters.get(key, null)
 	if typeof(value) != TYPE_INT and typeof(value) != TYPE_FLOAT:
 		return fallback
