@@ -201,13 +201,16 @@ func _prepare_occlusion(drawables: Array[Dictionary], frame: Dictionary, world_v
 			var feet: Vector2 = drawable.world
 			if drawable.kind == "boss_part":
 				var part: Dictionary = drawable.part
-				front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": world_view.sprite_art_box(String(part.sprite_id), part.feet), "base_alpha": 1.0})
+				var visibility: Dictionary = world_view.sprite_occlusion_descriptor(String(part.sprite_id), part.feet)
+				front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": visibility.get("art_box", Rect2()), "visibility": visibility, "base_alpha": 1.0})
 			elif drawable.kind == "corpse":
 				var corpse_frame: Dictionary = drawable.corpse.get("frame", {})
 				if not corpse_frame.is_empty() and not bool(corpse_frame.get("fallback", true)):
-					front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": _enemy_frame_art_box(corpse_frame, feet, world_view), "base_alpha": 1.0})
+					var corpse_visibility := _enemy_frame_occlusion_descriptor(corpse_frame, feet, world_view)
+					front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": corpse_visibility.get("art_box", Rect2()), "visibility": corpse_visibility, "base_alpha": 1.0})
 			elif drawable.kind == "enemy":
-				front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": _enemy_art_box(frame, drawable.enemy, feet, world_view), "base_alpha": 1.0})
+				var enemy_visibility := _enemy_occlusion_descriptor(frame, drawable.enemy, feet, world_view)
+				front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": enemy_visibility.get("art_box", Rect2()), "visibility": enemy_visibility, "base_alpha": 1.0})
 	world_view.prepare_actor_occlusion(front_cells, world_view.gameplay_to_world(frame["player_position"]))
 
 
@@ -383,11 +386,13 @@ func _draw_enemy(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, 
 	var modulate := Color(1.6, 1.6, 1.6, 1.0) if int(frame["sim_tick"]) < enemy.hit_flash_until_tick else role_tint
 	var action_frame := _enemy_action_frame(frame, enemy.entity_id)
 	if not action_frame.is_empty():
-		var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet, world_view), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
+		var visibility := _enemy_frame_occlusion_descriptor(action_frame, feet, world_view)
+		var cut: Dictionary = world_view.cutaway_for(visibility.get("art_box", Rect2()), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id, visibility)
 		_draw_enemy_action_frame(canvas, world_view, action_frame, feet, modulate, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 	else:
 		var sprite_id := "enemy.%s.%s" % [_enemy_role_id(enemy), _enemy_pose_id(enemy)]
-		var cut: Dictionary = world_view.cutaway_for(world_view.sprite_art_box(sprite_id, feet, enemy.facing.x < -0.001), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
+		var visibility: Dictionary = world_view.sprite_occlusion_descriptor(sprite_id, feet, enemy.facing.x < -0.001)
+		var cut: Dictionary = world_view.cutaway_for(visibility.get("art_box", Rect2()), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id, visibility)
 		world_view.draw_sprite(canvas, sprite_id, feet, enemy.facing.x < -0.001, modulate, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 
 
@@ -396,7 +401,8 @@ func _draw_enemy_corpse(canvas: CanvasItem, frame: Dictionary, world_view: RefCo
 	if action_frame.is_empty() or bool(action_frame.get("fallback", true)):
 		return
 	var feet: Vector2 = world_view.gameplay_to_world(corpse.get("position", Vector2.ZERO) as Vector2)
-	var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet, world_view), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
+	var visibility := _enemy_frame_occlusion_descriptor(action_frame, feet, world_view)
+	var cut: Dictionary = world_view.cutaway_for(visibility.get("art_box", Rect2()), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id, visibility)
 	_draw_enemy_action_frame(canvas, world_view, action_frame, feet, Color.WHITE, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 
 
@@ -410,19 +416,35 @@ func _enemy_frame_art_box(action_frame: Dictionary, feet_world: Vector2, world_v
 	if rect.size.x <= 0 or rect.size.y <= 0:
 		return Rect2()
 	var anchor: Vector2i = action_frame.get("anchor", EnemyAnimationScript.DEFAULT_ANCHOR)
-	var texture: Texture2D = action_frame.get("texture")
-	if texture != null and world_view != null and world_view.has_method("frame_art_box"):
-		var visible_box: Rect2 = world_view.frame_art_box(texture, Rect2(rect), feet_world, Vector2(anchor), Vector2.ZERO, bool(action_frame.get("flip_x", false)))
+	if world_view != null and world_view.has_method("frame_occlusion_descriptor"):
+		var visibility := _enemy_frame_occlusion_descriptor(action_frame, feet_world, world_view)
+		var visible_box: Rect2 = visibility.get("art_box", Rect2())
 		if visible_box.size.x > 0.0 and visible_box.size.y > 0.0:
 			return visible_box
 	return Rect2((feet_world - Vector2(anchor)).round(), Vector2(rect.size))
 
 
-func _enemy_art_box(frame: Dictionary, enemy: CombatEnemyState, feet_world: Vector2, world_view: RefCounted) -> Rect2:
+func _enemy_frame_occlusion_descriptor(action_frame: Dictionary, feet_world: Vector2, world_view: RefCounted) -> Dictionary:
+	var rect: Rect2i = action_frame.get("rect", Rect2i())
+	var anchor: Vector2i = action_frame.get("anchor", EnemyAnimationScript.DEFAULT_ANCHOR)
+	var texture: Texture2D = action_frame.get("texture")
+	if world_view != null and world_view.has_method("frame_occlusion_descriptor"):
+		return world_view.frame_occlusion_descriptor(texture, Rect2(rect), feet_world, Vector2(anchor), Vector2.ZERO, bool(action_frame.get("flip_x", false)))
+	return {"art_box": Rect2((feet_world - Vector2(anchor)).round(), Vector2(rect.size)), "conservative": true}
+
+
+func _enemy_occlusion_descriptor(frame: Dictionary, enemy: CombatEnemyState, feet_world: Vector2, world_view: RefCounted) -> Dictionary:
 	var action_frame := _enemy_action_frame(frame, enemy.entity_id)
 	if not action_frame.is_empty():
-		return _enemy_frame_art_box(action_frame, feet_world, world_view)
-	return world_view.sprite_art_box("enemy.%s.%s" % [_enemy_role_id(enemy), _enemy_pose_id(enemy)], feet_world, enemy.facing.x < -0.001)
+		return _enemy_frame_occlusion_descriptor(action_frame, feet_world, world_view)
+	var sprite_id := "enemy.%s.%s" % [_enemy_role_id(enemy), _enemy_pose_id(enemy)]
+	if world_view != null and world_view.has_method("sprite_occlusion_descriptor"):
+		return world_view.sprite_occlusion_descriptor(sprite_id, feet_world, enemy.facing.x < -0.001)
+	return {"art_box": Rect2(feet_world - Vector2(24.0, 44.0), Vector2(48.0, 48.0)), "conservative": true}
+
+
+func _enemy_art_box(frame: Dictionary, enemy: CombatEnemyState, feet_world: Vector2, world_view: RefCounted) -> Rect2:
+	return _enemy_occlusion_descriptor(frame, enemy, feet_world, world_view).get("art_box", Rect2())
 
 
 func _draw_enemy_action_frame(canvas: CanvasItem, world_view: RefCounted, action_frame: Dictionary, feet_world: Vector2, modulate: Color, cut: Rect2, cut_alpha: float) -> void:
