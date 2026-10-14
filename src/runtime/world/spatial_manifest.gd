@@ -1,6 +1,8 @@
 class_name SpatialManifest
 extends RefCounted
 
+const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+
 ## Pure, build-produced spatial data.  It describes authored relationships and
 ## channel capabilities; it never owns actors, node references or run state.
 
@@ -13,6 +15,7 @@ const FIELDS: Array[String] = [
 	"gameplay_spatial_metadata",
 ]
 const CHANNELS: Array[String] = ["movement", "navigation", "vision", "projectile", "occlusion"]
+const SOCKET_KINDS: Array[String] = ["spawn", "interaction", "exit"]
 const _VOLATILE_KEYS: Array[String] = [
 	"instance_id",
 	"node_instance_id",
@@ -108,6 +111,21 @@ func movement_bindings() -> Array[Dictionary]:
 	return bindings_for_channel("movement")
 
 
+## Converts the authored movement binding into the runtime boundary contract.
+## JSON manifests use plain arrays; the motor receives Rect2/Vector2 values only
+## after this explicit conversion. The first movement binding is canonical after
+## stable-id validation has established deterministic ordering.
+func movement_geometry() -> Dictionary:
+	for binding: Dictionary in movement_bindings():
+		if binding.get("kind", "") == "static_blocker":
+			continue
+		var geometry: Variant = binding.get("geometry", null)
+		var normalized := _normalize_movement_geometry(geometry)
+		if not normalized.is_empty():
+			return normalized
+	return {}
+
+
 func navigation_bindings() -> Array[Dictionary]:
 	return bindings_for_channel("navigation")
 
@@ -160,6 +178,8 @@ static func _validate_payload(data: Dictionary) -> Array[String]:
 	_validate_collection(data.get("traversal_profiles", []), "traversal_profiles", errors, false)
 	_validate_collection(data.get("regions_and_portals", []), "regions_and_portals", errors, false)
 	_validate_collection(data.get("spawn_interaction_exit_sockets", []), "spawn_interaction_exit_sockets", errors, false)
+	_validate_unique_ids(data.get("stable_bindings", []), "stable_bindings", errors, "duplicate_stable_id", true)
+	_validate_sockets(data.get("spawn_interaction_exit_sockets", []), errors)
 	return errors
 
 
@@ -174,6 +194,7 @@ static func _validate_collection(value: Variant, field: String, errors: Array[St
 			var identifier := _entry_id(entry)
 			if identifier.is_empty():
 				errors.append("missing_stable_id:%s[%d]" % [field, index])
+		var movement_enabled := false
 		if check_channels and entry.has("channels"):
 			if not entry["channels"] is Dictionary:
 				errors.append("invalid_channels:%s[%d]" % [field, index])
@@ -184,6 +205,129 @@ static func _validate_collection(value: Variant, field: String, errors: Array[St
 					errors.append("unknown_channel:%s" % channel)
 				elif not (entry["channels"] as Dictionary)[channel_key] is bool:
 					errors.append("invalid_channel_value:%s" % channel)
+			movement_enabled = bool((entry["channels"] as Dictionary).get("movement", false))
+		if check_channels and movement_enabled:
+			if not entry.has("geometry"):
+				errors.append("missing_movement_geometry:%s[%d]" % [field, index])
+			elif entry.get("kind", "") == "static_blocker":
+				var solid := ArenaGeometryScript.normalize_native_static_geometry(entry["geometry"])
+				if not bool(solid.get("ok", false)):
+					errors.append("invalid_static_geometry:%s[%d]" % [field, index])
+			elif _normalize_movement_geometry(entry.get("geometry", null)).is_empty():
+				errors.append("invalid_movement_geometry:%s[%d]" % [field, index])
+
+
+static func _validate_unique_ids(value: Variant, field: String, errors: Array[String], duplicate_error: String, require_id: bool) -> void:
+	var seen: Dictionary = {}
+	var entries: Array = _collection_entries(value)
+	for index in entries.size():
+		if not entries[index] is Dictionary:
+			continue
+		var identifier := _entry_id(entries[index] as Dictionary)
+		if identifier.is_empty():
+			if require_id and field == "stable_bindings":
+				errors.append("missing_stable_id:%s[%d]" % [field, index])
+			continue
+		if seen.has(identifier):
+			errors.append("%s:%s" % [duplicate_error, identifier])
+		else:
+			seen[identifier] = true
+
+
+static func _validate_sockets(value: Variant, errors: Array[String]) -> void:
+	var seen: Dictionary = {}
+	var entries: Array = _collection_entries(value)
+	for index in entries.size():
+		if not entries[index] is Dictionary:
+			continue
+		var entry: Dictionary = entries[index]
+		var identifier := _entry_id(entry)
+		if identifier.is_empty():
+			errors.append("missing_socket_id:spawn_interaction_exit_sockets[%d]" % index)
+		else:
+			if seen.has(identifier):
+				errors.append("duplicate_socket_id:%s" % identifier)
+			else:
+				seen[identifier] = true
+		var kind := String(entry.get("kind", "")).strip_edges().to_lower()
+		if kind not in SOCKET_KINDS:
+			errors.append("invalid_socket_kind:%s[%d]" % [kind if not kind.is_empty() else "missing", index])
+
+
+static func _normalize_movement_geometry(value: Variant) -> Dictionary:
+	if not value is Dictionary:
+		return {}
+	var source: Dictionary = value
+	var kind := String(source.get("type", "")).strip_edges().to_lower()
+	match kind:
+		"rect":
+			var rect := _rect_from(source.get("rect", null))
+			if not _valid_rect(rect):
+				return {}
+			return {"type": "rect", "rect": rect}
+		"corridor":
+			var corridor := _rect_from(source.get("rect", null))
+			var half_height_value: Variant = source.get("half_height", null)
+			if not _valid_rect(corridor) or not _valid_number(half_height_value):
+				return {}
+			var half_height := float(half_height_value)
+			if String(source.get("axis", "horizontal")).to_lower() != "horizontal" or half_height <= 0.0 or half_height > corridor.size.y * 0.5:
+				return {}
+			return {
+				"type": "corridor",
+				"rect": corridor,
+				"axis": "horizontal",
+				"half_height": half_height,
+			}
+		"ring":
+			var center := _vector2_from(source.get("center", null))
+			var inner_value: Variant = source.get("inner_radius", null)
+			var outer_value: Variant = source.get("outer_radius", null)
+			if not _valid_vector(center) or not _valid_number(inner_value) or not _valid_number(outer_value):
+				return {}
+			var inner := float(inner_value)
+			var outer := float(outer_value)
+			if inner < 0.0 or outer <= inner:
+				return {}
+			return {
+				"type": "ring",
+				"center": center,
+				"inner_radius": inner,
+				"outer_radius": outer,
+			}
+	return {}
+
+
+static func _rect_from(value: Variant) -> Rect2:
+	if value is Rect2:
+		return value as Rect2
+	if value is Array:
+		var values: Array = value as Array
+		if values.size() == 4 and values.all(func(item: Variant) -> bool: return _valid_number(item)):
+			return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
+	return Rect2()
+
+
+static func _vector2_from(value: Variant) -> Vector2:
+	if value is Vector2:
+		return value as Vector2
+	if value is Array:
+		var values: Array = value as Array
+		if values.size() == 2 and values.all(func(item: Variant) -> bool: return _valid_number(item)):
+			return Vector2(float(values[0]), float(values[1]))
+	return Vector2.INF
+
+
+static func _valid_rect(value: Rect2) -> bool:
+	return value.position.is_finite() and value.size.is_finite() and value.size.x > 0.0 and value.size.y > 0.0
+
+
+static func _valid_vector(value: Vector2) -> bool:
+	return value.is_finite()
+
+
+static func _valid_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value))
 
 
 static func _canonical_payload(data: Dictionary) -> Dictionary:

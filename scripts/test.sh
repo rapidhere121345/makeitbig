@@ -21,14 +21,26 @@ fi
 "$GODOT_BIN" --headless --path . --import
 "$GODOT_BIN" --headless --path . --script res://tests/run_all.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_runtime_world.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_simulation.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_arena_presenter.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_arena_actor_presenter.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_arena_combat_presenter.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_actor_motor.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_player_motion_system.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_player_combat_state.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_player_combat_rules.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_room_definition.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_room_catalog.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_rebuild_samples.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_native_concave_sample.gd
 "$GODOT_BIN" --headless --path . --script res://tests/run_training_report_builder.gd
 "$GODOT_BIN" --headless --path . --script res://tests/run_combat_state_codec.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_pixel_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_game_root_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_exploration.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_town_geometry_rebuild.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_town_native_contract.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_town_runtime.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_playtest_comfort.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_session_menu.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_character_progression.gd
@@ -54,19 +66,31 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_build_resolver.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_equipment_drop_generator.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_command_protocol.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_command_router.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_manual_combat_input.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_manual_aim_resolver.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_walkable_geometry.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_arena_geometry.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_arena_geometry_runtime.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_query.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_encounter_director.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_system.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_presentation_boundary.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_main_player_wiring.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_main_input_release.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_main_presentation_closeout.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_walkable_bounds.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_player_action_timeline.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_enemy_tactics.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_proxy_build.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_proxy_decision.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_proxy_intent_system.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_event_stream.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_presentation_events.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_feedback_audio.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_enemy_runtime.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_boss_duration.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_boss_parts_combat.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_boss_parts_presentation.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_boss_action_pose.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_combat_marks.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_enemy_animation.gd
@@ -106,21 +130,27 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_settlement_route_view.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_ending_screen.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_contract_run_controller.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_legacy_arena_adapter.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_runtime.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_repeatable_encounter_matrix.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_rules.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_smoke_input_driver.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_state_snapshot_builder.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_result.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_result_roundtrip.gd
 "$GODOT_BIN" --headless --path . --script res://tests/run_game_flow_smoke.gd
 
 STATE_DIR="${MIB_TEST_STATE_DIR:-$(pwd -P)/build/test-state}"
 mkdir -p "$STATE_DIR"
-EXPECTED_HASH=""
+# Frozen historical automation hash, recorded before the runtime replacement.
+EXPECTED_HASH="5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900"
+HISTORICAL_REPLAY_PROFILE="historical_circle_v1"
 for RENDER_RATE in 30 60 144; do
   HASH_PATH="$STATE_DIR/${RENDER_RATE}hz.sha256"
   "$GODOT_BIN" --headless --fixed-fps "$RENDER_RATE" --path . -- \
-    --auto-smoke "--state-hash-out=$HASH_PATH"
+	    --auto-smoke "--replay-geometry-profile=$HISTORICAL_REPLAY_PROFILE" "--state-hash-out=$HASH_PATH"
   ACTUAL_HASH="$(tr -d '\r\n' < "$HASH_PATH")"
-  if [[ -z "$EXPECTED_HASH" ]]; then
-    EXPECTED_HASH="$ACTUAL_HASH"
-  elif [[ "$ACTUAL_HASH" != "$EXPECTED_HASH" ]]; then
-    echo "Render-rate replay mismatch: 30Hz=$EXPECTED_HASH ${RENDER_RATE}Hz=$ACTUAL_HASH" >&2
+  if [[ "$ACTUAL_HASH" != "$EXPECTED_HASH" ]]; then
+    echo "Historical replay mismatch: golden=$EXPECTED_HASH ${RENDER_RATE}Hz=$ACTUAL_HASH" >&2
     exit 1
   fi
 done
@@ -128,7 +158,7 @@ echo "PASS  30/60/144Hz full automation replay: $EXPECTED_HASH"
 
 PRESENTATION_OFF_HASH_PATH="$STATE_DIR/presentation-off-60hz.sha256"
 "$GODOT_BIN" --headless --fixed-fps 60 --path . -- \
-  --auto-smoke --presentation-off "--state-hash-out=$PRESENTATION_OFF_HASH_PATH"
+	  --auto-smoke --presentation-off "--replay-geometry-profile=$HISTORICAL_REPLAY_PROFILE" "--state-hash-out=$PRESENTATION_OFF_HASH_PATH"
 PRESENTATION_OFF_HASH="$(tr -d '\r\n' < "$PRESENTATION_OFF_HASH_PATH")"
 if [[ "$PRESENTATION_OFF_HASH" != "$EXPECTED_HASH" ]]; then
   echo "Presentation-off replay mismatch: normal=$EXPECTED_HASH off=$PRESENTATION_OFF_HASH" >&2

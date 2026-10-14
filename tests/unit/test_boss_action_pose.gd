@@ -8,12 +8,12 @@ extends SceneTree
 ##
 ## The suite drives the pure helper with the authoritative boss timing only - a
 ## 24-tick windup, one active tick, a 24-tick recovery and a 30-tick phase
-## transition - and never starts an arena, simulates a tick or writes gameplay
-## state.
-## The recovery-bridge check at the end additionally replays the real state
-## machine in a bare main.gd harness and draws through the real world view.
+## transition. The pure helper checks do not simulate gameplay.
+## The recovery-bridge check additionally replays the real state machine in a
+## mounted Main session with real Simulation ticks and the real world view.
 
 const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd")
+const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 
 const BOSS_WINDUP_TICKS: int = 24
 const BOSS_ACTIVE_TICKS: int = 1
@@ -42,6 +42,10 @@ var failures: Array[String] = []
 
 
 func _initialize() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
 	_test_frame_contract()
 	_test_idle_zero()
 	_test_stage_bounds()
@@ -346,8 +350,11 @@ func _test_render_rate_equivalence() -> void:
 ## frame, so the seam between the authoritative active tick and the first recovery
 ## tick is measured on the numbers the draw call consumes.
 
-const MainScript = preload("res://src/game/main.gd")
+const DomainFixture = preload("res://tests/helpers/player_domain_fixture.gd")
+const Encounter = preload("res://src/game/encounter_director.gd")
+const PresentationSnapshot = preload("res://src/presentation/combat_presentation_snapshot.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
+const ArenaActorPresenterScript = preload("res://src/presentation/arena_actor_presenter.gd")
 
 ## One whole native pixel: the grid the sim's 0.001 gameplay store and the draw
 ## call's own rounding already move on.
@@ -363,6 +370,9 @@ const BRIDGE_TICK: int = 600
 ## The harness and the world view the bridge check draws through.
 var bridge_view
 var bridge_harness
+var bridge_fixture
+var bridge_session: Dictionary
+var actor_presenter
 
 
 func _test_recovery_bridge() -> void:
@@ -376,8 +386,11 @@ func _test_recovery_bridge() -> void:
 					walked += 1
 	_expect(walked == ACTIONS.size() * PHASES.size() * FACINGS.size(), "the recovery bridge walked %d of %d cases" % [walked, ACTIONS.size() * PHASES.size() * FACINGS.size()])
 	if bridge_harness != null:
-		bridge_harness.free()
+		bridge_fixture.free_session(bridge_session)
 		bridge_harness = null
+		bridge_session = {}
+		bridge_fixture = null
+	actor_presenter = null
 	bridge_view = null
 
 
@@ -386,12 +399,20 @@ func _open_bridge_harness() -> bool:
 	if not bridge_view.load_assets():
 		_expect(false, "the recovery bridge needs the published arena atlas")
 		return false
-	bridge_harness = MainScript.new()
-	## main._semantic_state_hash() reads the two runtimes _initialize_runtime()
-	## builds, and it is this check's guard: the replay hash covers both
-	## authoritative hand positions, so a bridge that wrote back would show up.
-	bridge_harness.destiny_forge = MainScript.DestinyForgeScript.new()
-	bridge_harness.proxy_runtime = MainScript.ProxyRuntimeScript.new()
+	bridge_fixture = DomainFixture.new()
+	bridge_session = bridge_fixture.mount({"room_id": "test.pose.bridge", "layout_id": "rectangle_arena", "objective_id": "hunt_elite", "enemy_ids": [], "hazard_ids": [], "elite_rule_ids": [], "boss_id": "threshold_colossus", "drop_tags": []})
+	bridge_harness = bridge_session.arena
+	actor_presenter = ArenaActorPresenterScript.new()
+	bridge_fixture.drive(bridge_harness)
+	bridge_fixture.advance_to(bridge_harness, BRIDGE_TICK)
+	var director = bridge_harness.encounter_director
+	var enemy = bridge_harness.boss
+	# Isolate the recovery bridge's real enemy state machine. Every callback
+	# runs inside Simulation after the world tick and player motor commit.
+	bridge_fixture.drive(bridge_harness, {"enemy_step": func() -> void:
+		director._advance_action_state(enemy, Encounter.BOSS_ACTIVE_TICKS, Encounter.BOSS_RECOVERY_TICKS)
+		director._update_boss_hands(enemy)
+	})
 	return true
 
 
@@ -401,7 +422,8 @@ func _open_bridge_harness() -> bool:
 ## the suite, not leave it looking green.
 func _bridge_case(action: String, phase: int, facing: Vector2) -> bool:
 	var label := "%s p%d %s" % [action, phase, facing]
-	var enemy = MainScript.EnemyData.new(Vector2(400.0, 300.0), 100.0, true, 1, "threshold_colossus")
+	var enemy = bridge_harness.boss
+	_expect(bool(bridge_harness.teleport_actor("enemy/%d" % enemy.entity_id, bridge_harness._arena_rect().get_center()).get("ok", false)), "bridge boss deployment failed")
 	var awakened := phase >= 2
 	## Each fist has its own base, exactly the pair main._update_boss_hands() and
 	## the world view use: measuring one against the other reads a 68px phantom.
@@ -411,30 +433,26 @@ func _bridge_case(action: String, phase: int, facing: Vector2) -> bool:
 	enemy.action_id = action
 	enemy.facing = facing
 	enemy.next_action_index = ACTIONS.find(action)
-	bridge_harness.sim_tick = BRIDGE_TICK
-	bridge_harness.player_position = enemy.position + facing * 200.0
-	## Exactly what main._start_boss_action() runs first; the arena-rect target
-	## shape in its second half needs a viewport this harness does not own.
-	bridge_harness._begin_action(enemy, action, MainScript.BOSS_WINDUP_TICKS)
+	bridge_harness.teleport_actor("ranger", enemy.position + facing * 200.0)
+	# Begin the real Encounter action at the currently committed world tick;
+	# subsequent cases keep advancing the same world instead of rewinding it.
+	bridge_harness.encounter_director._begin_action(enemy, action, Encounter.BOSS_WINDUP_TICKS)
 	enemy.facing = facing
-	bridge_harness.enemies.clear()
-	bridge_harness.enemies.append(enemy)
 	var impact: int = enemy.impact_tick
-	var recovery_start: int = impact + MainScript.BOSS_ACTIVE_TICKS
-	var recovery_end: int = recovery_start + MainScript.BOSS_RECOVERY_TICKS
+	var recovery_start: int = impact + Encounter.BOSS_ACTIVE_TICKS
+	var recovery_end: int = recovery_start + Encounter.BOSS_RECOVERY_TICKS
 	var drawn: Dictionary = {}
 	var published: Dictionary = {}
 	var strike: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO]
 	for tick in range(impact, recovery_end):
-		bridge_harness.sim_tick = tick
-		bridge_harness._advance_action_state(enemy, MainScript.BOSS_ACTIVE_TICKS, MainScript.BOSS_RECOVERY_TICKS)
-		bridge_harness._update_boss_hands(enemy)
+		bridge_fixture.advance_to(bridge_harness, tick)
 		var hash_before: String = bridge_harness._semantic_state_hash("recovery_bridge")
-		var frame: Dictionary = bridge_harness._boss_visual_pose(enemy)
+		var draw_enemy = PresentationSnapshot.enemy_record(enemy)
+		var frame: Dictionary = actor_presenter.boss_visual_pose(draw_enemy, tick)
 		_expect(hash_before.length() == 64, "%s: the state hash guard could not run" % label)
 		_expect(bridge_harness._semantic_state_hash("recovery_bridge") == hash_before, "%s: drawing tick %d moved the replay hash" % [label, tick])
-		drawn[tick] = _drawn_hands(enemy, frame)
-		published[tick] = _published_fields(enemy, tick)
+		drawn[tick] = _drawn_hands(draw_enemy, frame)
+		published[tick] = _published_fields(draw_enemy, tick)
 		if tick == impact:
 			strike = [enemy.left_hand_position - base_left, enemy.right_hand_position - base_right]
 	var scale: float = ArenaWorldViewScript.GAMEPLAY_TO_WORLD
@@ -533,7 +551,7 @@ func _published_fields(enemy, tick: int) -> Dictionary:
 
 
 func _render_published(fields: Dictionary) -> Array[Vector2]:
-	var enemy = MainScript.EnemyData.new(fields["position"], 100.0, true, 1, "threshold_colossus")
+	var enemy = CombatEnemyStateScript.new(fields["position"], 100.0, true, 1, "threshold_colossus")
 	enemy.phase_id = fields["phase_id"]
 	enemy.phase_state = fields["phase_state"]
 	enemy.action_id = fields["action_id"]
@@ -543,8 +561,4 @@ func _render_published(fields: Dictionary) -> Array[Vector2]:
 	enemy.facing = fields["facing"]
 	enemy.left_hand_position = fields["left"]
 	enemy.right_hand_position = fields["right"]
-	var tick_before: int = bridge_harness.sim_tick
-	bridge_harness.sim_tick = fields["tick"]
-	var drawn := _drawn_hands(enemy, bridge_harness._boss_visual_pose(enemy))
-	bridge_harness.sim_tick = tick_before
-	return drawn
+	return _drawn_hands(enemy, actor_presenter.boss_visual_pose(enemy, fields["tick"]))

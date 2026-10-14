@@ -1,0 +1,40 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource path="res://src/game/main.gd" type="Script" id="1_main"]
+[ext_resource path="res://src/runtime/world/room_asset_root.gd" type="Script" id="2_room_asset"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="RoomAsset" type="Node2D" parent="."]
+script = ExtResource("2_room_asset")
+scene_id = "combat.ring"
+layout_id = "ring"
+gameplay_source = "ring.spatial.json"
+presentation_source = "arena_world_view"
+arena_rect = Rect2(42, 190, 1196, 488)
+traversal_radius = 14.0
+
+[node name="Ground" type="Node2D" parent="RoomAsset"]
+[node name="Surface" type="Node2D" parent="RoomAsset/Ground"]
+metadata/binding_id = "ground.surface"
+[node name="GroundEffects" type="Node2D" parent="RoomAsset"]
+[node name="SortRoot" type="Node2D" parent="RoomAsset"]
+y_sort_enabled = true
+[node name="Foreground" type="Node2D" parent="RoomAsset"]
+[node name="GeometrySources" type="Node2D" parent="RoomAsset"]
+[node name="MovementBoundary" type="Node2D" parent="RoomAsset/GeometrySources"]
+metadata/binding_id = "combat/movement-boundary"
+metadata/source = "arena.geometry.v1"
+metadata/channels = {"movement": true, "navigation": true, "vision": true, "projectile": true, "occlusion": false}
+metadata/geometry = {"type": "ring", "center": [640.0, 434.0], "inner_radius": 97.6, "outer_radius": 209.84}
+[node name="Sockets" type="Node2D" parent="RoomAsset"]
+[node name="CombatSpawn" type="Marker2D" parent="RoomAsset/Sockets"]
+position = Vector2(461.7138290537235, 515.0391686119439)
+metadata/binding_id = "combat/spawn"
+metadata/kind = "spawn"
+
+[node name="EncounterOrigin" type="Marker2D" parent="RoomAsset/Sockets"]
+position = Vector2(640, 434)
+metadata/binding_id = "combat/encounter-origin"
+metadata/kind = "spawn"

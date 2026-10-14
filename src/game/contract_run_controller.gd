@@ -5,17 +5,17 @@ signal completed(result: Dictionary)
 signal abandoned(result: Dictionary)
 signal room_changed(room_index: int, room_count: int, room: Dictionary)
 
-const DEFAULT_ARENA_SCRIPT := preload("res://src/game/legacy_arena_adapter.gd")
+const DEFAULT_ROOM_RUNTIME_SCRIPT := preload("res://src/game/combat_room_runtime.gd")
 const ERROR_ALREADY_STARTED := "already_started"
 const ERROR_INVALID_ROOM_COUNT := "invalid_room_count"
 const ERROR_INVALID_ROOM_PLAN := "invalid_room_plan"
-const ERROR_ARENA_FACTORY_FAILED := "arena_factory_failed"
-const ERROR_ARENA_API_UNAVAILABLE := "arena_api_unavailable"
-const ERROR_ARENA_START_FAILED := "arena_start_failed"
+const ERROR_ROOM_RUNTIME_FACTORY_FAILED := "room_runtime_factory_failed"
+const ERROR_ROOM_RUNTIME_API_UNAVAILABLE := "room_runtime_api_unavailable"
+const ERROR_ROOM_RUNTIME_START_FAILED := "room_runtime_start_failed"
 
 ## Tests and future room implementations may inject a zero-argument factory
 ## before this node enters the tree.
-var arena_factory: Callable
+var room_runtime_factory: Callable
 
 var current_config: Dictionary:
 	get:
@@ -32,7 +32,7 @@ var room_count: int:
 var _current_config: Dictionary = {}
 var _rooms: Array[Dictionary] = []
 var _current_room_index := -1
-var _current_adapter: Node
+var _current_runtime: Node
 var _room_results: Array[Dictionary] = []
 var _rooms_completed := 0
 var _start_attempted := false
@@ -42,13 +42,13 @@ var _effects_volume := 0.45
 
 func set_effects_volume(value: float) -> void:
 	_effects_volume = clampf(value, 0.0, 1.0)
-	if is_instance_valid(_current_adapter) and _current_adapter.has_method("set_effects_volume"):
-		_current_adapter.call("set_effects_volume", _effects_volume)
+	if is_instance_valid(_current_runtime) and _current_runtime.has_method("set_effects_volume"):
+		_current_runtime.call("set_effects_volume", _effects_volume)
 
 
 func release_manual_controls() -> void:
-	if is_instance_valid(_current_adapter) and _current_adapter.has_method("release_manual_controls"):
-		_current_adapter.call("release_manual_controls")
+	if is_instance_valid(_current_runtime) and _current_runtime.has_method("release_manual_controls"):
+		_current_runtime.call("release_manual_controls")
 
 
 func start_session(config: Dictionary) -> Dictionary:
@@ -73,21 +73,21 @@ func start_session(config: Dictionary) -> Dictionary:
 
 
 func request_abandon() -> void:
-	if _finalized or _current_adapter == null or not is_instance_valid(_current_adapter):
+	if _finalized or _current_runtime == null or not is_instance_valid(_current_runtime):
 		return
-	if _current_adapter.has_method("request_abandon"):
-		_current_adapter.call("request_abandon")
+	if _current_runtime.has_method("request_abandon"):
+		_current_runtime.call("request_abandon")
 
 
 ## Presentation-only relay for the route layer: the arena screen mounted right
 ## now reports whether its published defeat clip is still on screen. It changes
-## no aggregate summary, no settlement and no adapter signal.
+## no aggregate summary, no settlement and no room-runtime signal.
 func defeat_presentation_ready() -> bool:
-	if _current_adapter == null or not is_instance_valid(_current_adapter):
+	if _current_runtime == null or not is_instance_valid(_current_runtime):
 		return true
-	if not _current_adapter.has_method("defeat_presentation_ready"):
+	if not _current_runtime.has_method("defeat_presentation_ready"):
 		return true
-	return bool(_current_adapter.call("defeat_presentation_ready"))
+	return bool(_current_runtime.call("defeat_presentation_ready"))
 
 
 func _prepare_rooms(expected_count: int) -> Dictionary:
@@ -114,47 +114,47 @@ func _prepare_rooms(expected_count: int) -> Dictionary:
 
 
 func _start_room(index: int, emit_change: bool, continued_input: RefCounted = null) -> Dictionary:
-	var adapter := _make_adapter()
-	if adapter == null:
-		return _error(ERROR_ARENA_FACTORY_FAILED)
-	if not adapter.has_method("start_session") or not adapter.has_signal("completed") or not adapter.has_signal("abandoned"):
-		adapter.queue_free()
-		return _error(ERROR_ARENA_API_UNAVAILABLE)
+	var runtime := _make_room_runtime()
+	if runtime == null:
+		return _error(ERROR_ROOM_RUNTIME_FACTORY_FAILED)
+	if not runtime.has_method("start_session") or not runtime.has_signal("completed") or not runtime.has_signal("abandoned"):
+		runtime.queue_free()
+		return _error(ERROR_ROOM_RUNTIME_API_UNAVAILABLE)
 
 	_current_room_index = index
-	_current_adapter = adapter
-	adapter.connect(&"completed", Callable(self, "_on_adapter_completed").bind(adapter, index))
-	adapter.connect(&"abandoned", Callable(self, "_on_adapter_abandoned").bind(adapter, index))
-	add_child(adapter)
+	_current_runtime = runtime
+	runtime.connect(&"completed", Callable(self, "_on_runtime_completed").bind(runtime, index))
+	runtime.connect(&"abandoned", Callable(self, "_on_runtime_abandoned").bind(runtime, index))
+	add_child(runtime)
 
 	var room_config := _current_config.duplicate(true)
 	room_config["room_index"] = index
 	room_config["room"] = _rooms[index].duplicate(true)
-	var launch_result: Variant = adapter.call("start_session", room_config)
+	var launch_result: Variant = runtime.call("start_session", room_config)
 	set_effects_volume(_effects_volume)
 	if not (launch_result is Dictionary) or not bool((launch_result as Dictionary).get("ok", false)):
-		var error_code := ERROR_ARENA_START_FAILED
+		var error_code := ERROR_ROOM_RUNTIME_START_FAILED
 		if launch_result is Dictionary:
 			error_code = String((launch_result as Dictionary).get("error", error_code))
-		_retire_current_adapter()
+		_retire_current_runtime()
 		return _error(error_code)
-	if continued_input != null and adapter.has_method("resume_continuous_manual_input"):
-		adapter.call("resume_continuous_manual_input", continued_input)
+	if continued_input != null and runtime.has_method("resume_continuous_manual_input"):
+		runtime.call("resume_continuous_manual_input", continued_input)
 
-	if emit_change and not _finalized and _current_adapter == adapter and _current_room_index == index:
+	if emit_change and not _finalized and _current_runtime == runtime and _current_room_index == index:
 		room_changed.emit(index, _rooms.size(), _rooms[index].duplicate(true))
 	return {"ok": true}
 
 
-func _make_adapter() -> Node:
-	if arena_factory.is_valid():
-		var candidate: Variant = arena_factory.call()
+func _make_room_runtime() -> Node:
+	if room_runtime_factory.is_valid():
+		var candidate: Variant = room_runtime_factory.call()
 		return candidate as Node if candidate is Node else null
-	return DEFAULT_ARENA_SCRIPT.new()
+	return DEFAULT_ROOM_RUNTIME_SCRIPT.new()
 
 
-func _on_adapter_completed(result: Dictionary, adapter: Node, index: int) -> void:
-	if not _accepts_signal(adapter, index):
+func _on_runtime_completed(result: Dictionary, runtime: Node, index: int) -> void:
+	if not _accepts_signal(runtime, index):
 		return
 	var isolated_result := result.duplicate(true)
 	_room_results.append(isolated_result)
@@ -163,14 +163,14 @@ func _on_adapter_completed(result: Dictionary, adapter: Node, index: int) -> voi
 		_rooms_completed += 1
 		if index + 1 < _rooms.size():
 			var continued_input: RefCounted = null
-			if String(_current_config.get("mode", "")) == "Manual" and adapter.has_method("take_continuous_manual_input"):
-				continued_input = adapter.call("take_continuous_manual_input") as RefCounted
-			_retire_current_adapter()
+			if String(_current_config.get("mode", "")) == "Manual" and runtime.has_method("take_continuous_manual_input"):
+				continued_input = runtime.call("take_continuous_manual_input") as RefCounted
+			_retire_current_runtime()
 			var next_started := _start_room(index + 1, true, continued_input)
 			if not bool(next_started.get("ok", false)):
 				_room_results.append({
 					"outcome": "error",
-					"error": String(next_started.get("error", ERROR_ARENA_START_FAILED)),
+					"error": String(next_started.get("error", ERROR_ROOM_RUNTIME_START_FAILED)),
 					"report": "Room runtime could not start.",
 				})
 				_finalize_completed("error")
@@ -178,15 +178,15 @@ func _on_adapter_completed(result: Dictionary, adapter: Node, index: int) -> voi
 	_finalize_completed(outcome)
 
 
-func _on_adapter_abandoned(result: Dictionary, adapter: Node, index: int) -> void:
-	if not _accepts_signal(adapter, index):
+func _on_runtime_abandoned(result: Dictionary, runtime: Node, index: int) -> void:
+	if not _accepts_signal(runtime, index):
 		return
 	_room_results.append(result.duplicate(true))
 	_finalize_abandoned()
 
 
-func _accepts_signal(adapter: Node, index: int) -> bool:
-	return not _finalized and adapter == _current_adapter and index == _current_room_index
+func _accepts_signal(runtime: Node, index: int) -> bool:
+	return not _finalized and runtime == _current_runtime and index == _current_room_index
 
 
 func _finalize_completed(outcome: String) -> void:
@@ -256,14 +256,14 @@ func _copy_config_value(key: String) -> Variant:
 	return {"value": _current_config.get(key)}.duplicate(true)["value"]
 
 
-func _retire_current_adapter() -> void:
-	var adapter := _current_adapter
-	_current_adapter = null
-	if adapter == null or not is_instance_valid(adapter):
+func _retire_current_runtime() -> void:
+	var runtime := _current_runtime
+	_current_runtime = null
+	if runtime == null or not is_instance_valid(runtime):
 		return
-	if adapter.get_parent() == self:
-		remove_child(adapter)
-	adapter.queue_free()
+	if runtime.get_parent() == self:
+		remove_child(runtime)
+	runtime.queue_free()
 
 
 func _error(code: String) -> Dictionary:

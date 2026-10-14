@@ -8,7 +8,7 @@ extends SceneTree
 ## pending or invalid with a named reason.
 
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
-const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
+const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
 ## A published sheet used as fixture pixels. No art or placeholder atlas is
 ## created by this test.
@@ -374,37 +374,26 @@ func _test_broken_deliveries(failures: Array[String]) -> void:
 
 
 func _test_view_integration(failures: Array[String]) -> void:
-	## One real view on the published atlas: the base hub draws its hero from the
-	## shared frame, with rect and anchor read from the manifest per frame.
-	var view = HamletConceptViewScript.new()
-	root.add_child(view)
-	view._ready()
-	_expect(view.load_default_assets(), "view: formal hamlet resources must load before inspecting its drawn nodes", failures)
-	_expect(view.ranger_action_pending_reasons().is_empty(), "view: the hub still reports the action atlas as pending: %s" % str(view.ranger_action_pending_reasons()), failures)
+	var hub := BaseHubScript.new()
+	root.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	var town = hub.get_town_runtime()
+	_expect(bool(hub.town_load_report.get("ok", false)), "view: native town assets did not load", failures)
 	var report: Dictionary = view.hero_animation_report()
-	_expect(report.get("fallback", true) == false, "view: the hub hero fell back to the static idle cell", failures)
-	_expect(String(report.get("clip", "")).begins_with("ranger.south."), "view: the hub hero clip is %s" % String(report.get("clip", "")), failures)
-	var metadata: Dictionary = view._hero_sprite_metadata()
-	var rect: Array = metadata.get("rect", [])
-	var anchor: Array = metadata.get("anchor", [])
-	_expect(rect.size() == 4 and Vector2i(int(rect[2]), int(rect[3])) == RangerAnimationScript.CELL, "view: the hub hero cell is %s" % str(rect), failures)
-	_expect(anchor.size() == 2 and Vector2i(int(anchor[0]), int(anchor[1])) == RangerAnimationScript.DEFAULT_ANCHOR, "view: the hub hero anchor is %s" % str(anchor), failures)
-	_expect(metadata.get("texture", null) != null, "view: the hub hero frame carries no texture", failures)
-	var diagnostic: Dictionary = view.ranger_animation_report()
-	_expect(diagnostic.has("reader") and diagnostic.has("state"), "view: the hub exposed no runtime diagnostic", failures)
-	_expect(int((diagnostic.get("reader", {}) as Dictionary).get("frame", -1)) >= 0, "view: the hub diagnostic lost the current frame", failures)
-	var shadow = view.get("_hero_shadow")
-	_expect(shadow is Polygon2D, "view: contact shadow must not sample a transparent atlas corner", failures)
-	if shadow is Polygon2D:
-		_expect(shadow.polygon.size() == 8, "view: contact shadow polygon changed", failures)
-		var bounds := Rect2(shadow.polygon[0], Vector2.ZERO)
-		for point in shadow.polygon:
-			bounds = bounds.expand(point)
-		_expect(bounds == Rect2(-12, -4, 24, 8), "view: action-cell padding must not enlarge contact footprint", failures)
+	_expect(not bool(report.get("fallback", true)) and report.get("texture", null) != null, "view: required ranger frame fell back", failures)
+	_expect(String(report.get("clip", "")).begins_with("ranger.south."), "view: town facing/clip differs", failures)
+	_expect(Vector2i((report.rect as Rect2i).size) == RangerAnimationScript.CELL and Vector2i(report.anchor) == RangerAnimationScript.DEFAULT_ANCHOR, "view: ranger cell or feet anchor changed", failures)
+	hub.move_hero(Vector2.RIGHT, 1.0 / 30.0)
+	var moving: Dictionary = view.hero_animation_report()
+	_expect(moving.action == "walk" and moving.facing == "east" and int(moving.resolved_tick) == town.simulation.tick, "view: ranger presentation does not consume the fixed tick state", failures)
+	var before: Dictionary = town.snapshot()
+	view._process(0.2)
+	_expect(town.snapshot() == before, "view: ranger presentation wrote town gameplay", failures)
 	var world = ArenaWorldViewScript.new()
 	var feet := Vector2(512, 320)
-	_expect(world.hero_cell_world(feet) == Rect2(feet - Vector2(24, 44), Vector2(48, 48)), "view: visual occlusion misses the extended action cell", failures)
-	view.free()
+	_expect(world.hero_cell_world(feet) == Rect2(feet - Vector2(24, 44), Vector2(48, 48)), "view: visual occlusion misses extended action cell", failures)
+	hub.free()
 
 
 func _fixture_atlas() -> Dictionary:

@@ -8,7 +8,7 @@ extends SceneTree
 
 const Atmosphere = preload("res://src/presentation/scene_atmosphere.gd")
 const AtmosphereLayerScript = preload("res://src/presentation/scene_atmosphere_layer.gd")
-const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
+const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
 const HearthReturnViewScript = preload("res://src/presentation/hearth_return_view.gd")
 
@@ -62,18 +62,15 @@ func _capture_hamlet() -> void:
 	viewport.size = Vector2i(1280, 720)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	root.add_child(viewport)
-	var view = HamletConceptViewScript.new()
-	viewport.add_child(view)
-	_expect(view.load_default_assets(), "GPU hamlet must load actual published assets")
+	var hub := BaseHubScript.new()
+	viewport.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	_expect(bool(hub.town_load_report.get("ok", false)), "GPU town must load native layers and actual actors")
 	view.set_world_scale(2, Vector2(1280, 720))
 	await _settle()
-	view._atmosphere_base.visible = false
-	view._atmosphere_light.visible = false
-	view._atmosphere_fore.visible = false
 	await _save(viewport, "hamlet_before.png")
-	view._atmosphere_base.visible = true
-	view._atmosphere_light.visible = true
-	view._atmosphere_fore.visible = true
+	view._process(0.51)
 	await _save(viewport, "hamlet_after.png")
 	viewport.queue_free()
 
@@ -186,21 +183,17 @@ func _test_layer() -> void:
 	_expect(layer is Node2D, "atmosphere layer must remain a Node2D drawing primitive")
 
 func _test_hamlet() -> void:
-	var view = HamletConceptViewScript.new()
-	root.add_child(view)
-	_expect(view.load_default_assets(), "hamlet: published assets did not load")
-	var report: Dictionary = view.atmosphere_report()
-	_expect(bool(report.base_ready), "hamlet: base atmosphere layer is absent")
-	_expect(bool(report.light_ready), "hamlet: additive local-light layer is absent")
-	_expect(bool(report.fore_ready), "hamlet: edge atmosphere layer is absent")
-	_expect(bool(report.drawn_inside_subviewport), "hamlet: atmosphere escaped the world SubViewport")
-	_expect(int(report.warm_light_count) == 2, "hamlet: expected exactly hearth and forge warm sockets")
-	_expect(view._atmosphere_base.z_index < 0, "hamlet: base atmosphere must stay below authored art")
-	_expect(view.world_viewport.get_node("OutsideSkirt").z_index < view.ground_base_layer.z_index, "hamlet: opaque outside skirt must not cover ground or buildings")
-	_expect(view._atmosphere_light.z_index > view.ground_base_layer.z_index, "hamlet: local light must draw above the opaque ground")
-	_expect(view._atmosphere_light.z_index < view.object_lower_layer.z_index, "hamlet: local light must stay below interactive objects")
-	_expect(view._atmosphere_fore.z_index > 0, "hamlet: edge atmosphere must stay above world art")
-	_expect(view.world_viewport.get_node_or_null("AtmosphereFore") != null, "hamlet: edge atmosphere is not owned by the viewport")
+	var hub := BaseHubScript.new()
+	root.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	_expect(bool(hub.town_load_report.get("ok", false)), "town: native assets did not load")
+	var audit := view.render_audit()
+	_expect(audit.runtime_background_patches == 0 and audit.native_count == 35, "town: native environmental art is missing")
+	_expect(view.world_presenter.get_parent().get_parent() == view.world_viewport, "town: shared world layers escaped the SubViewport")
+	_expect(view.world_presenter.ground_layer.z_index < view.world_presenter.sort_root.z_index, "town: ground covered native buildings")
+	_expect(not audit.supports_fade and not audit.supports_cutaway, "town: transparent underplate advertises opacity effects")
+	hub.free()
 
 func _test_arena() -> void:
 	var view = ArenaWorldViewScript.new()

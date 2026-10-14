@@ -1,0 +1,3653 @@
+{
+	"coordinate_convention": {
+		"scale": 1.0,
+		"units": "design_pixel",
+		"up": "negative_y"
+	},
+	"gameplay_spatial_metadata": {
+		"coordinate_precision": 0.015625,
+		"facilities": [
+			{
+				"id": "contract",
+				"label": "行路契台",
+				"landmark_offset_y": -112.0,
+				"locked": false,
+				"order": 0.0,
+				"position": [
+					283.0,
+					330.0
+				],
+				"radius": 48.0
+			},
+			{
+				"id": "loadout",
+				"label": "备行架",
+				"landmark_offset_y": -112.0,
+				"locked": false,
+				"order": 1.0,
+				"position": [
+					711.0,
+					284.0625
+				],
+				"radius": 48.0
+			},
+			{
+				"id": "forge",
+				"label": "回火砧",
+				"landmark_offset_y": -112.0,
+				"locked": false,
+				"order": 2.0,
+				"position": [
+					1107.0,
+					378.75
+				],
+				"radius": 48.0
+			},
+			{
+				"id": "training",
+				"label": "验律场",
+				"landmark_offset_y": -112.0,
+				"locked": false,
+				"order": 3.0,
+				"position": [
+					405.0,
+					540.9375
+				],
+				"radius": 48.0
+			},
+			{
+				"id": "proxy",
+				"label": "代行舱",
+				"landmark_offset_y": -112.0,
+				"locked": true,
+				"order": 4.0,
+				"position": [
+					1280.0,
+					480.0
+				],
+				"radius": 48.0
+			}
+		],
+		"geometry_source": "town.native.v1",
+		"hero_radius": 6.0,
+		"hero_screen_anchor": [
+			320.0,
+			222.0
+		],
+		"residents": [
+			{
+				"id": "iven",
+				"position": [
+					278.0,
+					300.9375
+				],
+				"radius": 7.0,
+				"role": "contract"
+			},
+			{
+				"id": "taren",
+				"position": [
+					719.0,
+					255.0
+				],
+				"radius": 7.0,
+				"role": "loadout"
+			},
+			{
+				"id": "oren",
+				"position": [
+					1065.0,
+					340.3125
+				],
+				"radius": 7.0,
+				"role": "forge"
+			},
+			{
+				"id": "leia",
+				"position": [
+					344.0,
+					538.125
+				],
+				"radius": 7.0,
+				"role": "training"
+			},
+			{
+				"id": "mira",
+				"position": [
+					1260.0,
+					452.8125
+				],
+				"radius": 7.0,
+				"role": "proxy"
+			}
+		],
+		"room_kind": "town",
+		"routes": {
+			"arrival": [
+				[
+					576.0,
+					595.3125
+				],
+				[
+					485.0,
+					605.625
+				],
+				[
+					506.0,
+					672.1875
+				],
+				[
+					519.0,
+					731.25
+				],
+				[
+					549.0,
+					796.875
+				],
+				[
+					598.0,
+					831.5625
+				],
+				[
+					548.0,
+					859.6875
+				],
+				[
+					520.0,
+					897.1875
+				]
+			],
+			"bridge": [
+				[
+					576.0,
+					595.3125
+				],
+				[
+					636.0,
+					602.8125
+				],
+				[
+					1013.0,
+					602.8125
+				],
+				[
+					1082.0,
+					606.5625
+				],
+				[
+					1072.0,
+					628.0
+				],
+				[
+					1100.0,
+					672.1875
+				],
+				[
+					1150.0,
+					693.75
+				],
+				[
+					1200.0,
+					720.0
+				],
+				[
+					1250.0,
+					743.4375
+				],
+				[
+					1300.0,
+					773.4375
+				],
+				[
+					1350.0,
+					805.3125
+				],
+				[
+					1400.0,
+					836.25
+				],
+				[
+					1430.0,
+					852.1875
+				]
+			],
+			"contract": [
+				[
+					576.0,
+					595.3125
+				],
+				[
+					510.0,
+					496.875
+				],
+				[
+					493.0,
+					398.4375
+				],
+				[
+					365.0,
+					348.75
+				],
+				[
+					283.0,
+					330.0
+				]
+			],
+			"forge": [
+				[
+					576.0,
+					595.3125
+				],
+				[
+					636.0,
+					602.8125
+				],
+				[
+					1029.0,
+					502.5
+				],
+				[
+					1091.0,
+					399.375
+				],
+				[
+					1107.0,
+					378.75
+				]
+			],
+			"loadout": [
+				[
+					576.0,
+					595.3125
+				],
+				[
+					510.0,
+					496.875
+				],
+				[
+					570.0,
+					375.0
+				],
+				[
+					661.0,
+					298.125
+				],
+				[
+					711.0,
+					284.0625
+				]
+			],
+			"proxy": [
+				[
+					576.0,
+					595.3125
+				],
+				[
+					636.0,
+					602.8125
+				],
+				[
+					1029.0,
+					502.5
+				],
+				[
+					1160.0,
+					458.4375
+				],
+				[
+					1220.0,
+					507.1875
+				],
+				[
+					1280.0,
+					480.0
+				]
+			],
+			"training": [
+				[
+					576.0,
+					595.3125
+				],
+				[
+					520.0,
+					550.3125
+				],
+				[
+					470.0,
+					500.625
+				],
+				[
+					418.0,
+					478.125
+				],
+				[
+					415.0,
+					538.125
+				],
+				[
+					405.0,
+					540.9375
+				]
+			]
+		},
+		"static_geometry": [
+			{
+				"id": "town/static/contract_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						183.0,
+						306.5625
+					],
+					[
+						176.0,
+						262.5
+					],
+					[
+						349.0,
+						234.375
+					]
+				]
+			},
+			{
+				"id": "town/static/contract_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						349.0,
+						234.375
+					],
+					[
+						362.0,
+						278.4375
+					],
+					[
+						183.0,
+						306.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_west_wall/000",
+				"kind": "polygon",
+				"points": [
+					[
+						514.0,
+						211.875
+					],
+					[
+						512.0,
+						129.375
+					],
+					[
+						596.0,
+						124.6875
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_west_wall/001",
+				"kind": "polygon",
+				"points": [
+					[
+						596.0,
+						124.6875
+					],
+					[
+						618.0,
+						246.5625
+					],
+					[
+						514.0,
+						211.875
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_back_wall/000",
+				"kind": "polygon",
+				"points": [
+					[
+						613.0,
+						136.875
+					],
+					[
+						603.0,
+						107.8125
+					],
+					[
+						765.0,
+						81.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_back_wall/001",
+				"kind": "polygon",
+				"points": [
+					[
+						765.0,
+						81.5625
+					],
+					[
+						771.0,
+						172.5
+					],
+					[
+						750.0,
+						180.9375
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_back_wall/002",
+				"kind": "polygon",
+				"points": [
+					[
+						747.0,
+						111.5625
+					],
+					[
+						613.0,
+						136.875
+					],
+					[
+						765.0,
+						81.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_back_wall/003",
+				"kind": "polygon",
+				"points": [
+					[
+						765.0,
+						81.5625
+					],
+					[
+						750.0,
+						180.9375
+					],
+					[
+						747.0,
+						111.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_crates/000",
+				"kind": "polygon",
+				"points": [
+					[
+						619.0,
+						251.25
+					],
+					[
+						599.0,
+						196.875
+					],
+					[
+						654.0,
+						188.4375
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_crates/001",
+				"kind": "polygon",
+				"points": [
+					[
+						654.0,
+						188.4375
+					],
+					[
+						697.0,
+						212.8125
+					],
+					[
+						673.0,
+						251.25
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_crates/002",
+				"kind": "polygon",
+				"points": [
+					[
+						673.0,
+						251.25
+					],
+					[
+						619.0,
+						251.25
+					],
+					[
+						654.0,
+						188.4375
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_roof/000",
+				"kind": "polygon",
+				"points": [
+					[
+						494.0,
+						125.625
+					],
+					[
+						494.0,
+						16.875
+					],
+					[
+						792.0,
+						16.875
+					]
+				]
+			},
+			{
+				"id": "town/static/loadout_roof/001",
+				"kind": "polygon",
+				"points": [
+					[
+						792.0,
+						16.875
+					],
+					[
+						792.0,
+						125.625
+					],
+					[
+						494.0,
+						125.625
+					]
+				]
+			},
+			{
+				"id": "town/static/contract_roof/000",
+				"kind": "polygon",
+				"points": [
+					[
+						100.0,
+						223.125
+					],
+					[
+						100.0,
+						121.875
+					],
+					[
+						418.0,
+						121.875
+					]
+				]
+			},
+			{
+				"id": "town/static/contract_roof/001",
+				"kind": "polygon",
+				"points": [
+					[
+						418.0,
+						121.875
+					],
+					[
+						418.0,
+						223.125
+					],
+					[
+						100.0,
+						223.125
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_west_roof/000",
+				"kind": "polygon",
+				"points": [
+					[
+						893.0,
+						204.375
+					],
+					[
+						893.0,
+						64.6875
+					],
+					[
+						1105.921875,
+						64.6875
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_west_roof/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1105.921875,
+						64.6875
+					],
+					[
+						1105.921875,
+						204.375
+					],
+					[
+						893.0,
+						204.375
+					]
+				]
+			},
+			{
+				"id": "town/static/proxy_tower_body/000",
+				"kind": "polygon",
+				"points": [
+					[
+						1312.0,
+						410.625
+					],
+					[
+						1312.0,
+						103.125
+					],
+					[
+						1508.0,
+						103.125
+					]
+				]
+			},
+			{
+				"id": "town/static/proxy_tower_body/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1508.0,
+						103.125
+					],
+					[
+						1508.0,
+						410.625
+					],
+					[
+						1312.0,
+						410.625
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						932.0,
+						275.625
+					],
+					[
+						918.0,
+						204.375
+					],
+					[
+						997.0,
+						222.1875
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						997.0,
+						222.1875
+					],
+					[
+						1072.0,
+						240.9375
+					],
+					[
+						1116.0,
+						280.3125
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/002",
+				"kind": "polygon",
+				"points": [
+					[
+						1228.0,
+						273.75
+					],
+					[
+						1230.0,
+						213.75
+					],
+					[
+						1261.0,
+						225.9375
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/003",
+				"kind": "polygon",
+				"points": [
+					[
+						1261.0,
+						225.9375
+					],
+					[
+						1266.0,
+						308.4375
+					],
+					[
+						1197.0,
+						346.875
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/004",
+				"kind": "polygon",
+				"points": [
+					[
+						1197.0,
+						346.875
+					],
+					[
+						1090.0,
+						324.375
+					],
+					[
+						1009.0,
+						297.1875
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/005",
+				"kind": "polygon",
+				"points": [
+					[
+						1009.0,
+						297.1875
+					],
+					[
+						932.0,
+						275.625
+					],
+					[
+						997.0,
+						222.1875
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/006",
+				"kind": "polygon",
+				"points": [
+					[
+						1228.0,
+						273.75
+					],
+					[
+						1261.0,
+						225.9375
+					],
+					[
+						1197.0,
+						346.875
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/007",
+				"kind": "polygon",
+				"points": [
+					[
+						1197.0,
+						346.875
+					],
+					[
+						1009.0,
+						297.1875
+					],
+					[
+						997.0,
+						222.1875
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/008",
+				"kind": "polygon",
+				"points": [
+					[
+						1188.0,
+						289.6875
+					],
+					[
+						1228.0,
+						273.75
+					],
+					[
+						1197.0,
+						346.875
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/009",
+				"kind": "polygon",
+				"points": [
+					[
+						1197.0,
+						346.875
+					],
+					[
+						997.0,
+						222.1875
+					],
+					[
+						1116.0,
+						280.3125
+					]
+				]
+			},
+			{
+				"id": "town/static/forge_base/010",
+				"kind": "polygon",
+				"points": [
+					[
+						1116.0,
+						280.3125
+					],
+					[
+						1188.0,
+						289.6875
+					],
+					[
+						1197.0,
+						346.875
+					]
+				]
+			},
+			{
+				"id": "town/static/proxy_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						1306.0,
+						459.375
+					],
+					[
+						1316.0,
+						420.9375
+					],
+					[
+						1411.0,
+						453.75
+					]
+				]
+			},
+			{
+				"id": "town/static/proxy_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1411.0,
+						453.75
+					],
+					[
+						1468.0,
+						423.75
+					],
+					[
+						1487.0,
+						459.375
+					]
+				]
+			},
+			{
+				"id": "town/static/proxy_base/002",
+				"kind": "polygon",
+				"points": [
+					[
+						1487.0,
+						459.375
+					],
+					[
+						1417.0,
+						497.8125
+					],
+					[
+						1306.0,
+						459.375
+					]
+				]
+			},
+			{
+				"id": "town/static/proxy_base/003",
+				"kind": "polygon",
+				"points": [
+					[
+						1306.0,
+						459.375
+					],
+					[
+						1411.0,
+						453.75
+					],
+					[
+						1487.0,
+						459.375
+					]
+				]
+			},
+			{
+				"id": "town/static/commons_fire/000",
+				"kind": "polygon",
+				"points": [
+					[
+						721.0,
+						448.125
+					],
+					[
+						751.0,
+						435.9375
+					],
+					[
+						828.0,
+						435.9375
+					]
+				]
+			},
+			{
+				"id": "town/static/commons_fire/001",
+				"kind": "polygon",
+				"points": [
+					[
+						828.0,
+						435.9375
+					],
+					[
+						852.0,
+						450.9375
+					],
+					[
+						858.0,
+						470.625
+					]
+				]
+			},
+			{
+				"id": "town/static/commons_fire/002",
+				"kind": "polygon",
+				"points": [
+					[
+						858.0,
+						470.625
+					],
+					[
+						821.0,
+						496.875
+					],
+					[
+						775.0,
+						501.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/commons_fire/003",
+				"kind": "polygon",
+				"points": [
+					[
+						775.0,
+						501.5625
+					],
+					[
+						738.0,
+						480.9375
+					],
+					[
+						721.0,
+						448.125
+					]
+				]
+			},
+			{
+				"id": "town/static/commons_fire/004",
+				"kind": "polygon",
+				"points": [
+					[
+						721.0,
+						448.125
+					],
+					[
+						828.0,
+						435.9375
+					],
+					[
+						858.0,
+						470.625
+					]
+				]
+			},
+			{
+				"id": "town/static/commons_fire/005",
+				"kind": "polygon",
+				"points": [
+					[
+						858.0,
+						470.625
+					],
+					[
+						775.0,
+						501.5625
+					],
+					[
+						721.0,
+						448.125
+					]
+				]
+			},
+			{
+				"id": "town/static/training_north_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						63.0,
+						441.5625
+					],
+					[
+						54.0,
+						429.375
+					],
+					[
+						221.0,
+						378.75
+					]
+				]
+			},
+			{
+				"id": "town/static/training_north_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						221.0,
+						378.75
+					],
+					[
+						378.0,
+						425.625
+					],
+					[
+						381.0,
+						436.875
+					]
+				]
+			},
+			{
+				"id": "town/static/training_north_base/002",
+				"kind": "polygon",
+				"points": [
+					[
+						225.0,
+						391.875
+					],
+					[
+						63.0,
+						441.5625
+					],
+					[
+						221.0,
+						378.75
+					]
+				]
+			},
+			{
+				"id": "town/static/training_north_base/003",
+				"kind": "polygon",
+				"points": [
+					[
+						221.0,
+						378.75
+					],
+					[
+						381.0,
+						436.875
+					],
+					[
+						225.0,
+						391.875
+					]
+				]
+			},
+			{
+				"id": "town/static/training_east_north_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						408.0,
+						459.375
+					],
+					[
+						380.0,
+						425.625
+					],
+					[
+						393.0,
+						422.8125
+					]
+				]
+			},
+			{
+				"id": "town/static/training_east_north_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						393.0,
+						422.8125
+					],
+					[
+						419.0,
+						450.9375
+					],
+					[
+						408.0,
+						459.375
+					]
+				]
+			},
+			{
+				"id": "town/static/training_east_south_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						464.0,
+						563.4375
+					],
+					[
+						446.0,
+						517.5
+					],
+					[
+						456.0,
+						518.4375
+					]
+				]
+			},
+			{
+				"id": "town/static/training_east_south_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						456.0,
+						518.4375
+					],
+					[
+						477.0,
+						556.875
+					],
+					[
+						464.0,
+						563.4375
+					]
+				]
+			},
+			{
+				"id": "town/static/training_south_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						107.0,
+						601.875
+					],
+					[
+						44.0,
+						533.4375
+					],
+					[
+						57.0,
+						530.625
+					]
+				]
+			},
+			{
+				"id": "town/static/training_south_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						238.0,
+						610.3125
+					],
+					[
+						465.0,
+						560.625
+					],
+					[
+						470.0,
+						572.8125
+					]
+				]
+			},
+			{
+				"id": "town/static/training_south_base/002",
+				"kind": "polygon",
+				"points": [
+					[
+						107.0,
+						601.875
+					],
+					[
+						57.0,
+						530.625
+					],
+					[
+						116.0,
+						588.75
+					]
+				]
+			},
+			{
+				"id": "town/static/training_south_base/003",
+				"kind": "polygon",
+				"points": [
+					[
+						238.0,
+						610.3125
+					],
+					[
+						470.0,
+						572.8125
+					],
+					[
+						240.0,
+						626.25
+					]
+				]
+			},
+			{
+				"id": "town/static/training_south_base/004",
+				"kind": "polygon",
+				"points": [
+					[
+						240.0,
+						626.25
+					],
+					[
+						107.0,
+						601.875
+					],
+					[
+						116.0,
+						588.75
+					]
+				]
+			},
+			{
+				"id": "town/static/training_south_base/005",
+				"kind": "polygon",
+				"points": [
+					[
+						116.0,
+						588.75
+					],
+					[
+						238.0,
+						610.3125
+					],
+					[
+						240.0,
+						626.25
+					]
+				]
+			},
+			{
+				"center": [
+					153.0,
+					487.5
+				],
+				"id": "town/static/training_post_0",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					208.0,
+					445.3125
+				],
+				"id": "town/static/training_post_1",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					246.0,
+					465.9375
+				],
+				"id": "town/static/training_post_2",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					315.0,
+					507.1875
+				],
+				"id": "town/static/training_post_3",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					379.0,
+					507.1875
+				],
+				"id": "town/static/training_post_4",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"id": "town/static/wood_contract_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						436.0,
+						344.0625
+					],
+					[
+						540.0,
+						318.75
+					],
+					[
+						543.0,
+						349.6875
+					]
+				]
+			},
+			{
+				"id": "town/static/wood_contract_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						543.0,
+						349.6875
+					],
+					[
+						493.0,
+						370.3125
+					],
+					[
+						436.0,
+						344.0625
+					]
+				]
+			},
+			{
+				"id": "town/static/wood_commons_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						601.0,
+						541.875
+					],
+					[
+						694.0,
+						555.9375
+					],
+					[
+						667.0,
+						576.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/wood_commons_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						667.0,
+						576.5625
+					],
+					[
+						617.0,
+						560.625
+					],
+					[
+						601.0,
+						541.875
+					]
+				]
+			},
+			{
+				"id": "town/static/wood_south_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						554.0,
+						653.4375
+					],
+					[
+						640.0,
+						636.5625
+					],
+					[
+						661.0,
+						660.0
+					]
+				]
+			},
+			{
+				"id": "town/static/wood_south_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						661.0,
+						660.0
+					],
+					[
+						637.0,
+						684.375
+					],
+					[
+						554.0,
+						653.4375
+					]
+				]
+			},
+			{
+				"id": "town/static/wood_east_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						1109.0,
+						557.8125
+					],
+					[
+						1180.0,
+						535.3125
+					],
+					[
+						1187.0,
+						568.125
+					]
+				]
+			},
+			{
+				"id": "town/static/wood_east_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1187.0,
+						568.125
+					],
+					[
+						1155.0,
+						593.4375
+					],
+					[
+						1109.0,
+						557.8125
+					]
+				]
+			},
+			{
+				"id": "town/static/cart_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						338.0,
+						780.0
+					],
+					[
+						434.0,
+						801.5625
+					],
+					[
+						388.0,
+						825.0
+					]
+				]
+			},
+			{
+				"id": "town/static/cart_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						388.0,
+						825.0
+					],
+					[
+						349.0,
+						807.1875
+					],
+					[
+						338.0,
+						780.0
+					]
+				]
+			},
+			{
+				"center": [
+					144.0,
+					224.0625
+				],
+				"id": "town/static/tree_board_trunk",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					541.0,
+					355.3125
+				],
+				"id": "town/static/tree_wood_trunk",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					1241.0,
+					458.4375
+				],
+				"id": "town/static/tree_east_trunk",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					805.0,
+					771.5625
+				],
+				"id": "town/static/tree_south_trunk",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					250.0,
+					759.375
+				],
+				"id": "town/static/tree_southwest_trunk",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"center": [
+					282.0,
+					868.125
+				],
+				"id": "town/static/tree_arrival_trunk",
+				"kind": "circle",
+				"radius": 5.625
+			},
+			{
+				"id": "town/static/northwest_forest/000",
+				"kind": "polygon",
+				"points": [
+					[
+						0.0,
+						0.0
+					],
+					[
+						448.0,
+						0.0
+					],
+					[
+						424.0,
+						67.5
+					]
+				]
+			},
+			{
+				"id": "town/static/northwest_forest/001",
+				"kind": "polygon",
+				"points": [
+					[
+						424.0,
+						67.5
+					],
+					[
+						368.0,
+						126.5625
+					],
+					[
+						285.0,
+						124.6875
+					]
+				]
+			},
+			{
+				"id": "town/static/northwest_forest/002",
+				"kind": "polygon",
+				"points": [
+					[
+						187.0,
+						193.125
+					],
+					[
+						149.0,
+						256.875
+					],
+					[
+						105.0,
+						328.125
+					]
+				]
+			},
+			{
+				"id": "town/static/northwest_forest/003",
+				"kind": "polygon",
+				"points": [
+					[
+						105.0,
+						328.125
+					],
+					[
+						0.0,
+						393.75
+					],
+					[
+						0.0,
+						0.0
+					]
+				]
+			},
+			{
+				"id": "town/static/northwest_forest/004",
+				"kind": "polygon",
+				"points": [
+					[
+						0.0,
+						0.0
+					],
+					[
+						424.0,
+						67.5
+					],
+					[
+						285.0,
+						124.6875
+					]
+				]
+			},
+			{
+				"id": "town/static/northwest_forest/005",
+				"kind": "polygon",
+				"points": [
+					[
+						187.0,
+						193.125
+					],
+					[
+						105.0,
+						328.125
+					],
+					[
+						0.0,
+						0.0
+					]
+				]
+			},
+			{
+				"id": "town/static/northwest_forest/006",
+				"kind": "polygon",
+				"points": [
+					[
+						0.0,
+						0.0
+					],
+					[
+						285.0,
+						124.6875
+					],
+					[
+						187.0,
+						193.125
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/000",
+				"kind": "polygon",
+				"points": [
+					[
+						774.0,
+						81.5625
+					],
+					[
+						756.0,
+						0.0
+					],
+					[
+						1335.0,
+						0.0
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1335.0,
+						0.0
+					],
+					[
+						1310.0,
+						126.5625
+					],
+					[
+						1265.0,
+						172.5
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/002",
+				"kind": "polygon",
+				"points": [
+					[
+						1265.0,
+						172.5
+					],
+					[
+						1206.0,
+						164.0625
+					],
+					[
+						1200.0,
+						37.5
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/003",
+				"kind": "polygon",
+				"points": [
+					[
+						1152.0,
+						37.5
+					],
+					[
+						1134.0,
+						90.0
+					],
+					[
+						995.0,
+						80.625
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/004",
+				"kind": "polygon",
+				"points": [
+					[
+						995.0,
+						80.625
+					],
+					[
+						930.0,
+						144.375
+					],
+					[
+						873.0,
+						155.625
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/005",
+				"kind": "polygon",
+				"points": [
+					[
+						826.0,
+						120.0
+					],
+					[
+						808.0,
+						218.4375
+					],
+					[
+						774.0,
+						216.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/006",
+				"kind": "polygon",
+				"points": [
+					[
+						1335.0,
+						0.0
+					],
+					[
+						1265.0,
+						172.5
+					],
+					[
+						1200.0,
+						37.5
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/007",
+				"kind": "polygon",
+				"points": [
+					[
+						995.0,
+						80.625
+					],
+					[
+						873.0,
+						155.625
+					],
+					[
+						826.0,
+						120.0
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/008",
+				"kind": "polygon",
+				"points": [
+					[
+						826.0,
+						120.0
+					],
+					[
+						774.0,
+						216.5625
+					],
+					[
+						774.0,
+						81.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/009",
+				"kind": "polygon",
+				"points": [
+					[
+						1335.0,
+						0.0
+					],
+					[
+						1200.0,
+						37.5
+					],
+					[
+						1152.0,
+						37.5
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/010",
+				"kind": "polygon",
+				"points": [
+					[
+						1152.0,
+						37.5
+					],
+					[
+						995.0,
+						80.625
+					],
+					[
+						826.0,
+						120.0
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/011",
+				"kind": "polygon",
+				"points": [
+					[
+						774.0,
+						81.5625
+					],
+					[
+						1335.0,
+						0.0
+					],
+					[
+						1152.0,
+						37.5
+					]
+				]
+			},
+			{
+				"id": "town/static/north_forest/012",
+				"kind": "polygon",
+				"points": [
+					[
+						1152.0,
+						37.5
+					],
+					[
+						826.0,
+						120.0
+					],
+					[
+						774.0,
+						81.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/000",
+				"kind": "polygon",
+				"points": [
+					[
+						1480.0,
+						81.5625
+					],
+					[
+						1492.0,
+						0.0
+					],
+					[
+						1536.0,
+						0.0
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						656.25
+					],
+					[
+						1475.0,
+						641.25
+					],
+					[
+						1463.0,
+						511.875
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/002",
+				"kind": "polygon",
+				"points": [
+					[
+						1491.0,
+						460.3125
+					],
+					[
+						1504.0,
+						358.125
+					],
+					[
+						1536.0,
+						339.375
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/003",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						217.5
+					],
+					[
+						1506.0,
+						210.0
+					],
+					[
+						1456.0,
+						163.125
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/004",
+				"kind": "polygon",
+				"points": [
+					[
+						1456.0,
+						163.125
+					],
+					[
+						1441.0,
+						108.75
+					],
+					[
+						1480.0,
+						81.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/005",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						656.25
+					],
+					[
+						1463.0,
+						511.875
+					],
+					[
+						1491.0,
+						460.3125
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/006",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						217.5
+					],
+					[
+						1456.0,
+						163.125
+					],
+					[
+						1480.0,
+						81.5625
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/007",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						656.25
+					],
+					[
+						1491.0,
+						460.3125
+					],
+					[
+						1536.0,
+						339.375
+					]
+				]
+			},
+			{
+				"id": "town/static/east_forest/008",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						217.5
+					],
+					[
+						1480.0,
+						81.5625
+					],
+					[
+						1536.0,
+						0.0
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/000",
+				"kind": "polygon",
+				"points": [
+					[
+						0.0,
+						960.0
+					],
+					[
+						0.0,
+						610.3125
+					],
+					[
+						89.0,
+						631.875
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/001",
+				"kind": "polygon",
+				"points": [
+					[
+						89.0,
+						631.875
+					],
+					[
+						159.0,
+						676.875
+					],
+					[
+						206.0,
+						722.8125
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/002",
+				"kind": "polygon",
+				"points": [
+					[
+						226.0,
+						783.75
+					],
+					[
+						245.0,
+						805.3125
+					],
+					[
+						271.0,
+						855.0
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/003",
+				"kind": "polygon",
+				"points": [
+					[
+						271.0,
+						855.0
+					],
+					[
+						329.0,
+						856.875
+					],
+					[
+						355.0,
+						917.8125
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/004",
+				"kind": "polygon",
+				"points": [
+					[
+						355.0,
+						917.8125
+					],
+					[
+						505.0,
+						960.0
+					],
+					[
+						0.0,
+						960.0
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/005",
+				"kind": "polygon",
+				"points": [
+					[
+						0.0,
+						960.0
+					],
+					[
+						89.0,
+						631.875
+					],
+					[
+						206.0,
+						722.8125
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/006",
+				"kind": "polygon",
+				"points": [
+					[
+						271.0,
+						855.0
+					],
+					[
+						355.0,
+						917.8125
+					],
+					[
+						0.0,
+						960.0
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/007",
+				"kind": "polygon",
+				"points": [
+					[
+						0.0,
+						960.0
+					],
+					[
+						206.0,
+						722.8125
+					],
+					[
+						226.0,
+						783.75
+					]
+				]
+			},
+			{
+				"id": "town/static/southwest_forest/008",
+				"kind": "polygon",
+				"points": [
+					[
+						226.0,
+						783.75
+					],
+					[
+						271.0,
+						855.0
+					],
+					[
+						0.0,
+						960.0
+					]
+				]
+			},
+			{
+				"id": "town/static/south_forest/000",
+				"kind": "polygon",
+				"points": [
+					[
+						486.0,
+						960.0
+					],
+					[
+						555.0,
+						908.4375
+					],
+					[
+						634.0,
+						862.5
+					]
+				]
+			},
+			{
+				"id": "town/static/south_forest/001",
+				"kind": "polygon",
+				"points": [
+					[
+						634.0,
+						862.5
+					],
+					[
+						679.0,
+						808.125
+					],
+					[
+						708.0,
+						780.9375
+					]
+				]
+			},
+			{
+				"id": "town/static/south_forest/002",
+				"kind": "polygon",
+				"points": [
+					[
+						708.0,
+						780.9375
+					],
+					[
+						748.0,
+						802.5
+					],
+					[
+						796.0,
+						836.25
+					]
+				]
+			},
+			{
+				"id": "town/static/south_forest/003",
+				"kind": "polygon",
+				"points": [
+					[
+						796.0,
+						836.25
+					],
+					[
+						780.0,
+						889.6875
+					],
+					[
+						632.0,
+						960.0
+					]
+				]
+			},
+			{
+				"id": "town/static/south_forest/004",
+				"kind": "polygon",
+				"points": [
+					[
+						632.0,
+						960.0
+					],
+					[
+						486.0,
+						960.0
+					],
+					[
+						634.0,
+						862.5
+					]
+				]
+			},
+			{
+				"id": "town/static/south_forest/005",
+				"kind": "polygon",
+				"points": [
+					[
+						634.0,
+						862.5
+					],
+					[
+						708.0,
+						780.9375
+					],
+					[
+						796.0,
+						836.25
+					]
+				]
+			},
+			{
+				"id": "town/static/south_forest/006",
+				"kind": "polygon",
+				"points": [
+					[
+						796.0,
+						836.25
+					],
+					[
+						632.0,
+						960.0
+					],
+					[
+						634.0,
+						862.5
+					]
+				]
+			},
+			{
+				"id": "town/static/water_south_bridge/000",
+				"kind": "polygon",
+				"points": [
+					[
+						1462.0,
+						960.0
+					],
+					[
+						760.0,
+						960.0
+					],
+					[
+						824.0,
+						811.875
+					]
+				]
+			},
+			{
+				"id": "town/static/water_south_bridge/001",
+				"kind": "polygon",
+				"points": [
+					[
+						976.0,
+						741.5625
+					],
+					[
+						1080.0,
+						691.875
+					],
+					[
+						1250.0,
+						764.0625
+					]
+				]
+			},
+			{
+				"id": "town/static/water_south_bridge/002",
+				"kind": "polygon",
+				"points": [
+					[
+						1250.0,
+						764.0625
+					],
+					[
+						1430.0,
+						883.125
+					],
+					[
+						1462.0,
+						914.0625
+					]
+				]
+			},
+			{
+				"id": "town/static/water_south_bridge/003",
+				"kind": "polygon",
+				"points": [
+					[
+						1462.0,
+						914.0625
+					],
+					[
+						1462.0,
+						960.0
+					],
+					[
+						824.0,
+						811.875
+					]
+				]
+			},
+			{
+				"id": "town/static/water_south_bridge/004",
+				"kind": "polygon",
+				"points": [
+					[
+						824.0,
+						811.875
+					],
+					[
+						976.0,
+						741.5625
+					],
+					[
+						1250.0,
+						764.0625
+					]
+				]
+			},
+			{
+				"id": "town/static/water_south_bridge/005",
+				"kind": "polygon",
+				"points": [
+					[
+						1250.0,
+						764.0625
+					],
+					[
+						1462.0,
+						914.0625
+					],
+					[
+						824.0,
+						811.875
+					]
+				]
+			},
+			{
+				"id": "town/static/water_north_bridge/000",
+				"kind": "polygon",
+				"points": [
+					[
+						1416.0,
+						823.125
+					],
+					[
+						1150.0,
+						663.75
+					],
+					[
+						1184.0,
+						657.1875
+					]
+				]
+			},
+			{
+				"id": "town/static/water_north_bridge/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1184.0,
+						657.1875
+					],
+					[
+						1218.0,
+						585.9375
+					],
+					[
+						1304.0,
+						524.0625
+					]
+				]
+			},
+			{
+				"id": "town/static/water_north_bridge/002",
+				"kind": "polygon",
+				"points": [
+					[
+						1304.0,
+						524.0625
+					],
+					[
+						1330.0,
+						530.625
+					],
+					[
+						1360.0,
+						609.375
+					]
+				]
+			},
+			{
+				"id": "town/static/water_north_bridge/003",
+				"kind": "polygon",
+				"points": [
+					[
+						1420.0,
+						684.375
+					],
+					[
+						1536.0,
+						687.1875
+					],
+					[
+						1536.0,
+						823.125
+					]
+				]
+			},
+			{
+				"id": "town/static/water_north_bridge/004",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						823.125
+					],
+					[
+						1416.0,
+						823.125
+					],
+					[
+						1184.0,
+						657.1875
+					]
+				]
+			},
+			{
+				"id": "town/static/water_north_bridge/005",
+				"kind": "polygon",
+				"points": [
+					[
+						1184.0,
+						657.1875
+					],
+					[
+						1304.0,
+						524.0625
+					],
+					[
+						1360.0,
+						609.375
+					]
+				]
+			},
+			{
+				"id": "town/static/water_north_bridge/006",
+				"kind": "polygon",
+				"points": [
+					[
+						1420.0,
+						684.375
+					],
+					[
+						1536.0,
+						823.125
+					],
+					[
+						1184.0,
+						657.1875
+					]
+				]
+			},
+			{
+				"id": "town/static/water_north_bridge/007",
+				"kind": "polygon",
+				"points": [
+					[
+						1184.0,
+						657.1875
+					],
+					[
+						1360.0,
+						609.375
+					],
+					[
+						1420.0,
+						684.375
+					]
+				]
+			},
+			{
+				"id": "town/static/bridge_east_rocks/000",
+				"kind": "polygon",
+				"points": [
+					[
+						1396.0,
+						960.0
+					],
+					[
+						1427.0,
+						891.5625
+					],
+					[
+						1440.0,
+						879.375
+					]
+				]
+			},
+			{
+				"id": "town/static/bridge_east_rocks/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1467.0,
+						885.0
+					],
+					[
+						1536.0,
+						864.375
+					],
+					[
+						1536.0,
+						960.0
+					]
+				]
+			},
+			{
+				"id": "town/static/bridge_east_rocks/002",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						960.0
+					],
+					[
+						1396.0,
+						960.0
+					],
+					[
+						1440.0,
+						879.375
+					]
+				]
+			},
+			{
+				"id": "town/static/bridge_east_rocks/003",
+				"kind": "polygon",
+				"points": [
+					[
+						1440.0,
+						879.375
+					],
+					[
+						1467.0,
+						885.0
+					],
+					[
+						1536.0,
+						960.0
+					]
+				]
+			},
+			{
+				"center": [
+					410.0,
+					265.3125
+				],
+				"id": "town/static/lamp_0",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					675.0,
+					372.1875
+				],
+				"id": "town/static/lamp_1",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					884.0,
+					347.8125
+				],
+				"id": "town/static/lamp_2",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					997.0,
+					472.5
+				],
+				"id": "town/static/lamp_3",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					573.0,
+					561.5625
+				],
+				"id": "town/static/lamp_4",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					1011.0,
+					420.9375
+				],
+				"id": "town/static/lamp_5",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					1092.0,
+					624.375
+				],
+				"id": "town/static/lamp_6",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					902.0,
+					780.0
+				],
+				"id": "town/static/lamp_7",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					1208.0,
+					742.5
+				],
+				"id": "town/static/lamp_8",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					1324.0,
+					828.75
+				],
+				"id": "town/static/lamp_9",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"center": [
+					433.0,
+					509.0625
+				],
+				"id": "town/static/lamp_10",
+				"kind": "circle",
+				"radius": 2.5
+			},
+			{
+				"id": "town/static/arrival_storage_fence_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						566.0,
+						690.9375
+					],
+					[
+						519.0,
+						645.0
+					],
+					[
+						529.0,
+						641.25
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_storage_fence_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						574.0,
+						678.75
+					],
+					[
+						714.0,
+						724.6875
+					],
+					[
+						706.0,
+						736.875
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_storage_fence_base/002",
+				"kind": "polygon",
+				"points": [
+					[
+						566.0,
+						690.9375
+					],
+					[
+						529.0,
+						641.25
+					],
+					[
+						574.0,
+						678.75
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_storage_fence_base/003",
+				"kind": "polygon",
+				"points": [
+					[
+						574.0,
+						678.75
+					],
+					[
+						706.0,
+						736.875
+					],
+					[
+						566.0,
+						690.9375
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_west_gate_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						568.0,
+						785.625
+					],
+					[
+						568.0,
+						748.125
+					],
+					[
+						581.0,
+						742.5
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_west_gate_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						581.0,
+						742.5
+					],
+					[
+						615.0,
+						751.875
+					],
+					[
+						613.0,
+						762.1875
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_west_gate_base/002",
+				"kind": "polygon",
+				"points": [
+					[
+						583.0,
+						751.875
+					],
+					[
+						581.0,
+						784.6875
+					],
+					[
+						568.0,
+						785.625
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_west_gate_base/003",
+				"kind": "polygon",
+				"points": [
+					[
+						581.0,
+						742.5
+					],
+					[
+						613.0,
+						762.1875
+					],
+					[
+						583.0,
+						751.875
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_west_gate_base/004",
+				"kind": "polygon",
+				"points": [
+					[
+						583.0,
+						751.875
+					],
+					[
+						568.0,
+						785.625
+					],
+					[
+						581.0,
+						742.5
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_east_gate_base/000",
+				"kind": "polygon",
+				"points": [
+					[
+						715.0,
+						756.5625
+					],
+					[
+						726.0,
+						787.5
+					],
+					[
+						717.0,
+						791.25
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_east_gate_base/001",
+				"kind": "polygon",
+				"points": [
+					[
+						708.0,
+						774.375
+					],
+					[
+						619.0,
+						813.75
+					],
+					[
+						612.0,
+						804.375
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_east_gate_base/002",
+				"kind": "polygon",
+				"points": [
+					[
+						715.0,
+						756.5625
+					],
+					[
+						717.0,
+						791.25
+					],
+					[
+						708.0,
+						774.375
+					]
+				]
+			},
+			{
+				"id": "town/static/arrival_east_gate_base/003",
+				"kind": "polygon",
+				"points": [
+					[
+						708.0,
+						774.375
+					],
+					[
+						612.0,
+						804.375
+					],
+					[
+						715.0,
+						756.5625
+					]
+				]
+			}
+		],
+		"view_size": [
+			640.0,
+			360.0
+		],
+		"world_size": [
+			1536.0,
+			960.0
+		]
+	},
+	"regions_and_portals": [],
+	"spawn_interaction_exit_sockets": [
+		{
+			"kind": "interaction",
+			"position": [
+				283.0,
+				330.0
+			],
+			"socket_id": "town/interaction/contract"
+		},
+		{
+			"kind": "interaction",
+			"position": [
+				1107.0,
+				378.75
+			],
+			"socket_id": "town/interaction/forge"
+		},
+		{
+			"kind": "interaction",
+			"position": [
+				711.0,
+				284.0625
+			],
+			"socket_id": "town/interaction/loadout"
+		},
+		{
+			"kind": "interaction",
+			"position": [
+				1280.0,
+				480.0
+			],
+			"socket_id": "town/interaction/proxy"
+		},
+		{
+			"kind": "interaction",
+			"position": [
+				405.0,
+				540.9375
+			],
+			"socket_id": "town/interaction/training"
+		},
+		{
+			"kind": "spawn",
+			"position": [
+				576.0,
+				595.3125
+			],
+			"socket_id": "town/spawn"
+		}
+	],
+	"stable_bindings": [
+		{
+			"binding_id": "town/ground",
+			"channels": {
+				"occlusion": false
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/movement-boundary",
+			"channels": {
+				"movement": true,
+				"navigation": true,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"rect": [
+					14.0,
+					14.0,
+					1508.0,
+					932.0
+				],
+				"type": "rect"
+			},
+			"source": "town.native.v1"
+		},
+		{
+			"binding_id": "town/native/arrival_east_gate",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/arrival_storage_fence",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/arrival_west_gate",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/cart",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/commons_fire",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/contract",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/forge",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/forge_chimney",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_0",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_1",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_10",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_2",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_3",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_4",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_5",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_6",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_7",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_8",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/lamp_9",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/loadout",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/proxy",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/training_east_north",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/training_east_south",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/training_north",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/training_south",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/tree_arrival",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/tree_board",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/tree_east",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/tree_south",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/tree_southwest",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/tree_wood",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/wood_commons",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/wood_contract",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/wood_east",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/native/wood_south",
+			"channels": {
+				"occlusion": true
+			},
+			"kind": "native_visual"
+		},
+		{
+			"binding_id": "town/static/arrival_east_gate_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/arrival_storage_fence_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/arrival_west_gate_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/bridge_east_rocks",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/cart_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/commons_fire",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/contract_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/contract_roof",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/east_forest",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/forge_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/forge_west_roof",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_0",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_1",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_10",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_2",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_3",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_4",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_5",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_6",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_7",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_8",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/lamp_9",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/loadout_back_wall",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/loadout_crates",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/loadout_roof",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/loadout_west_wall",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/north_forest",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/northwest_forest",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/proxy_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/proxy_tower_body",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/south_forest",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/southwest_forest",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_east_north_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_east_south_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_north_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_post_0",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_post_1",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_post_2",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_post_3",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_post_4",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/training_south_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/tree_arrival_trunk",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/tree_board_trunk",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/tree_east_trunk",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/tree_south_trunk",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/tree_southwest_trunk",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/tree_wood_trunk",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/water_north_bridge",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/water_south_bridge",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/wood_commons_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/wood_contract_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/wood_east_base",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/wood_south_base",
+			"channels": {},
+			"kind": "static_collision"
+		}
+	],
+	"traversal_profiles": []
+}

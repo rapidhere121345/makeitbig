@@ -27,14 +27,36 @@ if ($LASTEXITCODE -ne 0) { throw "Godot import failed with exit code $LASTEXITCO
 if ($LASTEXITCODE -ne 0) { throw "Godot tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_runtime_world.gd
 if ($LASTEXITCODE -ne 0) { throw "Runtime world tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_simulation.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat simulation tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_arena_presenter.gd
+if ($LASTEXITCODE -ne 0) { throw "Arena presenter tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_arena_actor_presenter.gd
+if ($LASTEXITCODE -ne 0) { throw "Arena actor presenter tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_arena_combat_presenter.gd
+if ($LASTEXITCODE -ne 0) { throw "Arena combat presenter tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_actor_motor.gd
 if ($LASTEXITCODE -ne 0) { throw "Actor motor tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_player_motion_system.gd
+if ($LASTEXITCODE -ne 0) { throw "Player motion system tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_player_combat_state.gd
+if ($LASTEXITCODE -ne 0) { throw "test_player_combat_state failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_player_combat_rules.gd
+if ($LASTEXITCODE -ne 0) { throw "test_player_combat_rules failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_room_definition.gd
 if ($LASTEXITCODE -ne 0) { throw "Room definition tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_room_catalog.gd
+if ($LASTEXITCODE -ne 0) { throw "Room catalog tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_rebuild_samples.gd
 if ($LASTEXITCODE -ne 0) { throw "Rebuild sample tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_native_concave_sample.gd
+if ($LASTEXITCODE -ne 0) { throw "test_native_concave_sample failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_town_geometry_rebuild.gd
 if ($LASTEXITCODE -ne 0) { throw "Town geometry rebuild tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_town_native_contract.gd
+if ($LASTEXITCODE -ne 0) { throw "test_town_native_contract failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_town_runtime.gd
+if ($LASTEXITCODE -ne 0) { throw "test_town_runtime failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_training_report_builder.gd
 if ($LASTEXITCODE -ne 0) { throw "Training report builder tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_combat_state_codec.gd
@@ -93,12 +115,30 @@ if ($LASTEXITCODE -ne 0) { throw "Build resolver tests failed with exit code $LA
 if ($LASTEXITCODE -ne 0) { throw "Equipment drop generator tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_combat_command_protocol.gd
 if ($LASTEXITCODE -ne 0) { throw "Combat command protocol tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_command_router.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat command router tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_manual_combat_input.gd
 if ($LASTEXITCODE -ne 0) { throw "Manual combat input tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_manual_aim_resolver.gd
 if ($LASTEXITCODE -ne 0) { throw "Manual aim resolver tests failed with exit code $LASTEXITCODE" }
-& $GodotBin --headless --path . --script res://tests/test_walkable_geometry.gd
-if ($LASTEXITCODE -ne 0) { throw "Walkable geometry tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_arena_geometry.gd
+if ($LASTEXITCODE -ne 0) { throw "Arena geometry tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_arena_geometry_runtime.gd
+if ($LASTEXITCODE -ne 0) { throw "Arena geometry runtime tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_query.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat query tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_encounter_director.gd
+if ($LASTEXITCODE -ne 0) { throw "Encounter director tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_system.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat system tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_presentation_boundary.gd
+if ($LASTEXITCODE -ne 0) { throw "test_combat_presentation_boundary failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_main_player_wiring.gd
+if ($LASTEXITCODE -ne 0) { throw "test_main_player_wiring failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_main_input_release.gd
+if ($LASTEXITCODE -ne 0) { throw "test_main_input_release failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_main_presentation_closeout.gd
+if ($LASTEXITCODE -ne 0) { throw "test_main_presentation_closeout failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_arena_walkable_bounds.gd
 if ($LASTEXITCODE -ne 0) { throw "Arena walkable bounds tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_player_action_timeline.gd
@@ -109,6 +149,8 @@ if ($LASTEXITCODE -ne 0) { throw "Enemy tactics tests failed with exit code $LAS
 if ($LASTEXITCODE -ne 0) { throw "Proxy build tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_proxy_decision.gd
 if ($LASTEXITCODE -ne 0) { throw "Proxy decision tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_proxy_intent_system.gd
+if ($LASTEXITCODE -ne 0) { throw "Proxy intent system tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_combat_event_stream.gd
 if ($LASTEXITCODE -ne 0) { throw "Combat event stream tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_combat_presentation_events.gd
@@ -119,6 +161,10 @@ if ($LASTEXITCODE -ne 0) { throw "Combat feedback audio tests failed with exit c
 if ($LASTEXITCODE -ne 0) { throw "Enemy runtime tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_boss_duration.gd
 if ($LASTEXITCODE -ne 0) { throw "Boss duration tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_boss_parts_combat.gd
+if ($LASTEXITCODE -ne 0) { throw "test_boss_parts_combat failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_boss_parts_presentation.gd
+if ($LASTEXITCODE -ne 0) { throw "test_boss_parts_presentation failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_boss_action_pose.gd
 if ($LASTEXITCODE -ne 0) { throw "Boss pose tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_combat_marks.gd
@@ -199,29 +245,41 @@ if ($LASTEXITCODE -ne 0) { throw "Settlement route tests failed with exit code $
 if ($LASTEXITCODE -ne 0) { throw "Ending screen tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_contract_run_controller.gd
 if ($LASTEXITCODE -ne 0) { throw "Contract run controller tests failed with exit code $LASTEXITCODE" }
-& $GodotBin --headless --path . --script res://tests/test_legacy_arena_adapter.gd
-if ($LASTEXITCODE -ne 0) { throw "Legacy arena adapter tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_room_runtime.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat room runtime tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_repeatable_encounter_matrix.gd
+if ($LASTEXITCODE -ne 0) { throw "Repeatable encounter matrix failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_room_rules.gd
+if ($LASTEXITCODE -ne 0) { throw "test_combat_room_rules failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_smoke_input_driver.gd
+if ($LASTEXITCODE -ne 0) { throw "test_smoke_input_driver failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_state_snapshot_builder.gd
+if ($LASTEXITCODE -ne 0) { throw "test_combat_state_snapshot_builder failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_room_result.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat room result tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_result_roundtrip.gd
+if ($LASTEXITCODE -ne 0) { throw "test_result_roundtrip failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_game_flow_smoke.gd
 if ($LASTEXITCODE -ne 0) { throw "Game flow smoke failed with exit code $LASTEXITCODE" }
 
 $StateDir = if ($env:MIB_TEST_STATE_DIR) { $env:MIB_TEST_STATE_DIR } else { Join-Path (Get-Location) "build/test-state" }
 New-Item -ItemType Directory -Force -Path $StateDir | Out-Null
-$ExpectedHash = $null
+# Frozen historical automation hash, recorded before the runtime replacement.
+$ExpectedHash = "5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900"
+$HistoricalReplayProfile = "historical_circle_v1"
 foreach ($RenderRate in 30, 60, 144) {
     $HashPath = Join-Path $StateDir "${RenderRate}hz.sha256"
-    & $GodotBin --headless --fixed-fps $RenderRate --path . -- --auto-smoke "--state-hash-out=$HashPath"
+    & $GodotBin --headless --fixed-fps $RenderRate --path . -- --auto-smoke "--replay-geometry-profile=$HistoricalReplayProfile" "--state-hash-out=$HashPath"
     if ($LASTEXITCODE -ne 0) { throw "${RenderRate}Hz replay failed with exit code $LASTEXITCODE" }
     $ActualHash = (Get-Content $HashPath -Raw).Trim()
-    if ($null -eq $ExpectedHash) {
-        $ExpectedHash = $ActualHash
-    } elseif ($ActualHash -ne $ExpectedHash) {
-        throw "Render-rate replay mismatch: 30Hz=$ExpectedHash ${RenderRate}Hz=$ActualHash"
+    if ($ActualHash -ne $ExpectedHash) {
+        throw "Historical replay mismatch: golden=$ExpectedHash ${RenderRate}Hz=$ActualHash"
     }
 }
 Write-Output "PASS  30/60/144Hz full automation replay: $ExpectedHash"
 
 $PresentationOffHashPath = Join-Path $StateDir "presentation-off-60hz.sha256"
-& $GodotBin --headless --fixed-fps 60 --path . -- --auto-smoke --presentation-off "--state-hash-out=$PresentationOffHashPath"
+& $GodotBin --headless --fixed-fps 60 --path . -- --auto-smoke --presentation-off "--replay-geometry-profile=$HistoricalReplayProfile" "--state-hash-out=$PresentationOffHashPath"
 if ($LASTEXITCODE -ne 0) { throw "Presentation-off replay failed with exit code $LASTEXITCODE" }
 $PresentationOffHash = (Get-Content $PresentationOffHashPath -Raw).Trim()
 if ($PresentationOffHash -ne $ExpectedHash) {

@@ -4,7 +4,7 @@ const ContentRegistry := preload("res://src/content/content_registry.gd")
 const ProxyBuild := preload("res://src/systems/proxy_build.gd")
 const Decision := preload("res://src/systems/proxy_decision.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
-const WalkableGeometry := preload("res://src/systems/walkable_geometry.gd")
+const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
 const TEST_ARENA := Rect2(-320.0, -320.0, 640.0, 640.0)
 
 var builds := {}
@@ -168,7 +168,7 @@ func _test_distance_settings(failures: Array[String]) -> void:
 
 
 func _test_no_progress_and_isolation(failures: Array[String]) -> void:
-	var geometry := WalkableGeometry.from_layout("corridor", Rect2(0.0, 0.0, 1.0, 1.0), 0.0)
+	var geometry := ArenaGeometry.from_layout("corridor", Rect2(0.0, 0.0, 1.0, 1.0), 0.0)
 	var snapshot := _snapshot_at(0, Vector2(1.0, 0.5), [_enemy(2, Vector2(11.0, 0.5))], 1.0, geometry)
 	var before := snapshot.duplicate(true)
 	var build_before: Dictionary = builds.white.duplicate(true)
@@ -206,7 +206,7 @@ func _snapshot(tick: int, enemies: Array, tagged: bool = false) -> Dictionary:
 
 
 func _snapshot_at(tick: int, player_position: Vector2, enemies: Array, targeting_distance: float, geometry: Dictionary = {}) -> Dictionary:
-	var resolved_geometry := geometry if not geometry.is_empty() else WalkableGeometry.from_layout("rectangle", TEST_ARENA, 0.0)
+	var resolved_geometry := geometry if not geometry.is_empty() else ArenaGeometry.from_layout("rectangle", TEST_ARENA, 0.0)
 	return {"snapshot_version": 3, "tick": tick, "actor_id": "ranger-1", "player_position": player_position, "facing": Vector2.RIGHT, "action_state": "idle", "attack_ready_tick": 0, "targeting_distance": targeting_distance, "visible_enemies": enemies.duplicate(true), "walkable_geometry": resolved_geometry.duplicate(true)}
 
 

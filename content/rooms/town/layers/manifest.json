@@ -1,0 +1,622 @@
+{
+  "conversion": "nearest_once_to_layout_world",
+  "ground": {
+    "owned_pixels": 1113455,
+    "path": "res://content/rooms/town/layers/ground.png",
+    "sha256": "61f3f17f2af2c9aa2998c2cf12ddb73f0a410bb3dbfafa0d9c866c119f705bb1"
+  },
+  "layout_sha256": "8f740098d326fd312a0d6463332c5a7d587ed8ae77af0465ff40dbbbb39e1dd3",
+  "layout_source": "res://art/production/p1/hamlet_town/layout.json",
+  "native": [
+    {
+      "crop": [
+        62,
+        54,
+        157,
+        169
+      ],
+      "feet": [
+        144.0,
+        224.06207999999998
+      ],
+      "id": "tree_board",
+      "interaction": "",
+      "owned_pixels": 18518,
+      "path": "res://content/rooms/town/layers/tree_board.png",
+      "sha256": "5e8d3e7b8bd7356ca050758085f2f964dade135d3ad45865145c498a3bd2ae19"
+    },
+    {
+      "crop": [
+        490,
+        30,
+        303,
+        229
+      ],
+      "feet": [
+        671.000064,
+        262.50048000000004
+      ],
+      "id": "loadout",
+      "interaction": "loadout",
+      "owned_pixels": 42294,
+      "path": "res://content/rooms/town/layers/loadout.png",
+      "sha256": "7d447d3fdb037958e46c6df7924872e8db18a2141290b1d954e992c8b2e88e0b"
+    },
+    {
+      "crop": [
+        402,
+        190,
+        36,
+        76
+      ],
+      "feet": [
+        409.99987200000004,
+        265.31232
+      ],
+      "id": "lamp_0",
+      "interaction": "",
+      "owned_pixels": 1689,
+      "path": "res://content/rooms/town/layers/lamp_0.png",
+      "sha256": "bf8872e0250d9589474a019a8fb37384dbc73b2489760de10cb86d14f781ec98"
+    },
+    {
+      "crop": [
+        162,
+        134,
+        218,
+        174
+      ],
+      "feet": [
+        285.00019199999997,
+        300.93792
+      ],
+      "id": "contract",
+      "interaction": "contract",
+      "owned_pixels": 28495,
+      "path": "res://content/rooms/town/layers/contract.png",
+      "sha256": "9f70af4a71f5b1e9bf72143899b620fdd1ddf08dee3e02f3051e72bf62755924"
+    },
+    {
+      "crop": [
+        892,
+        64,
+        284,
+        256
+      ],
+      "feet": [
+        1067.9992320000001,
+        320.62464
+      ],
+      "id": "forge",
+      "interaction": "forge",
+      "owned_pixels": 48598,
+      "path": "res://content/rooms/town/layers/forge.png",
+      "sha256": "57e4ca272b6f8a26af4c278c95eb1594350a2037b7a2e560f7304d13a2e58614"
+    },
+    {
+      "crop": [
+        875,
+        272,
+        38,
+        76
+      ],
+      "feet": [
+        884.0002559999999,
+        347.8128
+      ],
+      "id": "lamp_2",
+      "interaction": "",
+      "owned_pixels": 1770,
+      "path": "res://content/rooms/town/layers/lamp_2.png",
+      "sha256": "31b4fec72b3930de77e94b9a4e80a7d4197d39a46c7ef0727bc1081ebb30e9f2"
+    },
+    {
+      "crop": [
+        517,
+        267,
+        56,
+        98
+      ],
+      "feet": [
+        541.000704,
+        355.31232
+      ],
+      "id": "tree_wood",
+      "interaction": "",
+      "owned_pixels": 2549,
+      "path": "res://content/rooms/town/layers/tree_wood.png",
+      "sha256": "7ae4f63e51b9c1a839e192f1b55b66df3078275a9ccb338299bd6c0e129a1c76"
+    },
+    {
+      "crop": [
+        435,
+        285,
+        109,
+        81
+      ],
+      "feet": [
+        489.99936,
+        355.31232
+      ],
+      "id": "wood_contract",
+      "interaction": "",
+      "owned_pixels": 5124,
+      "path": "res://content/rooms/town/layers/wood_contract.png",
+      "sha256": "83efb2bb4f4749bb02f3210657fedf975f8c850e0116145b95c4fc35d59849b5"
+    },
+    {
+      "crop": [
+        1140,
+        37,
+        147,
+        322
+      ],
+      "feet": [
+        1204.99968,
+        358.12512000000004
+      ],
+      "id": "forge_chimney",
+      "interaction": "forge",
+      "owned_pixels": 26941,
+      "path": "res://content/rooms/town/layers/forge_chimney.png",
+      "sha256": "0d9852acfd1f703a98b30b64f0050ee8745c1f5a21e8ac6aa31d24f62c37b405"
+    },
+    {
+      "crop": [
+        667,
+        297,
+        36,
+        76
+      ],
+      "feet": [
+        674.999808,
+        372.1872
+      ],
+      "id": "lamp_1",
+      "interaction": "",
+      "owned_pixels": 1707,
+      "path": "res://content/rooms/town/layers/lamp_1.png",
+      "sha256": "5964a0951f704f0ddfd7502b9c9bc425b32add343935ff327b4bdebf525ee10b"
+    },
+    {
+      "crop": [
+        1003,
+        345,
+        36,
+        56
+      ],
+      "feet": [
+        1010.999808,
+        420.93792
+      ],
+      "id": "lamp_5",
+      "interaction": "",
+      "owned_pixels": 1395,
+      "path": "res://content/rooms/town/layers/lamp_5.png",
+      "sha256": "5587cbfa85756cdb57796a751977e60b7ec4c2b644a3ef9a101cbff6e3837314"
+    },
+    {
+      "crop": [
+        39,
+        340,
+        354,
+        100
+      ],
+      "feet": [
+        257.000448,
+        424.68768
+      ],
+      "id": "training_north",
+      "interaction": "",
+      "owned_pixels": 15231,
+      "path": "res://content/rooms/town/layers/training_north.png",
+      "sha256": "c0f967fab1ceab72c1b85217ee5a4c70c3c6fd3caebc734068ac36ac8c72b483"
+    },
+    {
+      "crop": [
+        377,
+        392,
+        41,
+        58
+      ],
+      "feet": [
+        405.000192,
+        444.37536
+      ],
+      "id": "training_east_north",
+      "interaction": "",
+      "owned_pixels": 1037,
+      "path": "res://content/rooms/town/layers/training_east_north.png",
+      "sha256": "64cb9cefec9b2fc5ea748b38efad5a8e5719068d8846f6eae15bdeb09f3bd850"
+    },
+    {
+      "crop": [
+        1189,
+        361,
+        90,
+        105
+      ],
+      "feet": [
+        1241.000448,
+        458.43744
+      ],
+      "id": "tree_east",
+      "interaction": "",
+      "owned_pixels": 5954,
+      "path": "res://content/rooms/town/layers/tree_east.png",
+      "sha256": "a4c45133da60ffe242f603a7f853ad4a3b8d4071a7d4661dcae2e8297558cc33"
+    },
+    {
+      "crop": [
+        988,
+        397,
+        38,
+        76
+      ],
+      "feet": [
+        997.000704,
+        472.50048000000004
+      ],
+      "id": "lamp_3",
+      "interaction": "",
+      "owned_pixels": 1846,
+      "path": "res://content/rooms/town/layers/lamp_3.png",
+      "sha256": "44859311ac3f5fb00208099a53055ebb958f5b1bccb5f062a03e6cd57aa2646d"
+    },
+    {
+      "crop": [
+        1299,
+        99,
+        237,
+        400
+      ],
+      "feet": [
+        1399.999488,
+        494.06208
+      ],
+      "id": "proxy",
+      "interaction": "proxy",
+      "owned_pixels": 62282,
+      "path": "res://content/rooms/town/layers/proxy.png",
+      "sha256": "c7a744e14477a17ce04e086ec514df262753d304f9c8d59deffb4f7a70a10f66"
+    },
+    {
+      "crop": [
+        720,
+        331,
+        139,
+        175
+      ],
+      "feet": [
+        790.0001279999999,
+        501.56255999999996
+      ],
+      "id": "commons_fire",
+      "interaction": "",
+      "owned_pixels": 13179,
+      "path": "res://content/rooms/town/layers/commons_fire.png",
+      "sha256": "dd4309a52c410f0ca8681de6a665cd0d73332715b71531a2584092071fb95784"
+    },
+    {
+      "crop": [
+        425,
+        434,
+        36,
+        76
+      ],
+      "feet": [
+        432.99993600000005,
+        509.06208
+      ],
+      "id": "lamp_10",
+      "interaction": "",
+      "owned_pixels": 1673,
+      "path": "res://content/rooms/town/layers/lamp_10.png",
+      "sha256": "999f0f1430a58d8ea4eaf3a6dcca1935a74ae889656c93396b9b66b1bfd6fe47"
+    },
+    {
+      "crop": [
+        427,
+        507,
+        51,
+        53
+      ],
+      "feet": [
+        451.00032,
+        555.0
+      ],
+      "id": "training_east_south",
+      "interaction": "",
+      "owned_pixels": 982,
+      "path": "res://content/rooms/town/layers/training_east_south.png",
+      "sha256": "e8bda07e9805cb670ab15c2b492c039213f18db5b093c79e26632e7e105c5383"
+    },
+    {
+      "crop": [
+        565,
+        486,
+        36,
+        76
+      ],
+      "feet": [
+        573.000192,
+        561.56256
+      ],
+      "id": "lamp_4",
+      "interaction": "",
+      "owned_pixels": 1717,
+      "path": "res://content/rooms/town/layers/lamp_4.png",
+      "sha256": "303e2ee3c288c3ed326af7d208826d658301d06124d5e57cbe484296b8f27636"
+    },
+    {
+      "crop": [
+        600,
+        509,
+        95,
+        63
+      ],
+      "feet": [
+        652.99968,
+        563.43744
+      ],
+      "id": "wood_commons",
+      "interaction": "",
+      "owned_pixels": 3675,
+      "path": "res://content/rooms/town/layers/wood_commons.png",
+      "sha256": "f9f98880abf01fccfb80d96d1969489330b8766e42bbd87e5e34e7547cb494ae"
+    },
+    {
+      "crop": [
+        1108,
+        518,
+        79,
+        71
+      ],
+      "feet": [
+        1152.0,
+        581.2502400000001
+      ],
+      "id": "wood_east",
+      "interaction": "",
+      "owned_pixels": 3282,
+      "path": "res://content/rooms/town/layers/wood_east.png",
+      "sha256": "84034063530225584d14f07e968517a553d93d4abcdda1cf50fbdbaca4791f86"
+    },
+    {
+      "crop": [
+        28,
+        497,
+        450,
+        134
+      ],
+      "feet": [
+        234.000384,
+        622.5004799999999
+      ],
+      "id": "training_south",
+      "interaction": "",
+      "owned_pixels": 18707,
+      "path": "res://content/rooms/town/layers/training_south.png",
+      "sha256": "0f34d1aeb82323105b2a7698fbf5f4d0d2785b15f349c8912170842ef117ea2a"
+    },
+    {
+      "crop": [
+        1083,
+        549,
+        38,
+        76
+      ],
+      "feet": [
+        1092.0007679999999,
+        624.37536
+      ],
+      "id": "lamp_6",
+      "interaction": "",
+      "owned_pixels": 1818,
+      "path": "res://content/rooms/town/layers/lamp_6.png",
+      "sha256": "69e5e38843057843d7b4b29531ab91e354fc300c16a64714a8cad84b37012de4"
+    },
+    {
+      "crop": [
+        553,
+        615,
+        109,
+        64
+      ],
+      "feet": [
+        614.00064,
+        675.0
+      ],
+      "id": "wood_south",
+      "interaction": "",
+      "owned_pixels": 3673,
+      "path": "res://content/rooms/town/layers/wood_south.png",
+      "sha256": "e760198494888bb4577c7f09a53cba9761231f180a593144ff5e70c9d8da4dc2"
+    },
+    {
+      "crop": [
+        517,
+        614,
+        197,
+        123
+      ],
+      "feet": [
+        703.9994879999999,
+        730.31232
+      ],
+      "id": "arrival_storage_fence",
+      "interaction": "",
+      "owned_pixels": 6878,
+      "path": "res://content/rooms/town/layers/arrival_storage_fence.png",
+      "sha256": "8119f1d360dfafa0d7b33aff9520b15c6b0f198d738cb30afffced4722dd71b8"
+    },
+    {
+      "crop": [
+        1200,
+        667,
+        37,
+        76
+      ],
+      "feet": [
+        1207.999488,
+        742.5004799999999
+      ],
+      "id": "lamp_8",
+      "interaction": "",
+      "owned_pixels": 1788,
+      "path": "res://content/rooms/town/layers/lamp_8.png",
+      "sha256": "8379e37b180cb150865318e24cf9ff8a11fe5edbfb91e6041953525f8850eb92"
+    },
+    {
+      "crop": [
+        197,
+        644,
+        106,
+        126
+      ],
+      "feet": [
+        249.99935999999997,
+        759.37536
+      ],
+      "id": "tree_southwest",
+      "interaction": "",
+      "owned_pixels": 8502,
+      "path": "res://content/rooms/town/layers/tree_southwest.png",
+      "sha256": "7a6e772aedcbedd1f6cbe00f794ae20b39efa79a475ae10a2f595dbc05a71457"
+    },
+    {
+      "crop": [
+        747,
+        655,
+        112,
+        128
+      ],
+      "feet": [
+        805.000704,
+        771.56256
+      ],
+      "id": "tree_south",
+      "interaction": "",
+      "owned_pixels": 8525,
+      "path": "res://content/rooms/town/layers/tree_south.png",
+      "sha256": "cafdc0e66045884078e3c1bbb0c58cdb31f78b00f0dceeb11f679ad4e175f652"
+    },
+    {
+      "crop": [
+        893,
+        705,
+        38,
+        76
+      ],
+      "feet": [
+        902.00064,
+        780.0
+      ],
+      "id": "lamp_7",
+      "interaction": "",
+      "owned_pixels": 1845,
+      "path": "res://content/rooms/town/layers/lamp_7.png",
+      "sha256": "9a129fdf98a9dd1a5f9c63d224e89de8521cf667afe1223817249d80b4829f05"
+    },
+    {
+      "crop": [
+        557,
+        708,
+        60,
+        82
+      ],
+      "feet": [
+        580.99968,
+        784.68768
+      ],
+      "id": "arrival_west_gate",
+      "interaction": "",
+      "owned_pixels": 2456,
+      "path": "res://content/rooms/town/layers/arrival_west_gate.png",
+      "sha256": "63e6072b8cfd665e34197d0f7ffb2e7b0adb4b1080418243ae9ca2b66979c421"
+    },
+    {
+      "crop": [
+        607,
+        731,
+        116,
+        83
+      ],
+      "feet": [
+        712.0005120000001,
+        797.8128
+      ],
+      "id": "arrival_east_gate",
+      "interaction": "",
+      "owned_pixels": 4172,
+      "path": "res://content/rooms/town/layers/arrival_east_gate.png",
+      "sha256": "fffde282c225499c2a932716b2961182dc627d3736dbd878da8cb972013c4f0f"
+    },
+    {
+      "crop": [
+        337,
+        748,
+        100,
+        73
+      ],
+      "feet": [
+        401.000448,
+        810.93792
+      ],
+      "id": "cart",
+      "interaction": "",
+      "owned_pixels": 4874,
+      "path": "res://content/rooms/town/layers/cart.png",
+      "sha256": "5fe06e9359ffc6159d1909d978bc0757d499f6e7434b2d83335561b317a94fb1"
+    },
+    {
+      "crop": [
+        1316,
+        753,
+        36,
+        76
+      ],
+      "feet": [
+        1323.9997440000002,
+        828.7497599999999
+      ],
+      "id": "lamp_9",
+      "interaction": "",
+      "owned_pixels": 1715,
+      "path": "res://content/rooms/town/layers/lamp_9.png",
+      "sha256": "521c0f6f3b9057deb2791ed5fbebd65055ed31fe5f3c6a6bb21ef20aa264f15e"
+    },
+    {
+      "crop": [
+        235,
+        756,
+        99,
+        113
+      ],
+      "feet": [
+        282.000384,
+        868.12512
+      ],
+      "id": "tree_arrival",
+      "interaction": "",
+      "owned_pixels": 6214,
+      "path": "res://content/rooms/town/layers/tree_arrival.png",
+      "sha256": "d801514e90fe208d4be493b80df50629a117e98493a6df38ebcd54d90818a2e6"
+    }
+  ],
+  "ownership_order": "feet_y_then_stable_id_last_wins",
+  "schema_version": 1,
+  "source": "res://art/production/p1/hamlet_town/town.png",
+  "source_sha256": "fa5d79265d233d9d013c097df44bc810419a31d41e8b756e1b3daf6c42186ee5",
+  "source_size": [
+    1536,
+    1024
+  ],
+  "supports_cutaway": false,
+  "supports_fade": false,
+  "unknown_underplate": "transparent",
+  "world_size": [
+    1536,
+    960
+  ]
+}

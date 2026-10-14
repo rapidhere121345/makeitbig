@@ -66,14 +66,14 @@ func _run() -> void:
 	_expect(first.get_pixel_stage().get_presentation_policy() == Stage.POLICY_FIXED_PIXEL
 		and first.get_presentation_viewport().get_visible_rect() == Rect2(0,0,1280,720),
 		"arena returns to the fixed 1280x720 authority canvas")
-	var adapter: Node = first.current_screen.get("_adapter")
-	# ContractRunController exposes its active adapter through children; no fake arena.
-	if adapter == null:
+	var runtime: Node = first.current_screen.get("_current_runtime")
+	# ContractRunController exposes its active room runtime through children; no fake arena.
+	if runtime == null:
 		for child in first.current_screen.get_children():
-			if child.get_script() != null and child.get_script().resource_path.ends_with("legacy_arena_adapter.gd"):
-				adapter = child
-	var arena: Node = adapter.get("_legacy") if adapter != null else null
-	_expect(arena != null,"real LegacyArenaAdapter mounted inside stage")
+			if child.get_script() != null and child.get_script().resource_path.ends_with("combat_room_runtime.gd"):
+				runtime = child
+	var arena: Node = runtime.get("room_instance") if runtime != null else null
+	_expect(arena != null,"real CombatRoomRuntime mounted inside stage")
 	if arena != null:
 		arena.set_process(false)
 		arena.set_physics_process(false)

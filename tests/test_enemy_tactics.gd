@@ -1,7 +1,7 @@
 extends SceneTree
 
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
-const WalkableGeometry := preload("res://src/systems/walkable_geometry.gd")
+const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
 
 const DEFAULT_ARENA := Rect2(0.0, 0.0, 640.0, 480.0)
 
@@ -39,7 +39,7 @@ func _initialize() -> void:
 
 
 func _base_snapshot(enemies: Array, hazards: Array = [], arena_rect: Rect2 = DEFAULT_ARENA, walkable_geometry: Variant = null) -> Dictionary:
-	var geometry: Dictionary = WalkableGeometry.from_layout("rectangle", arena_rect, 0.0) if walkable_geometry == null else walkable_geometry
+	var geometry: Dictionary = ArenaGeometry.from_layout("rectangle", arena_rect, 0.0) if walkable_geometry == null else walkable_geometry
 	return {
 		"snapshot_version": EnemyTacticsScript.SNAPSHOT_VERSION,
 		"tick": 120,
@@ -67,15 +67,15 @@ func _enemy(entity_id: int, kind_id: String, position: Vector2, action_state: St
 
 
 func _test_malformed_input() -> void:
-	var mismatched_geometry := WalkableGeometry.from_layout("rectangle", Rect2(0.0, 0.0, 320.0, 240.0), 0.0)
-	var invalid_geometry := WalkableGeometry.from_layout("rectangle", DEFAULT_ARENA, 0.0)
+	var mismatched_geometry := ArenaGeometry.from_layout("rectangle", Rect2(0.0, 0.0, 320.0, 240.0), 0.0)
+	var invalid_geometry := ArenaGeometry.from_layout("rectangle", DEFAULT_ARENA, 0.0)
 	invalid_geometry["kind"] = "unknown"
 	var missing_geometry := _base_snapshot([])
 	missing_geometry.erase("walkable_geometry")
 	var cases: Array = [
 		null,
 		{},
-		{"snapshot_version": 99, "tick": 0, "player_position": Vector2.ZERO, "arena_rect": Rect2(0, 0, 10, 10), "walkable_geometry": WalkableGeometry.from_layout("rectangle", Rect2(0, 0, 10, 10), 0.0), "enemies": []},
+		{"snapshot_version": 99, "tick": 0, "player_position": Vector2.ZERO, "arena_rect": Rect2(0, 0, 10, 10), "walkable_geometry": ArenaGeometry.from_layout("rectangle", Rect2(0, 0, 10, 10), 0.0), "enemies": []},
 		_base_snapshot([{"entity_id": 1}]),
 		_base_snapshot([_enemy(1, "melee_pursuer", Vector2.ZERO), _enemy(1, "fan_ranged", Vector2.ONE)]),
 		_base_snapshot([_enemy(1, "unknown", Vector2.ZERO)]),
@@ -150,12 +150,12 @@ func _test_charger_ranges() -> void:
 func _test_charger_padding_contact_projection() -> void:
 	var authored_arena := Rect2(0.0, 0.0, 640.0, 480.0)
 	for layout_id in ["rectangle_arena", "corridor"]:
-		var player_geometry := WalkableGeometry.from_layout(layout_id, authored_arena, 14.0)
-		var enemy_geometry := WalkableGeometry.from_layout(layout_id, authored_arena, 16.0)
+		var player_geometry := ArenaGeometry.from_layout(layout_id, authored_arena, 14.0)
+		var enemy_geometry := ArenaGeometry.from_layout(layout_id, authored_arena, 16.0)
 		var player := Vector2(float(player_geometry.bounds.position.x), float(player_geometry.center.y))
 		var enemy_position := player + Vector2.RIGHT * 100.0
-		var player_check: Dictionary = WalkableGeometry.project(player, player_geometry)
-		var contact: Dictionary = WalkableGeometry.project(player, enemy_geometry)
+		var player_check: Dictionary = ArenaGeometry.project(player, player_geometry)
+		var contact: Dictionary = ArenaGeometry.project(player, enemy_geometry)
 		_expect(bool(player_check.ok) and Vector2(player_check.position).is_equal_approx(player), "charger %s padding: player edge is not legal under padding 14" % layout_id)
 		_expect(bool(contact.ok) and player.distance_to(Vector2(contact.position)) <= EnemyTacticsScript.CHARGER_CONTACT_RADIUS, "charger %s padding: projected contact left the shared hit tolerance" % layout_id)
 		var snapshot := _base_snapshot([_enemy(20, "charging_raider", enemy_position)], [], enemy_geometry.bounds, enemy_geometry)
@@ -165,14 +165,14 @@ func _test_charger_padding_contact_projection() -> void:
 		_expect(Vector2(intent.action_direction).is_equal_approx(enemy_position.direction_to(Vector2(contact.position))), "charger %s padding: frozen direction did not target projected contact" % layout_id)
 		_expect(is_equal_approx(float(intent.action_distance), snappedf(enemy_position.distance_to(Vector2(contact.position)), 0.001)) and is_equal_approx(float(intent.action_distance), 98.0), "charger %s padding: action_distance did not freeze the projected 98px segment" % layout_id)
 		var execution_endpoint := enemy_position + Vector2(intent.action_direction).normalized() * float(intent.action_distance)
-		var execution_path: Dictionary = WalkableGeometry.line_segment_walkable(enemy_position, execution_endpoint, enemy_geometry)
+		var execution_path: Dictionary = ArenaGeometry.line_segment_walkable(enemy_position, execution_endpoint, enemy_geometry)
 		_expect(bool(execution_path.ok) and bool(execution_path.walkable), "charger %s padding: serialized execution endpoint is not walkable" % layout_id)
 
-	var player_geometry := WalkableGeometry.from_layout("rectangle_arena", authored_arena, 14.0)
-	var enemy_geometry := WalkableGeometry.from_layout("rectangle_arena", authored_arena, 30.0)
+	var player_geometry := ArenaGeometry.from_layout("rectangle_arena", authored_arena, 14.0)
+	var enemy_geometry := ArenaGeometry.from_layout("rectangle_arena", authored_arena, 30.0)
 	var player := Vector2(float(player_geometry.bounds.position.x), float(player_geometry.center.y))
 	var enemy_position := player + Vector2.RIGHT * 100.0
-	var contact: Dictionary = WalkableGeometry.project(player, enemy_geometry)
+	var contact: Dictionary = ArenaGeometry.project(player, enemy_geometry)
 	_expect(player.distance_to(Vector2(contact.position)) > EnemyTacticsScript.CHARGER_CONTACT_RADIUS, "charger padding: unreachable fixture did not exceed contact tolerance")
 	var snapshot := _base_snapshot([_enemy(21, "charging_raider", enemy_position)], [], enemy_geometry.bounds, enemy_geometry)
 	snapshot["player_position"] = player
@@ -230,7 +230,7 @@ func _test_fan_strafe_liveness() -> void:
 		var tangent := Vector2(-radial.y, radial.x)
 		_expect(absf(Vector2(intent.move_direction).dot(tangent)) >= 0.5, "fan liveness: tick %d lost its readable strafe component" % tick)
 		var step := Vector2(intent.move_direction) * 58.0 * float(intent.speed_scale) / 30.0
-		var projected: Dictionary = WalkableGeometry.project(position + step, snapshot["walkable_geometry"])
+		var projected: Dictionary = ArenaGeometry.project(position + step, snapshot["walkable_geometry"])
 		_expect(bool(projected.ok) and position.distance_to(Vector2(projected.position)) > 0.01, "fan liveness: tick %d hold movement was swallowed" % tick)
 		position = Vector2(projected.position)
 	_expect(attack_tick >= 0 and attack_tick <= 96, "fan liveness: stationary target at 200 never entered the legal attack band")
@@ -402,7 +402,7 @@ func _test_ring_inner_antipode_planning() -> void:
 	# This height yields a 91.2-unit inner radius, so antipodes are 182.4
 	# units apart and sit inside the charger's ordinary 88..190 launch band.
 	var arena := Rect2(0.0, 0.0, 640.0, 456.0)
-	var geometry := WalkableGeometry.from_layout("ring", arena, 0.0)
+	var geometry := ArenaGeometry.from_layout("ring", arena, 0.0)
 	var center: Vector2 = geometry["center"]
 	var inner_radius := float(geometry["inner_radius"])
 	var enemy_position := center - Vector2.RIGHT * inner_radius
@@ -420,12 +420,12 @@ func _test_ring_inner_antipode_planning() -> void:
 	for iteration in 360:
 		charger_snapshot["enemies"] = [_enemy(2, "charging_raider", simulated_position)]
 		var intent: Dictionary = tactics.plan(charger_snapshot).intents[0]
-		var path: Dictionary = WalkableGeometry.line_segment_walkable(simulated_position, antipode, geometry)
+		var path: Dictionary = ArenaGeometry.line_segment_walkable(simulated_position, antipode, geometry)
 		if String(intent.request_action) == "charge":
 			launch_iteration = iteration
 			var expected_distance := snappedf(simulated_position.distance_to(antipode), 0.001)
 			var execution_endpoint := simulated_position + Vector2(intent.action_direction).normalized() * float(intent.action_distance)
-			var execution_path: Dictionary = WalkableGeometry.line_segment_walkable(simulated_position, execution_endpoint, geometry)
+			var execution_path: Dictionary = ArenaGeometry.line_segment_walkable(simulated_position, execution_endpoint, geometry)
 			_expect(bool(path.ok) and bool(path.walkable), "ring charger: iterative planner launched before the contact chord became walkable")
 			_expect(is_equal_approx(float(intent.action_distance), expected_distance), "ring charger: action_distance did not match projected contact distance")
 			_expect(bool(execution_path.ok) and bool(execution_path.walkable), "ring charger: quantized execution endpoint left the validated chord")
@@ -435,7 +435,7 @@ func _test_ring_inner_antipode_planning() -> void:
 			_expect(not bool(path.walkable), "ring charger: planner kept moving after a legal in-band launch chord was available")
 			_expect(String(intent.reason) == "charger_path_blocked", "ring charger: blocked in-band setup reason changed at iteration %d" % iteration)
 		var step := Vector2(intent.move_direction) * 62.0 / 30.0 * float(intent.speed_scale)
-		var projected: Dictionary = WalkableGeometry.project(simulated_position + step, geometry)
+		var projected: Dictionary = ArenaGeometry.project(simulated_position + step, geometry)
 		_expect(bool(projected.ok) and simulated_position.distance_to(Vector2(projected.position)) > 0.01, "ring charger: setup movement was swallowed at iteration %d" % iteration)
 		simulated_position = projected.position
 	_expect(launch_iteration >= 0, "ring charger: deterministic setup never produced a legal launch chord")
@@ -443,7 +443,7 @@ func _test_ring_inner_antipode_planning() -> void:
 	# Retain the wider ring used by the existing all-role detour controls so fan
 	# and charger remain outside their action bands in this movement-only check.
 	arena = Rect2(0.0, 0.0, 640.0, 640.0)
-	geometry = WalkableGeometry.from_layout("ring", arena, 0.0)
+	geometry = ArenaGeometry.from_layout("ring", arena, 0.0)
 	center = geometry["center"]
 	inner_radius = float(geometry["inner_radius"])
 	enemy_position = center - Vector2.RIGHT * inner_radius
@@ -480,12 +480,12 @@ func _ring_direction_for(kind_id: String, entity_id: int, arena: Rect2, geometry
 		player_position -= Vector2.RIGHT.rotated(slot_angle) * EnemyTacticsScript.MELEE_RING_RADIUS
 	var snapshot := _base_snapshot([_enemy(entity_id, kind_id, enemy_position)], [], arena, geometry)
 	snapshot["player_position"] = player_position
-	var radial_projection: Dictionary = WalkableGeometry.project(enemy_position + Vector2.RIGHT * EnemyTacticsScript.CANDIDATE_LOOKAHEAD, geometry)
+	var radial_projection: Dictionary = ArenaGeometry.project(enemy_position + Vector2.RIGHT * EnemyTacticsScript.CANDIDATE_LOOKAHEAD, geometry)
 	_expect(enemy_position.distance_to(Vector2(radial_projection["position"])) <= 0.01, "ring %s: fixture radial step was not swallowed" % kind_id)
 	var result: Dictionary = tactics.plan(snapshot)
 	_expect(bool(result.ok), "ring %s: valid geometry snapshot failed" % kind_id)
 	var direction := Vector2(result.intents[0].move_direction)
-	var landing: Dictionary = WalkableGeometry.project(enemy_position + direction * EnemyTacticsScript.CANDIDATE_LOOKAHEAD, geometry)
+	var landing: Dictionary = ArenaGeometry.project(enemy_position + direction * EnemyTacticsScript.CANDIDATE_LOOKAHEAD, geometry)
 	_expect(String(result.intents[0].request_action).is_empty(), "ring %s: fixture unexpectedly requested an action" % kind_id)
 	_expect(enemy_position.distance_to(Vector2(landing["position"])) > 0.01, "ring %s: planner kept a swallowed radial direction" % kind_id)
 	_expect(absf(Vector2.RIGHT.cross(direction)) >= 0.8, "ring %s: planner did not choose a tangentially feasible detour: %s" % [kind_id, str(direction)])
@@ -494,7 +494,7 @@ func _ring_direction_for(kind_id: String, entity_id: int, arena: Rect2, geometry
 
 func _test_rectangle_geometry_straight_controls() -> void:
 	var arena := Rect2(0.0, 0.0, 640.0, 640.0)
-	var geometry := WalkableGeometry.from_layout("rectangle", arena, 0.0)
+	var geometry := ArenaGeometry.from_layout("rectangle", arena, 0.0)
 	var player := Vector2(468.0, 320.0)
 	var enemies := [
 		_enemy(6, "melee_pursuer", Vector2(100.0, 320.0)),

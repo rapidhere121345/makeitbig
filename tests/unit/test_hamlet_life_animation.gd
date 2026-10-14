@@ -1,7 +1,7 @@
 extends SceneTree
 ## Standalone contract check for the hamlet life runtime pass: the published
 ## resident work cycles (src/presentation/hamlet_life_animation.gd) rendered by
-## the hub view (src/presentation/hamlet_concept_view.gd).
+## the hub view (src/presentation/town_presenter.gd).
 ##
 ## Run it on its own:
 ##   godot --headless --path . --script res://tests/unit/test_hamlet_life_animation.gd
@@ -14,7 +14,7 @@ extends SceneTree
 ## drifted sheet before the hub draws it.
 
 const HamletLifeAnimationScript = preload("res://src/presentation/hamlet_life_animation.gd")
-const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
+const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
 
 const LIFE_DIR := "res://art/production/p1/hamlet_life_v01/"
 const LIFE_ATLAS_PATH := LIFE_DIR + "atlas.json"
@@ -71,11 +71,7 @@ func _initialize() -> void:
 	_test_frame_wrap()
 	_test_render_rates()
 	_test_loader_and_palette()
-	_test_static_fallback()
-	_test_residents_on_the_layout()
 	_test_formal_town_residents()
-	_test_sockets_on_their_owners()
-	_test_owner_fade_and_cutaway()
 	_test_strict_refusals()
 	_test_no_gameplay_writes()
 	_print_harness_report()
@@ -97,47 +93,31 @@ func _expect(condition: bool, message: String) -> void:
 ## ---------------------------------------------------------------- the package
 
 func _test_formal_town_residents() -> void:
-	var view = HamletConceptViewScript.new()
-	root.add_child(view)
-	_expect(view.load_default_assets(), "town life: formal scene did not load")
-	var layout: Dictionary = _read_json(HamletConceptViewScript.DEFAULT_LAYOUT_PATH)
-	var declared := {}
-	for item: Dictionary in layout.placements:
-		if String(item.get("layer", "")) == "npc":
-			declared[String(item.id)] = item
+	var hub := BaseHubScript.new()
+	root.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	var town = hub.get_town_runtime()
+	_expect(bool(hub.town_load_report.get("ok", false)), "town life: native scene failed to load")
 	var report: Dictionary = view.life_report()
-	_expect(report.residents.size() == 5 and report.effects.is_empty(), "town life: five residents or legacy socket suppression failed")
-	_expect(report.scene_effects.size() == 4 and not view.atmosphere_report().enabled, "town life: light animation or legacy atmosphere suppression failed")
-	var initial_frames := {}
+	_expect(report.residents.size() == 5 and report.effects.is_empty(), "town life: actual five residents missing or old socket overlay survived")
+	var frames := {}
 	for resident: Dictionary in report.residents:
 		var id := String(resident.id)
-		var item: Dictionary = declared.get(id, {})
-		var feet := Vector2(float(item.feet_uv[0]), float(item.feet_uv[1])) * view.world_size()
-		_expect(resident.feet == feet and view.hero_position_is_clear(feet + Vector2(0, 16)), "town life: role placement is not approachable " + id)
-		_expect(resident.clip == "%s.south.work" % id and String(resident.texture).begins_with(HamletLifeAnimationScript.LIFE_DIR) and resident.frames == 4, "town life: resident uses a static ghost " + id)
-		var node := view._sprite_nodes.get(id) as Sprite2D
-		_expect(node != null and node.get_parent() == view.actor_layer and node.scale == Vector2.ONE, "town life: resident detached from world feet-sort or enlarged " + id)
-		initial_frames[id] = resident.frame
-	view.set_life_time_for_test(0.51)
+		_expect(resident.feet == town.resident_positions()[id], "town life: registry feet and drawn feet differ " + id)
+		_expect(resident.clip == "%s.south.work" % id and resident.frames == 4 and String(resident.texture).begins_with(HamletLifeAnimationScript.LIFE_DIR), "town life: resident uses a static substitute " + id)
+		var node := view.world_presenter._actor_views.get("town/npc/" + id) as Sprite2D
+		_expect(node != null and node.get_parent() == view.world_presenter.sort_root and node.scale == Vector2.ONE, "town life: resident left shared feet sort " + id)
+		_expect(node.offset == -Vector2(RESIDENT_ANCHOR) and node.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "town life: resident anchor/filter changed " + id)
+		frames[id] = resident.frame
+	view._process(0.51)
 	var changed := 0
 	for resident: Dictionary in view.life_report().residents:
-		if resident.frame != initial_frames[resident.id]: changed += 1
-	_expect(changed == 5, "town life: not every resident work cycle advanced")
-	var initial_camera := Rect2(view.camera_world_offset(), view.render_audit().view_size)
-	var distant_facilities := 0
-	for patch: Node2D in view._scene_patches:
-		if String(patch.get_meta("placement_id")) in ["contract", "loadout", "forge", "forge_chimney", "training_north", "training_south", "proxy"]:
-			for point: Vector2 in patch.world_polygon:
-				_expect(Rect2(Vector2.ZERO, view.world_size()).grow(1).has_point(point), "town life: foreground extends outside the expanded town")
-				if not initial_camera.has_point(point):
-					distant_facilities += 1
-					break
-	_expect(distant_facilities >= 4, "town life: close camera still reveals all facilities at arrival")
-	view.configure(_fixture_atlas(), _fixture_layout())
-	_expect(view.world_viewport.size == Vector2i(640, 360) and view.render_audit().view_size == Vector2(640, 360), "town life: formal view leaked into legacy fixture")
-	_expect(view._scene_patches.is_empty() and not view._scene_mode(), "town life: formal foreground leaked into legacy fixture")
-	root.remove_child(view)
-	view.free()
+		if resident.frame != frames[resident.id]: changed += 1
+	_expect(changed == 5, "town life: every resident must advance its actual cycle")
+	var audit := view.render_audit()
+	_expect(audit.native_count == 35 and audit.runtime_background_patches == 0, "town life: runtime background patch survived")
+	hub.free()
 
 
 func _read_package() -> Dictionary:
@@ -339,173 +319,6 @@ func _test_loader_and_palette() -> void:
 		_expect(colours.size() == PALETTE_SIZE, "palette: the sheet carries %d colours, the approved sheet is 12 plus 2 amber" % colours.size())
 
 
-func _test_static_fallback() -> void:
-	var view = _fixture_view()
-	# The hub as it stood before this pass: the reader answers with the empty
-	# package a not-yet-published build hands it.
-	view.configure_life_for_test({}, {}, {})
-	_expect(view.is_ready(), "fallback: the static fixture must stay ready without a life package")
-	_expect(view.pending_reasons().is_empty(), "fallback: a missing life package must not reach the hub's pending list: %s" % [view.pending_reasons()])
-	_expect(not view.life_pending_reasons().is_empty(), "fallback: a missing life package must still be reported on its own list")
-	_expect((view.life_report()["residents"] as Array).is_empty(), "fallback: no resident may be claimed without a package")
-	for placement: String in RESIDENT_PLACEMENTS:
-		# Configured with the static atlas only, the placements are static too:
-		# the fixture never loads the game's real atlas.
-		var node := view._sprite_nodes.get("mira", null) as Sprite2D
-		if placement != "mira":
-			continue
-		_expect(node != null, "fallback: mira must keep its static sprite")
-		if node != null:
-			_expect(node.region_rect == Rect2(Vector2.ZERO, Vector2(FIXTURE_CELL)), "fallback: mira must keep the approved static cell, got %s" % node.region_rect)
-			_expect(node.offset == Vector2(-FIXTURE_ANCHOR), "fallback: mira must keep the approved static anchor, got %s" % node.offset)
-			_expect(node.position == RESIDENT_FEET["mira"], "fallback: mira must stand on its layout feet")
-	var life_nodes := 0
-	for key: Variant in view._sprite_nodes.keys():
-		if String(key).begins_with(HamletConceptViewScript.LIFE_NODE_PREFIX):
-			life_nodes += 1
-	_expect(life_nodes == 0, "fallback: %d life nodes were placed without a package" % life_nodes)
-
-
-func _test_residents_on_the_layout() -> void:
-	var view = _fixture_view(true)
-	var report: Dictionary = view.life_report()
-	_expect(bool(report["ready"]) and bool(report["art"]), "residents: the published package did not reach the view")
-	_expect((report["pending"] as Array).is_empty(), "residents: the live view reports %s" % [report["pending"]])
-	var residents: Array = report["residents"]
-	_expect(residents.size() == RESIDENT_PLACEMENTS.size(), "residents: %d of %d placements were animated" % [residents.size(), RESIDENT_PLACEMENTS.size()])
-	for entry: Dictionary in residents:
-		var placement := String(entry["id"])
-		var node := view._sprite_nodes.get(placement, null) as Sprite2D
-		_expect(node != null, "residents: %s has no sprite" % placement)
-		if node == null:
-			continue
-		_expect(entry["feet"] == RESIDENT_FEET[placement], "residents: %s stands at %s, its layout feet are %s" % [placement, entry["feet"], RESIDENT_FEET[placement]])
-		_expect(node.position == RESIDENT_FEET[placement], "residents: %s left its layout feet" % placement)
-		_expect(String(node.get_meta("life_clip", "")) == String(entry["clip"]), "residents: %s does not carry its clip" % placement)
-		_expect(entry["offset"] == -Vector2(RESIDENT_ANCHOR), "residents: %s is offset %s, the approved anchor puts it at %s" % [placement, entry["offset"], -Vector2(RESIDENT_ANCHOR)])
-		_expect(String(entry["texture"]) == RESIDENTS_PNG, "residents: %s is cut from %s" % [placement, entry["texture"]])
-		_expect(node.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "residents: %s must be drawn with nearest filtering" % placement)
-		_expect(node.scale == Vector2.ONE, "residents: %s must stay on the native 1x grid" % placement)
-
-	# A full period draws four real cells and never moves the resident or tricks
-	# with brightness: the walk from frame to frame is the art itself.
-	for placement: String in RESIDENT_PLACEMENTS:
-		var fps: float = RESIDENT_FPS[placement]
-		var node := view._sprite_nodes.get(placement, null) as Sprite2D
-		if node == null:
-			continue
-		var drawn := {}
-		for step in RESIDENT_FRAMES:
-			view.set_life_time_for_test((float(step) + 0.5) / fps)
-			drawn[node.region_rect] = true
-			_expect(node.position == RESIDENT_FEET[placement], "residents: %s moved while its cycle played" % placement)
-			_expect(node.offset == -Vector2(RESIDENT_ANCHOR), "residents: %s re-anchored between frames" % placement)
-			_expect(node.modulate == Color.WHITE, "residents: %s was tinted instead of animated" % placement)
-			_expect(node.region_rect.size == Vector2(RESIDENT_CELL), "residents: %s drew a %s cell" % [placement, node.region_rect.size])
-			_expect(node.texture != null and Vector2i(node.texture.get_size()) == SHEET_SIZE, "residents: %s is drawing another sheet" % placement)
-		_expect(drawn.size() == RESIDENT_FRAMES, "residents: %s showed %d cells across its cycle" % [placement, drawn.size()])
-		_expect(node.visible, "residents: %s must be drawn" % placement)
-		# The very first published frame has to be a real 48x48 cell cut from the
-		# sheet, never the static placement cell left behind by a refused band.
-		view.set_life_time_for_test(0.0)
-		var published_phase := 0.0
-		for entry: Dictionary in view.life_report()["residents"]:
-			if String(entry["id"]) == placement:
-				published_phase = float(entry["phase"])
-		var first: Dictionary = _new_life().frame_at("%s.south.work" % placement, published_phase)
-		_expect(not first.is_empty() and node.region_rect == first["rect"], "residents: %s draws %s at time zero, its published frame at phase %s is %s" % [placement, node.region_rect, published_phase, first.get("rect", Rect2())])
-
-
-func _test_sockets_on_their_owners() -> void:
-	var view = _fixture_view(true)
-	view.set_life_time_for_test(0.0)
-	var effects: Array = view.life_report()["effects"]
-	_expect(effects.size() == SOCKETS.size(), "sockets: %d of %d were placed" % [effects.size(), SOCKETS.size()])
-	var by_id := {}
-	for entry: Dictionary in effects:
-		by_id[String(entry["id"])] = entry
-	for published: Dictionary in SOCKETS:
-		var socket_id := String(published.id)
-		var entry: Dictionary = by_id.get(socket_id, {})
-		_expect(not entry.is_empty(), "sockets: %s was not placed" % socket_id)
-		if entry.is_empty():
-			continue
-		var clip := String(published.clip)
-		var owner_feet: Vector2 = STATION_FEET[String(published.owner)]
-		# The owner's feet carry the sort and never move for a socket; the whole
-		# authored placement - socket offset and clip anchor together - lives in
-		# the sprite offset, so the drawn cell still lands on owner + offset.
-		_expect(entry["feet"] == owner_feet, "sockets: %s stands at %s, its owner's feet are %s" % [socket_id, entry["feet"], owner_feet])
-		_expect(entry["socket_offset"] == published.offset, "sockets: %s carries offset %s, the approved socket offset is %s" % [socket_id, entry["socket_offset"], published.offset])
-		_expect(entry["offset"] == published.offset - Vector2(EFFECT_ANCHORS[clip]), "sockets: %s is offset %s, its socket offset minus its anchor is %s" % [socket_id, entry["offset"], published.offset - Vector2(EFFECT_ANCHORS[clip])])
-		_expect((entry["rect"] as Rect2).size == Vector2(EFFECT_CELLS[clip]), "sockets: %s drew a %s cell" % [socket_id, (entry["rect"] as Rect2).size])
-		_expect(view._sprite_nodes.has("%s%s" % [HamletConceptViewScript.LIFE_NODE_PREFIX, socket_id]), "sockets: %s must join the shared cutaway registry" % socket_id)
-		var node := view._sprite_nodes.get("%s%s" % [HamletConceptViewScript.LIFE_NODE_PREFIX, socket_id], null) as Sprite2D
-		_expect(node != null and String(node.get_meta("life_owner", "")) == String(published.owner), "sockets: %s does not carry its owner" % socket_id)
-		if node == null:
-			continue
-		var sorted := view.actor_layer.get_node_or_null(String(entry["node"])) != null
-		if String(published.layer) == "upper":
-			_expect(sorted, "sockets: upper socket %s must join the feet-sorted layer" % socket_id)
-		else:
-			_expect(not sorted, "sockets: lower socket %s must stay out of the feet-sorted layer" % socket_id)
-			_expect(node.get_parent() == view.object_lower_layer, "sockets: lower socket %s must stand in its owner's own band" % socket_id)
-		_expect(node.scale == Vector2.ONE and node.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "sockets: %s must stay on the native 1x grid" % socket_id)
-
-	# Every socket plays its own real frames, on its published cadence.
-	for clip: String in EFFECT_FPS.keys():
-		var fps: float = EFFECT_FPS[clip]
-		var drawn := {}
-		for step in EFFECT_FRAMES:
-			view.set_life_time_for_test((float(step) + 0.5) / fps)
-			for entry: Dictionary in view.life_report()["effects"]:
-				if String(entry["clip"]) != clip:
-					continue
-				if String(entry["id"]) != "hearth_cook_fire" and String(entry["id"]) != "tower_exhaust":
-					continue
-				drawn[(entry["rect"] as Rect2).position] = true
-				_expect(entry["feet"] == STATION_FEET[String(entry["owner"])], "sockets: %s left its owner's feet while its cycle played" % entry["id"])
-				_expect((entry["rect"] as Rect2).size == Vector2(EFFECT_CELLS[clip]), "sockets: %s drew a %s cell" % [entry["id"], (entry["rect"] as Rect2).size])
-		_expect(drawn.size() >= EFFECT_FRAMES, "sockets: %s showed %d distinct cells across its cycle" % [clip, drawn.size()])
-
-
-func _test_owner_fade_and_cutaway() -> void:
-	var view = _fixture_view(true)
-	var upper := view._sprite_nodes.get("life.tower_exhaust", null) as Sprite2D
-	var owner_upper := view._sprite_nodes.get("hearth.upper", null) as Sprite2D
-	var lower := view._sprite_nodes.get("life.hearth_cook_fire", null) as Sprite2D
-	_expect(upper != null and owner_upper != null and lower != null, "fade: the hearth's own sockets are missing")
-	if upper == null or owner_upper == null or lower == null:
-		return
-
-	view.teleport_hero(Vector2(900, 600))
-	view._process(0.016)
-	_expect(upper.modulate == Color.WHITE and owner_upper.modulate == Color.WHITE, "fade: a clear frame must leave the authored alpha alone")
-
-	# The avatar crosses the hearth's standing band: the owner's upper band takes
-	# the approved half-tone and its upper socket has to follow it, after the fade
-	# has been written, so the fire never burns through a translucent stand.
-	view.teleport_hero(Vector2(590, 370))
-	view._process(0.016)
-	_expect(is_equal_approx(owner_upper.modulate.a, HamletConceptViewScript.SPLIT_FADE_ALPHA), "fade: the hearth's upper band took alpha %.3f instead of %.2f" % [owner_upper.modulate.a, HamletConceptViewScript.SPLIT_FADE_ALPHA])
-	_expect(is_equal_approx(upper.modulate.a, owner_upper.modulate.a), "fade: the upper socket shows alpha %.3f against its owner's %.3f" % [upper.modulate.a, owner_upper.modulate.a])
-	_expect(is_equal_approx(lower.modulate.a, 1.0), "fade: a lower socket belongs to the solid band and must keep full alpha, got %.3f" % lower.modulate.a)
-
-	# Standing behind the tower's vent: the shared cutaway must know the socket.
-	view.teleport_hero(Vector2(716, 298))
-	view._process(0.016)
-	var report: Dictionary = view.occlusion_report()
-	_expect((report["front_ids"] as Array).has("life.tower_exhaust"), "cutaway: the steam socket was not cut in front of the avatar (%s)" % [report["front_ids"]])
-	_expect(not upper.visible, "cutaway: a cut socket must hand its cell to the five pieces")
-	_expect(not (report["front_ids"] as Array).has("life.hearth_cook_fire"), "cutaway: a lower socket must never be cut, its owner's band already draws behind the avatar")
-	_expect(lower.visible, "cutaway: the lower fire must stay drawn")
-
-	# With the hero clear again the socket is drawn from its own cell once more.
-	view.teleport_hero(Vector2(900, 600))
-	view._process(0.016)
-	_expect(upper.visible and owner_upper.visible, "cutaway: leaving the vent must restore the authored drawing")
-
-
 func _test_strict_refusals() -> void:
 	var atlas := _synthetic_atlas()
 	var manifest := {
@@ -566,88 +379,23 @@ func _test_strict_refusals() -> void:
 
 
 func _test_no_gameplay_writes() -> void:
-	var view = _fixture_view(true)
+	var hub := BaseHubScript.new()
+	root.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	var town = hub.get_town_runtime()
+	var before: Dictionary = town.snapshot()
+	var actors: Dictionary = town.registry.snapshot()
 	var before_user := _user_state()
-	var before_entries: Array[Dictionary] = view.feature_entries()
-	var before_audit: Dictionary = view.render_audit()
-	var before_hits: Array[String] = []
-	for point: Vector2 in [Vector2(584, 402), Vector2(655, 426), Vector2(120, 120)]:
-		before_hits.append(view.hit_test(point))
-	var before_nearby: String = view.nearby_feature_id()
-	var before_labels: String = view.nearby_label()
-
-	# Three seconds of hub life with the avatar walking past every socket.
-	view.teleport_hero(Vector2(640, 330))
-	for frame in range(432):
-		view.move_hero(Vector2.RIGHT, 1.0 / 144.0)
+	var nodes: int = view.world_presenter.sort_root.get_child_count()
+	for frame: int in 432:
 		view._process(1.0 / 144.0)
-
-	_expect(view._life_residents.size() == RESIDENT_PLACEMENTS.size(), "writes: the life pass dropped a resident")
-	_expect(view._life_effects.size() == SOCKETS.size(), "writes: the life pass dropped a socket")
-	var after_hits: Array[String] = []
-	for point: Vector2 in [Vector2(584, 402), Vector2(655, 426), Vector2(120, 120)]:
-		after_hits.append(view.hit_test(point))
-	_expect(after_hits == before_hits, "writes: the life pass changed a hub hotspot")
-	_expect(view.nearby_feature_id() == before_nearby and view.nearby_label() == before_labels, "writes: the life pass changed the hub's nearby entry")
-	_expect(view.feature_entries() == before_entries, "writes: the life pass changed the hub's entries")
-	var after_audit: Dictionary = view.render_audit()
-	# The only nodes a run may add are the cutaway's own tiling cache, which is
-	# the pre-existing lazy behaviour for any sprite the avatar walks behind.
-	var tiles: int = view._cutaway_cache.size() * 5
-	var before_layers: Dictionary = before_audit["layers"]
-	var after_layers: Dictionary = after_audit["layers"]
-	for layer_key: String in before_layers.keys():
-		var grown := int(after_layers[layer_key]) - int(before_layers[layer_key])
-		var allowed: int = tiles if layer_key == "actors" else 0
-		_expect(grown == allowed, "writes: the %s layer grew by %d node(s), the cutaway's own cache accounts for %d" % [layer_key, grown, allowed])
-	_expect(after_audit["facilities"] == before_audit["facilities"], "writes: the life pass changed the published stations")
-	_expect(after_audit["world_size"] == before_audit["world_size"], "writes: the life pass changed the world field")
-	_expect(_user_state() == before_user, "writes: the life pass wrote outside its own sprites")
+	_expect(town.snapshot() == before and town.registry.snapshot() == actors and town.simulation.tick == before.tick, "town life: presentation wrote gameplay or moved authority clock")
+	_expect(view.world_presenter.sort_root.get_child_count() == nodes, "town life: animation generated background/cutaway nodes")
+	_expect(_user_state() == before_user, "town life: presentation wrote saves")
+	hub.free()
 
 
-## ------------------------------------------------------------------- fixtures
-
-## The hub's own frame, in memory: five residents, the two split stands the
-## sockets hang on and the avatar, over the published feet.
-func _fixture_atlas() -> Dictionary:
-	var sprites := {
-		"hamlet.hearth": {"rect": [0, 0, 64, 64], "anchor": [24, 60], "texture": "fixture"},
-		"facility.forge": {"rect": [0, 0, 64, 64], "anchor": [24, 60], "texture": "fixture"},
-		"ranger.south.idle": {"rect": [64, 0, 32, 48], "anchor": [16, 44], "texture": "fixture"},
-	}
-	for placement: String in RESIDENT_PLACEMENTS:
-		sprites["resident.%s" % placement] = {"rect": [0, 0, FIXTURE_CELL.x, FIXTURE_CELL.y], "anchor": [FIXTURE_ANCHOR.x, FIXTURE_ANCHOR.y], "texture": "fixture"}
-	return {
-		"schema_version": 1,
-		"native_view": [640, 360],
-		"animations": {},
-		"textures": {"fixture": {"path": RESIDENTS_PNG, "width": SHEET_SIZE.x, "height": SHEET_SIZE.y}},
-		"sprites": sprites,
-	}
-
-
-func _fixture_layout() -> Dictionary:
-	var placements: Array[Dictionary] = [
-		{"id": "hearth", "sprite": "hamlet.hearth", "feet": [STATION_FEET["hearth"].x, STATION_FEET["hearth"].y], "layer": "object", "split_row": 32},
-		{"id": "forge", "sprite": "facility.forge", "feet": [STATION_FEET["forge"].x, STATION_FEET["forge"].y], "layer": "object", "split_row": 32},
-	]
-	for placement: String in RESIDENT_PLACEMENTS:
-		placements.append({"id": placement, "sprite": "resident.%s" % placement, "feet": [RESIDENT_FEET[placement].x, RESIDENT_FEET[placement].y], "layer": "npc"})
-	return {"schema_version": 1, "world": [1024, 640], "hero_start": [548, 405], "placements": placements}
-
-
-func _fixture_view(with_life: bool = false):
-	var view = HamletConceptViewScript.new()
-	root.add_child(view)
-	view.configure(_fixture_atlas(), _fixture_layout())
-	_expect(view.is_ready(), "fixture: the hub fixture did not come up")
-	if with_life:
-		view.configure_life_for_test(_package.atlas, _package.manifest, _package.effects)
-	return view
-
-
-## A minimal sound package for the refusal matrix: one 4-frame cycle cut from
-## the published sheet, so only the rule under test can be the reason it fails.
 func _synthetic_atlas(fps: float = 3.0, distinct: float = 4.0, loop: bool = true) -> Dictionary:
 	var sprites := {}
 	for index in 4:
@@ -718,17 +466,5 @@ func _collect_files(directory: String, state: Dictionary) -> void:
 ## The harness digest: one line per resident and socket with everything a GPU
 ## check needs to name the frame that is on screen.
 func _print_harness_report() -> void:
-	var view = _fixture_view(true)
-	var report := view.life_report()
-	print("  hamlet life package: ready=%s art=%s time=%.3f" % [report["ready"], report["art"], report["time"]])
-	for entry: Dictionary in report["residents"]:
-		print("  resident %-6s clip=%-18s frame=%d/%d fps=%.0f feet=%s offset=%s cell=%s" % [
-			entry["id"], entry["clip"], int(entry["frame"]), int(entry["frames"]), float(entry["fps"]),
-			str(entry["feet"]), str(entry["offset"]), str((entry["rect"] as Rect2).size),
-		])
-	for entry: Dictionary in report["effects"]:
-		print("  socket   %-16s owner=%-6s %-4s clip=%-10s frame=%d/%d fps=%.0f feet=%s offset=%s cell=%s" % [
-			entry["id"], entry["owner"], entry["layer"], entry["clip"], int(entry["frame"]), int(entry["frames"]),
-			float(entry["fps"]), str(entry["feet"]), str(entry["offset"]), str((entry["rect"] as Rect2).size),
-		])
-	print("  sheet: %s %s, %d colours" % [RESIDENTS_PNG, str(SHEET_SIZE), PALETTE_SIZE])
+	var report: Dictionary = _new_life().life_report()
+	print("  published life reader: ready=%s residents=%d sockets=%d" % [report.ready, report.residents.size(), report.effects.size()])

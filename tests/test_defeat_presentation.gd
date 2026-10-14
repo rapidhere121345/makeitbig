@@ -23,7 +23,7 @@ extends SceneTree
 ##    the parent node of the arena it mounted, so it processes first.
 
 const GameRootScript := preload("res://src/game/game_root.gd")
-const LegacyArenaAdapterScript := preload("res://src/game/legacy_arena_adapter.gd")
+const CombatRoomRuntimeScript := preload("res://src/game/combat_room_runtime.gd")
 const DefeatPresentationScript := preload("res://src/presentation/defeat_presentation.gd")
 const EarlyItemRegistryScript := preload("res://src/content/early_item_registry.gd")
 const BuildResolverScript := preload("res://src/systems/build_resolver.gd")
@@ -166,9 +166,9 @@ func _test_real_death(failures: Array[String], rate: int) -> int:
 	var delta := 1.0 / float(rate)
 	var session := _start_death_session(failures, true)
 	var arena: Node = session.get("arena")
-	var adapter: Node = session.get("adapter")
+	var runtime: Node = session.get("runtime")
 	var completed: Array = session.get("completed")
-	if arena == null or adapter == null:
+	if arena == null or runtime == null:
 		_teardown(session)
 		return -1
 
@@ -185,7 +185,8 @@ func _test_real_death(failures: Array[String], rate: int) -> int:
 		return -1
 	_expect(bool(arena.get("battle_over")) and not bool(arena.get("battle_victory")),
 		"real death %s: the defeat did not latch on the death tick" % tag, failures)
-	_expect(String(arena.get("last_damage_source_id")) == MELEE_CONTACT_SOURCE and int(arena.get("last_damage_tick")) == death_tick,
+	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	_expect(String(player.last_damage_source_id) == MELEE_CONTACT_SOURCE and int(player.last_damage_tick) == death_tick,
 		"real death %s: the lethal damage did not come from the melee pursuer on the death tick" % tag, failures)
 	_expect(String(arena.get("battle_report")).begins_with("DEFEAT"),
 		"real death %s: the defeat report was not latched with the death" % tag, failures)
@@ -206,7 +207,7 @@ func _test_real_death(failures: Array[String], rate: int) -> int:
 	var window_at_settlement: Dictionary = (arena.call("defeat_presentation_report") as Dictionary).get("window", {})
 	_expect(String(window_at_settlement.get("state", "")) != DefeatPresentationScript.STATE_COMPLETE,
 		"real death %s: the settlement waited for the death clip to finish" % tag, failures)
-	_expect(not bool(adapter.call("defeat_presentation_ready")),
+	_expect(not bool(runtime.call("defeat_presentation_ready")),
 		"real death %s: the arena reported the clip done while it was still playing" % tag, failures)
 	_expect(int(arena.get("sim_tick")) == death_tick,
 		"real death %s: the simulation kept ticking after the death" % tag, failures)
@@ -219,10 +220,10 @@ func _test_real_death(failures: Array[String], rate: int) -> int:
 	for _frame_index in MAX_WINDOW_FRAMES:
 		_advance_frame(session, delta)
 		window_frames += 1
-		var action := String((arena.get("ranger_frame") as Dictionary).get("action", ""))
+		var action := String((arena.presentation.animations.ranger_frame as Dictionary).get("action", ""))
 		if action != DefeatPresentationScript.ACTION_DEATH:
 			non_death_frames.append("window frame %d drew '%s'" % [window_frames, action])
-		if bool(adapter.call("defeat_presentation_ready")):
+		if bool(runtime.call("defeat_presentation_ready")):
 			ready_at = window_frames
 			break
 	_expect(ready_at > 0, "real death %s: the published death clip never finished on screen" % tag, failures)
@@ -241,10 +242,10 @@ func _test_real_death(failures: Array[String], rate: int) -> int:
 		"real death %s: the simulation moved while the corpse was on screen" % tag, failures)
 
 	# --- repeats and exits never settle a defeat twice.
-	adapter.call("_process", delta)
-	adapter.call("request_abandon")
+	runtime.call("_process", delta)
+	runtime.call("request_abandon")
 	arena.call("defeat_skip_presentation", "after_window")
-	adapter.call("_process", delta)
+	runtime.call("_process", delta)
 	_expect(completed.size() == 1 and (session.get("abandoned") as Array).is_empty(),
 		"real death %s: a repeat, abandon or skip re-settled the result" % tag, failures)
 	_teardown(session)
@@ -256,9 +257,9 @@ func _test_presentation_off(failures: Array[String]) -> void:
 	var delta := 1.0 / 60.0
 	var session := _start_death_session(failures, false)
 	var arena: Node = session.get("arena")
-	var adapter: Node = session.get("adapter")
+	var runtime: Node = session.get("runtime")
 	var completed: Array = session.get("completed")
-	if arena == null or adapter == null:
+	if arena == null or runtime == null:
 		_teardown(session)
 		return
 	_expect(arena.get("defeat_presentation") == null,
@@ -273,7 +274,7 @@ func _test_presentation_off(failures: Array[String]) -> void:
 		_expect(false, "presentation off: the melee pursuer never landed a fatal impact", failures)
 		_teardown(session)
 		return
-	_expect(bool(adapter.call("defeat_presentation_ready")),
+	_expect(bool(runtime.call("defeat_presentation_ready")),
 		"presentation off: the relay held a route without presentation", failures)
 	_expect(float((arena.call("defeat_presentation_report") as Dictionary).get("death_seconds", -1.0)) == 0.0,
 		"presentation off: the defeat clock advanced without presentation", failures)
@@ -285,15 +286,15 @@ func _test_presentation_off(failures: Array[String]) -> void:
 	_teardown(session)
 
 
-## The player-facing skip: once the session is settled the adapter is finalized,
+## The player-facing skip: once the session is settled the runtime is finalized,
 ## and the real return button on the arena screen still has to end the window.
 func _test_return_button_skip(failures: Array[String]) -> void:
 	var delta := 1.0 / 60.0
 	var session := _start_death_session(failures, true)
 	var arena: Node = session.get("arena")
-	var adapter: Node = session.get("adapter")
+	var runtime: Node = session.get("runtime")
 	var completed: Array = session.get("completed")
-	if arena == null or adapter == null:
+	if arena == null or runtime == null:
 		_teardown(session)
 		return
 	var death_tick := -1
@@ -311,9 +312,9 @@ func _test_return_button_skip(failures: Array[String]) -> void:
 	_expect(completed.size() == 1, "return button: the session did not settle before the press", failures)
 	var window_before: Dictionary = (arena.call("defeat_presentation_report") as Dictionary).get("window", {})
 	_expect(String(window_before.get("state", "")) == DefeatPresentationScript.STATE_PLAYING
-		and not bool(adapter.call("defeat_presentation_ready")),
+		and not bool(runtime.call("defeat_presentation_ready")),
 		"return button: the window was not live and holding before the press", failures)
-	var button: Variant = arena.get("return_button")
+	var button: Variant = arena.presentation.hud.find_child("ReturnButton", true, false)
 	_expect(button is Button and bool((button as Button).visible),
 		"return button: the defeat screen offered no visible return button", failures)
 	if button is Button:
@@ -322,7 +323,7 @@ func _test_return_button_skip(failures: Array[String]) -> void:
 	_expect(String(window_after.get("state", "")) == DefeatPresentationScript.STATE_SKIPPED
 		and String(window_after.get("skip_reason", "")) == "return_to_base",
 		"return button: a post-settlement press did not end the defeat window (state=%s)" % String(window_after.get("state", "")), failures)
-	_expect(bool(adapter.call("defeat_presentation_ready")),
+	_expect(bool(runtime.call("defeat_presentation_ready")),
 		"return button: the arena kept holding the route after the press", failures)
 	_expect(completed.size() == 1 and (session.get("abandoned") as Array).is_empty(),
 		"return button: the skip re-settled or abandoned the settled result", failures)
@@ -500,7 +501,7 @@ func _test_unchanged_outcomes(failures: Array[String]) -> void:
 
 
 ## The whole production chain, driven frame by frame: GameRoot -> real
-## ContractRunController -> real LegacyArenaAdapter -> real arena. The defeat
+## ContractRunController -> real CombatRoomRuntime -> real arena. The defeat
 ## settles and is saved while the arena screen is still mounted and still drawing
 ## the fall, the clip finishes on that same screen, and only then does the result
 ## screen replace it. The second contract ends the same window with the player's
@@ -515,7 +516,7 @@ func _test_production_chain(failures: Array[String]) -> void:
 		return
 	var logger = session.get("logger")
 	var generation_before := _save_generation(game)
-	_fixture_contact_kill(arena)
+	_fixture_contact_kill(arena, failures)
 	var death_tick := _drive_production_to_death(session, delta)
 	if death_tick < 0:
 		_expect(false, "production chain: the melee pursuer never landed a fatal impact", failures)
@@ -533,7 +534,7 @@ func _test_production_chain(failures: Array[String]) -> void:
 	var controller = game.current_screen
 	_expect(controller != null and controller.has_method("defeat_presentation_ready"),
 		"production chain: the production controller was replaced or lost its relay", failures)
-	_expect(is_instance_valid(arena) and not arena.is_queued_for_deletion() and String((arena.get("ranger_frame") as Dictionary).get("action", "")) == DefeatPresentationScript.ACTION_DEATH,
+	_expect(is_instance_valid(arena) and not arena.is_queued_for_deletion() and String((arena.presentation.animations.ranger_frame as Dictionary).get("action", "")) == DefeatPresentationScript.ACTION_DEATH,
 		"production chain: the mounted arena was not drawing the fall while the result waited", failures)
 	if controller is Node:
 		_expect((controller as Node).process_mode != Node.PROCESS_MODE_DISABLED,
@@ -545,7 +546,7 @@ func _test_production_chain(failures: Array[String]) -> void:
 	for _frame_index in MAX_WINDOW_FRAMES:
 		_advance_production_frame(session, delta)
 		held_frames += 1
-		if String((arena.get("ranger_frame") as Dictionary).get("action", "")) != DefeatPresentationScript.ACTION_DEATH:
+		if String((arena.presentation.animations.ranger_frame as Dictionary).get("action", "")) != DefeatPresentationScript.ACTION_DEATH:
 			left_death_clip = true
 		if game.current_route != "arena":
 			break
@@ -573,7 +574,7 @@ func _test_production_chain(failures: Array[String]) -> void:
 		_teardown_production(session)
 		return
 	var retry_generation := _save_generation(game)
-	_fixture_contact_kill(retry_arena)
+	_fixture_contact_kill(retry_arena, failures)
 	if _drive_production_to_death(session, delta) < 0:
 		_expect(false, "production chain: the retry contract never reached a real death", failures)
 		_teardown_production(session)
@@ -581,7 +582,7 @@ func _test_production_chain(failures: Array[String]) -> void:
 	_advance_production_frame(session, delta)
 	_expect(bool(game.call("defeat_route_report").get("pending", false)),
 		"production chain: the retry result was not waiting for its clip", failures)
-	var retry_button: Variant = retry_arena.get("return_button")
+	var retry_button: Variant = retry_arena.presentation.hud.find_child("ReturnButton", true, false)
 	if retry_button is Button:
 		(retry_button as Button).emit_signal("pressed")
 	_expect(String(((retry_arena.call("defeat_presentation_report") as Dictionary).get("window", {}) as Dictionary).get("skip_reason", "")) == "return_to_base",
@@ -598,7 +599,7 @@ func _test_production_chain(failures: Array[String]) -> void:
 ## scene fixture: no dead state, no battle_over, no victory flag.
 func _start_death_session(failures: Array[String], presentation_enabled: bool) -> Dictionary:
 	var session := {
-		"adapter": null,
+		"runtime": null,
 		"arena": null,
 		"completed": [] as Array[Dictionary],
 		"abandoned": [] as Array[Dictionary],
@@ -608,9 +609,9 @@ func _start_death_session(failures: Array[String], presentation_enabled: bool) -
 	if resolved_build.is_empty():
 		_expect(false, "fixture: the calibration_convergent Build did not resolve", failures)
 		return session
-	var adapter = LegacyArenaAdapterScript.new()
-	root.add_child(adapter)
-	var started: Dictionary = adapter.start_session({
+	var runtime = CombatRoomRuntimeScript.new()
+	root.add_child(runtime)
+	var started: Dictionary = runtime.start_session({
 		"contract_id": "embedded.defeat-window",
 		"mode": "Manual",
 		"preset_id": "convergent",
@@ -630,16 +631,16 @@ func _start_death_session(failures: Array[String], presentation_enabled: bool) -
 		"framework_context": {"resolved_build": resolved_build},
 	})
 	_expect(bool(started.get("ok", false)), "fixture: the embedded session did not start: %s" % str(started), failures)
-	var arena_value: Variant = adapter.get("_legacy")
+	var arena_value: Variant = runtime.get("room_instance")
 	if not (arena_value is Node):
-		_expect(false, "fixture: the adapter mounted no arena", failures)
+		_expect(false, "fixture: the runtime mounted no arena", failures)
 		_teardown(session)
 		return session
 	var arena := arena_value as Node
-	session["adapter"] = adapter
+	session["runtime"] = runtime
 	session["arena"] = arena
-	adapter.completed.connect(_capture_route.bind(session))
-	adapter.abandoned.connect(_capture_abandon.bind(session))
+	runtime.completed.connect(_capture_route.bind(session))
+	runtime.abandoned.connect(_capture_abandon.bind(session))
 	## The loop below owns the clock, so the engine never double-processes this
 	## arena while the test drives it frame by frame.
 	arena.set_process(false)
@@ -649,21 +650,21 @@ func _start_death_session(failures: Array[String], presentation_enabled: bool) -
 		_teardown(session)
 		return session
 	_expect(not bool(arena.get("battle_over")) and float(arena.get("player_health")) > 0.0
-		and String(arena.get("last_damage_source_id")).is_empty(),
+		and String(arena.player_combat_state.snapshot(arena.sim_tick).last_damage_source_id).is_empty(),
 		"fixture: the session was already over before the real impact", failures)
 	var enemy: Variant = roster[0]
-	enemy.position = (arena.get("player_position") as Vector2) + Vector2(12.0, 0.0)
-	arena.set("player_health", MELEE_CONTACT_DAMAGE)
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, (arena.get("player_position") as Vector2) + Vector2(12.0, 0.0))
+	_prepare_contact_health(arena, failures)
 	return session
 
 
-## Router frame order: the adapter is the arena's parent, so it processes first
+## Router frame order: the runtime is the arena's parent, so it processes first
 ## and only ever sees frames the arena already presented. The arena keeps
 ## processing after this call because nothing has taken its screen away yet.
 func _advance_frame(session: Dictionary, delta: float) -> void:
 	var counters: Dictionary = session["frames"]
 	counters["driven"] = int(counters.get("driven", 0)) + 1
-	(session["adapter"] as Node).call("_process", delta)
+	(session["runtime"] as Node).call("_process", delta)
 	(session["arena"] as Node).call("_process", delta)
 
 
@@ -678,12 +679,12 @@ func _capture_abandon(result: Dictionary, session: Dictionary) -> void:
 
 
 func _teardown(session: Dictionary) -> void:
-	var adapter: Node = session.get("adapter")
-	if adapter != null and is_instance_valid(adapter):
-		if adapter.get_parent() == root:
-			root.remove_child(adapter)
-		adapter.free()
-	session["adapter"] = null
+	var runtime: Node = session.get("runtime")
+	if runtime != null and is_instance_valid(runtime):
+		if runtime.get_parent() == root:
+			root.remove_child(runtime)
+		runtime.free()
+	session["runtime"] = null
 	session["arena"] = null
 
 
@@ -694,7 +695,7 @@ func _open_arena(failures: Array[String], seed_value: int) -> Dictionary:
 	var logger := FakePlaytestLog.new()
 	var game = GameRootScript.new()
 	game.save_directory_path = TEST_SAVE_DIRECTORY
-	game.arena_factory = Callable(self, "_make_death_screen")
+	game.room_runtime_factory = Callable(self, "_make_death_screen")
 	game.playtest_logging_enabled = false
 	game.initialize(PackedStringArray())
 	game.playtest_log = logger
@@ -728,7 +729,7 @@ func _teardown_game(session: Dictionary) -> void:
 
 
 ## The production chain, mounted for real: the injected screen here is the real
-## ContractRunController, which mounts the real adapter and the real arena. The
+## ContractRunController, which mounts the real runtime and the real arena. The
 ## arena only becomes ready inside a tree, so this game is added to the root and
 ## every node's frame is driven by the test.
 func _open_production_arena(failures: Array[String], seed_value: int) -> Dictionary:
@@ -743,7 +744,7 @@ func _open_production_arena(failures: Array[String], seed_value: int) -> Diction
 	logger.start_session({})
 	root.add_child(game)
 	game.set_process(false)
-	var session := {"game": game, "logger": logger, "screen": null, "adapter": null, "arena": null}
+	var session := {"game": game, "logger": logger, "screen": null, "runtime": null, "arena": null}
 	var profile_ready: bool = bool(game.start_new_game("ranger").get("ok", false)) and bool(game.complete_tutorial().get("ok", false))
 	_expect(profile_ready, "production chain: the profile did not reach the base", failures)
 	_expect(bool(game.open_contract().get("ok", false)), "production chain: the contract board did not open", failures)
@@ -759,26 +760,26 @@ func _attach_production_arena(session: Dictionary, failures: Array[String]) -> v
 	session["screen"] = controller
 	if controller == null or not controller.has_method("defeat_presentation_ready"):
 		_expect(false, "production chain: the production controller was not mounted", failures)
-		session["adapter"] = null
+		session["runtime"] = null
 		session["arena"] = null
 		return
-	var adapter = controller.get("_current_adapter")
-	if adapter == null or not adapter.has_method("defeat_presentation_ready"):
-		_expect(false, "production chain: the production adapter was not mounted", failures)
-		session["adapter"] = null
+	var runtime = controller.get("_current_runtime")
+	if runtime == null or not runtime.has_method("defeat_presentation_ready"):
+		_expect(false, "production chain: the production runtime was not mounted", failures)
+		session["runtime"] = null
 		session["arena"] = null
 		return
-	var arena_value: Variant = adapter.get("_legacy")
+	var arena_value: Variant = runtime.get("room_instance")
 	if not (arena_value is Node):
 		_expect(false, "production chain: the real arena was not mounted", failures)
-		session["adapter"] = null
+		session["runtime"] = null
 		session["arena"] = null
 		return
 	var arena := arena_value as Node
-	session["adapter"] = adapter
+	session["runtime"] = runtime
 	session["arena"] = arena
 	## The test owns the clock for every node in the chain.
-	(adapter as Node).set_process(false)
+	(runtime as Node).set_process(false)
 	arena.set_process(false)
 	var roster: Variant = arena.get("enemies")
 	_expect(roster is Array and (roster as Array).size() == 3,
@@ -788,19 +789,26 @@ func _attach_production_arena(session: Dictionary, failures: Array[String]) -> v
 			_expect(String(enemy.kind_id) == "melee_pursuer", "production chain: first hunt mounted an unexpected enemy kind", failures)
 
 
-func _fixture_contact_kill(arena: Node) -> void:
+func _fixture_contact_kill(arena: Node, failures: Array[String]) -> void:
 	var roster: Array = arena.get("enemies")
 	if roster.is_empty():
 		return
 	var enemy: Variant = roster[0]
-	enemy.position = (arena.get("player_position") as Vector2) + Vector2(12.0, 0.0)
-	arena.set("player_health", MELEE_CONTACT_DAMAGE)
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, (arena.get("player_position") as Vector2) + Vector2(12.0, 0.0))
+	_prepare_contact_health(arena, failures)
+
+
+func _prepare_contact_health(arena: Node, failures: Array[String]) -> void:
+	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	var receipt: Dictionary = arena.player_combat_rules.apply_damage(arena.sim_tick, float(player.player_health) - MELEE_CONTACT_DAMAGE, "fixture/contact-preparation", player.player_position)
+	var prepared: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	_expect(bool(receipt.get("accepted", false)) and is_equal_approx(float(prepared.player_health), MELEE_CONTACT_DAMAGE) and not arena.battle_over, "fixture: Rules did not prepare a living player for one fatal contact", failures)
 
 
 ## GameRoot processes before its children, then the router, then the arena.
 func _advance_production_frame(session: Dictionary, delta: float) -> void:
 	(session["game"] as Node).call("_process", delta)
-	(session["adapter"] as Node).call("_process", delta)
+	(session["runtime"] as Node).call("_process", delta)
 	(session["arena"] as Node).call("_process", delta)
 
 

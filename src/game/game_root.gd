@@ -96,7 +96,7 @@ const DEFAULT_CONTRACT: Dictionary = {
 ## Tests and future encounter implementations may provide a zero-argument
 ## factory before this node enters the tree. The returned node must expose
 ## start_session(config) plus completed(result) and abandoned(result) signals.
-var arena_factory: Callable
+var room_runtime_factory: Callable
 ## Called as (exit_code, reason) when set; invalid means the real get_tree().quit.
 var exit_code_hook: Callable
 var application_state
@@ -1868,7 +1868,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 		SceneRouterScript.ROUTE_ARENA:
 			var screen: Node = _make_arena_screen()
 			if screen == null:
-				_handle_arena_launch_failure("arena_factory_failed")
+				_handle_arena_launch_failure("room_runtime_factory_failed")
 				return
 			screen.connect("completed", _on_arena_completed)
 			screen.connect("abandoned", _on_arena_abandoned)
@@ -1877,7 +1877,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			var launch_result: Variant = screen.call("start_session", payload.duplicate(true))
 			_apply_route_preferences()
 			if not (launch_result is Dictionary) or not bool((launch_result as Dictionary).get("ok", false)):
-				var error_code := "arena_start_failed"
+				var error_code := "room_runtime_start_failed"
 				if launch_result is Dictionary:
 					error_code = String((launch_result as Dictionary).get("error", error_code))
 				_handle_arena_launch_failure(error_code)
@@ -1901,8 +1901,8 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 
 
 func _make_arena_screen() -> Node:
-	if arena_factory.is_valid():
-		var candidate: Variant = arena_factory.call()
+	if room_runtime_factory.is_valid():
+		var candidate: Variant = room_runtime_factory.call()
 		return candidate as Node if candidate is Node else null
 	return ContractRunControllerScript.new()
 

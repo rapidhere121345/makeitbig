@@ -4,7 +4,6 @@ extends RefCounted
 ## live renderer (feet-anchored sprite layers, split-row fade, snapped camera).
 
 const BaseHubScreenScript = preload("res://src/presentation/base_hub_screen.gd")
-const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
 const ApplicationStateScript = preload("res://src/game/application_state.gd")
 
 ## The layout's five interaction routes. Immortality keeps its legacy API but has
@@ -35,18 +34,17 @@ func run() -> Array[String]:
 
 	_test_entry_table(hub, failures)
 	var render_audit: Dictionary = hub.get_hub_view().render_audit()
-	_expect(String(render_audit.get("ground_source_path", "")) == String(_town_layout().scene_texture), "base hub: live ground did not use the R13 environmental town surface", failures)
-	var town_concept: Dictionary = render_audit.get("town_concept", {})
-	_expect(bool(town_concept.get("ready", false)) and bool(town_concept.get("animated", false))
-		and (town_concept.get("connected_features", []) as Array).size() >= 5,
-		"base hub: town composition layer did not connect the published facilities", failures)
+	_expect(String(render_audit.get("ground_source_path", "")) == "res://content/rooms/town/layers/ground.png", "base hub: live ground did not use the R13 environmental town surface", failures)
+	_expect(bool(render_audit.get("ready", false)) and bool(render_audit.get("shared_sort_root", false))
+		and int(render_audit.get("runtime_background_patches", -1)) == 0,
+		"base hub: strict native scene did not become ready: " + str(hub.town_load_report), failures)
 	_test_initial_position(hub, failures)
 	_test_hub_info_keeps_world_visible(hub, failures)
 	_test_concept_framing(hub, failures)
 	_test_delta_movement(hub, failures)
 	_test_diagonal_normalization(hub, failures)
 	_test_configured_input_actions(hub, failures)
-	_test_walk_to_external_stations(hub, failures)
+	_test_route_waypoint_progress(hub, failures)
 	_test_bounded_live_camera(hub, failures)
 	_test_feature_activation(hub, failures)
 	_test_interaction_keys(hub, failures)
@@ -70,11 +68,6 @@ func run() -> Array[String]:
 	_test_resident_prompt(hub, failures)
 	_test_nav_keyboard_access(hub, failures)
 	_test_world_display_scale(hub, failures)
-	_test_render_contract(hub, failures)
-	_test_playable_bounds(hub, failures)
-	_test_split_row_fade(hub, failures)
-	_test_framing_contract(hub, failures)
-	_test_unpublished_assets(hub, failures)
 
 	scene_tree.root.remove_child(temporary_root)
 	temporary_root.free()
@@ -83,6 +76,10 @@ func run() -> Array[String]:
 
 func _view_of(hub):
 	return hub.get_hub_view()
+
+
+func _town_of(hub):
+	return hub.get_town_runtime()
 
 
 func _design_of(hub, world_point: Vector2) -> Vector2:
@@ -97,7 +94,7 @@ func _test_entry_table(hub, failures: Array[String]) -> void:
 	var view = _view_of(hub)
 	var world: Vector2 = view.world_size()
 	for feature_id: String in FEATURE_IDS:
-		var entry: Dictionary = view.entry_for(feature_id)
+		var entry: Dictionary = _town_of(hub).entry_for(feature_id)
 		_expect(not entry.is_empty(), "base hub: hub entry %s is missing from the world" % feature_id, failures)
 		if entry.is_empty():
 			continue
@@ -105,9 +102,9 @@ func _test_entry_table(hub, failures: Array[String]) -> void:
 		var radius := float(entry.get("radius", 0.0))
 		_expect(radius >= 48.0, "base hub: %s interaction radius collapsed to %f" % [feature_id, radius], failures)
 		_expect(feet.x >= 0.0 and feet.y >= 0.0 and feet.x <= world.x and feet.y <= world.y, "base hub: %s placement sits outside the world" % feature_id, failures)
-	_expect(view.entry_for("immortality").is_empty(), "base hub: an unpublished facility appeared as an invisible hotspot", failures)
+	_expect(_town_of(hub).entry_for("immortality").is_empty(), "base hub: an unpublished facility appeared as an invisible hotspot", failures)
 	_expect(hub.get_feature_marker_text("immortality").is_empty(), "base hub: an unpublished facility still drew a marker", failures)
-	_expect(hub.get_world_feature_position("immortality").is_equal_approx(BaseHubScreenScript.LEGACY_FEATURE_POSITIONS["immortality"]), "base hub: the legacy facility lookup stopped answering in design space", failures)
+	_expect(hub.get_world_feature_position("immortality") == Vector2.ZERO, "base hub: missing facility acquired a phantom position", failures)
 
 
 func _test_initial_position(hub, failures: Array[String]) -> void:
@@ -138,7 +135,7 @@ func _test_concept_framing(hub, failures: Array[String]) -> void:
 	_expect(view.hero_screen_anchor() == Vector2(layout.hero_screen_anchor[0], layout.hero_screen_anchor[1]), "base hub: formal camera anchor differs from the published layout", failures)
 	_expect(view.world_size() == Vector2(1536, 960), "base hub: expanded town dimensions changed", failures)
 	_expect(audit.view_size.x < view.world_size().x * 0.5 and audit.view_size.y < view.world_size().y * 0.5, "base hub: the whole town is visible without walking", failures)
-	_expect(view.hero_position_is_clear(view.hero_world_position()), "base hub: published spawn intersects a footprint", failures)
+	_expect(_town_of(hub).hero_position_is_clear(view.hero_world_position()), "base hub: published spawn intersects a footprint", failures)
 
 
 
@@ -164,68 +161,31 @@ func _test_configured_input_actions(hub, failures: Array[String]) -> void:
 	_expect(hub.get_hero_position().x > origin.x, "base hub: configured movement action did not drive the hero", failures)
 
 
-func _test_playable_bounds(hub, failures: Array[String]) -> void:
-	## _test_render_contract installed the explicit obstacle-free fixture. Exact
-	## boundary clamping remains required; live walls have their own travel checks.
-	## Hub positions stay in the screen's design space, so the renderer's world
-	## bounds are doubled here before they are compared.
-	var bounds: Rect2 = _view_of(hub).world_bounds()
-	bounds = Rect2(bounds.position * 2.0, bounds.size * 2.0)
-	var center := bounds.get_center()
-	var cases := [
-		{"direction": Vector2.LEFT, "expected": Vector2(bounds.position.x, center.y), "side": "left"},
-		{"direction": Vector2.RIGHT, "expected": Vector2(bounds.end.x, center.y), "side": "right"},
-		{"direction": Vector2.UP, "expected": Vector2(center.x, bounds.position.y), "side": "top"},
-		{"direction": Vector2.DOWN, "expected": Vector2(center.x, bounds.end.y), "side": "bottom"},
-	]
-	for test_case: Dictionary in cases:
-		hub.set_hero_position(center)
-		hub.move_hero(test_case.direction as Vector2, 100.0)
-		_expect(hub.get_hero_position().is_equal_approx(test_case.expected as Vector2), "base hub: hero did not clamp to the %s bound" % String(test_case.side), failures)
-
-
-func _test_walk_to_external_stations(hub, failures: Array[String]) -> void:
-	var view = _view_of(hub)
-	var layout := _town_layout()
-	var events: Array[String] = []
-	hub.contract_requested.connect(func(): events.append("contract"))
-	hub.feature_requested.connect(func(id: String): events.append(id))
+func _test_route_waypoint_progress(hub, failures: Array[String]) -> void:
+	var town = _town_of(hub)
 	for id: String in FEATURE_IDS:
-		var route: Array = layout.routes_uv[id]
-		hub.set_hero_position(_uv_world(route[0], view.world_size()) * 2.0)
-		for uv: Array in route:
-			var target := _uv_world(uv, view.world_size())
-			var steps := 0
-			while view.hero_world_position().distance_to(target) > 0.05 and steps < 900:
-				var offset: Vector2 = target - view.hero_world_position()
-				hub.move_hero(offset, minf(1.0 / 60.0, offset.length() / view.HERO_SPEED))
-				steps += 1
-			_expect(view.hero_world_position().distance_to(target) <= 0.05 and view.hero_position_is_clear(view.hero_world_position()), "base hub: published route blocked: %s / %s" % [id, target], failures)
-		_expect(hub.get_nearby_feature_id() == id, "base hub: authored approach did not select " + id, failures)
-		var before := events.size()
-		var event := InputEventKey.new()
-		event.physical_keycode = KEY_E
-		event.pressed = true
-		hub._unhandled_key_input(event)
-		_expect(events.size() == before + 1 and events.back() == id, "base hub: authored E approach did not route once: " + id, failures)
-
+		var route: Array[Vector2] = town.route_points(id)
+		town.place_hero(route[0])
+		town.select_destination(id)
+		for index: int in range(route.size() - 1):
+			town.place_hero(route[index])
+			var guide: Dictionary = town.destination_guide()
+			_expect(Vector2(guide.guide).distance_to(route[index + 1]) < 0.01 and Vector2(guide.direction).length() > 0.01,
+				"base hub: guide failed to advance at shared waypoint %s/%d" % [id, index], failures)
+		var segment: int = int(town.destination_guide().route_segment)
+		town.place_hero(route[0])
+		_expect(int(town.destination_guide().route_segment) >= segment, "base hub: same destination route cursor regressed", failures)
 
 
 func _test_bounded_live_camera(hub, failures: Array[String]) -> void:
 	var view = _view_of(hub)
-	var camera_limit: Vector2 = view.world_size() - Vector2(view.world_viewport.size)
-	for point: Vector2 in [Vector2(20,20), Vector2(1004,620), Vector2(548,464), Vector2(870,615)]:
-		view.teleport_hero(point)
-		var camera: Vector2 = view.camera_world_offset()
-		_expect(camera.x >= 0 and camera.y >= 0 and camera.x <= camera_limit.x and camera.y <= camera_limit.y, "base hub: camera exposes outside formal world", failures)
-		var design: Vector2 = view.design_point_for_world(point, Vector2.ZERO, Vector2.ONE)
-		_expect(view.world_point_at_design(design, Vector2.ZERO, Vector2.ONE).is_equal_approx(point), "base hub: camera input conversion is not reversible", failures)
 	for id: String in FEATURE_IDS:
-		var point: Vector2 = view.entry_for(id).feet
-		view.teleport_hero(point)
+		var point: Vector2 = _town_of(hub).entry_for(id).feet
+		_town_of(hub).place_hero(point)
+		var camera: Vector2 = view.camera_world_offset()
+		_expect(camera.x >= 0 and camera.y >= 0 and camera.x <= 896 and camera.y <= 600, "base hub: camera left town bounds", failures)
 		var screen: Vector2 = view.design_point_for_world(point, Vector2.ZERO, Vector2.ONE)
-		_expect(screen.y > hub._header.get_global_rect().end.y and screen.y < 720.0, "base hub: authored approach is hidden by UI: " + id, failures)
-
+		_expect(view.world_point_at_design(screen, Vector2.ZERO, Vector2.ONE).distance_to(point) < 0.01, "base hub: pointer transform lost camera", failures)
 
 
 func _test_feature_activation(hub, failures: Array[String]) -> void:
@@ -246,7 +206,7 @@ func _test_feature_activation(hub, failures: Array[String]) -> void:
 			_expect(events.contract_count == contracts_before, "base hub: %s activation emitted contract_requested" % feature_id, failures)
 			_expect(events.feature_ids.size() == features_before + 1 and String(events.feature_ids[-1]) == feature_id, "base hub: %s activation did not emit its exact feature_requested ID" % feature_id, failures)
 
-	hub.set_hero_position(_view_of(hub).world_bounds().position)
+	hub.set_hero_position(_town_of(hub).route_points("contract")[0] * 2.0)
 	var contracts_before: int = events.contract_count
 	var features_before: int = events.feature_ids.size()
 	_expect(hub.get_nearby_feature_id().is_empty(), "base hub: away position unexpectedly selected a station", failures)
@@ -282,7 +242,7 @@ func _test_click_hotspot(hub, failures: Array[String]) -> void:
 	hub.feature_requested.connect(func(feature_id: String) -> void: events.append(feature_id))
 	hub.contract_requested.connect(func() -> void: events.append("contract"))
 	var view = _view_of(hub)
-	var forge_world: Vector2 = view.entry_for("forge").get("feet", Vector2.ZERO)
+	var forge_world: Vector2 = _town_of(hub).entry_for("forge").get("feet", Vector2.ZERO)
 	var forge_design: Vector2 = _design_of(hub, forge_world)
 	_expect(hub.click_at_design_point(forge_design), "base hub: clicking the forge station did not select it", failures)
 	_expect(events.is_empty() and hub.wayfinding_report().id == "forge", "base hub: a distant station opened instead of setting directions", failures)
@@ -296,7 +256,7 @@ func _test_click_hotspot(hub, failures: Array[String]) -> void:
 	## And the same click into every other published station, through the camera.
 	for feature_id: String in FEATURE_IDS:
 		var before: int = events.size()
-		var station_feet: Vector2 = view.entry_for(feature_id).get("feet", Vector2.ZERO)
+		var station_feet: Vector2 = _town_of(hub).entry_for(feature_id).get("feet", Vector2.ZERO)
 		hub.set_hero_position(station_feet * 2.0)
 		_expect(hub.click_at_design_point(_design_of(hub, station_feet)), "base hub: a click at the authored hero anchor did not select %s" % feature_id, failures)
 		_expect(events.size() == before + 1, "base hub: a world-space click on %s emitted nothing" % feature_id, failures)
@@ -306,16 +266,20 @@ func _test_click_hotspot(hub, failures: Array[String]) -> void:
 
 func _test_visible_station_pixels(hub, failures: Array[String]) -> void:
 	var view = _view_of(hub)
-	var layout := _town_layout()
-	var pixels: Image = load(String(layout.scene_texture)).get_image()
-	for placement: Dictionary in layout.placements:
-		if not FEATURE_IDS.has(String(placement.get("interaction", ""))): continue
-		var uv: Array = placement.feet_uv
-		var texel := Vector2i(int(float(uv[0]) * pixels.get_width()), int(float(uv[1]) * pixels.get_height()))
-		_expect(pixels.get_pixelv(texel).a > 0.0, "base hub: facility anchor lacks published scene pixels: " + String(placement.id), failures)
-		var world := _uv_world(uv, view.world_size())
-		_expect(view.hit_test(world) == placement.interaction, "base hub: formal facility pixels select a different route: " + String(placement.id), failures)
-
+	for node: Node in view.world_presenter.sort_root.get_children():
+		if not node is Sprite2D or String(node.get_meta("interaction", "")).is_empty(): continue
+		var sprite := node as Sprite2D
+		var image := sprite.texture.get_image()
+		var checked := false
+		for y: int in range(0, image.get_height(), 3):
+			for x: int in range(0, image.get_width(), 3):
+				if image.get_pixel(x, y).a == 0.0: continue
+				var point := sprite.position + sprite.offset + Vector2(x + 0.5, y + 0.5)
+				_expect(view.hit_test(point) == String(sprite.get_meta("interaction")), "base hub: actual native facility pixels select wrong stand", failures)
+				checked = true
+				break
+			if checked: break
+		_expect(checked, "base hub: native stand has no opaque pixels", failures)
 
 
 func _test_marker_copy(hub, failures: Array[String]) -> void:
@@ -324,7 +288,7 @@ func _test_marker_copy(hub, failures: Array[String]) -> void:
 	var renderer = _view_of(hub)
 	for feature_id: String in ["contract", "loadout", "forge", "proxy"]:
 		var marker: String = hub.get_feature_marker_text(feature_id)
-		var label := String(renderer.entry_for(feature_id).get("label", ""))
+		var label := String(_town_of(hub).entry_for(feature_id).get("label", ""))
 		_expect(not marker.is_empty(), "base hub: %s marker is empty" % feature_id, failures)
 		if not label.is_empty():
 			_expect(marker.contains(label), "base hub: %s marker lost the station name %s" % [feature_id, label], failures)
@@ -400,71 +364,6 @@ func _test_next_objective(hub, failures: Array[String]) -> void:
 	_expect(hub.get_feature_marker_text("loadout").contains("比较已开放") and hub.get_feature_marker_text("forge").contains("已解锁"), "base hub: authored facility rewards did not update their world markers", failures)
 
 
-func _test_render_contract(hub, failures: Array[String]) -> void:
-	## Visual regression against the approved concept: feet-anchored sprite layers,
-	## the world field at the origin, split-row bands in the right layers and a
-	## camera that follows the snapped avatar. The fixture pair stands in for the
-	## main-owned atlas and layout so the assertions never depend on publication.
-	var view = _view_of(hub)
-	_install_fixture(view)
-	_expect(view.is_ready(), "base hub: a complete fixture atlas did not put the renderer in its ready state", failures)
-	var audit: Dictionary = view.render_audit()
-	var layers := audit.get("layers", {}) as Dictionary
-	## Three unsplit stations, the split station's head and the avatar all share
-	## the y-sorted layer; only the split station's lower band sits under it.
-	_expect(int(layers.get("actors", 0)) == 6, "base hub: the y-sorted layer lost a station, the avatar or its shadow", failures)
-	_expect(int(layers.get("ground_layer", 0)) == 1, "base hub: ground-layer placement was not drawn", failures)
-	_expect(int(layers.get("object_lower", 0)) == 1, "base hub: the split station lower band is not drawn under the avatar layer", failures)
-	var nodes := audit.get("sprite_nodes", []) as Array
-	_expect("well" in nodes and "pebble" in nodes and "smithy.upper" in nodes and "smithy.lower" in nodes, "base hub: layout placements were not drawn under their own ids: %s" % str(nodes), failures)
-	var forge_rect: Rect2 = view._drawn_rect(view.entry_for("forge"))
-	_expect(forge_rect.size.is_equal_approx(Vector2(48.0, 64.0)), "base hub: forge cell size does not match its sprite rect", failures)
-	_expect(forge_rect.position.is_equal_approx(Vector2(404.0, 442.0)), "base hub: the forge is not anchored by its own feet and anchor", failures)
-	var pebble := view.ground_layer.get_node_or_null(NodePath("Ground_pebble")) as Sprite2D
-	_expect(pebble != null, "base hub: the fixture decoration node is missing", failures)
-	if pebble != null:
-		_expect(pebble.region_rect.is_equal_approx(Rect2(64.0, 0.0, 32.0, 24.0)), "base hub: a placement no longer cuts its own atlas rect", failures)
-		_expect(pebble.position.is_equal_approx(Vector2(120.0, 440.0)), "base hub: a placement no longer stands on its declared feet", failures)
-	view.teleport_hero(Vector2(200.0, 200.0))
-	view._process(0.016)
-	_expect(view.camera_world_offset().is_equal_approx(Vector2(200.0, 200.0) - Vector2(HamletConceptViewScript.NATIVE_VIEW) * 0.5), "base hub: the camera no longer follows the snapped avatar", failures)
-	_expect(view.actor_layer.y_sort_enabled, "base hub: the avatar layer lost its depth sorting", failures)
-
-
-func _test_split_row_fade(hub, failures: Array[String]) -> void:
-	## The half-tone rule: a stand's upper band fades while the avatar passes
-	## behind it and stays solid once the avatar is below its feet.
-	var view = _view_of(hub)
-	_install_fixture(view)
-	var audit: Dictionary = view.render_audit()
-	var layers := audit.get("layers", {}) as Dictionary
-	_expect(int(layers.get("object_lower", 0)) == 1 and int(layers.get("actors", 0)) == 6, "base hub: the split station did not divide across the y-sorted layers", failures)
-	var lower := view.object_lower_layer.get_node_or_null(NodePath("Lower_smithy")) as Sprite2D
-	var head := view.actor_layer.get_node_or_null(NodePath("Upper_smithy")) as Sprite2D
-	_expect(lower != null and head != null, "base hub: the split station lost its head or foot band", failures)
-	if lower == null or head == null:
-		return
-	## The station's own top rows are the standing band, drawn under the avatar
-	## layer; the bottom rows are the foot, drawn with the avatar. Positions are
-	## checked against the atlas rect so a moved cell still passes.
-	var smithy: Dictionary = view._sprites["station.smithy"]
-	var smithy_rect: Array = smithy.get("rect", [])
-	var smithy_anchor: Array = smithy.get("anchor", [])
-	_expect(is_equal_approx(head.region_rect.position.y, float(smithy_rect[1])) and is_equal_approx(head.region_rect.size.y, 40.0), "base hub: the standing band must be the source rows 0..split_row", failures)
-	_expect(is_equal_approx(lower.region_rect.position.y, float(smithy_rect[1]) + 40.0) and is_equal_approx(lower.region_rect.size.y, 56.0), "base hub: the foot band must be the source rows split_row..end", failures)
-	_expect(is_equal_approx(head.offset.y, -float(smithy_anchor[1])) and is_equal_approx(lower.offset.y, -float(smithy_anchor[1]) + 40.0), "base hub: the split bands are not placed on their own anchor", failures)
-	view.teleport_hero(Vector2(420.0, 195.0))
-	view._process(0.016)
-	_expect(is_equal_approx(head.modulate.a, HamletConceptViewScript.SPLIT_FADE_ALPHA), "base hub: the standing band did not fade while the avatar passed behind it", failures)
-	_expect(is_equal_approx(lower.modulate.a, 1.0), "base hub: the station foot must stay solid while the avatar stands in the opening", failures)
-	view.teleport_hero(Vector2(420.0, 400.0))
-	view._process(0.016)
-	_expect(is_equal_approx(head.modulate.a, 1.0), "base hub: the standing band stayed faded once the avatar stood below the station", failures)
-	view.teleport_hero(Vector2(420, 250))
-	view._process(0.016)
-	_expect(is_equal_approx(head.modulate.a, 1.0), "base hub: head overlap must not fade a building when hero feet are in front", failures)
-
-
 func _test_world_display_scale(hub, failures: Array[String]) -> void:
 	var view = _view_of(hub)
 	for dimensions: Vector2 in [Vector2(1280,720), Vector2(1600,900)]:
@@ -478,45 +377,6 @@ func _test_world_display_scale(hub, failures: Array[String]) -> void:
 		_expect(view.world_point_at_design(screen, Vector2.ZERO, Vector2.ONE).is_equal_approx(hero), "base hub: resized actual avatar click lost camera offset", failures)
 	view.set_world_scale(2, Vector2(1280,720))
 
-
-
-func _test_unpublished_assets(hub, failures: Array[String]) -> void:
-	## While the pair is missing the world must stay a plain floor: no sprite, no
-	## placeholder building, and no unpublished world hotspot is invented.
-	var view = _view_of(hub)
-	view.configure({}, {})
-	_expect(not view.is_ready(), "base hub: an empty atlas must not report ready assets", failures)
-	var audit: Dictionary = view.render_audit()
-	var layers := audit.get("layers", {}) as Dictionary
-	_expect(int(layers.get("actors", 0)) == 0 and int(layers.get("ground_layer", 0)) == 0, "base hub: pending assets drew sprites anyway", failures)
-	_expect(int(layers.get("skirt", 0)) == 0, "base hub: pending assets drew a ground field", failures)
-	for feature_id: String in FEATURE_IDS:
-		_expect(not view.entry_for(feature_id).is_empty(), "base hub: %s entry disappeared while assets are pending" % feature_id, failures)
-	_expect(not view.pending_reasons().is_empty(), "base hub: missing assets were not reported as pending", failures)
-
-
-func _test_framing_contract(hub, failures: Array[String]) -> void:
-	var view = _view_of(hub)
-	var layout := _fixture_layout()
-	layout["hero_screen_anchor"] = [320, 260]
-	view.configure(_fixture_atlas(), layout)
-	view.set_world_scale(2, Vector2(1280, 720))
-	for world_point: Vector2 in [Vector2(20, 20), Vector2(1004, 620), Vector2(501.75, 400.5)]:
-		view.teleport_hero(world_point)
-		var camera: Vector2 = view.camera_world_offset()
-		_expect(camera == camera.floor(), "base hub: framing introduced a fractional camera", failures)
-		_expect(camera == Vector2(view.hero_snapped_position()) - view.hero_screen_anchor(),
-			"base hub: legacy layout lost its unrestricted follow camera at the world edge", failures)
-		var screen: Vector2 = view.design_point_for_world(world_point, Vector2.ZERO, Vector2.ONE)
-		var restored: Vector2 = view.world_point_at_design(screen, Vector2.ZERO, Vector2.ONE)
-		_expect(restored.is_equal_approx(world_point), "base hub: framed mouse transform is not reversible", failures)
-	view.configure(_fixture_atlas(), _fixture_layout())
-	_expect(view.hero_screen_anchor() == Vector2(320, 180), "base hub: legacy layout must retain its centre anchor", failures)
-	for invalid: Variant in [[320.5, 260], [-1, 260], [640, 260], [320, 360], "320,260"]:
-		layout["hero_screen_anchor"] = invalid
-		view.configure(_fixture_atlas(), layout)
-		_expect(not view.is_ready() and view.hero_screen_anchor() == Vector2(320, 180),
-			"base hub: malformed screen anchor must fail visibly and use the safe centre", failures)
 
 
 func _hero_foot_design_point(hub) -> Vector2:
@@ -620,7 +480,7 @@ func _test_hub_prompt_stays_minimal(hub, failures: Array[String]) -> void:
 		## above measures directly against the published alpha of the stands.
 		_expect(prompt.position.y >= BaseHubScreenScript.HEADER_RECT.end.y and prompt.end.y <= BaseHubScreenScript.DESIGN_SIZE.y, "base hub: the %s prompt left the safe vertical band" % feature_id, failures)
 	## Away from every stand the badge is gone again.
-	hub.set_hero_position(_view_of(hub).world_bounds().position)
+	hub.set_hero_position(_town_of(hub).route_points("contract")[0] * 2.0)
 	_expect(hub.get_prompt_rect() == Rect2() and not hub._nearby_panel.visible, "base hub: the proximity prompt stayed on screen away from every stand", failures)
 
 
@@ -671,7 +531,7 @@ func _test_landmarks_follow_world(hub, failures: Array[String]) -> void:
 	for feature_id: String in FEATURE_IDS:
 		var landmark: Button = hub.get_landmark(feature_id)
 		var expected: Rect2 = hub._landmark_design_rect(feature_id)
-		_expect(landmark != null and not _view_of(hub).entry_for(feature_id).is_empty(),
+		_expect(landmark != null and not _town_of(hub).entry_for(feature_id).is_empty(),
 			"base hub: world landmark and published facility disagree: " + feature_id, failures)
 		if landmark == null: continue
 		if landmark.visible:
@@ -806,85 +666,28 @@ func _test_growth_story_and_settings(hub, failures: Array[String]) -> void:
 
 
 func _test_resident_prompt(hub, failures: Array[String]) -> void:
-	var residents: Array = hub.get_hub_view().life_report().get("residents", [])
-	_expect(not residents.is_empty(), "base hub: public town life API has no resident for proximity validation", failures)
-	if residents.is_empty(): return
-	var resident: Dictionary = residents[0]
 	var before_story: Dictionary = hub._story_snapshot.duplicate(true)
-	hub.present_adventure({}, {"available_conversations": [{"npc": resident.id, "npc_name": "镇民", "stage": 1,
-		"title": "寒原失联的旧路", "pages": ["炉边镇还在等消息。"], "id": "hub_prompt_test"}]})
-	hub.set_hero_position(Vector2(20, 20))
-	_expect(not hub._nearby_panel.visible and hub.find_child("TownStoryCue", true, false) == null,
-		"base hub: remote conversation selected an always-visible E/title prompt", failures)
-	hub.set_hero_position((resident.feet + Vector2(0, 10)) * 2.0)
-	_expect(hub.nearby_resident_id() == resident.id and hub._nearby_panel.visible
-		and hub._nearby_label.text == "[E] 与镇民交谈", "base hub: nearby resident has no explicit E prompt", failures)
-	var stand: Dictionary = {}
-	var stand_gap := INF
-	for entry: Dictionary in hub.get_hub_view().feature_entries():
-		var gap: float = Vector2(entry.feet).distance_to(Vector2(resident.feet))
-		if gap < stand_gap:
-			stand_gap = gap
-			stand = entry
-	if not stand.is_empty() and stand_gap <= hub.TALK_RADIUS:
-		## Dialogue beats the facility badge only while the resident is no
-		## farther than RESIDENT_PRIORITY_SLACK behind the facility feet, so the
-		## shared-stand probe is the midpoint: both gaps are equal and the
-		## resident legally keeps E without widening the runtime rule to the
-		## whole TALK_RADIUS.
-		var midpoint := (Vector2(resident.feet) + Vector2(stand.feet)) * 0.5
-		hub.set_hero_position(midpoint * 2.0)
-		_expect(hub.nearby_resident_id() == resident.id and String(hub._nearby_label.text).begins_with("[E] 与"),
-			"base hub: resident lost the E prompt to the co-located facility", failures)
-		_expect(hub.activate_nearby_interaction() and hub.is_dialogue_open(),
-			"base hub: E at a shared stand opened the facility instead of the resident", failures)
-		hub._dialogue.close_dialogue()
-		var facility_nearby: bool = not hub.get_hub_view().entry_for(hub.get_hub_view().nearby_feature_id()).is_empty()
-		if stand_gap > hub.RESIDENT_PRIORITY_SLACK and facility_nearby:
-			## The facility feet stay the facility's when the resident is beyond
-			## the slack; routing is decided by the empty resident id because
-			## activating the facility here would navigate away from the hub.
-			hub.set_hero_position(Vector2(stand.feet) * 2.0)
-			_expect(hub.nearby_resident_id().is_empty(),
-				"base hub: a beyond-slack resident stole the facility feet interaction", failures)
-		hub.set_hero_position((resident.feet + Vector2(0, 10)) * 2.0)
-	var event := InputEventKey.new()
-	event.physical_keycode = KEY_E
-	event.pressed = true
-	hub._unhandled_key_input(event)
-	_expect(hub.is_dialogue_open() and not hub._nearby_panel.visible, "base hub: E lost the real conversation entry", failures)
-	hub._dialogue.close_dialogue()
-	hub.get_hub_view().configure_life_for_test({}, {}, {})
-	hub.present_adventure({}, {"available_conversations": [{"npc": resident.id, "npc_name": "镇民", "stage": 1,
-		"title": "寒原失联的旧路", "pages": ["炉边镇还在等消息。"], "id": "hub_prompt_test"}]})
-	_expect(hub._resident_positions.has(resident.id) and hub.nearby_resident_id() == resident.id,
-		"base hub: static layout residents lost their talk position without life art", failures)
-	var far_id := ""
-	for id: String in hub._resident_positions:
-		if id != resident.id:
-			far_id = id
+	var positions: Dictionary = _town_of(hub).resident_positions()
+	var feet := Vector2.INF
+	for index: int in 32:
+		var candidate: Vector2 = positions.mira + Vector2.from_angle(TAU * float(index) / 32.0) * 22.0
+		if _town_of(hub).hero_position_is_clear(candidate) and candidate.distance_to(_town_of(hub).entry_for("proxy").feet) >= 22.0:
+			feet = candidate
 			break
-	if not stand.is_empty() and not far_id.is_empty():
-		## Iteration-order regression: with two residents inside the facility
-		## slack window, the farther one iterated later must not overwrite the
-		## nearer one (the old OR-branch let it win whenever a facility was in
-		## range).
-		hub.present_adventure({}, {"available_conversations": [
-			{"npc": far_id, "npc_name": "远处居民", "stage": 1, "title": "远", "pages": ["远"], "id": "hub_prompt_far"},
-			{"npc": resident.id, "npc_name": "镇民", "stage": 1,
-				"title": "寒原失联的旧路", "pages": ["炉边镇还在等消息。"], "id": "hub_prompt_test"}]})
-		hub.set_hero_position(Vector2(stand.feet) * 2.0)
-		hub._resident_positions[far_id] = Vector2(stand.feet) + Vector2(7.0, 0.0)
-		hub._resident_positions[resident.id] = Vector2(stand.feet) + Vector2(5.0, 0.0)
-		_expect(hub.nearby_resident_id() == resident.id,
-			"base hub: farther resident iterated later overwrote the nearer one", failures)
-	hub.get_hub_view().life_animation.load_default_assets()
+	_expect(feet.is_finite(), "base hub: resident approach blocked", failures)
+	hub.present_adventure({}, {"available_conversations": [{"npc": "mira", "npc_name": "米拉", "stage": 0, "id": "hub_prompt_test", "pages": ["留一盏灯。"]}]})
+	hub.set_hero_position(feet * 2.0)
+	_expect(hub.nearby_resident_id() == "mira", "base hub: closest resident lost E priority", failures)
+	_expect(hub._nearby_label.text.contains("米拉"), "base hub: NPC prompt did not name the resident", failures)
+	var before: Dictionary = hub.travel_snapshot()
+	_expect(hub.talk_to_resident("mira"), "base hub: conversation did not open", failures)
+	hub.move_hero(Vector2.RIGHT, 1.0)
+	_expect(hub.travel_snapshot() == before and not hub.activate_nearby_feature(), "base hub: dialogue did not freeze travel and facility input", failures)
+	hub._dialogue.close_dialogue()
+	_expect(not hub.is_dialogue_open() and hub.travel_snapshot() == before, "base hub: dialogue close changed travel", failures)
 	hub.present_adventure({}, before_story)
 
 
-## Every landmark draws the state the hub derived from the save, and the world marker
-## of the same stand keeps the matching note. Neither one is allowed to invent a
-## status the other does not have.
 func _test_nav_state_matches_cards(hub, failures: Array[String]) -> void:
 	var states: Array = hub.navigation_state()
 	_expect(states.size() == FEATURE_IDS.size(), "base hub: navigation_state published %d entries" % states.size(), failures)
@@ -952,7 +755,7 @@ func _test_goal_and_road_guide(hub, failures: Array[String]) -> void:
 	hub.present_adventure({}, {"current_objective": {"text": "沿寒原旧路清通外段，带回能用的材料与装备"}})
 	## The hub instance carries selections from earlier suites: start from the
 	## recommended departure, exactly like a fresh town arrival.
-	hub.restore_travel({"destination": "contract"})
+	_town_of(hub).select_destination("contract")
 	_expect(hub._objective_label.text.contains("行路契台") and hub._objective_label.text.contains("初次狩猎"),
 		"base hub: the first-hunt goal does not name the contract stand and the first hunt", failures)
 	_expect(hub._objective_label.tooltip_text.contains("沿寒原旧路"),
@@ -1115,7 +918,7 @@ func _test_nav_keyboard_access(hub, failures: Array[String]) -> void:
 		_expect(viewport_focus == null or viewport_focus == focus_card, "base hub: a landmark could not take focus", failures)
 		_expect(viewport_focus == null or hub._navigation_has_focus(), "base hub: focused landmark did not suspend world movement", failures)
 		_expect(not focus_card.focus_mode == Control.FOCUS_NONE, "base hub: a landmark turned focus off", failures)
-		_expect(focus_card.focus_neighbor_right.is_empty() == false, "base hub: a visible landmark has no Tab neighbour", failures)
+		_expect(not focus_card.is_visible() or _visible_landmark_count(hub) < 2 or not focus_card.focus_neighbor_right.is_empty(), "base hub: visible landmark lost its next visible neighbour", failures)
 		var key_event := InputEventKey.new()
 		key_event.physical_keycode = KEY_E
 		key_event.pressed = true
@@ -1159,48 +962,6 @@ func _post_boss_profile() -> Dictionary:
 	}}
 
 
-func _install_fixture(view) -> void:
-	view.configure(_fixture_atlas(), _fixture_layout())
-	view.replace_textures_for_test({"hamlet:fixture": ImageTexture.create_from_image(_fixture_image())})
-
-
-func _fixture_atlas() -> Dictionary:
-	return {
-		"schema_version": 1,
-		"native_view": [640, 360],
-		"animations": {},
-		"sprites": {
-			"station.contract": {"rect": [0, 0, 48, 64], "anchor": [24, 58], "texture": "fixture"},
-			"station.forge": {"rect": [48, 0, 48, 64], "anchor": [24, 58], "texture": "fixture"},
-			"station.smithy": {"rect": [96, 0, 64, 96], "anchor": [32, 90], "texture": "fixture"},
-			"decoration.pebble": {"rect": [64, 0, 32, 24], "anchor": [16, 20], "texture": "fixture"},
-			"ranger.south.idle": {"rect": [160, 0, 32, 48], "anchor": [16, 44], "texture": "fixture"},
-		},
-		"textures": {"fixture": {"path": "res://fixture/magenta.png", "width": 192, "height": 96}},
-	}
-
-
-func _fixture_layout() -> Dictionary:
-	return {
-		"schema_version": 1,
-		"world": [1024, 640],
-		"hero_start": [200, 200],
-		"placements": [
-			{"id": "contract", "sprite": "station.contract", "feet": [200, 300], "layer": "object", "interaction": "contract"},
-			{"id": "forge", "sprite": "station.forge", "feet": [428, 500], "layer": "object", "interaction": "forge"},
-			{"id": "smithy", "sprite": "station.smithy", "feet": [420, 240], "layer": "object", "split_row": 40},
-			{"id": "well", "sprite": "station.contract", "feet": [600, 320], "layer": "object"},
-			{"id": "pebble", "sprite": "decoration.pebble", "feet": [120, 440], "layer": "ground"},
-		],
-	}
-
-
-func _fixture_image() -> Image:
-	var image := Image.create(192, 96, false, Image.FORMAT_RGBA8)
-	image.fill(Color(0.85, 0.2, 0.75, 1.0))
-	return image
-
-
 func _expect(condition: bool, message: String, failures: Array[String]) -> void:
 	if not condition:
 		failures.append(message)
@@ -1212,3 +973,10 @@ func _town_layout() -> Dictionary:
 
 func _uv_world(uv: Array, world: Vector2) -> Vector2:
 	return Vector2(float(uv[0]), float(uv[1])) * world
+
+
+func _visible_landmark_count(hub) -> int:
+	var count := 0
+	for id: String in FEATURE_IDS:
+		if hub.get_landmark(id).visible: count += 1
+	return count

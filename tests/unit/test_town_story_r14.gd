@@ -45,7 +45,7 @@ func _run() -> void:
 	var id := String(hub.dialogue_report().entry_id)
 	hub.move_hero(Vector2.RIGHT, 1.0)
 	_expect(hub.get_hero_position() == location and view.camera_world_offset() == camera, "dialogue freezes movement without resetting camera")
-	_expect(not hub.activate_nearby_feature() and not hub.click_at_world_point(view.entry_for("contract").feet), "dialogue blocks facility action passthrough")
+	_expect(not hub.activate_nearby_feature() and not hub.click_at_world_point(hub.get_town_runtime().entry_for("contract").feet), "dialogue blocks facility action passthrough")
 	await _key(KEY_J)
 	await _key(KEY_C)
 	_expect(game.current_route == "base" and hub.is_dialogue_open(), "dialogue blocks story and character shortcuts")
@@ -88,39 +88,34 @@ func _finish(game: Node) -> void:
 	quit(0 if errors.is_empty() else 1)
 
 func _test_resident_approaches(view) -> Dictionary:
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://art/production/p1/hamlet_town/layout.json"))
-	var size: Vector2 = view.world_size()
-	var motor := ActorMotorScript.new(6.0)
-	var loaded: Dictionary = LayoutBlockerLoaderScript.populate_motor(motor, layout)
-	_expect(bool(loaded.ok), "resident approach geometry failed to load")
-	var bounds: Rect2 = view.world_bounds().grow(float(motor.radius))
-	var spawn := Vector2(layout.hero_start_uv[0], layout.hero_start_uv[1]) * size
+	var hub = view.get_parent()
+	var town = hub.get_town_runtime()
 	var approaches := {}
-	var roles := {}
-	for placement: Dictionary in layout.placements:
-		if placement.get("layer", "") == "npc": roles[String(placement.id)] = String(placement.role)
-	for resident: Dictionary in view.life_report().residents:
-		var role := String(roles[String(resident.id)])
+	var spawn: Vector2 = town.hero_world_position()
+	for resident: Dictionary in town.snapshot().resident_definitions:
+		var id := String(resident.id)
 		var position := spawn
-		for uv: Array in layout.routes_uv[role]:
-			var target := Vector2(float(uv[0]), float(uv[1])) * size
-			var reached: Vector2 = motor.move(position, target - position, bounds).position
-			_expect(reached.distance_to(target) < 0.05 and motor.is_position_clear(reached, bounds), String(resident.id) + " authored approach blocked at " + str(reached))
-			position = reached
-		var found := false
-		for index in 32:
-			var target: Vector2 = resident.feet + Vector2.from_angle(TAU * float(index) / 32.0) * 22.0
-			if not motor.is_position_clear(target, bounds): continue
-			var reached: Vector2 = motor.move(position, target - position, bounds).position
-			if reached.distance_to(target) >= 0.05: continue
-			var closest := true
-			for feature: String in ["contract", "loadout", "forge", "training", "proxy"]:
-				if target.distance_to(view.entry_for(feature).feet) <= 22.0: closest = false
-			if not closest: continue
-			approaches[String(resident.id)] = target
-			found = true
+		var tick: int = town.simulation.tick
+		town.registry.teleport_actor(town.HERO_ID, position)
+		for target: Vector2 in town.route_points(String(resident.role)):
+			var steps := 0
+			while town.hero_world_position().distance_to(target) > 0.05 and steps < 900:
+				town.submit_move((target - town.hero_world_position()) / (town.HERO_SPEED / 30.0))
+				town.step_tick()
+				steps += 1
+			_expect(town.hero_world_position().distance_to(target) < 0.05, id + " authored approach blocked")
+		var feet: Vector2 = town.resident_positions()[id]
+		for index: int in 32:
+			var target := feet + Vector2.from_angle(TAU * float(index) / 32.0) * 22.0
+			if not town.hero_position_is_clear(target): continue
+			var closer := false
+			for facility: Dictionary in town.feature_entries():
+				if target.distance_to(facility.feet) < 22.0: closer = true
+			if closer: continue
+			approaches[id] = target
 			break
-		_expect(found, String(resident.id) + " has no reachable E approach that favours the NPC")
+		_expect(approaches.has(id), id + " has no clear NPC-favouring approach")
+	town.place_hero(spawn)
 	return approaches
 
 func _key(code: Key) -> void:

@@ -1,10 +1,12 @@
 extends SceneTree
 ## Town movement and production-layout regression checks; never starts combat or writes saves.
 ## The production path is the same ActorMotor + LayoutBlockerLoader pair used by
-## HamletConceptView.  Core sweep/slide cases live in test_actor_motor.gd.
+## TownController.  Core sweep/slide cases live in test_actor_motor.gd.
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 const LayoutBlockerLoaderScript := preload("res://src/runtime/geometry/layout_blocker_loader.gd")
-const ViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
+const HubScript = preload("res://src/presentation/base_hub_screen.gd")
+const WORLD_MARGIN := 20.0
+const SOURCE_LAYOUT_PATH := "res://art/production/p1/hamlet_town/layout.json"
 const HERO_RADIUS := 6.0
 var failures: Array[String] = []
 
@@ -31,7 +33,7 @@ func _expect(condition: bool, message: String) -> void:
 
 func _geometry(shapes: Array) -> RefCounted:
 	var motor := ActorMotorScript.new(HERO_RADIUS)
-	var loaded: Dictionary = LayoutBlockerLoaderScript.populate_motor(motor, {
+	var loaded: Dictionary = LayoutBlockerLoaderScript.populate_geometry(motor, {
 		"collision": {"hero_radius": HERO_RADIUS, "world": shapes},
 	})
 	_expect(bool(loaded.get("ok", false)), "geometry: synthetic blocker set was rejected: %s" % [loaded.get("errors", [])])
@@ -41,7 +43,7 @@ func _geometry(shapes: Array) -> RefCounted:
 func _bounds() -> Rect2:
 	# ActorMotor receives the outer walkable world and keeps the circular
 	# footprint inside it.  The old town bounds represented the centre range.
-	return Rect2(Vector2.ONE * (ViewScript.WORLD_MARGIN - HERO_RADIUS), Vector2(1024.0, 640.0) - Vector2.ONE * (ViewScript.WORLD_MARGIN - HERO_RADIUS) * 2.0)
+	return Rect2(Vector2.ONE * (WORLD_MARGIN - HERO_RADIUS), Vector2(1024.0, 640.0) - Vector2.ONE * (WORLD_MARGIN - HERO_RADIUS) * 2.0)
 
 
 func _position(result: Dictionary) -> Vector2:
@@ -93,16 +95,16 @@ func _test_narrow_passages() -> void:
 
 func _test_reset_and_placement_loading() -> void:
 	var motor := _geometry([{"id": "boulder", "kind": "circle", "center": [300,200], "radius": 20}])
-	motor.clear()
+	motor.clear_geometry()
 	_expect(motor.snapshot().is_empty(), "reset: clearing the query retained old obstacles")
 	_expect(_position(motor.move(Vector2(100,200), Vector2(300,0), _bounds())) == Vector2(400,200), "reset: empty geometry changed walking")
-	var first := LayoutBlockerLoaderScript.populate_motor(motor, {
+	var first := LayoutBlockerLoaderScript.populate_geometry(motor, {
 		"placements": [{"id": "trunk", "feet": [300,200]}],
 		"collision": {"hero_radius": HERO_RADIUS, "placements": {"trunk": [{"kind": "circle", "center": [4,-5], "radius": 7}]},},
 	})
 	_expect(bool(first.ok) and motor.is_position_clear(Vector2(100,200)), "placement: first footprint failed to load")
 	_expect(not motor.is_position_clear(Vector2(304,195)), "placement: footprint did not follow native feet")
-	var second := LayoutBlockerLoaderScript.populate_motor(motor, {
+	var second := LayoutBlockerLoaderScript.populate_geometry(motor, {
 		"placements": [{"id": "trunk", "feet": [400,250]}],
 		"collision": {"hero_radius": HERO_RADIUS, "placements": {"trunk": [{"kind": "circle", "center": [4,-5], "radius": 7}]},},
 	})
@@ -110,24 +112,24 @@ func _test_reset_and_placement_loading() -> void:
 
 
 func _live_motor() -> RefCounted:
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ViewScript.DEFAULT_LAYOUT_PATH))
+	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
 	var motor := ActorMotorScript.new(HERO_RADIUS)
-	var result := LayoutBlockerLoaderScript.populate_motor(motor, layout)
+	var result := LayoutBlockerLoaderScript.populate_geometry(motor, layout)
 	_expect(bool(result.ok), "town: production layout rejected: %s" % [result.get("errors", [])])
 	return motor
 
 
 func _point_uv(pair: Array) -> Vector2:
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ViewScript.DEFAULT_LAYOUT_PATH))
+	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
 	return Vector2(float(pair[0]), float(pair[1])) * Vector2(layout.world[0], layout.world[1])
 
 
 func _live_bounds() -> Rect2:
-	return Rect2(Vector2.ONE * (ViewScript.WORLD_MARGIN - HERO_RADIUS), _point_uv([1, 1]) - Vector2.ONE * (ViewScript.WORLD_MARGIN - HERO_RADIUS) * 2.0)
+	return Rect2(Vector2.ONE * (WORLD_MARGIN - HERO_RADIUS), _point_uv([1, 1]) - Vector2.ONE * (WORLD_MARGIN - HERO_RADIUS) * 2.0)
 
 
 func _test_live_layout() -> void:
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ViewScript.DEFAULT_LAYOUT_PATH))
+	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
 	var collision = _live_motor()
 	var spawn := _point_uv(layout.hero_start_uv)
 	_expect(collision.is_position_clear(spawn, _live_bounds()), "town: initial player is trapped")
@@ -165,7 +167,7 @@ func _test_waterfront(collision) -> void:
 	for point: Vector2 in [Vector2(860, 596), Vector2(851, 534), Vector2(666, 564), Vector2(946, 496)]:
 		point = _point_uv([point.x / 1024.0, point.y / 640.0])
 		_expect(not collision.is_position_clear(point), "water: outside-deck water is walkable at %s" % point)
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ViewScript.DEFAULT_LAYOUT_PATH))
+	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
 	var deck: Array = layout.routes_uv.bridge
 	## Deck segments start at the plank inner section (texture 1150,740); the
 	## west entrance segment legitimately escapes onto the shore path.
@@ -212,26 +214,27 @@ func _test_bridge_deck(collision) -> void:
 
 
 func _test_live_view() -> void:
-	var view = ViewScript.new()
-	root.add_child(view)
-	_expect(view.load_default_assets(), "view: formal scene/characters failed to load: %s" % [view.pending_reasons()])
-	var audit: Dictionary = view.render_audit()
-	_expect(audit.view_size == Vector2(640, 360) and view.world_viewport.size == Vector2i(640, 360), "view: town lost its close follow camera")
-	_expect((view.world_display.size * view.world_display.scale).is_equal_approx(Vector2(1280, 720)), "view: formal canvas is not 1280x720")
-	_expect(audit.town_concept.source_size == Vector2(1536, 1024), "view: source dimensions not decoded")
-	_expect(audit.layers.ground == 0 and audit.layers.ground_layer == 0 and audit.layers.object_lower == 0, "view: legacy ground/objects still drawn")
-	for id in ["contract", "loadout", "forge", "training", "proxy"]:
-		var entry: Dictionary = view.entry_for(id)
-		_expect(not entry.is_empty() and view.hero_position_is_clear(entry.feet), "view: facility interaction blocked " + id)
-		view.teleport_hero(entry.feet)
-		_expect(view.nearby_feature_id() == id and view.hit_test(entry.feet) == id, "view: facility entry/point hit inconsistent " + id)
+	var hub := HubScript.new()
+	root.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	var town = hub.get_town_runtime()
+	_expect(bool(hub.town_load_report.get("ok", false)), "native town failed to load: " + str(hub.town_load_report))
+	if not town.is_ready():
+		hub.free()
+		return
+	view.set_world_scale(2, Vector2(1280, 720))
+	_expect(view.world_viewport.size == Vector2i(640, 360), "town lost close follow camera")
+	for id: String in ["contract", "loadout", "forge", "training", "proxy"]:
+		var entry: Dictionary = town.entry_for(id)
+		_expect(town.hero_position_is_clear(entry.feet), "facility interaction blocked " + id)
+		town.place_hero(entry.feet)
+		_expect(town.nearby_feature_id() == id and hub._hit_feature(entry.feet) == id, "facility entry/point hit inconsistent " + id)
 		var screen: Vector2 = view.design_point_for_world(entry.feet, Vector2.ZERO, Vector2.ONE)
-		_expect(view.world_point_at_design(screen, Vector2.ZERO, Vector2.ONE).distance_to(entry.feet) < 0.001, "view: camera coordinate round trip failed " + id)
+		_expect(view.world_point_at_design(screen, Vector2.ZERO, Vector2.ONE).distance_to(entry.feet) < 0.001, "camera round trip failed " + id)
 	view.set_world_scale(2, Vector2(1600, 900))
-	_expect((view.world_display.size * view.world_display.scale).is_equal_approx(Vector2(1600, 900)), "view: resized town clips or stretches")
-	view.teleport_hero(_point_uv([500.0 / 1024.0, 402.0 / 640.0]))
-	_expect(view.hero_position_is_clear(view.hero_world_position()), "view: clear hero anchor is blocked")
-	view.move_hero(Vector2.DOWN, 1.5)
-	_expect(view.hero_position_is_clear(view.hero_world_position()), "view: motor produced an invalid hero position")
-	root.remove_child(view)
-	view.free()
+	_expect((view.world_display.size * view.world_display.scale).is_equal_approx(Vector2(1600, 900)), "resized town clips or stretches")
+	town.place_hero(town.route_points("contract")[0])
+	hub.move_hero(Vector2.DOWN, 1.5)
+	_expect(town.hero_position_is_clear(town.hero_world_position()), "fixed motor produced invalid feet")
+	hub.free()

@@ -1,8 +1,17 @@
 extends SceneTree
 
-const MainScript := preload("res://src/game/main.gd")
+const PlayerFixture := preload("res://tests/helpers/player_domain_fixture.gd")
+const Skill := preload("res://src/systems/ranger_skill_rules.gd")
+const Timeline := preload("res://src/systems/player_action_timeline.gd")
 const ApplicationStateScript := preload("res://src/game/application_state.gd")
+const TalentFixture := preload("res://tests/helpers/talent_runtime_fixture.gd")
 const ContractPlanScript := preload("res://src/game/contract_plan.gd")
+const SnapshotBuilder := preload("res://src/game/combat_state_snapshot_builder.gd")
+const StateCodec := preload("res://src/game/combat_state_codec.gd")
+
+
+var fixture := PlayerFixture.new()
+var session: Dictionary = {}
 
 
 class FakeSaveStore:
@@ -22,38 +31,32 @@ func _initialize() -> void:
 func _run() -> void:
 	var failures: Array[String] = []
 	root.size = Vector2i(1280, 720)
-	var arena = MainScript.new()
-	arena.embedded_session = true
-	root.add_child(arena)
-	await process_frame
-	arena._spawn_wave()
+	_default_room()
+	_test_spawn_roles(session.arena, failures)
+	_test_damage_source_tracking(session.arena, failures)
+	_test_charger_sequence(session.arena, failures)
+	_test_fan_sequence(session.arena, failures)
+	_test_fan_attack_radius_runtime(session.arena, failures)
+	_test_same_role_action_lane_runtime(session.arena, failures)
+	_test_recovery_end_has_same_tick_intent(session.arena, failures)
+	_test_boss_runtime(session.arena, failures)
+	_test_hash_role_sensitivity(session.arena, failures)
+	_test_room_rosters_and_layouts(session.arena, failures)
+	_test_public_proxy_geometry_snapshot(session.arena, failures)
+	_test_authored_ring_runtime(session.arena, failures)
+	_test_ring_charger_path_runtime(session.arena, failures)
+	_test_charger_padding_edge_runtime(session.arena, failures)
+	_test_invalid_charge_distance_runtime(session.arena, failures)
+	_test_rectangle_runtime_does_not_detour(session.arena, failures)
+	_test_room_completion_and_validation(session.arena, failures)
+	_test_embedded_room_rewards(session.arena, failures)
+	_test_hazards(session.arena, failures)
+	_test_hazard_decision_boundaries(session.arena, failures)
+	_test_elite_rules(session.arena, failures)
+	_test_room_hash_sensitivity(session.arena, failures)
+	_test_early_durability_and_first_hunt(session.arena, failures)
 
-	_test_spawn_roles(arena, failures)
-	_test_damage_source_tracking(arena, failures)
-	_test_charger_sequence(arena, failures)
-	_test_fan_sequence(arena, failures)
-	_test_fan_attack_radius_runtime(arena, failures)
-	_test_same_role_action_lane_runtime(arena, failures)
-	_test_recovery_end_has_same_tick_intent(arena, failures)
-	_test_boss_runtime(arena, failures)
-	_test_hash_role_sensitivity(arena, failures)
-	_test_room_rosters_and_layouts(arena, failures)
-	_test_public_proxy_geometry_snapshot(arena, failures)
-	_test_authored_ring_runtime(arena, failures)
-	_test_ring_charger_path_runtime(arena, failures)
-	_test_charger_padding_edge_runtime(arena, failures)
-	_test_invalid_charge_distance_runtime(arena, failures)
-	_test_rectangle_runtime_does_not_detour(arena, failures)
-	_test_room_completion_and_validation(arena, failures)
-	_test_embedded_room_rewards(arena, failures)
-	_test_hazards(arena, failures)
-	_test_hazard_decision_boundaries(arena, failures)
-	_test_elite_rules(arena, failures)
-	_test_room_hash_sensitivity(arena, failures)
-	_test_early_durability_and_first_hunt(arena, failures)
-
-	root.remove_child(arena)
-	arena.free()
+	fixture.free_session(session)
 	if failures.is_empty():
 		print("PASS  test_enemy_runtime.gd")
 		quit(0)
@@ -74,136 +77,121 @@ func _test_spawn_roles(arena: Node, failures: Array[String]) -> void:
 	_expect(ids == [1, 2, 3, 4, 5, 6, 7], "spawn: entity IDs are not stable and ordered", failures)
 
 
-func _test_damage_source_tracking(arena: Node, failures: Array[String]) -> void:
-	arena.sim_tick = 17
-	arena.player_health = 100.0
-	arena.last_damage_source_id = ""
-	arena.last_damage_tick = -1
-	arena.dodge_remaining_ticks = 0
-	arena._damage_player(11.0, "enemy/charging_raider")
-	_expect(String(arena.last_damage_source_id) == "enemy/charging_raider" and int(arena.last_damage_tick) == 17,
+func _test_damage_source_tracking(_arena: Node, failures: Array[String]) -> void:
+	var fixture := TalentFixture.new()
+	var session: Dictionary = fixture.start_session()
+	var arena = session.arena
+	arena.set_process(false)
+	session.runtime.set_process(false)
+	var target = fixture.configure_target(arena)
+	fixture.advance_to(arena, 17)
+	var rules = arena.player_combat_rules
+	var applied: Dictionary = rules.apply_damage(17, 11.0, "enemy/charging_raider", target.position)
+	var player := fixture.player(arena)
+	_expect(applied.get("accepted", false) and player.last_damage_source_id == "enemy/charging_raider" and player.last_damage_tick == 17,
 		"damage source: charging raider impact did not record a stable source", failures)
-
-	arena.last_damage_source_id = "hazard/moving_fireline"
-	arena.last_damage_tick = 999
-	arena.dodge_remaining_ticks = 2
-	arena._damage_player(9.0, "hazard/moving_fireline")
-	_expect(String(arena.last_damage_source_id) == "hazard/moving_fireline" and int(arena.last_damage_tick) == 999,
+	_expect(arena.request_player_cast("dodge", 0, Vector2.UP).get("accepted", false), "damage source: real dodge setup failed", failures)
+	var avoided: Dictionary = rules.apply_damage(17, 9.0, "hazard/moving_fireline", target.position)
+	_expect(not avoided.get("accepted", false) and fixture.player(arena).last_damage_source_id == player.last_damage_source_id and fixture.player(arena).last_damage_tick == player.last_damage_tick,
 		"damage source: avoided damage updated the last source", failures)
-
-	arena.dodge_remaining_ticks = 0
-	arena._damage_player(7.0, "hazard/exposed_ground_zone")
-	arena._damage_player(1.2, "boss/slam")
-	_expect(String(arena.last_damage_source_id) == "boss/slam", "damage source: boss action source was not authoritative", failures)
-	arena.sim_tick = 18
-	arena.player_health = 1.0
-	arena._damage_player(5.0, "enemy/melee_pursuer")
-	_expect(arena.player_health == 0.0
-		and String(arena.last_damage_source_id) == "enemy/melee_pursuer"
-		and int(arena.last_damage_tick) == 18,
+	fixture.advance_to(arena, 17 + int(fixture.player(arena).dodge_remaining_ticks))
+	rules.apply_damage(arena.sim_tick, 7.0, "hazard/exposed_ground_zone", target.position)
+	rules.apply_damage(arena.sim_tick, 1.2, "boss/slam", target.position)
+	_expect(fixture.player(arena).last_damage_source_id == "boss/slam", "damage source: boss action source was not authoritative", failures)
+	fixture.step(arena)
+	var fatal_tick: int = arena.sim_tick
+	rules.apply_damage(fatal_tick, float(fixture.player(arena).player_health) + 1.0, "enemy/melee_pursuer", target.position)
+	player = fixture.player(arena)
+	_expect(player.player_health == 0.0 and player.last_damage_source_id == "enemy/melee_pursuer" and player.last_damage_tick == fatal_tick,
 		"damage source: fatal hit did not replace the prior source", failures)
-
-	arena.last_damage_source_id = "enemy/melee_pursuer"
-	arena.last_damage_tick = 123
-	arena._spawn_wave()
-	_expect(String(arena.last_damage_source_id).is_empty() and int(arena.last_damage_tick) == -1,
+	arena.start_room()
+	player = fixture.player(arena)
+	_expect(player.last_damage_source_id.is_empty() and player.last_damage_tick == -1000,
 		"damage source: room entry did not reset death diagnostics", failures)
+	fixture.free_session(session)
 
 
 func _test_charger_sequence(arena: Node, failures: Array[String]) -> void:
-	var charger = _enemy_of_kind(arena, "charging_raider")
-	arena.sim_tick = 10
-	arena.player_position = charger.position + Vector2(100.0, 0.0)
-	arena.player_health = 100.0
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
+	var charger = arena.enemies[0]
+	fixture.advance_to(arena, 10)
+	arena.teleport_actor("ranger", charger.position + Vector2(100.0, 0.0))
 	var contact_distance: float = charger.position.distance_to(arena.player_position)
 	var accepted: bool = arena._start_charger_action(charger, charger.position.direction_to(arena.player_position), contact_distance)
 	_expect(accepted and charger.action_state == "windup" and charger.impact_tick == 28, "charger: explicit-distance windup was not accepted", failures)
 	_expect(is_equal_approx(charger.charge_length, 100.0), "charger: direct sequence did not freeze its explicit distance", failures)
-	arena.sim_tick = charger.impact_tick
+	fixture.drive(arena, {"enemy_step": func() -> void: arena._update_charger_tick(charger)})
+	fixture.advance_to(arena, charger.impact_tick - 1)
 	var active_steps := 0
 	while charger.action_state != "recovery" and arena.sim_tick <= charger.impact_tick + arena.CHARGE_ACTIVE_TICKS:
 		var before: Vector2 = charger.position
-		arena._update_charger_tick(charger)
+		fixture.step(arena)
 		if charger.action_state == "active":
 			active_steps += 1
 			_expect(charger.position.distance_to(before) > 0.01, "charger: direct sequence swallowed an active body step", failures)
-		if charger.action_state != "recovery":
-			arena.sim_tick += 1
 	var after_impact: float = arena.player_health
 	_expect(active_steps == arena.CHARGE_ACTIVE_TICKS, "charger: direct sequence did not execute all active ticks", failures)
 	_expect(charger.action_state == "recovery" and charger.impact_resolved and is_equal_approx(after_impact, 89.0), "charger: moving body did not complete with one contact hit", failures)
-	arena.sim_tick += 1
-	arena._update_charger_tick(charger)
+	fixture.step(arena)
 	_expect(is_equal_approx(arena.player_health, after_impact), "charger: impact dealt damage more than once", failures)
 
 
 func _test_fan_sequence(arena: Node, failures: Array[String]) -> void:
-	var fan = _enemy_of_kind(arena, "fan_ranged")
-	arena.sim_tick = 40
-	arena.player_position = fan.position + Vector2(140.0, 0.0)
-	arena.player_health = 100.0
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["fan_ranged"])
+	var fan = arena.enemies[0]
+	fixture.advance_to(arena, 40)
+	arena.teleport_actor("ranger", fan.position + Vector2(140.0, 0.0))
 	arena._start_fan_action(fan)
 	_expect(fan.action_state == "windup" and fan.impact_tick == 61, "fan: windup or impact tick is wrong", failures)
-	arena.sim_tick = fan.impact_tick
-	arena._update_fan_tick(fan)
+	fixture.drive(arena, {"enemy_step": func() -> void: arena._update_fan_tick(fan)})
+	fixture.advance_to(arena, fan.impact_tick)
 	var after_impact: float = arena.player_health
 	_expect(fan.action_state == "active" and fan.impact_resolved, "fan: did not enter resolved active state", failures)
 	_expect(is_equal_approx(after_impact, 92.0), "fan: authoritative cone did not deal expected impact damage", failures)
+	# Repeated resolver submission at the same committed world tick cannot hit twice.
 	arena._update_fan_tick(fan)
 	_expect(is_equal_approx(arena.player_health, after_impact), "fan: impact dealt damage more than once", failures)
-	arena.sim_tick = fan.state_ends_tick
-	arena._update_fan_tick(fan)
+	fixture.advance_to(arena, fan.state_ends_tick)
 	_expect(fan.action_state == "recovery", "fan: active did not advance to recovery", failures)
 
 
 func _test_fan_attack_radius_runtime(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "rectangle_arena", "clear", ["fan_ranged"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["fan_ranged"])
 	var fan = arena.enemies[0]
-	arena.player_position = arena._arena_rect().get_center()
-	arena.player_health = 100.0
-	arena.dodge_remaining_ticks = 0
-
-	## The old 228 planning band started a 175-radius cone here, which always
-	## missed a stationary target. The runtime must now continue moving instead.
-	fan.position = arena.player_position - Vector2.RIGHT * 200.0
-	arena.sim_tick = 1
+	arena.teleport_actor("ranger", arena._arena_rect().get_center())
+	arena.teleport_actor("enemy/%d" % fan.entity_id, arena.player_position - Vector2.RIGHT * 200.0)
 	var outside_before: Vector2 = fan.position
-	arena._update_enemies_tick()
+	fixture.drive(arena, {"enemies": true})
+	fixture.step(arena)
 	_expect(fan.action_state == "none" and fan.motion_state == "moving" and fan.position != outside_before and String(fan.tactic_reason) == "fan_strafe_hold", "fan radius: target at 200 started an empty attack instead of moving", failures)
-
-	## Exactly on the shared radius, the frozen target shape, impact resolver and
-	## static player position must agree on one successful hit.
-	fan.position = arena.player_position - Vector2.RIGHT * arena.EnemyTacticsScript.FAN_ATTACK_RADIUS
-	arena.sim_tick = 40
-	arena._update_enemies_tick()
+	fixture.drive(arena)
+	fixture.advance_to(arena, 39)
+	arena.teleport_actor("enemy/%d" % fan.entity_id, arena.player_position - Vector2.RIGHT * arena.EnemyTacticsScript.FAN_ATTACK_RADIUS)
+	fixture.drive(arena, {"enemies": true})
+	fixture.step(arena)
 	_expect(fan.action_state == "windup" and is_equal_approx(float(fan.target_shape.get("radius", 0.0)), arena.EnemyTacticsScript.FAN_ATTACK_RADIUS), "fan radius: legal start did not freeze the shared target shape", failures)
-	arena.sim_tick = fan.impact_tick
-	arena._update_enemies_tick()
+	fixture.advance_to(arena, fan.impact_tick)
 	_expect(is_equal_approx(arena.player_health, 92.0), "fan radius: stationary target at the legal boundary was not hit", failures)
-	arena.framework_room = {}
-	arena._spawn_wave()
+	_default_room()
 
 
 func _test_same_role_action_lane_runtime(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "rectangle_arena", "clear", ["fan_ranged", "fan_ranged"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["fan_ranged", "fan_ranged"])
 	arena.combat_event_stream.reset()
-	arena.player_health = 100.0
-	arena.dodge_remaining_ticks = 0
-	arena.player_position = arena._arena_rect().get_center()
+	arena.teleport_actor("ranger", arena._arena_rect().get_center())
 	var first = arena.enemies[0]
 	var waiting = arena.enemies[1]
-	first.position = arena.player_position + Vector2(-150.0, 0.0)
-	waiting.position = arena.player_position + Vector2(150.0, 0.0)
-	arena.sim_tick = 1
-	arena._update_enemies_tick()
+	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(-150.0, 0.0))
+	arena.teleport_actor("enemy/%d" % waiting.entity_id, arena.player_position + Vector2(150.0, 0.0))
+
+	fixture.drive(arena, {"enemies": true})
+	fixture.step(arena)
 	_expect(first.action_state == "windup" and first.impact_tick == 22, "action lane: lowest stable fan did not own the first windup", failures)
 	_expect(waiting.action_state == "none" and waiting.motion_state == "moving" and String(waiting.tactic_reason).contains("action_lane_occupied"), "action lane: waiting fan neither yielded nor kept strafing", failures)
 
 	for tick in range(2, 23):
-		arena.sim_tick = tick
-		arena._update_enemies_tick()
+
+		fixture.step(arena)
 	var damage_events_at_first_impact := 0
 	for event: Dictionary in arena.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "damage_applied" and int(event.get("tick", -1)) == 22:
@@ -213,71 +201,72 @@ func _test_same_role_action_lane_runtime(arena: Node, failures: Array[String]) -
 
 	## Planning observes the first attacker as active at tick 23, then sees recovery
 	## at tick 24 and must immediately hand the role lane to the waiting fan.
-	arena.sim_tick = 23
-	arena._update_enemies_tick()
-	arena.sim_tick = 24
-	arena._update_enemies_tick()
+
+	fixture.step(arena)
+
+	fixture.step(arena)
 	_expect(first.action_state == "recovery" and waiting.action_state == "windup" and waiting.impact_tick == 45, "action lane: recovery did not release the role lane to its waiter", failures)
-	arena.framework_room = {}
-	arena._spawn_wave()
+	arena = _default_room()
 
 
 func _test_recovery_end_has_same_tick_intent(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
-	arena._spawn_wave()
-	arena.player_position = arena._arena_rect().get_center()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
+	arena.teleport_actor("ranger", arena._arena_rect().get_center())
 	var enemy = arena.enemies[0]
-	enemy.position = arena.player_position + Vector2(100.0, 0.0)
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(100.0, 0.0))
 	enemy.action_state = "recovery"
 	enemy.action_id = "contact"
 	enemy.action_instance_id = 77
 	enemy.state_ends_tick = 40
 	enemy.motion_state = "idle"
-	arena.sim_tick = 40
+	fixture.advance_to(arena, 39)
 	var before: Vector2 = enemy.position
-	arena._update_enemies_tick()
+	fixture.drive(arena, {"enemies": true})
+	fixture.step(arena)
 	_expect(enemy.action_state == "none" and enemy.motion_state == "moving" and enemy.position != before and String(enemy.tactic_reason) != "action_locked", "recovery boundary: ending tick discarded the newly available movement intent", failures)
-	arena.framework_room = {}
-	arena._spawn_wave()
+	arena = _default_room()
 	var boss = arena.boss
 	boss.action_state = "recovery"
 	boss.action_id = "slam"
 	boss.action_instance_id = 78
 	boss.state_ends_tick = 50
-	arena.sim_tick = 50
-	arena._update_enemies_tick()
+	fixture.advance_to(arena, 49)
+	fixture.drive(arena, {"enemies": true})
+	fixture.step(arena)
 	_expect(boss.action_state == "windup" and boss.state_started_tick == 50, "recovery boundary: boss ending tick discarded the next authoritative action", failures)
-	arena._spawn_wave()
+	_default_room()
 
 
 func _test_boss_runtime(arena: Node, failures: Array[String]) -> void:
+	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", [], "threshold_colossus")
+	# A real frozen build/contact supplies the exact 50% threshold. No totals writes.
+	fixture.reset(arena, {}, fixture.build({"p": 0.0, "damage": 5.0e11, "d": 225.0}))
+	fixture.drive(arena)
 	var boss = arena.boss
-	arena.player_health = 77.0
-	arena.boss_damage = arena.boss_maximum.multiply(BigValue.from_float(0.5))
-	arena.sim_tick = 100
-	arena._update_boss_tick(boss)
+	arena.teleport_actor("ranger", boss.position + Vector2(-140.0, 0.0))
+	arena.player_combat_rules.apply_damage(arena.sim_tick, 23.0, "fixture/setup", boss.position)
+	_expect(_cast_and_resolve_arrow(arena), "boss: real threshold arrow setup failed", failures)
+	_expect(arena.boss_damage.compare(arena.boss_maximum.multiply(BigValue.from_float(0.5))) == 0 and arena.arrow_hits == 1, "boss: real contact did not establish exactly 50% damage", failures)
+	fixture.advance_to(arena, 99)
+	fixture.drive(arena, {"enemy_step": func() -> void: arena._update_boss_tick(boss)})
+	fixture.step(arena)
 	_expect(boss.phase_id == "sealed" and boss.phase_state == "transition", "boss: 50% threshold did not start sealed transition", failures)
 	_expect(is_equal_approx(arena.player_health, 77.0), "boss: phase transition dealt damage", failures)
 	var transition_end: int = boss.state_ends_tick
-	arena.sim_tick = transition_end
-	arena._update_boss_tick(boss)
+	fixture.advance_to(arena, transition_end)
 	_expect(boss.phase_id == "awakened" and boss.phase_state == "stable", "boss: transition did not finish awakened", failures)
 	_expect(boss.core_open and boss.core_vulnerable, "boss: awakened core state is not exposed", failures)
 	_expect(boss.left_hand_position - boss.position != -(boss.right_hand_position - boss.position), "boss: phase 2 hands are still symmetric", failures)
 	_expect(is_equal_approx(arena.player_health, 77.0), "boss: transition completion dealt damage", failures)
-
 	var actions: Array[String] = []
 	for _index in 3:
-		arena.sim_tick += 1
-		arena._update_boss_tick(boss)
+		fixture.step(arena)
 		actions.append(boss.action_id)
-		arena.sim_tick = boss.impact_tick
-		arena._update_boss_tick(boss)
-		arena.sim_tick = boss.state_ends_tick
-		arena._update_boss_tick(boss)
-		arena.sim_tick = boss.state_ends_tick
-		arena._update_boss_tick(boss)
+		fixture.advance_to(arena, boss.impact_tick)
+		fixture.advance_to(arena, boss.state_ends_tick)
+		fixture.advance_to(arena, boss.state_ends_tick)
 	_expect(actions == ["slam", "sweep", "lane"], "boss: phase 2 move cycle is not slam/sweep/lane", failures)
+	_default_room()
 
 
 func _test_hash_role_sensitivity(arena: Node, failures: Array[String]) -> void:
@@ -293,8 +282,7 @@ func _test_hash_role_sensitivity(arena: Node, failures: Array[String]) -> void:
 func _test_room_rosters_and_layouts(arena: Node, failures: Array[String]) -> void:
 	var positions := {}
 	for layout in ["rectangle_arena", "corridor", "ring"]:
-		_configure_room(arena, layout, "clear", ["melee_pursuer", "charging_raider", "fan_ranged"])
-		arena._spawn_wave()
+		arena = _configure_room(arena, layout, "clear", ["melee_pursuer", "charging_raider", "fan_ranged"])
 		var kinds: Array[String] = []
 		var ids: Array[int] = []
 		for enemy in arena.enemies:
@@ -306,19 +294,19 @@ func _test_room_rosters_and_layouts(arena: Node, failures: Array[String]) -> voi
 	_expect(positions.rectangle_arena != positions.corridor and positions.corridor != positions.ring and positions.rectangle_arena != positions.ring, "layouts do not produce distinct deterministic spawn geometry", failures)
 	var center: Vector2 = arena._arena_rect().get_center()
 	var ring_clamp: Vector2 = arena._clamp_to_arena(center, 14.0)
-	## 2026-10-10 playtest fix: ring rooms fight across the whole map rectangle,
-	## so the clamp must leave the exact center in place instead of pushing it
-	## onto the retired annulus.
-	_expect(Vector2(ring_clamp).is_equal_approx(center), "ring layout did not keep its whole-map center walkable", failures)
+	var ring_geometry: Dictionary = arena._walkable_geometry(14.0)
+	_expect(not Vector2(ring_clamp).is_equal_approx(center)
+		and is_equal_approx(ring_clamp.distance_to(center), float(ring_geometry.get("inner_radius", 0.0))),
+		"ring layout did not project its center onto the authored inner boundary", failures)
 
 
 func _test_public_proxy_geometry_snapshot(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "ring", "clear", ["melee_pursuer", "charging_raider", "fan_ranged"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "ring", "clear", ["melee_pursuer", "charging_raider", "fan_ranged"])
 	var snapshot: Dictionary = arena._public_proxy_snapshot()
 	var geometry: Dictionary = snapshot.get("walkable_geometry", {})
 	_expect(int(snapshot.get("snapshot_version", -1)) == arena.ProxyDecisionScript.SNAPSHOT_VERSION, "public proxy snapshot did not use ProxyDecision's version constant", failures)
-	_expect(not geometry.is_empty() and String(geometry.get("kind", "")) == "rectangle" and not geometry.has("layout_id"), "public proxy snapshot did not expose the sanitized whole-map rectangle", failures)
+	_expect(not geometry.is_empty() and String(geometry.get("kind", "")) == "ring"
+		and float(geometry.get("inner_radius", 0.0)) > 0.0 and not geometry.has("layout_id"), "public proxy snapshot did not expose the sanitized ring geometry", failures)
 	_expect(not snapshot.has("layout_id") and not snapshot.has("room_id") and not snapshot.has("hazards") and not snapshot.has("telegraphs"), "public proxy snapshot exposed route, room, or future state", failures)
 	for enemy: Dictionary in snapshot.get("visible_enemies", []):
 		_expect(enemy.has("targetable")
@@ -332,17 +320,15 @@ func _test_public_proxy_geometry_snapshot(arena: Node, failures: Array[String]) 
 
 
 func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
-	# Preserve the authored six-entity crowd-control fixture. Its player remains
-	# at the center — open ground since ring rooms fight across the whole map
-	# rectangle — for the fan/melee/stall controls only; charger launch authority
-	# is covered by the open-chord test below.
-	_configure_room(arena, "ring", "clear", ["charging_raider", "melee_pursuer", "melee_pursuer", "fan_ranged", "fan_ranged", "melee_pursuer"])
-	arena._spawn_wave()
-	arena.player_position = arena._arena_rect().get_center()
+	# Preserve the authored six-entity crowd-control fixture. The player starts
+	# on the legal ring band; charger launch authority is covered by the chord
+	# test below.
+	arena = _configure_room(arena, "ring", "clear", ["charging_raider", "melee_pursuer", "melee_pursuer", "fan_ranged", "fan_ranged", "melee_pursuer"])
+	var center: Vector2 = arena._arena_rect().get_center()
+	arena.teleport_actor("ranger", arena._arena_rect().get_center() + Vector2.RIGHT * 160.0)
 	var charger = arena.enemies[0]
 	var fan = arena.enemies[3]
 	var melee = arena.enemies[5]
-	var center: Vector2 = arena.player_position
 	_expect((charger.position - center).normalized().dot((fan.position - center).normalized()) < -0.999, "authored ring: charger/fan fixture is not antipodal", failures)
 
 	var fan_entered_band := false
@@ -352,8 +338,9 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 	var melee_tangent_displacement := 0.0
 	var stalled_runs := {}
 	var maximum_stalled_run := 0
+	fixture.drive(arena, {"enemies": true})
 	for tick in range(1, 241):
-		arena.sim_tick = tick
+
 		var planned: Dictionary = arena.enemy_tactics.plan(arena._enemy_tactics_snapshot())
 		var intents_by_id := {}
 		for intent: Dictionary in planned.get("intents", []):
@@ -361,9 +348,9 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 		var before := {}
 		for enemy in arena.enemies:
 			before[enemy.entity_id] = enemy.position
-		arena._update_enemies_tick()
+		fixture.step(arena)
 
-		var fan_distance: float = fan.position.distance_to(center)
+		var fan_distance: float = fan.position.distance_to(arena.player_position)
 		var fan_in_band: bool = fan_distance >= arena.EnemyTacticsScript.FAN_ATTACK_MIN_RANGE and fan_distance <= arena.EnemyTacticsScript.FAN_ATTACK_RADIUS
 		if fan_in_band and not fan_entered_band:
 			fan_band_tick = tick
@@ -394,38 +381,31 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 
 
 func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "ring", "clear", ["charging_raider"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "ring", "clear", ["charging_raider"])
 	var player_geometry: Dictionary = arena._walkable_geometry(14.0)
 	var enemy_geometry: Dictionary = arena._walkable_geometry(16.0)
-	## 2026-10-10 playtest fix: ring rooms resolve to the whole-map rectangle, so
-	## the retired annulus radii stay zero and a direct chord across the open
-	## center is legal. The fixture proves the charger may launch across it
-	## immediately; the annulus geometry itself is still covered by
-	## tests/test_walkable_geometry.gd at the module level.
-	_expect(String(player_geometry.get("kind", "")) == "rectangle" and String(enemy_geometry.get("kind", "")) == "rectangle",
-		"ring runtime: ring rooms did not resolve to the whole-map rectangle", failures)
-	_expect(is_zero_approx(float(player_geometry.get("inner_radius", -1.0))) and is_zero_approx(float(player_geometry.get("outer_radius", -1.0))),
-		"ring runtime: annulus radii leaked into the whole-map rectangle", failures)
+	_expect(String(player_geometry.get("kind", "")) == "ring" and String(enemy_geometry.get("kind", "")) == "ring",
+		"ring runtime: ring rooms did not expose the authored annulus", failures)
+	_expect(float(player_geometry.get("inner_radius", 0.0)) > 0.0 and float(enemy_geometry.get("outer_radius", 0.0)) > float(enemy_geometry.get("inner_radius", 0.0)),
+		"ring runtime: authored annulus radii are invalid", failures)
 	var center: Vector2 = enemy_geometry["center"]
 	var fixture_standoff: float = clampf(120.0, arena.EnemyTacticsScript.CHARGER_LAUNCH_MIN_RANGE, arena.EnemyTacticsScript.CHARGER_LAUNCH_MAX_RANGE)
 
 	var charger = arena.enemies[0]
-	charger.position = center + Vector2.RIGHT * fixture_standoff
-	arena.player_position = center
-	arena.player_health = 100.0
-	arena.dodge_remaining_ticks = 0
-	var player_projection: Dictionary = arena.WalkableGeometryScript.project(arena.player_position, player_geometry)
-	var charger_projection: Dictionary = arena.WalkableGeometryScript.project(charger.position, enemy_geometry)
-	_expect(bool(player_projection.ok) and Vector2(player_projection.position).is_equal_approx(arena.player_position), "ring runtime: center player start is illegal under padding 14", failures)
+	var arc_half_angle := asin(fixture_standoff / 320.0)
+	arena.teleport_actor("enemy/%d" % charger.entity_id, center + Vector2.from_angle(-arc_half_angle) * 160.0)
+	arena.teleport_actor("ranger", center + Vector2.from_angle(arc_half_angle) * 160.0)
+	var player_projection: Dictionary = arena.ArenaGeometryScript.project(arena.player_position, player_geometry)
+	var charger_projection: Dictionary = arena.ArenaGeometryScript.project(charger.position, enemy_geometry)
+	_expect(bool(player_projection.ok) and Vector2(player_projection.position).is_equal_approx(arena.player_position), "ring runtime: in-band player start is illegal under padding 14", failures)
 	_expect(bool(charger_projection.ok) and Vector2(charger_projection.position).is_equal_approx(charger.position), "ring runtime: in-band charger start is illegal under padding 16", failures)
 	var initial_distance: float = charger.position.distance_to(arena.player_position)
 	_expect(initial_distance >= arena.EnemyTacticsScript.CHARGER_LAUNCH_MIN_RANGE and initial_distance <= arena.EnemyTacticsScript.CHARGER_LAUNCH_MAX_RANGE, "ring runtime: launch fixture is outside the charge band", failures)
-	var direct_chord: Dictionary = arena.WalkableGeometryScript.line_segment_walkable(charger.position, arena.player_position, enemy_geometry)
-	_expect(bool(direct_chord.ok) and bool(direct_chord.walkable), "ring runtime: the whole-map chord across the open center is not walkable", failures)
+	var direct_chord: Dictionary = arena.ArenaGeometryScript.line_segment_walkable(charger.position, arena.player_position, enemy_geometry)
+	_expect(bool(direct_chord.ok) and bool(direct_chord.walkable), "ring runtime: the chord within the authored band is not walkable", failures)
 	var initial_plan: Dictionary = arena.enemy_tactics.plan(arena._enemy_tactics_snapshot())
 	var initial_intent: Dictionary = initial_plan.intents[0]
-	_expect(String(initial_intent.request_action) == "charge" and String(initial_intent.reason) == "charger_launch_band", "ring runtime: a legal open-field chord did not launch immediately", failures)
+	_expect(String(initial_intent.request_action) == "charge" and String(initial_intent.reason) == "charger_launch_band", "ring runtime: a legal in-band chord did not launch immediately", failures)
 
 	var setup_displacement := 0.0
 	var launch_tick := -1
@@ -444,8 +424,9 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	var charge_action_instance_ids: Array[int] = []
 	var frozen_distance_sum := 0.0
 	var health_before_first_action := -1.0
+	fixture.drive(arena, {"enemies": true})
 	for tick in range(1, 1201):
-		arena.sim_tick = tick
+
 		var planned: Dictionary = arena.enemy_tactics.plan(arena._enemy_tactics_snapshot())
 		var intent: Dictionary = planned.intents[0]
 		var before: Vector2 = charger.position
@@ -453,7 +434,7 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 		var requested_charge := String(intent.request_action) == "charge"
 		if requested_charge:
 			var execution_endpoint: Vector2 = charger.position + Vector2(intent.action_direction).normalized() * float(intent.action_distance)
-			var launch_path: Dictionary = arena.WalkableGeometryScript.line_segment_walkable(charger.position, execution_endpoint, enemy_geometry)
+			var launch_path: Dictionary = arena.ArenaGeometryScript.line_segment_walkable(charger.position, execution_endpoint, enemy_geometry)
 			_expect(bool(launch_path.ok) and bool(launch_path.walkable), "ring runtime: Main accepted charge before the frozen line became walkable", failures)
 			launch_count += 1
 			if launch_count == 1:
@@ -461,7 +442,7 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 			if launch_tick < 0:
 				launch_tick = tick
 				launch_distance = charger.position.distance_to(arena.player_position)
-		arena._update_enemies_tick()
+		fixture.step(arena)
 		if requested_charge:
 			charge_action_instance_ids.append(charger.action_instance_id)
 			frozen_distance_sum += charger.charge_length
@@ -495,7 +476,7 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 			if String(event.get("type", "")) == "attack_resolved" and int(event.get("action_instance_id", -1)) == first_action_instance_id:
 				first_resolution = event
 				break
-	_expect(is_zero_approx(setup_displacement), "ring runtime: an open-field launch produced unexpected setup movement", failures)
+	_expect(is_zero_approx(setup_displacement), "ring runtime: an in-band launch produced unexpected setup movement", failures)
 	_expect(launch_tick >= 1 and launch_tick <= 600, "ring runtime: charger did not launch within 600 ticks", failures)
 	_expect(player_after_init_direct_moves == 0, "ring runtime: test moved the player after fixture initialization", failures)
 	_expect(launch_count == 1 and completed_cycles == 1 and charge_action_instance_ids.size() == 1, "ring runtime: first legal charge did not complete exactly one action cycle", failures)
@@ -509,18 +490,15 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 
 
 func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
 	var player_geometry: Dictionary = arena._walkable_geometry(14.0)
 	var enemy_geometry: Dictionary = arena._walkable_geometry(16.0)
 	var player_start := Vector2(float(player_geometry.bounds.position.x), float(player_geometry.center.y))
 	var charger = arena.enemies[0]
-	arena.player_position = player_start
-	charger.position = player_start + Vector2.RIGHT * 100.0
-	arena.player_health = 100.0
-	arena.dodge_remaining_ticks = 0
-	var player_check: Dictionary = arena.WalkableGeometryScript.project(player_start, player_geometry)
-	var contact: Dictionary = arena.WalkableGeometryScript.project(player_start, enemy_geometry)
+	arena.teleport_actor("ranger", player_start)
+	arena.teleport_actor("enemy/%d" % charger.entity_id, player_start + Vector2.RIGHT * 100.0)
+	var player_check: Dictionary = arena.ArenaGeometryScript.project(player_start, player_geometry)
+	var contact: Dictionary = arena.ArenaGeometryScript.project(player_start, enemy_geometry)
 	_expect(bool(player_check.ok) and Vector2(player_check.position).is_equal_approx(player_start), "padding runtime: player edge is illegal under padding 14", failures)
 	_expect(bool(contact.ok) and is_equal_approx(player_start.distance_to(Vector2(contact.position)), 2.0), "padding runtime: enemy contact projection is not the expected 2px inset", failures)
 
@@ -532,10 +510,11 @@ func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) ->
 	var active_displacement := 0.0
 	var recovery_tick := -1
 	var charge_action_instance_id := -1
+	fixture.drive(arena, {"enemies": true})
 	for tick in range(1, 81):
-		arena.sim_tick = tick
+
 		var before: Vector2 = charger.position
-		arena._update_enemies_tick()
+		fixture.step(arena)
 		if start_tick < 0 and charger.action_state == "windup":
 			start_tick = tick
 			frozen_charge_length = charger.charge_length
@@ -570,8 +549,7 @@ func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) ->
 func _test_invalid_charge_distance_runtime(arena: Node, failures: Array[String]) -> void:
 	var cases: Array = [null, 0.0, -1.0, INF]
 	for index in cases.size():
-		_configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-		arena._spawn_wave()
+		arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
 		var charger = arena.enemies[0]
 		var intent := {
 			"entity_id": charger.entity_id,
@@ -585,8 +563,7 @@ func _test_invalid_charge_distance_runtime(arena: Node, failures: Array[String])
 		arena._commit_normal_enemy_intent(charger, intent)
 		_expect(charger.action_state == "none" and charger.action_instance_id == 0 and String(charger.tactic_reason) == "invalid_charge_execution", "invalid charge distance: case %d was not rejected" % index, failures)
 
-	_configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
 	var charger = arena.enemies[0]
 	arena._commit_normal_enemy_intent(charger, {
 		"entity_id": charger.entity_id,
@@ -601,39 +578,35 @@ func _test_invalid_charge_distance_runtime(arena: Node, failures: Array[String])
 
 
 func _test_rectangle_runtime_does_not_detour(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
 	var center: Vector2 = arena._arena_rect().get_center()
-	arena.player_position = center
+	arena.teleport_actor("ranger", center)
 	var charger = arena.enemies[0]
-	charger.position = center + Vector2(250.0, 0.0)
+	arena.teleport_actor("enemy/%d" % charger.entity_id, center + Vector2(250.0, 0.0))
 	var before: Vector2 = charger.position
-	arena.sim_tick = 1
-	arena._update_enemies_tick()
+
+	fixture.drive(arena, {"enemies": true})
+	fixture.step(arena)
 	var displacement: Vector2 = charger.position - before
 	_expect(displacement.x < -0.01 and absf(displacement.y) <= 0.01, "rectangle runtime: direct approach triggered a walkable-geometry detour", failures)
 	print("ENEMY_RUNTIME_RECT_METRICS dx=%.3f dy=%.3f" % [displacement.x, displacement.y])
 
 
 func _test_room_completion_and_validation(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
-	arena._spawn_wave()
-	arena.enemies.clear()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
+	_defeat_target(arena, arena.enemies[0], failures)
 	arena._check_battle_end()
 	_expect(arena.battle_over and arena.battle_victory, "normal clear room did not win with no living targets", failures)
-	_configure_room(arena, "rectangle_arena", "timed_break", ["melee_pursuer"])
-	arena._spawn_wave()
-	arena.sim_tick = 901
+	arena = _configure_room(arena, "rectangle_arena", "timed_break", ["melee_pursuer"])
+	fixture.advance_to(arena, 901)
 	arena._update_room_rules_tick()
 	_expect(not arena.timed_bonus_available and not arena.battle_over, "timed_break timeout incorrectly failed the room", failures)
-	_configure_room(arena, "rectangle_arena", "hunt_elite", ["melee_pursuer", "fan_ranged"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", ["melee_pursuer", "fan_ranged"])
 	var elite = arena.enemies[0]
-	arena.enemies.erase(elite)
+	_defeat_target(arena, elite, failures)
 	arena._check_battle_end()
 	_expect(arena.battle_over and arena.battle_victory and arena.enemies.size() == 1, "hunt_elite did not use the first enemy as authoritative objective", failures)
-	_configure_room(arena, "rectangle_arena", "hunt_elite", [], "threshold_colossus")
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", [], "threshold_colossus")
 	_expect(arena.boss != null and arena.enemies.size() == 1 and arena.boss.entity_id == 1, "Boss room did not spawn authoritative threshold colossus", failures)
 	arena.framework_room.enemy_ids = ["unknown_enemy"]
 	_expect(arena._framework_room_error() == "unknown_enemy_id", "unknown enemy did not fail closed", failures)
@@ -643,15 +616,14 @@ func _test_room_completion_and_validation(arena: Node, failures: Array[String]) 
 
 
 func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [], [], ["equipment_general", "damage", "add_dice", "rewrite_dice", "refine_dice"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [], [], ["equipment_general", "damage", "add_dice", "rewrite_dice", "refine_dice"])
 	arena.contract_wins = 11
 	arena.last_drop_id = "legacy.sentinel"
 	arena.last_drop = "Legacy Sentinel"
 	var fake_store := FakeSaveStore.new()
 	arena.save_store = fake_store
-	var legacy_before: Dictionary = arena._legacy_reward_state()
-	arena.enemies.clear()
+	var embedded_state_before: Dictionary = arena._embedded_authority_state_snapshot()
+	_defeat_target(arena, arena.enemies[0], failures)
 	arena._check_battle_end()
 	_expect(arena.battle_victory, "embedded rewards: clear room did not remain a victory", failures)
 	_expect(arena.room_reward_snapshot == {
@@ -661,13 +633,16 @@ func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 		"bonus_earned": false,
 		"bonus_lost": false,
 	}, "embedded rewards: room_drop_tags were not mapped exactly to three tracks", failures)
-	_expect(arena._legacy_reward_state() == legacy_before and fake_store.save_calls == 0, "embedded rewards: legacy profile/drop/forge state was polluted", failures)
+	_expect(arena._embedded_authority_state_snapshot() == embedded_state_before and fake_store.save_calls == 0, "embedded rewards: framework state was polluted", failures)
 
-	_configure_room(arena, "rectangle_arena", "timed_break", ["melee_pursuer"], "", [], [], ["equipment_general"])
-	arena._spawn_wave()
-	arena.sim_tick = 901
+	arena = _configure_room(arena, "rectangle_arena", "timed_break", ["melee_pursuer"], "", [], [], ["equipment_general"])
+	arena.contract_wins = 11
+	arena.last_drop_id = "legacy.sentinel"
+	arena.last_drop = "Legacy Sentinel"
+	arena.save_store = fake_store
+	fixture.advance_to(arena, 901)
 	arena._update_room_rules_tick()
-	arena.enemies.clear()
+	_defeat_target(arena, arena.enemies[0], failures)
 	arena._check_battle_end()
 	_expect(arena.battle_victory and arena.room_reward_snapshot == {
 		"add_dice_delta": 0,
@@ -676,102 +651,88 @@ func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 		"bonus_earned": false,
 		"bonus_lost": true,
 	}, "embedded rewards: timed timeout was not bonus-only", failures)
-	_expect(arena._legacy_reward_state() == legacy_before and fake_store.save_calls == 0, "embedded rewards: timed victory polluted legacy state", failures)
+	_expect(arena._embedded_authority_state_snapshot() == embedded_state_before and fake_store.save_calls == 0, "embedded rewards: timed victory polluted framework state", failures)
 
 
 func _test_hazards(arena: Node, failures: Array[String]) -> void:
 	for hazard_id in ["exposed_ground_zone", "moving_fireline"]:
-		_configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [hazard_id])
-		arena._spawn_wave()
-		arena.player_health = 100.0
-		arena.dodge_remaining_ticks = 0
-		arena.player_position = Vector2(-10000.0, -10000.0)
-		arena.sim_tick = 30
-		arena._update_hazards_tick()
+		arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [hazard_id])
+		var center: Vector2 = arena._arena_rect().get_center()
+		# Both the waiting position and the hit position are legal registry feet.
+		arena.teleport_actor("ranger", center + Vector2(350.0, 100.0))
+		fixture.advance_to(arena, 30)
 		var state: Dictionary = arena.hazard_states[0]
-		arena.player_position = state.origin
+		var hit_position: Vector2 = state.origin + Vector2(0.0, state.length * 0.5) if hazard_id == "moving_fireline" else state.origin
+		arena.teleport_actor("ranger", hit_position)
 		arena._update_hazards_tick()
 		var after_hit: float = arena.player_health
 		arena._update_hazards_tick()
 		_expect(after_hit < 100.0 and is_equal_approx(arena.player_health, after_hit), "%s did not deal exactly one hit per cycle" % hazard_id, failures)
-		arena.sim_tick = 120
-		arena.dodge_remaining_ticks = 1
-		arena.player_position = Vector2(-10000.0, -10000.0)
-		arena._update_hazards_tick()
-		state = arena.hazard_states[0]
-		arena.player_position = state.origin
+		arena.teleport_actor("ranger", center + Vector2(350.0, 100.0))
+		fixture.advance_to(arena, 119)
 		var before_dodge: float = arena.player_health
+		_expect(fixture.cast(arena, "dodge", 0, Vector2.UP).get("accepted", false), "%s real dodge setup failed" % hazard_id, failures)
+		state = arena.hazard_states[0]
+		hit_position = state.origin + Vector2(0.0, state.length * 0.5) if hazard_id == "moving_fireline" else state.origin
+		arena.teleport_actor("ranger", hit_position)
 		arena._update_hazards_tick()
 		_expect(is_equal_approx(arena.player_health, before_dodge), "%s ignored dodge immunity" % hazard_id, failures)
 
 
 func _test_hazard_decision_boundaries(arena: Node, failures: Array[String]) -> void:
 	for hazard_id in ["exposed_ground_zone", "moving_fireline"]:
-		_configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [hazard_id])
-		arena._spawn_wave()
-		arena.sim_tick = arena.HAZARD_WARNING_TICKS - 1
-		arena._update_hazards_tick()
-		arena.sim_tick = arena.HAZARD_WARNING_TICKS
-		arena._update_enemies_tick()
+		arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [hazard_id])
+		fixture.advance_to(arena, arena.HAZARD_WARNING_TICKS - 1)
+		fixture.drive(arena, {"enemies": true})
+		fixture.step(arena)
 		var state: Dictionary = arena.hazard_states[0]
 		_expect(int(state.cycle_tick) == arena.HAZARD_WARNING_TICKS and String(state.phase) == "active", "%s decision boundary: enemy planning retained the previous tick hazard phase" % hazard_id, failures)
-
-	_configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", ["moving_fireline"])
-	arena._spawn_wave()
-	arena.sim_tick = arena.HAZARD_WARNING_TICKS + arena.HAZARD_ACTIVE_TICKS - 1
-	arena._update_hazards_tick()
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", ["moving_fireline"])
+	fixture.advance_to(arena, arena.HAZARD_WARNING_TICKS + arena.HAZARD_ACTIVE_TICKS - 1)
 	var fireline: Dictionary = arena.hazard_states[0]
-	arena.player_position = fireline.origin + Vector2(0.0, fireline.length * 0.5)
-	arena.dodge_cooldown_ticks = 0
-	_expect(arena._automation_smoke_dodge_required(), "moving_fireline decision boundary: player logic ignored the final active tick", failures)
+	arena.teleport_actor("ranger", fireline.origin + Vector2(0.0, fireline.length * 0.5))
+	_expect(arena.smoke_input_driver.requires_dodge({"player": arena.player_combat_state.snapshot(arena.sim_tick), "hazards": arena.hazard_states.duplicate(true), "boss": {"impact_tick": arena.boss.impact_tick, "target_shape": arena.boss.target_shape.duplicate(true)} if arena.boss != null else {}}), "moving_fireline decision boundary: player logic ignored the final active tick", failures)
 
 
 func _test_elite_rules(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "rectangle_arena", "hunt_elite", ["melee_pursuer", "fan_ranged"], "", [], ["periodic_barrier"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", ["melee_pursuer", "fan_ranged"], "", [], ["periodic_barrier"])
 	var elite = arena.enemies[0]
-	arena.player_position = elite.position
-	arena.sim_tick = 0
+	arena.teleport_actor("ranger", elite.position)
 	arena._update_room_rules_tick()
 	var health_before: float = elite.health
-	arena.attack_cooldown_ticks = 0
 	_cast_and_resolve_arrow(arena)
 	_expect(arena.elite_barrier_active and is_equal_approx(elite.health, health_before), "periodic barrier did not truly block damage", failures)
-	arena.sim_tick = 20
+	fixture.advance_to(arena, 20)
 	arena._update_room_rules_tick()
-	arena.attack_cooldown_ticks = 0
 	_cast_and_resolve_arrow(arena)
 	_expect(not arena.elite_barrier_active and elite.health < health_before, "periodic barrier did not open at fixed tick", failures)
 
-	_configure_room(arena, "ring", "hunt_elite", ["melee_pursuer"], "", [], ["summon_reinforcements"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "ring", "hunt_elite", ["melee_pursuer"], "", [], ["summon_reinforcements"])
 	elite = arena.enemies[0]
 	elite.health = elite.maximum_health * 0.5
-	arena._update_enemies_tick()
+	fixture.drive(arena, {"enemies": true})
+	fixture.step(arena)
 	var count_after_summon: int = arena.enemies.size()
-	arena._update_enemies_tick()
+	fixture.step(arena)
 	_expect(arena.reinforcements_summoned and count_after_summon == 2 and arena.enemies.size() == 2 and arena.enemies[1].entity_id == 2
 		and arena.enemies[1].health == 720.0 and arena.enemies[1].maximum_health == 720.0,
 		"reinforcement rule did not summon exactly once with stable ID and normal melee durability", failures)
 
-	_configure_room(arena, "ring", "hunt_elite", ["melee_pursuer"], "", [], ["summon_reinforcements"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "ring", "hunt_elite", ["melee_pursuer"], "", [], ["summon_reinforcements"])
 	elite = arena.enemies[0]
-	arena.player_position = elite.position
+	arena.teleport_actor("ranger", elite.position)
 	elite.health = 1.0
-	arena.attack_cooldown_ticks = 0
 	_cast_and_resolve_arrow(arena)
 	arena._check_battle_end()
 	_expect(arena.reinforcements_summoned and arena.enemies.size() == 1 and arena.enemies[0].entity_id == 2, "lethal threshold crossing skipped the reinforcement", failures)
 	_expect(not arena.battle_over, "hunt elite ended before summoned reinforcement was cleared", failures)
-	arena.enemies.clear()
+	_defeat_target(arena, arena.enemies[0], failures)
 	arena._check_battle_end()
 	_expect(arena.battle_over and arena.battle_victory, "hunt elite did not finish after summoned reinforcement was cleared", failures)
 
 
 func _test_room_hash_sensitivity(arena: Node, failures: Array[String]) -> void:
-	_configure_room(arena, "corridor", "timed_break", ["melee_pursuer"], "", ["moving_fireline"], ["periodic_barrier"])
-	arena._spawn_wave()
+	arena = _configure_room(arena, "corridor", "timed_break", ["melee_pursuer"], "", ["moving_fireline"], ["periodic_barrier"])
 	var first: String = arena._semantic_state_hash("test")
 	arena.layout_id = "ring"
 	var layout_hash: String = arena._semantic_state_hash("test")
@@ -790,20 +751,24 @@ func _test_room_hash_sensitivity(arena: Node, failures: Array[String]) -> void:
 	arena.elite_barrier_active = not arena.elite_barrier_active
 	arena.timed_bonus_available = false
 	var objective_hash: String = arena._semantic_state_hash("test")
-	arena.room_reward_snapshot["bonus_lost"] = true
+	_defeat_target(arena, arena.enemies[0], failures)
 	var reward_hash: String = arena._semantic_state_hash("test")
+	_expect(arena.room_reward_snapshot.bonus_lost, "room hash: real timed victory did not commit its lost bonus", failures)
+	var settled: Dictionary = SnapshotBuilder.build_runtime_state(arena, "test")
+	var without_bonus_loss: Dictionary = settled.duplicate(true)
+	without_bonus_loss.room_reward_snapshot.bonus_lost = false
+	_expect(StateCodec.sha256_canonical(settled) == reward_hash and StateCodec.sha256_canonical(without_bonus_loss) != reward_hash,
+		"room hash: settled reward state alone lost hash sensitivity", failures)
 	_expect(not first.is_empty() and first != layout_hash and first != hazard_hash and first != room_hash and first != drop_hash and first != elite_hash and first != objective_hash and objective_hash != reward_hash, "walkable layout or authoritative room state lost hash sensitivity", failures)
 
 
 func _test_early_durability_and_first_hunt(arena: Node, failures: Array[String]) -> void:
 	for kind_id: String in ["melee_pursuer", "charging_raider", "fan_ranged"]:
-		_configure_room(arena, "rectangle_arena", "clear", [kind_id])
-		arena._spawn_wave()
+		arena = _configure_room(arena, "rectangle_arena", "clear", [kind_id])
 		var normal_health: float = arena.enemies[0].health
 		_expect(normal_health == float(arena.EARLY_NORMAL_HEALTH_BY_KIND[kind_id]),
 			"early durability: normal %s did not use its role's base health" % kind_id, failures)
-		_configure_room(arena, "rectangle_arena", "hunt_elite", [kind_id])
-		arena._spawn_wave()
+		arena = _configure_room(arena, "rectangle_arena", "hunt_elite", [kind_id])
 		_expect(arena.enemies[0].health >= 1000.0 and arena.enemies[0].health > normal_health * 2.0,
 			"early durability: elite %s lost its distinct health pool" % kind_id, failures)
 	var state = ApplicationStateScript.new()
@@ -820,8 +785,9 @@ func _test_early_durability_and_first_hunt(arena: Node, failures: Array[String])
 	arena.framework_resolved_build = state.resolved_build_snapshot()
 	arena.framework_active_build = state.profile.active_build
 	arena.set_process(false)
-	var stationary := _first_hunt_input_run(arena, built.plan.rooms, false, failures)
-	var reactive := _first_hunt_input_run(arena, built.plan.rooms, true, failures)
+	var initial_build: Dictionary = state.resolved_build_snapshot()
+	var stationary := _first_hunt_input_run(arena, built.plan.rooms, false, failures, initial_build)
+	var reactive := _first_hunt_input_run(session.arena, built.plan.rooms, true, failures, initial_build)
 	for metrics: Dictionary in [stationary, reactive]:
 		_expect(float(metrics.seconds) >= 15.0 and float(metrics.seconds) <= 25.0,
 			"first hunt runtime: real two-room input run escaped 15–25 seconds: %s" % str(metrics), failures)
@@ -834,13 +800,10 @@ func _test_early_durability_and_first_hunt(arena: Node, failures: Array[String])
 		"first hunt runtime: real movement/dodge input gave no damage reduction", failures)
 
 
-func _first_hunt_input_run(arena: Node, rooms: Array, react: bool, failures: Array[String]) -> Dictionary:
+func _first_hunt_input_run(arena: Node, rooms: Array, react: bool, failures: Array[String], resolved: Dictionary) -> Dictionary:
 	var metrics := {"seconds": 0.0, "damage": 0.0, "warnings": 0, "dodges": 0, "move_ticks": 0, "defeated": 0}
 	for room: Dictionary in rooms:
-		arena.framework_room = room.duplicate(true)
-		arena.framework_room["room_index"] = int(room.index)
-		arena.framework_room["room_count"] = rooms.size()
-		arena._enter_arena()
+		arena = _mount_room(room, resolved, true)
 		_expect(arena.enemies.size() == 3 and arena.enemies[0].health == 720.0
 			and arena.enemies[0].entity_id == 1 and arena.enemies[2].entity_id == 3,
 			"first hunt runtime: roster did not spawn three durable entities", failures)
@@ -862,10 +825,10 @@ func _first_hunt_input_run(arena: Node, rooms: Array, react: bool, failures: Arr
 					react_now = true
 			if react and react_now:
 				_early_key_input(KEY_A, true)
-				if arena.dodge_cooldown_ticks == 0:
+				if fixture.player(arena).dodge_cooldown_ticks == 0:
 					_early_dodge_input(true)
 					_early_dodge_input(false)
-			elif arena.dodge_remaining_ticks == 0:
+			elif fixture.player(arena).dodge_remaining_ticks == 0:
 				_early_key_input(KEY_A, false)
 			var position_before: Vector2 = arena.player_position
 			arena._simulate_tick()
@@ -918,23 +881,13 @@ func _early_dodge_input(pressed: bool) -> void:
 	Input.flush_buffered_events()
 
 
-func _configure_room(arena: Node, layout: String, objective: String, enemy_ids: Array, boss_id: String = "", hazards: Array = [], elite_rules: Array = [], drop_tags: Array = ["equipment_general"]) -> void:
-	arena.embedded_session = true
-	arena.framework_room = {
-		"room_id": "test.%s.%s" % [layout, objective],
-		"layout_id": layout,
-		"layout": layout,
-		"objective_id": objective,
-		"objective": objective,
-		"hazard_ids": hazards.duplicate(),
-		"enemy_ids": enemy_ids.duplicate(),
-		"elite_rule_ids": elite_rules.duplicate(),
-		"boss_id": boss_id,
-		"drop_tags": drop_tags.duplicate(),
+func _configure_room(_arena: Node, layout: String, objective: String, enemy_ids: Array, boss_id: String = "", hazards: Array = [], elite_rules: Array = [], drop_tags: Array = ["equipment_general"]) -> Node:
+	var room := {
+		"room_id": "test.%s.%s" % [layout, objective], "layout_id": layout,
+		"objective_id": objective, "hazard_ids": hazards.duplicate(), "enemy_ids": enemy_ids.duplicate(),
+		"elite_rule_ids": elite_rules.duplicate(), "boss_id": boss_id, "drop_tags": drop_tags.duplicate(),
 	}
-	arena.battle_over = false
-	arena.battle_victory = false
-	arena.sim_tick = 0
+	return _mount_room(room)
 
 
 func _enemy_of_kind(arena: Node, kind_id: String) -> Variant:
@@ -945,25 +898,46 @@ func _enemy_of_kind(arena: Node, kind_id: String) -> Variant:
 
 
 func _cast_and_resolve_arrow(arena: Node) -> bool:
-	## Tests drive the same fixed-tick action authority as live play: request at T,
-	## emit the start event at T, release at T+windup, then advance the real
-	## projectile until swept contact or frozen range resolves it.
-	arena._process_player_action_events(arena.player_action_timeline.advance(arena.sim_tick))
-	var accepted: bool = arena._cast_skill_one()
-	arena._process_player_action_events(arena.player_action_timeline.advance(arena.sim_tick))
-	if not accepted:
+	fixture.wait_ready(arena)
+	var target = arena._preferred_skill_one_target()
+	if target == null:
 		return false
-	arena.sim_tick += arena.PlayerActionTimelineScript.WINDUP_TICKS
-	arena._process_player_action_events(arena.player_action_timeline.advance(arena.sim_tick))
-	var guard := 0
-	while not arena.projectiles.is_empty() and guard < 120:
-		arena._advance_piercing_projectiles_tick()
-		guard += 1
-		if not arena.projectiles.is_empty():
-			arena.sim_tick += 1
+	var receipt := fixture.cast(arena, "piercing_arrow", target.entity_id)
+	if not bool(receipt.get("accepted", false)):
+		return false
+	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
+	fixture.resolve_projectiles(arena)
 	return true
 
 
 func _expect(condition: bool, message: String, failures: Array[String]) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _mount_room(room: Dictionary, resolved: Dictionary = {}, live_input: bool = false) -> Node:
+	if not session.is_empty():
+		fixture.free_session(session)
+	session = fixture.mount(room, resolved)
+	fixture.drive(session.arena, {"input": live_input, "enemies": live_input})
+	return session.arena
+
+
+func _default_room() -> Node:
+	var room: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://content/rooms/combat/test_fixture.json"))
+	return _mount_room(room)
+
+
+func _defeat_target(arena: Node, target, failures: Array[String]) -> void:
+	# A low-health enemy initial state is settled by the real arrow contact,
+	# which also increments CS totals and commits room completion normally.
+	target.health = 1.0
+	var start: Vector2 = arena.player_position
+	var position: Vector2 = arena._clamp_to_arena(start + Vector2(60.0, 0.0), 16.0)
+	arena.teleport_actor("enemy/%d" % target.entity_id, position)
+	fixture.wait_ready(arena)
+	var receipt := fixture.cast(arena, "piercing_arrow", target.entity_id)
+	_expect(bool(receipt.get("accepted", false)), "room objective: real kill setup was rejected", failures)
+	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
+	fixture.resolve_projectiles(arena)
+	_expect(target not in arena.enemies and arena.defeated > 0, "room objective: target did not die through CS contact", failures)

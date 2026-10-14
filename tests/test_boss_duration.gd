@@ -11,9 +11,9 @@ extends SceneTree
 ##    preset = the calibration_exponential fixture: p=0.61, T=34, d=150, v=620,
 ##    turn=0.18, damage=160, breeding_split + pack_hunt_mark);
 ##  * a real Main instance is configured exactly like the production
-##    LegacyArenaAdapter (embedded_session, framework_room with boss
+##    CombatRoomRuntime (embedded_session, framework_room with boss
 ##    threshold_colossus, framework_resolved_build, automation_smoke=false) and
-##    entered via _enter_arena(), then advanced one authoritative
+##    entered via start_room(), then advanced one authoritative
 ##    _simulate_tick() at a time — ticks are never skipped or rewound;
 ##  * the player is driven only through the public request flags that the real
 ##    HUD / keyboard handlers write (attack_requested = Skill 1 button / SPACE,
@@ -23,6 +23,7 @@ extends SceneTree
 const MainScript := preload("res://src/game/main.gd")
 const EarlyRegistryScript := preload("res://src/content/early_item_registry.gd")
 const ResolverScript := preload("res://src/systems/build_resolver.gd")
+const SkillRules := preload("res://src/systems/ranger_skill_rules.gd")
 
 const ACCEPTANCE_MIN_SECONDS: float = 45.0
 const ACCEPTANCE_MAX_SECONDS: float = 120.0
@@ -48,7 +49,7 @@ func _run() -> void:
 		return
 
 	var arena = MainScript.new()
-	# Same embedded configuration order as the production LegacyArenaAdapter.
+	# Same embedded configuration order as the production CombatRoomRuntime.
 	arena.embedded_session = true
 	arena.test_session = true
 	arena.automation_smoke = false
@@ -69,26 +70,28 @@ func _run() -> void:
 	root.add_child(arena)
 	await process_frame
 
-	arena._enter_arena()
+	arena.start_room()
 	if not arena.in_arena:
 		_expect(false, "arena deployment was blocked: %s" % String(arena.last_save_message))
 		_finish(arena)
 		return
 	_expect(arena.boss != null and arena.boss.kind_id == "threshold_colossus" and arena.boss.entity_id == 1,
 		"embedded room did not spawn the authoritative threshold colossus")
-	_expect(is_equal_approx(arena.player_maximum_health, 112.0),
+	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	_expect(is_equal_approx(float(player.player_maximum_health), 112.0),
 		"qualified build did not grant the 112 vitality pool")
 
 	# Deterministic qualified-player placement: stand at a fixed in-range point
 	# before the first tick. All motion afterwards flows through real tick
 	# commands (dodge displacement) — this single write is deployment setup.
-	arena.player_position = arena.boss.position + Vector2(-RANGE_HOLD_DISTANCE, 0.0)
+	arena.teleport_actor("ranger", arena.boss.position + Vector2(-RANGE_HOLD_DISTANCE, 0.0))
 
 	var tick_cap: int = int(ACCEPTANCE_MAX_SECONDS) * int(arena.SIM_TICKS_PER_SECOND)
 	var transition_tick: int = -1
 	var phase_two_tick: int = -1
 	var damage_events: Array[String] = []
 	while not arena.battle_over and arena.sim_tick < tick_cap:
+		player = arena.player_combat_state.snapshot(arena.sim_tick)
 		var pressed_action := ""
 		if arena.boss != null and arena.boss.health > 0.0:
 			if transition_tick < 0 and arena.boss.phase_state == "transition":
@@ -99,22 +102,23 @@ func _run() -> void:
 			# player reacting to the fixed windup telegraph (SHIFT handler).
 			var boss_impact_next: bool = int(arena.boss.impact_tick) == int(arena.sim_tick) + 1
 			var fireline_near_next: bool = _moving_fireline_near_next_tick(arena)
-			if (boss_impact_next or fireline_near_next) and arena.dodge_cooldown_ticks == 0:
-				pressed_action = _press_vertical_dodge(arena.player_position, arena.boss.position)
-				arena.dodge_requested = true
+			if (boss_impact_next or fireline_near_next) and int(player.dodge_cooldown_ticks) == 0:
+				pressed_action = _press_vertical_dodge(player.player_position, arena.boss.position)
+				arena.command_source.dodge_requested = true
 		# Hold the Skill 1 request every tick; the fixed 13-tick cooldown in
-		# _cast_skill_one() is the only gate, so this casts exactly on cooldown.
-		arena.attack_requested = true
-		var health_before: float = float(arena.player_health)
+		# PlayerCombatRules is the gate, so this casts exactly on cooldown.
+		arena.command_source.attack_requested = true
+		var health_before: float = float(player.player_health)
 		arena._simulate_tick()
+		player = arena.player_combat_state.snapshot(arena.sim_tick)
 		if not pressed_action.is_empty():
 			Input.action_release(pressed_action)
-		if float(arena.player_health) < health_before:
+		if float(player.player_health) < health_before:
 			damage_events.append("tick=%d amount=%.1f boss=%s/%s dodge_cd=%d" % [
-				arena.sim_tick, health_before - float(arena.player_health),
+				arena.sim_tick, health_before - float(player.player_health),
 				String(arena.boss.action_id) if arena.boss != null else "none",
 				String(arena.boss.action_state) if arena.boss != null else "none",
-				arena.dodge_cooldown_ticks,
+				player.dodge_cooldown_ticks,
 			])
 
 	var elapsed: float = float(arena.sim_tick) / float(arena.SIM_TICKS_PER_SECOND)
@@ -127,13 +131,13 @@ func _run() -> void:
 		"boss never reached phase 2 before death (phase_id=%s core_open=%s)" % [arena.boss.phase_id if arena.boss != null else "<null>", arena.boss.core_open if arena.boss != null else false])
 	_expect(arena.boss_damage.compare(arena.boss_maximum) >= 0,
 		"accumulated damage %s did not reach the 1e12 threshold" % arena.boss_damage.to_short_string(6))
-	_expect(arena.player_health > 0.0,
-		"qualified driver died before the kill (health=%.1f)" % arena.player_health)
+	_expect(float(player.player_health) > 0.0,
+		"qualified driver died before the kill (health=%.1f)" % player.player_health)
 	_expect(arena.shots >= 100, "qualified driver did not execute a sustained real Skill 1 rotation")
 	print("BOSSDUR elapsed=%.3f ticks=%d casts=%d damage=%s health=%.1f distance=%.1f position=%s transition_tick=%d phase_two_tick=%d" % [
 		elapsed, arena.sim_tick, arena.shots, arena.boss_damage.to_short_string(6),
-		arena.player_health, arena.player_position.distance_to(arena.boss.position) if arena.boss != null else -1.0,
-		str(arena.player_position), transition_tick, phase_two_tick,
+		player.player_health, (player.player_position as Vector2).distance_to(arena.boss.position) if arena.boss != null else -1.0,
+		str(player.player_position), transition_tick, phase_two_tick,
 	])
 	if not arena.battle_victory:
 		print("BOSSDUR_DAMAGE %s" % "; ".join(damage_events))
@@ -148,8 +152,9 @@ func _moving_fireline_near_next_tick(arena: Node) -> bool:
 	var rect: Rect2 = arena._arena_rect()
 	var progress := float(cycle_tick) / float(int(arena.HAZARD_CYCLE_TICKS) - 1)
 	var line_x := lerpf(rect.position.x, rect.end.x, progress)
-	var dodge_step := float(arena.DODGE_SPEED) * float(arena.SIM_STEP_SECONDS)
-	return absf(float(arena.player_position.x) - line_x) <= 17.0 + dodge_step
+	var dodge_step := SkillRules.DODGE_SPEED * float(arena.SIM_STEP_SECONDS)
+	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	return absf(float((player.player_position as Vector2).x) - line_x) <= 17.0 + dodge_step
 
 
 func _press_vertical_dodge(from: Vector2, anchor: Vector2) -> String:

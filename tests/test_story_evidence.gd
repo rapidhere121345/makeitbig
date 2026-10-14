@@ -1,8 +1,10 @@
 extends SceneTree
 
 const State = preload("res://src/game/application_state.gd")
-const Adapter = preload("res://src/game/legacy_arena_adapter.gd")
+const CombatRoomRuntimeScript = preload("res://src/game/combat_room_runtime.gd")
 const CombatFixture = preload("res://tests/helpers/talent_runtime_fixture.gd")
+const SkillRules = preload("res://src/systems/ranger_skill_rules.gd")
+const Encounter = preload("res://src/game/encounter_director.gd")
 var failures: Array[String] = []
 
 func _initialize() -> void:
@@ -70,31 +72,43 @@ func _test_actual_projectile_evidence(outcome: String) -> void:
 	_expect(state.prepare_contract({"contract_id":"mainline_01_first_hunt","mode":"Manual","seed":52969,"room_count":1,"resolved_build":state.resolved_build_snapshot()}).ok, "real evidence contract prepare")
 	_expect(state.begin_session().ok, "real evidence session begin")
 	var frozen: Dictionary = state.active_session.resolved_build
-	var adapter := Adapter.new()
-	root.add_child(adapter)
-	var started: Dictionary = adapter.start_session({
+	var runtime := CombatRoomRuntimeScript.new()
+	root.add_child(runtime)
+	var room_definition: Dictionary = {"room_id":"story.evidence","layout_id":"rectangle_arena","objective_id":"clear","enemy_ids":["melee_pursuer"],"hazard_ids":[],"elite_rule_ids":[],"boss_id":"","drop_tags":[]}
+	if outcome == "blocked":
+		room_definition.objective_id = "hunt_elite"
+		room_definition.elite_rule_ids = ["periodic_barrier"]
+	var started: Dictionary = runtime.start_session({
 		"contract_id":"mainline_01_first_hunt","mode":"Manual","seed":52969,"presentation_enabled":false,
-		"room":{"room_id":"story.evidence","layout_id":"rectangle_arena","objective_id":"clear","enemy_ids":["melee_pursuer"],"hazard_ids":[],"elite_rule_ids":[],"boss_id":"","drop_tags":[]},
+		"room":room_definition,
 		"framework_context":{"active_build":state.profile.active_build,"resolved_build":frozen},
 	})
 	_expect(started.ok, "actual evidence arena launch")
-	var arena = adapter.get("_legacy")
+	var arena = runtime.get("room_instance")
 	var fixture := CombatFixture.new()
 	var target = fixture.configure_target(arena)
+	if outcome == "blocked":
+		# Cast in the open interval and release one tick before the next real
+		# barrier window. Projectile travel starts on the following tick.
+		fixture.advance_to(arena, Encounter.ELITE_BARRIER_PERIOD_TICKS - SkillRules.PIERCING_ARROW_WINDUP_TICKS - 2)
+		_expect(not arena.encounter_director.is_target_blocked(target), "blocked fixture did not cast in the barrier's open interval")
 	_expect(fixture.release_arrow(arena, target), "actual evidence arrow release")
 	if outcome == "miss": target.position += Vector2(0, 100)
 	if outcome == "blocked":
-		arena.elite_entity_id = target.entity_id
-		arena.elite_barrier_active = true
+		_expect(arena.sim_tick == Encounter.ELITE_BARRIER_PERIOD_TICKS - 1 and not arena.encounter_director.is_target_blocked(target), "blocked fixture did not release before the barrier transition")
 	fixture.advance_projectiles(arena)
-	var room: Dictionary = adapter._build_result("defeat")
+	if outcome == "blocked":
+		var contact: Dictionary = arena.combat_event_stream.latest("attack_resolved")
+		_expect(contact.get("outcome", "") == "blocked" and contact.get("barrier_id", "") == "periodic_barrier" and int(contact.get("tick", -1)) >= Encounter.ELITE_BARRIER_PERIOD_TICKS and arena.encounter_director.is_target_blocked(target), "actual projectile contact did not meet the live periodic barrier")
+		print("STORY_BARRIER_TRACE release_tick=", Encounter.ELITE_BARRIER_PERIOD_TICKS - 1, " contact_tick=", contact.get("tick", -1), " outcome=", contact.get("outcome", ""))
+	var room: Dictionary = runtime.build_result("defeat")
 	_expect(int(room.casts) == 1, "actual projectile was not cast")
 	_expect(int(room.arrow_hits) == (1 if outcome in ["damage", "wrong_fingerprint"] else 0), "miss/barrier fabricated a hit")
 	if outcome == "wrong_fingerprint": room.build_fingerprint = "different-build"
 	state.complete_session({"outcome":"defeat","room_results":[room],"rewards":{}})
 	_expect(_has_stage(state, 6) == (outcome == "damage"), "story accepted invalid evidence or lost actual contact")
 	_expect(state.profile.character.experience == 60, "observing growth on defeat granted completion XP")
-	adapter.free()
+	runtime.free()
 
 func _expect(ok: bool, message: String) -> void:
 	if not ok: failures.append(message)

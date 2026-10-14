@@ -54,7 +54,7 @@ func _test_continuation_uses_real_input(failures: Array[String]) -> void:
 	state.observe_attack_event(press, false)
 	var auto_arena = MainScript.new()
 	auto_arena.selected_mode = "Auto"
-	auto_arena.manual_combat_input = state
+	auto_arena.input_adapter.manual_combat_input = state
 	var before := state.snapshot()
 	_expect(auto_arena.take_continuous_manual_input() == null and state.snapshot() == before,
 		"continuation: Auto read or transferred manual sources", failures)
@@ -176,24 +176,24 @@ func _test_dodge_routes_by_press_origin(failures: Array[String]) -> void:
 	arena.selected_mode = "Manual"
 	var hud := FakeHud.new()
 	hud.pointer_over_interface = true
-	arena.hud_panel = hud
+	arena.presentation.hud = hud
 
 	var keyboard_press := _dodge_key_event(true)
 	_expect(keyboard_press != null and keyboard_press.is_action_pressed("dodge"), "dodge route fixture: keyboard binding is missing", failures)
 	arena._unhandled_input(keyboard_press)
-	_expect(_dodge_command_count(arena._manual_commands()) == 1, "dodge route: HUD hover swallowed a keyboard dodge", failures)
+	_expect(_dodge_command_count(arena.input_adapter.collect_commands(arena.gameplay_snapshot())) == 1, "dodge route: HUD hover swallowed a keyboard dodge", failures)
 
 	var hud_mouse_press := _dodge_mouse_event(true)
 	_expect(hud_mouse_press != null and hud_mouse_press.is_action_pressed("dodge"), "dodge route fixture: mouse binding is missing", failures)
 	arena._unhandled_input(hud_mouse_press)
-	_expect(_dodge_command_count(arena._manual_commands()) == 0, "dodge route: HUD-origin RMB queued a dodge", failures)
+	_expect(_dodge_command_count(arena.input_adapter.collect_commands(arena.gameplay_snapshot())) == 0, "dodge route: HUD-origin RMB queued a dodge", failures)
 
 	hud.pointer_over_interface = false
 	var world_mouse_press := _dodge_mouse_event(true)
 	arena._unhandled_input(world_mouse_press)
 	arena._unhandled_input(world_mouse_press)
-	_expect(_dodge_command_count(arena._manual_commands()) == 1, "dodge route: one RMB down queued more than one dodge command", failures)
-	arena.hud_panel = null
+	_expect(_dodge_command_count(arena.input_adapter.collect_commands(arena.gameplay_snapshot())) == 1, "dodge route: one RMB down queued more than one dodge command", failures)
+	arena.presentation.hud = null
 	hud.free()
 	arena.free()
 

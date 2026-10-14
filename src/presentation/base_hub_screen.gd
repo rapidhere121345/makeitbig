@@ -13,7 +13,9 @@ signal title_requested
 signal feature_requested(feature_id: String)
 
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
-const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
+const TownPresenterScript = preload("res://src/presentation/town_presenter.gd")
+const TownRuntimeScript = preload("res://src/runtime/world/town_runtime.gd")
+const TownControllerScript = preload("res://src/runtime/world/town_controller.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
 const TALK_RADIUS := 36.0
@@ -62,14 +64,7 @@ const DETAIL_TITLE_TEXT := "镇中近况"
 const DETAIL_STATUS_EMPTY_TEXT := "本屏暂无新的状态提示。"
 ## Legacy design-space anchors of the pre-hamlet hub, kept for the hub entries
 ## whose placement the layout has not published yet.
-const LEGACY_FEATURE_POSITIONS := {
-	"contract": Vector2(640.0, 205.0),
-	"loadout": Vector2(392.0, 274.0),
-	"forge": Vector2(888.0, 274.0),
-	"training": Vector2(875.0, 491.0),
-	"proxy": Vector2(405.0, 483.0),
-	"immortality": Vector2(640.0, 566.0),
-}
+
 ## Short player-facing names of the authored mainline nodes. Shared by the next
 ## objective line and the contract marker so the two can never disagree.
 const _SHORT_NODE_LABELS := {
@@ -130,17 +125,18 @@ var _prompt_rect := Rect2()
 var _details_expanded := false
 var _progress_label: Label
 var _design_canvas: Control
-var _view: HamletConceptViewScript
+var _view: TownPresenterScript
+var _town_controller: TownControllerScript
+var _town: TownRuntimeScript
+var town_load_report: Dictionary = {}
 var _nav_states: Array = []
 var _unlock_reasons: Dictionary = {}
 var _dialogue: TownDialogueScript
-var _resident_positions: Dictionary = {}
 var _resident_conversations: Dictionary = {}
 var _resident_markers: Dictionary = {}
 var _detail_objective_label: Label
 var _detail_story_label: Label
 var _header: PanelContainer
-var _destination_id := "contract"
 var _landmarks: Dictionary = {}
 var _landmark_styles: Dictionary = {}
 
@@ -301,39 +297,39 @@ func _derive_unlock_reasons() -> Dictionary:
 
 
 func move_hero(direction: Vector2, delta: float) -> void:
-	if not _built or delta <= 0.0 or is_dialogue_open():
+	if not _built or not bool(town_load_report.get("ok", false)) or delta <= 0.0 or is_dialogue_open() or _details_expanded:
 		return
-	var before := _view.hero_world_position()
-	_view.move_hero(direction.limit_length(1.0), delta)
-	if not before.is_equal_approx(_view.hero_world_position()): _update_nearby_feature()
+	_town_controller.advance_frame(direction, delta)
 
 
 func travel_snapshot() -> Dictionary:
-	return _view.travel_snapshot() if _view != null else {}
+	return _town.travel_snapshot() if _town != null and _town.is_ready() else {}
 
 
 func restore_travel(snapshot: Dictionary) -> void:
-	_view.restore_travel(snapshot)
-	_destination_id = String(snapshot.get("destination", "contract"))
-	_update_nearby_feature()
+	if _town != null:
+		_town.restore_travel(snapshot)
 
 
 func set_hero_position(position: Vector2) -> void:
-	_view.teleport_hero(Vector2(position) * DESIGN_TO_WORLD)
-	_update_nearby_feature()
+	_town.place_hero(position * DESIGN_TO_WORLD)
 
 
 func get_hero_position() -> Vector2:
-	return _view.hero_world_position() / DESIGN_TO_WORLD
+	return _town.hero_world_position() / DESIGN_TO_WORLD
 
 
 func get_nearby_feature_id() -> String:
-	return _view.nearby_feature_id()
+	return _town.nearby_feature_id()
+
+
+func get_town_runtime():
+	return _town
 
 
 func activate_nearby_feature() -> bool:
 	if is_dialogue_open(): return false
-	var feature_id := _view.nearby_feature_id()
+	var feature_id := _town.nearby_feature_id()
 	if feature_id.is_empty():
 		return false
 	return navigation_card_activated(feature_id)
@@ -355,16 +351,16 @@ func dialogue_report() -> Dictionary:
 
 func nearby_resident_id() -> String:
 	if _view == null or is_dialogue_open(): return ""
-	var feet := _view.hero_world_position()
+	var feet := _town.hero_world_position()
 	var facility_gap := INF
 	var best_distance := INF
 	var closest := ""
-	var feature := _view.entry_for(_view.nearby_feature_id())
+	var feature := _town.entry_for(_town.nearby_feature_id())
 	if not feature.is_empty():
 		facility_gap = feet.distance_to(feature.get("feet", Vector2(INF, INF)))
 	for id: String in _resident_conversations:
-		if not _resident_positions.has(id): continue
-		var candidate := feet.distance_to(_resident_positions[id])
+		if not _town.resident_positions().has(id): continue
+		var candidate := feet.distance_to(_town.resident_positions()[id])
 		## Strict nearest inside TALK_RADIUS: later/farther residents never
 		## overwrite an earlier nearer one, whatever the iteration order.
 		if candidate > TALK_RADIUS or candidate >= best_distance: continue
@@ -377,7 +373,7 @@ func nearby_resident_id() -> String:
 
 func talk_to_resident(resident_id: String) -> bool:
 	if _dialogue == null or is_dialogue_open() or not _resident_conversations.has(resident_id): return false
-	if not _resident_positions.has(resident_id) or _view.hero_world_position().distance_to(_resident_positions[resident_id]) > TALK_RADIUS: return false
+	if not _town.resident_positions().has(resident_id) or _town.hero_world_position().distance_to(_town.resident_positions()[resident_id]) > TALK_RADIUS: return false
 	var opened := _dialogue.open_conversation(_resident_conversations[resident_id])
 	if opened:
 		_nearby_panel.hide()
@@ -389,8 +385,8 @@ func talk_to_resident(resident_id: String) -> bool:
 
 func _click_resident(point: Vector2) -> bool:
 	for id: String in _resident_conversations:
-		if not _resident_positions.has(id): continue
-		var feet: Vector2 = _resident_positions[id]
+		if not _town.resident_positions().has(id): continue
+		var feet: Vector2 = _town.resident_positions()[id]
 		if Rect2(feet - Vector2(14, 34), Vector2(28, 40)).has_point(point):
 			return talk_to_resident(id)
 	return false
@@ -405,13 +401,6 @@ func _build_town_dialogue() -> void:
 
 func _refresh_town_conversations() -> void:
 	if _view == null or _dialogue == null: return
-	_resident_positions.clear()
-	for resident: Dictionary in _view.life_report().get("residents", []):
-		_resident_positions[String(resident.id)] = resident.feet
-	var layout_residents: Dictionary = _view.npc_placement_feet()
-	for id: String in layout_residents:
-		if not _resident_positions.has(id):
-			_resident_positions[id] = layout_residents[id]
 	_resident_conversations.clear()
 	for entry: Dictionary in _story_snapshot.get("available_conversations", []):
 		var id := String(entry.get("npc", ""))
@@ -443,8 +432,8 @@ func _update_resident_markers() -> void:
 	for id: String in _resident_markers:
 		var marker: Label = _resident_markers[id]
 		marker.visible = false
-		if _details_expanded or is_dialogue_open() or not _resident_positions.has(id) or not _resident_conversations.has(id): continue
-		var global_point := _view.design_point_for_world(_resident_positions[id] - Vector2(0, 38), _design_canvas.position, _design_canvas.scale)
+		if _details_expanded or is_dialogue_open() or not _town.resident_positions().has(id) or not _resident_conversations.has(id): continue
+		var global_point := _view.design_point_for_world(_town.resident_positions()[id] - Vector2(0, 38), _design_canvas.position, _design_canvas.scale)
 		var point := _design_canvas.get_global_transform_with_canvas().affine_inverse() * global_point
 		marker.position = (point - Vector2(17, 28)).floor()
 		marker.size = Vector2(34, 28)
@@ -459,7 +448,7 @@ func click_at_design_point(point: Vector2) -> bool:
 		return false
 	var world_point := _view.world_point_at_design(point, _design_canvas.position, _design_canvas.scale)
 	if _click_resident(world_point): return true
-	var feature_id := _view.hit_test(world_point)
+	var feature_id := _hit_feature(world_point)
 	if feature_id.is_empty():
 		return false
 	return navigation_card_activated(feature_id)
@@ -472,7 +461,7 @@ func click_at_world_point(world_point: Vector2) -> bool:
 	if _view == null:
 		return false
 	if _click_resident(world_point): return true
-	var feature_id := _view.hit_test(world_point)
+	var feature_id := _hit_feature(world_point)
 	if feature_id.is_empty():
 		return false
 	return navigation_card_activated(feature_id)
@@ -501,7 +490,7 @@ func get_next_objective_text() -> String:
 	return _next_objective_text()
 
 
-func get_hub_view() -> HamletConceptViewScript:
+func get_hub_view() -> TownPresenterScript:
 	## Test and main-thread access to the live renderer without going through UI.
 	return _view
 
@@ -513,7 +502,7 @@ func get_world_feature_position(feature_id: String) -> Vector2:
 	## back into it here.
 	var entry := _feature_entry(feature_id)
 	if entry.is_empty():
-		return LEGACY_FEATURE_POSITIONS.get(feature_id, Vector2.ZERO) as Vector2
+		return Vector2.ZERO
 	return Vector2(entry.get("feet", Vector2.ZERO)) * float(int(1.0 / DESIGN_TO_WORLD))
 
 
@@ -542,11 +531,30 @@ func _build_ui() -> void:
 
 	## The world viewport is the one place the hamlet pair is consumed: 640x360
 	## logical pixels scaled 2x with nearest scaling, exactly like the preview.
-	_view = HamletConceptViewScript.new()
-	_view.name = "HamletConceptView"
+	_view = TownPresenterScript.new()
+	_view.name = "TownPresenter"
 	add_child(_view)
 	move_child(_view, 1)
-	_view.load_default_assets()
+	_view.ensure_viewport()
+	_town_controller = TownControllerScript.new()
+	_town_controller.name = "TownController"
+	add_child(_town_controller)
+	_town = _town_controller.town
+	town_load_report = _view.load_character_assets()
+	if bool(town_load_report.get("ok", false)):
+		town_load_report = _town_controller.mount(_view.world_viewport)
+	if bool(town_load_report.get("ok", false)):
+		town_load_report = _view.attach(_town_controller.scene_runtime.presenter, _town.snapshot())
+	if bool(town_load_report.get("ok", false)):
+		_town.state_changed.connect(_on_town_state_changed)
+	else:
+		_town_controller.abort_loading(town_load_report)
+		var failure := Label.new()
+		failure.name = "TownLoadFailure"
+		failure.text = "镇区装载失败：%s" % String(town_load_report.get("error", "unknown"))
+		failure.tooltip_text = str(town_load_report.get("errors", []))
+		failure.position = Vector2(24, 100)
+		_design_canvas.add_child(failure)
 	_layout_design_canvas()
 
 	_build_header()
@@ -705,16 +713,16 @@ func _build_landmarks() -> void:
 		status.size = Vector2(LANDMARK_SIZE.x - 20.0, 28.0)
 		copy.add_child(status)
 		_landmarks[feature_id] = landmark
-	_view.set_destination(_destination_id)
+	_town.select_destination(_town.destination_id())
 
 
 func wayfinding_report() -> Dictionary:
-	var entry := _view.entry_for(_destination_id) if _view != null else {}
+	var entry := _town.entry_for(_town.destination_id()) if _view != null else {}
 	if entry.is_empty(): return {}
-	var delta: Vector2 = entry.feet - _view.hero_world_position()
+	var delta: Vector2 = entry.feet - _town.hero_world_position()
 	var arrived := delta.length() <= float(entry.radius)
 	var arrows := ["→", "↘", "↓", "↙", "←", "↖", "↑", "↗"]
-	return {"id": _destination_id, "arrived": arrived, "distance": delta.length(),
+	return {"id": _town.destination_id(), "arrived": arrived, "distance": delta.length(),
 		"direction": arrows[posmod(roundi(delta.angle() * 4.0 / PI), 8)]}
 
 
@@ -771,10 +779,7 @@ func _landmark_world_rect(feature_id: String) -> Rect2:
 	if entry.is_empty():
 		return Rect2()
 	var feet: Vector2 = entry.get("feet", Vector2.ZERO)
-	var building := _view._drawn_rect(entry)
-	var building_top := feet.y - 112.0
-	if building.size != Vector2.ZERO:
-		building_top = building.position.y
+	var building_top := feet.y + float(entry.get("landmark_offset_y", -112.0))
 	var size := LANDMARK_SIZE * DESIGN_TO_WORLD
 	var position := Vector2(feet.x - size.x * 0.5, building_top - LANDMARK_GAP * DESIGN_TO_WORLD - size.y)
 	return Rect2(position, size)
@@ -797,7 +802,7 @@ func _update_landmarks() -> void:
 	if _view == null or _design_canvas == null:
 		return
 	var camera := Rect2(_view.camera_world_offset(), Vector2(_view.world_viewport.size))
-	var nearby_id := _view.nearby_feature_id()
+	var nearby_id := _town.nearby_feature_id()
 	_nav_states = navigation_state()
 	for state: Dictionary in _nav_states:
 		var feature_id := String(state.id)
@@ -811,7 +816,7 @@ func _update_landmarks() -> void:
 		var title := landmark.get_node("Copy/Title") as Label
 		var status := landmark.get_node("Copy/Status") as Label
 		var nearby := feature_id == nearby_id
-		var selected := feature_id == _destination_id
+		var selected := feature_id == _town.destination_id()
 		if selected:
 			## The label can be hidden while its world feet stay technically on
 			## screen (the top band, another stand's art): the local road guide
@@ -991,7 +996,7 @@ func _update_nearby_feature() -> void:
 		_nearby_panel.hide()
 		_prompt_rect = Rect2()
 		return
-	var feature_id := _view.nearby_feature_id()
+	var feature_id := _town.nearby_feature_id()
 	_update_resident_markers()
 	var resident_id := nearby_resident_id()
 	if feature_id.is_empty() and resident_id.is_empty():
@@ -1012,7 +1017,7 @@ func _update_nearby_feature() -> void:
 
 
 func _facility_prompt_text(feature_id: String) -> String:
-	var entry := _view.entry_for(feature_id) if _view != null else {}
+	var entry := _town.entry_for(feature_id) if _view != null else {}
 	var label := String(entry.get("label", ""))
 	if label.is_empty():
 		label = _nav_title(feature_id)
@@ -1071,7 +1076,7 @@ func _hero_foot_design_point() -> Vector2:
 	## camera of this screen.
 	if _view == null:
 		return HERO_ENTRY_FOOT_ANCHOR
-	var screen_point := _view.design_point_for_world(_view.hero_world_position(), _design_canvas.position, _design_canvas.scale)
+	var screen_point := _view.design_point_for_world(_town.hero_world_position(), _design_canvas.position, _design_canvas.scale)
 	return _design_canvas.get_global_transform_with_canvas().affine_inverse() * screen_point
 
 
@@ -1083,13 +1088,13 @@ func _hero_cell_design_rect() -> Rect2:
 	var anchor := Vector2(24.0, 44.0)
 	var foot := Vector2.ZERO
 	if _view != null:
-		var metadata: Dictionary = _view._hero_sprite_metadata()
+		var metadata: Dictionary = _view.hero_visual_metadata()
 		var rect: Array = metadata.get("rect", [])
 		var metadata_anchor: Array = metadata.get("anchor", [])
 		if rect.size() == 4 and metadata_anchor.size() == 2:
 			cell = Vector2(float(rect[2]), float(rect[3]))
 			anchor = Vector2(float(metadata_anchor[0]), float(metadata_anchor[1]))
-		foot = _view.hero_world_position()
+		foot = _town.hero_world_position()
 	if _view == null:
 		return Rect2((foot - anchor) * WORLD_TO_DESIGN, cell * WORLD_TO_DESIGN)
 	var screen_to_canvas := _design_canvas.get_global_transform_with_canvas().affine_inverse()
@@ -1139,7 +1144,7 @@ func navigation_state() -> Array:
 			"reason": String(_unlock_reasons.get(feature_id, "")),
 			"status": _nav_status_text(feature_id),
 			"detail": _nav_detail(feature_id, progression, earned_rewards),
-			"current": feature_id == _view.nearby_feature_id() if _view != null else false,
+			"current": feature_id == _town.nearby_feature_id() if _view != null else false,
 		})
 	return states
 
@@ -1160,14 +1165,13 @@ func navigation_card_activated(feature_id: String) -> bool:
 	## A far click is a request for directions, not a remote facility opening.
 	if is_dialogue_open() or _details_expanded or not LANDMARK_FEATURE_IDS.has(feature_id):
 		return false
-	var entry := _view.entry_for(feature_id)
-	var within_reach := not entry.is_empty() and _view.hero_world_position().distance_to(entry.feet) <= float(entry.radius)
+	var entry := _town.entry_for(feature_id)
+	var within_reach := not entry.is_empty() and _town.hero_world_position().distance_to(entry.feet) <= float(entry.radius)
 	if not within_reach:
 		## Only an explicit directions request moves the local road guide. Walking
 		## up to a stand and entering it is not a destination choice, so a mistaken
 		## visit (the baseline run entered loadout this way) cannot quietly stick.
-		_destination_id = feature_id
-		_view.set_destination(feature_id)
+		_town.select_destination(feature_id)
 	_update_landmarks()
 	if _navigation_has_focus(): get_viewport().gui_get_focus_owner().release_focus()
 	if within_reach:
@@ -1260,19 +1264,25 @@ func _player_nav_node_label() -> String:
 
 
 func _feature_entry(feature_id: String) -> Dictionary:
-	## Layout first: the published placement decides where a station stands and
-	## what it is called. Only an unpublished entry falls back to the legacy
-	## 1280x720 anchor table halved into the 640x360 world.
-	if _view == null:
-		return {}
-	var entry := _view.entry_for(feature_id)
-	if not entry.is_empty():
-		if not bool(entry.get("from_layout", false)):
-			var fallback: Variant = LEGACY_FEATURE_POSITIONS.get(feature_id, null)
-			if fallback != null:
-				entry["feet"] = (fallback as Vector2) * DESIGN_TO_WORLD
-		return entry
-	return {}
+	return _town.entry_for(feature_id) if _town != null else {}
+
+
+func _hit_feature(point: Vector2) -> String:
+	var id := _view.hit_test(point)
+	if not id.is_empty():
+		return id
+	var distance := INF
+	for feature: Dictionary in _town.feature_entries():
+		var gap := point.distance_squared_to(feature.feet)
+		if gap <= pow(float(feature.radius), 2.0) and gap < distance:
+			distance = gap
+			id = String(feature.id)
+	return id
+
+
+func _on_town_state_changed(snapshot: Dictionary) -> void:
+	_view.consume(snapshot)
+	_update_nearby_feature()
 
 
 func _early_progress_text(progression: Dictionary) -> String:

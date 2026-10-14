@@ -57,11 +57,12 @@ const STYLE_ATLAS_PATH := "res://art/production/p1/combat_style_r13/v03/ranger_a
 const STYLE_TEXTURE_PATH := "res://art/production/p1/combat_style_r13/v03/ranger.png"
 const NATIVE_VIEW := Vector2i(640, 360)
 const SCHEMA_VERSION := 1
+const ArrowOrigin := preload("res://src/game/ranger_arrow_origin.gd")
 ## The action cell. 48x48 with a (24,44) foot anchor holds the approved 38px
 ## hero body at the same height and the same ground contact as the old 32x48
 ## idle cell; the extra width is padding for poses that reach sideways.
 const CELL := Vector2i(48, 48)
-const DEFAULT_ANCHOR := Vector2i(24, 44)
+const DEFAULT_ANCHOR := ArrowOrigin.FOOT_ANCHOR
 const BODY_HEIGHT := 38
 const SIM_TICKS_PER_SECOND := 30
 const FACINGS: Array[String] = ["south", "north", "east", "west"]
@@ -76,7 +77,7 @@ const ACTION_PRIORITY: Array[String] = ["death", "dodge", "dash", "shoot", "hit"
 const ACTION_CONTRACT := {
 	"idle": {"frames": 1, "fps": 8, "loop": true},
 	"walk": {"frames": 4, "fps": 8, "loop": true},
-	"shoot": {"frames": 4, "fps": 12, "loop": false},
+	"shoot": {"frames": ArrowOrigin.SHOOT_FRAMES, "fps": ArrowOrigin.SHOOT_FPS, "loop": false},
 	"dodge": {"frames": 2, "fps": 12, "loop": false},
 	"dash": {"frames": 2, "fps": 12, "loop": false},
 	"hit": {"frames": 1, "fps": 8, "loop": false},
@@ -89,12 +90,7 @@ const ACTION_RUNTIME_ENTRY := {}
 ## foot anchor only; using that anchor as the arrow origin put the projectile at
 ## the Ranger's boots. These per-facing/per-frame points follow the actual grip
 ## as the bow is raised and released.
-const ARROW_ATTACHMENT_BY_FACING_FRAME := {
-	"south": [Vector2i(30, 27), Vector2i(27, 25), Vector2i(27, 25), Vector2i(31, 29)],
-	"north": [Vector2i(24, 17), Vector2i(24, 15), Vector2i(24, 15), Vector2i(24, 20)],
-	"east": [Vector2i(34, 23), Vector2i(34, 24), Vector2i(36, 24), Vector2i(34, 29)],
-	"west": [Vector2i(14, 23), Vector2i(14, 24), Vector2i(12, 24), Vector2i(14, 29)],
-}
+const ARROW_ATTACHMENT_BY_FACING_FRAME := ArrowOrigin.SOCKETS
 ## The approved west-facing walk sheet has two contact poses whose painted sole is
 ## one source pixel above the shared (24,44) foot anchor.  Keep the authoritative
 ## foot point stable by compensating only those presentation frames.  This does
@@ -261,42 +257,23 @@ static func duration_ticks_for(frame_count: int, fps: int) -> int:
 
 ## The release boundary samples the same authored shoot frame as resolve().
 static func shoot_frame_at_tick(shoot_ticks: int) -> int:
-	return frame_index_for(
-		int(ACTION_CONTRACT["shoot"]["frames"]),
-		int(ACTION_CONTRACT["shoot"]["fps"]),
-		float(maxi(0, shoot_ticks)) / float(SIM_TICKS_PER_SECOND),
-		false
-	)
+	return ArrowOrigin.shoot_frame_at_tick(shoot_ticks)
 
 
 static func arrow_attachment_local(facing: Variant, frame: int) -> Vector2i:
-	var key := facing_key(facing)
-	var anchors: Array = ARROW_ATTACHMENT_BY_FACING_FRAME[key]
-	return anchors[clampi(frame, 0, anchors.size() - 1)] as Vector2i
+	return ArrowOrigin.attachment_local(facing, frame)
 
 
 ## Converts the authored cell socket into deterministic gameplay coordinates.
 ## world_units_per_gameplay is supplied by the arena transform so the rendered
 ## hand and the authoritative release point remain the same point on screen.
 static func arrow_attachment_offset(facing: Variant, frame: int, world_units_per_gameplay: float) -> Vector2:
-	if not is_finite(world_units_per_gameplay) or world_units_per_gameplay <= 0.0:
-		return Vector2.ZERO
-	return Vector2(arrow_attachment_local(facing, frame) - DEFAULT_ANCHOR) / world_units_per_gameplay
+	return ArrowOrigin.attachment_offset(facing, frame, world_units_per_gameplay)
 
 
 ## Four-way facing bucket. Screen space: +y points down.
 static func facing_key(facing: Variant) -> String:
-	if facing is String:
-		var name := String(facing).to_lower()
-		return name if FACINGS.has(name) else "south"
-	if facing == null or not (facing is Vector2):
-		return "south"
-	var direction := facing as Vector2
-	if direction.length_squared() <= 0.0001:
-		return "south"
-	if absf(direction.x) >= absf(direction.y):
-		return "east" if direction.x > 0.0 else "west"
-	return "north" if direction.y < 0.0 else "south"
+	return ArrowOrigin.facing_key(facing)
 
 
 ## Records the first tick of one event. Returns true only that first time, so a

@@ -1,0 +1,17 @@
+{
+  "room_id": "test.fixture",
+  "layout_id": "rectangle_arena",
+  "objective_id": "hunt_elite",
+  "hazard_ids": [],
+  "enemy_ids": [
+    "melee_pursuer",
+    "melee_pursuer",
+    "charging_raider",
+    "charging_raider",
+    "fan_ranged",
+    "fan_ranged"
+  ],
+  "elite_rule_ids": [],
+  "boss_id": "threshold_colossus",
+  "drop_tags": []
+}

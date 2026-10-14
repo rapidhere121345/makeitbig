@@ -390,9 +390,16 @@ func _sweep_shape(start: Vector2, motion: Vector2, blocker: Dictionary, footprin
 		is_initial = is_initial or distance <= footprint_radius + CONTACT_EPSILON
 	else:
 		is_initial = is_initial or distance <= float(blocker.get("radius", 0.0)) + footprint_radius + CONTACT_EPSILON
+	var touching_start := is_initial and not bool(state.get("penetrating", false))
 	if is_initial:
 		result.append(_make_hit(blocker, start, 0.0, normal, true, bool(state.get("penetrating", false)), "start"))
-		return result
+		# A penetrating start has no trustworthy swept path.  A merely touching
+		# start does: keep the t=0 contact for the motor, but also search the
+		# rounded vertex/edge continuation.  Returning only the t=0 face contact
+		# makes a tangent slide jump inside a polygon's Minkowski corner on the
+		# next tick.
+		if not touching_start:
+			return result
 
 	var candidates: Array[Dictionary] = []
 	if String(blocker.get("kind", "")) == "circle":
@@ -442,6 +449,15 @@ func _sweep_shape(start: Vector2, motion: Vector2, blocker: Dictionary, footprin
 		return result
 	_sort_hits(candidates)
 	var first_time := float(candidates[0].get("time", 1.0))
+	if touching_start:
+		first_time = INF
+		for candidate: Dictionary in candidates:
+			var candidate_time := float(candidate.get("time", 1.0))
+			if candidate_time > TIME_EPSILON:
+				first_time = candidate_time
+				break
+		if is_inf(first_time):
+			return result
 	for candidate: Dictionary in candidates:
 		if absf(float(candidate.get("time", 1.0)) - first_time) <= TIME_EPSILON:
 			result.append(candidate)

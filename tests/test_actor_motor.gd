@@ -13,9 +13,16 @@ func _initialize() -> void:
 	_test_convex_polygon_diagonal()
 	_test_circle_start_contact_and_reverse_escape()
 	_test_start_inside_is_not_exempt()
+	_test_polygon_corner_slide_preserves_clearance()
 	_test_inner_corner_and_multi_contact_order()
 	_test_narrow_channel()
-	_test_bounds_are_continuous_and_do_not_project()
+	_test_rect_boundary()
+	_test_corridor_boundary()
+	_test_ring_boundary()
+	_test_ring_exact_tick1_clearance()
+	_test_ring_curved_tangents_and_reversal()
+	_test_ring_and_blocker_intersection()
+	_test_boundary_results_are_stable()
 	_test_fixed_tick_rates()
 	if failures.is_empty():
 		print("PASS  test_actor_motor.gd")
@@ -115,6 +122,27 @@ func _test_start_inside_is_not_exempt() -> void:
 		_expect(bool((result.contacts as Array)[0].penetrating), "inside: contact did not identify penetration")
 
 
+func _test_polygon_corner_slide_preserves_clearance() -> void:
+	## A straight edge tangent can reach the rounded Minkowski corner in one
+	## tick.  The contact query must expose that continuation and the motor must
+	## never commit a sub-epsilon penetration from a valid start.
+	var motor := ActorMotorScript.new(6.0)
+	var fence_corner := PackedVector2Array([
+		Vector2(446.000671387, 517.499511719),
+		Vector2(456.0, 518.437438965),
+		Vector2(477.000183105, 556.87487793),
+		Vector2(463.999450684, 563.437438965),
+	])
+	_expect(motor.register_polygon("fence-corner", fence_corner), "corner slide: registration failed")
+	var start := Vector2(451.7878, 512.0161)
+	_expect(motor.is_position_clear(start), "corner slide: authored tangent start is not clear")
+	var position := start
+	for _tick in 12:
+		var result: Dictionary = motor.move(position, Vector2.LEFT * 1.6, Rect2(20.0, 20.0, 1496.0, 920.0))
+		position = result.position
+		_expect(motor.is_position_clear(position, Rect2(20.0, 20.0, 1496.0, 920.0)), "corner slide: motor committed a penetrating endpoint at %s" % position)
+
+
 func _test_inner_corner_and_multi_contact_order() -> void:
 	var motor := ActorMotorScript.new(1.0)
 	# The free quadrant is x < 10, y < 10.  Both faces are reached at the
@@ -141,17 +169,185 @@ func _test_narrow_channel() -> void:
 	_expect(bool(result.blocked), "channel: blocked passage did not report contact")
 
 
-func _test_bounds_are_continuous_and_do_not_project() -> void:
+func _test_rect_boundary() -> void:
 	var motor := ActorMotorScript.new(2.0)
 	var bounds := Rect2(0.0, 0.0, 20.0, 20.0)
+	_expect(motor.set_boundary({"type": "rect", "rect": bounds}), "rect boundary: registration failed")
 	var result: Dictionary = motor.move(Vector2(10.0, 10.0), Vector2(-30.0, 0.0), bounds)
-	_expect(_near_vector(result.position, Vector2(2.0, 10.0)), "bounds: continuous sweep did not stop at the footprint boundary")
-	_expect(bool(result.blocked) and motor.is_position_clear(result.position, bounds), "bounds: resolved position is invalid")
+	_expect(_near_vector(result.position, Vector2(2.0, 10.0)), "rect boundary: continuous sweep did not stop at the footprint boundary")
+	_expect(bool(result.blocked) and motor.is_position_clear(result.position), "rect boundary: resolved position is invalid")
 	var outside: Dictionary = motor.move(Vector2(-4.0, 10.0), Vector2(1.0, 0.0), bounds)
-	_expect(_near_vector(outside.position, Vector2(-4.0, 10.0)), "bounds: an outside start was projected to a nearest walkable point")
-	_expect(bool(outside.blocked), "bounds: outside start was silently exempted")
+	_expect(_near_vector(outside.position, Vector2(-4.0, 10.0)), "rect boundary: an outside start was projected to a nearest walkable point")
+	_expect(bool(outside.blocked), "rect boundary: outside start was silently exempted")
 	var reverse: Dictionary = motor.move(Vector2(2.0, 10.0), Vector2(4.0, 0.0), bounds)
-	_expect(_near_vector(reverse.position, Vector2(6.0, 10.0)) and not bool(reverse.blocked), "bounds: reverse movement from a boundary contact was blocked")
+	_expect(_near_vector(reverse.position, Vector2(6.0, 10.0)) and not bool(reverse.blocked), "rect boundary: reverse movement from a boundary contact was blocked")
+
+	var corner: Dictionary = motor.move(Vector2(10.0, 10.0), Vector2(-30.0, -30.0), bounds)
+	_expect(_near_vector(corner.position, Vector2(2.0, 2.0)), "rect boundary: corner movement crossed the footprint boundary")
+	_expect((corner.contacts as Array).size() == 2, "rect boundary: corner movement lost one boundary contact")
+
+
+func _test_corridor_boundary() -> void:
+	var motor := ActorMotorScript.new(3.0)
+	var corridor := Rect2(0.0, 0.0, 100.0, 40.0)
+	_expect(motor.set_boundary({"type": "corridor", "rect": corridor, "axis": "horizontal", "half_height": 10.0}), "corridor boundary: registration failed")
+	var right_edge: Dictionary = motor.move(Vector2(50.0, 20.0), Vector2(100.0, 0.0))
+	_expect(_near_vector(right_edge.position, Vector2(97.0, 20.0)), "corridor boundary: outer x edge ignored footprint clearance")
+	_expect(bool(right_edge.blocked) and motor.is_position_clear(right_edge.position), "corridor boundary: x edge result was invalid")
+	var top_edge: Dictionary = motor.move(Vector2(50.0, 20.0), Vector2(0.0, -100.0))
+	_expect(_near_vector(top_edge.position, Vector2(50.0, 13.0)), "corridor boundary: inner y edge ignored footprint clearance")
+	_expect(bool(top_edge.blocked) and motor.is_position_clear(top_edge.position), "corridor boundary: y edge result was invalid")
+	var tangent: Dictionary = motor.move(Vector2(50.0, 13.0), Vector2(10.0, 0.0))
+	_expect(_near_vector(tangent.position, Vector2(60.0, 13.0)) and not bool(tangent.blocked), "corridor boundary: tangent movement was blocked")
+
+
+func _test_ring_boundary() -> void:
+	var motor := ActorMotorScript.new(2.0)
+	var center := Vector2.ZERO
+	var inner := 10.0
+	var outer := 30.0
+	_expect(motor.set_boundary({"type": "ring", "center": center, "inner_radius": inner, "outer_radius": outer}), "ring boundary: registration failed")
+	var inner_contact := Vector2.RIGHT * (inner + 2.0)
+	var enter_hole: Dictionary = motor.move(inner_contact, Vector2.LEFT * 20.0)
+	_expect(_near_vector(enter_hole.position, inner_contact), "ring boundary: movement entered the inner hole")
+	_expect(bool(enter_hole.blocked) and motor.is_position_clear(enter_hole.position), "ring boundary: inner contact was not reported as a stable boundary")
+	var inner_tangent: Dictionary = motor.move(inner_contact, Vector2.UP * 5.0)
+	_expect(_near_vector(inner_tangent.position, inner_contact + Vector2.UP * 5.0), "ring boundary: tangent movement did not continue")
+	var inner_reverse: Dictionary = motor.move(inner_contact, Vector2.RIGHT * 5.0)
+	_expect(_near_vector(inner_reverse.position, inner_contact + Vector2.RIGHT * 5.0) and not bool(inner_reverse.blocked), "ring boundary: reverse movement could not escape the inner edge")
+
+	var outer_contact := Vector2.RIGHT * (outer - 2.0)
+	var leave_ring: Dictionary = motor.move(outer_contact, Vector2.RIGHT * 20.0)
+	_expect(_near_vector(leave_ring.position, outer_contact), "ring boundary: movement crossed the outer edge")
+	_expect(bool(leave_ring.blocked) and motor.is_position_clear(leave_ring.position), "ring boundary: outer contact was not reported as a stable boundary")
+	var outer_reverse: Dictionary = motor.move(outer_contact, Vector2.LEFT * 5.0)
+	_expect(_near_vector(outer_reverse.position, outer_contact - Vector2.RIGHT * 5.0) and not bool(outer_reverse.blocked), "ring boundary: reverse movement could not leave the outer contact")
+
+
+func _test_boundary_results_are_stable() -> void:
+	var motor := ActorMotorScript.new(2.0)
+	_expect(motor.set_boundary({"type": "ring", "center": Vector2(12.0, -4.0), "inner_radius": 10.0, "outer_radius": 30.0}), "stability: ring registration failed")
+	var start := Vector2(24.0, -4.0)
+	var displacement := Vector2(20.0, 15.0)
+	var first: Dictionary = motor.move(start, displacement)
+	var second: Dictionary = motor.move(start, displacement)
+	_expect(_near_vector(first.position, second.position), "stability: repeated ring result changed position")
+	_expect(bool(first.blocked) == bool(second.blocked), "stability: repeated ring result changed blocked state")
+	_expect(int(first.iterations) == int(second.iterations), "stability: repeated ring result changed iteration count")
+	_expect((first.contacts as Array).size() == (second.contacts as Array).size(), "stability: repeated ring result changed contact count")
+	if not (first.contacts as Array).is_empty() and not (second.contacts as Array).is_empty():
+		var first_contact: Dictionary = (first.contacts as Array)[0]
+		var second_contact: Dictionary = (second.contacts as Array)[0]
+		_expect(String(first_contact.get("blocker_id", "")) == String(second_contact.get("blocker_id", "")), "stability: repeated ring result changed contact identity")
+		_expect(_near(float(first_contact.get("time", 0.0)), float(second_contact.get("time", 0.0))), "stability: repeated ring result changed contact time")
+
+
+func _test_ring_exact_tick1_clearance() -> void:
+	var motor := ActorMotorScript.new(14.0)
+	_expect(motor.set_boundary({"type": "ring", "center": Vector2(640.0, 434.0), "inner_radius": 97.6, "outer_radius": 209.84}), "ring tick1: boundary rejected")
+	var start := Vector2(461.7138366699219, 515.0391845703125)
+	var displacement := Vector2.LEFT * (245.0 / 30.0)
+	_expect(motor.is_position_clear(start), "ring tick1: exact production spawn is not clear")
+	var result: Dictionary = motor.move(start, displacement)
+	_expect(bool(result.get("ok", false)) and motor.is_position_clear(result.position), "ring tick1: shared motor accepted an illegal footprint at %s" % result.position)
+	_expect(start.distance_to(result.position) > 3.0, "ring tick1: tangent movement was discarded")
+	_expect(result == motor.move(start, displacement), "ring tick1: identical input changed the result")
+	var position: Vector2 = result.position
+	for tick in 90:
+		var moved: Dictionary = motor.move(position, displacement)
+		_expect(motor.is_position_clear(moved.position), "ring tick1: consecutive tick %d committed an illegal footprint" % (tick + 2))
+		position = moved.position
+	var reverse: Dictionary = motor.move(result.position, -displacement)
+	_expect(_near_vector(reverse.position, result.position - displacement) and not bool(reverse.blocked), "ring tick1: immediate reverse did not leave contact freely")
+
+
+func _test_ring_curved_tangents_and_reversal() -> void:
+	var center := Vector2(640.0, 434.0)
+	for footprint: float in [14.0, 16.0]:
+		var motor := ActorMotorScript.new(footprint)
+		motor.set_boundary({"type": "ring", "center": center, "inner_radius": 97.6, "outer_radius": 209.84})
+		for degrees: float in [0.0, 12.3, 45.0, 90.0, 137.0, 155.545, 180.0, 225.0, 270.0, 315.0, 359.0]:
+			var radial := Vector2.from_angle(deg_to_rad(degrees))
+			var tangent := Vector2(-radial.y, radial.x)
+			for outer: bool in [false, true]:
+				var limit := 209.84 - footprint if outer else 97.6 + footprint
+				var start := center + radial * limit
+				var free_normal := -radial if outer else radial
+				var label := "ring r%d angle%s %s" % [int(footprint), degrees, "outer" if outer else "inner"]
+				_expect(motor.is_position_clear(start), label + ": contact start is not clear")
+				for sign_value: float in [-1.0, 1.0]:
+					var motion := tangent * sign_value * (245.0 / 30.0)
+					var moved: Dictionary = motor.move(start, motion)
+					_expect(motor.is_position_clear(moved.position), label + ": tangent result is not clear")
+					_expect((moved.position - start).dot(motion.normalized()) > 8.0, label + ": tangent movement stuck")
+					_expect(moved == motor.move(start, motion), label + ": tangent input is unstable")
+					if not outer:
+						_expect(_near_vector(moved.position, start + motion), label + ": inner tangent lost free movement")
+					var into_edge := motion - free_normal * 4.0
+					var sliding: Dictionary = motor.move(start, into_edge)
+					_expect(motor.is_position_clear(sliding.position) and (sliding.position - start).dot(motion.normalized()) > 8.0, label + ": mixed input lost tangent clearance/movement")
+					var reverse: Dictionary = motor.move(sliding.position, free_normal * 4.0)
+					_expect(motor.is_position_clear(reverse.position) and not bool(reverse.blocked), label + ": reverse escape was blocked")
+					_expect(_near_vector(reverse.position, sliding.position + free_normal * 4.0), label + ": reverse escape lost displacement")
+				# Recompute the tangent each tick, so both directions stay on the
+				# outer edge instead of relying on a once-fixed world direction.
+				if outer:
+					var position := start
+					for sign_value: float in [-1.0, 1.0]:
+						position = start
+						for tick in 120:
+							var current_radial := (position - center).normalized()
+							var motion := Vector2(-current_radial.y, current_radial.x) * sign_value * (245.0 / 30.0)
+							var moved: Dictionary = motor.move(position, motion)
+							_expect(bool(moved.get("ok", false)) and motor.is_position_clear(moved.position), label + ": orbit footprint illegal at tick %d" % tick)
+							_expect((moved.position - position).dot(motion.normalized()) > 8.0, label + ": orbit stalled or jittered at tick %d" % tick)
+							position = moved.position
+					var idle: Dictionary = motor.move(position, Vector2.ZERO)
+					_expect(idle.position == position, label + ": idle contact jittered")
+					var head_on: Dictionary = motor.move(start, radial * 5.0)
+					_expect(_near_vector(head_on.position, start), label + ": outward-only contact jittered")
+				else:
+					var across_hole: Dictionary = motor.move(start, -radial * 500.0)
+					_expect(_near_vector(across_hole.position, start) and bool(across_hole.blocked), label + ": swept displacement crossed the hole")
+
+
+func _test_ring_and_blocker_intersection() -> void:
+	for footprint: float in [14.0, 16.0]:
+		var motor := ActorMotorScript.new(footprint)
+		var center := Vector2(640.0, 434.0)
+		motor.set_boundary({"type": "ring", "center": center, "inner_radius": 97.6, "outer_radius": 209.84})
+		# This wall cuts through the outer circle. Its footprint offset and the
+		# circle must both constrain the same submitted slide and its reversal.
+		motor.register_rect("ring-crossing-wall", Rect2(600.0, 540.0, 260.0, 40.0))
+		var limit := 209.84 - footprint
+		var start := center + Vector2.from_angle(0.35) * limit
+		var position := start
+		for tick in 30:
+			var moved: Dictionary = motor.move(position, Vector2(4.0, 9.0))
+			_expect(motor.is_position_clear(moved.position), "ring+wall r%d: illegal footprint at tick %d" % [int(footprint), tick])
+			_expect(moved == motor.move(position, Vector2(4.0, 9.0)), "ring+wall: same input changed the result")
+			position = moved.position
+		_expect(position.y <= 540.0 - footprint + GeometryQueryScript.CONTACT_EPSILON, "ring+wall: crossed the wall")
+		_expect(start.distance_to(position) > 15.0, "ring+wall: legal slide was discarded")
+		var reverse: Dictionary = motor.move(position, Vector2(-4.0, -9.0))
+		_expect(motor.is_position_clear(reverse.position) and position.distance_to(reverse.position) > 9.0, "ring+wall: immediate reverse stuck")
+		# A large outer tangent is retracted into the disk, then still swept
+		# against the inner hole and static blockers; endpoint projection alone
+		# would incorrectly tunnel through this thin wall on the chord.
+		motor.clear_geometry()
+		motor.register_rect("chord-wall", Rect2(685.0, 500.0, 8.0, 180.0))
+		var chord_start := center + Vector2.RIGHT * limit
+		var large: Dictionary = motor.move(chord_start, Vector2.DOWN * 1000.0)
+		_expect(motor.is_position_clear(large.position) and bool(large.blocked), "ring+wall: large curved tangent returned an illegal footprint")
+		_expect(large.position.x >= 693.0 + footprint - GeometryQueryScript.CONTACT_EPSILON, "ring+wall: curved continuation crossed the blocker")
+		motor.clear_geometry()
+		motor.set_boundary({"type": "ring", "center": center, "inner_radius": 174.0, "outer_radius": 209.84})
+		var narrow: Dictionary = motor.move(chord_start, Vector2.DOWN * 1000.0)
+		_expect(motor.is_position_clear(narrow.position), "narrow ring: curved continuation ended in the hole")
+		var found_inner := false
+		for contact: Dictionary in narrow.contacts:
+			found_inner = found_inner or String(contact.get("blocker_id", "")) == "ring:inner"
+		_expect(found_inner, "narrow ring: curved continuation skipped the hole sweep")
 
 
 func _test_fixed_tick_rates() -> void:

@@ -1,15 +1,26 @@
 # Make It Big 工作记录
 
-更新时间：2026-10-10
+更新时间：2026-10-14
 
-本轮改动：桥中心通道与栏杆/水域边界校准，补屋顶和塔体阻挡；NPC 近距 E 交谈优先级与位置回退；炉膛/篝火像素火星；回收环场按整张地图矩形边界通行；游侠像素装饰随左行步态变化，修复数组追加死循环；战斗 HUD 使用无衬线字体和 1px 描边。
+运行时重构已完成版本化历史回放与当前图形 closeout；发布页已更新 build `20261014-151302-fcc9700b6eb6`。保留全部 dirty；禁止 reset/clean、恢复旧权威或修改历史 golden。
 
-图形验收完成：单实例 Xvfb `127.0.0.1:99`、Godot 4.7.2、llvmpipe；桥双向、栏杆/墙体阻挡、NPC 对话、炉膛动画、左行步态、拉弓命中/闪避、1280×720 与 1600×900 HUD。窗口退出 0。证据在 `build/current/play-session-review/`，详见 `docs/GRAPHICAL_VALIDATION.md`。未验收宿主 NVIDIA 性能、Windows 实机或声音。
+## 当前验收
 
-验证：完整 `container_build.sh` 通过，Win/Linux 导出与 Linux 空目录 smoke 通过，日志无 GDScript 运行错误。30/60/144Hz 与关闭表现层回放哈希均为 `5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900`。旧环形断言和跨房间输入测试配置已校准；容器测试新增 `SCRIPT ERROR` 门禁，避免 Godot 退出 0 掩盖未执行断言。日志：`build/current/final-container-build.log`。
+- 当前实时默认 profile 是 `multipart_v2`。历史回放通过显式 `historical_circle_v1` 兼容 profile 验证，未改变默认 Boss 部件命中。30/60/144 Hz 与 presentation-off 60 Hz 均恢复固定 golden `5bd724ca...a900`；默认 multipart 当前 hash 为 `801e41c8...12a35`。
+- 版本化完整构建已 exit0：119 项测试、600 房矩阵、导出、Linux 空目录 smoke、历史四种回放均到达并通过。证据 `build/current/rebuild-replay-versioned/`。历史 golden 未改。
+- 当前唯一图形窗口已正常退出0，当前 Main `4e882864...8490`，engine gate/source freeze 均 PASS。报告 `build/current/rebuild-graphical-closeout-v3-20261014/REPORT.md`，汇总 `SUMMARY.json`。
+- 图形实证覆盖真实 mark 中文 HUD、seed0 room1 ring 步行、Manual 三房胜利、自然败北、Boss 手动胜利和 Auto final_victory；结果页均按实际按钮返回基地。observer 2870 tick 行、5764 次 footprint 检查无 gap/非法位置。
+- 当前环境是 UID1000、Godot4.7.2、容器 X11/llvmpipe；不代替宿主 GPU、Windows 实机、声音或最低配置性能验收。
 
-固定流程：`source scripts/container_env.sh` → `./scripts/container_build.sh` → 审查并提交 → `./scripts/release.sh all --note '改动说明'` → 深度校验与线上核对。图形入口使用 `mib-prepare-display`，最多一个 Godot 图形实例；不重启部署服务。
+## 已落实的边界与证据
 
-发布页：<https://example-runtime.tail99c4e8.ts.net:8448>，唯一发布根 `build/releases/`，Win/Linux 下载与 SHA256，保留最近 20 个有效 build，由宿主 Tailscale Serve 暴露。版本与下载校验以线上 `index.json` 最新条目为准。协作同步对象：`5ad53811-e299-4f42-8611-08c649e34e12`；不操作原会话。
+- State/Rules 拥有玩家状态，registry 是唯一位置真值；Simulation 使用真实 tick，Motor 只提交一次。CombatSystem 拥有累计值，Encounter 拥有敌人/屏障/伤害来源，RoomRules 拥有胜负/奖励。Main 只装配窄接口，表现消费 detached 快照。
+- 真实 multipart 攻击、同伤害组去重、Boss 部件独立 SortRoot、Builder 精确浮点 parts hash、Ring 曲率 clearance、原生凹角/孔样板、600 房矩阵和生命周期压力均有定向证据；旧 Hamlet/LegacyArenaAdapter/WalkableGeometry 及旧玩家写回已删除。
+- 旧 enemy/ranger 与 presentation fixtures 均已迁移并释放 ownership；原行为函数和业务门槛保留。Main mark 报告与 HUD 中文目标显示均已由当前窗口复验。
+- 生产空缓存 3/3 PASS，见 `build/current/rebuild-clean-import/20261014T101937Z/REPORT.md`。旧 fullbuild 失败目录、旧图形 FAIL 和启动诊断全部保留，不覆盖为 PASS。
 
-<!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->
+## 版本与剩余限制
+
+- 当前主要 hash：Main `4e882864...8490`；CombatSystem `43985ec4...f9625`；FrameBuilder `b35fbf...8113c`；presentation Controller `053ebd...2a9f`；ContractRunController `5727c7...51d5`。完整值见当前 closeout `source-freeze-gate.json`。
+- 历史 golden 固定不变；legacy replay profile 只能由测试脚本显式选择，不能被实时装配隐式选中。
+- 已发布；未重新生成 golden；GPU、声音和额外宿主实机验收不作为本版本阻塞条件。后续源码变更必须重新跑相关 focused、fullbuild 和图形 freeze。

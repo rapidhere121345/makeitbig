@@ -1,5 +1,7 @@
 extends SceneTree
-## Standalone occlusion regression for the two live world views: the cutaway that
+## Combat cutaway and native-town sorting regression. Town structural checks
+## do not claim clean-underplate visibility or replace future real screenshots.
+## The combat cutaway
 ## keeps a hero's own source pixels readable when a ruin, a stand or the colossus
 ## draws in front of it.
 ##
@@ -10,7 +12,7 @@ extends SceneTree
 ## state and never re-renders: the numbers it checks are the numbers the draw calls
 ## consume, because both come from the same functions.
 
-const HamletConceptViewScript = preload("res://src/presentation/hamlet_concept_view.gd")
+const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
 const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd")
 
@@ -45,7 +47,6 @@ func _initialize() -> void:
 func _run() -> void:
 	_test_budget()
 	_test_pieces()
-	_test_hamlet()
 	await _test_town_scene()
 	_test_arena()
 	_test_posed_boss_geometry()
@@ -97,20 +98,15 @@ func _test_posed_boss_geometry() -> void:
 ## on top of the hero, the composed opacity of that stack may never exceed the
 ## ceiling, and a single foreground band must stay inside the approved band.
 func _test_budget() -> void:
-	_expect(is_equal_approx(HamletConceptViewScript.cutaway_alpha(0), 1.0), "budget: no occluder must leave the authored alpha alone")
-	_expect(is_equal_approx(ArenaWorldViewScript.cutaway_alpha(0), 1.0), "budget: arena must leave the authored alpha alone without an occluder")
+	_expect(is_equal_approx(ArenaWorldViewScript.cutaway_alpha(0), 1.0), "budget: arena changed alpha without occluders")
 	for count in range(1, 7):
-		var hamlet_share := HamletConceptViewScript.cutaway_alpha(count)
-		var arena_share := ArenaWorldViewScript.cutaway_alpha(count)
-		_expect(is_equal_approx(hamlet_share, arena_share), "budget: both views disagree on the share for %d occluder(s)" % count)
-		var composed := 1.0 - pow(1.0 - hamlet_share, float(count))
-		_expect(composed <= LOCAL_OPACITY_CEILING + 0.000001, "budget: %d occluder(s) compose %.3f, above the local ceiling" % [count, composed])
-		_expect(composed >= 0.12, "budget: %d occluder(s) compose %.3f, below the approved local band" % [count, composed])
-	_expect(is_equal_approx(HamletConceptViewScript.cutaway_alpha(1), 0.16), "budget: a single foreground band must sit at the approved 0.16 local opacity")
+		var share := ArenaWorldViewScript.cutaway_alpha(count)
+		var composed := 1.0 - pow(1.0 - share, float(count))
+		_expect(composed <= LOCAL_OPACITY_CEILING + 0.000001, "budget: arena exceeds local opacity ceiling")
+		_expect(composed >= 0.12, "budget: arena fell below approved local band")
+	_expect(is_equal_approx(ArenaWorldViewScript.cutaway_alpha(1), 0.16), "budget: single arena band changed opacity")
 
 
-## The five pieces must tile the drawn cell exactly once: a cut may never double a
-## band, leave a seam, or touch a pixel the authored alpha already covered.
 func _test_pieces() -> void:
 	var quad := Rect2(Vector2(100.0, 100.0), Vector2(96.0, 96.0))
 	var core := Rect2(Vector2(122.0, 122.0), Vector2(52.0, 52.0))
@@ -142,175 +138,37 @@ func _test_pieces() -> void:
 	_expect(is_equal_approx(window_alpha, 0.45 * 0.16), "pieces: the window must multiply the authored fade, got %.3f" % window_alpha)
 
 
-func _test_hamlet() -> void:
-	var view = HamletConceptViewScript.new()
-	root.add_child(view)
-	# Keep old configure fixtures explicit; the formal entry now uses the full town.
-	var atlas: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(HamletConceptViewScript.DEFAULT_ATLAS_PATH))
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(HamletConceptViewScript.LEGACY_LAYOUT_PATH))
-	view.configure(atlas, layout)
-	if not view.is_ready():
-		_expect(false, "hamlet: the live hub view is not ready, so no occlusion can be checked")
-		return
-	_expect(view._sprites.has("hamlet.fence"), "hamlet: the rack cell is missing from the union of the published atlases")
-
-	for point: Vector2 in BASE_RACK_FAILURES:
-		view.teleport_hero(point)
-		view._process(0.016)
-		var report: Dictionary = view.occlusion_report()
-		_expect(int(report["occluder_count"]) >= 1, "hamlet: the rack at %s reports no foreground layer" % str(point))
-		_expect((report["front_ids"] as Array).has("north_fence"), "hamlet: the rack is not reported as the layer in front at %s" % str(point))
-		_expect(float(report["local_opacity_total"]) <= LOCAL_OPACITY_CEILING, "hamlet: %s composes %.3f local opacity" % [str(point), float(report["local_opacity_total"])])
-		_expect((report["window_world"] as Rect2).encloses(report["hero_cell_world"]), "hamlet: the window must cover the hero's own cell at %s" % str(point))
-		_check_hamlet_cut(view, "north_fence", 1.0, "rack at %s" % str(point))
-
-	for point: Vector2 in BASE_HEARTH_FAILURES:
-		view.teleport_hero(point)
-		view._process(0.016)
-		var report: Dictionary = view.occlusion_report()
-		_expect(int(report["occluder_count"]) >= 1, "hamlet: the hearth at %s reports no foreground layer" % str(point))
-		_expect(float(report["local_opacity_total"]) <= LOCAL_OPACITY_CEILING, "hamlet: the hearth at %s composes %.3f local opacity" % [str(point), float(report["local_opacity_total"])])
-		_expect((report["window_world"] as Rect2).encloses(report["hero_cell_world"]), "hamlet: the window must cover the hero's own cell at %s" % str(point))
-		_check_hamlet_cut(view, "hearth.upper", float(HamletConceptViewScript.SPLIT_FADE_ALPHA), "hearth at %s" % str(point))
-
-	view.teleport_hero(BASE_IN_FRONT)
-	view._process(0.016)
-	var in_front: Dictionary = view.occlusion_report()
-	_expect(not (in_front["front_ids"] as Array).has("north_fence"), "hamlet: the rack must not be cut when the hero's own feet are in front of it")
-	var rack := view._sprite_nodes.get("north_fence", null) as Sprite2D
-	_expect(rack != null and rack.visible, "hamlet: the rack must stay drawn when the hero is in front of it")
-	_expect(rack != null and is_equal_approx(rack.modulate.a, 1.0), "hamlet: the rack's authored alpha must not change when the hero is in front of it")
-
-	view.teleport_hero(BASE_CLEAR)
-	view._process(0.016)
-	_expect(rack != null and rack.visible, "hamlet: leaving the rack must restore the authored drawing in the same frame")
-	for node: Sprite2D in _hamlet_pieces(view, "north_fence"):
-		if node != null:
-			_expect(not node.visible, "hamlet: a cut piece of the rack stayed on screen after the hero walked clear")
-
-	_test_hamlet_sweep(view)
-	# Movement updates the sprite immediately; its occlusion must be committed
-	# in that same call, even before this view's next _process callback.
-	view.teleport_hero(Vector2(570.0, 212.2))
-	view.move_hero(Vector2.UP, 2.0 / 30.0)
-	var crossing_rack := view._sprite_nodes.get("north_fence") as Sprite2D
-	_expect(crossing_rack != null and not crossing_rack.visible, "hamlet: crossing behind rack left the opaque source visible for one frame")
-	view.move_hero(Vector2.DOWN, 2.0 / 30.0)
-	_expect(crossing_rack != null and crossing_rack.visible, "hamlet: leaving rack failed to restore it on the movement frame")
-	root.remove_child(view)
-	view.free()
-
-
-## One foreground band: the window it draws must be the low-alpha piece, the rest
-## of the band must keep the authored alpha, and the pieces must tile its cell.
-func _check_hamlet_cut(view, placement_id: String, authored_alpha: float, label: String) -> void:
-	var sprite := view._sprite_nodes.get(placement_id, null) as Sprite2D
-	if sprite == null:
-		_expect(false, "hamlet: %s has no drawn sprite" % label)
-		return
-	_expect(not sprite.visible, "hamlet: %s is still drawn as one whole cell under the hero" % label)
-	var pieces := _hamlet_pieces(view, placement_id)
-	_expect(pieces.size() == 5, "hamlet: %s has %d cut pieces instead of five" % [label, pieces.size()])
-	var covered := 0.0
-	var window_seen := false
-	for index in pieces.size():
-		var node := pieces[index] as Sprite2D
-		if node == null or not node.visible:
-			continue
-		covered += node.region_rect.size.x * node.region_rect.size.y
-		if index == HamletConceptViewScript.CUTAWAY_WINDOW_INDEX:
-			window_seen = true
-			_expect(node.modulate.a <= LOCAL_OPACITY_CEILING + 0.000001, "hamlet: %s draws its window at %.3f local opacity" % [label, node.modulate.a])
-			_expect(node.modulate.a <= authored_alpha + 0.000001, "hamlet: %s draws its window brighter than the authored band" % label)
-		else:
-			_expect(is_equal_approx(node.modulate.a, authored_alpha), "hamlet: %s changed the authored alpha outside the window" % label)
-	_expect(window_seen, "hamlet: %s drew no low-alpha window at all" % label)
-	_expect(covered <= sprite.region_rect.size.x * sprite.region_rect.size.y + 0.5, "hamlet: %s draws more pixels than its own cell" % label)
-
-
-func _hamlet_pieces(view, placement_id: String) -> Array:
-	var sprite := view._sprite_nodes.get(placement_id, null) as Sprite2D
-	if sprite == null:
-		return []
-	return view._cutaway_cache.get(int(sprite.get_instance_id()), []) as Array
-
-
-## Sample the real layout on a 24px grid, reporting its deepest observed stack.
-## This finite geometry sweep does not prove every possible subpixel position.
-func _test_hamlet_sweep(view) -> void:
-	var deepest := 0
-	var worst := 0.0
-	var worst_point := Vector2.ZERO
-	var y := 24.0
-	while y < view.world_size().y - 24.0:
-		var x := 24.0
-		while x < view.world_size().x - 24.0:
-			view.teleport_hero(Vector2(x, y))
-			view._process(0.001)
-			var report: Dictionary = view.occlusion_report()
-			deepest = maxi(deepest, int(report["occluder_count"]))
-			var total := float(report["local_opacity_total"])
-			if total > worst:
-				worst = total
-				worst_point = Vector2(x, y)
-			x += 24.0
-		y += 24.0
-	_expect(worst <= LOCAL_OPACITY_CEILING + 0.000001, "hamlet: the sweep stacks %.3f local opacity at %s" % [worst, str(worst_point)])
-	_expect(deepest >= 1, "hamlet: the sweep found no foreground overlap at all, so the cutaway was never exercised")
-	print("  hamlet sweep: deepest stack %d layer(s), worst local opacity %.3f at %s" % [deepest, worst, str(worst_point)])
-
-
-func _polygon_area(points: PackedVector2Array) -> float:
-	var total := 0.0
-	for index in points.size():
-		total += points[index].cross(points[(index + 1) % points.size()])
-	return absf(total) * 0.5
-
-
 func _test_town_scene() -> void:
-	var view = HamletConceptViewScript.new()
-	root.add_child(view)
-	_expect(view.load_default_assets(), "town: formal PNG/layout not ready")
-	var audit: Dictionary = view.render_audit()
-	_expect(audit.ground_source_path == "res://art/production/p1/hamlet_town/town.png", "town: formal background uses an old ground")
-	for patch: Node2D in view._scene_patches:
-		_expect(patch.get_parent() == view.actor_layer and patch.scene_texture == view._scene_texture,
-			"town: foreground is not the same texture in the feet-sort layer")
-		_expect(not Geometry2D.triangulate_polygon(patch.world_polygon).is_empty(), "town: invalid foreground " + String(patch.name))
+	var hub := BaseHubScript.new()
+	root.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	var town = hub.get_town_runtime()
+	_expect(bool(hub.town_load_report.get("ok", false)), "town: native scene failed to load")
+	var audit := view.render_audit()
+	_expect(audit.ground_source_path == "res://content/rooms/town/layers/ground.png" and audit.runtime_background_patches == 0, "town: legacy background patch path survived")
+	_expect(audit.unknown_underplate == "transparent" and not audit.supports_cutaway and not audit.supports_fade, "town: incomplete underplate capabilities were hidden")
+	var shared: Node2D = view.world_presenter.sort_root
+	_expect(shared.y_sort_enabled and view._hero_sprite.get_parent() == shared, "town: hero has a parallel sort domain")
+	var native_count := 0
 	for id: String in ["contract", "loadout", "forge", "proxy", "tree_south", "commons_fire"]:
-		var target: Node2D
-		for patch: Node2D in view._scene_patches:
-			if String(patch.get_meta("placement_id")) == id: target = patch
-		_expect(target != null, "town: missing foreground " + id)
-		if target == null: continue
-		view.teleport_hero(target.position - Vector2(0, 18))
-		# Let the actual CanvasItem draw consume its polygon UVs and cut bands.
+		var sprite: Node = view.world_presenter.native_binding_node("town/native/" + id)
+		_expect(sprite is Sprite2D and sprite.get_parent() == shared, "town: native building left shared sort root: " + id)
+	for node: Node in shared.get_children():
+		if not node.has_meta("texture_path"): continue
+		native_count += 1
+		_expect(node is Sprite2D and not (node as Sprite2D).region_enabled and String(node.get_meta("texture_path")).begins_with("res://content/rooms/town/layers/"), "town: visual was cropped from background at runtime")
+		_expect((node as CanvasItem).visible and is_equal_approx((node as CanvasItem).modulate.a, 1.0), "town: transparent underplate enabled fade or hiding")
+	var before: int = shared.get_child_count()
+	for target: Vector2 in town.route_points("contract"):
+		town.place_hero(target)
 		await process_frame
-		await process_frame
-		var report: Dictionary = view.occlusion_report()
-		_expect(id in report.front_ids and report.local_opacity_total <= LOCAL_OPACITY_CEILING,
-			"town: behind %s is not locally readable" % id)
-		_expect(target.cut_alpha < 1.0 and target.cut_window == report.window_world, "town: draw window differs from occlusion report " + id)
-		var covered := 0.0
-		var found_window := false
-		for fragment: Dictionary in target.fragments():
-			var points: PackedVector2Array = fragment.points
-			covered += _polygon_area(points)
-			_expect(not Geometry2D.triangulate_polygon(points).is_empty(), "town: cut fragment cannot draw " + id)
-			found_window = found_window or float(fragment.alpha) < 1.0
-		_expect(found_window and absf(covered - _polygon_area(target.world_polygon)) < 0.1,
-			"town: window fragments duplicate or lose foreground area " + id)
-		view.teleport_hero(target.position + Vector2(0, 60))
-		_expect(target.cut_alpha == 1.0 and id not in view.occlusion_report().front_ids,
-			"town: in front of %s still fades" % id)
-	# The open wood-barn bay must not repeat a floor polygon over its resident.
-	var taren := view._sprite_nodes.get("taren") as Sprite2D
-	for patch: Node2D in view._scene_patches:
-		if String(patch.get_meta("placement_id")) == "loadout":
-			_expect(not Geometry2D.is_point_in_polygon(taren.position, patch.world_polygon), "town: barn bay floor masks the worker")
-	_test_hamlet_sweep(view)
-	root.remove_child(view)
-	view.free()
+		_expect(shared.get_child_count() == before, "town: movement created cutaway fragments")
+		for node: Node in shared.get_children():
+			if node.has_meta("texture_path"):
+				_expect((node as CanvasItem).visible and (node as CanvasItem).modulate.a == 1.0, "town: movement hid native art")
+	_expect(native_count == 35, "town: offline native ownership is incomplete")
+	hub.free()
 
 
 func _test_arena() -> void:
