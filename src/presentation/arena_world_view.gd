@@ -53,6 +53,10 @@ const CUTAWAY_WINDOW_INDEX: int = 4
 ## Alpha bounds stay conservative by one source pixel so antialiased edge pixels
 ## and the integer destination rounding cannot make an occluder too small.
 const ALPHA_VISIBLE_BOUNDS_PADDING: float = 1.0
+## A source pixel with any meaningful alpha is part of the visual occluder.  The
+## mask is used only to decide whether two drawn cells really meet; the one
+## pixel bounds padding above remains the conservative box used for diagnostics.
+const ALPHA_OCCLUSION_THRESHOLD: float = 0.0
 const GROUND_SPRITE_ID: String = "scene.ground"
 ## Only these calibration_v01 sprites are reused read-only; the reworked atlas
 ## owns everything else, so a missing reworked sprite stays missing instead of
@@ -109,6 +113,7 @@ var _sprites: Dictionary = {}
 var _textures: Dictionary = {}
 var _texture_images: Dictionary = {}
 var _alpha_visible_bounds: Dictionary = {}
+var _alpha_masks: Dictionary = {}
 var _decals: Array[Dictionary] = []
 var _structures: Array[Dictionary] = []
 var _tower_feet := Vector2.ZERO
@@ -210,6 +215,7 @@ func load_assets() -> bool:
 	_textures.clear()
 	_texture_images.clear()
 	_alpha_visible_bounds.clear()
+	_alpha_masks.clear()
 	_decals.clear()
 	_structures.clear()
 	_ready = false
@@ -616,6 +622,83 @@ func frame_art_box(texture: Texture2D, source_rect: Rect2, feet_world: Vector2, 
 	return Rect2(destination.position + visible.position, visible.size)
 
 
+## A detached description of the pixels a published sprite really contributes
+## to the foreground pass.  Callers keep the authored destination rectangle for
+## drawing and use this descriptor only for visibility intersection.
+func sprite_occlusion_descriptor(sprite_id: String, feet_world: Vector2, flip_x: bool = false) -> Dictionary:
+	var metadata := sprite(sprite_id)
+	if metadata.is_empty():
+		return {}
+	var region := _region_of(metadata)
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
+	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
+	return _occlusion_descriptor(_textures.get(String(metadata.get("texture", ""))) as Texture2D, region, destination, flip_x)
+
+
+## Dynamic action frames use exactly the same descriptor contract as published
+## sprites, including authored draw offsets and horizontal mirroring.
+func frame_occlusion_descriptor(texture: Texture2D, source_rect: Rect2, feet_world: Vector2, anchor: Vector2, draw_offset: Vector2 = Vector2.ZERO, flip_x: bool = false) -> Dictionary:
+	if source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
+		return {}
+	var destination := Rect2((feet_world - anchor + draw_offset).round(), source_rect.size)
+	return _occlusion_descriptor(texture, source_rect, destination, flip_x)
+
+
+## Public read-only query used by actor and structure passes.  A missing or
+## unreadable texture deliberately falls back to its destination box, matching
+## the existing conservative art-box behavior.
+func occlusion_descriptor_intersects(descriptor: Dictionary, query: Rect2) -> bool:
+	if descriptor.is_empty() or query.size.x <= 0.0 or query.size.y <= 0.0:
+		return false
+	var art_box: Rect2 = descriptor.get("art_box", descriptor.get("destination", Rect2()))
+	if not art_box.intersects(query):
+		return false
+	if bool(descriptor.get("conservative", true)):
+		return true
+	var destination: Rect2 = descriptor.get("destination", Rect2())
+	var source_rect: Rect2 = descriptor.get("source_rect", Rect2())
+	var mask: Dictionary = descriptor.get("mask", {})
+	var rows: Array = mask.get("rows", [])
+	if rows.is_empty() or destination.size.x <= 0.0 or destination.size.y <= 0.0:
+		return true
+	var overlap := destination.intersection(query)
+	var width := maxi(0, roundi(source_rect.size.x))
+	var height := maxi(0, roundi(source_rect.size.y))
+	if width <= 0 or height <= 0 or overlap.size.x <= 0.0 or overlap.size.y <= 0.0:
+		return false
+	var x0 := clampi(floori(overlap.position.x - destination.position.x), 0, width)
+	var x1 := clampi(ceili(overlap.end.x - destination.position.x), 0, width)
+	var y0 := clampi(floori(overlap.position.y - destination.position.y), 0, height)
+	var y1 := clampi(ceili(overlap.end.y - destination.position.y), 0, height)
+	if x0 >= x1 or y0 >= y1:
+		return false
+	var flipped := bool(descriptor.get("flip_x", false))
+	for local_y in range(y0, y1):
+		## flip_x mirrors columns only; the source row keeps its authored Y.
+		var source_y := local_y
+		if source_y < 0 or source_y >= rows.size():
+			continue
+		var runs: PackedInt32Array = rows[source_y]
+		var source_x0 := width - x1 if flipped else x0
+		var source_x1 := width - x0 if flipped else x1
+		for run_index in range(0, runs.size(), 2):
+			if int(runs[run_index]) < source_x1 and int(runs[run_index + 1]) > source_x0:
+				return true
+	return false
+
+
+func visibility_intersects(visibility: Variant, query: Rect2) -> bool:
+	if visibility is Array:
+		for descriptor: Variant in visibility:
+			if descriptor is Dictionary and occlusion_descriptor_intersects(descriptor, query):
+				return true
+		return false
+	if visibility is Dictionary:
+		return occlusion_descriptor_intersects(visibility, query)
+	return false
+
+
 ## The actor presenter calls this after resolving the frame that will actually
 ## be drawn.  Keeping the box here makes static cutaway, actor prepass, Boss
 ## helpers and diagnostics consume the same integer destination rectangle.
@@ -648,28 +731,34 @@ func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
 		var stable_id := _structure_stable_id(structure_index, sprite_id)
 		if not SortRelation.is_front(SortRelation.entry(feet.y, 0, stable_id), hero_sort):
 			continue
-		var box := sprite_art_box(sprite_id, feet)
-		if box.size.x <= 0.0 or not box.intersects(window):
+		var visibility := sprite_occlusion_descriptor(sprite_id, feet)
+		var box: Rect2 = visibility.get("art_box", Rect2())
+		if box.size.x <= 0.0 or not visibility_intersects(visibility, window):
 			continue
 		found.append({
 			"id": sprite_id,
 			"stable_id": stable_id,
 			"feet_world": feet,
 			"art_box": box,
+			"visibility": visibility,
 			"overlap": box.intersection(window),
 			"base_alpha": 1.0,
 		})
 	var tower_feet := tower_feet_world()
 	if SortRelation.is_front(SortRelation.entry(tower_feet.y, 0, "structure/tower"), hero_sort):
-		var upper := sprite_art_box("tower.upper", tower_feet)
-		var base := sprite_art_box("tower.base", tower_feet)
+		var upper_visibility := sprite_occlusion_descriptor("tower.upper", tower_feet)
+		var base_visibility := sprite_occlusion_descriptor("tower.base", tower_feet)
+		var upper: Rect2 = upper_visibility.get("art_box", Rect2())
+		var base: Rect2 = base_visibility.get("art_box", Rect2())
 		var tower_box := upper.merge(base)
-		if tower_box.intersects(window):
+		var tower_visibility: Array[Dictionary] = [upper_visibility, base_visibility]
+		if visibility_intersects(tower_visibility, window):
 			found.append({
 				"id": "tower",
 				"stable_id": "structure/tower",
 				"feet_world": tower_feet,
 				"art_box": tower_box,
+				"visibility": tower_visibility,
 				"overlap": tower_box.intersection(window),
 				"base_alpha": 1.0,
 			})
@@ -680,11 +769,12 @@ func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
 ## itself (main.gd owns the enemies): the window, whether the actor draws in
 ## front of the hero and the local alpha its own cell must use. An empty window
 ## means the actor keeps its authored alpha for this frame.
-func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2, sort_rank: int = 1, stable_id: String = "actor") -> Dictionary:
+func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2, sort_rank: int = 1, stable_id: String = "actor", visibility: Variant = null) -> Dictionary:
 	var cell := hero_cell_world(hero_world_point)
 	var window := cutaway_window(cell)
 	var actor_sort := SortRelation.entry(feet_world.y, sort_rank, stable_id)
-	if not SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) or not art_box.intersects(window):
+	var overlaps := visibility_intersects(visibility, window) if visibility != null else art_box.intersects(window)
+	if not SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) or not overlaps:
 		return {"window": window, "local_alpha": 1.0, "in_front": false}
 	## The ruins and the tower keep the same budget this actor shares, so the
 	## whole foreground stack still composes under CUTAWAY_TOTAL_OPACITY.
@@ -701,11 +791,13 @@ func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2
 	var hero_sort := _hero_sort_entry(hero_world_point)
 	for cell: Dictionary in cells:
 		var box: Rect2 = cell["art_box"]
+		var visibility: Variant = cell.get("visibility", null)
 		var stable_id := String(cell.get("stable_id", cell.get("id", "actor")))
 		var sort_rank := int(cell.get("sort_rank", cell.get("rank", 1)))
 		var baseline_y := float(cell.get("baseline_y", (cell.get("feet_world", Vector2.ZERO) as Vector2).y))
 		var actor_sort := SortRelation.entry(baseline_y, sort_rank, stable_id)
-		if SortRelation.is_front(actor_sort, hero_sort) and box.intersects(window):
+		var overlaps := visibility_intersects(visibility, window) if visibility != null else box.intersects(window)
+		if SortRelation.is_front(actor_sort, hero_sort) and overlaps:
 			_actor_occluders.append(cell.duplicate())
 	_actor_cutaway_ready = true
 	_cutaway_hero = Vector2(INF, INF)
@@ -715,7 +807,7 @@ func _tower_upper_faded(hero_world_point: Vector2) -> bool:
 	var feet := tower_feet_world()
 	if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), _hero_sort_entry(hero_world_point)):
 		return false
-	return sprite_art_box("tower.upper", feet).intersects(hero_cell_world(hero_world_point))
+	return visibility_intersects(sprite_occlusion_descriptor("tower.upper", feet), hero_cell_world(hero_world_point))
 
 
 func _cutaway_plan(hero_world_point: Vector2) -> Dictionary:
@@ -760,7 +852,8 @@ func _boss_cutaway(sprite_ids: Array, feet_list: Array, feet_world: Vector2, her
 			sort_feet = sort_feet_list[index] as Vector2
 		var sort_id := "enemy/boss/%s" % String(part_ids[index] if index < part_ids.size() else sprite_ids[index])
 		var actor_sort := SortRelation.entry(sort_feet.y, 3, sort_id)
-		if SortRelation.is_front(actor_sort, hero_sort) and sprite_art_box(String(sprite_ids[index]), feet_list[index] as Vector2).intersects(window):
+		var visibility := sprite_occlusion_descriptor(String(sprite_ids[index]), feet_list[index] as Vector2)
+		if SortRelation.is_front(actor_sort, hero_sort) and visibility_intersects(visibility, window):
 			overlapping += 1
 	if overlapping <= 0:
 		return {"window": Rect2(), "alpha": 1.0}
@@ -826,8 +919,8 @@ func structure_fade(sprite_id: String, feet_world: Vector2, hero_world_point: Ve
 		return 1.0
 	if not SortRelation.is_front(SortRelation.entry(feet_world.y, 0, "structure/%s" % sprite_id), _hero_sort_entry(hero_world_point)):
 		return 1.0
-	var cell := sprite_art_box(sprite_id, feet_world)
-	return FORE_FADE if cell.intersects(hero_cell_world(hero_world_point)) else 1.0
+	var visibility := sprite_occlusion_descriptor(sprite_id, feet_world)
+	return FORE_FADE if visibility_intersects(visibility, hero_cell_world(hero_world_point)) else 1.0
 
 
 func hero_cell_world(hero_world_point: Vector2) -> Rect2:
@@ -891,11 +984,17 @@ func hero_cover_report(hero_world_point: Vector2) -> Dictionary:
 
 
 func draw_structure(canvas: CanvasItem, sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> void:
-	var alpha := structure_fade(sprite_id, feet_world, hero_world_point)
-	## The authored fade still says how solid the ruin is overall; the cutaway then
-	## keeps the hero's own window readable instead of washing the whole ruin out.
+	var alpha := structure_draw_alpha(sprite_id, feet_world, hero_world_point)
+	## A foreground ruin keeps its authored opacity outside the exact player
+	## window.  Only the window is reduced by the shared cutaway budget, so a gate
+	## does not turn into a translucent ghost merely because one pixel overlaps.
 	var cut := _cutaway_for_cell(sprite_id, feet_world, hero_world_point)
 	draw_sprite(canvas, sprite_id, feet_world, false, Color(1.0, 1.0, 1.0, alpha), cut["window"], cut["alpha"])
+
+
+func structure_draw_alpha(sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> float:
+	var cut := _cutaway_for_cell(sprite_id, feet_world, hero_world_point)
+	return 1.0 if (cut["window"] as Rect2).has_area() else structure_fade(sprite_id, feet_world, hero_world_point)
 
 
 func draw_tower(canvas: CanvasItem, hero_world_point: Vector2) -> void:
@@ -928,9 +1027,13 @@ func boss_draw_parts(feet_world: Vector2, phase: int, left_hand_delta_gameplay: 
 func draw_boss_part(canvas: CanvasItem, part: Dictionary, hero_world_point: Vector2, sort_rank: int = 3, stable_id: String = "enemy/boss/part") -> void:
 	var feet: Vector2 = part.feet
 	var anchor: Vector2 = part.sort_feet
-	var box := sprite_art_box(String(part.sprite_id), feet)
-	var cut := cutaway_for(box, anchor, hero_world_point, sort_rank, stable_id)
-	var alpha := FORE_FADE if SortRelation.is_front(SortRelation.entry(anchor.y, sort_rank, stable_id), _hero_sort_entry(hero_world_point)) and box.intersects(hero_cell_world(hero_world_point)) else 1.0
+	var visibility := sprite_occlusion_descriptor(String(part.sprite_id), feet)
+	var box: Rect2 = visibility.get("art_box", Rect2())
+	var cut := cutaway_for(box, anchor, hero_world_point, sort_rank, stable_id, visibility)
+	## Boss parts use the same local window as ruins.  Keeping the rest of the
+	## part opaque preserves its mass and silhouette while the player remains
+	## readable at the actual overlap.
+	var alpha := 1.0
 	var tint: Color = part.get("tint", Color.WHITE)
 	tint.a *= alpha
 	draw_sprite(canvas, String(part.sprite_id), feet, false, tint, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
@@ -960,9 +1063,10 @@ func boss_fade_alpha(
 	for part: Dictionary in boss_draw_parts(feet_world, phase, left_hand_delta_gameplay, right_hand_delta_gameplay, pose_frame):
 		var part_id := String(part.get("part_id", "part"))
 		var sort_feet: Vector2 = part.get("sort_feet", feet_world)
-		var art_box := sprite_art_box(String(part.get("sprite_id", "")), part.get("feet", feet_world))
+		var visibility := sprite_occlusion_descriptor(String(part.get("sprite_id", "")), part.get("feet", feet_world))
+		var art_box: Rect2 = visibility.get("art_box", Rect2())
 		var actor_sort := SortRelation.entry(sort_feet.y, 3, "enemy/boss/%s" % part_id)
-		if SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) and art_box.intersects(hero_cell):
+		if SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) and visibility_intersects(visibility, hero_cell):
 			return FORE_FADE
 	return 1.0
 
@@ -1050,6 +1154,89 @@ func _texture_image(texture: Texture2D) -> Image:
 	return _texture_images.get(identity) as Image
 
 
+func _occlusion_descriptor(texture: Texture2D, source_rect: Rect2, destination: Rect2, flip_x: bool) -> Dictionary:
+	var fallback := {
+		"texture": texture,
+		"source_rect": source_rect,
+		"destination": destination,
+		"flip_x": flip_x,
+		"art_box": destination,
+		"conservative": true,
+	}
+	if texture == null or source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
+		return fallback
+	var mask := _alpha_mask(texture, source_rect)
+	## Keep the public art box identical to sprite_art_box/frame_art_box.  The
+	## descriptor's mask remains unpadded and decides exact pixel intersection.
+	var visible := _visible_region_bounds(texture, source_rect)
+	if flip_x:
+		visible.position.x = source_rect.size.x - (visible.position.x + visible.size.x)
+	fallback["art_box"] = Rect2(destination.position + visible.position, visible.size)
+	fallback["mask"] = mask
+	fallback["conservative"] = bool(mask.get("conservative", true))
+	return fallback
+
+
+## Cache each source region as horizontal visible runs.  This keeps exact alpha
+## intersection cheap enough for the per-frame actor/structure prepass while
+## preserving holes in gates, hands, cores and broken walls.
+func _alpha_mask(texture: Texture2D, source_rect: Rect2) -> Dictionary:
+	var fallback := {
+		"bounds": Rect2(Vector2.ZERO, source_rect.size),
+		"rows": [],
+		"conservative": true,
+	}
+	if texture == null or source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
+		return fallback
+	var key := _texture_cache_key(texture, source_rect)
+	if _alpha_masks.has(key):
+		return _alpha_masks[key] as Dictionary
+	var image := _texture_image(texture)
+	if image == null or image.is_empty():
+		_alpha_masks[key] = fallback
+		return fallback
+	var source := Rect2i(source_rect.position.round(), source_rect.size.round())
+	var width := maxi(0, source.size.x)
+	var height := maxi(0, source.size.y)
+	var rows: Array = []
+	var min_x := width
+	var min_y := height
+	var max_x := 0
+	var max_y := 0
+	var found := false
+	var image_size := image.get_size()
+	for local_y in range(height):
+		var runs := PackedInt32Array()
+		var run_start := -1
+		for local_x in range(width):
+			var image_x := source.position.x + local_x
+			var image_y := source.position.y + local_y
+			var visible := image_x >= 0 and image_y >= 0 and image_x < image_size.x and image_y < image_size.y and image.get_pixel(image_x, image_y).a > ALPHA_OCCLUSION_THRESHOLD
+			if visible and run_start < 0:
+				run_start = local_x
+			if not visible and run_start >= 0:
+				runs.append(run_start)
+				runs.append(local_x)
+				run_start = -1
+		if run_start >= 0:
+			runs.append(run_start)
+			runs.append(width)
+		if runs.size() > 0:
+			found = true
+			min_x = mini(min_x, int(runs[0]))
+			max_x = maxi(max_x, int(runs[runs.size() - 1]))
+			min_y = mini(min_y, local_y)
+			max_y = local_y + 1
+		rows.append(runs)
+	var result := fallback.duplicate(true)
+	result["rows"] = rows
+	if found:
+		result["bounds"] = Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
+		result["conservative"] = false
+	_alpha_masks[key] = result
+	return result
+
+
 func _visible_region_bounds(texture: Texture2D, source_rect: Rect2) -> Rect2:
 	var fallback := Rect2(Vector2.ZERO, source_rect.size)
 	if texture == null or source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
@@ -1057,37 +1244,11 @@ func _visible_region_bounds(texture: Texture2D, source_rect: Rect2) -> Rect2:
 	var key := _texture_cache_key(texture, source_rect)
 	if _alpha_visible_bounds.has(key):
 		return _alpha_visible_bounds[key] as Rect2
-	var image := _texture_image(texture)
-	if image == null or image.is_empty():
+	var mask := _alpha_mask(texture, source_rect)
+	var local: Rect2 = mask.get("bounds", fallback)
+	if bool(mask.get("conservative", true)):
 		_alpha_visible_bounds[key] = fallback
 		return fallback
-	var source := Rect2i(source_rect.position.round(), source_rect.size.round())
-	var image_size := image.get_size()
-	var start_x := maxi(0, source.position.x)
-	var start_y := maxi(0, source.position.y)
-	var end_x := mini(image_size.x, source.end.x)
-	var end_y := mini(image_size.y, source.end.y)
-	var min_x := end_x
-	var min_y := end_y
-	var max_x := start_x
-	var max_y := start_y
-	var found := false
-	for y in range(start_y, end_y):
-		for x in range(start_x, end_x):
-			if image.get_pixel(x, y).a <= 0.0:
-				continue
-			found = true
-			min_x = mini(min_x, x)
-			min_y = mini(min_y, y)
-			max_x = maxi(max_x, x + 1)
-			max_y = maxi(max_y, y + 1)
-	if not found:
-		_alpha_visible_bounds[key] = fallback
-		return fallback
-	var local := Rect2(
-		Vector2(min_x - source.position.x, min_y - source.position.y),
-		Vector2(max_x - min_x, max_y - min_y)
-	)
 	local = local.grow(ALPHA_VISIBLE_BOUNDS_PADDING).intersection(fallback)
 	if local.size.x <= 0.0 or local.size.y <= 0.0:
 		local = fallback

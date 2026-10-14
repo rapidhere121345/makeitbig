@@ -241,6 +241,36 @@ func _test_alpha_visible_bounds(view) -> void:
 	transparent_image.fill(Color(0.0, 0.0, 0.0, 0.0))
 	var transparent_texture := ImageTexture.create_from_image(transparent_image)
 	_expect(view.frame_art_box(transparent_texture, Rect2(0, 0, 12, 10), feet, Vector2(4, 6)) == dynamic_full, "alpha: full-transparent frame did not use full-cell fallback")
+	var hole_image := Image.create(12, 10, false, Image.FORMAT_RGBA8)
+	hole_image.fill(Color(0.0, 0.0, 0.0, 0.0))
+	for x in range(2, 10):
+		hole_image.set_pixel(x, 2, Color.WHITE)
+		hole_image.set_pixel(x, 7, Color.WHITE)
+	for y in range(2, 8):
+		hole_image.set_pixel(2, y, Color.WHITE)
+		hole_image.set_pixel(9, y, Color.WHITE)
+	var hole_texture := ImageTexture.create_from_image(hole_image)
+	var hole_descriptor: Dictionary = view.frame_occlusion_descriptor(hole_texture, Rect2(0, 0, 12, 10), feet, Vector2(4, 6))
+	var hole_destination: Rect2 = hole_descriptor["destination"]
+	var hole_center := Rect2(hole_destination.position + Vector2(4, 4), Vector2(3, 2))
+	var hole_edge := Rect2(hole_destination.position + Vector2(2, 4), Vector2(1, 2))
+	_expect(hole_descriptor["art_box"].intersects(hole_center), "alpha: concave mask test did not retain its conservative art box")
+	_expect(not view.occlusion_descriptor_intersects(hole_descriptor, hole_center), "alpha: transparent hole was treated as a visible occluder")
+	_expect(view.occlusion_descriptor_intersects(hole_descriptor, hole_edge), "alpha: visible mask edge was lost during exact intersection")
+	var hole_flip: Dictionary = view.frame_occlusion_descriptor(hole_texture, Rect2(0, 0, 12, 10), feet, Vector2(4, 6), Vector2.ZERO, true)
+	var flipped_edge := Rect2(hole_flip["destination"].position + Vector2(9, 4), Vector2(1, 2))
+	_expect(view.occlusion_descriptor_intersects(hole_flip, flipped_edge), "alpha: flipped concave mask did not mirror its visible edge")
+	var asymmetric_image := Image.create(6, 6, false, Image.FORMAT_RGBA8)
+	asymmetric_image.fill(Color(0.0, 0.0, 0.0, 0.0))
+	for x in range(0, 2):
+		for y in range(0, 2):
+			asymmetric_image.set_pixel(x, y, Color.WHITE)
+	var asymmetric_texture := ImageTexture.create_from_image(asymmetric_image)
+	var asymmetric_flip: Dictionary = view.frame_occlusion_descriptor(asymmetric_texture, Rect2(0, 0, 6, 6), feet, Vector2.ZERO, Vector2.ZERO, true)
+	var flipped_top := Rect2(asymmetric_flip["destination"].position + Vector2(4, 0), Vector2(2, 2))
+	var flipped_bottom := Rect2(asymmetric_flip["destination"].position + Vector2(4, 4), Vector2(2, 2))
+	_expect(view.occlusion_descriptor_intersects(asymmetric_flip, flipped_top), "alpha: flip_x lost the authored top row")
+	_expect(not view.occlusion_descriptor_intersects(asymmetric_flip, flipped_bottom), "alpha: flip_x incorrectly mirrored the source vertically")
 
 	var presenter := ArenaActorPresenterScript.new()
 	var dynamic_frame := {"texture": texture, "rect": Rect2i(0, 0, 12, 10), "anchor": Vector2i(4, 6), "fallback": false, "flip_x": true}
@@ -364,6 +394,7 @@ func _check_arena_cell(view, sprite_id: String, feet_gameplay: Vector2, hero_gam
 
 	var feet: Vector2 = view.gameplay_to_world(feet_gameplay)
 	var authored: float = view.structure_fade(sprite_id, feet, hero_world)
+	_expect(is_equal_approx(view.structure_draw_alpha(sprite_id, feet, hero_world), 1.0), "arena: %s globally faded the whole ruin instead of using the local cutaway window" % label)
 	var drawn: Array[Dictionary] = view.cutaway_geometry(sprite_id, feet, hero_world, authored)
 	_expect(not drawn.is_empty(), "arena: %s keeps its single-rectangle draw while covering the hero" % label)
 	var window_seen := false
