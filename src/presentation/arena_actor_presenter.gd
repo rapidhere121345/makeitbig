@@ -15,6 +15,7 @@ const EnemyAnimationScript := preload("res://src/presentation/enemy_animation.gd
 const BossActionPoseScript := preload("res://src/presentation/boss_action_pose.gd")
 const Snapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
 const PaletteScript := preload("res://src/presentation/combat_palette.gd")
+const SortRelation := preload("res://src/presentation/occlusion_query.gd")
 
 const FRAME_KEYS := {
 	"presentation_enabled": "bool",
@@ -64,6 +65,7 @@ func contract_report() -> Dictionary:
 		"fallback_art": false,
 		"native_sort_interface": "sync_sort_views(WorldPresenter, detached actor frame, ArenaWorldView); host uses gameplay_transform on WorldPresenter",
 		"sort_identity": "stable entity/part IDs; no Node instance IDs",
+		"sort_relation": "baseline/y, rank, stable id shared by draw and occlusion",
 	}
 
 
@@ -139,12 +141,15 @@ func draw_shadows(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted)
 ## Body/core use one enemy record and one phase; each hand uses its gameplay pose.
 func draw_list(frame: Dictionary, world_view: RefCounted) -> Array[Dictionary]:
 	var drawables: Array[Dictionary] = []
-	for entry: Dictionary in world_view.structure_draw_list():
+	var structure_list: Array[Dictionary] = world_view.structure_draw_list()
+	for structure_index: int in structure_list.size():
+		var entry: Dictionary = structure_list[structure_index]
 		var feet: Vector2 = entry.feet_world
 		var sprite_id := String(entry.sprite_id)
-		drawables.append({"id": "structure/%s/%s" % [sprite_id, str(feet)], "y": feet.y, "rank": 0, "kind": "structure", "sprite": sprite_id, "world": feet})
+		var stable_id := "structure/%d/%s" % [structure_index, sprite_id]
+		drawables.append({"id": stable_id, "stable_id": stable_id, "baseline_y": feet.y, "y": feet.y, "rank": 0, "kind": "structure", "sprite": sprite_id, "world": feet})
 	var tower_feet: Vector2 = world_view.tower_feet_world()
-	drawables.append({"id": "structure/tower", "y": tower_feet.y, "rank": 0, "kind": "tower", "world": tower_feet})
+	drawables.append({"id": "structure/tower", "stable_id": "structure/tower", "baseline_y": tower_feet.y, "y": tower_feet.y, "rank": 0, "kind": "tower", "world": tower_feet})
 	for enemy: CombatEnemyState in frame["enemies"]:
 		var feet: Vector2 = world_view.gameplay_to_world(enemy.position)
 		if enemy.is_boss:
@@ -153,14 +158,17 @@ func draw_list(frame: Dictionary, world_view: RefCounted) -> Array[Dictionary]:
 			var right_base := enemy.position + Vector2(38.0 if awakened else 34.0, 12.0 if awakened else 0.0)
 			for part: Dictionary in world_view.boss_draw_parts(feet, 2 if awakened else 1, enemy.left_hand_position - left_base, enemy.right_hand_position - right_base, boss_visual_pose(enemy, int(frame["sim_tick"]))):
 				var anchor: Vector2 = part.sort_feet
-				drawables.append({"id": "enemy/%d/%s" % [enemy.entity_id, part.part_id], "entity_id": enemy.entity_id, "part_id": part.part_id, "y": anchor.y, "rank": 3, "kind": "boss_part", "world": anchor, "enemy": enemy, "part": part})
+				var stable_id := "enemy/%d/%s" % [enemy.entity_id, part.part_id]
+				drawables.append({"id": stable_id, "stable_id": stable_id, "entity_id": enemy.entity_id, "part_id": part.part_id, "baseline_y": anchor.y, "y": anchor.y, "rank": 3, "kind": "boss_part", "world": anchor, "enemy": enemy, "part": part})
 		else:
-			drawables.append({"id": "enemy/%d/body" % enemy.entity_id, "entity_id": enemy.entity_id, "part_id": "body", "y": feet.y, "rank": 1, "kind": "enemy", "world": feet, "enemy": enemy})
+			var stable_id := "enemy/%d/body" % enemy.entity_id
+			drawables.append({"id": stable_id, "stable_id": stable_id, "entity_id": enemy.entity_id, "part_id": "body", "baseline_y": feet.y, "y": feet.y, "rank": 1, "kind": "enemy", "world": feet, "enemy": enemy})
 	for corpse: Dictionary in frame["enemy_corpses"]:
 		var feet: Vector2 = world_view.gameplay_to_world(corpse.get("position", Vector2.ZERO) as Vector2)
-		drawables.append({"id": "corpse/%d" % int(corpse.get("entity_id", 0)), "y": feet.y, "rank": 1, "kind": "corpse", "world": feet, "corpse": corpse})
+		var stable_id := "corpse/%d" % int(corpse.get("entity_id", 0))
+		drawables.append({"id": stable_id, "stable_id": stable_id, "baseline_y": feet.y, "y": feet.y, "rank": 1, "kind": "corpse", "world": feet, "corpse": corpse})
 	var hero_world: Vector2 = world_view.gameplay_to_world(frame["player_position"])
-	drawables.append({"id": "ranger/body", "entity_id": "ranger", "part_id": "body", "y": hero_world.y, "rank": 2, "kind": "player", "world": hero_world})
+	drawables.append({"id": "ranger/body", "stable_id": "ranger/body", "entity_id": "ranger", "part_id": "body", "baseline_y": hero_world.y, "y": hero_world.y, "rank": 2, "kind": "player", "world": hero_world})
 	drawables.sort_custom(_drawable_precedes)
 	return drawables
 
@@ -179,21 +187,26 @@ func draw(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted) -> void
 
 func _prepare_occlusion(drawables: Array[Dictionary], frame: Dictionary, world_view: RefCounted) -> void:
 	var front_cells: Array[Dictionary] = []
-	var hero_drawn := false
+	var hero_drawable: Dictionary = {}
 	for drawable: Dictionary in drawables:
 		if drawable.kind == "player":
-			hero_drawn = true
-		elif hero_drawn:
+			hero_drawable = drawable
+			break
+	if hero_drawable.is_empty():
+		world_view.prepare_actor_occlusion([], world_view.gameplay_to_world(frame["player_position"]))
+		return
+	for drawable: Dictionary in drawables:
+		if drawable.kind != "player" and SortRelation.is_front(drawable, hero_drawable):
 			var feet: Vector2 = drawable.world
 			if drawable.kind == "boss_part":
 				var part: Dictionary = drawable.part
-				front_cells.append({"id": drawable.id, "feet_world": feet, "art_box": world_view.sprite_art_box(String(part.sprite_id), part.feet), "base_alpha": 1.0})
+				front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": world_view.sprite_art_box(String(part.sprite_id), part.feet), "base_alpha": 1.0})
 			elif drawable.kind == "corpse":
 				var corpse_frame: Dictionary = drawable.corpse.get("frame", {})
 				if not corpse_frame.is_empty() and not bool(corpse_frame.get("fallback", true)):
-					front_cells.append({"id": drawable.id, "feet_world": feet, "art_box": _enemy_frame_art_box(corpse_frame, feet), "base_alpha": 1.0})
+					front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": _enemy_frame_art_box(corpse_frame, feet), "base_alpha": 1.0})
 			elif drawable.kind == "enemy":
-				front_cells.append({"id": drawable.id, "feet_world": feet, "art_box": _enemy_art_box(frame, drawable.enemy, feet, world_view), "base_alpha": 1.0})
+				front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": _enemy_art_box(frame, drawable.enemy, feet, world_view), "base_alpha": 1.0})
 	world_view.prepare_actor_occlusion(front_cells, world_view.gameplay_to_world(frame["player_position"]))
 
 
@@ -205,13 +218,13 @@ func draw_entry(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, d
 		"tower":
 			world_view.draw_tower(canvas, hero)
 		"boss_part":
-			world_view.draw_boss_part(canvas, drawable.part, hero)
+			world_view.draw_boss_part(canvas, drawable.part, hero, int(drawable.rank), String(drawable.id))
 			if String(drawable.part_id) == "body":
 				_draw_boss_world_bar(canvas, frame, world_view, drawable.enemy)
 		"enemy":
-			_draw_enemy(canvas, frame, world_view, drawable.enemy)
+			_draw_enemy(canvas, frame, world_view, drawable.enemy, int(drawable.rank), String(drawable.id))
 		"corpse":
-			_draw_enemy_corpse(canvas, frame, world_view, drawable.corpse)
+			_draw_enemy_corpse(canvas, frame, world_view, drawable.corpse, int(drawable.rank), String(drawable.id))
 		"player":
 			_draw_player(canvas, frame, world_view)
 
@@ -306,11 +319,7 @@ func _record_report(frame: Dictionary, pass_name: String) -> void:
 
 
 func _drawable_precedes(left: Dictionary, right: Dictionary) -> bool:
-	if float(left["y"]) != float(right["y"]):
-		return float(left["y"]) < float(right["y"])
-	if int(left["rank"]) != int(right["rank"]):
-		return int(left["rank"]) < int(right["rank"])
-	return String(left["id"]) < String(right["id"])
+	return SortRelation.precedes(left, right)
 
 
 func _draw_player(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted) -> void:
@@ -340,7 +349,7 @@ func _draw_ranger_frame(canvas: CanvasItem, frame: Dictionary, world_view: RefCo
 	RangerMotionOverlayScript.draw_front(canvas, feet_world, facing, action, frame_index, float(frame["ranger_visual_time"]))
 
 
-func _draw_enemy(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, enemy: CombatEnemyState) -> void:
+func _draw_enemy(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, enemy: CombatEnemyState, sort_rank: int = 1, stable_id: String = "") -> void:
 	var feet: Vector2 = world_view.gameplay_to_world(enemy.position)
 	var role_tint := Color(1.20, 1.18, 1.14, 1.0)
 	match enemy.kind_id:
@@ -349,20 +358,20 @@ func _draw_enemy(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, 
 	var modulate := Color(1.6, 1.6, 1.6, 1.0) if int(frame["sim_tick"]) < enemy.hit_flash_until_tick else role_tint
 	var action_frame := _enemy_action_frame(frame, enemy.entity_id)
 	if not action_frame.is_empty():
-		var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet), feet, world_view.gameplay_to_world(frame["player_position"]))
+		var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
 		_draw_enemy_action_frame(canvas, world_view, action_frame, feet, modulate, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 	else:
 		var sprite_id := "enemy.%s.%s" % [_enemy_role_id(enemy), _enemy_pose_id(enemy)]
-		var cut: Dictionary = world_view.cutaway_for(world_view.sprite_art_box(sprite_id, feet), feet, world_view.gameplay_to_world(frame["player_position"]))
+		var cut: Dictionary = world_view.cutaway_for(world_view.sprite_art_box(sprite_id, feet), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
 		world_view.draw_sprite(canvas, sprite_id, feet, enemy.facing.x < -0.001, modulate, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 
 
-func _draw_enemy_corpse(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, corpse: Dictionary) -> void:
+func _draw_enemy_corpse(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, corpse: Dictionary, sort_rank: int = 1, stable_id: String = "") -> void:
 	var action_frame: Dictionary = corpse.get("frame", {})
 	if action_frame.is_empty() or bool(action_frame.get("fallback", true)):
 		return
 	var feet: Vector2 = world_view.gameplay_to_world(corpse.get("position", Vector2.ZERO) as Vector2)
-	var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet), feet, world_view.gameplay_to_world(frame["player_position"]))
+	var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
 	_draw_enemy_action_frame(canvas, world_view, action_frame, feet, Color.WHITE, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 
 
