@@ -19,6 +19,7 @@ extends RefCounted
 const PaletteScript = preload("res://src/presentation/combat_palette.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
+const SortRelation = preload("res://src/presentation/occlusion_query.gd")
 const TOWER_LIGHT_FEET := Vector2(212.0, 394.0)
 const RUIN_LIGHT_FEET := Vector2(703.0, 220.0)
 const ATMOSPHERE_PRESET := "arena"
@@ -584,35 +585,48 @@ func sprite_art_box(sprite_id: String, feet_world: Vector2) -> Rect2:
 	return Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
 
 
+func _hero_sort_entry(hero_world_point: Vector2) -> Dictionary:
+	return SortRelation.entry(hero_world_point.y, 2, "ranger/body")
+
+
+func _structure_stable_id(structure_index: int, sprite_id: String) -> String:
+	return "structure/%d/%s" % [structure_index, sprite_id]
+
+
 ## Every ruin and the tower that really draws in front of the hero and reaches
 ## into the hero's own window. Anything the feet sort already draws first cannot
 ## hide the hero, and every other cell keeps its authored alpha untouched.
 func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
 	var window := cutaway_window(hero_cell_world(hero_world_point))
+	var hero_sort := _hero_sort_entry(hero_world_point)
 	var found: Array[Dictionary] = []
-	for placement in _structures:
+	for structure_index: int in _structures.size():
+		var placement: Dictionary = _structures[structure_index]
 		var sprite_id := String(placement.get("id", ""))
 		var feet := gameplay_to_world(_point(placement.get("feet", [])))
-		if feet.y <= hero_world_point.y:
+		var stable_id := _structure_stable_id(structure_index, sprite_id)
+		if not SortRelation.is_front(SortRelation.entry(feet.y, 0, stable_id), hero_sort):
 			continue
 		var box := sprite_art_box(sprite_id, feet)
 		if box.size.x <= 0.0 or not box.intersects(window):
 			continue
 		found.append({
 			"id": sprite_id,
+			"stable_id": stable_id,
 			"feet_world": feet,
 			"art_box": box,
 			"overlap": box.intersection(window),
 			"base_alpha": 1.0,
 		})
 	var tower_feet := tower_feet_world()
-	if tower_feet.y > hero_world_point.y:
+	if SortRelation.is_front(SortRelation.entry(tower_feet.y, 0, "structure/tower"), hero_sort):
 		var upper := sprite_art_box("tower.upper", tower_feet)
 		var base := sprite_art_box("tower.base", tower_feet)
 		var tower_box := upper.merge(base)
 		if tower_box.intersects(window):
 			found.append({
 				"id": "tower",
+				"stable_id": "structure/tower",
 				"feet_world": tower_feet,
 				"art_box": tower_box,
 				"overlap": tower_box.intersection(window),
@@ -625,10 +639,11 @@ func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
 ## itself (main.gd owns the enemies): the window, whether the actor draws in
 ## front of the hero and the local alpha its own cell must use. An empty window
 ## means the actor keeps its authored alpha for this frame.
-func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2) -> Dictionary:
+func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2, sort_rank: int = 1, stable_id: String = "actor") -> Dictionary:
 	var cell := hero_cell_world(hero_world_point)
 	var window := cutaway_window(cell)
-	if feet_world.y <= hero_world_point.y or not art_box.intersects(window):
+	var actor_sort := SortRelation.entry(feet_world.y, sort_rank, stable_id)
+	if not SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) or not art_box.intersects(window):
 		return {"window": window, "local_alpha": 1.0, "in_front": false}
 	## The ruins and the tower keep the same budget this actor shares, so the
 	## whole foreground stack still composes under CUTAWAY_TOTAL_OPACITY.
@@ -642,9 +657,14 @@ func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2)
 func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2) -> void:
 	_actor_occluders.clear()
 	var window := cutaway_window(hero_cell_world(hero_world_point))
+	var hero_sort := _hero_sort_entry(hero_world_point)
 	for cell: Dictionary in cells:
 		var box: Rect2 = cell["art_box"]
-		if box.intersects(window):
+		var stable_id := String(cell.get("stable_id", cell.get("id", "actor")))
+		var sort_rank := int(cell.get("sort_rank", cell.get("rank", 1)))
+		var baseline_y := float(cell.get("baseline_y", (cell.get("feet_world", Vector2.ZERO) as Vector2).y))
+		var actor_sort := SortRelation.entry(baseline_y, sort_rank, stable_id)
+		if SortRelation.is_front(actor_sort, hero_sort) and box.intersects(window):
 			_actor_occluders.append(cell.duplicate())
 	_actor_cutaway_ready = true
 	_cutaway_hero = Vector2(INF, INF)
@@ -652,7 +672,7 @@ func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2
 
 func _tower_upper_faded(hero_world_point: Vector2) -> bool:
 	var feet := tower_feet_world()
-	if feet.y <= hero_world_point.y:
+	if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), _hero_sort_entry(hero_world_point)):
 		return false
 	return Rect2(feet + Vector2(-64.0, -184.0), Vector2(128.0, 148.0)).intersects(hero_cell_world(hero_world_point))
 
@@ -687,14 +707,19 @@ func _cutaway_for_cell(sprite_id: String, feet_world: Vector2, hero_world_point:
 ## The colossus is one occluder drawn as four sprites: when it really stands in
 ## front of the hero they all share a single split of the budget the ruins are not
 ## already using, so body, core and both hands can never stack opaquely.
-func _boss_cutaway(sprite_ids: Array, feet_list: Array, feet_world: Vector2, hero_world_point: Vector2) -> Dictionary:
-	if feet_world.y < hero_world_point.y:
-		return {"window": Rect2(), "alpha": 1.0}
+func _boss_cutaway(sprite_ids: Array, feet_list: Array, feet_world: Vector2, hero_world_point: Vector2, sort_feet_list: Array = []) -> Dictionary:
 	var plan := _cutaway_plan(hero_world_point)
 	var window: Rect2 = plan["window"]
 	var overlapping := 0
+	var hero_sort := _hero_sort_entry(hero_world_point)
+	var part_ids := ["body", "core", "left_hand", "right_hand"]
 	for index: int in sprite_ids.size():
-		if sprite_art_box(String(sprite_ids[index]), feet_list[index] as Vector2).intersects(window):
+		var sort_feet: Vector2 = feet_world if index < 2 else feet_list[index]
+		if index < sort_feet_list.size():
+			sort_feet = sort_feet_list[index] as Vector2
+		var sort_id := "enemy/boss/%s" % String(part_ids[index] if index < part_ids.size() else sprite_ids[index])
+		var actor_sort := SortRelation.entry(sort_feet.y, 3, sort_id)
+		if SortRelation.is_front(actor_sort, hero_sort) and sprite_art_box(String(sprite_ids[index]), feet_list[index] as Vector2).intersects(window):
 			overlapping += 1
 	if overlapping <= 0:
 		return {"window": Rect2(), "alpha": 1.0}
@@ -758,7 +783,7 @@ func structure_fade(sprite_id: String, feet_world: Vector2, hero_world_point: Ve
 	var metadata := sprite(sprite_id)
 	if metadata.is_empty():
 		return 1.0
-	if feet_world.y <= hero_world_point.y:
+	if not SortRelation.is_front(SortRelation.entry(feet_world.y, 0, "structure/%s" % sprite_id), _hero_sort_entry(hero_world_point)):
 		return 1.0
 	var cell := Rect2(feet_world - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
 	return FORE_FADE if cell.intersects(hero_cell_world(hero_world_point)) else 1.0
@@ -857,12 +882,12 @@ func boss_draw_parts(feet_world: Vector2, phase: int, left_hand_delta_gameplay: 
 
 ## One independently sorted authored cell. The sort anchor, rather than the
 ## logical Boss's root, decides whether this part is in front of the player.
-func draw_boss_part(canvas: CanvasItem, part: Dictionary, hero_world_point: Vector2) -> void:
+func draw_boss_part(canvas: CanvasItem, part: Dictionary, hero_world_point: Vector2, sort_rank: int = 3, stable_id: String = "enemy/boss/part") -> void:
 	var feet: Vector2 = part.feet
 	var anchor: Vector2 = part.sort_feet
 	var box := sprite_art_box(String(part.sprite_id), feet)
-	var cut := cutaway_for(box, anchor, hero_world_point)
-	var alpha := FORE_FADE if anchor.y > hero_world_point.y and box.intersects(hero_cell_world(hero_world_point)) else 1.0
+	var cut := cutaway_for(box, anchor, hero_world_point, sort_rank, stable_id)
+	var alpha := FORE_FADE if SortRelation.is_front(SortRelation.entry(anchor.y, sort_rank, stable_id), _hero_sort_entry(hero_world_point)) and box.intersects(hero_cell_world(hero_world_point)) else 1.0
 	var tint: Color = part.get("tint", Color.WHITE)
 	tint.a *= alpha
 	draw_sprite(canvas, String(part.sprite_id), feet, false, tint, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
@@ -882,11 +907,14 @@ func boss_parts_world(feet_world: Vector2) -> Array[Rect2]:
 ## 1.0 when the colossus cannot hide the hero, FORE_FADE when it is in front of
 ## and overlapping the hero's real cells.
 func boss_fade_alpha(feet_world: Vector2, hero_world_point: Vector2) -> float:
-	if feet_world.y <= hero_world_point.y:
-		return 1.0
 	var hero_cell := hero_cell_world(hero_world_point)
-	for part in boss_parts_world(feet_world):
-		if part.intersects(hero_cell):
+	var part_ids := ["body", "core", "left_hand", "right_hand"]
+	var sort_offsets := [Vector2.ZERO, Vector2.ZERO, BOSS_HAND_LEFT_OFFSET, BOSS_HAND_RIGHT_OFFSET]
+	for index: int in boss_parts_world(feet_world).size():
+		var part: Rect2 = boss_parts_world(feet_world)[index]
+		var sort_feet := feet_world + (sort_offsets[index] as Vector2)
+		var actor_sort := SortRelation.entry(sort_feet.y, 3, "enemy/boss/%s" % String(part_ids[index]))
+		if SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) and part.intersects(hero_cell):
 			return FORE_FADE
 	return 1.0
 

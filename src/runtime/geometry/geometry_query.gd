@@ -14,11 +14,23 @@ extends RefCounted
 ## ids, scene order, or rendering state.
 
 const EPSILON := 0.000001
-## Contact tolerance absorbs the sub-pixel rounding introduced when authored
-## UV vertices are scaled into world pixels.  It is only used to classify a
-## mathematically tangent contact; it never moves an actor or widens a shape.
-const CONTACT_EPSILON := 0.0001
-const TIME_EPSILON := 0.000001
+## Distance tolerance absorbs the sub-pixel rounding introduced when authored
+## UV vertices are scaled into world pixels.  It classifies a contact only;
+## it never moves an actor or widens a shape.
+const DISTANCE_EPSILON := 0.0001
+## TOI tolerance is expressed in normalized sweep time and is kept separate
+## from geometric distance classification.
+const TOI_EPSILON := 0.000001
+## Discriminants are in squared-distance units.  This relative tolerance keeps
+## near tangents stable for both short and long sweeps without changing the
+## distance tolerance used by position queries.
+const DISCRIMINANT_EPSILON := 0.0000001
+## A projected tangent can retain a few representable ulps in its inward
+## component.  This is a directional comparison tolerance, not a clearance.
+const DIRECTION_EPSILON := 0.00001
+## Compatibility names retained for existing consumers of the pure query API.
+const CONTACT_EPSILON := DISTANCE_EPSILON
+const TIME_EPSILON := TOI_EPSILON
 const MIN_SHAPE_SIZE := 0.000001
 
 var _blockers: Dictionary = {}
@@ -312,12 +324,12 @@ func _shape_state(point: Vector2, blocker: Dictionary, footprint_radius: float) 
 		var normal := (point - center).normalized()
 		if normal.length_squared() <= EPSILON * EPSILON:
 			normal = Vector2.RIGHT
-		var penetrating := distance < combined_radius - CONTACT_EPSILON
+		var penetrating := distance < combined_radius - DISTANCE_EPSILON
 		return {
 			"distance": distance,
 			"normal": normal,
-			"inside": distance < combined_radius - CONTACT_EPSILON,
-			"boundary": absf(distance - combined_radius) <= CONTACT_EPSILON,
+			"inside": distance < combined_radius - DISTANCE_EPSILON,
+			"boundary": absf(distance - combined_radius) <= DISTANCE_EPSILON,
 			"penetrating": penetrating,
 		}
 	return _polygon_state(point, blocker["points"], footprint_radius)
@@ -338,9 +350,9 @@ func _polygon_state(point: Vector2, points: PackedVector2Array, footprint_radius
 		var edge_length := edge.length()
 		var outward := Vector2(edge.y, -edge.x) / edge_length
 		var signed_side := (point - a).dot(outward)
-		if signed_side > CONTACT_EPSILON:
+		if signed_side > DISTANCE_EPSILON:
 			inside = false
-		if absf(signed_side) <= CONTACT_EPSILON:
+		if absf(signed_side) <= DISTANCE_EPSILON:
 			boundary = true
 		var along := clampf((point - a).dot(edge) / edge.length_squared(), 0.0, 1.0)
 		var candidate := a + edge * along
@@ -354,7 +366,7 @@ func _polygon_state(point: Vector2, points: PackedVector2Array, footprint_radius
 
 	var distance := sqrt(maxf(0.0, closest_distance_squared))
 	var normal := point - closest
-	if closest_along > CONTACT_EPSILON and closest_along < 1.0 - CONTACT_EPSILON:
+	if closest_along > DISTANCE_EPSILON and closest_along < 1.0 - DISTANCE_EPSILON:
 		# Face contacts use the exact authored edge normal.  Reconstructing it
 		# from a nearly tangent point would accumulate a tiny sideways component
 		# over many fixed ticks.
@@ -368,7 +380,7 @@ func _polygon_state(point: Vector2, points: PackedVector2Array, footprint_radius
 		# the only stable direction available.  It is deliberately not used to
 		# relocate the point.
 		normal = closest_outward
-	var penetrating := (inside and not boundary) or distance < footprint_radius - CONTACT_EPSILON
+	var penetrating := (inside and not boundary) or distance < footprint_radius - DISTANCE_EPSILON
 	return {
 		"distance": distance,
 		"normal": normal,
@@ -387,9 +399,9 @@ func _sweep_shape(start: Vector2, motion: Vector2, blocker: Dictionary, footprin
 	var normal: Vector2 = state.get("normal", Vector2.RIGHT)
 	var is_initial := bool(state.get("inside", false)) or bool(state.get("penetrating", false))
 	if String(blocker.get("kind", "")) == "polygon":
-		is_initial = is_initial or distance <= footprint_radius + CONTACT_EPSILON
+		is_initial = is_initial or distance <= footprint_radius + DISTANCE_EPSILON
 	else:
-		is_initial = is_initial or distance <= float(blocker.get("radius", 0.0)) + footprint_radius + CONTACT_EPSILON
+		is_initial = is_initial or distance <= float(blocker.get("radius", 0.0)) + footprint_radius + DISTANCE_EPSILON
 	var touching_start := is_initial and not bool(state.get("penetrating", false))
 	if is_initial:
 		result.append(_make_hit(blocker, start, 0.0, normal, true, bool(state.get("penetrating", false)), "start"))
@@ -425,11 +437,11 @@ func _sweep_shape(start: Vector2, motion: Vector2, blocker: Dictionary, footprin
 			if speed < -EPSILON:
 				var signed_side := (start - a).dot(outward)
 				var time := (footprint_radius - signed_side) / speed
-				if time >= -TIME_EPSILON and time <= 1.0 + TIME_EPSILON:
+				if time >= -TOI_EPSILON and time <= 1.0 + TOI_EPSILON:
 					var clamped_time := clampf(time, 0.0, 1.0)
 					var contact := start + motion * clamped_time
 					var along := (contact - a).dot(tangent)
-					if along >= -CONTACT_EPSILON and along <= edge_length + CONTACT_EPSILON:
+					if along >= -DISTANCE_EPSILON and along <= edge_length + DISTANCE_EPSILON:
 						var contact_state := _polygon_state(contact, points, footprint_radius)
 						if _is_boundary_contact(contact_state, footprint_radius):
 							candidates.append(_make_hit(blocker, contact, clamped_time, contact_state["normal"], false, false, "edge_%04d" % index))
@@ -439,11 +451,21 @@ func _sweep_shape(start: Vector2, motion: Vector2, blocker: Dictionary, footprin
 			var circle_time := _sweep_point_circle(start, motion, vertex, footprint_radius)
 			if circle_time.is_empty():
 				continue
+			var contact_time := float(circle_time["time"])
 			var contact: Vector2 = circle_time["position"]
 			var contact_state := _polygon_state(contact, points, footprint_radius)
 			if not _is_boundary_contact(contact_state, footprint_radius):
+				# Vector2 stores the represented point in real_t precision.  At a
+				# long, shallow sweep that representation can land just beyond the
+				# distance tolerance even though the scalar root is valid.  Find the
+				# latest time which the same position query accepts; this is a TOI
+				# backoff derived from the query, never a normal nudge.
+				contact_time = _validated_point_circle_time(start, motion, vertex, footprint_radius, contact_time)
+				contact = start + motion * contact_time
+				contact_state = _polygon_state(contact, points, footprint_radius)
+			if not _is_boundary_contact(contact_state, footprint_radius):
 				continue
-			candidates.append(_make_hit(blocker, contact, float(circle_time["time"]), contact_state["normal"], false, false, "vertex_%04d" % index))
+			candidates.append(_make_hit(blocker, contact, contact_time, contact_state["normal"], false, false, "vertex_%04d" % index))
 
 	if candidates.is_empty():
 		return result
@@ -453,39 +475,60 @@ func _sweep_shape(start: Vector2, motion: Vector2, blocker: Dictionary, footprin
 		first_time = INF
 		for candidate: Dictionary in candidates:
 			var candidate_time := float(candidate.get("time", 1.0))
-			if candidate_time > TIME_EPSILON:
+			if candidate_time > TOI_EPSILON:
 				first_time = candidate_time
 				break
 		if is_inf(first_time):
 			return result
 	for candidate: Dictionary in candidates:
-		if absf(float(candidate.get("time", 1.0)) - first_time) <= TIME_EPSILON:
+		if absf(float(candidate.get("time", 1.0)) - first_time) <= TOI_EPSILON:
 			result.append(candidate)
 	return result
 
 
 func _sweep_point_circle(start: Vector2, motion: Vector2, center: Vector2, radius: float) -> Dictionary:
-	var a := motion.length_squared()
+	var motion_x := float(motion.x)
+	var motion_y := float(motion.y)
+	var a := motion_x * motion_x + motion_y * motion_y
 	if a <= EPSILON * EPSILON:
 		return {}
-	var offset := start - center
-	var b := offset.dot(motion)
-	var c := offset.length_squared() - radius * radius
+	var offset_x := float(start.x) - float(center.x)
+	var offset_y := float(start.y) - float(center.y)
+	var b := offset_x * motion_x + offset_y * motion_y
+	var c := offset_x * offset_x + offset_y * offset_y - radius * radius
 	var discriminant := b * b - a * c
-	if discriminant < -CONTACT_EPSILON:
+	var discriminant_scale := maxf(1.0, maxf(absf(b * b), absf(a * c)))
+	var discriminant_tolerance := DISCRIMINANT_EPSILON * discriminant_scale
+	if discriminant < -discriminant_tolerance:
 		return {}
 	var root := sqrt(maxf(0.0, discriminant))
 	var time := (-b - root) / a
-	if time < -TIME_EPSILON or time > 1.0 + TIME_EPSILON:
+	if time < -TOI_EPSILON or time > 1.0 + TOI_EPSILON:
 		return {}
 	var clamped_time := clampf(time, 0.0, 1.0)
 	return {"time": clamped_time, "position": start + motion * clamped_time}
 
 
+func _validated_point_circle_time(start: Vector2, motion: Vector2, center: Vector2, radius: float, time: float) -> float:
+	var candidate := start + motion * time
+	if candidate.distance_to(center) >= radius - DISTANCE_EPSILON:
+		return time
+	var lower := 0.0
+	var upper := time
+	for _pass in 12:
+		var middle := (lower + upper) * 0.5
+		var point := start + motion * middle
+		if point.distance_to(center) >= radius - DISTANCE_EPSILON:
+			lower = middle
+		else:
+			upper = middle
+	return lower
+
+
 func _is_boundary_contact(state: Dictionary, radius: float) -> bool:
 	if bool(state.get("inside", false)) and not bool(state.get("boundary", false)):
 		return false
-	return absf(float(state.get("distance", INF)) - radius) <= CONTACT_EPSILON
+	return absf(float(state.get("distance", INF)) - radius) <= DISTANCE_EPSILON
 
 
 func _make_hit(blocker: Dictionary, position: Vector2, time: float, normal: Vector2, initial: bool, penetrating: bool, feature_key: String) -> Dictionary:

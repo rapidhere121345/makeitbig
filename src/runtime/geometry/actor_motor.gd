@@ -9,12 +9,8 @@ extends RefCounted
 
 const GeometryQueryScript := preload("res://src/runtime/geometry/geometry_query.gd")
 
-const MAX_ITERATIONS := 8
+const MAX_ITERATIONS := 32
 const MAX_CONTACT_PROJECTION_PASSES := 8
-## A contact projection can lose a few ulps when an authored UV polygon is
-## expanded by a circular footprint.  This tiny, query-verified separation is
-## only applied after a valid start; it never repairs an invalid authored spawn.
-const CLEARANCE_NUDGE := 0.001
 
 var query
 var radius := 0.0
@@ -167,7 +163,7 @@ func move(start: Vector2, displacement: Vector2, bounds: Rect2 = Rect2()) -> Dic
 		earliest_time = clampf(earliest_time, 0.0, 1.0)
 		var simultaneous: Array[Dictionary] = []
 		for candidate: Dictionary in blocking:
-			if absf(float(candidate.get("time", 1.0)) - earliest_time) <= GeometryQueryScript.TIME_EPSILON:
+			if absf(float(candidate.get("time", 1.0)) - earliest_time) <= GeometryQueryScript.TOI_EPSILON:
 				simultaneous.append(candidate)
 		simultaneous = GeometryQueryScript.sort_hits(simultaneous)
 
@@ -182,13 +178,14 @@ func move(start: Vector2, displacement: Vector2, bounds: Rect2 = Rect2()) -> Dic
 
 		var projected := _project_against_contacts(after, simultaneous)
 		projected = _outer_slide_continuation(position, projected, simultaneous)
+		projected = _query_validated_motion(position, projected, bounds)
 		remaining = projected
 		if remaining.length_squared() <= GeometryQueryScript.EPSILON * GeometryQueryScript.EPSILON:
 			remaining = Vector2.ZERO
 			break
 		# A penetrating start has no valid nearest-walkable projection.  Keep the
 		# authored position and stop this move rather than silently teleporting it.
-		if earliest_time <= GeometryQueryScript.TIME_EPSILON and _has_penetration(simultaneous) and projected.distance_squared_to(after) <= GeometryQueryScript.EPSILON * GeometryQueryScript.EPSILON:
+		if earliest_time <= GeometryQueryScript.TOI_EPSILON and _has_penetration(simultaneous) and projected.distance_squared_to(after) <= GeometryQueryScript.EPSILON * GeometryQueryScript.EPSILON:
 			remaining = Vector2.ZERO
 			break
 
@@ -205,8 +202,6 @@ func _result(
 	enforce_clear: bool = false,
 	bounds: Rect2 = Rect2()
 ) -> Dictionary:
-	if enforce_clear and not is_position_clear(position, bounds):
-		position = _repair_clear_position(position, contacts, bounds)
 	var ordered_contacts := GeometryQueryScript.sort_hits(contacts)
 	var result := {
 		"ok": true,
@@ -226,6 +221,31 @@ func _failure(result: Dictionary, error: String) -> Dictionary:
 	result["ok"] = false
 	result["error"] = error
 	return result
+
+
+## Contact projection is computed from represented Vector2 values.  At large
+## authored coordinates, that can make a mathematically tangent endpoint land
+## just inside the same footprint query used by is_position_clear().  Retain
+## the largest clear fraction found by a deterministic query search; this is a
+## motion validation step, not a clearance nudge or a fabricated repair.
+func _query_validated_motion(position: Vector2, motion: Vector2, bounds: Rect2) -> Vector2:
+	if motion.length_squared() <= GeometryQueryScript.EPSILON * GeometryQueryScript.EPSILON:
+		return Vector2.ZERO
+	var endpoint := position + motion
+	if is_position_clear(endpoint, bounds):
+		return motion
+	var low := 0.0
+	var high := 1.0
+	var accepted_motion := Vector2.ZERO
+	for _pass in 24:
+		var middle := (low + high) * 0.5
+		var candidate_motion := motion * middle
+		if is_position_clear(position + candidate_motion, bounds):
+			low = middle
+			accepted_motion = candidate_motion
+		else:
+			high = middle
+	return accepted_motion
 
 
 ## A tangent line at the outer circle immediately leaves the allowed disk.
@@ -253,44 +273,32 @@ func _outer_slide_continuation(position: Vector2, motion: Vector2, contacts: Arr
 	return retracted - position
 
 
-func _repair_clear_position(position: Vector2, contacts: Array[Dictionary], bounds: Rect2) -> Vector2:
-	var candidates := contacts.duplicate(true)
-	for candidate: Dictionary in sweep(position, Vector2.ZERO, bounds):
-		_append_contact(candidates, candidate)
-	var repaired := position
-	for _pass in MAX_CONTACT_PROJECTION_PASSES:
-		if is_position_clear(repaired, bounds):
-			return repaired
-		var changed := false
-		for contact: Dictionary in GeometryQueryScript.sort_hits(candidates):
-			var normal: Vector2 = contact.get("normal", Vector2.ZERO)
-			if normal.length_squared() <= GeometryQueryScript.EPSILON * GeometryQueryScript.EPSILON:
-				continue
-			normal = normal.normalized()
-			var trial := repaired + normal * CLEARANCE_NUDGE
-			if is_position_clear(trial, bounds):
-				repaired = trial
-				changed = true
-				break
-			if not trial.is_equal_approx(repaired):
-				repaired = trial
-				changed = true
-				break
-		if not changed:
-			break
-	return repaired
-
-
 func _blocks_motion(contact: Dictionary, motion: Vector2) -> bool:
 	if bool(contact.get("penetrating", false)):
 		return true
+	if String(contact.get("kind", "")) == "ring_boundary":
+		var center: Vector2 = contact.get("center", Vector2.ZERO)
+		var limit := float(contact.get("limit", 0.0))
+		var contact_position: Vector2 = contact.get("position", Vector2.ZERO)
+		var contact_time := clampf(float(contact.get("time", 0.0)), 0.0, 1.0)
+		# hit.position already includes the part of this iteration before TOI.
+		# Only the post-contact remainder may decide whether a ring boundary is
+		# entered. Adding the full motion here would double-count nonzero TOIs.
+		var post_contact_motion := motion * (1.0 - contact_time)
+		var endpoint: Vector2 = contact_position + post_contact_motion
+		var endpoint_distance: float = endpoint.distance_to(center)
+		if String(contact.get("feature_key", "")) == "outer":
+			var contact_distance := contact_position.distance_to(center)
+			return maxf(contact_distance, endpoint_distance) > limit + GeometryQueryScript.DISTANCE_EPSILON
+		var segment_length_squared := post_contact_motion.length_squared()
+		var closest_distance := minf(contact_position.distance_to(center), endpoint_distance)
+		if segment_length_squared > GeometryQueryScript.EPSILON * GeometryQueryScript.EPSILON:
+			var offset := contact_position - center
+			var parameter := clampf(-offset.dot(post_contact_motion) / segment_length_squared, 0.0, 1.0)
+			closest_distance = minf(closest_distance, (offset + post_contact_motion * parameter).length())
+		return closest_distance < limit - GeometryQueryScript.DISTANCE_EPSILON
 	var normal: Vector2 = contact.get("normal", Vector2.RIGHT)
-	if String(contact.get("kind", "")) == "ring_boundary" and String(contact.get("feature_key", "")) == "outer":
-		# The circle sweep returns only disk EXITs, including a t=0 tangent.
-		# Retesting a rounded Vector2 normal can misclassify that tangent as
-		# leaving the contact. Inward reversal has no exit within the segment.
-		return true
-	return motion.dot(normal) < -GeometryQueryScript.EPSILON
+	return motion.dot(normal) < -GeometryQueryScript.DIRECTION_EPSILON
 
 
 func _project_against_contacts(value: Vector2, contacts: Array[Dictionary]) -> Vector2:
@@ -303,7 +311,7 @@ func _project_against_contacts(value: Vector2, contacts: Array[Dictionary]) -> V
 				continue
 			normal = normal.normalized()
 			var inward := result.dot(normal)
-			if inward < -GeometryQueryScript.EPSILON:
+			if inward < -GeometryQueryScript.DIRECTION_EPSILON:
 				result -= normal * inward
 				changed = true
 		if not changed:
@@ -317,7 +325,7 @@ func _append_contact(target: Array[Dictionary], candidate: Dictionary) -> void:
 	for existing: Dictionary in target:
 		if String(existing.get("blocker_id", existing.get("id", ""))) == candidate_id:
 			var existing_normal: Vector2 = existing.get("normal", Vector2.RIGHT)
-			if existing_normal.distance_squared_to(candidate_normal) <= GeometryQueryScript.CONTACT_EPSILON * GeometryQueryScript.CONTACT_EPSILON:
+			if existing_normal.distance_squared_to(candidate_normal) <= GeometryQueryScript.DIRECTION_EPSILON * GeometryQueryScript.DIRECTION_EPSILON:
 				return
 	target.append(candidate)
 
@@ -335,12 +343,12 @@ func _inside_bounds(position: Vector2, bounds: Rect2) -> bool:
 	var rect := _normalized_rect(bounds)
 	var minimum := rect.position + Vector2.ONE * radius
 	var maximum := rect.end - Vector2.ONE * radius
-	if maximum.x < minimum.x - GeometryQueryScript.CONTACT_EPSILON or maximum.y < minimum.y - GeometryQueryScript.CONTACT_EPSILON:
+	if maximum.x < minimum.x - GeometryQueryScript.DISTANCE_EPSILON or maximum.y < minimum.y - GeometryQueryScript.DISTANCE_EPSILON:
 		return false
-	return position.x >= minimum.x - GeometryQueryScript.CONTACT_EPSILON \
-		and position.x <= maximum.x + GeometryQueryScript.CONTACT_EPSILON \
-		and position.y >= minimum.y - GeometryQueryScript.CONTACT_EPSILON \
-		and position.y <= maximum.y + GeometryQueryScript.CONTACT_EPSILON
+	return position.x >= minimum.x - GeometryQueryScript.DISTANCE_EPSILON \
+		and position.x <= maximum.x + GeometryQueryScript.DISTANCE_EPSILON \
+		and position.y >= minimum.y - GeometryQueryScript.DISTANCE_EPSILON \
+		and position.y <= maximum.y + GeometryQueryScript.DISTANCE_EPSILON
 
 
 func _inside_domain(position: Vector2, bounds: Rect2) -> bool:
@@ -354,14 +362,14 @@ func _inside_domain(position: Vector2, bounds: Rect2) -> bool:
 			var half_height := float(movement_boundary["half_height"]) - radius
 			var center_y := rect.get_center().y
 			return half_height >= 0.0 \
-				and position.x >= rect.position.x + radius - GeometryQueryScript.CONTACT_EPSILON \
-				and position.x <= rect.end.x - radius + GeometryQueryScript.CONTACT_EPSILON \
-				and position.y >= center_y - half_height - GeometryQueryScript.CONTACT_EPSILON \
-				and position.y <= center_y + half_height + GeometryQueryScript.CONTACT_EPSILON
+				and position.x >= rect.position.x + radius - GeometryQueryScript.DISTANCE_EPSILON \
+				and position.x <= rect.end.x - radius + GeometryQueryScript.DISTANCE_EPSILON \
+				and position.y >= center_y - half_height - GeometryQueryScript.DISTANCE_EPSILON \
+				and position.y <= center_y + half_height + GeometryQueryScript.DISTANCE_EPSILON
 		"ring":
 			var distance := position.distance_to(movement_boundary["center"])
-			return distance >= float(movement_boundary["inner_radius"]) + radius - GeometryQueryScript.CONTACT_EPSILON \
-				and distance <= float(movement_boundary["outer_radius"]) - radius + GeometryQueryScript.CONTACT_EPSILON
+			return distance >= float(movement_boundary["inner_radius"]) + radius - GeometryQueryScript.DISTANCE_EPSILON \
+				and distance <= float(movement_boundary["outer_radius"]) - radius + GeometryQueryScript.DISTANCE_EPSILON
 	return false
 
 
@@ -412,10 +420,10 @@ func _append_circle_boundary_hit(target: Array[Dictionary], blocker_id: String, 
 	var offset := start - center
 	var distance := offset.length()
 	var normal := (-offset).normalized() if outer_boundary and distance > GeometryQueryScript.EPSILON else (offset.normalized() if distance > GeometryQueryScript.EPSILON else Vector2.RIGHT)
-	var forbidden := (distance > limit + GeometryQueryScript.CONTACT_EPSILON) if outer_boundary else (distance < limit - GeometryQueryScript.CONTACT_EPSILON)
-	var initial := absf(distance - limit) <= GeometryQueryScript.CONTACT_EPSILON
+	var forbidden := (distance > limit + GeometryQueryScript.DISTANCE_EPSILON) if outer_boundary else (distance < limit - GeometryQueryScript.DISTANCE_EPSILON)
+	var initial := absf(distance - limit) <= GeometryQueryScript.DISTANCE_EPSILON
 	if forbidden:
-		target.append(_circle_hit(blocker_id, start, normal, 0.0, true, true, outer_boundary))
+		target.append(_circle_hit(blocker_id, start, normal, 0.0, true, true, outer_boundary, center, limit))
 		return
 	# Vector2 dot/length_squared round to real_t before returning a double.
 	# Near a tangent, that error in c can erase both roots of the quadratic.
@@ -427,32 +435,34 @@ func _append_circle_boundary_hit(target: Array[Dictionary], blocker_id: String, 
 	var speed_squared := mx * mx + my * my
 	if speed_squared <= GeometryQueryScript.EPSILON * GeometryQueryScript.EPSILON:
 		if initial:
-			target.append(_circle_hit(blocker_id, start, normal, 0.0, true, false, outer_boundary))
+			target.append(_circle_hit(blocker_id, start, normal, 0.0, true, false, outer_boundary, center, limit))
 		return
 	var radial_motion := x * mx + y * my
-	if initial and ((outer_boundary and radial_motion >= -GeometryQueryScript.EPSILON * distance) or (not outer_boundary and radial_motion < 0.0)):
-		target.append(_circle_hit(blocker_id, start, normal, 0.0, true, false, outer_boundary))
+	if initial and ((outer_boundary and radial_motion >= -GeometryQueryScript.DIRECTION_EPSILON * maxf(distance, 1.0)) or (not outer_boundary and radial_motion < 0.0)):
+		target.append(_circle_hit(blocker_id, start, normal, 0.0, true, false, outer_boundary, center, limit))
 		return
 	var b := 2.0 * radial_motion
 	var c := x * x + y * y - limit * limit
 	var discriminant := b * b - 4.0 * speed_squared * c
-	if discriminant < -GeometryQueryScript.TIME_EPSILON:
+	var discriminant_scale := maxf(1.0, maxf(absf(b * b), absf(4.0 * speed_squared * c)))
+	var discriminant_tolerance := GeometryQueryScript.DISCRIMINANT_EPSILON * discriminant_scale
+	if discriminant < -discriminant_tolerance:
 		return
 	discriminant = maxf(0.0, discriminant)
 	var root := sqrt(discriminant)
 	var first := (-b - root) / (2.0 * speed_squared)
 	var second := (-b + root) / (2.0 * speed_squared)
 	var time := second if outer_boundary else first
-	if time < -GeometryQueryScript.TIME_EPSILON or time > 1.0 + GeometryQueryScript.TIME_EPSILON:
+	if time < -GeometryQueryScript.TOI_EPSILON or time > 1.0 + GeometryQueryScript.TOI_EPSILON:
 		return
 	var contact_position := start + motion * clampf(time, 0.0, 1.0)
 	var contact_offset := contact_position - center
 	if contact_offset.length_squared() > GeometryQueryScript.EPSILON * GeometryQueryScript.EPSILON:
 		normal = (-contact_offset).normalized() if outer_boundary else contact_offset.normalized()
-	target.append(_circle_hit(blocker_id, contact_position, normal, clampf(time, 0.0, 1.0), initial, false, outer_boundary))
+	target.append(_circle_hit(blocker_id, contact_position, normal, clampf(time, 0.0, 1.0), initial, false, outer_boundary, center, limit))
 
 
-func _circle_hit(blocker_id: String, position: Vector2, normal: Vector2, time: float, initial: bool, penetrating: bool, outer_boundary: bool) -> Dictionary:
+func _circle_hit(blocker_id: String, position: Vector2, normal: Vector2, time: float, initial: bool, penetrating: bool, outer_boundary: bool, center: Vector2, limit: float) -> Dictionary:
 	return {
 		"id": blocker_id,
 		"blocker_id": blocker_id,
@@ -460,6 +470,8 @@ func _circle_hit(blocker_id: String, position: Vector2, normal: Vector2, time: f
 		"time": time,
 		"position": position,
 		"normal": normal,
+		"center": center,
+		"limit": limit,
 		"initial": initial or penetrating,
 		"penetrating": penetrating,
 		"shape_key": "ring|%s|%s" % ["outer" if outer_boundary else "inner", String.num(time, 9)],
@@ -485,14 +497,14 @@ func _sweep_bounds(start: Vector2, motion: Vector2, bounds: Rect2) -> Array[Dict
 
 func _append_boundary_hit(target: Array[Dictionary], blocker_id: String, start: Vector2, motion: Vector2, limit: float, coordinate: float, toward_speed: float, normal: Vector2, feature: String) -> void:
 	var gap := (coordinate - limit) if normal == Vector2.RIGHT or normal == Vector2.DOWN else (limit - coordinate)
-	var penetrating := gap < -GeometryQueryScript.CONTACT_EPSILON
-	var initial := absf(gap) <= GeometryQueryScript.CONTACT_EPSILON
+	var penetrating := gap < -GeometryQueryScript.DISTANCE_EPSILON
+	var initial := absf(gap) <= GeometryQueryScript.DISTANCE_EPSILON
 	if not penetrating and not initial and toward_speed <= GeometryQueryScript.EPSILON:
 		return
 	var time := 0.0
 	if not penetrating and not initial:
 		time = gap / toward_speed
-		if time < -GeometryQueryScript.TIME_EPSILON or time > 1.0 + GeometryQueryScript.TIME_EPSILON:
+		if time < -GeometryQueryScript.TOI_EPSILON or time > 1.0 + GeometryQueryScript.TOI_EPSILON:
 			return
 		time = clampf(time, 0.0, 1.0)
 	var position := start + motion * time

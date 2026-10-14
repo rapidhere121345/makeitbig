@@ -74,6 +74,7 @@ func _run() -> void:
 	snapshot = Snapshot.capture(authoritative_values)
 	frame = builder.actor_frame(snapshot, _visual())
 	_test_projection()
+	await _test_equal_baseline_occlusion()
 	await _test_real_draw_order()
 	await _test_shared_native_sort()
 	_expect(_authority_hash() == before, "draw/sort projection changed canonical authority hash")
@@ -109,6 +110,54 @@ func _test_projection() -> void:
 	var first := _ids(presenter.draw_list(reordered, view))
 	reordered.enemies.reverse()
 	_expect(first == _ids(presenter.draw_list(reordered, view)), "enemy insertion order changed stable sort")
+
+
+func _test_equal_baseline_occlusion() -> void:
+	## All Boss parts share the player's baseline here. The hand gameplay pose then
+	## moves both hand anchors onto that same baseline, exercising rank/id ties in
+	## the draw list, prepass, cutaway lookup and Boss group helper.
+	var equal_boss: CombatEnemyState = Snapshot.enemy_record(frame.enemies[0])
+	equal_boss.position = boss.position
+	equal_boss.left_hand_position = equal_boss.position + Vector2(-34.0, 25.0)
+	equal_boss.right_hand_position = equal_boss.position + Vector2(34.0, 25.0)
+	var equal_frame := frame.duplicate(true)
+	equal_frame.player_position = equal_boss.position
+	equal_frame.enemies = [equal_boss]
+	equal_frame.boss = equal_boss
+	view.begin_frame(Rect2(0, 0, 1280, 720), equal_boss.position, Rect2(42, 190, 1196, 488))
+	var entries := presenter.draw_list(equal_frame, view)
+	var ids := _ids(entries)
+	_expect(ids.find("ranger/body") < ids.find("enemy/7/body") and ids.find("enemy/7/body") < ids.find("enemy/7/core") and ids.find("enemy/7/core") < ids.find("enemy/7/left_hand") and ids.find("enemy/7/left_hand") < ids.find("enemy/7/right_hand"), "equal-y body/core/hand order did not use rank then stable id")
+	var canvas := ActorCanvas.new()
+	canvas.renderer = presenter
+	canvas.frame = equal_frame
+	canvas.view = view
+	root.add_child(canvas)
+	await _redraw(canvas)
+	_expect(view.sprite_calls.find("ranger.south.idle") < view.sprite_calls.find("boss.body_phase1") and view.sprite_calls.find("boss.body_phase1") < view.sprite_calls.find("boss.core_phase1") and view.sprite_calls.find("boss.core_phase1") < view.sprite_calls.find("boss.hand_left") and view.sprite_calls.find("boss.hand_left") < view.sprite_calls.find("boss.hand_right"), "equal-y actual draw pass diverged from stable sort")
+	canvas.free()
+	for entry: Dictionary in entries:
+		if entry.kind == "boss_part":
+			var part: Dictionary = entry.part
+			## Use the real part baseline and a one-cell overlap probe so this check
+			## isolates the sort relation from the hands' lateral art placement.
+			var cut: Dictionary = view.cutaway_for(view.hero_cell_world(view.gameplay_to_world(equal_boss.position)), entry.world, view.gameplay_to_world(equal_boss.position), int(entry.rank), String(entry.id))
+			_expect(bool(cut.in_front), "equal-y Boss part %s disagrees with draw order" % String(entry.id))
+	presenter._prepare_occlusion(entries, equal_frame, view)
+	var hero_world := view.gameplay_to_world(equal_boss.position)
+	var probe_cells: Array[Dictionary] = []
+	for entry: Dictionary in entries:
+		if entry.kind == "boss_part":
+			probe_cells.append({"id": entry.id, "stable_id": entry.id, "sort_rank": int(entry.rank), "baseline_y": float(entry.baseline_y), "feet_world": entry.world, "art_box": view.hero_cell_world(hero_world), "base_alpha": 1.0})
+	view.prepare_actor_occlusion(probe_cells, hero_world)
+	var report: Dictionary = view.occlusion_report(hero_world)
+	for part_id in ["enemy/7/body", "enemy/7/core", "enemy/7/left_hand", "enemy/7/right_hand"]:
+		_expect((report.front_ids as Array).has(part_id), "equal-y occlusion prepass dropped %s" % part_id)
+	var parts: Array[Dictionary] = view.boss_draw_parts(view.gameplay_to_world(equal_boss.position), 1, Vector2(0, 25), Vector2(0, 25))
+	var sprite_ids: Array = parts.map(func(part: Dictionary) -> String: return String(part.sprite_id))
+	var feet_list: Array = parts.map(func(part: Dictionary) -> Vector2: return part.feet)
+	var boss_cut: Dictionary = view._boss_cutaway(sprite_ids, feet_list, view.gameplay_to_world(equal_boss.position), view.gameplay_to_world(equal_boss.position))
+	_expect((boss_cut.window as Rect2).size.x > 0.0, "equal-y Boss group helper disagreed with part sort anchors")
 
 
 func _test_real_draw_order() -> void:
