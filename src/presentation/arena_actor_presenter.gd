@@ -276,10 +276,7 @@ func sync_sort_views(domain: WorldPresenter, frame: Dictionary, world_view: RefC
 		view.drawable = drawable
 		view.world_view = world_view
 		view.art_to_native = art_to_native
-		domain.sync_actor(id, art_to_native * (drawable.world as Vector2))
-		# CanvasItem y-sort resolves equal baselines by sibling order. Keep that
-		# tie order identical to the stable pure projection, regardless of insertion.
-		domain.sort_root.move_child(view, domain.sort_root.get_child_count() - 1)
+		domain.sync_actor(id, art_to_native * (drawable.world as Vector2), Vector2.ZERO, int(drawable.rank), id)
 		view.queue_redraw()
 	_record_report(detached, "actors")
 	_last_report["sort_domain"] = "shared_sort_root"

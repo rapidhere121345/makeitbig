@@ -196,6 +196,18 @@ func _test_shared_native_sort() -> void:
 	var hand: Node2D = nodes["enemy/7/left_hand"]
 	_expect(body != player and player != hand and body.get_parent() == native.get_parent() and hand.get_parent() == native.get_parent(), "actors/parts/native remain flattened in separate CanvasItems or sort roots")
 	_expect(body.position.y < native.position.y and native.position.y < player.position.y and player.position.y < hand.position.y, "native node cannot interleave body/player/hand in the same y-sort domain")
+	# Equal baselines are ordered by the shared rank/id contract, including a
+	# native child that was authored before the dynamic views existed.
+	native.position.y = player.position.y
+	native.set_meta("sort_rank", 3)
+	native.set_meta("sort_stable_id", "aaa/native")
+	domain.reorder_sort_root()
+	var equal_order := _sort_root_names(domain)
+	_expect(equal_order.find("ranger_body") < equal_order.find("NativeOccluder"), "equal-baseline rank did not outrank stable id: %s" % str(equal_order))
+	native.set_meta("sort_rank", 2)
+	domain.reorder_sort_root()
+	equal_order = _sort_root_names(domain)
+	_expect(equal_order.find("NativeOccluder") < equal_order.find("ranger_body"), "equal-baseline stable id did not resolve a rank tie: %s" % str(equal_order))
 	for node: Node2D in nodes.values():
 		_expect(node.z_index == 0 and not node.y_sort_enabled, "part used arbitrary z or another nested sorting domain")
 		_expect(not node.frame.enemies.is_empty() and node.frame.enemies[0] != frame.enemies[0], "native views retained mutable actor-frame enemy references")
@@ -270,6 +282,13 @@ func _registered_order(domain: WorldPresenter) -> Array:
 		if node is ActorPresenter.SortView:
 			ids.append(String(node.drawable.id))
 	return ids
+
+
+func _sort_root_names(domain: WorldPresenter) -> Array:
+	var names: Array[String] = []
+	for node: Node in domain.sort_root.get_children():
+		names.append(String(node.name))
+	return names
 
 
 func _visual() -> Dictionary:

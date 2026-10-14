@@ -674,7 +674,7 @@ func _tower_upper_faded(hero_world_point: Vector2) -> bool:
 	var feet := tower_feet_world()
 	if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), _hero_sort_entry(hero_world_point)):
 		return false
-	return Rect2(feet + Vector2(-64.0, -184.0), Vector2(128.0, 148.0)).intersects(hero_cell_world(hero_world_point))
+	return sprite_art_box("tower.upper", feet).intersects(hero_cell_world(hero_world_point))
 
 
 func _cutaway_plan(hero_world_point: Vector2) -> Dictionary:
@@ -785,7 +785,7 @@ func structure_fade(sprite_id: String, feet_world: Vector2, hero_world_point: Ve
 		return 1.0
 	if not SortRelation.is_front(SortRelation.entry(feet_world.y, 0, "structure/%s" % sprite_id), _hero_sort_entry(hero_world_point)):
 		return 1.0
-	var cell := Rect2(feet_world - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+	var cell := sprite_art_box(sprite_id, feet_world)
 	return FORE_FADE if cell.intersects(hero_cell_world(hero_world_point)) else 1.0
 
 
@@ -818,26 +818,21 @@ func hero_cover_report(hero_world_point: Vector2) -> Dictionary:
 	var in_front: Array[String] = []
 	var faded: Array[String] = []
 	var full_covers: Array[String] = []
-	for placement in _structures:
-		var sprite_id := String(placement.get("id", ""))
-		var feet := gameplay_to_world(_point(placement.get("feet", [])))
-		if feet.y <= hero_world_point.y:
+	## Consume the same static entries as the live cutaway plan.  The old report
+	## compared raw feet.y and full atlas cells, which disagreed for equal-depth
+	## rank ties and for keep_rows cells such as the tower upper.
+	for entry: Dictionary in cutaway_front(hero_world_point):
+		var entry_id := String(entry.get("id", ""))
+		var report_id := "tower.upper" if entry_id == "tower" else entry_id
+		var art_box: Rect2 = entry.get("art_box", Rect2())
+		if not art_box.intersects(hero_cell):
 			continue
-		var metadata := sprite(sprite_id)
-		var cell := Rect2(feet - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
-		if not cell.intersects(hero_cell):
-			continue
-		in_front.append(sprite_id)
-		if structure_fade(sprite_id, feet, hero_world_point) < 1.0:
-			faded.append(sprite_id)
-		elif Rect2(feet - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata)).encloses(hero_cell):
-			full_covers.append(sprite_id)
-	var tower_feet := tower_feet_world()
-	if tower_feet.y > hero_world_point.y:
-		var upper := Rect2(tower_feet + Vector2(-64.0, -184.0), Vector2(128.0, 148.0))
-		if upper.intersects(hero_cell):
-			in_front.append("tower.upper")
-			faded.append("tower.upper")
+		in_front.append(report_id)
+		var is_faded := entry_id == "tower" or structure_fade(entry_id, entry["feet_world"], hero_world_point) < 1.0
+		if is_faded:
+			faded.append(report_id)
+		elif art_box.encloses(hero_cell):
+			full_covers.append(report_id)
 	return {
 		"hero_cell": hero_cell,
 		"in_front": in_front,
@@ -896,25 +891,30 @@ func draw_boss_part(canvas: CanvasItem, part: Dictionary, hero_world_point: Vect
 ## Body, core and both hands in world units, in the order they are drawn.
 func boss_parts_world(feet_world: Vector2) -> Array[Rect2]:
 	var parts: Array[Rect2] = []
-	for entry in [["boss.body_phase2", Vector2.ZERO], ["boss.core_phase2", BOSS_CORE_OFFSET], ["boss.hand_left", BOSS_HAND_LEFT_OFFSET], ["boss.hand_right", BOSS_HAND_RIGHT_OFFSET]]:
-		var metadata := sprite(String(entry[0]))
-		if metadata.is_empty():
-			continue
-		parts.append(Rect2(feet_world + (entry[1] as Vector2) - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata)))
+	for part: Dictionary in boss_draw_parts(feet_world, 2, Vector2.ZERO, Vector2.ZERO):
+		var box := sprite_art_box(String(part.get("sprite_id", "")), part.get("feet", feet_world))
+		if box.size.x > 0.0 and box.size.y > 0.0:
+			parts.append(box)
 	return parts
 
 
 ## 1.0 when the colossus cannot hide the hero, FORE_FADE when it is in front of
 ## and overlapping the hero's real cells.
-func boss_fade_alpha(feet_world: Vector2, hero_world_point: Vector2) -> float:
+func boss_fade_alpha(
+	feet_world: Vector2,
+	hero_world_point: Vector2,
+	phase: int = 2,
+	left_hand_delta_gameplay: Vector2 = Vector2.ZERO,
+	right_hand_delta_gameplay: Vector2 = Vector2.ZERO,
+	pose_frame: Dictionary = {}
+) -> float:
 	var hero_cell := hero_cell_world(hero_world_point)
-	var part_ids := ["body", "core", "left_hand", "right_hand"]
-	var sort_offsets := [Vector2.ZERO, Vector2.ZERO, BOSS_HAND_LEFT_OFFSET, BOSS_HAND_RIGHT_OFFSET]
-	for index: int in boss_parts_world(feet_world).size():
-		var part: Rect2 = boss_parts_world(feet_world)[index]
-		var sort_feet := feet_world + (sort_offsets[index] as Vector2)
-		var actor_sort := SortRelation.entry(sort_feet.y, 3, "enemy/boss/%s" % String(part_ids[index]))
-		if SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) and part.intersects(hero_cell):
+	for part: Dictionary in boss_draw_parts(feet_world, phase, left_hand_delta_gameplay, right_hand_delta_gameplay, pose_frame):
+		var part_id := String(part.get("part_id", "part"))
+		var sort_feet: Vector2 = part.get("sort_feet", feet_world)
+		var art_box := sprite_art_box(String(part.get("sprite_id", "")), part.get("feet", feet_world))
+		var actor_sort := SortRelation.entry(sort_feet.y, 3, "enemy/boss/%s" % part_id)
+		if SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) and art_box.intersects(hero_cell):
 			return FORE_FADE
 	return 1.0
 
@@ -922,19 +922,13 @@ func boss_fade_alpha(feet_world: Vector2, hero_world_point: Vector2) -> float:
 ## Colossus footprint in world units, used by the visibility checks so a boss
 ## head that leaves the frame or slips under the HUD can never pass as "fine".
 func boss_body_rect_world(feet_world: Vector2) -> Rect2:
-	var metadata := sprite("boss.body_phase2")
-	if metadata.is_empty():
-		return Rect2()
-	return Rect2(feet_world - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+	return sprite_art_box("boss.body_phase2", feet_world)
 
 
 func boss_hand_rect_world(feet_world: Vector2, left: bool) -> Rect2:
 	var sprite_id := "boss.hand_left" if left else "boss.hand_right"
-	var metadata := sprite(sprite_id)
-	if metadata.is_empty():
-		return Rect2()
 	var offset := BOSS_HAND_LEFT_OFFSET if left else BOSS_HAND_RIGHT_OFFSET
-	return Rect2(feet_world + offset - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+	return sprite_art_box(sprite_id, feet_world + offset)
 
 
 func sprite(sprite_id: String) -> Dictionary:

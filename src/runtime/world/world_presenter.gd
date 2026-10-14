@@ -148,7 +148,10 @@ func register_actor_view(actor_id: String, view: Node2D) -> Dictionary:
 		view.reparent(sort_root)
 	else:
 		sort_root.add_child(view)
+	view.set_meta("sort_rank", int(view.get_meta("sort_rank", 0)))
+	view.set_meta("sort_stable_id", String(view.get_meta("sort_stable_id", id)))
 	_actor_views[id] = view
+	reorder_sort_root()
 	return {"ok": true, "error": ""}
 
 
@@ -161,13 +164,58 @@ func unregister_actor_view(actor_id: String) -> void:
 		(view as Node).queue_free()
 
 
-func sync_actor(actor_id: String, world_feet: Vector2, visual_offset := Vector2.ZERO) -> Dictionary:
+func sync_actor(actor_id: String, world_feet: Vector2, visual_offset := Vector2.ZERO, sort_rank: int = -1, stable_id: String = "") -> Dictionary:
 	var view: Variant = _actor_views.get(actor_id, null)
 	if not view is Node2D or not is_instance_valid(view):
 		return {"ok": false, "error": "unknown_actor_view"}
 	var actor_view := view as Node2D
+	if sort_rank >= 0:
+		actor_view.set_meta("sort_rank", sort_rank)
+	if not stable_id.strip_edges().is_empty():
+		actor_view.set_meta("sort_stable_id", stable_id)
 	actor_view.position = world_feet + visual_offset
+	reorder_sort_root()
 	return {"ok": true, "error": ""}
+
+
+## CanvasItem y-sort only compares the baseline.  Equal-baseline native and
+## dynamic nodes therefore need an explicit sibling order so the shared
+## presentation contract remains baseline/y -> rank -> stable id regardless of
+## scene insertion order.  Native nodes may author sort_rank/sort_stable_id
+## metadata; unnamed nodes use rank 0 and their stable scene name.
+func reorder_sort_root() -> void:
+	_ensure_layers()
+	if sort_root == null:
+		return
+	var ordered: Array[Node] = []
+	for child: Node in sort_root.get_children():
+		ordered.append(child)
+	ordered.sort_custom(func(left: Node, right: Node) -> bool:
+			return _sort_child_precedes(left, right)
+	)
+	for index: int in ordered.size():
+		if sort_root.get_child(index) != ordered[index]:
+			sort_root.move_child(ordered[index], index)
+
+
+func _sort_child_precedes(left: Node, right: Node) -> bool:
+	var left_2d := left as Node2D
+	var right_2d := right as Node2D
+	var left_y := left_2d.position.y if left_2d != null else 0.0
+	var right_y := right_2d.position.y if right_2d != null else 0.0
+	if left_y != right_y:
+		return left_y < right_y
+	var left_rank := int(left.get_meta("sort_rank", 0))
+	var right_rank := int(right.get_meta("sort_rank", 0))
+	if left_rank != right_rank:
+		return left_rank < right_rank
+	var left_id := String(left.get_meta("sort_stable_id", left.name))
+	var right_id := String(right.get_meta("sort_stable_id", right.name))
+	if left_id != right_id:
+		return left_id < right_id
+	var left_name := String(left.name)
+	var right_name := String(right.name)
+	return left_name < right_name
 
 
 func set_actor_visible(actor_id: String, visible: bool) -> bool:

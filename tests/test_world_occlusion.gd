@@ -201,6 +201,7 @@ func _test_arena() -> void:
 
 	_check_arena_tower(view)
 	_check_arena_boss(view)
+	_test_shared_diagnostic_geometry(view)
 	_test_mixed_actor_budget(view)
 	print("  arena sweep: %d ruin placements, the tower and the colossus all measured" % view.structure_placements().size())
 
@@ -317,3 +318,25 @@ func _check_arena_boss(view) -> void:
 			## An arm is cut together with the body whenever it does reach the window,
 			## and left alone when the hero stands clear of it.
 			_expect(reaches == view.sprite_art_box(String(sprite_ids[index]), feet_list[index] as Vector2).intersects(cut["window"]), "arena: the colossus arm share is inconsistent")
+
+
+## The external reports must consume the same sort anchors and art rectangles as
+## the live draw path.  This catches stale feet-only checks and Boss helpers that
+## ignore a posed hand's actual sort anchor.
+func _test_shared_diagnostic_geometry(view) -> void:
+	var tower_gameplay: Vector2 = view.tower_feet() - Vector2(0.0, 12.0)
+	view.begin_frame(ARENA_VIEWPORT, tower_gameplay, ARENA_RECT)
+	var tower_world: Vector2 = view.gameplay_to_world(tower_gameplay)
+	var cover: Dictionary = view.hero_cover_report(tower_world)
+	var live: Dictionary = view.occlusion_report(tower_world)
+	_expect((cover["in_front"] as Array).has("tower.upper"), "diagnostic cover report disagreed with the live tower occluder")
+	_expect((cover["faded"] as Array).has("tower.upper"), "diagnostic cover report lost the tower fade decision")
+	_expect((live["front_ids"] as Array).has("tower"), "live tower report lost its shared static entry")
+
+	var boss_feet := Vector2(500.0, 400.0)
+	var hero := Vector2(500.0, 430.0)
+	var left_delta := Vector2(100.0, 100.0)
+	var posed_alpha: float = view.boss_fade_alpha(boss_feet, hero, 2, left_delta, Vector2.ZERO)
+	_expect(is_equal_approx(posed_alpha, ArenaWorldViewScript.FORE_FADE), "Boss diagnostic fade ignored the posed hand sort anchor")
+	_expect(view.boss_body_rect_world(boss_feet) == view.sprite_art_box("boss.body_phase2", boss_feet), "Boss body report diverged from its drawn art box")
+	_expect(view.boss_hand_rect_world(boss_feet, true) == view.sprite_art_box("boss.hand_left", boss_feet + ArenaWorldViewScript.BOSS_HAND_LEFT_OFFSET), "Boss hand report diverged from its drawn art box")
