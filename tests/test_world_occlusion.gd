@@ -14,6 +14,7 @@ extends SceneTree
 
 const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
+const ArenaActorPresenterScript = preload("res://src/presentation/arena_actor_presenter.gd")
 const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd")
 
 ## Visual-overlap budget: at most this much total local opacity may sit on top of
@@ -202,8 +203,35 @@ func _test_arena() -> void:
 	_check_arena_tower(view)
 	_check_arena_boss(view)
 	_test_shared_diagnostic_geometry(view)
+	_test_resolved_hero_destination(view)
 	_test_mixed_actor_budget(view)
 	print("  arena sweep: %d ruin placements, the tower and the colossus all measured" % view.structure_placements().size())
+
+
+func _test_resolved_hero_destination(view) -> void:
+	var focus_gameplay := Vector2(570.0, 235.0)
+	view.begin_frame(ARENA_VIEWPORT, focus_gameplay, ARENA_RECT)
+	var hero_world: Vector2 = view.gameplay_to_world(focus_gameplay)
+	var shifted := Rect2((hero_world - Vector2(24.0, 44.0) + Vector2(0.0, 1.0)).round(), Vector2(48.0, 48.0))
+	var presenter := ArenaActorPresenterScript.new()
+	var frame := {
+		"player_position": focus_gameplay,
+		"ranger_frame": {
+			"fallback": false,
+			"rect": Rect2i(0, 0, 48, 48),
+			"anchor": Vector2i(24, 44),
+			"draw_offset": Vector2i(0, 1),
+		},
+	}
+	presenter._set_hero_occlusion_box(frame, view)
+	_expect(view.hero_cell_world(hero_world) == shifted, "hero frame: cutaway kept the stale idle destination")
+	_expect(view.cutaway_window(view.hero_cell_world(hero_world)).encloses(shifted), "hero frame: cutaway window does not cover the resolved destination")
+	view.begin_frame(ARENA_VIEWPORT, focus_gameplay, ARENA_RECT)
+	frame["ranger_frame"] = {"fallback": true}
+	presenter._set_hero_occlusion_box(frame, view)
+	_expect(view.hero_cell_world(hero_world) != shifted, "hero frame: fallback retained a previous action offset")
+	view.begin_frame(ARENA_VIEWPORT, focus_gameplay, ARENA_RECT)
+	_expect(view.hero_cell_world(hero_world) != shifted, "hero frame: begin_frame retained a previous action offset")
 
 
 func _test_mixed_actor_budget(view) -> void:

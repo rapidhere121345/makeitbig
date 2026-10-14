@@ -112,6 +112,10 @@ var _arena := Rect2()
 var _anchor := Vector2.ZERO
 var _origin := Vector2.ZERO
 var _hero_world := Vector2.ZERO
+## The default envelope covers the approved fallback idle cell.  A resolved
+## action frame may have a draw offset, so ArenaActorPresenter replaces this
+## with the exact destination rectangle before any foreground plan is built.
+var _hero_occlusion_box := Rect2()
 ## One cutaway plan per hero position: every ruin, the tower and the colossus
 ## share the same window and the same split of the local opacity budget, so no
 ## combination of them can stack into an opaque wall over the hero.
@@ -224,6 +228,7 @@ func begin_frame(clip_rect: Rect2, focus_gameplay: Vector2, arena_rect: Rect2) -
 	_arena = arena_rect
 	_anchor = WORLD_FOCUS - arena_rect.size * GAMEPLAY_TO_WORLD * 0.5
 	_hero_world = gameplay_to_world(focus_gameplay)
+	_hero_occlusion_box = _default_hero_cell(_hero_world)
 	_origin = camera_origin_for(_hero_world)
 	_cutaway_hero = Vector2(INF, INF)
 	_atmosphere_drawn = false
@@ -585,6 +590,16 @@ func sprite_art_box(sprite_id: String, feet_world: Vector2) -> Rect2:
 	return Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
 
 
+## The actor presenter calls this after resolving the frame that will actually
+## be drawn.  Keeping the box here makes static cutaway, actor prepass, Boss
+## helpers and diagnostics consume the same integer destination rectangle.
+func set_hero_occlusion_box(box: Rect2) -> bool:
+	if not box.position.is_finite() or not box.size.is_finite() or box.size.x <= 0.0 or box.size.y <= 0.0:
+		return false
+	_hero_occlusion_box = box
+	return true
+
+
 func _hero_sort_entry(hero_world_point: Vector2) -> Dictionary:
 	return SortRelation.entry(hero_world_point.y, 2, "ranger/body")
 
@@ -790,8 +805,15 @@ func structure_fade(sprite_id: String, feet_world: Vector2, hero_world_point: Ve
 
 
 func hero_cell_world(hero_world_point: Vector2) -> Rect2:
-	# Actions can extend a bow/cape beyond the old 32px idle cell. This is only
-	# a conservative visual occlusion envelope, never a gameplay collision box.
+	# Actions can extend a bow/cape beyond the old 32px idle cell. The live frame
+	# supplies the exact destination box; callers asking about another point get
+	# the conservative fallback envelope used before a frame is resolved.
+	if _hero_world.is_equal_approx(hero_world_point) and _hero_occlusion_box.size.x > 0.0 and _hero_occlusion_box.size.y > 0.0:
+		return _hero_occlusion_box
+	return _default_hero_cell(hero_world_point)
+
+
+func _default_hero_cell(hero_world_point: Vector2) -> Rect2:
 	return Rect2(hero_world_point - Vector2(24.0, 44.0), Vector2(48.0, 48.0))
 
 
