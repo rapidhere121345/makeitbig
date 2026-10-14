@@ -13,6 +13,7 @@ func _initialize() -> void:
 	_test_ring_nonzero_toi()
 	_test_ring_tangent_and_reverse()
 	_test_near_tangent()
+	_test_deterministic_clearance_sweep()
 	if failures.is_empty():
 		print("PASS  test_footprint_edge_cases.gd")
 		quit(0)
@@ -94,6 +95,31 @@ func _test_near_tangent() -> void:
 	_expect(hits.is_empty(), "near-tangent: a path outside the distance tolerance reported a hit: %s" % str(hits))
 	var tangent_hits: Array[Dictionary] = query.sweep(Vector2(-20.0, 6.00000001), motion, radius)
 	_expect(not tangent_hits.is_empty(), "near-tangent: represented tangent did not report a stable contact")
+
+
+## A compact deterministic stress pass keeps the endpoint invariant covered across
+## mixed rectangle corners and ring chords without making the focused test depend
+## on random process state.  Starts inside a blocker are skipped because the
+## public contract deliberately rejects those instead of authoring a recovery.
+func _test_deterministic_clearance_sweep() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 0xC0111DE
+	var checked := 0
+	for trial in 256:
+		var motor := ActorMotorScript.new(0.5 + rng.randf() * 5.5)
+		for blocker_index in 3:
+			var origin := Vector2(rng.randf_range(-180.0, 180.0), rng.randf_range(-120.0, 120.0))
+			var size := Vector2(rng.randf_range(2.0, 24.0), rng.randf_range(2.0, 24.0))
+			motor.register_rect("stress_%02d" % blocker_index, Rect2(origin, size))
+		var start := Vector2(rng.randf_range(-180.0, 180.0), rng.randf_range(-120.0, 120.0))
+		if not motor.is_position_clear(start):
+			continue
+		checked += 1
+		var displacement := Vector2(rng.randf_range(-260.0, 260.0), rng.randf_range(-220.0, 220.0))
+		var result: Dictionary = motor.move(start, displacement, Rect2(-240.0, -180.0, 480.0, 360.0))
+		_expect(bool(result.get("ok", false)), "stress: valid start was rejected at trial %d" % trial)
+		_expect(motor.is_position_clear(result.position, Rect2(-240.0, -180.0, 480.0, 360.0)), "stress: endpoint lost clearance at trial %d: %s" % [trial, str(result)])
+	_expect(checked >= 200, "stress: too many trials were discarded as invalid starts (%d)" % checked)
 
 
 func _expect(condition: bool, message: String) -> void:
