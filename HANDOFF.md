@@ -2,7 +2,7 @@
 
 更新时间：2026-10-14
 
-运行时重构、碰撞边界和演员遮挡排序已收口；本轮继续统一诊断与生产遮挡几何，并修复共享 SortRoot 等高 native/dynamic tie。碰撞/遮挡改动已通过完整构建，发布页已刷新为 `20261014-230102-f5f5a29022aa`。历史 golden 不改。
+运行时重构、碰撞边界和演员遮挡排序已收口；本轮继续统一诊断与生产遮挡几何，并修复共享 SortRoot 等高 native/dynamic tie。碰撞/遮挡改动已通过完整构建，发布页已刷新为 `20261014-230132-edfb90b91b88`。历史 golden 不改。
 
 ## 当前验收
 
@@ -24,7 +24,7 @@
 
 ## 版本与剩余限制
 
-- 当前提交 `f5f5a29`；Main `4e882864...8490`；CombatSystem `43985ec4...f9625`；FrameBuilder `b35fbf...8113c`；presentation Controller `053ebd...2a9f`；ContractRunController `5727c7...51d5`。完整值见当前 closeout `source-freeze-gate.json`。
+- 当前提交 `edfb90b`（运行时改动提交 `f5f5a29`）；Main `4e882864...8490`；CombatSystem `43985ec4...f9625`；FrameBuilder `b35fbf...8113c`；presentation Controller `053ebd...2a9f`；ContractRunController `5727c7...51d5`。完整值见当前 closeout `source-freeze-gate.json`。
 - 历史 golden 固定不变；legacy replay profile 只能由测试脚本显式选择，不能被实时装配隐式选中。
-- 本轮完整 `./scripts/container_build.sh` 已 exit0：全测试、600 房矩阵、30/60/144 Hz 历史 replay、presentation-off、导出与 Linux smoke 均通过；golden 未改，发布包为 `20261014-230102-f5f5a29022aa`。
+- 本轮完整 `./scripts/container_build.sh` 已 exit0：全测试、600 房矩阵、30/60/144 Hz 历史 replay、presentation-off、导出与 Linux smoke 均通过；golden 未改，发布包为 `20261014-230132-edfb90b91b88`。
 - 已发布；未重新生成 golden；GPU、声音和额外宿主实机验收不作为本版本阻塞条件。后续源码变更必须重新跑相关 focused、fullbuild 和图形 freeze。
