@@ -29,14 +29,13 @@ func _run() -> void:
 	_expect(hub.wayfinding_report().id == "loadout" and not hub.wayfinding_report().arrived,
 		"distant selection did not show the selected direction")
 	_expect(not hub.activate_nearby_feature() and game.current_route == "base", "E opened a distant destination")
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(view.DEFAULT_LAYOUT_PATH))
+	var town = hub.get_town_runtime()
 	# Walk the authored road with live collision before any explicit camera tests.
-	for uv: Array in layout.routes_uv.loadout:
-		var target: Vector2 = Vector2(uv[0], uv[1]) * view.world_size()
+	for target: Vector2 in town.route_points("loadout"):
 		var steps := 0
 		while view.hero_world_position().distance_to(target) > 0.05 and steps < 900:
 			var delta: Vector2 = target - view.hero_world_position()
-			hub.move_hero(delta, minf(1.0 / 60.0, delta.length() / view.HERO_SPEED))
+			hub.move_hero(delta / (town.HERO_SPEED / 30.0), 1.0 / 30.0)
 			steps += 1
 		_expect(view.hero_world_position().distance_to(target) < 0.05, "expanded road blocked before " + str(target))
 	_expect(view.camera_world_offset().distance_to(camera_before) > 150, "camera failed to follow the long walk")
@@ -69,7 +68,7 @@ func _run() -> void:
 			if landmark.visible:
 				_expect(Rect2(Vector2(12,92), Vector2(1256,616)).encloses(landmark.get_rect()), "%s landmark escaped logical canvas" % feature_id)
 		for point: Vector2 in [view.world_bounds().position, view.world_bounds().end, saved.position]:
-			view.teleport_hero(point)
+			hub.get_town_runtime().place_hero(point)
 			var camera: Vector2 = view.camera_world_offset()
 			var limit: Vector2 = view.world_size() - Vector2(view.world_viewport.size)
 			_expect(camera == camera.clamp(Vector2.ZERO, limit), "camera exposes outside the town")

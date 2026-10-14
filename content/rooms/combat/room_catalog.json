@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "rooms": [
+    {
+      "layout_id": "rectangle_arena",
+      "world_scene_path": "res://content/rooms/combat/rectangle_arena.tscn",
+      "manifest_path": "res://content/rooms/combat/rectangle_arena.spatial.json",
+      "gameplay_digest": "combat-gameplay-v1",
+      "presentation_digest": "combat-presentation-v1",
+      "schema_version": 1,
+      "presentation": {
+        "display_name": "破碎前哨",
+        "concept": "开阔的方形前庭，先读清敌群从哪一侧逼近。",
+        "landmark": "关隘残门",
+        "entry_hint": "从南侧进入前庭，保持退路，先处理迎面敌群。",
+        "exit_hint": "清场后穿过东侧残门。"
+      },
+      "spawn_profiles": {
+        "default": {
+          "pattern": "grid",
+          "origin": [-145.0, -80.0],
+          "columns": 3,
+          "column_step": 145.0,
+          "row_step": 110.0
+        },
+        "first_hunt_clear": {
+          "pattern": "fan",
+          "origin": [-220.0, 100.0],
+          "radius": 350.0,
+          "angles_degrees": [-69.0, -35.0, 0.0]
+        },
+        "first_hunt_followup": {
+          "pattern": "fan",
+          "origin": [-220.0, 100.0],
+          "radius": 350.0,
+          "angles_degrees": [-60.0, -25.0, 10.0]
+        },
+        "test.fixture": {
+          "pattern": "explicit",
+          "offsets": [
+            [-70.0, -150.0],
+            [115.0, -125.0],
+            [210.0, 25.0],
+            [125.0, 150.0],
+            [-65.0, 165.0],
+            [-210.0, -45.0],
+            [250.0, -40.0]
+          ]
+        }
+      }
+    },
+    {
+      "layout_id": "corridor",
+      "world_scene_path": "res://content/rooms/combat/corridor.tscn",
+      "manifest_path": "res://content/rooms/combat/corridor.spatial.json",
+      "gameplay_digest": "combat-gameplay-v1",
+      "presentation_digest": "combat-presentation-v1",
+      "schema_version": 1,
+      "presentation": {
+        "display_name": "风切通道",
+        "concept": "狭长风口，横向走位比直线后撤更重要。",
+        "landmark": "峡口旗标",
+        "entry_hint": "沿旗标横向走位，避开冲锋线和远程扇面。",
+        "exit_hint": "清场后穿过东侧风门。"
+      },
+      "spawn_profiles": {
+        "default": {
+          "pattern": "alternating_rows",
+          "origin": [-180.0, 0.0],
+          "columns": 4,
+          "x_step": 120.0,
+          "row_values": [-42.0, 42.0]
+        },
+        "first_hunt_followup": {
+          "pattern": "approach_band",
+          "origin": [-220.0, 58.0],
+          "distance": 350.0,
+          "offsets_y": [-4.0, -3.0, -2.0]
+        }
+      }
+    },
+    {
+      "layout_id": "ring",
+      "world_scene_path": "res://content/rooms/combat/ring.tscn",
+      "manifest_path": "res://content/rooms/combat/ring.spatial.json",
+      "gameplay_digest": "combat-gameplay-v1",
+      "presentation_digest": "combat-presentation-v1",
+      "schema_version": 1,
+      "presentation": {
+        "display_name": "回收环场",
+        "concept": "环带形回收场，中央区域不可通行，内外边缘限定可走环带。",
+        "landmark": "环形灯标",
+        "entry_hint": "沿环带绕行中央灯标，利用环带拉开距离，内外边缘会真实阻挡。",
+        "exit_hint": "清场后沿东南环门离场。"
+      },
+      "spawn_profiles": {
+        "default": {
+          "pattern": "radial",
+          "center": [0.0, 0.0],
+          "radius": 175.0,
+          "start_angle_degrees": -90.0
+        }
+      }
+    }
+  ]
+}

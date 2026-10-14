@@ -11,7 +11,10 @@ extends SceneTree
 ##    mode/proxy explanation, all still present under their original cell names.
 
 const ArenaHudScript := preload("res://src/presentation/arena_hud.gd")
-const MainScript := preload("res://src/game/main.gd")
+const DomainFixture := preload("res://tests/helpers/player_domain_fixture.gd")
+const PresentationSnapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
+const Encounter := preload("res://src/game/encounter_director.gd")
+const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 const ShellThemeScript := preload("res://src/presentation/shell_theme.gd")
 const SKILL_CELLS: Array[String] = ["Skill1Button", "Skill2Button", "Skill3Button", "DodgeButton"]
 ## Cells that carry the default strip. All of them must be visible, inside the top
@@ -922,11 +925,14 @@ func _test_room_progress(hud: Control, failures: Array[String]) -> void:
 
 
 func _test_elite_feedback(hud: Control, failures: Array[String]) -> void:
-	var arena := MainScript.new()
-	var elite := MainScript.EnemyData.new(Vector2.ZERO, 1600.0, false, 1)
-	arena.enemies.append(elite)
-	arena.elite_entity_id = elite.entity_id
-	arena.elite_rule_ids.assign(["periodic_barrier", "summon_reinforcements"])
+	var fixture := DomainFixture.new()
+	var session := fixture.mount({"room_id": "test.hud.elite", "layout_id": "rectangle_arena", "objective_id": "hunt_elite", "enemy_ids": ["melee_pursuer"], "hazard_ids": [], "elite_rule_ids": ["periodic_barrier", "summon_reinforcements"], "boss_id": "", "drop_tags": []})
+	var arena = session.arena
+	fixture.drive(arena)
+	var phase_samples: Array[Dictionary] = []
+	for tick in [0, Encounter.ELITE_BARRIER_ACTIVE_TICKS, Encounter.ELITE_BARRIER_PERIOD_TICKS]:
+		fixture.advance_to(arena, tick)
+		phase_samples.append(PresentationSnapshot.capture(arena.gameplay_snapshot()))
 	var snapshot := _snapshot()
 	snapshot.merge({"has_boss": false, "objective_label": "猎杀精英", "room_count": 2,
 		"room_index": 1, "room_elapsed_seconds": 0.0, "living_targets": 2}, true)
@@ -939,13 +945,12 @@ func _test_elite_feedback(hud: Control, failures: Array[String]) -> void:
 		root.content_scale_size = viewport_size
 		root.size = viewport_size
 		await process_frame
-		for tick in [0, MainScript.ELITE_BARRIER_ACTIVE_TICKS, MainScript.ELITE_BARRIER_PERIOD_TICKS]:
-			arena.sim_tick = tick
-			arena._update_room_rules_tick()
-			snapshot["elite_status"] = arena._elite_status_text()
+		for phase_sample: Dictionary in phase_samples:
+			var tick: int = phase_sample.sim_tick
+			snapshot["elite_status"] = arena.presentation.frame_builder.elite_status(phase_sample)
 			hud.present(snapshot)
 			await process_frame
-			var expected := "屏障开启·绕行等空隙" if arena.elite_barrier_active else "屏障消退·集中攻击"
+			var expected := "屏障开启·绕行等空隙" if phase_sample.elite_barrier_active else "屏障消退·集中攻击"
 			_expect(panel.is_visible_in_tree() and expected in label.text and "召援待触发·精英半血召援" in label.text,
 				"elite HUD: authority phase or summon readiness missing at %s tick %d" % [viewport_size, tick], failures)
 			_expect(_label_text(hud, "EncounterHeading") == "第 2 / 2 房 · 猎杀精英"
@@ -961,20 +966,22 @@ func _test_elite_feedback(hud: Control, failures: Array[String]) -> void:
 					"elite HUD: cue overlaps %s at %s" % [node_name, viewport_size], failures)
 			_expect(panel.mouse_filter == Control.MOUSE_FILTER_IGNORE and label.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 				"elite HUD: mechanism display captures combat pointer input", failures)
-		arena.reinforcements_summoned = true
-		snapshot["elite_status"] = arena._elite_status_text()
+		var summoned := PresentationSnapshot.capture(phase_samples[-1])
+		summoned.reinforcements_summoned = true
+		snapshot["elite_status"] = arena.presentation.frame_builder.elite_status(summoned)
 		hud.present(snapshot)
 		_expect("援军已出现·留意新增敌人" in label.text and "待触发" not in label.text,
 			"elite HUD: authority summon transition left readiness text", failures)
-		arena.reinforcements_summoned = false
 	# The rule IDs and barrier phase can remain set after death: the display must
 	# clear from the live elite lookup, even while ordinary targets remain alive.
+	var display := PresentationSnapshot.capture(phase_samples[-1])
+	var elite = display.enemies[0]
 	elite.health = 0.0
-	_expect(arena._elite_status_text() == "无", "elite HUD: dead elite still publishes a mechanic", failures)
+	_expect(arena.presentation.frame_builder.elite_status(display) == "无", "elite HUD: dead elite still publishes a mechanic", failures)
 	elite.health = elite.maximum_health
-	arena.enemies.clear()
-	arena.enemies.append(MainScript.EnemyData.new(Vector2.ZERO, 720.0, false, 2))
-	snapshot["elite_status"] = arena._elite_status_text()
+	display.enemies.clear()
+	display.enemies.append(CombatEnemyStateScript.new(Vector2.ZERO, 720.0, false, 2))
+	snapshot["elite_status"] = arena.presentation.frame_builder.elite_status(display)
 	hud.present(snapshot)
 	_expect(not panel.visible and label.text.is_empty() and "屏障" not in _visible_copy(hud),
 		"elite HUD: elite defeat left a cue over ordinary combat", failures)
@@ -987,11 +994,12 @@ func _test_elite_feedback(hud: Control, failures: Array[String]) -> void:
 	snapshot["battle_over"] = true
 	hud.present(snapshot)
 	_expect(not panel.visible and label.text.is_empty(), "elite HUD: settled combat retained a stale cue", failures)
-	arena.battle_over = true
-	_expect(arena._elite_status_text() == "无", "elite HUD: settled arena publishes a mechanic", failures)
+	display = PresentationSnapshot.capture(phase_samples[-1])
+	display.battle_over = true
+	_expect(arena.presentation.frame_builder.elite_status(display) == "无", "elite HUD: settled arena publishes a mechanic", failures)
 	hud.present(_snapshot())
 	_expect(not panel.visible, "elite HUD: plain snapshot inherited elite feedback", failures)
-	arena.free()
+	fixture.free_session(session)
 	root.content_scale_size = original_scale_size
 	root.size = Vector2i(1280, 720)
 	await process_frame

@@ -5,7 +5,7 @@ extends RefCounted
 
 const ProxyBuild := preload("res://src/systems/proxy_build.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
-const WalkableGeometry := preload("res://src/systems/walkable_geometry.gd")
+const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
 
 const SNAPSHOT_VERSION := 3
 const STATE_VERSION := 1
@@ -262,7 +262,7 @@ static func _normalize_snapshot(value: Variant, observation_contract: Array) -> 
 	var targeting_distance := float(snapshot.targeting_distance)
 	if not _finite(targeting_distance) or targeting_distance <= 0.0 or not snapshot.visible_enemies is Array:
 		return {"ok": false, "error": "invalid_snapshot"}
-	var geometry_result: Dictionary = WalkableGeometry.normalize(snapshot.walkable_geometry)
+	var geometry_result: Dictionary = ArenaGeometry.normalize(snapshot.walkable_geometry)
 	if not bool(geometry_result.get("ok", false)):
 		return {"ok": false, "error": "invalid_walkable_geometry:%s" % String(geometry_result.get("error", "invalid_geometry"))}
 	var allow_classification := CLASSIFICATION_CHANNEL in observation_contract
@@ -404,10 +404,10 @@ static func _quantize_unit(value: float) -> int:
 
 static func _feasible_move_direction(player_position: Vector2, desired_direction: Vector2, walkable_geometry: Dictionary, target_entity_id: int) -> Dictionary:
 	var stable_sign := 1 if posmod(target_entity_id, 2) == 0 else -1
-	var choice: Dictionary = WalkableGeometry.choose_feasible_direction(player_position, desired_direction, 24.0, walkable_geometry, stable_sign)
+	var choice: Dictionary = ArenaGeometry.choose_feasible_direction(player_position, desired_direction, 24.0, walkable_geometry, stable_sign)
 	if not bool(choice.get("ok", false)):
 		return {"ok": false, "error": "walkable_geometry_choice_failed:%s" % String(choice.get("error", "unknown"))}
-	if not WalkableGeometry._has_meaningful_progress(float(choice.actual_displacement), 24.0):
+	if not ArenaGeometry._has_meaningful_progress(float(choice.actual_displacement), 24.0):
 		return {"ok": true, "error": "", "direction": Vector2.ZERO, "detour": false, "no_progress": true}
 	return {"ok": true, "error": "", "direction": Vector2(choice.direction), "detour": bool(choice.detour), "no_progress": false}
 

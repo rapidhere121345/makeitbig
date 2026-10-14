@@ -1,7 +1,7 @@
 class_name LayoutBlockerLoader
 extends RefCounted
 
-## Converts the legacy JSON layout's authored collision section into the
+## Converts the authored JSON layout's collision section into the
 ## normalized static shapes consumed by ActorMotor.
 ##
 ## This is a content loading/build boundary, not a second movement solver.
@@ -12,16 +12,17 @@ extends RefCounted
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 
 
-static func populate_motor(motor: Variant, layout: Dictionary) -> Dictionary:
-	if motor == null or not motor.has_method("clear") or not motor.has_method("register"):
-		return {"ok": false, "error": "invalid_motor", "errors": [], "registered": 0, "hero_radius": 6.0}
-	motor.clear()
+static func populate_geometry(target: Variant, layout: Dictionary) -> Dictionary:
+	if target == null or not target.has_method("clear_geometry") or not target.has_method("set_geometry_radius"):
+		return {"ok": false, "error": "invalid_geometry_target", "errors": [], "registered": 0, "hero_radius": 6.0}
+	target.clear_geometry()
 	var collision_value: Variant = layout.get("collision", null)
 	if not collision_value is Dictionary:
 		return {"ok": true, "error": "", "errors": [], "registered": 0, "hero_radius": 6.0}
 	var collision: Dictionary = collision_value
 	var hero_radius := maxf(0.0, float(collision.get("hero_radius", 6.0)))
-	motor.set_radius(hero_radius)
+	if not bool(target.set_geometry_radius(hero_radius)):
+		return {"ok": false, "error": "invalid_geometry_radius", "errors": [], "registered": 0, "hero_radius": hero_radius}
 	var world_size := Vector2(1024.0, 640.0)
 	if collision.has("world_uv") or _has_npc_feet(layout):
 		world_size = _world_size(layout)
@@ -40,7 +41,7 @@ static func populate_motor(motor: Variant, layout: Dictionary) -> Dictionary:
 			var shape_value: Variant = _array_entries(declared)[index]
 			if not shape_value is Dictionary:
 				continue
-			var result := _register_shape(motor, "%s#placement_%02d" % [placement_id, index], shape_value as Dictionary, feet, Vector2.ONE, errors)
+			var result := _register_shape(target, "%s#placement_%02d" % [placement_id, index], shape_value as Dictionary, feet, Vector2.ONE, errors)
 			registered += int(result)
 
 	var world_shapes: Array = collision.get("world", []) if collision.get("world", []) is Array else []
@@ -52,7 +53,7 @@ static func populate_motor(motor: Variant, layout: Dictionary) -> Dictionary:
 		if shape_id.is_empty():
 			errors.append("missing_shape_id:world_%02d" % index)
 			continue
-		registered += _register_shape(motor, shape_id, raw_shape as Dictionary, Vector2.ZERO, Vector2.ONE, errors)
+		registered += _register_shape(target, shape_id, raw_shape as Dictionary, Vector2.ZERO, Vector2.ONE, errors)
 
 	var world_uv_shapes: Array = collision.get("world_uv", []) if collision.get("world_uv", []) is Array else []
 	for index in world_uv_shapes.size():
@@ -63,7 +64,7 @@ static func populate_motor(motor: Variant, layout: Dictionary) -> Dictionary:
 		if shape_id.is_empty():
 			errors.append("missing_shape_id:world_uv_%02d" % index)
 			continue
-		registered += _register_shape(motor, shape_id, raw_shape as Dictionary, Vector2.ZERO, world_size, errors)
+		registered += _register_shape(target, shape_id, raw_shape as Dictionary, Vector2.ZERO, world_size, errors)
 
 	for raw_placement: Variant in layout.get("placements", []):
 		if not raw_placement is Dictionary:
@@ -75,7 +76,7 @@ static func populate_motor(motor: Variant, layout: Dictionary) -> Dictionary:
 		# NPC feet are authored in world pixels while their position is UV-based.
 		# Normalize only the radius before applying the UV scale.
 		var npc_radius := 7.0 / minf(world_size.x, world_size.y)
-		var result := _register_shape(motor, String(placement.get("id", "npc")), {"kind": "circle", "radius": npc_radius}, Vector2.ZERO, world_size, errors, feet_uv)
+		var result := _register_shape(target, String(placement.get("id", "npc")), {"kind": "circle", "radius": npc_radius}, Vector2.ZERO, world_size, errors, feet_uv)
 		registered += result
 
 	return {

@@ -38,7 +38,7 @@ func _run_smoke() -> void:
 	_cleanup_test_directory()
 	var game = GAME_ROOT_SCENE.instantiate()
 	game.save_directory_path = TEST_DIRECTORY
-	game.arena_factory = Callable(self, "_make_fake_arena")
+	game.room_runtime_factory = Callable(self, "_make_fake_arena")
 	game.playtest_logging_enabled = false
 	root.add_child(game)
 	var failure := ""
@@ -149,7 +149,7 @@ func _run_smoke() -> void:
 	if failure.is_empty():
 		var resumed = GAME_ROOT_SCENE.instantiate()
 		resumed.save_directory_path = TEST_DIRECTORY
-		resumed.arena_factory = Callable(self, "_make_fake_arena")
+		resumed.room_runtime_factory = Callable(self, "_make_fake_arena")
 		resumed.playtest_logging_enabled = false
 		root.add_child(resumed)
 		var restored: Dictionary = resumed.application_state.early_game_snapshot()

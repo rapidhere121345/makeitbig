@@ -24,27 +24,18 @@ func _initialize() -> void:
 
 
 func _test_town_building_channels_and_sort_anchor() -> void:
-	var manifest = SpatialManifestScript.new({
-		"coordinate_convention": {"units": "pixel", "up": "negative_y"},
-		"stable_bindings": [{
-			"binding_id": "town.hearth.front",
-			"channels": {"movement": true, "navigation": true, "vision": true, "projectile": true, "occlusion": true},
-		}],
-		"traversal_profiles": [{"profile_id": "standard", "radius": 6.0}],
-		"regions_and_portals": [{"region_id": "town", "portals": []}],
-		"spawn_interaction_exit_sockets": [{"socket_id": "town.exit", "kind": "exit"}],
-		"gameplay_spatial_metadata": {"room_kind": "town"},
-	})
-	_expect(manifest.is_valid(), "town: authored building manifest is invalid")
-	_expect(manifest.movement_bindings().size() == 1 and manifest.occlusion_bindings().size() == 1, "town: channels collapsed or disappeared")
+	var manifest = SpatialManifestScript.new(JSON.parse_string(FileAccess.get_file_as_string("res://content/rooms/town/hearthside.spatial.json")))
+	_expect(manifest.is_valid(), "town: native derived manifest invalid")
+	_expect(manifest.movement_bindings().size() == 1 and manifest.occlusion_bindings().size() == 35, "town: boundary and visual channels collapsed")
+	var boundary: Dictionary = manifest.movement_bindings()[0]
+	_expect(not bool(boundary.channels.occlusion) and boundary.geometry.type == "rect", "town: movement boundary inferred from visible alpha")
+	_expect((manifest.gameplay_spatial_metadata.static_geometry as Array).size() > 100, "town: authored collision pieces disappeared")
 	var definition_result: Dictionary = EntityDefinitionScript.from_dict({
-		"entity_id": "ranger",
-		"feet_anchor": Vector2(12.0, 18.0),
-		"footprint": {"kind": "circle", "radius": 6.0},
-		"sort_baseline": 18.0,
+		"entity_id": "ranger", "feet_anchor": Vector2(12.0, 18.0),
+		"footprint": {"kind": "circle", "radius": 6.0}, "sort_baseline": 18.0,
 		"parts": [{"part_id": "body", "visual_id": "ranger.body"}],
 	})
-	_expect(bool(definition_result.ok), "town: feet anchored entity was rejected")
+	_expect(bool(definition_result.ok), "town: feet anchored entity rejected")
 
 
 func _test_corridor_opening_and_wall_slide() -> void:

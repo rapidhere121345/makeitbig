@@ -142,12 +142,15 @@ func _snapshot(id: int) -> void:
 	if game.current_screen.has_method("get_checklist_snapshot"):
 		result.tutorial = game.current_screen.get_checklist_snapshot()
 		result.position = str(game.current_screen.get_player_position())
-	if game.current_screen.has_method("get_hub_view"):
-		result.town = game.current_screen.get_hub_view().life_report()
-		result.position = str(game.current_screen.get_hub_view().hero_world_position())
-		var guide: Variant = game.current_screen.get_hub_view().destination_guide_report()
-		if guide is Dictionary:
-			result.destination_guide = guide
+	if game.current_screen.has_method("get_town_runtime"):
+		var town = game.current_screen.get_town_runtime()
+		var presenter = game.current_screen.get_hub_view()
+		result.town = presenter.life_report()
+		result.position = str(town.hero_world_position())
+		result.town_tick = town.simulation.tick if town.is_ready() else 0
+		result.destination_guide = presenter.destination_guide_report()
+		result.town_render = presenter.render_audit()
+		result.town_load = game.current_screen.town_load_report
 	var mains: Array = game.current_screen.find_children("*", "Node2D", true, false)
 	if game.current_screen is Node2D: mains.push_front(game.current_screen)
 	for node in mains:

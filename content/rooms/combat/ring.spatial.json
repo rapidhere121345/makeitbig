@@ -1,0 +1,70 @@
+{
+  "coordinate_convention": {
+    "scale": 1.0,
+    "units": "design_pixel",
+    "up": "negative_y"
+  },
+  "gameplay_spatial_metadata": {
+    "authored_arena_rect": [
+      42.0,
+      190.0,
+      1196.0,
+      488.0
+    ],
+    "geometry_source": "arena.geometry.v1",
+    "layout_id": "ring",
+    "room_kind": "combat"
+  },
+  "regions_and_portals": [
+    {
+      "portals": [],
+      "region_id": "combat"
+    }
+  ],
+  "spawn_interaction_exit_sockets": [
+    {
+      "kind": "spawn",
+      "position": [
+        640.0,
+        434.0
+      ],
+      "socket_id": "combat/encounter-origin"
+    },
+    {
+      "kind": "spawn",
+      "position": [
+        461.7138366699219,
+        515.0391845703125
+      ],
+      "socket_id": "combat/spawn"
+    }
+  ],
+  "stable_bindings": [
+    {
+      "binding_id": "combat/movement-boundary",
+      "channels": {
+        "movement": true,
+        "navigation": true,
+        "occlusion": false,
+        "projectile": true,
+        "vision": true
+      },
+      "geometry": {
+        "center": [
+          640.0,
+          434.0
+        ],
+        "inner_radius": 97.6,
+        "outer_radius": 209.84,
+        "type": "ring"
+      },
+      "source": "arena.geometry.v1"
+    }
+  ],
+  "traversal_profiles": [
+    {
+      "profile_id": "standard",
+      "radius": 14.0
+    }
+  ]
+}

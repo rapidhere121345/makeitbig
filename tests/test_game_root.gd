@@ -607,7 +607,7 @@ func _test_playtest_event_wiring(failures: Array[String]) -> void:
 	var logger := FakePlaytestLog.new()
 	var game = GameRootScript.new()
 	game.save_directory_path = TEST_DIRECTORY
-	game.arena_factory = Callable(self, "_make_fake_arena")
+	game.room_runtime_factory = Callable(self, "_make_fake_arena")
 	game.playtest_log = logger
 	game.playtest_logging_enabled = true
 	game.initialize(PackedStringArray())
@@ -720,7 +720,7 @@ func _test_playtest_event_wiring(failures: Array[String]) -> void:
 func _test_presentation_flag_wiring(failures: Array[String]) -> void:
 	var off_game = GameRootScript.new()
 	off_game.save_directory_path = TEST_DIRECTORY
-	off_game.arena_factory = Callable(self, "_make_fake_arena")
+	off_game.room_runtime_factory = Callable(self, "_make_fake_arena")
 	off_game.playtest_logging_enabled = false
 	off_game.initialize(PackedStringArray(["--presentation-off"]))
 	_expect(bool(off_game.start_new_game("ranger").get("ok", false)), "game root presentation: profile setup failed", failures)
@@ -736,7 +736,7 @@ func _test_presentation_flag_wiring(failures: Array[String]) -> void:
 	_cleanup_test_directory()
 	var on_game = GameRootScript.new()
 	on_game.save_directory_path = TEST_DIRECTORY
-	on_game.arena_factory = Callable(self, "_make_fake_arena")
+	on_game.room_runtime_factory = Callable(self, "_make_fake_arena")
 	on_game.playtest_logging_enabled = false
 	on_game.initialize(PackedStringArray())
 	_expect(bool(on_game.start_new_game("ranger").get("ok", false)), "game root presentation: default profile setup failed", failures)
@@ -767,7 +767,7 @@ func _log_events(events: Array[Dictionary], event_id: String) -> Array[Dictionar
 func _create_game():
 	var game = GameRootScript.new()
 	game.save_directory_path = TEST_DIRECTORY
-	game.arena_factory = Callable(self, "_make_fake_arena")
+	game.room_runtime_factory = Callable(self, "_make_fake_arena")
 	game.playtest_logging_enabled = false
 	game.initialize(PackedStringArray())
 	return game

@@ -3,12 +3,16 @@ extends SceneTree
 ##
 ## The markings may only ever describe the range the simulation resolves: the
 ## hatch is clipped to the authoritative rect, the brackets stay open and short,
-## and no helper touches gameplay data. The draw paths in main.gd are checked by
-## source so the fix cannot silently regress to a closed box or a full circle.
+## and no helper touches gameplay data. The combat presenter draw paths are
+## checked by source so the fix cannot silently regress to a closed box or a full
+## circle.
 const CombatMarks = preload("res://src/presentation/combat_marks.gd")
 
 const MAIN_SOURCE_PATH := "res://src/game/main.gd"
+const CONTROLLER_SOURCE_PATH := "res://src/presentation/combat_presentation_controller.gd"
 const HELPER_SOURCE_PATH := "res://src/presentation/combat_marks.gd"
+const PRESENTER_SOURCE_PATH := "res://src/presentation/arena_presenter.gd"
+const COMBAT_PRESENTER_SOURCE_PATH := "res://src/presentation/arena_combat_presenter.gd"
 const EPSILON := 0.0001
 
 var failures: Array[String] = []
@@ -116,23 +120,30 @@ func _test_markings_do_not_mutate_gameplay_data() -> void:
 
 func _test_draw_paths_use_the_clipped_marks() -> void:
 	var source := FileAccess.get_file_as_string(MAIN_SOURCE_PATH)
+	var controller_source := FileAccess.get_file_as_string(CONTROLLER_SOURCE_PATH)
+	var combat_source := FileAccess.get_file_as_string(COMBAT_PRESENTER_SOURCE_PATH)
 	_expect(not source.is_empty(), "main.gd is readable")
-	var ground := _function_body(source, "_draw_gameplay_ground_effects")
-	var legacy := _function_body(source, "_draw_legacy_arena")
-	var slam := _function_body(source, "_draw_boss_target_shape")
-	var mark := _function_body(source, "_draw_mark_indicator")
-	var overlay := _function_body(source, "_draw_player_status_overlay")
-	_expect(not ground.is_empty() and not legacy.is_empty() and not slam.is_empty() and not mark.is_empty() and not overlay.is_empty(), "the drawn entry points still exist")
-	_expect(not ground.contains("_draw_layout_markers("), "the approved world no longer draws the legacy floor layout decoration")
+	_expect(not controller_source.is_empty(), "combat presentation controller is readable")
+	_expect(not combat_source.is_empty(), "arena combat presenter is readable")
+	var ground := _function_body(combat_source, "draw_ground")
+	var draw := _function_body(controller_source, "_draw")
+	var publication := _function_body(controller_source, "commit")
+	var ground_pass := _function_body(controller_source, "draw_ground_pass")
+	var slam := _function_body(combat_source, "_draw_boss_target_shape")
+	var mark := _function_body(combat_source, "_draw_mark_indicator")
+	var overlay := _function_body(combat_source, "_draw_player_status_overlay")
+	var presenter_source := FileAccess.get_file_as_string(PRESENTER_SOURCE_PATH)
+	_expect(not ground.is_empty() and not draw.is_empty() and not slam.is_empty() and not mark.is_empty() and not overlay.is_empty(), "the drawn entry points still exist")
+	_expect(not presenter_source.is_empty(), "the arena presenter source is readable")
+	_expect(not source.contains("_draw_legacy_") and not source.contains("actors_atlas"), "the retired flat-field and atlas drawing paths remain removed")
+	_expect(_function_body(source, "_draw").is_empty(), "Main carries no combat draw pass")
+	_expect(publication.contains("world_view.begin_frame") and publication.contains("actor_presenter.sync_sort_views") and ground_pass.contains("combat_presenter.draw_ground") and draw.contains("combat_presenter.draw_overlays") and not draw.contains("actor_presenter.draw(") and not draw.contains("_draw_presentation_error"), "the presentation controller owns frame publication and actor projection order")
+	_expect(presenter_source.contains("_draw_presentation_error") and presenter_source.contains("draw_ground") and presenter_source.contains("draw_decals"), "ArenaPresenter owns the native world path and explicit load error")
 	_expect(ground.contains("_draw_boss_target_shape") and ground.contains("_draw_hazard"), "world telegraphs and hazards still draw")
 	_expect(ground.contains("_draw_walkable_layout_boundaries("), "true movement limits remain visible in approved world")
-	var boundary := _function_body(source, "_draw_walkable_layout_boundaries")
-	## 2026-10-10 playtest fix: ring rooms are bounded by the whole map
-	## rectangle, so the quiet border is the dashed rectangle edge, never the
-	## retired 0.20/0.43 annulus arcs. The corridor keeps its 72px strip.
-	_expect(boundary.contains("arena.grow(-14.0)") and boundary.contains("_draw_dashed_edge_rectangle(bounds") and boundary.contains("minf(72.0"), "quiet borders use current player clamp dimensions")
+	var boundary := _function_body(combat_source, "_draw_walkable_layout_boundaries")
+	_expect(boundary.contains("walkable_geometry") and boundary.contains("canvas.draw_arc(center, inner_radius") and boundary.contains("canvas.draw_arc(center, outer_radius"), "ring guides use the canonical annulus geometry")
 	_expect(not boundary.contains("COLOR_AMBER") and boundary.contains("COLOR_NEUTRAL"), "movement boundaries do not masquerade as targets")
-	_expect(legacy.contains("_draw_layout_markers("), "the flat-field fallback keeps its legacy layout marks")
 	_expect(slam.contains("CombatMarksScript.diagonal_hatch_segments(rect"), "the slam windup hatches through the clipped helper on the authoritative rect")
 	_expect(slam.contains("draw_rect(rect, color)") and slam.contains("draw_rect(rect, color, false, 2.0)"), "active and recovery slam semantics are untouched")
 	_expect(not mark.contains("draw_arc("), "the hunter mark is no longer a full circle")
@@ -140,7 +151,7 @@ func _test_draw_paths_use_the_clipped_marks() -> void:
 	_expect(mark.contains("draw_circle(") and mark.contains("-126.0") and mark.contains("-56.0"), "the published hunter mark dot keeps its offsets")
 	_expect(not overlay.contains("draw_rect(dodge_frame"), "the dodge no longer draws a closed box")
 	_expect(overlay.contains("CombatMarksScript.corner_bracket_segments(dodge_frame"), "the dodge draws four short bone corners on the same frame")
-	_expect(overlay.contains("Vector2(44.0, 64.0)") and overlay.contains("Vector2(26.0, 32.0)") and overlay.contains("dodge_remaining_ticks > 0"), "the dodge keeps its authored bounds and active window")
+	_expect(overlay.contains("Vector2(44.0, 64.0)") and overlay.contains("dodge_remaining_ticks") and overlay.contains("> 0"), "the dodge keeps its authored bounds and active window")
 
 
 func _function_body(source: String, name: String) -> String:

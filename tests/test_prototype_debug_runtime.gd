@@ -208,7 +208,7 @@ func _test_force_family_unknown_rejected(failures: Array[String]) -> void:
 func _make_rejecting_game(directory: String, extra: Array[String], failures: Array[String]) -> Node:
 	var game = GameRootScript.new()
 	game.save_directory_path = directory
-	game.arena_factory = Callable(self, "_make_fake_arena")
+	game.room_runtime_factory = Callable(self, "_make_fake_arena")
 	game.playtest_logging_enabled = false
 	var flow_errors: Array[Dictionary] = []
 	game.flow_error.connect(func(code: String, detail: String): flow_errors.append({"code": code, "detail": detail}))
@@ -312,7 +312,7 @@ func _test_no_persist_writes_nothing(failures: Array[String]) -> void:
 	var logger := FakePlaytestLog.new()
 	var game = GameRootScript.new()
 	game.save_directory_path = directory
-	game.arena_factory = Callable(self, "_make_fake_arena")
+	game.room_runtime_factory = Callable(self, "_make_fake_arena")
 	game.playtest_log = logger
 	game.playtest_logging_enabled = true
 	game.initialize(_pack(_debug_args(directory, ["--mib-stage=base", "--mib-no-persist"])))
@@ -328,7 +328,7 @@ func _test_no_persist_writes_nothing(failures: Array[String]) -> void:
 func _make_debug_game(directory: String, extra: Array[String]):
 	var game = GameRootScript.new()
 	game.save_directory_path = directory
-	game.arena_factory = Callable(self, "_make_fake_arena")
+	game.room_runtime_factory = Callable(self, "_make_fake_arena")
 	game.playtest_logging_enabled = false
 	game.initialize(_pack(_debug_args(directory, extra)))
 	return game

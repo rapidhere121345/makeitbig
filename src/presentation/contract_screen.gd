@@ -105,11 +105,13 @@ var _campaign_nodes: Array[Dictionary] = []
 var _workspace: HBoxContainer
 var _contract_scroll: ScrollContainer
 var _build_scroll: ScrollContainer
+var _contract_illustration: Control
 var _art = FacilityArtScript.new()
 var _start_transition_active := false
 var _start_emitted := false
 var _pending_start_config: Dictionary = {}
 var _transition_overlay: Control
+var _confirmation_button: Button
 var _transition_tween: Tween
 var _transition_control_state: Dictionary = {}
 var _presentation_enabled_override: Variant = null
@@ -196,12 +198,11 @@ func _build_ui() -> void:
 	build_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	build_content.add_theme_constant_override("separation", 8)
 	_build_scroll.add_child(build_content)
-	var illustration := ShellThemeScript.illustration_panel("contract_road", 92)
-	illustration.name = "ContractRoadIllustration"
-	build_content.add_child(illustration)
-	var fit_illustration := func(): illustration.custom_minimum_size.y = clampf(size.y - 628.0, 92.0, 200.0)
-	resized.connect(fit_illustration)
-	fit_illustration.call_deferred()
+	_contract_illustration = ShellThemeScript.illustration_panel("contract_road", 92)
+	_contract_illustration.name = "ContractRoadIllustration"
+	build_content.add_child(_contract_illustration)
+	resized.connect(_fit_contract_illustration)
+	_fit_contract_illustration.call_deferred()
 	var build_title := _field_label("随身整备")
 	build_title.add_theme_font_size_override("font_size", 22)
 	build_content.add_child(build_title)
@@ -372,6 +373,12 @@ func _field_label(text: String) -> Label:
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return label
+
+
+func _fit_contract_illustration() -> void:
+	if not is_instance_valid(_contract_illustration):
+		return
+	_contract_illustration.custom_minimum_size.y = clampf(size.y - 628.0, 92.0, 200.0)
 
 
 func _reading_tile(parent: Control, caption: String, value_name: String, value_size: int) -> Label:
@@ -842,6 +849,7 @@ func _begin_start_transition(config: Dictionary) -> void:
 		return
 	_transition_overlay = _create_start_transition_overlay()
 	add_child(_transition_overlay)
+	_confirmation_button.grab_focus()
 	_transition_tween = create_tween()
 	_transition_tween.set_parallel(true)
 	_transition_tween.tween_property(_transition_overlay, "modulate:a", 1.0, 0.10)
@@ -849,9 +857,6 @@ func _begin_start_transition(config: Dictionary) -> void:
 	var rule := _transition_overlay.get_node("Center/AcceptanceCard/Content/Rule") as Control
 	_transition_tween.tween_property(card, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_transition_tween.tween_property(rule, "custom_minimum_size:x", 320.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_transition_tween.chain().tween_interval(0.14)
-	_transition_tween.chain().tween_property(_transition_overlay, "modulate:a", 0.0, 0.16)
-	_transition_tween.finished.connect(complete_start_transition)
 
 
 func _create_start_transition_overlay() -> Control:
@@ -910,10 +915,17 @@ func _create_start_transition_overlay() -> Control:
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(rule)
 	var note := Label.new()
-	note.text = "整备行路 · 即将进入契约"
+	note.text = "整备行路 · 请确认出征"
 	note.add_theme_font_size_override("font_size", 20)
 	note.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 	content.add_child(note)
+	_confirmation_button = Button.new()
+	_confirmation_button.name = "ConfirmDepartureButton"
+	_confirmation_button.text = "确认出征 · Enter"
+	_confirmation_button.tooltip_text = "确认当前契约、模式、构筑与种子并进入战斗。"
+	_confirmation_button.focus_mode = Control.FOCUS_ALL
+	_confirmation_button.pressed.connect(complete_start_transition)
+	content.add_child(_confirmation_button)
 	return overlay
 
 

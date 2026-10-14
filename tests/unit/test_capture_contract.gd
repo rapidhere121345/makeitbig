@@ -62,7 +62,7 @@ func _run() -> void:
 	var game := Game.new()
 	game.save_directory_path = TEST_DIRECTORY
 	game.playtest_logging_enabled = false
-	game.arena_factory = func() -> Node: return FakeArena.new()
+	game.room_runtime_factory = func() -> Node: return FakeArena.new()
 	var observed: Array[Dictionary] = []
 	game.exit_code_hook = func(code: int, reason: String) -> void:
 		observed.append({"code": code, "reason": reason, "route": game.current_route, "stage": game._auto_smoke_stage})

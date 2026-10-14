@@ -1,5 +1,7 @@
 extends SceneTree
 
+const Skill := preload("res://src/systems/ranger_skill_rules.gd")
+
 const Fixture := preload("res://tests/helpers/talent_runtime_fixture.gd")
 
 
@@ -31,7 +33,7 @@ func _test_capabilities_come_from_locked_build(fixture, failures: Array[String])
 	var session: Dictionary = fixture.start_session(["ranger_critical_hunter"])
 	var arena = session.arena
 	var expected: Dictionary = session.build.talent_capabilities
-	_expect(arena.talent_capabilities == expected, "runtime talents still follow the framework_talent_build bypass", failures)
+	_expect(fixture.player(arena).talent_capabilities == expected, "runtime talents still follow the framework_talent_build bypass", failures)
 	_expect(arena.locked_build.talent_capabilities == expected, "locked build lost its compiled talent capabilities", failures)
 	fixture.free_session(session)
 
@@ -43,8 +45,8 @@ func _test_critical_hunter_once_after_pure_reads(fixture, failures: Array[String
 	var base_events: float = float(arena._current_model().total_events_float)
 	for _index in 8:
 		arena._current_model()
-		arena._player_attack_ui_state()
-		arena._update_hud()
+		arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
+		arena.refresh_presentation()
 	_expect(is_equal_approx(float(arena._current_model().total_events_float), base_events), "model/HUD reads consumed the once-per-battle critical bonus", failures)
 	_expect(fixture.release_arrow(arena, target), "critical hunter: first arrow did not release", failures)
 	var first = arena.projectiles[0]
@@ -53,9 +55,7 @@ func _test_critical_hunter_once_after_pure_reads(fixture, failures: Array[String
 	var damage_before := _normal_target_damage(arena, target)
 	fixture.advance_projectiles(arena)
 	_expect(_normal_target_damage(arena, target) - damage_before > expected_first * 0.99, "first critical bonus did not reach actual contact damage", failures)
-	arena.attack_cooldown_ticks = 0
-	arena.player_action_timeline.reset()
-	arena.projectiles.clear()
+	fixture.wait_for_cast_ready(arena)
 	target.health = 1000000000.0
 	_expect(fixture.release_arrow(arena, target), "critical hunter: second arrow did not release", failures)
 	var second = arena.projectiles[0]
@@ -69,7 +69,7 @@ func _test_last_generation_pool(fixture, failures: Array[String]) -> void:
 	var base_damage: float = float(arena.locked_build.total_events_float) * arena.locked_payload
 	var target = fixture.configure_target(arena, Vector2(120.0, 0.0))
 	_expect(fixture.release_arrow(arena, target), "last generation: expiring arrow did not release", failures)
-	target.position = arena.player_position + Vector2(arena.locked_targeting_distance + 80.0, 220.0)
+	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(arena.locked_targeting_distance + 80.0, 220.0))
 	var expiring = arena.projectiles[0]
 	var health_before: float = target.health
 	fixture.advance_projectiles(arena)
@@ -78,9 +78,8 @@ func _test_last_generation_pool(fixture, failures: Array[String]) -> void:
 	_expect(_boss_damage_float(arena) < 0.001, "last generation: miss directly added boss damage", failures)
 	_expect(_near(float(expiring.ordinary_damage), base_damage, 0.001), "unexpected base arrow payload", failures)
 
-	arena.attack_cooldown_ticks = 0
-	arena.player_action_timeline.reset()
-	target.position = arena.player_position + Vector2(120.0, 0.0)
+	fixture.wait_for_cast_ready(arena)
+	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(120.0, 0.0))
 	target.health = 1000000000.0
 	var before_hit: float = target.health
 	_expect(fixture.release_arrow(arena, target), "last generation: consuming arrow did not release", failures)
@@ -88,9 +87,8 @@ func _test_last_generation_pool(fixture, failures: Array[String]) -> void:
 	var first_consumption: float = before_hit - target.health
 	_expect(_near(first_consumption, base_damage * 1.15, 0.05), "next valid hit did not consume the 15%% pool exactly once (got %.3f want %.3f)" % [first_consumption, base_damage * 1.15], failures)
 
-	arena.attack_cooldown_ticks = 0
-	arena.player_action_timeline.reset()
-	target.position = arena.player_position + Vector2(120.0, 0.0)
+	fixture.wait_for_cast_ready(arena)
+	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(120.0, 0.0))
 	target.health = 1000000000.0
 	before_hit = target.health
 	_expect(fixture.release_arrow(arena, target), "last generation: post-consumption arrow did not release", failures)
@@ -98,7 +96,7 @@ func _test_last_generation_pool(fixture, failures: Array[String]) -> void:
 	_expect(_near(before_hit - target.health, base_damage, 0.05), "retained payload was recursively retained after one consumption", failures)
 
 	arena.framework_resolved_build = session.build
-	arena._enter_arena()
+	arena.start_room()
 	var reset_target = fixture.configure_target(arena)
 	_expect(fixture.release_arrow(arena, reset_target), "last generation: new-encounter arrow did not release", failures)
 	var reset_before: float = reset_target.health
@@ -111,29 +109,31 @@ func _test_wind_walker_interrupt_and_mark(fixture, failures: Array[String]) -> v
 	var session: Dictionary = fixture.start_session(["ranger_wind_walker"])
 	var arena = session.arena
 	var target = fixture.configure_target(arena)
-	_expect(arena._request_piercing_arrow(target.entity_id).get("accepted", false), "wind walker: arrow request was rejected", failures)
-	_expect(arena._start_dodge_from_command(Vector2.UP), "wind walker: dodge was rejected", failures)
-	var after_dodge: Dictionary = arena.player_action_timeline.snapshot()
+	_expect(fixture.cast(arena, "piercing_arrow", target.entity_id).get("accepted", false), "wind walker: arrow request was rejected", failures)
+	_expect(fixture.cast(arena, "dodge", 0, Vector2.UP).get("accepted", false), "wind walker: dodge was rejected", failures)
+	var after_dodge: Dictionary = fixture.player(arena).timeline
 	_expect(not (after_dodge.active.is_empty() and after_dodge.buffered.is_empty()), "wind walker dodge interrupted a live/buffered arrow", failures)
-	arena._start_dash_from_command(Vector2.RIGHT)
-	var after_dash: Dictionary = arena.player_action_timeline.snapshot()
+	fixture.wait_for_cast_ready(arena)
+	_expect(fixture.cast(arena, "piercing_arrow", target.entity_id).get("accepted", false), "wind walker: dash arrow request was rejected", failures)
+	_expect(fixture.cast(arena, "dash", 0, Vector2.RIGHT).get("accepted", false), "wind walker: dash was rejected", failures)
+	var after_dash: Dictionary = fixture.player(arena).timeline
 	_expect(not (after_dash.active.is_empty() and after_dash.buffered.is_empty()), "wind walker dash interrupted a live/buffered arrow", failures)
 
-	arena.player_action_timeline.reset()
-	arena.dodge_remaining_ticks = 1
-	arena.dash_remaining_ticks = 0
-	arena.marked_entity_id = target.entity_id
-	arena.hunter_mark_expires_tick = arena.sim_tick
-	arena._update_hunter_mark_tick()
-	_expect(arena.marked_entity_id == 0, "wind walker postponed mark expiry because a displacement was active", failures)
+	fixture.wait_for_cast_ready(arena)
+	_expect(fixture.cast(arena, "hunter_mark", target.entity_id).get("accepted", false), "wind walker: mark was rejected", failures)
+	var expiry: int = fixture.player(arena).hunter_mark_expires_tick
+	fixture.advance_to(arena, expiry - 2)
+	_expect(fixture.cast(arena, "dodge", 0, Vector2.UP).get("accepted", false), "wind walker: expiry dodge was rejected", failures)
+	fixture.advance_to(arena, expiry)
+	_expect(fixture.player(arena).dodge_remaining_ticks > 0 and fixture.player(arena).marked_entity_id == 0, "wind walker postponed mark expiry because a displacement was active", failures)
 	fixture.free_session(session)
 
 	var ordinary: Dictionary = fixture.start_session([])
 	var plain = ordinary.arena
 	var plain_target = fixture.configure_target(plain)
-	plain._request_piercing_arrow(plain_target.entity_id)
-	plain._start_dodge_from_command(Vector2.UP)
-	var interrupted: Dictionary = plain.player_action_timeline.snapshot()
+	_expect(fixture.cast(plain, "piercing_arrow", plain_target.entity_id).get("accepted", false), "ordinary arrow was rejected", failures)
+	_expect(fixture.cast(plain, "dodge", 0, Vector2.UP).get("accepted", false), "ordinary dodge was rejected", failures)
+	var interrupted: Dictionary = fixture.player(plain).timeline
 	_expect(interrupted.active.is_empty() and interrupted.buffered.is_empty(), "ordinary dodge no longer interrupts arrow windup/buffer", failures)
 	fixture.free_session(ordinary)
 
@@ -143,19 +143,19 @@ func _test_defocused_tracking_candidate(fixture, failures: Array[String]) -> voi
 	var arena = session.arena
 	var marked_target = fixture.configure_target(arena)
 	var nearer_target = arena.enemies[1]
-	nearer_target.position = arena.player_position + Vector2(80.0, 0.0)
+	arena.teleport_actor("enemy/%d" % nearer_target.entity_id, arena.player_position + Vector2(80.0, 0.0))
 	nearer_target.health = 1000000000.0
 	nearer_target.maximum_health = nearer_target.health
-	_expect(arena._cast_hunter_mark(marked_target.entity_id), "defocused tracking: initial mark was rejected", failures)
-	marked_target.position = arena.player_position + Vector2(arena.locked_targeting_distance * arena.HUNTER_MARK_RANGE_MULTIPLIER + 10.0, 0.0)
-	arena._update_hunter_mark_tick()
-	_expect(arena.marked_entity_id == 0 and arena.hunter_mark_expires_tick == 0,
+	_expect(fixture.cast(arena, "hunter_mark", marked_target.entity_id).get("accepted", false), "defocused tracking: initial mark was rejected", failures)
+	arena.teleport_actor("enemy/%d" % marked_target.entity_id, arena.player_position + Vector2(arena.locked_targeting_distance * Skill.HUNTER_MARK_RANGE_MULTIPLIER + 10.0, 0.0))
+	fixture.step(arena)
+	_expect(fixture.player(arena).marked_entity_id == 0 and fixture.player(arena).hunter_mark_expires_tick == 0,
 		"defocused tracking: lost mark remained active", failures)
-	_expect(arena.hunter_mark_candidate_entity_id == marked_target.entity_id
-		and arena.hunter_mark_candidate_expires_tick == arena.sim_tick + 15,
+	_expect(fixture.player(arena).hunter_mark_candidate_entity_id == marked_target.entity_id
+		and fixture.player(arena).hunter_mark_candidate_expires_tick == arena.sim_tick + 15,
 		"defocused tracking: lost target did not retain the exact 15-tick candidate window", failures)
 
-	marked_target.position = arena.player_position + Vector2(180.0, 0.0)
+	arena.teleport_actor("enemy/%d" % marked_target.entity_id, arena.player_position + Vector2(180.0, 0.0))
 	var preferred = arena._preferred_skill_one_target()
 	_expect(preferred != null and preferred.entity_id == marked_target.entity_id,
 		"defocused tracking: candidate did not outrank the nearer unmarked target", failures)
@@ -165,9 +165,8 @@ func _test_defocused_tracking_candidate(fixture, failures: Array[String]) -> voi
 	_expect(_near(float(arrow.ordinary_damage), base_damage, 0.001),
 		"defocused tracking: candidate restored hunter-mark damage multiplier", failures)
 
-	arena.sim_tick = arena.hunter_mark_candidate_expires_tick + 1
-	arena._update_talent_runtime_tick()
-	_expect(arena.hunter_mark_candidate_entity_id == 0 and arena.hunter_mark_candidate_expires_tick == 0,
+	fixture.advance_to(arena, int(fixture.player(arena).hunter_mark_candidate_expires_tick) + 1)
+	_expect(fixture.player(arena).hunter_mark_candidate_entity_id == 0 and fixture.player(arena).hunter_mark_candidate_expires_tick == 0,
 		"defocused tracking: candidate outlived its 15-tick window", failures)
 	fixture.free_session(session)
 
@@ -176,24 +175,18 @@ func _test_light_step_keen_eye_recovery_pose(fixture, failures: Array[String]) -
 	var session: Dictionary = fixture.start_session([])
 	var arena = session.arena
 	var target = fixture.configure_target(arena)
-	arena._cast_hunter_mark(target.entity_id)
-	_expect(arena.hunter_mark_expires_tick == arena.sim_tick + int(round(arena.HUNTER_MARK_DURATION_TICKS * 1.10)), "keen eye did not extend the real mark expiry tick", failures)
-	arena.dodge_cooldown_ticks = 0
-	arena.dodge_remaining_ticks = 0
-	arena.dash_remaining_ticks = 0
-	arena._start_dodge_from_command(Vector2.RIGHT)
-	_expect(arena.dodge_cooldown_ticks == int(round(arena.DODGE_COOLDOWN_TICKS * 0.92)), "recovery pose did not reduce the real dodge cooldown", failures)
-
-	arena.dodge_remaining_ticks = 0
-	arena.dodge_cooldown_ticks = 0
+	_expect(fixture.cast(arena, "hunter_mark", target.entity_id).get("accepted", false), "keen eye: mark was rejected", failures)
+	_expect(fixture.player(arena).hunter_mark_expires_tick == arena.sim_tick + int(round(Skill.HUNTER_MARK_DURATION_TICKS * 1.10)), "keen eye did not extend the real mark expiry tick", failures)
+	_expect(fixture.cast(arena, "dodge").get("accepted", false), "recovery pose: dodge was rejected", failures)
+	_expect(fixture.player(arena).dodge_cooldown_ticks == int(round(Skill.DODGE_COOLDOWN_TICKS * 0.92)), "recovery pose did not reduce the real dodge cooldown", failures)
+	fixture.advance_to(arena, int(arena.sim_tick) + int(fixture.player(arena).dodge_remaining_ticks))
 	var start: Vector2 = arena.player_position
-	arena._start_dash_from_command(Vector2.RIGHT)
-	var duration: int = arena.dash_remaining_ticks
-	_expect(duration == int(round(arena.DASH_DURATION_TICKS * 1.10)), "light step did not lengthen the real dash duration", failures)
-	for _index in duration:
-		arena._advance_player_tick(Vector2.ZERO, 1.0)
-		arena._advance_mobility_counters()
-	_expect(_near(arena.player_position.distance_to(start), arena.DASH_TOTAL_DISTANCE, 0.10), "light step changed total dash displacement (distance=%.3f)" % arena.player_position.distance_to(start), failures)
+	_expect(fixture.cast(arena, "dash").get("accepted", false), "light step: dash was rejected", failures)
+	var duration: int = fixture.player(arena).dash_remaining_ticks
+	_expect(duration == int(round(Skill.DASH_DURATION_TICKS * 1.10)), "light step did not lengthen the real dash duration", failures)
+	for _index in duration - 1:
+		fixture.step(arena)
+	_expect(_near(arena.player_position.distance_to(start), Skill.DASH_TOTAL_DISTANCE, 0.10), "light step changed total dash displacement (distance=%.3f)" % arena.player_position.distance_to(start), failures)
 	fixture.free_session(session)
 
 
@@ -203,18 +196,14 @@ func _test_three_skill_rhythm(fixture, failures: Array[String]) -> void:
 	var target = fixture.configure_target(arena)
 	_expect(fixture.release_arrow(arena, target), "three rhythm: opening arrow did not release", failures)
 	fixture.advance_projectiles(arena)
-	arena.attack_cooldown_ticks = 0
-	arena.player_action_timeline.reset()
-	arena.hunter_mark_cooldown_ticks = 0
-	arena._cast_hunter_mark(target.entity_id)
-	arena._start_dash_from_command(Vector2.RIGHT)
-	arena._process_player_action_events(arena.player_action_timeline.advance(arena.sim_tick))
-	var receipt: Dictionary = arena._request_piercing_arrow(target.entity_id)
-	var snapshot: Dictionary = arena.player_action_timeline.snapshot()
+	fixture.wait_for_cast_ready(arena)
+	_expect(fixture.cast(arena, "hunter_mark", target.entity_id).get("accepted", false), "three rhythm: mark was rejected", failures)
+	_expect(fixture.cast(arena, "dash").get("accepted", false), "three rhythm: dash was rejected", failures)
+	var receipt: Dictionary = fixture.cast(arena, "piercing_arrow", target.entity_id)
+	var snapshot: Dictionary = fixture.player(arena).timeline
 	var request: Dictionary = snapshot.active if not snapshot.active.is_empty() else snapshot.buffered
 	_expect(bool(receipt.get("accepted", false)) and int(request.get("windup_ticks", 5)) == 4, "three rhythm did not consume one 4-tick windup while wind walker retained it (status=%s windup=%s)" % [String(receipt.get("status", "")), str(request.get("windup_ticks", -1))], failures)
-	arena.sim_tick = int(request.get("start_tick", arena.sim_tick)) + int(request.get("windup_ticks", 4))
-	arena._process_player_action_events(arena.player_action_timeline.advance(arena.sim_tick))
+	fixture.advance_to(arena, int(request.get("start_tick", arena.sim_tick)) + int(request.get("windup_ticks", 4)))
 	_expect(not arena.projectiles.is_empty(), "three rhythm accelerated arrow did not leave the bow", failures)
 	fixture.free_session(session)
 
@@ -233,7 +222,7 @@ func _test_render_rates_and_presentation_switch(fixture, failures: Array[String]
 		for _index in int(setting.frames):
 			arena._process(float(setting.delta))
 			arena._current_model()
-			arena._player_attack_ui_state()
+			arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 		var guard := 0
 		while int(arena.sim_tick) < 270 and guard < 64:
 			arena._process(float(setting.delta))

@@ -18,6 +18,7 @@ extends RefCounted
 
 const PaletteScript = preload("res://src/presentation/combat_palette.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
+const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const TOWER_LIGHT_FEET := Vector2(212.0, 394.0)
 const RUIN_LIGHT_FEET := Vector2(703.0, 220.0)
 const ATMOSPHERE_PRESET := "arena"
@@ -98,36 +99,6 @@ const BOSS_HAND_LEFT_OFFSET := Vector2(-68.0, -18.0)
 const BOSS_HAND_RIGHT_OFFSET := Vector2(68.0, -18.0)
 const TOWER_UPPER_FADE: float = 0.52
 
-## Room identities are visual aliases for the already-authoritative layout ids.
-## They describe the space the player is entering; spawns, collision and rewards
-## continue to be owned by main.gd.
-const ROOM_CONCEPTS := {
-	"rectangle_arena": {
-		"title": "破碎前哨",
-		"landmark": "关隘残门",
-		"concept": "开阔的方形前庭，先读清敌群从哪一侧逼近。",
-		"entry_hint": "从南侧进入前庭，保持退路，先处理迎面敌群。",
-		"exit_hint": "清场后穿过东侧残门。",
-	},
-	"ring": {
-		"title": "回收环场",
-		"landmark": "环形灯标",
-		## Mirrors the shipped ring copy in content/early_campaign.json: the room
-		## fights across the whole map rectangle, so no fallback may teach the
-		## retired central-well annulus.
-		"concept": "开阔回收场，整片地面都可通行，四周残壁就是场地边界。",
-		"entry_hint": "放心横穿中央灯标，用整片场地拉开距离，残壁边缘会真实阻挡。",
-		"exit_hint": "清场后沿东南环门离场。",
-	},
-	"corridor": {
-		"title": "风切通道",
-		"landmark": "峡口旗标",
-		"concept": "狭长风口，横向走位比直线后撤更重要。",
-		"entry_hint": "沿旗标横向走位，避开冲锋线和远程扇面。",
-		"exit_hint": "清场后穿过东侧风门。",
-	},
-}
-
 var pending_reason: String = ""
 
 var _sprites: Dictionary = {}
@@ -152,12 +123,13 @@ var _actor_occluders: Array[Dictionary] = []
 ## The colossus is drawn by this file but its live position only exists at draw
 ## time, so the report can only speak about the colossus of the frame that was
 ## really drawn.
-var _boss_drawn := false
-var _boss_drawn_feet := Vector2(INF, INF)
-var _boss_drawn_local_alpha := 1.0
-var _boss_drawn_box := Rect2()
 var _ready := false
 var _atmosphere_drawn := false
+var _room_catalog: RefCounted
+
+
+func _init() -> void:
+	_room_catalog = RoomCatalogScript.new()
 
 
 func is_ready() -> bool:
@@ -254,7 +226,6 @@ func begin_frame(clip_rect: Rect2, focus_gameplay: Vector2, arena_rect: Rect2) -
 	_origin = camera_origin_for(_hero_world)
 	_cutaway_hero = Vector2(INF, INF)
 	_atmosphere_drawn = false
-	_boss_drawn = false
 	_actor_cutaway_ready = false
 	_actor_occluders.clear()
 
@@ -397,10 +368,10 @@ func draw_ground(canvas: CanvasItem) -> void:
 
 
 func room_concept_report(layout_id: String) -> Dictionary:
-	var concept: Dictionary = ROOM_CONCEPTS.get(layout_id, ROOM_CONCEPTS["rectangle_arena"])
+	var concept: Dictionary = _room_catalog.presentation(layout_id) if _room_catalog != null else {}
 	return {
 		"layout_id": layout_id,
-		"title": String(concept.get("title", "战斗场")),
+		"title": String(concept.get("display_name", "战斗场")),
 		"landmark": String(concept.get("landmark", "边界标记")),
 		"concept": String(concept.get("concept", "")),
 		"entry_hint": String(concept.get("entry_hint", "")),
@@ -764,21 +735,7 @@ func occlusion_report(hero_world_point: Vector2) -> Dictionary:
 		entry["overlap"] = (entry["art_box"] as Rect2).intersection(window)
 		entries.append(entry)
 		front_ids.append(String(entry["id"]))
-	if not _actor_cutaway_ready and _boss_drawn and _hero_world == hero_world_point:
-		## The colossus covers the hero as well, so the total this report states is
-		## the total of the frame that was really drawn, never a guess.
-		var boss_local := _boss_drawn_local_alpha
-		opacity = 1.0 - (1.0 - opacity) * (1.0 - boss_local)
-		front_ids.append("boss")
-		entries.append({
-			"id": "boss",
-			"sprite_id": "boss",
-			"node": "boss",
-			"feet_world": _boss_drawn_feet,
-			"art_box": _boss_drawn_box,
-			"local_alpha": boss_local,
-			"overlap": _boss_drawn_box.intersection(window),
-		})
+
 	return {
 		"hero_world": hero_world_point,
 		"hero_cell_world": cell,
@@ -886,40 +843,29 @@ func draw_tower(canvas: CanvasItem, hero_world_point: Vector2) -> void:
 ## are drawn in another pass and stay opaque.
 func boss_draw_parts(feet_world: Vector2, phase: int, left_hand_delta_gameplay: Vector2, right_hand_delta_gameplay: Vector2, pose_frame: Dictionary = {}) -> Array[Dictionary]:
 	var phase_id := 2 if phase >= 2 else 1
+	var left_anchor := feet_world + BOSS_HAND_LEFT_OFFSET + left_hand_delta_gameplay * GAMEPLAY_TO_WORLD
+	var right_anchor := feet_world + BOSS_HAND_RIGHT_OFFSET + right_hand_delta_gameplay * GAMEPLAY_TO_WORLD
+	# Body/core share the actor's ground baseline. Hand baselines follow the
+	# gameplay pose; cosmetic lift/recoil changes the sprite, never its ground.
 	return [
-		{"sprite_id": "boss.body_phase%d" % phase_id, "feet": feet_world + Vector2(pose_frame.get("body_offset_px", Vector2i.ZERO))},
-		{"sprite_id": "boss.core_phase%d" % phase_id, "feet": feet_world + BOSS_CORE_OFFSET + Vector2(pose_frame.get("core_offset_px", Vector2i.ZERO))},
-		{"sprite_id": "boss.hand_left", "feet": feet_world + BOSS_HAND_LEFT_OFFSET + left_hand_delta_gameplay * GAMEPLAY_TO_WORLD + Vector2(pose_frame.get("left_hand_offset_px", Vector2i.ZERO))},
-		{"sprite_id": "boss.hand_right", "feet": feet_world + BOSS_HAND_RIGHT_OFFSET + right_hand_delta_gameplay * GAMEPLAY_TO_WORLD + Vector2(pose_frame.get("right_hand_offset_px", Vector2i.ZERO))},
+		{"part_id": "body", "sprite_id": "boss.body_phase%d" % phase_id, "sort_feet": feet_world, "feet": feet_world + Vector2(pose_frame.get("body_offset_px", Vector2i.ZERO)), "tint": Color.WHITE},
+		{"part_id": "core", "sprite_id": "boss.core_phase%d" % phase_id, "sort_feet": feet_world, "feet": feet_world + BOSS_CORE_OFFSET + Vector2(pose_frame.get("core_offset_px", Vector2i.ZERO)), "tint": Color(pose_frame.get("core_tint", Color.WHITE))},
+		{"part_id": "left_hand", "sprite_id": "boss.hand_left", "sort_feet": left_anchor, "feet": left_anchor + Vector2(pose_frame.get("left_hand_offset_px", Vector2i.ZERO)), "tint": Color.WHITE},
+		{"part_id": "right_hand", "sprite_id": "boss.hand_right", "sort_feet": right_anchor, "feet": right_anchor + Vector2(pose_frame.get("right_hand_offset_px", Vector2i.ZERO)), "tint": Color.WHITE},
 	]
 
 
-## Both the cutaway prepass and the actual GPU pass consume boss_draw_parts(),
-## including this frame's pose; a moving fist cannot escape its opacity budget.
-func draw_boss(canvas: CanvasItem, feet_world: Vector2, phase: int, left_hand_delta_gameplay: Vector2, right_hand_delta_gameplay: Vector2, core_open: bool, hero_world_point: Vector2, pose_frame: Dictionary = {}) -> void:
-	var phase_id := 2 if phase >= 2 else 1
-	var alpha := boss_fade_alpha(feet_world, hero_world_point)
-	var modulate := Color(1.0, 1.0, 1.0, alpha)
-	var parts := boss_draw_parts(feet_world, phase, left_hand_delta_gameplay, right_hand_delta_gameplay, pose_frame)
-	var body_feet: Vector2 = parts[0]["feet"]
-	var core_feet: Vector2 = parts[1]["feet"]
-	var left_feet: Vector2 = parts[2]["feet"]
-	var right_feet: Vector2 = parts[3]["feet"]
-	var sprite_ids := ["boss.body_phase%d" % phase_id, "boss.core_phase%d" % phase_id, "boss.hand_left", "boss.hand_right"]
-	var feet_list := [body_feet, core_feet, left_feet, right_feet]
-	var cut := _boss_cutaway(sprite_ids, feet_list, feet_world, hero_world_point)
-	_boss_drawn = (cut["window"] as Rect2).size.x > 0.0
-	if _boss_drawn:
-		_boss_drawn_feet = feet_world
-		_boss_drawn_local_alpha = alpha * float(cut["alpha"])
-		_boss_drawn_box = Rect2()
-		for index: int in sprite_ids.size():
-			var box := sprite_art_box(String(sprite_ids[index]), feet_list[index] as Vector2)
-			_boss_drawn_box = box if _boss_drawn_box.size.x <= 0.0 else _boss_drawn_box.merge(box)
-	draw_sprite(canvas, String(sprite_ids[0]), body_feet, false, modulate, cut["window"], cut["alpha"])
-	draw_sprite(canvas, String(sprite_ids[1]), core_feet, false, modulate * Color(pose_frame.get("core_tint", Color.WHITE)), cut["window"], cut["alpha"])
-	draw_sprite(canvas, String(sprite_ids[2]), left_feet, false, modulate, cut["window"], cut["alpha"])
-	draw_sprite(canvas, String(sprite_ids[3]), right_feet, false, modulate, cut["window"], cut["alpha"])
+## One independently sorted authored cell. The sort anchor, rather than the
+## logical Boss's root, decides whether this part is in front of the player.
+func draw_boss_part(canvas: CanvasItem, part: Dictionary, hero_world_point: Vector2) -> void:
+	var feet: Vector2 = part.feet
+	var anchor: Vector2 = part.sort_feet
+	var box := sprite_art_box(String(part.sprite_id), feet)
+	var cut := cutaway_for(box, anchor, hero_world_point)
+	var alpha := FORE_FADE if anchor.y > hero_world_point.y and box.intersects(hero_cell_world(hero_world_point)) else 1.0
+	var tint: Color = part.get("tint", Color.WHITE)
+	tint.a *= alpha
+	draw_sprite(canvas, String(part.sprite_id), feet, false, tint, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 
 
 ## Body, core and both hands in world units, in the order they are drawn.
@@ -987,13 +933,13 @@ func _draw_cell(canvas: CanvasItem, metadata: Dictionary, feet_world: Vector2, f
 			pieces = cut_pieces(destination, region, core, modulate.a, cut_alpha)
 		# Compose with the active world transform; resetting to identity used to
 		# put subsequent actors in raw screen coordinates when an enemy faced left.
-		canvas.draw_set_transform_matrix(world_transform() * Transform2D(0.0, Vector2(-1.0, 1.0), 0.0, center))
+		canvas.draw_set_transform_matrix(_canvas_world_transform(canvas) * Transform2D(0.0, Vector2(-1.0, 1.0), 0.0, center))
 		for piece: Dictionary in pieces:
 			var dest: Rect2 = piece["dest"]
 			var mirrored_local := Rect2(Vector2(center.x - dest.end.x, dest.position.y - center.y), dest.size)
 			var mirrored_source := Rect2(region.position + Vector2(destination.size.x - (dest.end.x - destination.position.x), dest.position.y - destination.position.y), dest.size)
 			canvas.draw_texture_rect_region(texture, mirrored_local, mirrored_source, Color(modulate.r, modulate.g, modulate.b, float(piece["alpha"])))
-		canvas.draw_set_transform_matrix(world_transform())
+		canvas.draw_set_transform_matrix(_canvas_world_transform(canvas))
 		return
 	if not flip_x:
 		var core := _cutaway_core(destination, cut, cut_alpha)
@@ -1258,3 +1204,7 @@ func _point(value: Variant) -> Vector2:
 		return Vector2.ZERO
 	var array: Array = value
 	return Vector2(float(array[0]), float(array[1]))
+
+
+func _canvas_world_transform(canvas: CanvasItem) -> Transform2D:
+	return canvas.get_meta("actor_world_transform", world_transform()) as Transform2D

@@ -1,7 +1,7 @@
 class_name EnemyTactics
 extends RefCounted
 
-const WalkableGeometry := preload("res://src/systems/walkable_geometry.gd")
+const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
 
 ## Deterministic, scene-free enemy intent planner.
 ##
@@ -11,7 +11,7 @@ const WalkableGeometry := preload("res://src/systems/walkable_geometry.gd")
 ##   "tick": int >= 0,
 ##   "player_position": Vector2,
 ##   "arena_rect": Rect2 with positive size,
-##   "walkable_geometry": normalized WalkableGeometry with bounds == arena_rect,
+##   "walkable_geometry": normalized ArenaGeometry with bounds == arena_rect,
 ##   "enemies": [{
 ##     "entity_id": int >= 0 (unique),
 ##     "kind_id": "melee_pursuer" | "charging_raider" | "fan_ranged" |
@@ -31,7 +31,7 @@ const WalkableGeometry := preload("res://src/systems/walkable_geometry.gd")
 ## }
 ## A shape is {"shape":"circle", "center":Vector2, "radius":number > 0}
 ## or {"shape":"rect", "rect":Rect2 with positive size}. Unknown enum values,
-## shapes, or malformed required data fail closed. Extra adapter metadata is ignored.
+## shapes, or malformed required data fail closed. Extra spatial metadata is ignored.
 ## The planner never mutates the snapshot.
 
 const SNAPSHOT_VERSION := 2
@@ -95,7 +95,7 @@ func plan(snapshot: Variant) -> Dictionary:
 		return {"ok": false, "intents": [], "error": error}
 
 	var safe_snapshot: Dictionary = (snapshot as Dictionary).duplicate(true)
-	var normalized_geometry: Dictionary = WalkableGeometry.normalize(safe_snapshot["walkable_geometry"])
+	var normalized_geometry: Dictionary = ArenaGeometry.normalize(safe_snapshot["walkable_geometry"])
 	safe_snapshot["walkable_geometry"] = normalized_geometry["value"]
 	var sorted_enemies: Array = safe_snapshot["enemies"].duplicate(true)
 	sorted_enemies.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a["entity_id"]) < int(b["entity_id"]))
@@ -177,7 +177,7 @@ func score_candidate_direction(snapshot: Dictionary, enemy: Dictionary, desired_
 		if hazard.has("warning_geometry") and _shape_contains(hazard["warning_geometry"], raw_candidate):
 			score += WARNING_HAZARD_PENALTY
 
-	var projection: Dictionary = WalkableGeometry.project(raw_candidate, snapshot["walkable_geometry"])
+	var projection: Dictionary = ArenaGeometry.project(raw_candidate, snapshot["walkable_geometry"])
 	if not bool(projection["ok"]):
 		return score + GEOMETRY_BLOCKED_PENALTY
 	var actual_displacement := position.distance_to(Vector2(projection["position"]))
@@ -196,7 +196,7 @@ func choose_candidate_direction(snapshot: Dictionary, enemy: Dictionary, desired
 	var best_direction := desired
 	var best_score := INF
 	var stable_sign := 1 if posmod(int(enemy["entity_id"]), 2) == 0 else -1
-	var candidates: Array[Vector2] = WalkableGeometry.candidate_directions(desired, stable_sign)
+	var candidates: Array[Vector2] = ArenaGeometry.candidate_directions(desired, stable_sign)
 	for candidate: Vector2 in candidates:
 		var score := score_candidate_direction(snapshot, enemy, desired, candidate)
 		if score < best_score:
@@ -255,13 +255,13 @@ func _plan_charger(snapshot: Dictionary, enemy: Dictionary) -> Dictionary:
 	var to_player := player - position
 	var distance := to_player.length()
 	if distance >= CHARGER_LAUNCH_MIN_RANGE and distance <= CHARGER_LAUNCH_MAX_RANGE and _action_ready(snapshot, enemy):
-		var contact_projection: Dictionary = WalkableGeometry.project(player, snapshot["walkable_geometry"])
+		var contact_projection: Dictionary = ArenaGeometry.project(player, snapshot["walkable_geometry"])
 		if not bool(contact_projection.get("ok", false)):
 			return _charger_setup_intent(snapshot, enemy, "charger_contact_invalid")
 		var contact_point: Vector2 = contact_projection.get("position", Vector2.ZERO)
 		if player.distance_to(contact_point) > CHARGER_CONTACT_RADIUS:
 			return _charger_setup_intent(snapshot, enemy, "charger_contact_unreachable")
-		var path: Dictionary = WalkableGeometry.line_segment_walkable(position, contact_point, snapshot["walkable_geometry"])
+		var path: Dictionary = ArenaGeometry.line_segment_walkable(position, contact_point, snapshot["walkable_geometry"])
 		if not bool(path.get("ok", false)) or not bool(path.get("walkable", false)):
 			return _charger_setup_intent(snapshot, enemy, "charger_path_blocked" if bool(path.get("ok", false)) else "charger_path_invalid")
 		var contact_delta := contact_point - position
@@ -275,7 +275,7 @@ func _plan_charger(snapshot: Dictionary, enemy: Dictionary) -> Dictionary:
 		var execution_endpoint := position + serialized_direction.normalized() * action_distance
 		if execution_endpoint.distance_to(player) > CHARGER_CONTACT_RADIUS:
 			return _charger_setup_intent(snapshot, enemy, "charger_contact_unreachable")
-		var execution_path: Dictionary = WalkableGeometry.line_segment_walkable(position, execution_endpoint, snapshot["walkable_geometry"])
+		var execution_path: Dictionary = ArenaGeometry.line_segment_walkable(position, execution_endpoint, snapshot["walkable_geometry"])
 		if not bool(execution_path.get("ok", false)) or not bool(execution_path.get("walkable", false)):
 			return _charger_setup_intent(snapshot, enemy, "charger_path_blocked" if bool(execution_path.get("ok", false)) else "charger_path_invalid")
 		return _action_intent(int(enemy["entity_id"]), "charge", contact_delta, "charger_launch_band", action_distance)
@@ -451,7 +451,7 @@ func _snapshot_error(snapshot: Variant) -> String:
 		return "invalid_player_position"
 	if not _valid_rect(data["arena_rect"]):
 		return "invalid_arena_rect"
-	var normalized_geometry: Dictionary = WalkableGeometry.normalize(data["walkable_geometry"])
+	var normalized_geometry: Dictionary = ArenaGeometry.normalize(data["walkable_geometry"])
 	if not bool(normalized_geometry["ok"]):
 		return "invalid_walkable_geometry_%s" % String(normalized_geometry["error"])
 	if Rect2(normalized_geometry["value"]["bounds"]) != Rect2(data["arena_rect"]):

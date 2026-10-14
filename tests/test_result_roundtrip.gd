@@ -29,7 +29,7 @@ func _run() -> void:
 	for _room in room_count:
 		if game.current_route != "arena":
 			break
-		var arena: Node = game.current_screen.get("_current_adapter").get("_legacy")
+		var arena: Node = game.current_screen.get("_current_runtime").get("room_instance")
 		arena.set("automation_smoke", true)
 		for _tick in 1800:
 			if bool(arena.get("battle_over")):
@@ -53,8 +53,9 @@ func _run() -> void:
 	var slot := String(item.slot)
 	var result: Control = game.current_screen
 	var review := result.find_children("ReviewDrop_*", "Button", true, false)[0] as Button
-	_expect(review.text == "比较（尚未装备）" and result.get_equipment_card_summaries()[0].contains("当前在行囊中，尚未装备"),
-		"fresh drop state/action is wrong", failures)
+	_expect(review.text == "比较（尚未装备）" and not review.disabled
+		and result.get_equipment_card_summaries()[0].contains("已入库，尚未装备"),
+		"fresh drop state/action is wrong: %s / %s" % [review.text, result.get_equipment_card_summaries()], failures)
 	review.pressed.emit()
 	await _frames(3)
 	_expect(game.current_route == "loadout", "comparison did not open loadout", failures)
@@ -72,8 +73,9 @@ func _run() -> void:
 	result = game.current_screen
 	review = result.find_children("ReviewDrop_*", "Button", true, false)[0] as Button
 	_expect(review.text == "查看（已装备）" and not review.disabled
-		and result.get_equipment_card_summaries()[0].contains("当前已装备，正在使用"),
-		"return from equipment retained stale uninstalled state", failures)
+		and result.get_equipment_card_summaries()[0].contains(" · 已装备")
+		and not result.get_equipment_card_summaries()[0].contains("尚未装备"),
+		"return from equipment retained stale uninstalled state: %s / %s" % [review.text, result.get_equipment_card_summaries()], failures)
 	_expect(game.application_state.last_result == receipt and result.get_presented_result() == receipt,
 		"equipping rewrote the acquisition receipt", failures)
 	(result.find_child("EquipmentDetailButton", true, false) as Button).pressed.emit()
@@ -92,10 +94,10 @@ func _run() -> void:
 		_return_to_result(game, failures)
 		await _frames(3)
 		result = game.current_screen
-		_expect(result.get_equipment_card_summaries()[0].contains("当前在行囊中，尚未装备")
+		_expect(result.get_equipment_card_summaries()[0].contains("已入库，尚未装备")
 			and (result.find_children("ReviewDrop_*", "Button", true, false)[0] as Button).text == "比较（尚未装备）"
 			and game.application_state.last_result == receipt,
-			"unequip return failed to refresh status or changed reward facts", failures)
+			"unequip return failed to refresh status or changed reward facts: %s" % [result.get_equipment_card_summaries()], failures)
 	_finish(game, failures)
 
 

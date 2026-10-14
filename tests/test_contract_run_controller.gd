@@ -149,7 +149,7 @@ func _test_invalid_plans(failures: Array[String]) -> void:
 	var length_config := _config(2)
 	length_config["room_plan"] = {"rooms": [{"id": "only"}]}
 	_expect(bad_length.start_session(length_config) == {"ok": false, "error": "invalid_room_plan"}, "validation: plan length error changed", failures)
-	_expect(_created.is_empty(), "validation: invalid plan created an adapter", failures)
+	_expect(_created.is_empty(), "validation: invalid plan created an runtime", failures)
 	_destroy_controller(bad_length)
 
 	var bad_type = _create_controller()
@@ -173,10 +173,10 @@ func _test_alias_isolation(failures: Array[String]) -> void:
 	var config_copy: Dictionary = controller.current_config
 	config_copy.nested.value = 8
 	_expect(int(controller.current_config.nested.value) == 1, "aliases: config getter/input leaked", failures)
-	_expect(int(_created[0].config.room.nested.value) == 2, "aliases: room input leaked into adapter config", failures)
+	_expect(int(_created[0].config.room.nested.value) == 2, "aliases: room input leaked into runtime config", failures)
 	_created[0].resolve(_result("victory", 1, 1.0, 1, 1, 0, 0, "", "", "first done"))
 	_room_events[0].room.nested.value = 8
-	_expect(int(_created[1].config.room.nested.value) == 3, "aliases: room_changed payload leaked into adapter config", failures)
+	_expect(int(_created[1].config.room.nested.value) == 3, "aliases: room_changed payload leaked into runtime config", failures)
 	var room_result := _result("victory", 1, 1.0, 1, 1, 0, 0, "", "", "done")
 	room_result["nested"] = {"value": 4}
 	_created[1].resolve(room_result)
@@ -194,7 +194,7 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 		"room_count": plan.room_count, "room_plan": plan,
 		"framework_context": {"resolved_build": state.resolved_build_snapshot(), "active_build": state.profile.active_build}}
 	for scenario: String in ["held", "released_before", "released_after", "paused", "pointer"]:
-		var controller = ControllerScript.new() # Production adapter and Main, no FakeArena.
+		var controller = ControllerScript.new() # Production runtime and Main, no FakeArena.
 		var results: Array[Dictionary] = []
 		controller.completed.connect(func(result: Dictionary) -> void: results.append(result.duplicate(true)))
 		root.add_child(controller)
@@ -215,14 +215,14 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 		if not bool(started.get("ok", false)):
 			controller.free()
 			continue
-		var adapter: Node = controller.get("_current_adapter")
-		var first: Node = adapter.get("_legacy")
+		var runtime: Node = controller.get("_current_runtime")
+		var first: Node = runtime.get("room_instance")
 		first.set_process(false)
 		if scenario == "pointer":
-			first.world_view.begin_frame(Rect2(Vector2.ZERO, Vector2(1280, 720)), first.player_position, first._arena_rect())
-			var point: Vector2 = first.world_view.gameplay_to_screen(first.enemies[0].position + Vector2(0.0, -22.0))
+			first.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, Vector2(1280, 720)), first.player_position, first._arena_rect())
+			var point: Vector2 = first.presentation.world_view.gameplay_to_screen(first.enemies[0].position + Vector2(0.0, -22.0))
 			_attack_pointer(point, true)
-			_expect(first.manual_pointer_target_entity_id == 1, "continuous input: real pointer fixture did not lock enemy 1", failures)
+			_expect(first.input_adapter.manual_pointer_target_entity_id == 1, "continuous input: real pointer fixture did not lock enemy 1", failures)
 		else:
 			_attack_key(true) # One physical Space press; no repeated press events in either room.
 		for tick in 1800:
@@ -242,11 +242,11 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 			controller.process_mode = Node.PROCESS_MODE_DISABLED
 			controller.release_manual_controls() # Existing menu-resume boundary; Space is still down.
 			controller.process_mode = Node.PROCESS_MODE_INHERIT
-		adapter._process(0.0) # Real completion signal creates the next production room.
+		runtime._process(0.0) # Real completion signal creates the next production room.
 		_expect(controller.current_room_index == 1, "continuous input: controller did not enter room two", failures)
-		var second: Node = (controller.get("_current_adapter") as Node).get("_legacy")
+		var second: Node = (controller.get("_current_runtime") as Node).get("room_instance")
 		second.set_process(false)
-		_expect(second.manual_pointer_target_entity_id == 0 and not second.manual_combat_input.snapshot().pointer_world_held,
+		_expect(second.input_adapter.manual_pointer_target_entity_id == 0 and not second.input_adapter.manual_combat_input.snapshot().pointer_world_held,
 			"continuous input: pointer lock or held mouse source crossed the room boundary", failures)
 		if scenario == "released_after":
 			_attack_key(false)
@@ -255,7 +255,7 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 				if second.battle_over:
 					break
 				second._simulate_tick()
-			(controller.get("_current_adapter") as Node)._process(0.0)
+			(controller.get("_current_runtime") as Node)._process(0.0)
 			_expect(second.battle_victory and second.shots > 0 and results.size() == 1
 				and int(results[0].rooms_completed) == 2,
 				"continuous input: held Space stopped firing across two real rooms", failures)
@@ -264,7 +264,7 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 				if second.battle_over:
 					break
 				second._simulate_tick()
-			_expect(second.shots == 0 and not second.manual_combat_input.snapshot().assisted_held,
+			_expect(second.shots == 0 and not second.input_adapter.manual_combat_input.snapshot().assisted_held,
 				"continuous input: %s left automatic fire in the next room" % scenario, failures)
 		print("CONTINUOUS_ROOM_INPUT scenario=%s room1_casts=%d room2_casts=%d" % [scenario, first_casts, second.shots])
 		if scenario == "paused":
@@ -274,11 +274,11 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 			var fresh_started: Dictionary = fresh.start_session(config)
 			_expect(bool(fresh_started.get("ok", false)), "continuous input: fresh deployment after exit failed", failures)
 			if bool(fresh_started.get("ok", false)):
-				var fresh_main: Node = (fresh.get("_current_adapter") as Node).get("_legacy")
+				var fresh_main: Node = (fresh.get("_current_runtime") as Node).get("room_instance")
 				fresh_main.set_process(false)
 				for tick in 60:
 					fresh_main._simulate_tick()
-				_expect(fresh_main.shots == 0 and not fresh_main.manual_combat_input.snapshot().assisted_held,
+				_expect(fresh_main.shots == 0 and not fresh_main.input_adapter.manual_combat_input.snapshot().assisted_held,
 					"continuous input: exit/new deployment restored still-held menu input", failures)
 			fresh.free()
 		_attack_key(false)
@@ -311,7 +311,7 @@ func _create_controller():
 	_room_events.clear()
 	_factory_fail_after = -1
 	var controller = ControllerScript.new()
-	controller.arena_factory = Callable(self, "_make_fake_arena")
+	controller.room_runtime_factory = Callable(self, "_make_fake_arena")
 	controller.completed.connect(_on_completed)
 	controller.abandoned.connect(_on_abandoned)
 	controller.room_changed.connect(_on_room_changed)

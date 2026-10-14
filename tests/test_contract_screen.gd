@@ -320,6 +320,40 @@ func _run() -> void:
 	root.remove_child(transition_screen)
 	transition_screen.free()
 
+	# The real visible path exposes an explicit confirmation card; it must remain
+	# actionable until the player confirms and then leave the contract state.
+	var timed_screen = ContractScreenScript.new()
+	root.add_child(timed_screen)
+	var timed_starts: Array[Dictionary] = []
+	timed_screen.start_requested.connect(func(config: Dictionary) -> void: timed_starts.append(config.duplicate(true)))
+	timed_screen.present(
+		{"initial_class": "ranger"},
+		{"contract_id": "mainline_01_first_hunt", "mode": "Manual", "seed": 4242},
+		"",
+		_snapshot(false, "mainline_01_first_hunt")
+	)
+	timed_screen.set_presentation_enabled(true)
+	timed_screen.call("_on_start_pressed")
+	var confirmation_button := timed_screen.find_child("ConfirmDepartureButton", true, false) as Button
+	_expect(confirmation_button != null and confirmation_button.has_focus(),
+		"contract screen: departure confirmation did not expose a focused keyboard/mouse control", failures)
+	_expect(timed_starts.is_empty() and bool(timed_screen.get("_start_transition_active")),
+		"contract screen: validated first click skipped the explicit departure confirmation", failures)
+	await create_timer(1.0).timeout
+	_expect(timed_starts.is_empty() and bool(timed_screen.get("_start_transition_active")),
+		"contract screen: departure confirmation disappeared without user input", failures)
+	confirmation_button.pressed.emit()
+	_expect(timed_starts.size() == 1 and timed_starts[0] == {
+		"contract_id": "mainline_01_first_hunt",
+		"mode": "Manual",
+		"preset_id": "fixed_start",
+		"seed": 4242,
+		"room_count": 1,
+	} and not bool(timed_screen.get("_start_transition_active")),
+		"contract screen: confirming departure changed the validated start payload or stayed on contract", failures)
+	root.remove_child(timed_screen)
+	timed_screen.free()
+
 	root.remove_child(screen)
 	screen.free()
 	_finish(failures)

@@ -1,0 +1,1377 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/runtime/world/town_scene_root.gd" id="1_town"]
+
+[node name="HearthsideTown" type="Node2D"]
+
+script = ExtResource("1_town")
+
+world_size = Vector2(1536, 960)
+
+view_size = Vector2(640, 360)
+
+hero_screen_anchor = Vector2(320, 222)
+
+[node name="Ground" type="Node2D" parent="."]
+
+[node name="Surface" type="Sprite2D" parent="Ground"]
+
+centered = false
+
+metadata/binding_id = "town/ground"
+
+metadata/texture_path = "res://content/rooms/town/layers/ground.png"
+
+[node name="GroundEffects" type="Node2D" parent="."]
+
+[node name="SortRoot" type="Node2D" parent="."]
+
+y_sort_enabled = true
+
+[node name="tree_board" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(144, 224.06208)
+
+centered = false
+
+offset = Vector2(-82, -170.06208)
+
+metadata/binding_id = "town/native/tree_board"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/tree_board.png"
+
+[node name="loadout" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(671.000064, 262.50048)
+
+centered = false
+
+offset = Vector2(-181.000064, -232.50048)
+
+metadata/binding_id = "town/native/loadout"
+
+metadata/interaction = "loadout"
+
+metadata/texture_path = "res://content/rooms/town/layers/loadout.png"
+
+[node name="lamp_0" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(409.999872, 265.31232)
+
+centered = false
+
+offset = Vector2(-7.999872, -75.31232)
+
+metadata/binding_id = "town/native/lamp_0"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_0.png"
+
+[node name="contract" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(285.000192, 300.93792)
+
+centered = false
+
+offset = Vector2(-123.000192, -166.93792)
+
+metadata/binding_id = "town/native/contract"
+
+metadata/interaction = "contract"
+
+metadata/texture_path = "res://content/rooms/town/layers/contract.png"
+
+[node name="forge" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1067.999232, 320.62464)
+
+centered = false
+
+offset = Vector2(-175.999232, -256.62464)
+
+metadata/binding_id = "town/native/forge"
+
+metadata/interaction = "forge"
+
+metadata/texture_path = "res://content/rooms/town/layers/forge.png"
+
+[node name="lamp_2" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(884.000256, 347.8128)
+
+centered = false
+
+offset = Vector2(-9.000256, -75.8128)
+
+metadata/binding_id = "town/native/lamp_2"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_2.png"
+
+[node name="tree_wood" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(541.000704, 355.31232)
+
+centered = false
+
+offset = Vector2(-24.000704, -88.31232)
+
+metadata/binding_id = "town/native/tree_wood"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/tree_wood.png"
+
+[node name="wood_contract" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(489.99936, 355.31232)
+
+centered = false
+
+offset = Vector2(-54.99936, -70.31232)
+
+metadata/binding_id = "town/native/wood_contract"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/wood_contract.png"
+
+[node name="forge_chimney" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1204.99968, 358.12512)
+
+centered = false
+
+offset = Vector2(-64.99968, -321.12512)
+
+metadata/binding_id = "town/native/forge_chimney"
+
+metadata/interaction = "forge"
+
+metadata/texture_path = "res://content/rooms/town/layers/forge_chimney.png"
+
+[node name="lamp_1" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(674.999808, 372.1872)
+
+centered = false
+
+offset = Vector2(-7.999808, -75.1872)
+
+metadata/binding_id = "town/native/lamp_1"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_1.png"
+
+[node name="lamp_5" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1010.999808, 420.93792)
+
+centered = false
+
+offset = Vector2(-7.999808, -75.93792)
+
+metadata/binding_id = "town/native/lamp_5"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_5.png"
+
+[node name="training_north" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(257.000448, 424.68768)
+
+centered = false
+
+offset = Vector2(-218.000448, -84.68768)
+
+metadata/binding_id = "town/native/training_north"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/training_north.png"
+
+[node name="training_east_north" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(405.000192, 444.37536)
+
+centered = false
+
+offset = Vector2(-28.000192, -52.37536)
+
+metadata/binding_id = "town/native/training_east_north"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/training_east_north.png"
+
+[node name="tree_east" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1241.000448, 458.43744)
+
+centered = false
+
+offset = Vector2(-52.000448, -97.43744)
+
+metadata/binding_id = "town/native/tree_east"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/tree_east.png"
+
+[node name="lamp_3" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(997.000704, 472.50048)
+
+centered = false
+
+offset = Vector2(-9.000704, -75.50048)
+
+metadata/binding_id = "town/native/lamp_3"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_3.png"
+
+[node name="proxy" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1399.999488, 494.06208)
+
+centered = false
+
+offset = Vector2(-100.999488, -395.06208)
+
+metadata/binding_id = "town/native/proxy"
+
+metadata/interaction = "proxy"
+
+metadata/texture_path = "res://content/rooms/town/layers/proxy.png"
+
+[node name="commons_fire" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(790.000128, 501.56256)
+
+centered = false
+
+offset = Vector2(-70.000128, -170.56256)
+
+metadata/binding_id = "town/native/commons_fire"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/commons_fire.png"
+
+[node name="lamp_10" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(432.999936, 509.06208)
+
+centered = false
+
+offset = Vector2(-7.999936, -75.06208)
+
+metadata/binding_id = "town/native/lamp_10"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_10.png"
+
+[node name="training_east_south" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(451.00032, 555)
+
+centered = false
+
+offset = Vector2(-24.00032, -48)
+
+metadata/binding_id = "town/native/training_east_south"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/training_east_south.png"
+
+[node name="lamp_4" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(573.000192, 561.56256)
+
+centered = false
+
+offset = Vector2(-8.000192, -75.56256)
+
+metadata/binding_id = "town/native/lamp_4"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_4.png"
+
+[node name="wood_commons" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(652.99968, 563.43744)
+
+centered = false
+
+offset = Vector2(-52.99968, -54.43744)
+
+metadata/binding_id = "town/native/wood_commons"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/wood_commons.png"
+
+[node name="wood_east" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1152, 581.25024)
+
+centered = false
+
+offset = Vector2(-44, -63.25024)
+
+metadata/binding_id = "town/native/wood_east"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/wood_east.png"
+
+[node name="training_south" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(234.000384, 622.50048)
+
+centered = false
+
+offset = Vector2(-206.000384, -125.50048)
+
+metadata/binding_id = "town/native/training_south"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/training_south.png"
+
+[node name="lamp_6" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1092.000768, 624.37536)
+
+centered = false
+
+offset = Vector2(-9.000768, -75.37536)
+
+metadata/binding_id = "town/native/lamp_6"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_6.png"
+
+[node name="wood_south" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(614.00064, 675)
+
+centered = false
+
+offset = Vector2(-61.00064, -60)
+
+metadata/binding_id = "town/native/wood_south"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/wood_south.png"
+
+[node name="arrival_storage_fence" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(703.999488, 730.31232)
+
+centered = false
+
+offset = Vector2(-186.999488, -116.31232)
+
+metadata/binding_id = "town/native/arrival_storage_fence"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/arrival_storage_fence.png"
+
+[node name="lamp_8" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1207.999488, 742.50048)
+
+centered = false
+
+offset = Vector2(-7.999488, -75.50048)
+
+metadata/binding_id = "town/native/lamp_8"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_8.png"
+
+[node name="tree_southwest" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(249.99936, 759.37536)
+
+centered = false
+
+offset = Vector2(-52.99936, -115.37536)
+
+metadata/binding_id = "town/native/tree_southwest"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/tree_southwest.png"
+
+[node name="tree_south" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(805.000704, 771.56256)
+
+centered = false
+
+offset = Vector2(-58.000704, -116.56256)
+
+metadata/binding_id = "town/native/tree_south"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/tree_south.png"
+
+[node name="lamp_7" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(902.00064, 780)
+
+centered = false
+
+offset = Vector2(-9.00064, -75)
+
+metadata/binding_id = "town/native/lamp_7"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_7.png"
+
+[node name="arrival_west_gate" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(580.99968, 784.68768)
+
+centered = false
+
+offset = Vector2(-23.99968, -76.68768)
+
+metadata/binding_id = "town/native/arrival_west_gate"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/arrival_west_gate.png"
+
+[node name="arrival_east_gate" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(712.000512, 797.8128)
+
+centered = false
+
+offset = Vector2(-105.000512, -66.8128)
+
+metadata/binding_id = "town/native/arrival_east_gate"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/arrival_east_gate.png"
+
+[node name="cart" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(401.000448, 810.93792)
+
+centered = false
+
+offset = Vector2(-64.000448, -62.93792)
+
+metadata/binding_id = "town/native/cart"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/cart.png"
+
+[node name="lamp_9" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(1323.999744, 828.74976)
+
+centered = false
+
+offset = Vector2(-7.999744, -75.74976)
+
+metadata/binding_id = "town/native/lamp_9"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/lamp_9.png"
+
+[node name="tree_arrival" type="Sprite2D" parent="SortRoot"]
+
+position = Vector2(282.000384, 868.12512)
+
+centered = false
+
+offset = Vector2(-47.000384, -112.12512)
+
+metadata/binding_id = "town/native/tree_arrival"
+
+metadata/interaction = ""
+
+metadata/texture_path = "res://content/rooms/town/layers/tree_arrival.png"
+
+[node name="Foreground" type="Node2D" parent="."]
+
+[node name="GeometrySources" type="Node2D" parent="."]
+
+[node name="MovementBoundary" type="Node2D" parent="GeometrySources"]
+
+metadata/binding_id = "town/movement-boundary"
+
+metadata/rect = Rect2(14, 14, 1508, 932)
+
+[node name="Static" type="Node2D" parent="GeometrySources"]
+
+[node name="contract_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/contract_base"
+
+polygon = PackedVector2Array(175.999488, 262.50048, 349.000704, 234.37536, 361.999872, 278.43744, 183.000576, 306.56256)
+
+[node name="loadout_west_wall" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/loadout_west_wall"
+
+polygon = PackedVector2Array(511.999488, 129.37536, 596.000256, 124.68768, 618.000384, 246.56256, 513.99936, 211.87488)
+
+[node name="loadout_back_wall" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/loadout_back_wall"
+
+polygon = PackedVector2Array(602.999808, 107.8128, 765.000192, 81.56256, 770.999808, 172.50048, 749.999616, 180.93792, 746.999808, 111.56256, 613.000704, 136.87488)
+
+[node name="loadout_crates" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/loadout_crates"
+
+polygon = PackedVector2Array(599.000064, 196.87488, 653.999616, 188.43744, 696.999936, 212.8128, 672.999936, 251.25024, 619.00032, 251.25024)
+
+[node name="loadout_roof" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/loadout_roof"
+
+polygon = PackedVector2Array(494.00064, 16.87488, 792, 16.87488, 792, 125.62464, 494.00064, 125.62464)
+
+[node name="contract_roof" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/contract_roof"
+
+polygon = PackedVector2Array(99.999744, 121.87488, 417.99936, 121.87488, 417.99936, 223.12512, 99.999744, 223.12512)
+
+[node name="forge_west_roof" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/forge_west_roof"
+
+polygon = PackedVector2Array(892.99968, 64.68768, 1105.92, 64.68768, 1105.92, 204.37536, 892.99968, 204.37536)
+
+[node name="proxy_tower_body" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/proxy_tower_body"
+
+polygon = PackedVector2Array(1312.000512, 103.12512, 1508.000256, 103.12512, 1508.000256, 410.62464, 1312.000512, 410.62464)
+
+[node name="forge_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/forge_base"
+
+polygon = PackedVector2Array(917.999616, 204.37536, 997.000704, 222.1872, 1072.000512, 240.93792, 1115.999232, 280.31232, 1188.000768, 289.68768, 1227.999744, 273.74976, 1229.999616, 213.74976, 1261.000704, 225.93792, 1266.000384, 308.43744, 1197.000192, 346.87488, 1089.99936, 324.37536, 1008.999936, 297.1872, 932.000256, 275.62464)
+
+[node name="proxy_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/proxy_base"
+
+polygon = PackedVector2Array(1316.000256, 420.93792, 1411.00032, 453.74976, 1467.999744, 423.74976, 1487.000064, 459.37536, 1416.999936, 497.8128, 1305.99936, 459.37536)
+
+[node name="commons_fire" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/commons_fire"
+
+polygon = PackedVector2Array(720.999936, 448.12512, 738.000384, 480.93792, 774.999552, 501.56256, 820.99968, 496.87488, 858.000384, 470.62464, 852.000768, 450.93792, 827.999232, 435.93792, 750.999552, 435.93792)
+
+[node name="training_north_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_north_base"
+
+polygon = PackedVector2Array(53.999616, 429.37536, 220.99968, 378.74976, 378.000384, 425.62464, 381.000192, 436.87488, 224.999424, 391.87488, 63.000576, 441.56256)
+
+[node name="training_east_north_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_east_north_base"
+
+polygon = PackedVector2Array(380.000256, 425.62464, 392.999424, 422.8128, 418.999296, 450.93792, 408, 459.37536)
+
+[node name="training_east_south_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_east_south_base"
+
+polygon = PackedVector2Array(446.00064, 517.49952, 456, 518.43744, 477.000192, 556.87488, 463.999488, 563.43744)
+
+[node name="training_south_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_south_base"
+
+polygon = PackedVector2Array(44.000256, 533.43744, 56.999424, 530.62464, 116.000256, 588.74976, 238.000128, 610.31232, 464.999424, 560.62464, 470.00064, 572.8128, 240, 626.25024, 106.999296, 601.87488)
+
+[node name="training_post_0" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_post_0"
+
+position = Vector2(152.999424, 487.49952)
+
+metadata/radius = 5.62464
+
+[node name="training_post_1" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_post_1"
+
+position = Vector2(208.000512, 445.31232)
+
+metadata/radius = 5.62464
+
+[node name="training_post_2" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_post_2"
+
+position = Vector2(245.999616, 465.93792)
+
+metadata/radius = 5.62464
+
+[node name="training_post_3" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_post_3"
+
+position = Vector2(314.999808, 507.1872)
+
+metadata/radius = 5.62464
+
+[node name="training_post_4" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/training_post_4"
+
+position = Vector2(379.00032, 507.1872)
+
+metadata/radius = 5.62464
+
+[node name="wood_contract_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/wood_contract_base"
+
+polygon = PackedVector2Array(539.999232, 318.74976, 543.000576, 349.68768, 493.000704, 370.31232, 435.999744, 344.06208)
+
+[node name="wood_commons_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/wood_commons_base"
+
+polygon = PackedVector2Array(694.000128, 555.93792, 667.00032, 576.56256, 617.000448, 560.62464, 600.999936, 541.87488)
+
+[node name="wood_south_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/wood_south_base"
+
+polygon = PackedVector2Array(640.000512, 636.56256, 661.000704, 660, 637.000704, 684.37536, 553.999872, 653.43744)
+
+[node name="wood_east_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/wood_east_base"
+
+polygon = PackedVector2Array(1179.999744, 535.31232, 1186.999296, 568.12512, 1154.999808, 593.43744, 1108.99968, 557.8128)
+
+[node name="cart_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/cart_base"
+
+polygon = PackedVector2Array(433.999872, 801.56256, 387.999744, 825, 349.000704, 807.1872, 337.999872, 780)
+
+[node name="tree_board_trunk" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/tree_board_trunk"
+
+position = Vector2(144, 224.06208)
+
+metadata/radius = 5.62464
+
+[node name="tree_wood_trunk" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/tree_wood_trunk"
+
+position = Vector2(541.000704, 355.31232)
+
+metadata/radius = 5.62464
+
+[node name="tree_east_trunk" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/tree_east_trunk"
+
+position = Vector2(1241.000448, 458.43744)
+
+metadata/radius = 5.62464
+
+[node name="tree_south_trunk" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/tree_south_trunk"
+
+position = Vector2(805.000704, 771.56256)
+
+metadata/radius = 5.62464
+
+[node name="tree_southwest_trunk" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/tree_southwest_trunk"
+
+position = Vector2(249.99936, 759.37536)
+
+metadata/radius = 5.62464
+
+[node name="tree_arrival_trunk" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/tree_arrival_trunk"
+
+position = Vector2(282.000384, 868.12512)
+
+metadata/radius = 5.62464
+
+[node name="northwest_forest" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/northwest_forest"
+
+polygon = PackedVector2Array(0, 0, 448.000512, 0, 424.000512, 67.49952, 367.999488, 126.56256, 285.000192, 124.68768, 187.00032, 193.12512, 148.99968, 256.87488, 104.999424, 328.12512, 0, 393.74976)
+
+[node name="north_forest" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/north_forest"
+
+polygon = PackedVector2Array(756.000768, 0, 1335.000576, 0, 1310.00064, 126.56256, 1265.000448, 172.50048, 1205.999616, 164.06208, 1200, 37.49952, 1152, 37.49952, 1133.999616, 90, 994.999296, 80.62464, 930.000384, 144.37536, 872.999424, 155.62464, 825.99936, 120, 808.000512, 218.43744, 773.999616, 216.56256, 773.999616, 81.56256)
+
+[node name="east_forest" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/east_forest"
+
+polygon = PackedVector2Array(1491.999744, 0, 1536, 0, 1536, 656.25024, 1474.999296, 641.25024, 1463.000064, 511.87488, 1490.999808, 460.31232, 1504.000512, 358.12512, 1536, 339.37536, 1536, 217.49952, 1506.000384, 210, 1456.000512, 163.12512, 1440.999936, 108.74976, 1480.000512, 81.56256)
+
+[node name="southwest_forest" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/southwest_forest"
+
+polygon = PackedVector2Array(0, 610.31232, 89.000448, 631.87488, 159.000576, 676.87488, 206.00064, 722.8128, 225.99936, 783.74976, 244.99968, 805.31232, 270.999552, 855, 329.000448, 856.87488, 355.00032, 917.8128, 504.999936, 960, 0, 960)
+
+[node name="south_forest" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/south_forest"
+
+polygon = PackedVector2Array(485.999616, 960, 631.999488, 960, 779.999232, 889.68768, 795.999744, 836.25024, 747.999744, 802.50048, 708.000768, 780.93792, 678.999552, 808.12512, 633.99936, 862.50048, 554.999808, 908.43744)
+
+[node name="water_south_bridge" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/water_south_bridge"
+
+polygon = PackedVector2Array(760.000512, 960, 823.999488, 811.87488, 976.000512, 741.56256, 1080, 691.87488, 1249.999872, 764.06208, 1430.00064, 883.12512, 1462.000128, 914.06208, 1462.000128, 960)
+
+[node name="water_north_bridge" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/water_north_bridge"
+
+polygon = PackedVector2Array(1150.000128, 663.74976, 1183.999488, 657.1872, 1218.000384, 585.93792, 1303.999488, 524.06208, 1329.99936, 530.62464, 1360.000512, 609.37536, 1419.999744, 684.37536, 1536, 687.1872, 1536, 823.12512, 1416, 823.12512)
+
+[node name="bridge_east_rocks" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/bridge_east_rocks"
+
+polygon = PackedVector2Array(1426.999296, 891.56256, 1440, 879.37536, 1466.999808, 885, 1536, 864.37536, 1536, 960, 1395.999744, 960)
+
+[node name="lamp_0" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_0"
+
+position = Vector2(409.999872, 265.31232)
+
+metadata/radius = 2.49984
+
+[node name="lamp_1" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_1"
+
+position = Vector2(674.999808, 372.1872)
+
+metadata/radius = 2.49984
+
+[node name="lamp_2" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_2"
+
+position = Vector2(884.000256, 347.8128)
+
+metadata/radius = 2.49984
+
+[node name="lamp_3" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_3"
+
+position = Vector2(997.000704, 472.50048)
+
+metadata/radius = 2.49984
+
+[node name="lamp_4" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_4"
+
+position = Vector2(573.000192, 561.56256)
+
+metadata/radius = 2.49984
+
+[node name="lamp_5" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_5"
+
+position = Vector2(1010.999808, 420.93792)
+
+metadata/radius = 2.49984
+
+[node name="lamp_6" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_6"
+
+position = Vector2(1092.000768, 624.37536)
+
+metadata/radius = 2.49984
+
+[node name="lamp_7" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_7"
+
+position = Vector2(902.00064, 780)
+
+metadata/radius = 2.49984
+
+[node name="lamp_8" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_8"
+
+position = Vector2(1207.999488, 742.50048)
+
+metadata/radius = 2.49984
+
+[node name="lamp_9" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_9"
+
+position = Vector2(1323.999744, 828.74976)
+
+metadata/radius = 2.49984
+
+[node name="lamp_10" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/lamp_10"
+
+position = Vector2(432.999936, 509.06208)
+
+metadata/radius = 2.49984
+
+[node name="arrival_storage_fence_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/arrival_storage_fence_base"
+
+polygon = PackedVector2Array(519.000576, 645, 528.999936, 641.25024, 574.000128, 678.74976, 714.000384, 724.68768, 705.99936, 736.87488, 566.00064, 690.93792)
+
+[node name="arrival_west_gate_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/arrival_west_gate_base"
+
+polygon = PackedVector2Array(568.000512, 748.12512, 580.99968, 742.50048, 615.000576, 751.87488, 613.000704, 762.1872, 582.999552, 751.87488, 580.99968, 784.68768, 568.000512, 785.62464)
+
+[node name="arrival_east_gate_base" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/arrival_east_gate_base"
+
+polygon = PackedVector2Array(612.000768, 804.37536, 619.00032, 813.74976, 708.000768, 774.37536, 717.000192, 791.25024, 725.999616, 787.49952, 715.00032, 756.56256)
+
+[node name="Routes" type="Node2D" parent="GeometrySources"]
+
+[node name="arrival" type="Node2D" parent="GeometrySources/Routes"]
+
+[node name="Point00" type="Marker2D" parent="GeometrySources/Routes/arrival"]
+
+position = Vector2(576, 595.31232)
+
+[node name="Point01" type="Marker2D" parent="GeometrySources/Routes/arrival"]
+
+position = Vector2(484.99968, 605.62464)
+
+[node name="Point02" type="Marker2D" parent="GeometrySources/Routes/arrival"]
+
+position = Vector2(505.999872, 672.1872)
+
+[node name="Point03" type="Marker2D" parent="GeometrySources/Routes/arrival"]
+
+position = Vector2(519.000576, 731.25024)
+
+[node name="Point04" type="Marker2D" parent="GeometrySources/Routes/arrival"]
+
+position = Vector2(549.000192, 796.87488)
+
+[node name="Point05" type="Marker2D" parent="GeometrySources/Routes/arrival"]
+
+position = Vector2(598.000128, 831.56256)
+
+[node name="Point06" type="Marker2D" parent="GeometrySources/Routes/arrival"]
+
+position = Vector2(548.000256, 859.68768)
+
+[node name="Point07" type="Marker2D" parent="GeometrySources/Routes/arrival"]
+
+position = Vector2(520.000512, 897.1872)
+
+[node name="bridge" type="Node2D" parent="GeometrySources/Routes"]
+
+[node name="Point00" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(576, 595.31232)
+
+[node name="Point01" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(635.999232, 602.8128)
+
+[node name="Point02" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1012.99968, 602.8128)
+
+[node name="Point03" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1081.999872, 606.56256)
+
+[node name="Point04" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1072.000512, 628.00032)
+
+[node name="Point05" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1100.000256, 672.1872)
+
+[node name="Point06" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1150.000128, 693.74976)
+
+[node name="Point07" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1200, 720)
+
+[node name="Point08" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1249.999872, 743.43744)
+
+[node name="Point09" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1299.999744, 773.43744)
+
+[node name="Point10" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1349.999616, 805.31232)
+
+[node name="Point11" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1399.999488, 836.25024)
+
+[node name="Point12" type="Marker2D" parent="GeometrySources/Routes/bridge"]
+
+position = Vector2(1430.00064, 852.1872)
+
+[node name="contract" type="Node2D" parent="GeometrySources/Routes"]
+
+[node name="Point00" type="Marker2D" parent="GeometrySources/Routes/contract"]
+
+position = Vector2(576, 595.31232)
+
+[node name="Point01" type="Marker2D" parent="GeometrySources/Routes/contract"]
+
+position = Vector2(509.999616, 496.87488)
+
+[node name="Point02" type="Marker2D" parent="GeometrySources/Routes/contract"]
+
+position = Vector2(493.000704, 398.43744)
+
+[node name="Point03" type="Marker2D" parent="GeometrySources/Routes/contract"]
+
+position = Vector2(364.99968, 348.74976)
+
+[node name="Point04" type="Marker2D" parent="GeometrySources/Routes/contract"]
+
+position = Vector2(283.00032, 330)
+
+[node name="forge" type="Node2D" parent="GeometrySources/Routes"]
+
+[node name="Point00" type="Marker2D" parent="GeometrySources/Routes/forge"]
+
+position = Vector2(576, 595.31232)
+
+[node name="Point01" type="Marker2D" parent="GeometrySources/Routes/forge"]
+
+position = Vector2(635.999232, 602.8128)
+
+[node name="Point02" type="Marker2D" parent="GeometrySources/Routes/forge"]
+
+position = Vector2(1029.000192, 502.50048)
+
+[node name="Point03" type="Marker2D" parent="GeometrySources/Routes/forge"]
+
+position = Vector2(1090.999296, 399.37536)
+
+[node name="Point04" type="Marker2D" parent="GeometrySources/Routes/forge"]
+
+position = Vector2(1106.999808, 378.74976)
+
+[node name="loadout" type="Node2D" parent="GeometrySources/Routes"]
+
+[node name="Point00" type="Marker2D" parent="GeometrySources/Routes/loadout"]
+
+position = Vector2(576, 595.31232)
+
+[node name="Point01" type="Marker2D" parent="GeometrySources/Routes/loadout"]
+
+position = Vector2(509.999616, 496.87488)
+
+[node name="Point02" type="Marker2D" parent="GeometrySources/Routes/loadout"]
+
+position = Vector2(570.000384, 375)
+
+[node name="Point03" type="Marker2D" parent="GeometrySources/Routes/loadout"]
+
+position = Vector2(661.000704, 298.12512)
+
+[node name="Point04" type="Marker2D" parent="GeometrySources/Routes/loadout"]
+
+position = Vector2(711.000576, 284.06208)
+
+[node name="proxy" type="Node2D" parent="GeometrySources/Routes"]
+
+[node name="Point00" type="Marker2D" parent="GeometrySources/Routes/proxy"]
+
+position = Vector2(576, 595.31232)
+
+[node name="Point01" type="Marker2D" parent="GeometrySources/Routes/proxy"]
+
+position = Vector2(635.999232, 602.8128)
+
+[node name="Point02" type="Marker2D" parent="GeometrySources/Routes/proxy"]
+
+position = Vector2(1029.000192, 502.50048)
+
+[node name="Point03" type="Marker2D" parent="GeometrySources/Routes/proxy"]
+
+position = Vector2(1159.999488, 458.43744)
+
+[node name="Point04" type="Marker2D" parent="GeometrySources/Routes/proxy"]
+
+position = Vector2(1220.000256, 507.1872)
+
+[node name="Point05" type="Marker2D" parent="GeometrySources/Routes/proxy"]
+
+position = Vector2(1279.999488, 480)
+
+[node name="training" type="Node2D" parent="GeometrySources/Routes"]
+
+[node name="Point00" type="Marker2D" parent="GeometrySources/Routes/training"]
+
+position = Vector2(576, 595.31232)
+
+[node name="Point01" type="Marker2D" parent="GeometrySources/Routes/training"]
+
+position = Vector2(520.000512, 550.31232)
+
+[node name="Point02" type="Marker2D" parent="GeometrySources/Routes/training"]
+
+position = Vector2(470.00064, 500.62464)
+
+[node name="Point03" type="Marker2D" parent="GeometrySources/Routes/training"]
+
+position = Vector2(417.99936, 478.12512)
+
+[node name="Point04" type="Marker2D" parent="GeometrySources/Routes/training"]
+
+position = Vector2(414.999552, 538.12512)
+
+[node name="Point05" type="Marker2D" parent="GeometrySources/Routes/training"]
+
+position = Vector2(405.000192, 540.93792)
+
+[node name="Sockets" type="Node2D" parent="."]
+
+[node name="Spawn" type="Marker2D" parent="Sockets"]
+
+position = Vector2(576, 595.31232)
+
+metadata/binding_id = "town/spawn"
+
+metadata/kind = "spawn"
+
+[node name="contract" type="Marker2D" parent="Sockets"]
+
+position = Vector2(283.00032, 330)
+
+metadata/binding_id = "town/interaction/contract"
+
+metadata/kind = "interaction"
+
+metadata/id = "contract"
+
+metadata/label = "行路契台"
+
+metadata/radius = 48
+
+metadata/order = 0
+
+metadata/landmark_offset_y = -112.0
+
+metadata/locked = false
+
+[node name="loadout" type="Marker2D" parent="Sockets"]
+
+position = Vector2(711.000576, 284.06208)
+
+metadata/binding_id = "town/interaction/loadout"
+
+metadata/kind = "interaction"
+
+metadata/id = "loadout"
+
+metadata/label = "备行架"
+
+metadata/radius = 48
+
+metadata/order = 1
+
+metadata/landmark_offset_y = -112.0
+
+metadata/locked = false
+
+[node name="forge" type="Marker2D" parent="Sockets"]
+
+position = Vector2(1106.999808, 378.74976)
+
+metadata/binding_id = "town/interaction/forge"
+
+metadata/kind = "interaction"
+
+metadata/id = "forge"
+
+metadata/label = "回火砧"
+
+metadata/radius = 48
+
+metadata/order = 2
+
+metadata/landmark_offset_y = -112.0
+
+metadata/locked = false
+
+[node name="training" type="Marker2D" parent="Sockets"]
+
+position = Vector2(405.000192, 540.93792)
+
+metadata/binding_id = "town/interaction/training"
+
+metadata/kind = "interaction"
+
+metadata/id = "training"
+
+metadata/label = "验律场"
+
+metadata/radius = 48
+
+metadata/order = 3
+
+metadata/landmark_offset_y = -112.0
+
+metadata/locked = false
+
+[node name="proxy" type="Marker2D" parent="Sockets"]
+
+position = Vector2(1279.999488, 480)
+
+metadata/binding_id = "town/interaction/proxy"
+
+metadata/kind = "interaction"
+
+metadata/id = "proxy"
+
+metadata/label = "代行舱"
+
+metadata/radius = 48
+
+metadata/order = 4
+
+metadata/landmark_offset_y = -112.0
+
+metadata/locked = true
+
+[node name="iven" type="Marker2D" parent="Sockets"]
+
+position = Vector2(278.00064, 300.93792)
+
+metadata/binding_id = "town/resident/iven"
+
+metadata/kind = "resident"
+
+metadata/id = "iven"
+
+metadata/role = "contract"
+
+[node name="taren" type="Marker2D" parent="Sockets"]
+
+position = Vector2(719.000064, 255)
+
+metadata/binding_id = "town/resident/taren"
+
+metadata/kind = "resident"
+
+metadata/id = "taren"
+
+metadata/role = "loadout"
+
+[node name="oren" type="Marker2D" parent="Sockets"]
+
+position = Vector2(1064.999424, 340.31232)
+
+metadata/binding_id = "town/resident/oren"
+
+metadata/kind = "resident"
+
+metadata/id = "oren"
+
+metadata/role = "forge"
+
+[node name="leia" type="Marker2D" parent="Sockets"]
+
+position = Vector2(343.999488, 538.12512)
+
+metadata/binding_id = "town/resident/leia"
+
+metadata/kind = "resident"
+
+metadata/id = "leia"
+
+metadata/role = "training"
+
+[node name="mira" type="Marker2D" parent="Sockets"]
+
+position = Vector2(1259.999232, 452.8128)
+
+metadata/binding_id = "town/resident/mira"
+
+metadata/kind = "resident"
+
+metadata/id = "mira"
+
+metadata/role = "proxy"

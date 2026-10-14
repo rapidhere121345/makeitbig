@@ -1,0 +1,123 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/runtime/world/native_static_room_root.gd" id="1_root"]
+
+[node name="ConcaveHolePassage" type="Node2D"]
+script = ExtResource("1_root")
+scene_id = "native.concave_hole_passage"
+world_asset_id = "native/concave_hole_passage"
+gameplay_source = "concave_hole_passage.spatial.json"
+presentation_source = "native_scene"
+authored_bounds = Rect2(0, 0, 800, 600)
+traversal_radius = 10.0
+
+[node name="Ground" type="Node2D" parent="."]
+[node name="Surface" type="Polygon2D" parent="Ground"]
+polygon = PackedVector2Array(0, 0, 600, 0, 600, 180, 800, 180, 800, 600, 0, 600)
+color = Color(0.16, 0.2, 0.23, 1)
+metadata/binding_id = "ground.surface"
+[node name="GroundEffects" type="Node2D" parent="."]
+[node name="SortRoot" type="Node2D" parent="."]
+y_sort_enabled = true
+[node name="Island" type="Polygon2D" parent="SortRoot"]
+position = Vector2(215, 350)
+polygon = PackedVector2Array(-35, -70, 35, -70, 35, 0, -35, 0)
+color = Color(0.07, 0.09, 0.12, 1)
+metadata/binding_id = "island.visual"
+[node name="Foreground" type="Node2D" parent="."]
+[node name="GeometrySources" type="Node2D" parent="."]
+[node name="MovementBoundary" type="Node2D" parent="GeometrySources"]
+metadata/binding_id = "world/outer-boundary"
+metadata/geometry = {"type": "rect", "rect": [0.0, 0.0, 800.0, 600.0]}
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+[node name="Static" type="Node2D" parent="GeometrySources"]
+
+[node name="Notch" type="Polygon2D" parent="GeometrySources/Static"]
+visible = false
+polygon = PackedVector2Array(600, 0, 800, 0, 800, 180, 600, 180)
+metadata/binding_id = "solid/Notch"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Hole" type="Polygon2D" parent="GeometrySources/Static"]
+visible = false
+polygon = PackedVector2Array(180, 280, 250, 280, 250, 350, 180, 350)
+metadata/binding_id = "solid/Hole"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="CornerVertical" type="Polygon2D" parent="GeometrySources/Static"]
+visible = false
+polygon = PackedVector2Array(600, 380, 620, 380, 620, 550, 600, 550)
+metadata/binding_id = "solid/CornerVertical"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="CornerHorizontal" type="Polygon2D" parent="GeometrySources/Static"]
+visible = false
+polygon = PackedVector2Array(620, 380, 760, 380, 760, 400, 620, 400)
+metadata/binding_id = "solid/CornerHorizontal"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="GateTop" type="Polygon2D" parent="GeometrySources/Static"]
+visible = false
+polygon = PackedVector2Array(400, 0, 430, 0, 430, 100, 400, 100)
+metadata/binding_id = "solid/GateTop"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="GateUpper" type="Polygon2D" parent="GeometrySources/Static"]
+visible = false
+polygon = PackedVector2Array(400, 119.5, 430, 119.5, 430, 220, 400, 220)
+metadata/binding_id = "solid/GateUpper"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="GateLower" type="Polygon2D" parent="GeometrySources/Static"]
+visible = false
+polygon = PackedVector2Array(400, 240, 430, 240, 430, 340, 400, 340)
+metadata/binding_id = "solid/GateLower"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="GateBottom" type="Polygon2D" parent="GeometrySources/Static"]
+visible = false
+polygon = PackedVector2Array(400, 362, 430, 362, 430, 600, 400, 600)
+metadata/binding_id = "solid/GateBottom"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Sockets" type="Node2D" parent="."]
+
+[node name="Spawn" type="Marker2D" parent="Sockets"]
+position = Vector2(60, 60)
+metadata/binding_id = "socket/Spawn"
+metadata/kind = "spawn"
+
+[node name="HoleApproach" type="Marker2D" parent="Sockets"]
+position = Vector2(130, 315)
+metadata/binding_id = "socket/HoleApproach"
+metadata/kind = "interaction"
+
+[node name="SlideApproach" type="Marker2D" parent="Sockets"]
+position = Vector2(140, 310)
+metadata/binding_id = "socket/SlideApproach"
+metadata/kind = "interaction"
+
+[node name="CornerApproach" type="Marker2D" parent="Sockets"]
+position = Vector2(660, 440)
+metadata/binding_id = "socket/CornerApproach"
+metadata/kind = "interaction"
+
+[node name="NarrowApproach" type="Marker2D" parent="Sockets"]
+position = Vector2(360, 109.75)
+metadata/binding_id = "socket/NarrowApproach"
+metadata/kind = "interaction"
+
+[node name="CriticalApproach" type="Marker2D" parent="Sockets"]
+position = Vector2(360, 230)
+metadata/binding_id = "socket/CriticalApproach"
+metadata/kind = "interaction"
+
+[node name="WideApproach" type="Marker2D" parent="Sockets"]
+position = Vector2(360, 351)
+metadata/binding_id = "socket/WideApproach"
+metadata/kind = "interaction"
+
+[node name="Exit" type="Marker2D" parent="Sockets"]
+position = Vector2(740, 560)
+metadata/binding_id = "socket/Exit"
+metadata/kind = "exit"

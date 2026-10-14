@@ -73,11 +73,8 @@ func _test_town_guidance_and_tab() -> void:
 	var indicator := view.world_viewport.get_node_or_null("TownDestinationIndicator") as Polygon2D
 	_expect(indicator != null and indicator.visible and indicator.get_child_count() == 0,
 		"destination guide is not one visible local marker")
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(view.DEFAULT_LAYOUT_PATH))
-	var routes: Dictionary = layout.get("routes_uv", {})
-	var contract_route: Array = routes.get("contract", [])
-	var first_uv: Array = contract_route[1]
-	var first_road_point: Vector2 = Vector2(float(first_uv[0]), float(first_uv[1])) * view.world_size()
+	var town = hub.get_town_runtime()
+	var first_road_point: Vector2 = town.route_points("contract")[1]
 	_expect(Vector2(guide.get("guide", Vector2.INF)).distance_to(first_road_point) < 0.01,
 		"destination guide ignored the authored first road waypoint")
 	_expect(hub.find_child("TownWayfinder", true, false) == null,

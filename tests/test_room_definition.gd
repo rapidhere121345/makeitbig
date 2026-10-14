@@ -13,6 +13,7 @@ func _initialize() -> void:
 	_test_manifest_digest_is_stable()
 	_test_runtime_state_does_not_write_back()
 	_test_channels_do_not_mix()
+	_test_manifest_identity_validation()
 	for failure: String in failures:
 		printerr(failure)
 	print("PASS test_room_definition.gd" if failures.is_empty() else "FAIL test_room_definition.gd")
@@ -83,14 +84,40 @@ func _test_channels_do_not_mix() -> void:
 	_expect(manifest.vision_occluders().size() == 1, "vision channel must select only vision occluders")
 	_expect(manifest.projectile_blockers().size() == 1, "projectile channel must select only projectile blockers")
 	_expect(manifest.occlusion_bindings().size() == 1, "occlusion channel must select only occlusion bindings")
+	var movement_geometry: Dictionary = manifest.movement_geometry()
+	_expect(String(movement_geometry.get("type", "")) == "rect" and movement_geometry.get("rect", Rect2()) == Rect2(0.0, 0.0, 100.0, 100.0), "movement channel must convert authored JSON geometry to runtime Rect2")
 	_expect(manifest.bindings_for_channel("unknown").is_empty(), "unknown channels must not fall through to another channel")
 	_expect(not source_has_method("is_blocked"), "the contract must not expose a universal is_blocked helper")
+
+
+func _test_manifest_identity_validation() -> void:
+	var duplicate_bindings: Dictionary = _manifest_fixture(false).snapshot()
+	duplicate_bindings["stable_bindings"] = [
+		{"binding_id": "same", "channels": {}},
+		{"binding_id": "same", "channels": {}},
+	]
+	var binding_errors := SpatialManifestScript.validate_data(duplicate_bindings)
+	_expect(_contains(binding_errors, "duplicate_stable_id:same"), "manifest: duplicate stable binding ids were accepted")
+	var missing_geometry: Dictionary = _manifest_fixture(false).snapshot()
+	(missing_geometry["stable_bindings"] as Array)[0].erase("geometry")
+	_expect(_contains(SpatialManifestScript.validate_data(missing_geometry), "missing_movement_geometry:stable_bindings[0]"), "manifest: movement binding without geometry was accepted")
+	var invalid_sockets: Dictionary = _manifest_fixture(false).snapshot()
+	invalid_sockets["spawn_interaction_exit_sockets"] = [
+		{"socket_id": "socket.same", "kind": "spawn"},
+		{"socket_id": "socket.same", "kind": "unknown"},
+	]
+	var socket_errors := SpatialManifestScript.validate_data(invalid_sockets)
+	_expect(_contains(socket_errors, "duplicate_socket_id:socket.same"), "manifest: duplicate socket ids were accepted")
+	_expect(_contains(socket_errors, "invalid_socket_kind:unknown[1]"), "manifest: unknown socket kind was accepted")
+	var missing_socket: Dictionary = _manifest_fixture(false).snapshot()
+	missing_socket["spawn_interaction_exit_sockets"] = [{"kind": "spawn"}]
+	_expect(_contains(SpatialManifestScript.validate_data(missing_socket), "missing_socket_id:spawn_interaction_exit_sockets[0]"), "manifest: socket without an id was accepted")
 
 
 func _manifest_fixture(reverse_order: bool) -> RefCounted:
 	var bindings: Array = [
 		{"binding_id": "gate.b", "channels": {"movement": false, "navigation": true, "vision": false, "projectile": false, "occlusion": false}},
-		{"binding_id": "gate.a", "channels": {"movement": true, "navigation": false, "vision": true, "projectile": true, "occlusion": true}},
+		{"binding_id": "gate.a", "channels": {"movement": true, "navigation": false, "vision": true, "projectile": true, "occlusion": true}, "geometry": {"type": "rect", "rect": [0.0, 0.0, 100.0, 100.0]}},
 	]
 	if reverse_order:
 		bindings.reverse()
