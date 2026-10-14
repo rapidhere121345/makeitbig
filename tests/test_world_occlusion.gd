@@ -16,6 +16,7 @@ const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
 const ArenaActorPresenterScript = preload("res://src/presentation/arena_actor_presenter.gd")
 const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd")
+const EnemyScript = preload("res://src/runtime/world/combat_enemy_state.gd")
 
 ## Visual-overlap budget: at most this much total local opacity may sit on top of
 ## the hero's own cell, so a per-channel comparison against the source pixels can
@@ -188,6 +189,7 @@ func _test_arena() -> void:
 		_expect(texture != null, "arena: %s has metadata but no actual texture, so it would be invisible" % sprite_id)
 		if texture != null:
 			_expect(Rect2(Vector2.ZERO, texture.get_size()).encloses(metadata.rect), "arena: %s source region exceeds its loaded texture" % sprite_id)
+	_test_alpha_visible_bounds(view)
 
 	var clear_gameplay := Vector2(430.0, 360.0)
 	view.begin_frame(ARENA_VIEWPORT, clear_gameplay, ARENA_RECT)
@@ -206,6 +208,94 @@ func _test_arena() -> void:
 	_test_resolved_hero_destination(view)
 	_test_mixed_actor_budget(view)
 	print("  arena sweep: %d ruin placements, the tower and the colossus all measured" % view.structure_placements().size())
+
+
+func _test_alpha_visible_bounds(view) -> void:
+	var feet := Vector2(500.0, 400.0)
+	for sprite_id in ["ruin.wall_corner", "boss.body_phase1", "enemy.melee.idle", "ranger.south.idle"]:
+		var full := _full_sprite_destination(view, sprite_id, feet)
+		var visible: Rect2 = view.sprite_art_box(sprite_id, feet)
+		_expect(full.encloses(visible), "alpha: %s visible box escaped its full destination" % sprite_id)
+		_expect(visible.size.x < full.size.x and visible.size.y < full.size.y, "alpha: %s did not shrink its transparent bounds" % sprite_id)
+		_expect(visible == _expected_sprite_visible_box(view, sprite_id, feet, false), "alpha: %s did not retain its alpha bbox plus 1px padding" % sprite_id)
+	var tower_upper: Rect2 = view.sprite_art_box("tower.upper", feet)
+	var tower_base: Rect2 = view.sprite_art_box("tower.base", feet)
+	_expect(tower_upper == _expected_sprite_visible_box(view, "tower.upper", feet, false), "alpha: tower.upper ignored keep_rows source region")
+	_expect(tower_base == _expected_sprite_visible_box(view, "tower.base", feet, false), "alpha: tower.base ignored keep_rows source region")
+
+	var image := Image.create(12, 10, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.0, 0.0, 0.0, 0.0))
+	for y in range(3, 8):
+		for x in range(2, 5):
+			image.set_pixel(x, y, Color.WHITE)
+	var texture := ImageTexture.create_from_image(image)
+	var dynamic_full := Rect2((feet - Vector2(4.0, 6.0)).round(), Vector2(12.0, 10.0))
+	var east: Rect2 = view.frame_art_box(texture, Rect2(0, 0, 12, 10), feet, Vector2(4, 6), Vector2.ZERO, false)
+	var west: Rect2 = view.frame_art_box(texture, Rect2(0, 0, 12, 10), feet, Vector2(4, 6), Vector2.ZERO, true)
+	_expect(dynamic_full.encloses(east) and east.size == Vector2(5, 7), "alpha: dynamic frame did not include its asymmetric bbox plus 1px padding")
+	_expect(west.size == east.size and west.position.x == dynamic_full.position.x + dynamic_full.size.x - (east.position.x - dynamic_full.position.x + east.size.x) and west.position.y == east.position.y, "alpha: flip_x did not mirror dynamic visible bounds east=%s west=%s full=%s" % [str(east), str(west), str(dynamic_full)])
+	_expect(east != dynamic_full and west != dynamic_full, "alpha: dynamic transparent border still expanded occlusion to the full cell")
+	var invalid: Rect2 = view.frame_art_box(null, Rect2(0, 0, 12, 10), feet, Vector2(4, 6))
+	_expect(invalid == dynamic_full, "alpha: invalid texture cache fallback became a zero box")
+	var transparent_image := Image.create(12, 10, false, Image.FORMAT_RGBA8)
+	transparent_image.fill(Color(0.0, 0.0, 0.0, 0.0))
+	var transparent_texture := ImageTexture.create_from_image(transparent_image)
+	_expect(view.frame_art_box(transparent_texture, Rect2(0, 0, 12, 10), feet, Vector2(4, 6)) == dynamic_full, "alpha: full-transparent frame did not use full-cell fallback")
+
+	var presenter := ArenaActorPresenterScript.new()
+	var dynamic_frame := {"texture": texture, "rect": Rect2i(0, 0, 12, 10), "anchor": Vector2i(4, 6), "fallback": false, "flip_x": true}
+	var enemy_box: Rect2 = presenter._enemy_frame_art_box(dynamic_frame, feet, view)
+	_expect(enemy_box == west, "alpha: enemy dynamic frame art box disagreed with frame flip_x")
+	view.begin_frame(ARENA_VIEWPORT, Vector2(500, 400), ARENA_RECT)
+	var hero_frame := {"player_position": Vector2(500, 400), "player_facing": Vector2.LEFT, "ranger_frame": dynamic_frame}
+	presenter._set_hero_occlusion_box(hero_frame, view)
+	var hero_west: Rect2 = view.frame_art_box(texture, Rect2(0, 0, 12, 10), view.gameplay_to_world(Vector2(500, 400)), Vector2(4, 6), Vector2.ZERO, true)
+	_expect(view.hero_cell_world(view.gameplay_to_world(Vector2(500, 400))) == hero_west, "alpha: hero action occlusion ignored explicit flip_x")
+	var enemy := EnemyScript.new(Vector2.ZERO, 100.0, false, 19)
+	enemy.facing = Vector2.LEFT
+	var fallback_frame := {"enemy_frames": {}}
+	var fallback_box: Rect2 = presenter._enemy_art_box(fallback_frame, enemy, feet, view)
+	_expect(fallback_box == view.sprite_art_box("enemy.melee.idle", feet, true), "alpha: legacy enemy fallback art box ignored draw mirror")
+	var world_source := FileAccess.get_file_as_string("res://src/presentation/arena_world_view.gd")
+	var actor_source := FileAccess.get_file_as_string("res://src/presentation/arena_actor_presenter.gd")
+	_expect(world_source.contains("var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), size)"), "alpha: _draw_cell destination contract changed")
+	_expect(world_source.contains("draw_texture_rect_region(texture, visible, source, modulate)"), "alpha: _draw_cell source contract changed")
+	_expect(actor_source.contains("var destination := Rect2((feet_world - anchor).round(), region.size)"), "alpha: _draw_enemy_action_frame destination contract changed")
+	_expect(actor_source.contains("draw_texture_rect_region(texture, visible, source, modulate)"), "alpha: _draw_enemy_action_frame source contract changed")
+
+
+func _full_sprite_destination(view, sprite_id: String, feet: Vector2) -> Rect2:
+	var metadata: Dictionary = view.sprite(sprite_id)
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	var region: Rect2 = view._region_of(metadata)
+	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
+	return Rect2((feet - anchor + (region.position - rect.position)).round(), region.size)
+
+
+func _expected_sprite_visible_box(view, sprite_id: String, feet: Vector2, flip_x: bool) -> Rect2:
+	var metadata: Dictionary = view.sprite(sprite_id)
+	var texture: Texture2D = view._textures.get(String(metadata.get("texture", "")))
+	var region: Rect2 = view._region_of(metadata)
+	var image: Image = texture.get_image()
+	var source := Rect2i(region.position.round(), region.size.round())
+	var min_x := source.end.x
+	var min_y := source.end.y
+	var max_x := source.position.x
+	var max_y := source.position.y
+	for y in range(source.position.y, source.end.y):
+		for x in range(source.position.x, source.end.x):
+			if image.get_pixel(x, y).a > 0.0:
+				min_x = mini(min_x, x)
+				min_y = mini(min_y, y)
+				max_x = maxi(max_x, x + 1)
+				max_y = maxi(max_y, y + 1)
+	var local := Rect2(Vector2(min_x - source.position.x, min_y - source.position.y), Vector2(max_x - min_x, max_y - min_y)).grow(ArenaWorldViewScript.ALPHA_VISIBLE_BOUNDS_PADDING).intersection(Rect2(Vector2.ZERO, region.size))
+	if flip_x:
+		local.position.x = region.size.x - (local.position.x + local.size.x)
+	var rect: Rect2 = metadata.get("rect", Rect2())
+	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
+	var destination := Rect2((feet - anchor + (region.position - rect.position)).round(), region.size)
+	return Rect2(destination.position + local.position, local.size)
 
 
 func _test_resolved_hero_destination(view) -> void:

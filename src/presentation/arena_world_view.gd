@@ -50,6 +50,9 @@ const CUTAWAY_TOTAL_OPACITY: float = 0.16
 const CUTAWAY_WINDOW_PAD: float = 2.0
 ## Index of the window inside the five tiling pieces (four solid bands first).
 const CUTAWAY_WINDOW_INDEX: int = 4
+## Alpha bounds stay conservative by one source pixel so antialiased edge pixels
+## and the integer destination rounding cannot make an occluder too small.
+const ALPHA_VISIBLE_BOUNDS_PADDING: float = 1.0
 const GROUND_SPRITE_ID: String = "scene.ground"
 ## Only these calibration_v01 sprites are reused read-only; the reworked atlas
 ## owns everything else, so a missing reworked sprite stays missing instead of
@@ -104,6 +107,8 @@ var pending_reason: String = ""
 
 var _sprites: Dictionary = {}
 var _textures: Dictionary = {}
+var _texture_images: Dictionary = {}
+var _alpha_visible_bounds: Dictionary = {}
 var _decals: Array[Dictionary] = []
 var _structures: Array[Dictionary] = []
 var _tower_feet := Vector2.ZERO
@@ -203,6 +208,8 @@ func load_assets() -> bool:
 	pending_reason = ""
 	_sprites.clear()
 	_textures.clear()
+	_texture_images.clear()
+	_alpha_visible_bounds.clear()
 	_decals.clear()
 	_structures.clear()
 	_ready = false
@@ -578,7 +585,7 @@ static func cutaway_pieces(quad: Rect2, core: Rect2) -> Array[Rect2]:
 
 ## The world rect a cell really draws into: exactly the destination _draw_cell()
 ## uses, including a keep_rows band, so a cutaway is measured on real art.
-func sprite_art_box(sprite_id: String, feet_world: Vector2) -> Rect2:
+func sprite_art_box(sprite_id: String, feet_world: Vector2, flip_x: bool = false) -> Rect2:
 	var metadata := sprite(sprite_id)
 	if metadata.is_empty():
 		return Rect2()
@@ -587,7 +594,26 @@ func sprite_art_box(sprite_id: String, feet_world: Vector2) -> Rect2:
 		return Rect2()
 	var rect: Rect2 = metadata.get("rect", Rect2())
 	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
-	return Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
+	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
+	var visible := _visible_region_bounds(_textures.get(String(metadata.get("texture", ""))) as Texture2D, region)
+	if flip_x:
+		visible.position.x = region.size.x - (visible.position.x + visible.size.x)
+	return Rect2(destination.position + visible.position, visible.size)
+
+
+## Dynamic action frames use the same source-region cache as published arena
+## sprites. This only describes the pixels that can occlude; the draw pass still
+## submits the complete source_rect at the complete destination rectangle.
+func frame_art_box(texture: Texture2D, source_rect: Rect2, feet_world: Vector2, anchor: Vector2, draw_offset: Vector2 = Vector2.ZERO, flip_x: bool = false) -> Rect2:
+	if source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
+		return Rect2()
+	var destination := Rect2((feet_world - anchor + draw_offset).round(), source_rect.size)
+	if texture == null:
+		return destination
+	var visible := _visible_region_bounds(texture, source_rect)
+	if flip_x:
+		visible.position.x = source_rect.size.x - (visible.position.x + visible.size.x)
+	return Rect2(destination.position + visible.position, visible.size)
 
 
 ## The actor presenter calls this after resolving the frame that will actually
@@ -1004,6 +1030,77 @@ static func _region_of(metadata: Dictionary) -> Rect2:
 	return Rect2(rect.position.x, rect.position.y + float(rows[0]), rect.size.x, float(rows[1]) - float(rows[0]))
 
 
+func _texture_cache_key(texture: Texture2D, source_rect: Rect2) -> String:
+	if texture == null:
+		return "<null>|%s" % str(source_rect)
+	var identity := texture.resource_path
+	if identity.is_empty():
+		identity = "instance:%d" % texture.get_instance_id()
+	return "%s|%d,%d,%d,%d" % [identity, roundi(source_rect.position.x), roundi(source_rect.position.y), roundi(source_rect.size.x), roundi(source_rect.size.y)]
+
+
+func _texture_image(texture: Texture2D) -> Image:
+	if texture == null:
+		return null
+	var identity := texture.resource_path
+	if identity.is_empty():
+		identity = "instance:%d" % texture.get_instance_id()
+	if not _texture_images.has(identity):
+		_texture_images[identity] = texture.get_image()
+	return _texture_images.get(identity) as Image
+
+
+func _visible_region_bounds(texture: Texture2D, source_rect: Rect2) -> Rect2:
+	var fallback := Rect2(Vector2.ZERO, source_rect.size)
+	if texture == null or source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
+		return fallback
+	var key := _texture_cache_key(texture, source_rect)
+	if _alpha_visible_bounds.has(key):
+		return _alpha_visible_bounds[key] as Rect2
+	var image := _texture_image(texture)
+	if image == null or image.is_empty():
+		_alpha_visible_bounds[key] = fallback
+		return fallback
+	var source := Rect2i(source_rect.position.round(), source_rect.size.round())
+	var image_size := image.get_size()
+	var start_x := maxi(0, source.position.x)
+	var start_y := maxi(0, source.position.y)
+	var end_x := mini(image_size.x, source.end.x)
+	var end_y := mini(image_size.y, source.end.y)
+	var min_x := end_x
+	var min_y := end_y
+	var max_x := start_x
+	var max_y := start_y
+	var found := false
+	for y in range(start_y, end_y):
+		for x in range(start_x, end_x):
+			if image.get_pixel(x, y).a <= 0.0:
+				continue
+			found = true
+			min_x = mini(min_x, x)
+			min_y = mini(min_y, y)
+			max_x = maxi(max_x, x + 1)
+			max_y = maxi(max_y, y + 1)
+	if not found:
+		_alpha_visible_bounds[key] = fallback
+		return fallback
+	var local := Rect2(
+		Vector2(min_x - source.position.x, min_y - source.position.y),
+		Vector2(max_x - min_x, max_y - min_y)
+	)
+	local = local.grow(ALPHA_VISIBLE_BOUNDS_PADDING).intersection(fallback)
+	if local.size.x <= 0.0 or local.size.y <= 0.0:
+		local = fallback
+	_alpha_visible_bounds[key] = local
+	return local
+
+
+func _prime_alpha_visible_bounds() -> void:
+	for sprite_id: String in _sprites.keys():
+		var metadata: Dictionary = _sprites[sprite_id]
+		_visible_region_bounds(_textures.get(String(metadata.get("texture", ""))) as Texture2D, _region_of(metadata))
+
+
 func _cutaway_core(destination: Rect2, cut: Rect2, cut_alpha: float) -> Rect2:
 	## The window in destination-local units, on the integer grid so every piece
 	## reads whole source pixels. An empty result means the cell is drawn as
@@ -1148,6 +1245,7 @@ func _load_textures(scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
 		pending_reason = "ASSETS PENDING: approved ground must be 1024x640"
 		return false
 	_textures[APPROVED_GROUND_KEY] = ground
+	_prime_alpha_visible_bounds()
 	return true
 
 

@@ -205,7 +205,7 @@ func _prepare_occlusion(drawables: Array[Dictionary], frame: Dictionary, world_v
 			elif drawable.kind == "corpse":
 				var corpse_frame: Dictionary = drawable.corpse.get("frame", {})
 				if not corpse_frame.is_empty() and not bool(corpse_frame.get("fallback", true)):
-					front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": _enemy_frame_art_box(corpse_frame, feet), "base_alpha": 1.0})
+					front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": _enemy_frame_art_box(corpse_frame, feet, world_view), "base_alpha": 1.0})
 			elif drawable.kind == "enemy":
 				front_cells.append({"id": drawable.id, "stable_id": drawable.stable_id, "sort_rank": int(drawable.rank), "baseline_y": float(drawable.baseline_y), "feet_world": feet, "art_box": _enemy_art_box(frame, drawable.enemy, feet, world_view), "base_alpha": 1.0})
 	world_view.prepare_actor_occlusion(front_cells, world_view.gameplay_to_world(frame["player_position"]))
@@ -330,11 +330,19 @@ func _set_hero_occlusion_box(frame: Dictionary, world_view: RefCounted) -> void:
 	var feet: Vector2 = world_view.gameplay_to_world(frame["player_position"])
 	var action_frame: Dictionary = frame.get("ranger_frame", {})
 	if action_frame.is_empty() or bool(action_frame.get("fallback", true)):
-		world_view.set_hero_occlusion_box(Rect2(feet - Vector2(24.0, 44.0), Vector2(48.0, 48.0)))
+		var facing := _player_facing_name(frame.get("player_facing", Vector2.DOWN))
+		var idle_box: Rect2 = world_view.sprite_art_box("ranger.%s.idle" % facing, feet) if world_view.has_method("sprite_art_box") else Rect2()
+		world_view.set_hero_occlusion_box(idle_box if idle_box.size.x > 0.0 and idle_box.size.y > 0.0 else Rect2(feet - Vector2(24.0, 44.0), Vector2(48.0, 48.0)))
 		return
 	var rect: Rect2i = action_frame.get("rect", Rect2i())
 	var anchor: Vector2i = action_frame.get("anchor", RangerAnimationScript.DEFAULT_ANCHOR)
 	var draw_offset: Vector2i = action_frame.get("draw_offset", Vector2i.ZERO)
+	var texture: Texture2D = action_frame.get("texture")
+	if texture != null and world_view.has_method("frame_art_box"):
+		var visible_box: Rect2 = world_view.frame_art_box(texture, Rect2(rect), feet, Vector2(anchor), Vector2(draw_offset), bool(action_frame.get("flip_x", false)))
+		if visible_box.size.x > 0.0 and visible_box.size.y > 0.0:
+			world_view.set_hero_occlusion_box(visible_box)
+			return
 	var destination := Rect2((feet - Vector2(anchor) + Vector2(draw_offset)).round(), Vector2(rect.size))
 	world_view.set_hero_occlusion_box(destination)
 
@@ -375,11 +383,11 @@ func _draw_enemy(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, 
 	var modulate := Color(1.6, 1.6, 1.6, 1.0) if int(frame["sim_tick"]) < enemy.hit_flash_until_tick else role_tint
 	var action_frame := _enemy_action_frame(frame, enemy.entity_id)
 	if not action_frame.is_empty():
-		var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
+		var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet, world_view), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
 		_draw_enemy_action_frame(canvas, world_view, action_frame, feet, modulate, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 	else:
 		var sprite_id := "enemy.%s.%s" % [_enemy_role_id(enemy), _enemy_pose_id(enemy)]
-		var cut: Dictionary = world_view.cutaway_for(world_view.sprite_art_box(sprite_id, feet), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
+		var cut: Dictionary = world_view.cutaway_for(world_view.sprite_art_box(sprite_id, feet, enemy.facing.x < -0.001), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
 		world_view.draw_sprite(canvas, sprite_id, feet, enemy.facing.x < -0.001, modulate, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 
 
@@ -388,7 +396,7 @@ func _draw_enemy_corpse(canvas: CanvasItem, frame: Dictionary, world_view: RefCo
 	if action_frame.is_empty() or bool(action_frame.get("fallback", true)):
 		return
 	var feet: Vector2 = world_view.gameplay_to_world(corpse.get("position", Vector2.ZERO) as Vector2)
-	var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
+	var cut: Dictionary = world_view.cutaway_for(_enemy_frame_art_box(action_frame, feet, world_view), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id)
 	_draw_enemy_action_frame(canvas, world_view, action_frame, feet, Color.WHITE, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 
 
@@ -397,19 +405,24 @@ func _enemy_action_frame(frame: Dictionary, entity_id: int) -> Dictionary:
 	return {} if bool(action_frame.get("fallback", true)) else action_frame
 
 
-func _enemy_frame_art_box(action_frame: Dictionary, feet_world: Vector2) -> Rect2:
+func _enemy_frame_art_box(action_frame: Dictionary, feet_world: Vector2, world_view: RefCounted = null) -> Rect2:
 	var rect: Rect2i = action_frame.get("rect", Rect2i())
 	if rect.size.x <= 0 or rect.size.y <= 0:
 		return Rect2()
 	var anchor: Vector2i = action_frame.get("anchor", EnemyAnimationScript.DEFAULT_ANCHOR)
+	var texture: Texture2D = action_frame.get("texture")
+	if texture != null and world_view != null and world_view.has_method("frame_art_box"):
+		var visible_box: Rect2 = world_view.frame_art_box(texture, Rect2(rect), feet_world, Vector2(anchor), Vector2.ZERO, bool(action_frame.get("flip_x", false)))
+		if visible_box.size.x > 0.0 and visible_box.size.y > 0.0:
+			return visible_box
 	return Rect2((feet_world - Vector2(anchor)).round(), Vector2(rect.size))
 
 
 func _enemy_art_box(frame: Dictionary, enemy: CombatEnemyState, feet_world: Vector2, world_view: RefCounted) -> Rect2:
 	var action_frame := _enemy_action_frame(frame, enemy.entity_id)
 	if not action_frame.is_empty():
-		return _enemy_frame_art_box(action_frame, feet_world)
-	return world_view.sprite_art_box("enemy.%s.%s" % [_enemy_role_id(enemy), _enemy_pose_id(enemy)], feet_world)
+		return _enemy_frame_art_box(action_frame, feet_world, world_view)
+	return world_view.sprite_art_box("enemy.%s.%s" % [_enemy_role_id(enemy), _enemy_pose_id(enemy)], feet_world, enemy.facing.x < -0.001)
 
 
 func _draw_enemy_action_frame(canvas: CanvasItem, world_view: RefCounted, action_frame: Dictionary, feet_world: Vector2, modulate: Color, cut: Rect2, cut_alpha: float) -> void:
