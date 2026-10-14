@@ -176,6 +176,7 @@ func draw_list(frame: Dictionary, world_view: RefCounted) -> Array[Dictionary]:
 func draw(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted) -> void:
 	if canvas == null or world_view == null or not _frame_is_drawable(frame):
 		return
+	_set_hero_occlusion_box(frame, world_view)
 	var drawables := draw_list(frame, world_view)
 	_prepare_occlusion(drawables, frame, world_view)
 	for drawable: Dictionary in drawables:
@@ -245,6 +246,7 @@ func sync_sort_views(domain: WorldPresenter, frame: Dictionary, world_view: RefC
 	if not bool(frame.presentation_enabled) or not bool(frame.in_arena):
 		release_sort_views()
 		return {"ok": true, "error": "", "ids": []}
+	_set_hero_occlusion_box(frame, world_view)
 	var detached := frame.duplicate(true)
 	var enemies: Array[CombatEnemyState] = []
 	for enemy: CombatEnemyState in frame.enemies:
@@ -317,6 +319,24 @@ func _record_report(frame: Dictionary, pass_name: String) -> void:
 
 func _drawable_precedes(left: Dictionary, right: Dictionary) -> bool:
 	return SortRelation.precedes(left, right)
+
+
+## Keep the cutaway envelope tied to the same destination rectangle as the live
+## ranger draw.  The fallback remains the conservative 48x48 cell; resolved
+## action frames additionally carry their authored draw offset.
+func _set_hero_occlusion_box(frame: Dictionary, world_view: RefCounted) -> void:
+	if not world_view.has_method("set_hero_occlusion_box"):
+		return
+	var feet: Vector2 = world_view.gameplay_to_world(frame["player_position"])
+	var action_frame: Dictionary = frame.get("ranger_frame", {})
+	if action_frame.is_empty() or bool(action_frame.get("fallback", true)):
+		world_view.set_hero_occlusion_box(Rect2(feet - Vector2(24.0, 44.0), Vector2(48.0, 48.0)))
+		return
+	var rect: Rect2i = action_frame.get("rect", Rect2i())
+	var anchor: Vector2i = action_frame.get("anchor", RangerAnimationScript.DEFAULT_ANCHOR)
+	var draw_offset: Vector2i = action_frame.get("draw_offset", Vector2i.ZERO)
+	var destination := Rect2((feet - Vector2(anchor) + Vector2(draw_offset)).round(), Vector2(rect.size))
+	world_view.set_hero_occlusion_box(destination)
 
 
 func _draw_player(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted) -> void:
