@@ -113,6 +113,10 @@ func _test_room_concept_geometry() -> void:
 	_expect(view._concept_center_world(geometry, world_bounds) == view.gameplay_to_world(gameplay_bounds.get_center()), "concept: room landmarks did not use gameplay center")
 	_expect(is_equal_approx(view._concept_radius_world(geometry, "corridor_half_height", 62.0), 72.0 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: corridor landmark used a stale visual half-height")
 	_expect(is_equal_approx(view._concept_radius_world(geometry, "outer_radius", 152.0), 209.84 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: ring landmark used a stale visual radius")
+	var corridor_edge := view._concept_corridor_edge_world(geometry, world_bounds, 1.0)
+	_expect(is_equal_approx(corridor_edge, view._concept_center_world(geometry, world_bounds).y + 72.0 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: corridor edge did not follow the authoritative half-height")
+	var trace_radius := view._concept_ring_trace_radius_world(view._concept_radius_world(geometry, "inner_radius", 70.0), view._concept_radius_world(geometry, "outer_radius", 152.0))
+	_expect(trace_radius > view._concept_radius_world(geometry, "inner_radius", 70.0) and trace_radius < view._concept_radius_world(geometry, "outer_radius", 152.0), "concept: ring trace escaped the authoritative radius band")
 
 
 ## The local opacity budget is the whole point of the pass: whatever a frame stacks

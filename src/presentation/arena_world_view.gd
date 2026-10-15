@@ -442,6 +442,14 @@ func _concept_radius_world(geometry: Dictionary, key: String, fallback: float) -
 	return fallback
 
 
+func _concept_corridor_edge_world(geometry: Dictionary, bounds: Rect2, side: float) -> float:
+	return _concept_center_world(geometry, bounds).y + _concept_radius_world(geometry, "corridor_half_height", 62.0) * side
+
+
+func _concept_ring_trace_radius_world(inner_radius: float, outer_radius: float) -> float:
+	return lerpf(inner_radius, outer_radius, 0.66)
+
+
 func _draw_outpost_concept(canvas: CanvasItem, phase: float, geometry: Dictionary = {}) -> void:
 	var field := _concept_bounds_world(geometry)
 	canvas.draw_rect(field, Color(PaletteScript.SLATE_0, 0.25), true)
@@ -466,15 +474,17 @@ func _draw_ring_concept(canvas: CanvasItem, phase: float, geometry: Dictionary =
 	var outer_radius := _concept_radius_world(geometry, "outer_radius", 152.0)
 	canvas.draw_circle(center, outer_radius + 12.0, Color(PaletteScript.SLATE_0, 0.31))
 	canvas.draw_circle(center, inner_radius, Color(PaletteScript.INK, 0.38))
-	canvas.draw_arc(center, outer_radius, 0.0, TAU, 64, Color(PaletteScript.COPPER_DULL, 0.66), 4.0, false)
-	canvas.draw_arc(center, inner_radius, 0.0, TAU, 48, Color(PaletteScript.BONE_DIM, 0.34), 2.0, false)
+	## The gameplay presenter owns the visible authoritative boundary strokes.
+	## Keep this layer to fills and landmarks so the same ring is never drawn twice
+	## under different transforms and source-over colors.
 	for index in 8:
 		var angle := TAU * float(index) / 8.0
 		var point := center + Vector2(cos(angle), sin(angle)) * outer_radius
 		canvas.draw_rect(Rect2(point - Vector2(5.0, 7.0), Vector2(10.0, 14.0)), Color(PaletteScript.SLATE_2, 0.54), true)
 		var glow := 0.18 + 0.11 * (0.5 + 0.5 * sin(phase * TAU + float(index) * 0.6))
 		canvas.draw_circle(point + Vector2(0.0, -5.0), 2.5, Color(PaletteScript.COPPER, glow))
-	canvas.draw_arc(center, 138.0, phase * TAU, phase * TAU + PI * 0.42, 12, Color(PaletteScript.COLD, 0.42), 3.0, false)
+	var trace_radius := _concept_ring_trace_radius_world(inner_radius, outer_radius)
+	canvas.draw_arc(center, trace_radius, phase * TAU, phase * TAU + PI * 0.42, 12, Color(PaletteScript.COLD, 0.42), 3.0, false)
 	_draw_room_gate(canvas, center + Vector2(outer_radius, 0.0), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
 	_draw_room_gate(canvas, center + Vector2(outer_radius * 0.70, outer_radius * 0.70), Vector2.UP, Color(PaletteScript.COLD, 0.48), false)
 
@@ -491,18 +501,14 @@ func _draw_corridor_concept(canvas: CanvasItem, phase: float, geometry: Dictiona
 	canvas.draw_rect(Rect2(Vector2(left, top), Vector2(right - left, lane.position.y - top)), Color(PaletteScript.INK, 0.24), true)
 	canvas.draw_rect(Rect2(Vector2(left, lane.end.y), Vector2(right - left, bottom - lane.end.y)), Color(PaletteScript.INK, 0.24), true)
 	canvas.draw_rect(lane, Color(PaletteScript.SLATE_1, 0.28), true)
-	for side in [-1.0, 1.0]:
-		var y: float = center_y + float(side) * 62.0
-		var x := left
-		while x < right:
-			var segment := minf(26.0, right - x)
-			canvas.draw_line(Vector2(x, y), Vector2(x + segment, y), Color(PaletteScript.COLD, 0.50), 3.0, false)
-			x += 42.0
+	## Corridor edge strokes come from ArenaCombatPresenter's gameplay pass. The
+	## concept layer supplies the lane fill and vertical wayfinding posts only.
 	for index in 6:
 		var x := left + 90.0 + float(index) * 126.0
 		var y := center_y + sin(phase * TAU + float(index) * 0.55) * 3.0
-		canvas.draw_line(Vector2(x, y + 54.0), Vector2(x, y - 54.0), Color(PaletteScript.COPPER_DULL, 0.58), 3.0, false)
-		canvas.draw_line(Vector2(x, y - 50.0), Vector2(x + 14.0, y - 43.0), Color(PaletteScript.COLD, 0.48), 2.0, false)
+		var post_half_height := half_height * 0.75
+		canvas.draw_line(Vector2(x, y + post_half_height), Vector2(x, y - post_half_height), Color(PaletteScript.COPPER_DULL, 0.58), 3.0, false)
+		canvas.draw_line(Vector2(x, y - post_half_height + 4.0), Vector2(x + 14.0, y - post_half_height + 11.0), Color(PaletteScript.COLD, 0.48), 2.0, false)
 	_draw_room_gate(canvas, Vector2(left + 8.0, center_y), Vector2.RIGHT, Color(PaletteScript.COLD, 0.60), false)
 	_draw_room_gate(canvas, Vector2(right - 8.0, center_y), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
 	for index in 4:
