@@ -12,10 +12,21 @@ const ERROR_INVALID_ROOM_PLAN := "invalid_room_plan"
 const ERROR_ROOM_RUNTIME_FACTORY_FAILED := "room_runtime_factory_failed"
 const ERROR_ROOM_RUNTIME_API_UNAVAILABLE := "room_runtime_api_unavailable"
 const ERROR_ROOM_RUNTIME_START_FAILED := "room_runtime_start_failed"
+const ERROR_ROOM_COMMIT_FAILED := "room_commit_failed"
 
 ## Tests and future room implementations may inject a zero-argument factory
 ## before this node enters the tree.
 var room_runtime_factory: Callable
+
+## Framework port for the room-victory path. When set, it is called with
+## (room_index, room_result) after a room victory and before the next room
+## starts. It must return the ApplicationState boundary result
+## Dictionary{ok,error,committed_items,resolved_build,active_build}. On success
+## only this controller's detached framework context for the next room adopts
+## the returned active_build/resolved_build; room plan, results and runtime
+## authority stay unchanged. When unset, room transitions keep the launch-time
+## framework context.
+var room_commit_port: Callable
 
 var current_config: Dictionary:
 	get:
@@ -162,6 +173,22 @@ func _on_runtime_completed(result: Dictionary, runtime: Node, index: int) -> voi
 	if outcome == "victory":
 		_rooms_completed += 1
 		if index + 1 < _rooms.size():
+			if room_commit_port.is_valid():
+				var committed: Variant = room_commit_port.call(index, isolated_result.duplicate(true))
+				if not (committed is Dictionary) or not bool((committed as Dictionary).get("ok", false)):
+					_retire_current_runtime()
+					var commit_error := "invalid_commit_result"
+					if committed is Dictionary:
+						commit_error = String((committed as Dictionary).get("error", "invalid_commit_result"))
+					_room_results.append({
+						"outcome": "error",
+						"error": ERROR_ROOM_COMMIT_FAILED,
+						"commit_error": commit_error,
+						"report": "Room victory commit failed before the next room.",
+					})
+					_finalize_completed("error")
+					return
+				_apply_room_commit_to_context(committed as Dictionary)
 			var continued_input: RefCounted = null
 			if String(_current_config.get("mode", "")) == "Manual" and runtime.has_method("take_continuous_manual_input"):
 				continued_input = runtime.call("take_continuous_manual_input") as RefCounted
@@ -176,6 +203,21 @@ func _on_runtime_completed(result: Dictionary, runtime: Node, index: int) -> voi
 				_finalize_completed("error")
 			return
 	_finalize_completed(outcome)
+
+
+## Applies a successful framework commit to the detached config the next room
+## reads. Only framework_context (and its sibling resolved_build hint) change.
+func _apply_room_commit_to_context(committed: Dictionary) -> void:
+	var framework_value: Variant = _current_config.get("framework_context", {})
+	var framework: Dictionary = framework_value if framework_value is Dictionary else {}
+	var resolved_value: Variant = committed.get("resolved_build", {})
+	if resolved_value is Dictionary and not (resolved_value as Dictionary).is_empty():
+		framework["resolved_build"] = (resolved_value as Dictionary).duplicate(true)
+		_current_config["resolved_build"] = (resolved_value as Dictionary).duplicate(true)
+	var active_value: Variant = committed.get("active_build", {})
+	if active_value is Dictionary and not (active_value as Dictionary).is_empty():
+		framework["active_build"] = (active_value as Dictionary).duplicate(true)
+	_current_config["framework_context"] = framework
 
 
 func _on_runtime_abandoned(result: Dictionary, runtime: Node, index: int) -> void:

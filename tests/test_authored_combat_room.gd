@@ -61,7 +61,7 @@ func _run() -> void:
 	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
 	var stats: Dictionary = player.get("combat_stats", {})
 	_expect(bool(arena.room_loot_enabled), "authored room: room loot facade was not enabled")
-	_expect(float(stats.get("move_speed", 0.0)) == 220.0 and int(stats.get("attack_cooldown_ticks", 0)) == 11, "authored room: mounted player did not consume the room combat sheet")
+	_expect(float(stats.get("move_speed", 0.0)) == 220.0 and int(stats.get("attack_cooldown_ticks", 0)) == 11 and String(stats.get("movement_model", "")) == "accelerated", "authored room: mounted player did not consume the room combat sheet")
 
 	var enemies: Array = arena.enemies
 	_expect(enemies.size() == 1, "authored room: side room did not keep its one-enemy encounter")
@@ -122,11 +122,15 @@ func _run() -> void:
 	loot = arena.room_loot_snapshot
 	entities = loot.get("entities", [])
 	if not entities.is_empty():
-		_expect(String(entities[0].get("state", "")) == "left_in_room", "authored room: terminal settlement did not preserve the unpicked drop")
+		_expect(String(entities[0].get("state", "")) == "available", "authored room: victory closed the loot window before room exit")
 	runtime.completed.connect(func(result: Dictionary) -> void: _completed.append(result.duplicate(true)))
 	runtime.request_abandon()
 	_expect(_completed.size() == 1, "authored room: mounted result was not emitted once")
 	if _completed.size() == 1:
+		loot = arena.room_loot_snapshot
+		entities = loot.get("entities", [])
+		if not entities.is_empty():
+			_expect(String(entities[0].get("state", "")) == "left_in_room", "authored room: room exit did not preserve the unpicked drop")
 		var result: Dictionary = _completed[0]
 		var settlement: Dictionary = result.get("room_loot_settlement", {})
 		_expect(String(result.get("outcome", "")) == "victory", "authored room: result outcome changed")

@@ -13,12 +13,14 @@ class FakeArena:
 	var config: Dictionary = {}
 	var started := false
 	var abandon_requests := 0
+	var event_log: Array = []
 
 	func start_session(value: Dictionary) -> Dictionary:
 		if started:
 			return {"ok": false, "error": "already_started"}
 		started = true
 		config = value.duplicate(true)
+		event_log.append("start:%d" % int(value.get("room_index", -1)))
 		return {"ok": true}
 
 	func resolve(result: Dictionary) -> void:
@@ -33,6 +35,7 @@ var _completed_events: Array[Dictionary] = []
 var _abandoned_events: Array[Dictionary] = []
 var _room_events: Array[Dictionary] = []
 var _factory_fail_after := -1
+var _event_log: Array = []
 
 
 func _initialize() -> void:
@@ -49,6 +52,8 @@ func _run() -> void:
 	_test_duplicate_signal_guard(failures)
 	_test_invalid_plans(failures)
 	_test_alias_isolation(failures)
+	_test_commit_port_orders_framework_commit(failures)
+	_test_commit_failure_blocks_next_room(failures)
 	_test_real_held_attack_between_rooms(failures)
 	if failures.is_empty():
 		print("PASS  test_contract_run_controller.gd")
@@ -185,6 +190,84 @@ func _test_alias_isolation(failures: Array[String]) -> void:
 	_destroy_controller(controller)
 
 
+func _test_commit_port_orders_framework_commit(failures: Array[String]) -> void:
+	var state = ApplicationStateScript.new()
+	state.start_new_profile("ranger")
+	state.prepare_contract({
+		"contract_id": "handoff.test", "mode": "Manual", "seed": 9001, "room_count": 2,
+		"resolved_build": state.resolved_build_snapshot(),
+		"room_plan": {"rooms": [{"room_id": "handoff-a"}, {"room_id": "handoff-b"}]},
+	})
+	state.begin_session()
+	var controller = _create_controller()
+	controller.room_commit_port = func(room_index: int, room_result: Dictionary) -> Dictionary:
+		_event_log.append("commit:%d" % room_index)
+		return state.commit_room_victory_and_resolve_next_build(room_index, room_result)
+	var config := _config(2)
+	config["room_plan"] = {"rooms": [{"id": "a"}, {"id": "b"}]}
+	config["framework_context"] = {"active_build": state.profile.active_build, "resolved_build": {"build_fingerprint": "stale"}}
+	_expect(bool(controller.start_session(config).get("ok", false)), "commit port: start failed", failures)
+	_created[0].resolve(_handoff_victory([_handoff_loot(state, "handoff_loot_a")]))
+	_expect(_event_log == ["start:0", "commit:0", "start:1"],
+		"commit port: framework commit must run before room two starts (log=%s)" % str(_event_log), failures)
+	var room_config: Dictionary = _created[1].config
+	var framework: Dictionary = room_config.get("framework_context", {})
+	_expect((framework.get("resolved_build", {}) as Dictionary) == (state.active_session.resolved_build as Dictionary),
+		"commit port: room two did not receive the refreshed resolved build", failures)
+	_expect(String((framework.get("resolved_build", {}) as Dictionary).get("build_fingerprint", "")) != "stale",
+		"commit port: stale build leaked into room two", failures)
+	_expect((framework.get("active_build", {}) as Dictionary) == (state.profile.active_build as Dictionary),
+		"commit port: room two did not receive the active build", failures)
+	# The final room never goes through the port: one victory summary settles.
+	_created[1].resolve(_handoff_victory([_handoff_loot(state, "handoff_loot_b")]))
+	_expect(_event_log == ["start:0", "commit:0", "start:1"], "commit port: final room must not call the port", failures)
+	_expect(_completed_events.size() == 1 and String(_completed_events[0].outcome) == "victory",
+		"commit port: two-room run did not finish as one victory", failures)
+	_destroy_controller(controller)
+
+
+func _test_commit_failure_blocks_next_room(failures: Array[String]) -> void:
+	var controller = _create_controller()
+	controller.room_commit_port = func(_room_index: int, _room_result: Dictionary) -> Dictionary:
+		return {"ok": false, "error": "room_index_mismatch"}
+	controller.start_session(_config(2))
+	_created[0].resolve(_handoff_victory([]))
+	_expect(_created.size() == 1, "commit failure: next room must not start", failures)
+	_expect(_completed_events.size() == 1 and String(_completed_events[0].outcome) == "error",
+		"commit failure: run must finalize as an explicit error", failures)
+	if _completed_events.size() == 1:
+		var summary: Dictionary = _completed_events[0]
+		var room_error: Dictionary = summary.room_results[1]
+		_expect(String(room_error.get("error", "")) == "room_commit_failed"
+			and String(room_error.get("commit_error", "")) == "room_index_mismatch",
+			"commit failure: error result lost the commit diagnostics", failures)
+		_expect(int(summary.rooms_completed) == 1 and int(summary.rewards.contract_wins_delta) == 0,
+			"commit failure: failed handoff must not grant the contract win", failures)
+	_destroy_controller(controller)
+
+
+func _handoff_loot(state, instance_id: String) -> Dictionary:
+	var item: Dictionary = (state.profile.inventory.equipment[0] as Dictionary).duplicate(true)
+	item["instance_id"] = instance_id
+	return item
+
+
+func _handoff_victory(items: Array) -> Dictionary:
+	return {
+		"outcome": "victory",
+		"ticks": 1,
+		"elapsed_seconds": 0.1,
+		"casts": 1,
+		"defeated": 1,
+		"report": "handoff",
+		"rewards": {"contract_wins_delta": 1, "law_tallies_delta": {"inscribe": 0, "rewrite": 0, "refine": 0}},
+		"room_loot_settlement": {
+			"ok": true, "error": "", "outcome": "victory",
+			"items": items.duplicate(true), "entities": [], "event_count": items.size(),
+		},
+	}
+
+
 func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 	var state = ApplicationStateScript.new()
 	state.start_new_profile("ranger")
@@ -310,6 +393,7 @@ func _create_controller():
 	_abandoned_events.clear()
 	_room_events.clear()
 	_factory_fail_after = -1
+	_event_log.clear()
 	var controller = ControllerScript.new()
 	controller.room_runtime_factory = Callable(self, "_make_fake_arena")
 	controller.completed.connect(_on_completed)
@@ -329,6 +413,7 @@ func _make_fake_arena() -> Node:
 	if _factory_fail_after >= 0 and _created.size() >= _factory_fail_after:
 		return null
 	var arena := FakeArena.new()
+	arena.event_log = _event_log
 	_created.append(arena)
 	return arena
 

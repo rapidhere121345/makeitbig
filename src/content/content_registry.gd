@@ -9,6 +9,7 @@ extends RefCounted
 const PROXY_PATH := "res://content/proxy_components.json"
 const PRESET_PATH := "res://content/ranger_presets.json"
 const EarlyCampaignRegistryScript = preload("res://src/content/early_campaign_registry.gd")
+const EarlyEnemyProfileRegistryScript = preload("res://src/content/early_enemy_profile_registry.gd")
 const EarlyItemRegistryScript = preload("res://src/content/early_item_registry.gd")
 const EarlySkillRegistryScript = preload("res://src/content/early_skill_registry.gd")
 
@@ -41,6 +42,7 @@ var preset_equipped_parameters := {}
 var presets := {}
 var preset_order: Array[String] = []
 var early_campaign_registry: Variant
+var early_enemy_profile_registry: Variant
 var early_item_registry: Variant
 var early_skill_registry: Variant
 
@@ -54,10 +56,16 @@ func load_all() -> Array[String]:
 	presets.clear()
 	preset_order.clear()
 	early_campaign_registry = EarlyCampaignRegistryScript.new()
+	early_enemy_profile_registry = EarlyEnemyProfileRegistryScript.new()
 	early_item_registry = EarlyItemRegistryScript.new()
 	early_skill_registry = EarlySkillRegistryScript.new()
 	var failures: Array[String] = []
-	failures.append_array(early_campaign_registry.load_campaign())
+	var campaign_failures: Array[String] = early_campaign_registry.load_campaign()
+	failures.append_array(campaign_failures)
+	var enemy_profile_failures: Array[String] = early_enemy_profile_registry.load_all()
+	failures.append_array(enemy_profile_failures)
+	if campaign_failures.is_empty() and enemy_profile_failures.is_empty():
+		failures.append_array(early_enemy_profile_registry.validate_campaign_roles(early_campaign_registry.normal_enemy_role_map()))
 	failures.append_array(early_item_registry.load_all())
 	failures.append_array(early_skill_registry.load_all())
 	var proxy_data := _read_json(PROXY_PATH)

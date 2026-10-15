@@ -5,6 +5,7 @@ const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.
 const CombatEventStreamScript := preload("res://src/systems/combat_event_stream.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 const RoomCatalogScript := preload("res://src/runtime/world/room_catalog.gd")
+const EnemyProfileRegistryScript := preload("res://src/content/early_enemy_profile_registry.gd")
 
 class PlayerPort:
 	extends RefCounted
@@ -27,6 +28,11 @@ func _initialize() -> void:
 	var failures: Array[String] = []
 	var director = EncounterDirectorScript.new()
 	var room_catalog = RoomCatalogScript.new()
+	var enemy_profiles = EnemyProfileRegistryScript.new()
+	var profile_errors: Array[String] = enemy_profiles.load_all()
+	_expect(profile_errors.is_empty(), "director: enemy profile content failed to load: %s" % ";".join(profile_errors), failures)
+	var profile_ready: Dictionary = director.set_enemy_profile_registry(enemy_profiles)
+	_expect(bool(profile_ready.get("ok", false)), "director: enemy profile port was not configured", failures)
 	var valid_room := {
 		"layout_id": "corridor",
 		"objective_id": "clear",
@@ -105,8 +111,9 @@ func _initialize() -> void:
 	var snapshot: Dictionary = director.enemy_tactics_snapshot()
 	_expect(int(snapshot.get("snapshot_version", -1)) == 2 and (snapshot.get("enemies", []) as Array).size() == 1,
 		"director: tactics snapshot was not assembled from room-local state", failures)
-	var accepted := director._start_charger_action(enemy, Vector2.RIGHT, 80.0)
-	_expect(accepted and enemy.action_state == "windup", "director: charger action did not stay in encounter authority", failures)
+	var charger := CombatEnemyStateScript.new(Vector2(120.0, 200.0), 420.0, false, 3, "charging_raider")
+	var accepted := director._start_charger_action(charger, Vector2.RIGHT, 80.0)
+	_expect(accepted and charger.action_state == "windup", "director: charger action did not stay in encounter authority", failures)
 	_expect(registered_ids.is_empty(), "director: passive encounter update performed an unsolicited actor registration", failures)
 
 	if failures.is_empty():

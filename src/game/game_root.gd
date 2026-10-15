@@ -1904,7 +1904,10 @@ func _make_arena_screen() -> Node:
 	if room_runtime_factory.is_valid():
 		var candidate: Variant = room_runtime_factory.call()
 		return candidate as Node if candidate is Node else null
-	return ContractRunControllerScript.new()
+	var controller: Node = ContractRunControllerScript.new()
+	if application_state != null and application_state.has_method("commit_room_victory_and_resolve_next_build"):
+		controller.set("room_commit_port", Callable(application_state, "commit_room_victory_and_resolve_next_build"))
+	return controller
 
 
 func _handle_arena_launch_failure(error_code: String) -> void:

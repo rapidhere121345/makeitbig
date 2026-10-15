@@ -1070,6 +1070,62 @@ func begin_session() -> Dictionary:
 	return {"ok": true, "session": _active_session.duplicate(true)}
 
 
+func commit_room_victory_and_resolve_next_build(room_index: int, room_result: Dictionary) -> Dictionary:
+	if _active_session.is_empty():
+		return _failure("active_session_required")
+	if int(room_index) != int(_active_session.get("room_index", -1)):
+		return _failure("room_index_mismatch")
+	if String(room_result.get("outcome", "")).to_lower() != "victory":
+		return _failure("room_victory_required")
+	var settlement_value: Variant = room_result.get("room_loot_settlement", {})
+	if not settlement_value is Dictionary:
+		return _failure("invalid_room_loot_settlement")
+	var settlement: Dictionary = settlement_value
+	var items_value: Variant = settlement.get("items", [])
+	if not settlement.is_empty():
+		if not bool(settlement.get("ok", false)) or String(settlement.get("outcome", "")) != "victory":
+			return _failure("invalid_room_loot_settlement")
+		if not items_value is Array:
+			return _failure("invalid_room_loot_settlement")
+	var registry: Variant = _loaded_item_registry()
+	if registry == null:
+		return _failure("content_unavailable")
+	var candidates: Array[Dictionary] = []
+	var seen_ids: Dictionary = {}
+	for item_value: Variant in items_value:
+		if not item_value is Dictionary or not registry.validate_item_instance(item_value).is_empty():
+			return _failure("invalid_room_loot_item")
+		var item: Dictionary = item_value
+		var instance_id := String(item.get("instance_id", ""))
+		if instance_id.is_empty() or seen_ids.has(instance_id):
+			continue
+		seen_ids[instance_id] = true
+		candidates.append(item.duplicate(true))
+	var next_profile := _profile.duplicate(true)
+	var equipment: Array = (next_profile.inventory as Dictionary).equipment
+	var committed: Array = []
+	for item in candidates:
+		if not _owned_equipment(String(item.get("instance_id", ""))).is_empty():
+			continue
+		equipment.append(item.duplicate(true))
+		committed.append(item.duplicate(true))
+	var resolved := _resolve_build_with_inventory(
+		next_profile.active_build, (next_profile.inventory as Dictionary).equipment, next_profile
+	)
+	if not bool(resolved.get("ok", false)):
+		return _failure("invalid_next_build")
+	_profile = next_profile
+	_active_session["room_index"] = int(room_index) + 1
+	_active_session["resolved_build"] = (resolved as Dictionary).duplicate(true)
+	return {
+		"ok": true,
+		"error": "",
+		"committed_items": committed.duplicate(true),
+		"resolved_build": (resolved as Dictionary).duplicate(true),
+		"active_build": (_profile.active_build as Dictionary).duplicate(true),
+	}.duplicate(true)
+
+
 func complete_session(result: Dictionary) -> Dictionary:
 	if _active_session.is_empty():
 		return _failure("active_session_required")

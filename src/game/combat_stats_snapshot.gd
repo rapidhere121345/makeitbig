@@ -15,11 +15,13 @@ const INTEGER_FIELDS: Array[String] = [
 	"attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks",
 ]
 const REQUIRED_FIELDS: Array[String] = NUMERIC_FIELDS + INTEGER_FIELDS + ["resistances", "provenance"]
-const ALL_FIELDS: Array[String] = ["schema_version"] + REQUIRED_FIELDS
+const OPTIONAL_FIELDS: Array[String] = ["movement_model"]
+const ALL_FIELDS: Array[String] = ["schema_version"] + REQUIRED_FIELDS + OPTIONAL_FIELDS
 const ROOM_OVERLAY_FIELDS: Array[String] = [
 	"move_speed", "acceleration", "dodge_distance",
-	"attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks", "resistances",
+	"attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks", "resistances", "movement_model",
 ]
+const MOVEMENT_MODELS: Array[String] = ["direct", "accelerated"]
 
 var maximum_health: float = 0.0
 var damage: float = 0.0
@@ -33,6 +35,11 @@ var dodge_duration_ticks: int = 0
 var dodge_cooldown_ticks: int = 0
 var resistances: Dictionary = {}
 var provenance: Dictionary = {}
+## `direct` preserves the legacy one-command-to-one-speed mapping. `accelerated`
+## treats acceleration as units per second squared and keeps velocity in the
+## room-local player state. The mode is explicit so a content author cannot
+## accidentally change replay semantics by merely adding an unused number.
+var movement_model: String = "direct"
 
 
 static func from_data(value: Variant) -> Dictionary:
@@ -74,6 +81,9 @@ static func from_data(value: Variant) -> Dictionary:
 			for source: Variant in sources:
 				if not source is String or String(source).strip_edges().is_empty():
 					errors.append("invalid_provenance:%s" % field)
+	var movement_model_value: Variant = data.get("movement_model", "direct")
+	if not movement_model_value is String or String(movement_model_value) not in MOVEMENT_MODELS:
+		errors.append("invalid_movement_model")
 	if not errors.is_empty():
 		return {"ok": false, "error": ";".join(errors), "errors": errors, "value": {}}
 	var result: RefCounted = load("res://src/game/combat_stats_snapshot.gd").new()
@@ -105,6 +115,7 @@ static func from_resolved_build(build: Variant, provenance_prefix: String = "bui
 		"dodge_duration_ticks": combat_stats.get("dodge_duration_ticks", null),
 		"dodge_cooldown_ticks": combat_stats.get("dodge_cooldown_ticks", null),
 		"resistances": (combat_stats.get("resistances", {}) as Dictionary).duplicate(true) if combat_stats.get("resistances", {}) is Dictionary else combat_stats.get("resistances", null),
+		"movement_model": String(combat_stats.get("movement_model", "direct")),
 		"provenance": {},
 	}
 	for field: String in NUMERIC_FIELDS + INTEGER_FIELDS:
@@ -131,6 +142,7 @@ static func from_room_overlay(build: Variant, overlay: Variant, room_id: String)
 		"dodge_duration_ticks": RangerSkillRulesScript.DODGE_DURATION_TICKS,
 		"dodge_cooldown_ticks": RangerSkillRulesScript.DODGE_COOLDOWN_TICKS,
 		"resistances": {"physical": 0.0},
+		"movement_model": "direct",
 	}
 	for key: Variant in (overlay as Dictionary).keys():
 		if not key is String or String(key) not in ROOM_OVERLAY_FIELDS:
@@ -157,13 +169,14 @@ static func from_room_overlay(build: Variant, overlay: Variant, room_id: String)
 		"dodge_duration_ticks": values.dodge_duration_ticks,
 		"dodge_cooldown_ticks": values.dodge_cooldown_ticks,
 		"resistances": (values.resistances as Dictionary).duplicate(true) if values.resistances is Dictionary else values.resistances,
+		"movement_model": values.movement_model,
 		"provenance": provenance,
 	}
 	return from_data(stats_data)
 
 
 func snapshot() -> Dictionary:
-	return {
+	var result := {
 		"schema_version": SCHEMA_VERSION,
 		"maximum_health": maximum_health,
 		"damage": damage,
@@ -178,6 +191,9 @@ func snapshot() -> Dictionary:
 		"resistances": resistances.duplicate(true),
 		"provenance": provenance.duplicate(true),
 	}
+	if movement_model != "direct":
+		result["movement_model"] = movement_model
+	return result
 
 
 func _assign(data: Dictionary) -> void:
@@ -193,6 +209,7 @@ func _assign(data: Dictionary) -> void:
 	dodge_cooldown_ticks = int(data.dodge_cooldown_ticks)
 	resistances = (data.resistances as Dictionary).duplicate(true)
 	provenance = (data.provenance as Dictionary).duplicate(true)
+	movement_model = String(data.get("movement_model", "direct"))
 
 
 static func _finite_positive(value: Variant) -> bool:

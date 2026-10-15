@@ -121,7 +121,7 @@ func _run() -> void:
 	, 120)
 	_expect(second_dead and bool(arena.battle_victory), "real room: second enemy did not produce mounted victory")
 	var in_room_settlement: Dictionary = arena.room_loot_snapshot.get("settlement", {})
-	_expect(String(in_room_settlement.get("outcome", "")) == "victory" and (in_room_settlement.get("items", []) as Array).size() == 1, "real room: victory did not create the one in-room loot settlement")
+	_expect(in_room_settlement.is_empty(), "real room: victory settled loot before the player left the loot window")
 
 	runtime.completed.connect(func(result: Dictionary) -> void: _completed.append(result.duplicate(true)))
 	runtime.request_abandon()
@@ -129,6 +129,8 @@ func _run() -> void:
 	if _completed.size() == 1:
 		var result: Dictionary = _completed[0]
 		var settlement: Dictionary = result.get("room_loot_settlement", {})
+		in_room_settlement = arena.room_loot_snapshot.get("settlement", {})
+		_expect(String(in_room_settlement.get("outcome", "")) == "victory" and (in_room_settlement.get("items", []) as Array).size() == 1, "real room: room exit did not create the one in-room loot settlement")
 		_expect(String(result.get("outcome", "")) == "victory", "real room: mounted result did not report victory")
 		_expect((settlement.get("items", []) as Array).size() == 1, "real room: picked ItemInstance was not carried into the result")
 		_expect(String(settlement.get("outcome", "")) == "victory", "real room: result settlement outcome changed")

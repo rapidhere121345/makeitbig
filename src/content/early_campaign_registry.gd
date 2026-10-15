@@ -116,6 +116,14 @@ func layout_info(layout_id: String) -> Dictionary:
 	return {}
 
 
+func normal_enemy_role_map() -> Dictionary:
+	var result := {}
+	for value: Variant in _data.get("normal_enemies", []):
+		if value is Dictionary:
+			result[String((value as Dictionary).get("id", ""))] = String((value as Dictionary).get("role", ""))
+	return result
+
+
 func is_unlocked(node_id: String, completed_node_ids: Array, mode: String) -> bool:
 	if not _nodes.has(node_id) or mode not in MODES:
 		return false
@@ -409,8 +417,10 @@ func _validate_room_features(room: Dictionary, context: String, catalogs: Dictio
 			failures.append("%s: combat_stats must be an object" % context)
 		else:
 			var stats: Dictionary = stats_value
-			var allowed: Array[String] = ["move_speed", "acceleration", "dodge_distance", "attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks", "resistances"]
+			var allowed: Array[String] = ["move_speed", "acceleration", "dodge_distance", "attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks", "resistances", "movement_model"]
 			_validate_fields(stats, allowed, "%s combat_stats" % context, failures)
+			if stats.has("movement_model") and (not stats.movement_model is String or String(stats.movement_model) not in ["direct", "accelerated"]):
+				failures.append("%s combat_stats.movement_model must be direct or accelerated" % context)
 			for field: String in ["move_speed", "acceleration", "dodge_distance"]:
 				if not _is_finite_number(stats.get(field, null)) or float(stats.get(field)) <= 0.0:
 					failures.append("%s combat_stats.%s must be positive" % [context, field])

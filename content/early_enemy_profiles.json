@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "profiles": [
+    {
+      "schema_version": 1,
+      "profile_id": "melee_pursuer",
+      "role": "melee_chase",
+      "normal_health": 720.0,
+      "elite_health": 1600.0,
+      "move_speed": 72.0,
+      "breath_ticks": 4,
+      "actions": {
+        "contact": {"windup_ticks": 5, "active_ticks": 1, "recovery_ticks": 11, "damage": 5.0}
+      }
+    },
+    {
+      "schema_version": 1,
+      "profile_id": "charging_raider",
+      "role": "telegraphed_charge",
+      "normal_health": 420.0,
+      "elite_health": 1300.0,
+      "move_speed": 62.0,
+      "breath_ticks": 8,
+      "actions": {
+        "charge": {"windup_ticks": 18, "active_ticks": 10, "recovery_ticks": 22, "damage": 11.0}
+      }
+    },
+    {
+      "schema_version": 1,
+      "profile_id": "fan_ranged",
+      "role": "telegraphed_fan_ranged",
+      "normal_health": 240.0,
+      "elite_health": 1000.0,
+      "move_speed": 58.0,
+      "breath_ticks": 10,
+      "actions": {
+        "fan": {"windup_ticks": 21, "active_ticks": 1, "recovery_ticks": 28, "damage": 8.0}
+      }
+    }
+  ]
+}

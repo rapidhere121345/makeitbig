@@ -60,6 +60,10 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_capture_contract.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_playtest_log.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_early_campaign.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_enemy_combat_profile.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_status_effect_ledger.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_mainline_room_loot.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_room_loot_build_handoff.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_early_items.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_early_skills.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_player_readable_build.gd
@@ -67,6 +71,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_build_resolver.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_equipment_drop_generator.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_command_protocol.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_loot_pickup_protocol.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_command_router.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_manual_combat_input.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_manual_aim_resolver.gd

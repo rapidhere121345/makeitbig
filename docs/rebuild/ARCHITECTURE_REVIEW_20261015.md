@@ -107,6 +107,26 @@ The first slice only needs health, damage, move speed, dodge distance, and
 cooldowns. It must still use the same ActorRegistry/ActorMotor submission
 boundary.
 
+The first Flare-inspired refinement is now explicit in
+`CombatStatsSnapshot`: `movement_model` defaults to `direct`, while an authored
+room may opt into `accelerated`. The accelerated model keeps velocity in the
+room-local player state, approaches the resolved target velocity on the fixed
+30 Hz tick, and records that velocity in the authoritative snapshot. This
+keeps content behavior data-driven without making an unused `acceleration`
+number silently alter legacy rooms. The next boundary is to apply the same
+definition/resolved-instance split to enemy stats and action profiles.
+
+That enemy boundary is now present for the three early normal kinds. The JSON
+definition is validated by `EarlyEnemyProfileRegistry`, resolved into a fresh
+`EnemyCombatProfile`, and injected into `EncounterDirector`; the live
+`CombatEnemyState` keeps only room identity, health, and action progress. The
+first profile owns normal/elite health, locomotion speed, breath interval,
+action timing, and damage. Tactical range geometry remains in `EnemyTactics`,
+and Boss phase values remain in the Boss owner. The role map is cross-checked
+against `early_campaign.json`, so a content author cannot silently give a
+profile a different tactical role. Status effects and drop consumption remain
+separate follow-up slices.
+
 ### 5. CombatEnemyState combines too many lifecycles
 
 `src/runtime/world/combat_enemy_state.gd` carries base identity, health and
@@ -148,10 +168,12 @@ The remaining consequences apply to authored rooms that have not opted in:
 The first part of that boundary is now implemented by `CombatRoomLoot`:
 `EquipmentDropGenerator` stays pure, while slot normalization, pickup queueing,
 and the one settlement call live behind the room facade. Main passes room
-content and relays commands. The next step is to feed an authored campaign
-room through that facade; `ApplicationState` should continue consuming the
-ledger's detached settlement receipt instead of reconstructing room drops from
-`room_plan`.
+content and relays commands. An authored campaign room now runs through that
+facade, and `ApplicationState` consumes the ledger's detached settlement
+receipt. Picked items cross the room boundary through one typed port and the
+next room receives a freshly resolved build; the remaining boundary work is to
+move more room lifecycle ownership out of Main without creating another loot or
+inventory authority.
 
 ### 7. Result and snapshot code still reflect the composition root
 
@@ -196,9 +218,10 @@ sorting will not solve them.
 1. Add detached stat, wave, loot, and room-result contracts with standalone
    tests. This is complete for the current opt-in ledger slice.
 2. Move the existing slot normalization, pickup queue, and settlement relay
-   from Main into a room facade. This is complete for the opt-in slice; next
-   enable one authored campaign room and retain the old `ApplicationState` path
-   only for rooms without a ledger.
+   from Main into a room facade. The opt-in slice and one authored campaign room
+   are complete; picked equipment now crosses the room boundary through
+   `ApplicationState.commit_room_victory_and_resolve_next_build()` and the old
+   final-session path remains the only contract-level settlement.
 3. Add a typed `RoomEncounter` facade around EncounterDirector. Move wave state
    and enemy add/remove through it, then migrate CombatSystem's encounter
    callbacks to the facade.

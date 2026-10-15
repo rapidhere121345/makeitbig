@@ -35,7 +35,7 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 	ordered_enemies.sort_custom(func(left, right) -> bool: return int(left.entity_id) < int(right.entity_id))
 	for enemy in ordered_enemies:
 		var part_state := _enemy_parts_state(enemy)
-		enemy_state.append({
+		var enemy_entry := {
 			"action_instance_id": enemy.action_instance_id,
 			"action_id": enemy.action_id,
 			"action_state": enemy.action_state,
@@ -71,7 +71,12 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"target_shape": CombatStateCodecScript.target_shape_state(enemy.target_shape),
 			"x_millipixels": roundi(enemy.position.x * 1000.0),
 			"y_millipixels": roundi(enemy.position.y * 1000.0),
-		})
+		}
+		if enemy.has_method("status_effects_snapshot"):
+			var effects: Variant = enemy.status_effects_snapshot(int(_runtime_value(runtime, "sim_tick", 0)))
+			if effects is Dictionary and bool((effects as Dictionary).get("ok", false)) and not ((effects as Dictionary).get("effects", []) as Array).is_empty():
+				enemy_entry["status_effects"] = CombatStateCodecScript.hash_safe(effects)
+		enemy_state.append(enemy_entry)
 
 	var hazard_state: Array[Dictionary] = []
 	var hazard_value: Variant = _runtime_value(runtime, "hazard_states")
@@ -244,6 +249,11 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 	}
 	if player.has("combat_stats"):
 		state["combat_stats"] = CombatStateCodecScript.hash_safe(player.get("combat_stats", {}))
+		var combat_stats_value: Variant = player.get("combat_stats", {})
+		if combat_stats_value is Dictionary and String((combat_stats_value as Dictionary).get("movement_model", "direct")) == "accelerated":
+			var velocity: Vector2 = player.get("player_velocity", Vector2.ZERO)
+			state["player_velocity_x_milli"] = roundi(velocity.x * 1000.0)
+			state["player_velocity_y_milli"] = roundi(velocity.y * 1000.0)
 	var talent_capabilities: Variant = player.get("talent_capabilities", {})
 	if talent_capabilities is Dictionary and not (talent_capabilities as Dictionary).is_empty():
 		state["talent_runtime"] = {
