@@ -2,7 +2,7 @@
 
 更新时间：2026-10-15
 
-本轮碰撞与遮挡收口已提交并推送到 `master`：`d45851d`（`Align room landmarks with walkable geometry`）。发布页 build 为 `20261015-002901-d45851df6318`，正式静态发布根在 `build/releases/`。
+本轮碰撞与遮挡收口的源码提交为 `eb95c57`（`Align concept boundaries with authoritative geometry`），发布页已更新并准备推送。发布页 build 为 `20261015-011732-eb95c57737af`，正式静态发布根在 `build/releases/`。
 
 ## 当前验收
 
@@ -14,7 +14,7 @@
 ## 本轮实现
 
 - `ArenaPresenter` 将当前 frame 的 detached `walkable_geometry` 传给概念层。
-- `ArenaWorldView` 的 rectangle、corridor、ring 概念边界读取同一份权威 bounds、center、half-height 和 radii；概念层仍只负责绘制，不参与玩法碰撞。
+- `ArenaWorldView` 的 rectangle、corridor、ring 概念边界读取同一份权威 bounds、center、half-height 和 radii；概念层不再重复绘制由 gameplay pass 负责的边界线。
 - `test_world_occlusion.gd` 增加概念几何与 authoritative snapshot 的对应断言；ActorMotor/GeometryQuery 继续负责 footprint 碰撞，alpha mask 继续只负责视觉遮挡。
 
 ## 证据与限制
