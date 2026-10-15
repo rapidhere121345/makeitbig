@@ -185,7 +185,7 @@ func request_cast(tick: int, ability_id: String, target_entity_id: int = 0, dire
 		if bool(values.three_skill_bonus_ready):
 			reset_three_skill_sequence()
 		if String(receipt.status) == "started":
-			values.attack_cooldown_ticks = Skill.PIERCING_ARROW_COOLDOWN_TICKS
+			values.attack_cooldown_ticks = _state.attack_cooldown_ticks()
 			values.player_facing = aim
 	return receipt
 
@@ -314,7 +314,7 @@ func _start_mobility(tick: int, kind: String, input_direction: Vector2) -> Dicti
 	var direction := input_direction.normalized() if input_direction != Vector2.ZERO else (values.player_facing as Vector2).normalized()
 	if direction == Vector2.ZERO:
 		direction = Vector2.RIGHT
-	var duration := Skill.DODGE_DURATION_TICKS if kind == "dodge" else _state.scaled_ticks(Skill.DASH_DURATION_TICKS, "dash_duration_multiplier")
+	var duration := _state.dodge_duration_ticks() if kind == "dodge" else _state.scaled_ticks(Skill.DASH_DURATION_TICKS, "dash_duration_multiplier")
 	if kind == "dodge":
 		values.player_facing = direction
 	else:
@@ -323,7 +323,7 @@ func _start_mobility(tick: int, kind: String, input_direction: Vector2) -> Dicti
 	values[kind + "_remaining_ticks"] = duration
 	values[kind + "_cooldown_ticks"] = _state.dodge_cooldown() if kind == "dodge" else Skill.DASH_COOLDOWN_TICKS
 	values[kind + "_started_tick"] = tick
-	var distance := Skill.DODGE_SPEED * Motion.SIM_STEP_SECONDS * duration if kind == "dodge" else Skill.DASH_TOTAL_DISTANCE
+	var distance := _state.dodge_distance() if kind == "dodge" else Skill.DASH_TOTAL_DISTANCE
 	var event: Dictionary = _stream.emit(tick, "displacement_started", {"actor_id": _state._ranger_id, "kind": kind, "start_tick": tick, "end_tick": tick + duration, "from": _state.position(), "intended_to": _state.position() + direction * distance, "invulnerable": kind == "dodge"})
 	var receipt := _accepted()
 	receipt["events"] = [event]
@@ -343,7 +343,7 @@ func _process_action_events(events: Array) -> void:
 		var id := int(event.get("action_instance_id", 0))
 		match String(event.type):
 			"buffered_started":
-				_state._values.attack_cooldown_ticks = Skill.PIERCING_ARROW_COOLDOWN_TICKS
+				_state._values.attack_cooldown_ticks = _state.attack_cooldown_ticks()
 			"action_started":
 				var aim_data: Dictionary = event.aim_direction_milli
 				var aim := Vector2(float(aim_data.x), float(aim_data.y)) / 1000.0

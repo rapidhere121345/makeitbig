@@ -9,7 +9,10 @@ The first opt-in room-local loot slice is now implemented and covered by
 contact to spawn an enemy drop, queues pickup for the next committed tick, and
 returns one victory settlement. The authored campaign still has no general
 `loot_slots` rollout, and the player combat sheet remains the next production
-integration step described below.
+integration step described below. The first stats adapter is also in place:
+an explicit `combat_stats` section now drives move speed, dodge distance and
+duration, and attack/dodge cooldowns; legacy builds without the section keep
+the historical motion constants until authored values are introduced.
 
 ## Player promise
 

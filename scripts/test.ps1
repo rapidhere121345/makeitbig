@@ -43,6 +43,8 @@ if ($LASTEXITCODE -ne 0) { throw "Player motion system tests failed with exit co
 if ($LASTEXITCODE -ne 0) { throw "test_player_combat_state failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_player_combat_rules.gd
 if ($LASTEXITCODE -ne 0) { throw "test_player_combat_rules failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_stats_runtime.gd
+if ($LASTEXITCODE -ne 0) { throw "test_combat_stats_runtime failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_room_definition.gd
 if ($LASTEXITCODE -ne 0) { throw "Room definition tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_room_catalog.gd

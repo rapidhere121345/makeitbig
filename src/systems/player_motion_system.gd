@@ -27,13 +27,13 @@ func advance_player(state: PlayerState, world, tick: int, direction: Vector2, sp
 		facing = values.dash_direction
 		displacement = facing * (Skill.DASH_TOTAL_DISTANCE / float(state.scaled_ticks(Skill.DASH_DURATION_TICKS, "dash_duration_multiplier")))
 	elif int(values.dodge_remaining_ticks) > 0:
-		displacement = values.dodge_direction * Skill.DODGE_SPEED * SIM_STEP_SECONDS
+		displacement = values.dodge_direction * (state.dodge_distance() / float(maxi(1, state.dodge_duration_ticks())))
 	elif direction != Vector2.ZERO:
 		var phase := state._timeline.phase_at(tick)
 		var action_scale := 0.38 if phase == "windup" else (0.72 if phase == "recovery" else 1.0)
 		if phase == "idle":
 			facing = direction
-		displacement = direction * PLAYER_SPEED * speed_scale * action_scale * SIM_STEP_SECONDS
+		displacement = direction * state.move_speed() * speed_scale * action_scale * SIM_STEP_SECONDS
 	var result: Dictionary = state._registry.move_actor(state._ranger_id, displacement, tick)
 	if bool(result.get("ok", false)):
 		values.player_facing = facing

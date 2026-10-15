@@ -201,9 +201,10 @@ sorting will not solve them.
    callbacks to the facade.
 4. Replace PlayerCombatState's untyped stat keys with a `CombatStatsSnapshot`
    and retain the current action/timeline state until behavior tests use the
-   public snapshots. The current `CombatStatsSnapshot` is a validated domain
-   contract, but the production player still uses fixed movement and cooldown
-   constants.
+   public snapshots. The first opt-in slice now consumes move speed, dodge
+   distance/duration, and attack/dodge cooldowns from an explicit sheet; builds
+   without that field retain the historical constants. Authored build resolver
+   values and acceleration/velocity state remain the next boundary.
 5. Migrate CombatSimulation to grouped ports and delete its string callback
    adapter after the old fixtures are gone.
 6. Remove Main's writable projections and dynamic result reads. Rebuild the
