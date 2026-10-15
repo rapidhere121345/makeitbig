@@ -30,21 +30,24 @@ var aim_resolver := AimResolver.new()
 
 
 func world_frame(snapshot: Dictionary, viewport: Rect2, pending_reason: String) -> Dictionary:
+	var presentation_geometry: Dictionary = snapshot.get("presentation_geometry", snapshot["walkable_geometry"]).duplicate(true)
 	return {
 		"presentation_enabled": true, "in_arena": snapshot["in_arena"],
 		"viewport_rect": viewport, "arena_rect": snapshot["arena_rect"],
 		"focus_gameplay": snapshot["player_position"],
 		"layout_id": snapshot["layout_id"],
 		"walkable_geometry": snapshot["walkable_geometry"].duplicate(true),
+		"presentation_geometry": presentation_geometry,
 		"sim_tick": snapshot["sim_tick"], "pending_reason": pending_reason,
 	}
 
 
 func combat_frame(snapshot: Dictionary, input_view: Dictionary, visual: Dictionary, font: Font) -> Dictionary:
+	var presentation_geometry: Dictionary = snapshot.get("presentation_geometry", snapshot["walkable_geometry"]).duplicate(true)
 	return {
 		"presentation_enabled": true, "in_arena": snapshot["in_arena"],
 		"arena_rect": snapshot["arena_rect"], "layout_id": snapshot["layout_id"],
-		"walkable_geometry": snapshot["walkable_geometry"], "sim_tick": snapshot["sim_tick"],
+		"walkable_geometry": snapshot["walkable_geometry"], "presentation_geometry": presentation_geometry, "sim_tick": snapshot["sim_tick"],
 		"player_position": snapshot["player_position"], "player_facing": snapshot["player_facing"],
 		"enemies": snapshot["enemies"], "hazard_states": snapshot["hazard_states"],
 		"projectiles": snapshot["projectiles"], "traces": visual["traces"],

@@ -312,6 +312,7 @@ func _ensure_encounter_director() -> void:
 		"combat_outcome_port": combat_system,
 		"register_enemy": Callable(self, "_register_enemy_actor"),
 		"walkable_geometry": Callable(self, "_walkable_geometry"),
+		"collision_geometry": Callable(self, "_collision_geometry"),
 		"layout_spawn_offsets": Callable(self, "_layout_spawn_offsets"),
 		"clamp_to_arena": Callable(self, "_clamp_to_arena"),
 		"quantize_position": Callable(self, "_quantize_position"),
@@ -624,7 +625,7 @@ func _show_base() -> void:
 
 
 func start_room() -> void:
-	if scene_runtime != null and (not scene_runtime.is_ready() or _arena_rect().size.x <= 0.0 or _arena_rect().size.y <= 0.0 or _walkable_geometry(14.0).is_empty()):
+	if scene_runtime != null and (not scene_runtime.is_ready() or _arena_rect().size.x <= 0.0 or _arena_rect().size.y <= 0.0 or _collision_geometry(14.0).is_empty()):
 		last_save_message = "Deployment blocked: native_room_geometry_unavailable"
 		_refresh_lab()
 		return
@@ -1016,7 +1017,11 @@ func interrupt_player_action(reason: String) -> Dictionary:
 
 
 func _auto_commands() -> Array[Dictionary]:
-	var result: Dictionary = proxy_intent_system.decide(_public_proxy_snapshot(), command_sequence)
+	var observation := _public_proxy_snapshot()
+	var collision_geometry := _collision_geometry(14.0)
+	if not collision_geometry.is_empty():
+		observation["walkable_geometry"] = collision_geometry
+	var result: Dictionary = proxy_intent_system.decide(observation, command_sequence)
 	if not bool(result.get("ok", false)):
 		return []
 	command_sequence = int(result.get("next_sequence", command_sequence))
@@ -1646,6 +1651,34 @@ func _walkable_geometry(padding: float) -> Dictionary:
 	return (normalized.get("value", {}) as Dictionary).duplicate(true) if bool(normalized.get("ok", false)) else {}
 
 
+func _presentation_geometry() -> Dictionary:
+	var boundary: Dictionary = {}
+	if scene_runtime != null:
+		var native_boundary: Variant = scene_runtime.get("movement_boundary")
+		if native_boundary is Dictionary:
+			boundary = (native_boundary as Dictionary).duplicate(true)
+	else:
+		boundary = ArenaGeometryScript.movement_boundary(layout_id, _arena_rect())
+	if not boundary.is_empty():
+		var native_geometry := ArenaGeometryScript.from_native_boundary(boundary, _arena_rect(), 0.0)
+		if not native_geometry.is_empty():
+			return native_geometry
+	return ArenaGeometryScript.from_layout(layout_id, _arena_rect(), 0.0)
+
+
+func _collision_geometry(radius: float) -> Dictionary:
+	if not is_finite(radius) or radius < 0.0:
+		return {}
+	var boundary: Dictionary = {}
+	if scene_runtime != null:
+		var native_boundary: Variant = scene_runtime.get("movement_boundary")
+		if native_boundary is Dictionary:
+			boundary = (native_boundary as Dictionary).duplicate(true)
+	else:
+		boundary = ArenaGeometryScript.movement_boundary(layout_id, _arena_rect())
+	return ArenaGeometryScript.from_native_boundary_for_footprint(boundary, _arena_rect(), radius)
+
+
 func _room_socket(binding: String) -> Variant:
 	if scene_runtime == null:
 		return null
@@ -1673,47 +1706,13 @@ func _project_actor_spawn_position(value: Vector2, radius: float) -> Dictionary:
 	## room is live, all further displacement is submitted through the registry.
 	if not value.is_finite() or not is_finite(radius) or radius <= 0.0:
 		return {"ok": false, "error": "invalid_spawn_footprint"}
-	if _walkable_geometry(radius).is_empty():
+	var geometry := _collision_geometry(radius)
+	if geometry.is_empty():
 		return {"ok": false, "error": "spawn_geometry_unavailable"}
-	var boundary: Dictionary = {}
-	if scene_runtime != null:
-		var runtime_boundary: Variant = scene_runtime.get("movement_boundary")
-		if runtime_boundary is Dictionary:
-			boundary = (runtime_boundary as Dictionary).duplicate(true)
-	else:
-		boundary = ArenaGeometryScript.movement_boundary(layout_id, _arena_rect())
-	var normalized: Dictionary = ArenaGeometryScript.normalize_native_boundary(boundary)
-	if not bool(normalized.get("ok", false)):
-		return {"ok": false, "error": "spawn_boundary_unavailable"}
-	boundary = normalized["value"]
-	match String(boundary.get("type", "")):
-		"rect":
-			var rect: Rect2 = boundary["rect"]
-			return {"ok": true, "position": Vector2(
-				clampf(value.x, rect.position.x + radius, rect.end.x - radius),
-				clampf(value.y, rect.position.y + radius, rect.end.y - radius)
-			)}
-		"corridor":
-			var corridor: Rect2 = boundary["rect"]
-			var half_height := float(boundary["half_height"]) - radius
-			if half_height <= 0.0:
-				return {"ok": false, "error": "spawn_footprint_exceeds_corridor"}
-			var center_y := corridor.get_center().y
-			return {"ok": true, "position": Vector2(
-				clampf(value.x, corridor.position.x + radius, corridor.end.x - radius),
-				clampf(value.y, center_y - half_height, center_y + half_height)
-			)}
-		"ring":
-			var center: Vector2 = boundary["center"]
-			var offset := value - center
-			var distance := offset.length()
-			var direction := offset.normalized() if distance > 0.000001 else Vector2.RIGHT
-			var inner := float(boundary["inner_radius"]) + radius
-			var outer := float(boundary["outer_radius"]) - radius
-			if inner >= outer:
-				return {"ok": false, "error": "spawn_footprint_exceeds_ring"}
-			return {"ok": true, "position": center + direction * clampf(distance, inner, outer)}
-	return {"ok": false, "error": "unsupported_spawn_boundary"}
+	var projected: Dictionary = ArenaGeometryScript.project(value, geometry)
+	if not bool(projected.get("ok", false)):
+		return {"ok": false, "error": "spawn_projection_failed:%s" % String(projected.get("error", "invalid_geometry"))}
+	return {"ok": true, "position": Vector2(projected["position"])}
 
 
 func _handle_command_line() -> void:
@@ -1841,6 +1840,7 @@ func gameplay_snapshot() -> Dictionary:
 		"proxy_prediction": proxy_prediction,
 		"selected_mode": selected_mode,
 		"arena_rect": _arena_rect(), "walkable_geometry": _walkable_geometry(14.0),
+		"presentation_geometry": _presentation_geometry(),
 		"projectiles": projectiles,
 		"equipped_parameters": content_registry.preset_equipped_parameters if content_registry != null else {},
 		"model": _current_model() if content_registry != null else {},

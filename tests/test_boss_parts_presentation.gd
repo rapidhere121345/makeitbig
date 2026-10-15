@@ -118,8 +118,11 @@ func _test_equal_baseline_occlusion() -> void:
 	## the draw list, prepass, cutaway lookup and Boss group helper.
 	var equal_boss: CombatEnemyState = Snapshot.enemy_record(frame.enemies[0])
 	equal_boss.position = boss.position
-	equal_boss.left_hand_position = equal_boss.position + Vector2(-34.0, 25.0)
-	equal_boss.right_hand_position = equal_boss.position + Vector2(34.0, 25.0)
+	# Pull both posed hands just into the hero cell while keeping all four
+	# authored sort baselines equal. This makes the production prepass exercise
+	# the worst case where every Boss part contributes to one cutaway budget.
+	equal_boss.left_hand_position = equal_boss.position + Vector2(30.0, 25.0)
+	equal_boss.right_hand_position = equal_boss.position + Vector2(-30.0, 25.0)
 	var equal_frame := frame.duplicate(true)
 	equal_frame.player_position = equal_boss.position
 	equal_frame.enemies = [equal_boss]
@@ -145,6 +148,10 @@ func _test_equal_baseline_occlusion() -> void:
 			_expect(bool(cut.in_front), "equal-y Boss part %s disagrees with draw order" % String(entry.id))
 	presenter._prepare_occlusion(entries, equal_frame, view)
 	var hero_world := view.gameplay_to_world(equal_boss.position)
+	var production_report: Dictionary = view.occlusion_report(hero_world)
+	for part_id in ["enemy/7/body", "enemy/7/core", "enemy/7/left_hand", "enemy/7/right_hand"]:
+		_expect((production_report.front_ids as Array).has(part_id), "production actor prepass dropped Boss part %s from the shared cutaway budget" % part_id)
+	_expect(float(production_report.local_opacity_total) <= 0.160001, "production Boss parts exceeded the shared local opacity budget")
 	var probe_cells: Array[Dictionary] = []
 	for entry: Dictionary in entries:
 		if entry.kind == "boss_part":
