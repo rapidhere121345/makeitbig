@@ -29,6 +29,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_player_motion_system.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_player_combat_state.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_player_combat_rules.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_stats_runtime.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_room_definition.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_room_catalog.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_rebuild_samples.gd

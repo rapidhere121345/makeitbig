@@ -6,6 +6,7 @@ extends RefCounted
 const Timeline := preload("res://src/systems/player_action_timeline.gd")
 const Skill := preload("res://src/systems/ranger_skill_rules.gd")
 const Big := preload("res://src/core/big_value.gd")
+const CombatStats := preload("res://src/game/combat_stats_snapshot.gd")
 
 var _registry
 var _ranger_id := ""
@@ -15,6 +16,8 @@ var _build: Dictionary = {}
 var _values: Dictionary = {}
 var _timeline := Timeline.new()
 var _last_tick := -1
+var _combat_stats
+var _combat_stats_enabled := false
 
 
 func reset_for_room(locked_build: Dictionary, actor_registry, ranger_id: String, start_tick: int) -> Dictionary:
@@ -29,6 +32,14 @@ func reset_for_room(locked_build: Dictionary, actor_registry, ranger_id: String,
 	_room_instance_id = actor_registry.room_instance_id
 	_world_revision = actor_registry.world_revision
 	_build = locked_build.duplicate(true)
+	_combat_stats = null
+	_combat_stats_enabled = false
+	if locked_build.has("combat_stats"):
+		var stats_result: Dictionary = CombatStats.from_resolved_build(locked_build)
+		if not bool(stats_result.get("ok", false)):
+			return {"ok": false, "error": "invalid_combat_stats:%s" % String(stats_result.get("error", "invalid"))}
+		_combat_stats = stats_result.value
+		_combat_stats_enabled = true
 	_last_tick = start_tick
 	_timeline.reset()
 	_values = {
@@ -76,6 +87,8 @@ func snapshot(tick: int) -> Dictionary:
 	slice["action_phase"] = _timeline.phase_at(tick)
 	slice["locked_build"] = _build.duplicate(true)
 	slice["equipped_skills"] = (_build.get("skills", ["piercing_arrow"]) as Array).duplicate()
+	if _combat_stats_enabled:
+		slice["combat_stats"] = (_combat_stats as RefCounted).snapshot()
 	return slice
 
 
@@ -93,9 +106,36 @@ func targeting_distance() -> float:
 	return float((_build.get("final_parameters", {}) as Dictionary).get("d", 225.0))
 
 
+func combat_stats_enabled() -> bool:
+	return _combat_stats_enabled
+
+
+func combat_stats_snapshot() -> Dictionary:
+	return (_combat_stats as RefCounted).snapshot() if _combat_stats_enabled else {}
+
+
+func move_speed() -> float:
+	return float(_combat_stats.move_speed) if _combat_stats_enabled else 245.0
+
+
+func dodge_distance() -> float:
+	if _combat_stats_enabled:
+		return float(_combat_stats.dodge_distance)
+	return Skill.DODGE_SPEED * float(Skill.DODGE_DURATION_TICKS) / float(Skill.TICKS_PER_SECOND)
+
+
+func dodge_duration_ticks() -> int:
+	return int(_combat_stats.dodge_duration_ticks) if _combat_stats_enabled else Skill.DODGE_DURATION_TICKS
+
+
+func attack_cooldown_ticks() -> int:
+	return int(_combat_stats.attack_cooldown_ticks) if _combat_stats_enabled else Skill.PIERCING_ARROW_COOLDOWN_TICKS
+
+
 func scaled_ticks(base: int, capability: String) -> int:
 	return maxi(1, int(round(float(base) * (1.0 + clampf(float(_values.talent_capabilities.get(capability, 0.0)), -1.0, 10.0)))))
 
 
 func dodge_cooldown() -> int:
-	return maxi(1, int(round(float(Skill.DODGE_COOLDOWN_TICKS) * (1.0 - clampf(float(_values.talent_capabilities.get("dodge_cooldown_reduction", 0.0)), 0.0, 0.95)))))
+	var base := int(_combat_stats.dodge_cooldown_ticks) if _combat_stats_enabled else Skill.DODGE_COOLDOWN_TICKS
+	return maxi(1, int(round(float(base) * (1.0 - clampf(float(_values.talent_capabilities.get("dodge_cooldown_reduction", 0.0)), 0.0, 0.95)))))
