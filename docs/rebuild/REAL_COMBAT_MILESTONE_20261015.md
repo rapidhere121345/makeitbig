@@ -4,6 +4,13 @@ This document defines the smallest next gameplay slice after the geometry and
 presentation rebuild. It is a design and acceptance contract; it does not
 claim that the slice is implemented yet.
 
+The first opt-in room-local loot slice is now implemented and covered by
+`tests/test_real_combat_room.gd`: a mounted two-enemy room uses a real arrow
+contact to spawn an enemy drop, queues pickup for the next committed tick, and
+returns one victory settlement. The authored campaign still has no general
+`loot_slots` rollout, and the player combat sheet remains the next production
+integration step described below.
+
 ## Player promise
 
 The player enters one authored room, reads a telegraphed encounter, moves with
