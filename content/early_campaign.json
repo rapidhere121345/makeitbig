@@ -193,7 +193,27 @@
         "hazard_ids": ["exposed_ground_zone", "moving_fireline"],
         "enemy_ids": ["melee_pursuer", "charging_raider", "fan_ranged"],
         "elite_rule_ids": ["periodic_barrier", "summon_reinforcements"],
-        "drop_tags": ["main_hand", "off_hand", "gloves", "ring", "equipment_general"]
+        "drop_tags": ["main_hand", "off_hand", "gloves", "ring", "equipment_general"],
+        "room_overrides": [{
+          "index": 0,
+          "loot_slots": [{
+            "slot_id": "targeted_equipment_drop",
+            "source": "enemy_death",
+            "tags": ["equipment_general"],
+            "pickup_radius": 24.0,
+            "guaranteed": true,
+            "guarantee_family": "maximum_health"
+          }],
+          "combat_stats": {
+            "move_speed": 220.0,
+            "acceleration": 360.0,
+            "dodge_distance": 96.0,
+            "attack_cooldown_ticks": 11,
+            "dodge_duration_ticks": 5,
+            "dodge_cooldown_ticks": 30,
+            "resistances": {"physical": 0.10}
+          }
+        }]
       },
       "first_reward_tags": ["equipment_compare_unlock"],
       "drop_tags": ["main_hand", "off_hand", "gloves", "ring", "equipment_general"],

@@ -134,6 +134,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_runtime.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_real_combat_domains.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_real_combat_room.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_authored_combat_room.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_repeatable_encounter_matrix.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_rules.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_smoke_input_driver.gd

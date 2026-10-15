@@ -253,6 +253,8 @@ if ($LASTEXITCODE -ne 0) { throw "Combat room runtime tests failed with exit cod
 if ($LASTEXITCODE -ne 0) { throw "Real combat domain tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_real_combat_room.gd
 if ($LASTEXITCODE -ne 0) { throw "Real mounted combat room tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_authored_combat_room.gd
+if ($LASTEXITCODE -ne 0) { throw "Authored combat room tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_repeatable_encounter_matrix.gd
 if ($LASTEXITCODE -ne 0) { throw "Repeatable encounter matrix failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_combat_room_rules.gd

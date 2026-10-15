@@ -6,6 +6,7 @@ extends RefCounted
 ## profile data during a fixed tick.
 
 const SCHEMA_VERSION: int = 1
+const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
 const NUMERIC_FIELDS: Array[String] = [
 	"maximum_health", "damage", "projectile_speed", "targeting_distance",
 	"move_speed", "acceleration", "dodge_distance",
@@ -15,6 +16,10 @@ const INTEGER_FIELDS: Array[String] = [
 ]
 const REQUIRED_FIELDS: Array[String] = NUMERIC_FIELDS + INTEGER_FIELDS + ["resistances", "provenance"]
 const ALL_FIELDS: Array[String] = ["schema_version"] + REQUIRED_FIELDS
+const ROOM_OVERLAY_FIELDS: Array[String] = [
+	"move_speed", "acceleration", "dodge_distance",
+	"attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks", "resistances",
+]
 
 var maximum_health: float = 0.0
 var damage: float = 0.0
@@ -104,6 +109,56 @@ static func from_resolved_build(build: Variant, provenance_prefix: String = "bui
 	}
 	for field: String in NUMERIC_FIELDS + INTEGER_FIELDS:
 		(stats_data.provenance as Dictionary)[field] = ["%s:%s" % [provenance_prefix, field]]
+	return from_data(stats_data)
+
+
+static func from_room_overlay(build: Variant, overlay: Variant, room_id: String) -> Dictionary:
+	## Room authored tuning may adjust movement/action values while base damage,
+	## health, weapon speed and range remain owned by the resolved build.
+	if not build is Dictionary or not overlay is Dictionary:
+		return _failure("invalid_room_combat_stats")
+	if room_id.strip_edges().is_empty():
+		return _failure("missing_room_id")
+	var parameters_value: Variant = (build as Dictionary).get("final_parameters", null)
+	if not parameters_value is Dictionary:
+		return _failure("missing_final_parameters")
+	var parameters: Dictionary = parameters_value
+	var values: Dictionary = {
+		"move_speed": 245.0,
+		"acceleration": 245.0,
+		"dodge_distance": RangerSkillRulesScript.DODGE_SPEED * float(RangerSkillRulesScript.DODGE_DURATION_TICKS) / float(RangerSkillRulesScript.TICKS_PER_SECOND),
+		"attack_cooldown_ticks": RangerSkillRulesScript.PIERCING_ARROW_COOLDOWN_TICKS,
+		"dodge_duration_ticks": RangerSkillRulesScript.DODGE_DURATION_TICKS,
+		"dodge_cooldown_ticks": RangerSkillRulesScript.DODGE_COOLDOWN_TICKS,
+		"resistances": {"physical": 0.0},
+	}
+	for key: Variant in (overlay as Dictionary).keys():
+		if not key is String or String(key) not in ROOM_OVERLAY_FIELDS:
+			return _failure("unknown_room_combat_stats_field:%s" % String(key))
+		values[String(key)] = (overlay as Dictionary)[key]
+	for field: String in ["attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks"]:
+		if values[field] is float and is_equal_approx(float(values[field]), roundf(float(values[field]))):
+			values[field] = int(roundf(float(values[field])))
+	var provenance: Dictionary = {}
+	for field: String in NUMERIC_FIELDS + INTEGER_FIELDS:
+		provenance[field] = ["build:%s" % field]
+	for field: String in ["move_speed", "acceleration", "dodge_distance", "attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks"]:
+		provenance[field] = ["room:%s:%s" % [room_id, field]]
+	var stats_data := {
+		"schema_version": SCHEMA_VERSION,
+		"maximum_health": parameters.get("max_health", null),
+		"damage": parameters.get("damage", null),
+		"projectile_speed": parameters.get("v", null),
+		"targeting_distance": parameters.get("d", null),
+		"move_speed": values.move_speed,
+		"acceleration": values.acceleration,
+		"dodge_distance": values.dodge_distance,
+		"attack_cooldown_ticks": values.attack_cooldown_ticks,
+		"dodge_duration_ticks": values.dodge_duration_ticks,
+		"dodge_cooldown_ticks": values.dodge_cooldown_ticks,
+		"resistances": (values.resistances as Dictionary).duplicate(true) if values.resistances is Dictionary else values.resistances,
+		"provenance": provenance,
+	}
 	return from_data(stats_data)
 
 
