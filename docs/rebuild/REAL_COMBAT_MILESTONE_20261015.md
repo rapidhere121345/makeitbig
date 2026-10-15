@@ -13,6 +13,8 @@ integration step described below. The first stats adapter is also in place:
 an explicit `combat_stats` section now drives move speed, dodge distance and
 duration, and attack/dodge cooldowns; legacy builds without the section keep
 the historical motion constants until authored values are introduced.
+The loot lifecycle itself now lives in `CombatRoomLoot`; Main only assembles it
+and relays room observations and pickup commands.
 
 ## Player promise
 
