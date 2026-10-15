@@ -2,12 +2,10 @@
 
 更新时间：2026-10-15
 
-本轮完成碰撞与遮挡边界收口，保留旧 replay/public `walkable_geometry` 契约。物理层现在通过按角色半径收缩的 native geometry 驱动 Main/Encounter 的敌人战术、Auto 移动、出生投影和部署检查；presentation 层单独使用 native `presentation_geometry` 绘制环带/走廊概念边线，避免规划 inset 与真实中心空间混用。ActorMotor 的角点、窄口、切线、长位移和 ring 孔 sweep 继续由共享 registry/motor 处理。
+本轮在既有 Stage 0 typed stats/wave/loot ledger 基础上完成可选 room-local loot 接线：真实 Main 负责房间内 ledger、死亡/清场 spawn、下一固定 tick pickup、victory/defeat/abandoned 一次 settlement，Runtime/Result/Contract 汇总 detached ItemInstance，ApplicationState 消费已拾取实例，snapshot 和 arena presentation 只在启用 ledger 的房间增加 `room_loot`。重复 pickup 请求、房间级清场来源 ID、败北/弃战结算已收口。
 
-当前提交后的下一阶段设计已落盘：[架构审查](docs/rebuild/ARCHITECTURE_REVIEW_20261015.md) 和 [真实战斗第一切片](docs/rebuild/REAL_COMBAT_MILESTONE_20261015.md)。Stage 0 的 typed stats、wave definition、room-local loot ledger 已有独立纯域测试；下一步接入一间真实 authored room，暂不继续向 Main 添加房间规则或奖励回调。
+架构设计仍见 [架构审查](docs/rebuild/ARCHITECTURE_REVIEW_20261015.md) 和 [真实战斗第一切片](docs/rebuild/REAL_COMBAT_MILESTONE_20261015.md)。旧房间没有 `loot_slots` 时保留旧路径；当前 content 还没有把掉落槽普遍写入正式战役房间。
 
-遮挡层继续使用统一 `baseline/y → rank → stable id` 排序、alpha visible bounds、局部 cutaway 和共享透明度预算；诊断报告现在覆盖前景废墟局部 cutaway，并与实际 Boss 多部件 draw/prepass 共用几何。
+验证：Main check-only、loot domain、RoomRules/Runtime/Result、Main wiring、snapshot builder、contract controller、presentation/occlusion 定向测试及 `git diff --check` 通过；完整 `source scripts/container_env.sh && ./scripts/test.sh` exit 0，旧 30/60/144 Hz golden `5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900`、600 房矩阵和 headless smoke 仍通过。
 
-当前验证：定向 geometry/motor/runtime/encounter/enemy/ranger/Main/presentation/occlusion 测试通过；canonical snapshot、RoomRules/Runtime、talent、input feedback、Boss 部件和 120 个真实 ring ticks 通过；`git diff --check` 通过。标准 `./scripts/container_build.sh` exit 0，全套测试、600 房矩阵、30/60/144 Hz 与 presentation-off 回放、历史 golden `5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900`、导出和 Linux 空目录 smoke 均通过。
-
-本轮没有修改素材、content 或历史 golden。尚未因本轮改动重新运行图形窗口；GPU、声音和宿主机实机仍不作为验收阻塞条件。发布页仍指向上一版已验证构建；如需发布当前提交，先执行项目规定的 release verify/stage 流程。
+阻塞：真实 mounted loot 回归（敌人死亡→掉落→下一 tick 拾取→结果一次结算→重复请求拒绝）尚未验收。两次独立子代理因基础设施断流失败且没有留下测试文件；因此当前 Stage 1 不标记完成、不启动发布页更新。GPU 与声音继续不作为验收条件；未启动图形窗口、fullbuild、导出或新 golden。

@@ -51,6 +51,9 @@ static func build(current_config: Dictionary, room_snapshot: Dictionary, outcome
 		"report": String(room_snapshot.get("battle_report", "")),
 		"rewards": rewards,
 	}
+	var room_loot_value: Variant = room_snapshot.get("room_loot_settlement", {})
+	if room_loot_value is Dictionary and not (room_loot_value as Dictionary).is_empty():
+		result["room_loot_settlement"] = (room_loot_value as Dictionary).duplicate(true)
 	if outcome == "defeat":
 		result["failure_reason"] = room_snapshot.last_damage_source_id
 		result["death_tick"] = room_snapshot.last_damage_tick

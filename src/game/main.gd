@@ -34,6 +34,8 @@ const PlayerCombatStateScript := preload("res://src/runtime/world/player_combat_
 const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.gd")
 const CombatCommandSourceScript = preload("res://src/systems/combat_command_source.gd")
 const CombatSimulationScript = preload("res://src/systems/combat_simulation.gd")
+const CombatLootLedgerScript := preload("res://src/game/combat_loot_ledger.gd")
+const EquipmentDropGeneratorScript := preload("res://src/systems/equipment_drop_generator.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -202,6 +204,29 @@ var layout_id: String = "rectangle_arena"
 var objective_id: String = "clear"
 var room_entry_start_tick: int = 0
 var room_drop_tags: Array = []
+var framework_seed: int = FATE_SEED
+var _room_loot_ledger
+var _room_loot_slots: Array[Dictionary] = []
+var _room_loot_settlement: Dictionary = {}
+var _room_loot_pickup_requests: Array[Dictionary] = []
+var _room_loot_pickup_receipts: Array[Dictionary] = []
+var _room_loot_request_sequence: int = 0
+var _room_loot_drop_index: int = 0
+var room_loot_enabled: bool:
+	get:
+		return _room_loot_ledger != null
+var room_loot_snapshot: Dictionary:
+	get:
+		if _room_loot_ledger == null:
+			return {"enabled": false, "entities": [], "events": [], "settlement": {}}
+		var snapshot: Dictionary = _room_loot_ledger.snapshot()
+		snapshot["enabled"] = true
+		snapshot["pending_pickup_requests"] = _room_loot_pickup_requests.duplicate(true)
+		snapshot["pickup_receipts"] = _room_loot_pickup_receipts.duplicate(true)
+		return snapshot
+var room_loot_settlement: Dictionary:
+	get:
+		return _room_loot_settlement.duplicate(true)
 var hazard_states: Array[Dictionary]:
 	get:
 		return encounter_director.hazard_states
@@ -613,6 +638,7 @@ func _choose_forge_candidate(choice_number: int) -> void:
 func _show_base() -> void:
 	in_arena = false
 	room_rules.reset()
+	_reset_room_loot()
 	presentation.leave_arena()
 	release_manual_controls()
 	if proxy_runtime != null:
@@ -675,6 +701,7 @@ func start_room() -> void:
 	proxy_prediction = proxy_runtime.predict(requirements) if selected_mode == "Auto" else "manual"
 	in_arena = true
 	room_rules.reset()
+	_reset_room_loot()
 	lab_view.hide_base()
 	input_adapter.reset_intent()
 	command_sequence = 0
@@ -763,7 +790,166 @@ func _spawn_wave() -> bool:
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "room_rules_unavailable"))
 		in_arena = false
 		return false
+	var loot_configured := _configure_room_loot(spawn_room)
+	if not bool(loot_configured.get("ok", false)):
+		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
+		in_arena = false
+		return false
 	return true
+
+
+func _reset_room_loot() -> void:
+	_room_loot_ledger = null
+	_room_loot_slots.clear()
+	_room_loot_settlement.clear()
+	_room_loot_pickup_requests.clear()
+	_room_loot_pickup_receipts.clear()
+	_room_loot_request_sequence = 0
+	_room_loot_drop_index = 0
+
+
+func _configure_room_loot(room: Dictionary) -> Dictionary:
+	_reset_room_loot()
+	if not room.has("loot_slots"):
+		return {"ok": true, "error": ""}
+	var slots_value: Variant = room.get("loot_slots")
+	if not slots_value is Array:
+		return {"ok": false, "error": "invalid_loot_slots"}
+	var seen: Dictionary = {}
+	var normalized: Array[Dictionary] = []
+	for raw_value: Variant in (slots_value as Array):
+		if not raw_value is Dictionary:
+			return {"ok": false, "error": "invalid_loot_slot"}
+		var raw: Dictionary = raw_value
+		var slot_id := String(raw.get("slot_id", "")).strip_edges()
+		var source := String(raw.get("source", "")).strip_edges()
+		if slot_id.is_empty() or seen.has(slot_id) or source not in ["enemy_death", "wave_clear"]:
+			return {"ok": false, "error": "invalid_loot_slot_identity"}
+		var tags: Array[String] = []
+		if raw.has("tags"):
+			if not raw.tags is Array:
+				return {"ok": false, "error": "invalid_loot_slot_tags:%s" % slot_id}
+			for tag_value: Variant in raw.tags:
+				if not tag_value is String or String(tag_value).strip_edges().is_empty():
+					return {"ok": false, "error": "invalid_loot_slot_tags:%s" % slot_id}
+				tags.append(String(tag_value).strip_edges())
+		elif raw.get("tag", null) is String and not String(raw.tag).strip_edges().is_empty():
+			tags.append(String(raw.tag).strip_edges())
+		else:
+			return {"ok": false, "error": "missing_loot_slot_tag:%s" % slot_id}
+		var pickup_radius_value: Variant = raw.get("pickup_radius", 18.0)
+		if (typeof(pickup_radius_value) not in [TYPE_INT, TYPE_FLOAT]
+				or not is_finite(float(pickup_radius_value)) or float(pickup_radius_value) <= 0.0):
+			return {"ok": false, "error": "invalid_loot_pickup_radius:%s" % slot_id}
+		if raw.has("guaranteed") and not raw.guaranteed is bool:
+			return {"ok": false, "error": "invalid_loot_guaranteed:%s" % slot_id}
+		var guarantee := String(raw.get("guarantee_family", "")).strip_edges()
+		normalized.append({
+			"slot_id": slot_id, "source": source, "tags": tags,
+			"pickup_radius": float(pickup_radius_value), "guaranteed": bool(raw.get("guaranteed", false)),
+			"guarantee_family": guarantee,
+		})
+		seen[slot_id] = true
+	if normalized.is_empty():
+		return {"ok": true, "error": ""}
+	if content_registry == null or content_registry.early_item_registry == null:
+		return {"ok": false, "error": "loot_item_registry_unavailable"}
+	var generator := EquipmentDropGeneratorScript.new(content_registry.early_item_registry)
+	var ledger := CombatLootLedgerScript.new()
+	var configured: Dictionary = ledger.configure(room_id, framework_seed, generator)
+	if not bool(configured.get("ok", false)):
+		return configured
+	_room_loot_slots = normalized
+	_room_loot_ledger = ledger
+	return {"ok": true, "error": ""}
+
+
+func _spawn_room_loot_for_source(source: String, source_entity_id: int, position: Vector2) -> Dictionary:
+	if _room_loot_ledger == null or not position.is_finite():
+		return {"ok": false, "error": "room_loot_disabled"}
+	# A wave-clear slot is attached to the room, not to an actor. Keep the
+	# ledger's positive entity-id invariant by using a stable synthetic source
+	# identity for that room-level event.
+	var resolved_source_entity_id := source_entity_id
+	if resolved_source_entity_id <= 0:
+		resolved_source_entity_id = 1000000000 + _room_loot_drop_index
+	var spawned_slots: Dictionary = _room_loot_ledger.snapshot().get("spawned_slots", {})
+	for slot: Dictionary in _room_loot_slots:
+		if String(slot.source) != source or spawned_slots.has(String(slot.slot_id)):
+			continue
+		var result: Dictionary = _room_loot_ledger.spawn(
+			sim_tick, String(slot.slot_id), resolved_source_entity_id, position,
+			_room_loot_drop_index, slot.tags, String(slot.guarantee_family), float(slot.pickup_radius)
+		)
+		if bool(result.get("ok", false)):
+			_room_loot_drop_index += 1
+		return result
+	return {"ok": false, "error": "no_matching_loot_slot"}
+
+
+func request_loot_pickup(loot_entity_id: String) -> Dictionary:
+	if _room_loot_ledger == null:
+		return {"ok": false, "error": "room_loot_disabled"}
+	if not in_arena or battle_over:
+		return {"ok": false, "error": "loot_pickup_room_inactive"}
+	var normalized_id := loot_entity_id.strip_edges()
+	if normalized_id.is_empty():
+		return {"ok": false, "error": "invalid_loot_entity_id"}
+	var found := false
+	for entity: Dictionary in room_loot_snapshot.get("entities", []):
+		if String(entity.get("loot_entity_id", "")) == normalized_id and String(entity.get("state", "")) == "available":
+			found = true
+			break
+	if not found:
+		return {"ok": false, "error": "loot_not_available"}
+	for pending: Dictionary in _room_loot_pickup_requests:
+		if String(pending.get("loot_entity_id", "")) == normalized_id:
+			return {"ok": false, "error": "loot_pickup_already_queued"}
+	_room_loot_request_sequence += 1
+	var request := {
+		"request_id": _room_loot_request_sequence, "loot_entity_id": normalized_id,
+		"requested_tick": sim_tick, "execute_tick": sim_tick + 1,
+	}
+	_room_loot_pickup_requests.append(request)
+	return {"ok": true, "error": "", "accepted": true, "queued": true, "request": request.duplicate(true)}
+
+
+func _process_room_loot_pickups_tick() -> void:
+	if _room_loot_ledger == null or _room_loot_pickup_requests.is_empty():
+		return
+	var player := player_combat_state.snapshot(sim_tick)
+	var remaining: Array[Dictionary] = []
+	for request: Dictionary in _room_loot_pickup_requests:
+		if int(request.execute_tick) > sim_tick:
+			remaining.append(request)
+			continue
+		var result: Dictionary
+		if float(player.get("player_health", 0.0)) <= 0.0 or battle_over:
+			result = {"ok": false, "error": "loot_pickup_player_inactive"}
+		else:
+			result = _room_loot_ledger.pickup(sim_tick, 1, String(request.loot_entity_id), player.player_position)
+		result["request_id"] = int(request.request_id)
+		_room_loot_pickup_receipts.append(result.duplicate(true))
+	_room_loot_pickup_requests = remaining
+
+
+func _settle_room_loot(outcome: String) -> void:
+	if _room_loot_ledger == null or not _room_loot_settlement.is_empty():
+		return
+	var settled: Dictionary = _room_loot_ledger.settle(outcome)
+	if bool(settled.get("ok", false)):
+		_room_loot_settlement = settled.duplicate(true)
+
+
+func settle_room_loot(outcome: String) -> Dictionary:
+	if outcome not in ["victory", "defeat", "abandoned"]:
+		return {"ok": false, "error": "invalid_loot_outcome"}
+	if _room_loot_ledger == null:
+		return {"ok": true, "error": "", "enabled": false, "settlement": {}}
+	_settle_room_loot(outcome)
+	if _room_loot_settlement.is_empty():
+		return {"ok": false, "error": "loot_settlement_failed"}
+	return {"ok": true, "error": "", "enabled": true, "settlement": _room_loot_settlement.duplicate(true)}
 
 
 func _load_test_room_fixture() -> Dictionary:
@@ -1215,6 +1401,8 @@ func _piercing_arrow_swept_contact(start: Vector2, finish: Vector2, target: Comb
 
 func _remove_combat_target(target: CombatEnemyState) -> void:
 	enemies.erase(target)
+	if target != null and target.health <= 0.0:
+		_spawn_room_loot_for_source("enemy_death", target.entity_id, target.position)
 
 
 func _cancel_buffered_target(entity_id: int) -> int:
@@ -1454,6 +1642,9 @@ func _layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
 
 func _check_battle_end() -> void:
 	var embedded_state_before := _embedded_authority_state_snapshot()
+	# Pickup is a committed post-movement phase. Requests are queued by the
+	# public input boundary and can only mutate the room ledger here.
+	_process_room_loot_pickups_tick()
 	var observed: Dictionary = room_rules.observe(player_combat_state.snapshot(sim_tick), {
 		"has_boss": boss != null, "boss_health": boss.health if boss != null else 0.0,
 		"enemy_count": enemies.size(), "elite_entity_id": elite_entity_id,
@@ -1464,6 +1655,9 @@ func _check_battle_end() -> void:
 	if not bool(observed.changed):
 		return
 	battle_report = String(observed.state.report)
+	if battle_victory:
+		_spawn_room_loot_for_source("wave_clear", 0, player_position)
+	_settle_room_loot("victory" if battle_victory else "defeat")
 	if battle_victory:
 		if automation_smoke:
 			var smoke_valid := false
@@ -1827,6 +2021,7 @@ func gameplay_snapshot() -> Dictionary:
 		"objective_id": objective_id,
 		"embedded_session": embedded_session,
 		"framework_room": framework_room,
+		"room_loot": room_loot_snapshot,
 		"room_entry_start_tick": room_entry_start_tick,
 		"locked_build": locked_build,
 		"locked_targeting_distance": locked_targeting_distance,

@@ -211,6 +211,8 @@ func _build_summary(outcome: String) -> Dictionary:
 	var report := ""
 	var law_tallies_delta := {"inscribe": 0, "rewrite": 0, "refine": 0}
 	var failure_reason := ""
+	var room_loot_settlements: Array[Dictionary] = []
+	var room_loot_items: Array[Dictionary] = []
 	for room_result: Dictionary in _room_results:
 		ticks += int(room_result.get("ticks", 0))
 		elapsed_seconds += float(room_result.get("elapsed_seconds", 0.0))
@@ -227,6 +229,14 @@ func _build_summary(outcome: String) -> Dictionary:
 					law_tallies_delta[operation] = int(law_tallies_delta[operation]) + int((room_tallies_value as Dictionary).get(operation, 0))
 		if failure_reason.is_empty() and String(room_result.get("outcome", "")) == outcome:
 			failure_reason = String(room_result.get("failure_reason", ""))
+		var loot_value: Variant = room_result.get("room_loot_settlement", {})
+		if loot_value is Dictionary and not (loot_value as Dictionary).is_empty():
+			room_loot_settlements.append((loot_value as Dictionary).duplicate(true))
+			var items_value: Variant = (loot_value as Dictionary).get("items", [])
+			if items_value is Array:
+				for item_value: Variant in items_value:
+					if item_value is Dictionary:
+						room_loot_items.append((item_value as Dictionary).duplicate(true))
 
 	var summary := {
 		"outcome": outcome,
@@ -247,6 +257,9 @@ func _build_summary(outcome: String) -> Dictionary:
 		},
 		"room_results": _room_results.duplicate(true),
 	}
+	if not room_loot_settlements.is_empty():
+		summary["room_loot_settlements"] = room_loot_settlements.duplicate(true)
+		summary["room_loot_items"] = room_loot_items.duplicate(true)
 	if outcome == "defeat" and not failure_reason.is_empty():
 		summary["failure_reason"] = failure_reason
 	return summary
