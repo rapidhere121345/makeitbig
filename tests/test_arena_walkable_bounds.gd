@@ -42,6 +42,7 @@ func _run() -> void:
 	await process_frame
 
 	_test_ring_geometry(arena)
+	_test_geometry_layers(arena)
 	_test_ring_player_boundaries(arena)
 	_test_ring_enemy_boundary(arena)
 	_test_ring_boss_target(arena)
@@ -133,6 +134,18 @@ func _test_ring_geometry(arena: Node) -> void:
 	_expect(_near_vector(outer_projection, center + Vector2.RIGHT * float(geometry.outer_radius)), "ring: the outer boundary did not project onto the annulus")
 
 
+func _test_geometry_layers(arena: Node) -> void:
+	var snapshot: Dictionary = arena.gameplay_snapshot()
+	var presentation: Dictionary = snapshot.get("presentation_geometry", {})
+	var collision: Dictionary = arena._collision_geometry(14.0)
+	_expect(String(presentation.get("kind", "")) == "ring", "ring: presentation geometry lost the native layout kind")
+	_expect(is_equal_approx(float(presentation.get("inner_radius", 0.0)), 97.6)
+		and is_equal_approx(float(presentation.get("outer_radius", 0.0)), 209.84), "ring: presentation geometry still used the planning inset")
+	_expect(is_equal_approx(float(collision.get("inner_radius", 0.0)), 111.6)
+		and is_equal_approx(float(collision.get("outer_radius", 0.0)), 195.84), "ring: collision geometry lost the player footprint clearance")
+	_expect(not is_equal_approx(float(presentation.get("outer_radius", 0.0)), float(arena._walkable_geometry(14.0).get("outer_radius", 0.0))), "ring: presentation and planning geometry collapsed into one contract")
+
+
 func _test_ring_player_boundaries(arena: Node) -> void:
 	var boundary := _ring_boundary(arena)
 	var center: Vector2 = boundary["center"]
@@ -202,7 +215,7 @@ func _test_ring_boss_target(arena: Node) -> void:
 		return
 	var outside: Vector2 = arena._arena_rect().get_center() + Vector2(999.0, -999.0)
 	arena.teleport_actor("ranger", outside)
-	var expected_outside: Dictionary = ArenaGeometryScript.project(outside, arena._walkable_geometry(28.0))
+	var expected_outside: Dictionary = ArenaGeometryScript.project(outside, arena._collision_geometry(28.0))
 	arena._start_boss_action(boss, "slam")
 	var outside_shape: Dictionary = boss.target_shape
 	_expect(String(outside_shape.get("type", "")) == "rect", "ring: boss slam target shape changed")
@@ -211,7 +224,7 @@ func _test_ring_boss_target(arena: Node) -> void:
 	boss.action_state = "none"
 	var center: Vector2 = arena._arena_rect().get_center()
 	arena.teleport_actor("ranger", center)
-	var expected_center: Dictionary = ArenaGeometryScript.project(center, arena._walkable_geometry(28.0))
+	var expected_center: Dictionary = ArenaGeometryScript.project(center, arena._collision_geometry(28.0))
 	arena._start_boss_action(boss, "slam")
 	_expect(_near_vector(Rect2(boss.target_shape.get("rect", Rect2())).get_center(), Vector2(expected_center["position"])), "ring: boss slam target entered the inner hole")
 

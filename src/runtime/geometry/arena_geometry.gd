@@ -107,6 +107,54 @@ static func from_native_boundary(boundary: Dictionary, arena_rect: Rect2, paddin
 	return result["value"] if bool(result.get("ok", false)) else {}
 
 
+## Converts a native boundary into the actual center-space available to one
+## circular actor.  This is intentionally separate from from_native_boundary():
+## the latter preserves the v03 planning inset used by replay/public snapshots,
+## while this contract mirrors ActorMotor's footprint clearance exactly.
+static func from_native_boundary_for_footprint(boundary: Dictionary, arena_rect: Rect2, radius: float) -> Dictionary:
+	if not _valid_rect(arena_rect) or not _valid_number(radius) or radius < 0.0:
+		return {}
+	var normalized := normalize_native_boundary(boundary)
+	if not bool(normalized.get("ok", false)):
+		return {}
+	var native: Dictionary = normalized["value"]
+	var native_kind := String(native["type"])
+	var bounds := arena_rect.grow(-radius)
+	if not _valid_rect(bounds):
+		return {}
+	var half_height := 0.0
+	var inner := 0.0
+	var outer := 0.0
+	if native_kind in ["rect", "corridor"]:
+		if not (native["rect"] as Rect2).is_equal_approx(arena_rect):
+			return {}
+		if native_kind == "corridor":
+			half_height = float(native["half_height"]) - radius
+			if half_height <= 0.0:
+				return {}
+	else:
+		if not (native["center"] as Vector2).is_equal_approx(arena_rect.get_center()):
+			return {}
+		var basis := minf(arena_rect.size.x, arena_rect.size.y)
+		if float(native["outer_radius"]) > basis * 0.5:
+			return {}
+		inner = float(native["inner_radius"]) + radius
+		outer = float(native["outer_radius"]) - radius
+		if outer <= inner:
+			return {}
+	var candidate := {
+		"schema_version": SCHEMA_VERSION,
+		"kind": "rectangle" if native_kind == "rect" else native_kind,
+		"bounds": bounds,
+		"center": bounds.get_center(),
+		"corridor_half_height": half_height,
+		"inner_radius": inner,
+		"outer_radius": outer,
+	}
+	var result := normalize(candidate)
+	return result["value"] if bool(result.get("ok", false)) else {}
+
+
 static func normalize(value: Variant) -> Dictionary:
 	if not value is Dictionary:
 		return _normalize_failure("invalid_geometry")

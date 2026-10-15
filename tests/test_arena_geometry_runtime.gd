@@ -10,6 +10,7 @@ func _initialize() -> void:
 	_test_corridor_projection()
 	_test_ring_projection()
 	_test_native_boundary_planning()
+	_test_native_boundary_footprint_clearance()
 	_test_line_segment_walkability()
 	_test_invalid_schema_fails_closed()
 	_test_candidate_order()
@@ -114,6 +115,24 @@ func _test_native_boundary_planning() -> void:
 	_expect(Geometry.from_native_boundary({}, arena, 14.0).is_empty(), "native planner: missing boundary created a rectangle")
 	_expect(Geometry.from_native_boundary(custom_ring, arena, 244.0).is_empty(), "native planner: impossible inset was accepted")
 	_expect(Geometry.from_native_boundary(custom_ring, Rect2(arena.position + Vector2.ONE, arena.size), 0.0).is_empty(), "native planner: displaced source identity was ignored")
+
+
+func _test_native_boundary_footprint_clearance() -> void:
+	var arena := Rect2(42.0, 190.0, 1196.0, 488.0)
+	var ring := Geometry.movement_boundary("ring", arena)
+	var ring_center := arena.get_center()
+	var ring_geometry := Geometry.from_native_boundary_for_footprint(ring, arena, 14.0)
+	_expect(Rect2(ring_geometry.get("bounds", Rect2())) == arena.grow(-14.0), "native footprint: ring bounds did not inset by the actor radius")
+	_expect(is_equal_approx(float(ring_geometry.get("inner_radius", 0.0)), 111.6) and is_equal_approx(float(ring_geometry.get("outer_radius", 0.0)), 195.84), "native footprint: ring clearance did not offset both radii")
+	var projected_inner: Dictionary = Geometry.project(ring_center + Vector2.RIGHT * 100.0, ring_geometry)
+	_expect(bool(projected_inner.get("ok", false)) and is_equal_approx(Vector2(projected_inner["position"]).distance_to(ring_center), 111.6), "native footprint: inner projection still entered the actor's forbidden band")
+	var corridor := Geometry.movement_boundary("corridor", arena)
+	var corridor_geometry := Geometry.from_native_boundary_for_footprint(corridor, arena, 14.0)
+	_expect(is_equal_approx(float(corridor_geometry.get("corridor_half_height", 0.0)), 58.0), "native footprint: corridor half-height did not subtract the actor radius")
+	var rectangle := Geometry.movement_boundary("rectangle_arena", arena)
+	var rectangle_geometry := Geometry.from_native_boundary_for_footprint(rectangle, arena, 14.0)
+	_expect(Rect2(rectangle_geometry.get("bounds", Rect2())) == arena.grow(-14.0), "native footprint: rectangle bounds changed clearance semantics")
+	_expect(Geometry.from_native_boundary_for_footprint(ring, arena, 230.0).is_empty(), "native footprint: impossible ring radius was accepted")
 
 
 func _test_invalid_schema_fails_closed() -> void:

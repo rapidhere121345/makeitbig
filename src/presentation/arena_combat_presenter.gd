@@ -41,6 +41,10 @@ const FRAME_KEYS := {
 	"font": "Font or null",
 }
 
+const OPTIONAL_FRAME_KEYS := {
+	"presentation_geometry": "Dictionary",
+}
+
 const COLOR_INK: Color = PaletteScript.INK
 const COLOR_NEUTRAL: Color = PaletteScript.SLATE_3
 const COLOR_BONE: Color = PaletteScript.BONE
@@ -68,6 +72,7 @@ func _init() -> void:
 func contract_report() -> Dictionary:
 	return {
 		"frame_keys": FRAME_KEYS.duplicate(true),
+		"optional_frame_keys": OPTIONAL_FRAME_KEYS.duplicate(true),
 		"authority": "parent-owned read-only frame",
 		"canvas_owner": "caller owns transform order and draw target",
 		"draw_layers": ["ground_telegraphs", "world_target_markers", "combat_overlays"],
@@ -180,6 +185,17 @@ func validate_frame(frame: Dictionary) -> String:
 		var padding := bounds.position.x - arena_rect.position.x
 		if padding < 0.0 or not bounds.grow(padding).is_equal_approx(arena_rect):
 			return "frame key walkable_geometry arena mismatch"
+		if frame.has("presentation_geometry"):
+			if not frame["presentation_geometry"] is Dictionary:
+				return "frame key presentation_geometry must be Dictionary"
+			var presentation := ArenaGeometryScript.normalize(frame["presentation_geometry"])
+			if not bool(presentation.get("ok", false)):
+				return "frame key presentation_geometry invalid:%s" % String(presentation.get("error", "unknown"))
+			var presentation_value: Dictionary = presentation["value"]
+			if String(presentation_value.get("kind", "")) != expected_kind:
+				return "frame key presentation_geometry layout mismatch"
+			if not (presentation_value["bounds"] as Rect2).is_equal_approx(arena_rect):
+				return "frame key presentation_geometry arena mismatch"
 	return ""
 
 
@@ -253,7 +269,7 @@ func _record_report(frame: Dictionary, pass_name: String) -> void:
 
 func _draw_walkable_layout_boundaries(canvas: CanvasItem, frame: Dictionary) -> void:
 	var arena: Rect2 = frame["arena_rect"]
-	var geometry: Dictionary = frame["walkable_geometry"]
+	var geometry: Dictionary = frame.get("presentation_geometry", frame["walkable_geometry"])
 	if geometry.is_empty():
 		return
 	var bounds: Rect2 = geometry["bounds"]

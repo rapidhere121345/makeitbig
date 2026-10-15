@@ -1011,7 +1011,8 @@ func hero_cover_report(hero_world_point: Vector2) -> Dictionary:
 		if not art_box.intersects(hero_cell):
 			continue
 		in_front.append(report_id)
-		var is_faded := entry_id == "tower" or structure_fade(entry_id, entry["feet_world"], hero_world_point) < 1.0
+		var cut := _cutaway_for_cell(entry_id, entry["feet_world"], hero_world_point)
+		var is_faded := entry_id == "tower" or (cut["window"] as Rect2).has_area() or structure_fade(entry_id, entry["feet_world"], hero_world_point) < 1.0
 		if is_faded:
 			faded.append(report_id)
 		elif art_box.encloses(hero_cell):

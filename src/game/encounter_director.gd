@@ -89,6 +89,7 @@ var move_enemy_callback: Callable
 var player_rule_port: RefCounted
 var register_enemy_callback: Callable
 var walkable_geometry_callback: Callable
+var collision_geometry_callback: Callable
 var layout_spawn_offsets_callback: Callable
 var clamp_to_arena_callback: Callable
 var quantize_position_callback: Callable
@@ -158,6 +159,13 @@ func configure(callbacks: Dictionary) -> Dictionary:
 	combat_outcome_port = outcome_port
 	register_enemy_callback = callbacks.get("register_enemy", Callable())
 	walkable_geometry_callback = callbacks.get("walkable_geometry", Callable())
+	if callbacks.has("collision_geometry"):
+		var collision_geometry_value: Variant = callbacks.get("collision_geometry")
+		if not collision_geometry_value is Callable or not (collision_geometry_value as Callable).is_valid():
+			return {"ok": false, "error": "invalid_callback:collision_geometry"}
+		collision_geometry_callback = collision_geometry_value as Callable
+	else:
+		collision_geometry_callback = Callable()
 	layout_spawn_offsets_callback = callbacks.get("layout_spawn_offsets", Callable())
 	clamp_to_arena_callback = callbacks.get("clamp_to_arena", Callable())
 	quantize_position_callback = callbacks.get("quantize_position", Callable())
@@ -272,6 +280,13 @@ func _walkable_geometry(padding: float) -> Dictionary:
 	return result if result is Dictionary else {}
 
 
+func _collision_geometry(padding: float) -> Dictionary:
+	if collision_geometry_callback.is_valid():
+		var result: Variant = collision_geometry_callback.call(padding)
+		return result if result is Dictionary else {}
+	return _walkable_geometry(padding)
+
+
 func _quantize_position(value: Vector2) -> Vector2:
 	if quantize_position_callback.is_valid():
 		return Vector2(quantize_position_callback.call(value))
@@ -279,6 +294,12 @@ func _quantize_position(value: Vector2) -> Vector2:
 
 
 func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
+	if collision_geometry_callback.is_valid():
+		var geometry := _collision_geometry(padding)
+		var projected := ArenaGeometryScript.project(value, geometry)
+		if bool(projected.get("ok", false)):
+			return Vector2(projected["position"])
+		return value
 	if clamp_to_arena_callback.is_valid():
 		return Vector2(clamp_to_arena_callback.call(value, padding))
 	return value.clamp(arena_rect.position + Vector2.ONE * padding, arena_rect.end - Vector2.ONE * padding)
@@ -388,7 +409,7 @@ func update_tick() -> void:
 
 
 func enemy_tactics_snapshot() -> Dictionary:
-	var geometry := _walkable_geometry(16.0)
+	var geometry := _collision_geometry(16.0)
 	var actors: Array[Dictionary] = []
 	for enemy: CombatEnemyState in enemies:
 		var planning_state := enemy.action_state

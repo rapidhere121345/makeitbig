@@ -17,6 +17,7 @@ const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd
 const ArenaActorPresenterScript = preload("res://src/presentation/arena_actor_presenter.gd")
 const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd")
 const FrameBuilderScript = preload("res://src/presentation/combat_presentation_frame_builder.gd")
+const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 const EnemyScript = preload("res://src/runtime/world/combat_enemy_state.gd")
 
 ## Visual-overlap budget: at most this much total local opacity may sit on top of
@@ -135,6 +136,7 @@ func _test_world_frame_projection() -> void:
 		"player_position": Vector2(640.0, 434.0),
 		"layout_id": "ring",
 		"walkable_geometry": geometry,
+		"presentation_geometry": ArenaGeometryScript.from_layout("ring", ARENA_RECT, 0.0),
 		"sim_tick": 17,
 	}
 	var frame: Dictionary = FrameBuilderScript.new().world_frame(snapshot, ARENA_VIEWPORT, "")
@@ -144,6 +146,9 @@ func _test_world_frame_projection() -> void:
 	_expect(projected == geometry, "world frame changed the authoritative ring geometry")
 	projected["outer_radius"] = 1.0
 	_expect(is_equal_approx(float(geometry["outer_radius"]), 209.84), "world frame geometry mutation reached the snapshot")
+	var presentation_projected: Dictionary = frame.get("presentation_geometry", {})
+	_expect(String(presentation_projected.get("kind", "")) == "ring", "world frame lost its independent presentation geometry")
+	_expect(is_equal_approx(float(presentation_projected.get("outer_radius", 0.0)), minf(ARENA_RECT.size.x, ARENA_RECT.size.y) * 0.43), "world frame presentation geometry kept the planning inset")
 
 
 ## The local opacity budget is the whole point of the pass: whatever a frame stacks
@@ -531,6 +536,12 @@ func _test_shared_diagnostic_geometry(view) -> void:
 	_expect((cover["in_front"] as Array).has("tower.upper"), "diagnostic cover report disagreed with the live tower occluder")
 	_expect((cover["faded"] as Array).has("tower.upper"), "diagnostic cover report lost the tower fade decision")
 	_expect((live["front_ids"] as Array).has("tower"), "live tower report lost its shared static entry")
+	var placement: Dictionary = view.structure_placements()[0]
+	var ruin_id := String(placement["id"])
+	var ruin_feet_gameplay := Vector2(float((placement["feet"] as Array)[0]), float((placement["feet"] as Array)[1]))
+	view.begin_frame(ARENA_VIEWPORT, ruin_feet_gameplay - Vector2(0.0, 12.0), ARENA_RECT)
+	var ruin_cover: Dictionary = view.hero_cover_report(view.gameplay_to_world(ruin_feet_gameplay - Vector2(0.0, 12.0)))
+	_expect((ruin_cover["faded"] as Array).has(ruin_id), "diagnostic cover report treated a foreground ruin cutaway as opaque")
 
 	var boss_feet := Vector2(500.0, 400.0)
 	var hero := Vector2(500.0, 430.0)
