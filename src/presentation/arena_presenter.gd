@@ -205,7 +205,7 @@ func _draw() -> void:
 	var world_transform: Transform2D = _world_view.call("world_transform")
 	draw_set_transform_matrix(world_transform)
 	_world_view.call("draw_ground", self)
-	_world_view.call("draw_room_concept", self, String(frame["layout_id"]), int(frame["sim_tick"]))
+	_world_view.call("draw_room_concept", self, String(frame["layout_id"]), int(frame["sim_tick"]), frame.get("walkable_geometry", {}))
 	_world_view.call("draw_decals", self)
 	_world_view.call("draw_structure_shadows", self)
 	## Actors and telegraphs remain outside this first boundary. Their future pass
