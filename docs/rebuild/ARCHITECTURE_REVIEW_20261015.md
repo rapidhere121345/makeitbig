@@ -145,11 +145,13 @@ The remaining consequences apply to authored rooms that have not opted in:
 * the existing deterministic RNG order is not a suitable substitute for
   room-local settlement state.
 
-**Target boundary:** keep `EquipmentDropGenerator` pure, but move slot
-normalization, pickup queueing, and the one settlement call behind a room-owned
-facade. Main should only pass room content and relay commands. `ApplicationState`
-should consume the ledger's detached settlement receipt instead of
-reconstructing room drops from `room_plan`.
+The first part of that boundary is now implemented by `CombatRoomLoot`:
+`EquipmentDropGenerator` stays pure, while slot normalization, pickup queueing,
+and the one settlement call live behind the room facade. Main passes room
+content and relays commands. The next step is to feed an authored campaign
+room through that facade; `ApplicationState` should continue consuming the
+ledger's detached settlement receipt instead of reconstructing room drops from
+`room_plan`.
 
 ### 7. Result and snapshot code still reflect the composition root
 
@@ -194,8 +196,9 @@ sorting will not solve them.
 1. Add detached stat, wave, loot, and room-result contracts with standalone
    tests. This is complete for the current opt-in ledger slice.
 2. Move the existing slot normalization, pickup queue, and settlement relay
-   from Main into a room facade; then enable one authored campaign room and
-   retain the old `ApplicationState` path only for rooms without a ledger.
+   from Main into a room facade. This is complete for the opt-in slice; next
+   enable one authored campaign room and retain the old `ApplicationState` path
+   only for rooms without a ledger.
 3. Add a typed `RoomEncounter` facade around EncounterDirector. Move wave state
    and enemy add/remove through it, then migrate CombatSystem's encounter
    callbacks to the facade.
