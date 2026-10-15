@@ -175,6 +175,7 @@ func _configure_room_instance(instance: Node) -> void:
 	instance.set("test_session", true)
 	instance.set("presentation_enabled", bool(_current_config.get("presentation_enabled", true)))
 	instance.set("framework_room", (_current_config.get("room", {}) as Dictionary).duplicate(true))
+	instance.set("framework_seed", int(_current_config.get("seed", 0)))
 	instance.set("automation_smoke", bool(_current_config.get("automation_smoke", false)))
 	var framework_context: Dictionary = _current_config.get("framework_context", {})
 	var active_build: Variant = framework_context.get("active_build", {})
@@ -248,6 +249,11 @@ func _finalize(signal_name: StringName, outcome: String) -> void:
 	_finalized = true
 	set_process(false)
 	_disconnect_return_requested()
+	if is_instance_valid(_room_instance) and _room_instance.has_method("settle_room_loot"):
+		var loot_settlement: Variant = _room_instance.call("settle_room_loot", outcome)
+		if not loot_settlement is Dictionary or not bool((loot_settlement as Dictionary).get("ok", false)):
+			push_error("room_loot_settlement_failed:%s" % String((loot_settlement as Dictionary).get("error", "invalid_receipt")) if loot_settlement is Dictionary else "invalid_receipt")
+			return
 	if outcome == "abandoned":
 		release_manual_controls()
 		_room_instance.set_process(false)
@@ -270,6 +276,7 @@ func build_result(outcome: String) -> Dictionary:
 	var player: Dictionary = state.snapshot(int(_room_instance.get("sim_tick")))
 	var room_snapshot := {
 		"room_reward_snapshot": _room_instance.get("room_reward_snapshot"),
+		"room_loot_settlement": _room_instance.get("room_loot_settlement"),
 		"sim_tick": _room_instance.get("sim_tick"),
 		"elapsed": _room_instance.get("elapsed"),
 		"shots": _room_instance.get("shots"),

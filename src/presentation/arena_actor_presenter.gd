@@ -134,6 +134,9 @@ func draw_shadows(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted)
 			world_view.draw_shadow(canvas, world_view.gameplay_to_world(enemy.position), 92.0, 28.0, 0.34)
 		else:
 			world_view.draw_shadow(canvas, world_view.gameplay_to_world(enemy.position), 38.0, 14.0, 0.24)
+	for loot: Dictionary in frame.get("loot_entities", []):
+		if String(loot.get("state", "")) == "available":
+			world_view.draw_shadow(canvas, world_view.gameplay_to_world(loot.get("position", Vector2.ZERO)), 18.0, 7.0, 0.22)
 	_record_report(frame, "actor_shadows")
 
 
@@ -167,6 +170,13 @@ func draw_list(frame: Dictionary, world_view: RefCounted) -> Array[Dictionary]:
 		var feet: Vector2 = world_view.gameplay_to_world(corpse.get("position", Vector2.ZERO) as Vector2)
 		var stable_id := "corpse/%d" % int(corpse.get("entity_id", 0))
 		drawables.append({"id": stable_id, "stable_id": stable_id, "baseline_y": feet.y, "y": feet.y, "rank": 1, "kind": "corpse", "world": feet, "corpse": corpse})
+	for loot: Dictionary in frame.get("loot_entities", []):
+		if String(loot.get("state", "")) != "available":
+			continue
+		var feet: Vector2 = world_view.gameplay_to_world(loot.get("position", Vector2.ZERO))
+		var loot_id := String(loot.get("loot_entity_id", ""))
+		var stable_id := "loot/%s" % loot_id
+		drawables.append({"id": stable_id, "stable_id": stable_id, "baseline_y": feet.y, "y": feet.y, "rank": 1, "kind": "loot", "world": feet, "loot": loot})
 	var hero_world: Vector2 = world_view.gameplay_to_world(frame["player_position"])
 	drawables.append({"id": "ranger/body", "stable_id": "ranger/body", "entity_id": "ranger", "part_id": "body", "baseline_y": hero_world.y, "y": hero_world.y, "rank": 2, "kind": "player", "world": hero_world})
 	drawables.sort_custom(_drawable_precedes)
@@ -229,6 +239,8 @@ func draw_entry(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, d
 			_draw_enemy(canvas, frame, world_view, drawable.enemy, int(drawable.rank), String(drawable.id))
 		"corpse":
 			_draw_enemy_corpse(canvas, frame, world_view, drawable.corpse, int(drawable.rank), String(drawable.id))
+		"loot":
+			world_view.draw_loot(canvas, drawable.world, drawable.loot)
 		"player":
 			_draw_player(canvas, frame, world_view)
 

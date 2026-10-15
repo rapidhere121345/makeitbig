@@ -50,6 +50,7 @@ func combat_frame(snapshot: Dictionary, input_view: Dictionary, visual: Dictiona
 		"walkable_geometry": snapshot["walkable_geometry"], "presentation_geometry": presentation_geometry, "sim_tick": snapshot["sim_tick"],
 		"player_position": snapshot["player_position"], "player_facing": snapshot["player_facing"],
 		"enemies": snapshot["enemies"], "hazard_states": snapshot["hazard_states"],
+		"loot_entities": (snapshot.get("room_loot", {}).get("entities", []) as Array).duplicate(true),
 		"projectiles": snapshot["projectiles"], "traces": visual["traces"],
 		"combat_feedback_marks": visual["combat_feedback_marks"],
 		"player_damage_overlay": visual["player_damage_overlay"],
@@ -78,6 +79,7 @@ func actor_frame(snapshot: Dictionary, visual: Dictionary) -> Dictionary:
 		"ranger_visual_time": visual["ranger_visual_time"], "ranger_frame": visual["ranger_frame"].duplicate(true),
 		"enemy_frames": visual["enemy_frames"].duplicate(true), "enemies": enemies,
 		"enemy_corpses": visual["enemy_corpses"].duplicate(true), "boss_health_ratio": ratio,
+		"loot_entities": (snapshot.get("room_loot", {}).get("entities", []) as Array).duplicate(true),
 	}
 
 
@@ -184,6 +186,7 @@ func hud_frame(snapshot: Dictionary, input_view: Dictionary, action_edge_occlude
 		"proxy_prediction": snapshot["proxy_prediction"],
 		"last_proxy_failure": snapshot.get("proxy_failure", {}),
 		"action_edge_occluded": action_edge_occluded,
+		"loot_entities": (snapshot.get("room_loot", {}).get("entities", []) as Array).duplicate(true),
 	}
 
 

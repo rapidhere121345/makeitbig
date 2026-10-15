@@ -251,6 +251,9 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"retained_arrow_damage": _big_value_state(player.get("retained_arrow_damage")),
 			"retained_arrow_ordinary_damage": String.num(float(player.get("retained_arrow_ordinary_damage", 0.0)), 12),
 		}
+	var room_loot_value: Variant = _runtime_value(runtime, "room_loot_snapshot", {})
+	if room_loot_value is Dictionary and bool((room_loot_value as Dictionary).get("enabled", false)):
+		state["room_loot"] = CombatStateCodecScript.hash_safe(room_loot_value)
 	return state
 
 

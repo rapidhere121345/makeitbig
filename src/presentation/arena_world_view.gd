@@ -568,6 +568,26 @@ func draw_shadow(canvas: CanvasItem, feet_world: Vector2, width_world: float, de
 	canvas.draw_colored_polygon(polygon, Color(PaletteScript.CONTACT_SHADOW, alpha))
 
 
+## Room-local equipment is rendered as a small readable pickup marker. The item
+## preview remains detached data; this pass never inspects or mutates inventory.
+func draw_loot(canvas: CanvasItem, feet_world: Vector2, entity: Dictionary) -> void:
+	if canvas == null or not feet_world.is_finite() or String(entity.get("state", "")) != "available":
+		return
+	var pulse := 1.0 + 0.12 * sin(float(entity.get("spawned_tick", 0)) * 0.25)
+	var center := feet_world + Vector2(0.0, -10.0)
+	var half := 6.0 * pulse
+	var diamond := PackedVector2Array([
+		center + Vector2(0.0, -half), center + Vector2(half, 0.0),
+		center + Vector2(0.0, half), center + Vector2(-half, 0.0),
+	])
+	canvas.draw_colored_polygon(diamond, Color(PaletteScript.COLD, 0.86))
+	canvas.draw_polyline(PackedVector2Array([
+		center + Vector2(0.0, -half), center + Vector2(half, 0.0),
+		center + Vector2(0.0, half), center + Vector2(-half, 0.0),
+		center + Vector2(0.0, -half),
+	]), PaletteScript.BONE, 1.0, false)
+
+
 func draw_structure_shadows(canvas: CanvasItem) -> void:
 	for placement in _structures:
 		var metadata := sprite(String(placement.get("id", "")))

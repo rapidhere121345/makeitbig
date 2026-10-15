@@ -1916,6 +1916,17 @@ func _settle_room_equipment_drops(result: Dictionary) -> void:
 	var rewards_value: Variant = result.get("rewards", {})
 	var rewards: Dictionary = rewards_value if rewards_value is Dictionary else {}
 	var added: Array = []
+	var ledger_room_indices: Dictionary = {}
+	var ledger_items := _collect_room_loot_items(result, ledger_room_indices)
+	for item_value: Variant in ledger_items:
+		if item_value is Dictionary:
+			var item: Dictionary = (item_value as Dictionary).duplicate(true)
+			var registry: Variant = _loaded_item_registry()
+			if registry != null and registry.validate_item_instance(item).is_empty():
+				var instance_id := String(item.get("instance_id", ""))
+				if not instance_id.is_empty() and _owned_equipment(instance_id).is_empty():
+					(((_profile.inventory as Dictionary).equipment) as Array).append(item.duplicate(true))
+					added.append(item.duplicate(true))
 	var attempt_number := _repeatable_attempt_for_session()
 	var pity_family := ""
 	if attempt_number > 0:
@@ -1926,7 +1937,7 @@ func _settle_room_equipment_drops(result: Dictionary) -> void:
 			pity_family = _pity_family_for_resolved_build(resolved_build)
 	var outcome := String(result.get("outcome", "")).to_lower()
 	if has_profile() and outcome in ["victory", "final_victory"] and _equipment_drops_unlocked_for_session():
-		added = _generate_new_room_equipment(result, attempt_number, pity_family, rewards)
+		added.append_array(_generate_new_room_equipment(result, attempt_number, pity_family, rewards, ledger_room_indices))
 	rewards["equipment_drops"] = added.duplicate(true)
 	rewards["equipment_drop_count"] = added.size()
 	result["rewards"] = rewards
@@ -1946,7 +1957,7 @@ func _equipment_drops_unlocked_for_session() -> bool:
 	)
 
 
-func _generate_new_room_equipment(result: Dictionary, attempt_number: int = 0, pity_family: String = "", rewards: Dictionary = {}) -> Array:
+func _generate_new_room_equipment(result: Dictionary, attempt_number: int = 0, pity_family: String = "", rewards: Dictionary = {}, skip_room_indices: Dictionary = {}) -> Array:
 	var plan_value: Variant = _active_session.get("room_plan", {})
 	if not plan_value is Dictionary:
 		return []
@@ -1971,6 +1982,8 @@ func _generate_new_room_equipment(result: Dictionary, attempt_number: int = 0, p
 	var pity_pending := not pity_family.is_empty()
 	var added: Array = []
 	for room_index in range(room_limit):
+		if skip_room_indices.has(room_index):
+			continue
 		var room_value: Variant = rooms[room_index]
 		if not room_value is Dictionary:
 			continue
@@ -2009,6 +2022,27 @@ func _generate_new_room_equipment(result: Dictionary, attempt_number: int = 0, p
 			pity_pending = false
 			rewards["pity_guarantee_family"] = pity_family
 	return added
+
+
+func _collect_room_loot_items(result: Dictionary, room_indices: Dictionary) -> Array[Dictionary]:
+	var collected: Array[Dictionary] = []
+	var room_results_value: Variant = result.get("room_results", [])
+	if not room_results_value is Array:
+		return collected
+	for room_index in (room_results_value as Array).size():
+		var room_value: Variant = (room_results_value as Array)[room_index]
+		if not room_value is Dictionary:
+			continue
+		var settlement_value: Variant = (room_value as Dictionary).get("room_loot_settlement", {})
+		if not settlement_value is Dictionary or (settlement_value as Dictionary).is_empty():
+			continue
+		room_indices[room_index] = true
+		var items_value: Variant = (settlement_value as Dictionary).get("items", [])
+		if items_value is Array:
+			for item_value: Variant in items_value:
+				if item_value is Dictionary:
+					collected.append((item_value as Dictionary).duplicate(true))
+	return collected
 
 
 func _has_recognized_equipment_tag(tags: Array) -> bool:
