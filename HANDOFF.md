@@ -4,7 +4,7 @@
 
 本轮完成碰撞与遮挡边界收口，保留旧 replay/public `walkable_geometry` 契约。物理层现在通过按角色半径收缩的 native geometry 驱动 Main/Encounter 的敌人战术、Auto 移动、出生投影和部署检查；presentation 层单独使用 native `presentation_geometry` 绘制环带/走廊概念边线，避免规划 inset 与真实中心空间混用。ActorMotor 的角点、窄口、切线、长位移和 ring 孔 sweep 继续由共享 registry/motor 处理。
 
-当前提交后的下一阶段设计已落盘：[架构审查](docs/rebuild/ARCHITECTURE_REVIEW_20261015.md) 和 [真实战斗第一切片](docs/rebuild/REAL_COMBAT_MILESTONE_20261015.md)。下一步先实现 typed stats、wave、room-local loot ledger 的纯域测试，再接入一个真实 authored room；暂不继续向 Main 添加房间规则或奖励回调。
+当前提交后的下一阶段设计已落盘：[架构审查](docs/rebuild/ARCHITECTURE_REVIEW_20261015.md) 和 [真实战斗第一切片](docs/rebuild/REAL_COMBAT_MILESTONE_20261015.md)。Stage 0 的 typed stats、wave definition、room-local loot ledger 已有独立纯域测试；下一步接入一间真实 authored room，暂不继续向 Main 添加房间规则或奖励回调。
 
 遮挡层继续使用统一 `baseline/y → rank → stable id` 排序、alpha visible bounds、局部 cutaway 和共享透明度预算；诊断报告现在覆盖前景废墟局部 cutaway，并与实际 Boss 多部件 draw/prepass 共用几何。
 
