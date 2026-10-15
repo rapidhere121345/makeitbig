@@ -1,7 +1,7 @@
 # Runtime architecture review — 2026-10-15
 
 This review was refreshed after the room-local loot slice at committed `HEAD`
-`7dfc64c` and the mounted regression in `tests/test_real_combat_room.gd`. The
+`31dc9c7` and the mounted regression in `tests/test_real_combat_room.gd`. The
 repository was clean before that slice. It covers the next product step:
 authored combat rooms, room-local drops, and a more expressive ranger build.
 
