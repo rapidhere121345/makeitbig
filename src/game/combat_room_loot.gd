@@ -86,6 +86,12 @@ func enabled() -> bool:
 	return _ledger != null
 
 
+func has_unsettled_entities() -> bool:
+	if _ledger == null or not _settlement.is_empty():
+		return false
+	return not (_ledger.snapshot().get("entities", []) as Array).is_empty()
+
+
 func spawn_for_source(tick: int, source: String, source_entity_id: int, position: Vector2) -> Dictionary:
 	if _ledger == null or not position.is_finite():
 		return _failure("room_loot_disabled")
@@ -106,10 +112,12 @@ func spawn_for_source(tick: int, source: String, source_entity_id: int, position
 	return _failure("no_matching_loot_slot")
 
 
-func request_pickup(tick: int, active: bool, battle_over: bool, loot_entity_id: String) -> Dictionary:
+func request_pickup(tick: int, active: bool, battle_over: bool, battle_victory: bool, loot_entity_id: String) -> Dictionary:
 	if _ledger == null:
 		return _failure("room_loot_disabled")
-	if not active or battle_over:
+	# A victory ends combat but leaves the room open for an explicit loot window.
+	# Defeat closes the room immediately and never permits a queued pickup.
+	if not active or (battle_over and not battle_victory):
 		return _failure("loot_pickup_room_inactive")
 	var normalized_id := loot_entity_id.strip_edges()
 	if normalized_id.is_empty():
@@ -133,7 +141,7 @@ func request_pickup(tick: int, active: bool, battle_over: bool, loot_entity_id: 
 	return {"ok": true, "error": "", "accepted": true, "queued": true, "request": request.duplicate(true)}
 
 
-func process_pickups(tick: int, player_health: float, player_position: Vector2, battle_over: bool) -> void:
+func process_pickups(tick: int, player_health: float, player_position: Vector2, battle_over: bool, battle_victory: bool) -> void:
 	if _ledger == null or _pickup_requests.is_empty():
 		return
 	var remaining: Array[Dictionary] = []
@@ -142,7 +150,7 @@ func process_pickups(tick: int, player_health: float, player_position: Vector2, 
 			remaining.append(request)
 			continue
 		var result: Dictionary
-		if player_health <= 0.0 or battle_over:
+		if player_health <= 0.0 or (battle_over and not battle_victory):
 			result = _failure("loot_pickup_player_inactive")
 		else:
 			result = _ledger.pickup(tick, 1, String(request.loot_entity_id), player_position)

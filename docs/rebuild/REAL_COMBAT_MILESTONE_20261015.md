@@ -1,20 +1,25 @@
 # Real combat milestone — first authored room
 
-This document defines the smallest next gameplay slice after the geometry and
-presentation rebuild. It is a design and acceptance contract; it does not
-claim that the slice is implemented yet.
+This document defines the smallest gameplay slice after the geometry and
+presentation rebuild. It is both the design contract and the acceptance record
+for the currently implemented room-local slice; later stages remain planned.
 
 The first opt-in room-local loot slice is now implemented and covered by
-`tests/test_real_combat_room.gd`: a mounted two-enemy room uses a real arrow
-contact to spawn an enemy drop, queues pickup for the next committed tick, and
-returns one victory settlement. The authored campaign still has no general
-`loot_slots` rollout, and the player combat sheet remains the next production
-integration step described below. The first stats adapter is also in place:
+`tests/test_real_combat_room.gd` and `tests/test_mainline_room_loot.gd`: a
+mounted room uses a real arrow contact to spawn an enemy drop, keeps victory
+combat separate from room settlement, queues pickup for the next committed
+tick, and returns one settlement when the player leaves. Authored rooms may
+opt into `loot_slots`; rooms without them retain the old path. The first stats adapter is also in place:
 an explicit `combat_stats` section now drives move speed, dodge distance and
 duration, and attack/dodge cooldowns; legacy builds without the section keep
 the historical motion constants until authored values are introduced.
 The loot lifecycle itself now lives in `CombatRoomLoot`; Main only assembles it
 and relays room observations and pickup commands.
+The pickup command now uses the strict six-field `CombatLootPickupProtocol`:
+Manual `F` input and Auto submit the same detached request, while the room
+ledger remains the authority for range, room phase, and one-shot pickup state.
+Malformed, stale, future, duplicate, and cross-actor requests are rejected
+before they reach the room ledger.
 
 ## Player promise
 
@@ -217,7 +222,8 @@ Rules:
 * a slot can spawn once;
 * an entity can be picked up once;
 * a pickup is accepted only on a committed tick, inside the authored radius,
-  and while the player is alive and the room is not terminal;
+  and while the player is alive and the room is either in combat or in its
+  post-victory loot window;
 * the generator receives the room loot RNG stream and a stable slot/entity
   identity;
 * `settle` is the only operation that exposes the generated item to
@@ -261,15 +267,16 @@ Add typed validation/snapshot tests for `CombatStatsSnapshot`,
 Acceptance: malformed fields fail explicitly; detached snapshots cannot mutate
 the domain; same inputs produce byte-identical fingerprints.
 
-### Stage 1 — one wave and one drop
+### Stage 1 — one wave and one drop — implemented
 
 Add one authored room with one enemy wave and one deterministic drop slot.
 Wire the room facade into the existing `CombatRoomRuntime`; keep the existing
 terminal rules and fixed tick order.
 
 Acceptance: real mounted room, 30 Hz, Manual command stream, enemy telegraph,
-valid movement, contact/dodge result, enemy death, loot spawn, pickup, and one
-settlement receipt all occur in one run.
+valid movement, contact/dodge result, enemy death, loot spawn, strict pickup,
+and one settlement receipt on explicit room exit all occur in one run. The
+focused mounted tests and the non-root pickup protocol test pass.
 
 ### Stage 2 — build-driven combat stats
 
@@ -285,14 +292,17 @@ ActorRegistry validation.
 Add a delayed second wave and the wound status. Verify defeat before pickup,
 victory after both waves, and one-shot settlement on repeated terminal calls.
 
-Acceptance: stale wave commands and post-terminal pickup are rejected; defeat
-never grants a room drop; victory settles picked and unpicked states once.
+Acceptance: stale wave commands and defeat-window pickup are rejected; defeat
+never grants a room item; victory keeps picked and unpicked states until room
+exit, then settles them once.
 
 ### Stage 4 — presentation and progression integration
 
 Expose detached loot entities and status feedback to the existing presenter,
 then replace the outer contract's room-plan reward reconstruction with the
-room settlement receipt.
+room settlement receipt. The next bounded step is to commit picked items at
+the room boundary and resolve the next room's build from the updated session
+inventory; it must not add a second inventory or stat calculator.
 
 Acceptance: graphical HUD and result screen agree with the authoritative room
 snapshot; replay hash and inventory receipt match across Manual and Auto where

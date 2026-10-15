@@ -1,6 +1,8 @@
 class_name CombatEnemyState
 extends RefCounted
 
+const StatusEffectLedgerScript := preload("res://src/game/status_effect_ledger.gd")
+
 ## Mutable room-local enemy state.
 ##
 ## Combat systems own transitions that mutate this record. Presentation reads
@@ -47,6 +49,7 @@ var next_action_index: int = 0
 var tactic_state: String = "idle"
 var tactic_reason: String = "spawned"
 var next_action_ready_tick: int = 0
+var _status_effects: RefCounted = StatusEffectLedgerScript.new()
 
 
 func _init(
@@ -62,6 +65,7 @@ func _init(
 	health = hp
 	maximum_health = hp
 	is_boss = boss
+	_status_effects.reset()
 	left_hand_position = spawn_position + Vector2(-34.0, 0.0)
 	right_hand_position = spawn_position + Vector2(34.0, 0.0)
 
@@ -73,6 +77,31 @@ func _init(
 			{"part_id": "left_hand", "pose": Vector2.ZERO, "pose_source": "left_hand", "hurtbox": {"type": "circle", "radius": 24.0}, "damage_group_id": "body", "broken": false, "active": true},
 			{"part_id": "right_hand", "pose": Vector2.ZERO, "pose_source": "right_hand", "hurtbox": {"type": "circle", "radius": 24.0}, "damage_group_id": "body", "broken": false, "active": true},
 		]
+
+
+func apply_status_effect(
+	tick: int,
+	effect_id: String,
+	source_id: String,
+	duration_ticks: int,
+	magnitude: float,
+	stack_policy: String = "replace",
+	max_stacks: int = 1,
+	modifier: Dictionary = {}
+) -> Dictionary:
+	return _status_effects.apply(tick, effect_id, source_id, duration_ticks, magnitude, stack_policy, max_stacks, modifier)
+
+
+func advance_status_effects(tick: int) -> Dictionary:
+	return _status_effects.advance(tick)
+
+
+func remove_status_effect(tick: int, effect_id: String) -> Dictionary:
+	return _status_effects.remove(tick, effect_id)
+
+
+func status_effects_snapshot(tick: int = -1) -> Dictionary:
+	return _status_effects.snapshot(tick)
 
 
 func hurtbox_parts() -> Array[Dictionary]:

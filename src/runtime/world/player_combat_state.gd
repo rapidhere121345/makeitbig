@@ -45,6 +45,7 @@ func reset_for_room(locked_build: Dictionary, actor_registry, ranger_id: String,
 	_values = {
 		"player_health": maximum, "player_maximum_health": maximum,
 		"player_facing": Vector2.RIGHT, "player_last_displacement": Vector2.ZERO,
+		"player_velocity": Vector2.ZERO,
 		"attack_cooldown_ticks": 0, "dodge_cooldown_ticks": 0,
 		"hunter_mark_cooldown_ticks": 0, "dash_cooldown_ticks": 0,
 		"dodge_remaining_ticks": 0, "dash_remaining_ticks": 0,
@@ -114,8 +115,25 @@ func combat_stats_snapshot() -> Dictionary:
 	return (_combat_stats as RefCounted).snapshot() if _combat_stats_enabled else {}
 
 
+func movement_model() -> String:
+	return String(_combat_stats.movement_model) if _combat_stats_enabled else "direct"
+
+
+func uses_accelerated_movement() -> bool:
+	return _combat_stats_enabled and movement_model() == "accelerated"
+
+
 func move_speed() -> float:
 	return float(_combat_stats.move_speed) if _combat_stats_enabled else 245.0
+
+
+func acceleration() -> float:
+	return float(_combat_stats.acceleration) if _combat_stats_enabled else 0.0
+
+
+func player_velocity() -> Vector2:
+	var value: Variant = _values.get("player_velocity", Vector2.ZERO)
+	return value if value is Vector2 and (value as Vector2).is_finite() else Vector2.ZERO
 
 
 func dodge_distance() -> float:

@@ -30,6 +30,7 @@ func run() -> Array[String]:
 	_test_session_lifecycle(failures)
 	_test_reward_settlement(failures)
 	_test_room_equipment_drop_settlement(failures)
+	_test_room_victory_commit_handoff(failures)
 	_test_boss_defeat_bottleneck(failures)
 	_test_abandon(failures)
 	_test_persistent_payload(failures)
@@ -1269,6 +1270,132 @@ func _test_room_equipment_drop_settlement(failures: Array[String]) -> void:
 	var malformed: Dictionary = bounded.complete_session({"outcome": "victory", "rooms_completed": "4"})
 	_expect(int(malformed.result.rewards.equipment_drop_count) == 0,
 		"room drops: malformed rooms_completed did not fail closed", failures)
+
+
+func _test_room_victory_commit_handoff(failures: Array[String]) -> void:
+	# Room 0 victory commits its picked loot exactly once, keeps the equipped
+	# build untouched, refreshes the session build and advances the room cursor.
+	var state := ApplicationState.new()
+	state.start_new_profile("ranger")
+	state.prepare_contract({
+		"contract_id": "handoff.test",
+		"mode": "Manual",
+		"seed": 9001,
+		"room_count": 2,
+		"resolved_build": state.resolved_build_snapshot(),
+		"room_plan": {"rooms": [{"room_id": "handoff-a"}, {"room_id": "handoff-b"}]},
+	})
+	state.begin_session()
+	var inventory_size: int = (state.profile.inventory.equipment as Array).size()
+	var active_before: Dictionary = state.profile.active_build
+	var committed: Dictionary = state.commit_room_victory_and_resolve_next_build(
+		0, _handoff_victory_result([_handoff_loot_instance(state, "handoff_loot_a")])
+	)
+	_expect(bool(committed.get("ok", false)), "handoff: room 0 commit failed: %s" % _code(committed), failures)
+	if bool(committed.get("ok", false)):
+		_expect((committed.committed_items as Array).size() == 1
+			and String((committed.committed_items as Array)[0].instance_id) == "handoff_loot_a",
+			"handoff: committed_items must carry the picked instance exactly once", failures)
+		_expect((state.profile.inventory.equipment as Array).size() == inventory_size + 1
+			and _has_equipment_instance(state.profile.inventory.equipment, "handoff_loot_a"),
+			"handoff: picked loot did not land in the equipment inventory", failures)
+		_expect(state.profile.active_build == active_before,
+			"handoff: commit must not auto-equip loot", failures)
+		_expect(int(state.active_session.room_index) == 1,
+			"handoff: session room_index did not advance", failures)
+		var fingerprint := String((committed.resolved_build as Dictionary).get("build_fingerprint", ""))
+		_expect(fingerprint.length() == 64
+			and (state.active_session.resolved_build as Dictionary) == (committed.resolved_build as Dictionary),
+			"handoff: session resolved_build did not adopt the refreshed resolver output", failures)
+		committed.resolved_build["build_fingerprint"] = "mutated"
+		committed.active_build["equipped_item_ids"]["main_hand"] = "mutated"
+		(committed.committed_items as Array)[0]["instance_id"] = "mutated"
+		_expect(String((state.active_session.resolved_build as Dictionary).get("build_fingerprint", "")) == fingerprint
+			and _has_equipment_instance(state.profile.inventory.equipment, "handoff_loot_a")
+			and state.profile.active_build == active_before,
+			"handoff: returned commit data aliases internal state", failures)
+
+	# Rejections fail closed: session cursor and inventory stay untouched.
+	var locked_inventory: int = (state.profile.inventory.equipment as Array).size()
+	_expect(_code(state.commit_room_victory_and_resolve_next_build(
+		0, _handoff_victory_result([_handoff_loot_instance(state, "handoff_loot_dup")])
+	)) == "room_index_mismatch",
+		"handoff: duplicate room 0 call must be rejected by the advanced cursor", failures)
+	_expect(_code(state.commit_room_victory_and_resolve_next_build(5, _handoff_victory_result([]))) == "room_index_mismatch",
+		"handoff: wrong room index must be rejected", failures)
+	_expect(_code(state.commit_room_victory_and_resolve_next_build(1, {"outcome": "defeat"})) == "room_victory_required",
+		"handoff: non-victory room result must be rejected", failures)
+	var failed_settlement := _handoff_victory_result([])
+	(failed_settlement.room_loot_settlement as Dictionary)["ok"] = false
+	_expect(_code(state.commit_room_victory_and_resolve_next_build(1, failed_settlement)) == "invalid_room_loot_settlement",
+		"handoff: failed settlement receipt must be rejected", failures)
+	var lost_settlement := _handoff_victory_result([])
+	(lost_settlement.room_loot_settlement as Dictionary)["outcome"] = "defeat"
+	_expect(_code(state.commit_room_victory_and_resolve_next_build(1, lost_settlement)) == "invalid_room_loot_settlement",
+		"handoff: settlement outcome must match the room victory", failures)
+	var stray_items := _handoff_victory_result([])
+	(stray_items.room_loot_settlement as Dictionary)["items"] = "not-an-array"
+	_expect(_code(state.commit_room_victory_and_resolve_next_build(1, stray_items)) == "invalid_room_loot_settlement",
+		"handoff: settlement items must be an array", failures)
+	var unregistered := _handoff_victory_result([_handoff_loot_instance(state, "handoff_loot_bad")])
+	((unregistered.room_loot_settlement as Dictionary).items as Array)[0].erase("affixes")
+	_expect(_code(state.commit_room_victory_and_resolve_next_build(1, unregistered)) == "invalid_room_loot_item",
+		"handoff: loot failing registry validation must be rejected", failures)
+	_expect(_code(state.commit_room_victory_and_resolve_next_build(1, _handoff_victory_result(["not-an-item"]))) == "invalid_room_loot_item",
+		"handoff: non-ItemInstance loot entry must be rejected", failures)
+	_expect((state.profile.inventory.equipment as Array).size() == locked_inventory
+		and int(state.active_session.room_index) == 1,
+		"handoff: rejected commits must leave session and inventory untouched", failures)
+
+	# A lootless victory still advances the cursor with nothing committed.
+	var lootless: Dictionary = state.commit_room_victory_and_resolve_next_build(1, {"outcome": "victory"})
+	_expect(bool(lootless.get("ok", false)) and (lootless.committed_items as Array).is_empty()
+		and int(state.active_session.room_index) == 2,
+		"handoff: lootless victory must commit nothing and advance the cursor", failures)
+
+	# complete_session stays the single late settlement: committed loot is not
+	# appended or re-reported twice.
+	var finalized: Dictionary = state.complete_session({
+		"outcome": "victory",
+		"room_count": 2,
+		"rooms_completed": 2,
+		"room_results": [
+			_handoff_victory_result([_handoff_loot_instance(state, "handoff_loot_a")]),
+			{"outcome": "victory"},
+		],
+		"rewards": {},
+	})
+	_expect(bool(finalized.get("ok", false)), "handoff: contract settlement failed", failures)
+	_expect(_equipment_instance_count(state.profile.inventory.equipment, "handoff_loot_a") == 1,
+		"handoff: committed loot was appended a second time by complete_session", failures)
+	_expect(((finalized.result.rewards as Dictionary).get("equipment_drops", []) as Array).is_empty(),
+		"handoff: complete_session re-reported already committed loot", failures)
+
+	# Without an active session the boundary fails closed.
+	var fresh := ApplicationState.new()
+	fresh.start_new_profile("ranger")
+	_expect(_code(fresh.commit_room_victory_and_resolve_next_build(0, _handoff_victory_result([]))) == "active_session_required",
+		"handoff: commit without an active session must fail", failures)
+
+
+func _handoff_loot_instance(state: ApplicationState, instance_id: String) -> Dictionary:
+	var item: Dictionary = (state.profile.inventory.equipment[0] as Dictionary).duplicate(true)
+	item["instance_id"] = instance_id
+	return item
+
+
+func _handoff_victory_result(items: Array) -> Dictionary:
+	return {
+		"outcome": "victory",
+		"room_loot_settlement": {
+			"ok": true,
+			"error": "",
+			"outcome": "victory",
+			"items": items.duplicate(true),
+			"entities": [],
+			"event_count": items.size(),
+		},
+	}
 
 
 func _test_boss_defeat_bottleneck(failures: Array[String]) -> void:

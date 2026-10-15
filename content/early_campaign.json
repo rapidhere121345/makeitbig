@@ -123,7 +123,7 @@
       "kind": "mainline",
       "unlock_prerequisites": ["mainline_02_priority_under_pressure"],
       "room_sequence": [
-        {"id": "first_elite_barrier", "layout_id": "rectangle_arena", "objective_id": "hunt_elite", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": ["periodic_barrier"], "boss_id": "", "drop_tags": ["equipment_general", "main_hand", "gloves"], "new_problem_id": "periodic_barrier_window"}
+        {"id": "first_elite_barrier", "layout_id": "rectangle_arena", "objective_id": "hunt_elite", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": ["periodic_barrier"], "boss_id": "", "drop_tags": ["equipment_general", "main_hand", "gloves"], "loot_slots": [{"slot_id": "elite_equipment_drop", "source": "enemy_death", "tags": ["equipment_general", "main_hand", "gloves"], "pickup_radius": 24.0, "guaranteed": true, "guarantee_family": "carrier_power"}], "new_problem_id": "periodic_barrier_window"}
       ],
       "first_reward_tags": ["breeding_split_item"],
       "drop_tags": ["equipment_general", "main_hand", "gloves"],
@@ -211,7 +211,8 @@
             "attack_cooldown_ticks": 11,
             "dodge_duration_ticks": 5,
             "dodge_cooldown_ticks": 30,
-            "resistances": {"physical": 0.10}
+            "resistances": {"physical": 0.10},
+            "movement_model": "accelerated"
           }
         }]
       },

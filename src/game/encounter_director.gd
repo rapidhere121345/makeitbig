@@ -10,6 +10,7 @@ extends RefCounted
 
 const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
+const EnemyCombatProfileScript := preload("res://src/game/enemy_combat_profile.gd")
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
 
@@ -25,18 +26,6 @@ const REQUIRED_ROOM_FIELDS: Array[String] = [
 ]
 
 const SIM_STEP_SECONDS: float = 1.0 / 30.0
-const MELEE_MOVE_SPEED: float = 72.0
-const CHARGER_MOVE_SPEED: float = 62.0
-const FAN_MOVE_SPEED: float = 58.0
-const MELEE_WINDUP_TICKS: int = 5
-const MELEE_ACTIVE_TICKS: int = 1
-const MELEE_RECOVERY_TICKS: int = 11
-const CHARGE_WINDUP_TICKS: int = 18
-const CHARGE_ACTIVE_TICKS: int = 10
-const CHARGE_RECOVERY_TICKS: int = 22
-const FAN_WINDUP_TICKS: int = 21
-const FAN_ACTIVE_TICKS: int = 1
-const FAN_RECOVERY_TICKS: int = 28
 const BOSS_TRANSITION_TICKS: int = 30
 const BOSS_WINDUP_TICKS: int = 24
 const BOSS_ACTIVE_TICKS: int = 1
@@ -47,17 +36,6 @@ const HAZARD_CYCLE_TICKS: int = 90
 const ELITE_BARRIER_PERIOD_TICKS: int = 60
 const ELITE_BARRIER_ACTIVE_TICKS: int = 20
 const TIMED_BREAK_BONUS_TICKS: int = 900
-const EARLY_NORMAL_HEALTH_BY_KIND := {
-	"melee_pursuer": 720.0,
-	"charging_raider": 420.0,
-	"fan_ranged": 240.0,
-}
-const EARLY_ELITE_HEALTH_BY_KIND := {
-	"melee_pursuer": 1600.0,
-	"charging_raider": 1300.0,
-	"fan_ranged": 1000.0,
-}
-
 var tick: int = 0
 var player_position := Vector2.ZERO
 var arena_rect := Rect2()
@@ -74,6 +52,8 @@ var reinforcements_summoned: bool = false
 var timed_bonus_available: bool = true
 var next_entity_id: int = 1
 var next_enemy_action_instance_id: int = 1
+var enemy_profile_registry: RefCounted
+var _enemy_profiles: Dictionary = {}
 var combat_outcome_port: RefCounted
 var boss_damage: BigValue:
 	get:
@@ -173,6 +153,13 @@ func configure(callbacks: Dictionary) -> Dictionary:
 	return {"ok": true, "error": ""}
 
 
+func set_enemy_profile_registry(value: Variant) -> Dictionary:
+	if not value is RefCounted or not value.has_method("resolve"):
+		return {"ok": false, "error": "enemy_profile_registry_unavailable"}
+	enemy_profile_registry = value
+	return {"ok": true, "error": ""}
+
+
 func set_context(
 	new_tick: int,
 	new_player_position: Vector2,
@@ -199,6 +186,7 @@ func spawn_wave(room: Dictionary, center: Vector2) -> Dictionary:
 		return {"ok": false, "error": type_error}
 	enemies.clear()
 	boss = null
+	_enemy_profiles.clear()
 	hazard_states.clear()
 	elite_rule_ids.clear()
 	elite_entity_id = 0
@@ -223,6 +211,8 @@ func spawn_wave(room: Dictionary, center: Vector2) -> Dictionary:
 	if not roster_value is Array:
 		return {"ok": false, "error": "invalid_enemy_roster"}
 	var roster: Array = roster_value
+	if enemy_profile_registry == null:
+		return {"ok": false, "error": "enemy_profile_registry_unavailable"}
 	var required_offsets := roster.size() + (1 if not boss_id.is_empty() else 0)
 	var room_offsets := _layout_spawn_offsets(layout_id, required_offsets)
 	if not layout_spawn_offsets_callback.is_valid():
@@ -234,9 +224,10 @@ func spawn_wave(room: Dictionary, center: Vector2) -> Dictionary:
 			return {"ok": false, "error": "invalid_spawn_socket"}
 	for index in roster.size():
 		var kind_id := String(roster[index])
-		if not EARLY_NORMAL_HEALTH_BY_KIND.has(kind_id):
-			return {"ok": false, "error": "unknown_enemy_id"}
-		enemies.append(CombatEnemyStateScript.new(center + room_offsets[index], float(EARLY_NORMAL_HEALTH_BY_KIND[kind_id]), false, index + 1, kind_id))
+		var profile: RefCounted = _resolve_enemy_profile(kind_id)
+		if profile == null:
+			return {"ok": false, "error": "unknown_enemy_profile_id"}
+		enemies.append(CombatEnemyStateScript.new(center + room_offsets[index], float(profile.get("normal_health")), false, index + 1, kind_id))
 	next_entity_id = roster.size() + 1
 	if boss_id == "threshold_colossus":
 		boss = CombatEnemyStateScript.new(center + room_offsets[roster.size()], 1200.0, true, next_entity_id, boss_id)
@@ -249,9 +240,10 @@ func spawn_wave(room: Dictionary, center: Vector2) -> Dictionary:
 		elite_rule_ids.append(String(value))
 	if objective_id == "hunt_elite" and not enemies.is_empty() and not enemies[0].is_boss:
 		elite_entity_id = enemies[0].entity_id
-		if not EARLY_ELITE_HEALTH_BY_KIND.has(enemies[0].kind_id):
-			return {"ok": false, "error": "unknown_elite_enemy_id"}
-		var elite_health := float(EARLY_ELITE_HEALTH_BY_KIND[enemies[0].kind_id])
+		var elite_profile: RefCounted = _profile_for_enemy(enemies[0])
+		if elite_profile == null:
+			return {"ok": false, "error": "unknown_enemy_profile_id"}
+		var elite_health: float = float(elite_profile.get("elite_health"))
 		enemies[0].health = elite_health
 		enemies[0].maximum_health = elite_health
 	for value in room.get("hazard_ids", []):
@@ -474,7 +466,12 @@ func _maybe_summon_reinforcements(elite: CombatEnemyState) -> void:
 		reinforcements_summoned = false
 		battle_report = "reinforcement_spawn_socket_invalid:%d" % reinforcement_id
 		return
-	var reinforcement := CombatEnemyStateScript.new(_arena_rect().get_center() + spawn, float(EARLY_NORMAL_HEALTH_BY_KIND["melee_pursuer"]), false, reinforcement_id, "melee_pursuer")
+	var reinforcement_profile: RefCounted = _resolve_enemy_profile("melee_pursuer")
+	if reinforcement_profile == null:
+		reinforcements_summoned = false
+		battle_report = "reinforcement_profile_missing:melee_pursuer"
+		return
+	var reinforcement := CombatEnemyStateScript.new(_arena_rect().get_center() + spawn, float(reinforcement_profile.get("normal_health")), false, reinforcement_id, "melee_pursuer")
 	enemies.append(reinforcement)
 	if register_enemy_callback.is_valid() and not _register_enemy_actor(reinforcement):
 		push_error("reinforcement_actor_registration_failed:%d" % reinforcement_id)
@@ -537,6 +534,25 @@ func _enemy_by_entity_id(id: int) -> CombatEnemyState:
 		if enemy.entity_id == id:
 			return enemy
 	return null
+
+
+func _resolve_enemy_profile(kind_id: String):
+	if _enemy_profiles.has(kind_id):
+		return _enemy_profiles[kind_id]
+	if enemy_profile_registry == null:
+		return null
+	var resolved: Variant = enemy_profile_registry.resolve(kind_id)
+	if not resolved is Dictionary or not bool((resolved as Dictionary).get("ok", false)):
+		return null
+	var value: Variant = (resolved as Dictionary).get("value", null)
+	if not value is RefCounted or not value.has_method("snapshot"):
+		return null
+	_enemy_profiles[kind_id] = value
+	return value
+
+
+func _profile_for_enemy(enemy: CombatEnemyState):
+	return _resolve_enemy_profile(enemy.kind_id) if enemy != null else null
 
 
 func _allocate_entity_id() -> int:
@@ -622,11 +638,16 @@ func _emit_enemy_action_accepted(enemy: CombatEnemyState) -> void:
 
 
 func _enemy_breath_ticks(kind_id: String) -> int:
-	match kind_id:
-		"melee_pursuer": return 4
-		"charging_raider": return 8
-		"fan_ranged": return 10
-	return 0
+	var profile: RefCounted = _resolve_enemy_profile(kind_id)
+	return int(profile.get("breath_ticks")) if profile != null else 0
+
+
+func _action_profile(enemy: CombatEnemyState, action_id: String) -> Dictionary:
+	var profile: RefCounted = _profile_for_enemy(enemy)
+	if profile == null or not profile.has_method("action"):
+		return {}
+	var value: Variant = profile.action(action_id)
+	return value if value is Dictionary else {}
 
 
 func _intent_for_enemy(enemy: CombatEnemyState) -> Dictionary:
@@ -641,13 +662,14 @@ func _intent_for_enemy(enemy: CombatEnemyState) -> Dictionary:
 
 func _update_melee_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
 	var previous_state := enemy.action_state
-	_advance_action_state(enemy, MELEE_ACTIVE_TICKS, MELEE_RECOVERY_TICKS)
+	var action := _action_profile(enemy, "contact")
+	_advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
 	if enemy.action_state == "active" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, 5.0, CombatQueryScript.shape_contains(enemy.target_shape, player_position))
+		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), CombatQueryScript.shape_contains(enemy.target_shape, player_position))
 	if previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, 5.0, false)
+		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
 	if enemy.action_state == "none":
 		_commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else _intent_for_enemy(enemy))
 	else:
@@ -655,7 +677,8 @@ func _update_melee_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> voi
 
 
 func _start_melee_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	_begin_action(enemy, "contact", MELEE_WINDUP_TICKS)
+	var action := _action_profile(enemy, "contact")
+	_begin_action(enemy, "contact", int(action.get("windup_ticks", 0)))
 	enemy.facing = direction.normalized() if direction != Vector2.ZERO else enemy.position.direction_to(player_position)
 	if enemy.facing == Vector2.ZERO:
 		enemy.facing = Vector2.RIGHT
@@ -666,7 +689,10 @@ func _start_melee_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.Z
 func _start_charger_action(enemy: CombatEnemyState, direction: Vector2, action_distance: float) -> bool:
 	if not is_finite(direction.x) or not is_finite(direction.y) or direction.is_zero_approx() or not is_finite(action_distance) or action_distance <= 0.0:
 		return false
-	_begin_action(enemy, "charge", CHARGE_WINDUP_TICKS)
+	var action := _action_profile(enemy, "charge")
+	if action.is_empty():
+		return false
+	_begin_action(enemy, "charge", int(action.get("windup_ticks", 0)))
 	enemy.charge_origin = enemy.position
 	enemy.charge_direction = direction.normalized()
 	enemy.facing = enemy.charge_direction
@@ -679,11 +705,12 @@ func _start_charger_action(enemy: CombatEnemyState, direction: Vector2, action_d
 
 func _update_charger_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
 	var previous_state := enemy.action_state
-	_advance_action_state(enemy, CHARGE_ACTIVE_TICKS, CHARGE_RECOVERY_TICKS)
+	var action := _action_profile(enemy, "charge")
+	_advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
 	if enemy.action_state == "active":
 		enemy.motion_state = "moving"
 		var before := enemy.position
-		var step := enemy.charge_length / float(CHARGE_ACTIVE_TICKS)
+		var step := enemy.charge_length / float(maxi(1, int(action.get("active_ticks", 1))))
 		var movement_result := _move_enemy_actor(enemy, enemy.charge_direction * step)
 		if not bool(movement_result.get("ok", false)):
 			enemy.motion_state = "idle"
@@ -691,10 +718,10 @@ func _update_charger_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> v
 			var contact := CombatQueryScript.distance_to_segment(player_position, before, enemy.position) <= EnemyTacticsScript.CHARGER_CONTACT_RADIUS
 			if contact:
 				enemy.impact_resolved = true
-				_resolve_hostile_attack(enemy, 11.0, true)
+				_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), true)
 	elif previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, 11.0, false)
+		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
 	elif enemy.action_state == "none":
 		_commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else _intent_for_enemy(enemy))
 	else:
@@ -702,7 +729,8 @@ func _update_charger_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> v
 
 
 func _start_fan_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	_begin_action(enemy, "fan", FAN_WINDUP_TICKS)
+	var action := _action_profile(enemy, "fan")
+	_begin_action(enemy, "fan", int(action.get("windup_ticks", 0)))
 	var fan_direction := direction.normalized() if direction != Vector2.ZERO else enemy.position.direction_to(player_position)
 	if fan_direction == Vector2.ZERO:
 		fan_direction = enemy.facing
@@ -719,13 +747,14 @@ func _start_fan_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZER
 
 func _update_fan_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
 	var previous_state := enemy.action_state
-	_advance_action_state(enemy, FAN_ACTIVE_TICKS, FAN_RECOVERY_TICKS)
+	var action := _action_profile(enemy, "fan")
+	_advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
 	if enemy.action_state == "active" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, 8.0, EnemyTacticsScript.fan_attack_contains(enemy.target_shape, player_position))
+		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), EnemyTacticsScript.fan_attack_contains(enemy.target_shape, player_position))
 	if previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, 8.0, false)
+		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
 	if enemy.action_state == "none":
 		_commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else _intent_for_enemy(enemy))
 	else:
@@ -762,11 +791,11 @@ func _commit_normal_enemy_intent(enemy: CombatEnemyState, intent: Dictionary) ->
 		enemy.motion_state = "idle"
 		return
 	direction = direction.normalized()
-	var base_speed := MELEE_MOVE_SPEED
-	if enemy.kind_id == "charging_raider":
-		base_speed = CHARGER_MOVE_SPEED
-	elif enemy.kind_id == "fan_ranged":
-		base_speed = FAN_MOVE_SPEED
+	var profile: RefCounted = _profile_for_enemy(enemy)
+	if profile == null:
+		enemy.motion_state = "idle"
+		return
+	var base_speed: float = float(profile.get("move_speed"))
 	var before := enemy.position
 	var movement_result := _move_enemy_actor(enemy, direction * base_speed * speed_scale * SIM_STEP_SECONDS)
 	if not bool(movement_result.get("ok", false)):

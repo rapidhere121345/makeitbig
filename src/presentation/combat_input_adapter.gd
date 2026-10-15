@@ -24,11 +24,13 @@ var command_source
 var feedback
 var screen_mapper: Callable
 var pointer_interface_query: Callable
+var loot_pickup_command_factory: Callable
 var manual_pointer_target_entity_id := 0
 var manual_pointer_gameplay := Vector2.ZERO
 var manual_pointer_target_anchor := Vector2.ZERO
 var manual_pointer_target_radius := 0.0
 var manual_pointer_status := POINTER_STATUS_NONE
+var _loot_pickup_requested_id := ""
 var _snapshot: Dictionary = {}
 
 
@@ -39,6 +41,7 @@ func configure(source: RefCounted, command_factories: Dictionary, feedback_owner
 	screen_mapper = mapper
 	pointer_interface_query = interface_query
 	var callbacks := command_factories.duplicate()
+	loot_pickup_command_factory = callbacks.get("make_loot_pickup", Callable())
 	callbacks.merge({
 		"player_position": Callable(self, "player_position"),
 		"player_facing": Callable(self, "player_facing"),
@@ -70,6 +73,22 @@ func collect_commands(snapshot: Dictionary) -> Array[Dictionary]:
 	})
 
 
+## Loot input is a room command, not a PlayerCombatRules command. Main consumes
+## this detached request before routing the ordinary combat commands, so the
+## ledger remains the only authority for range, lifecycle and one-shot state.
+func collect_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
+	_snapshot = snapshot
+	if _loot_pickup_requested_id.is_empty() or not loot_input_active(snapshot):
+		_loot_pickup_requested_id = "" if not loot_input_active(snapshot) else _loot_pickup_requested_id
+		return {}
+	var loot_entity_id := _loot_pickup_requested_id
+	_loot_pickup_requested_id = ""
+	if not loot_pickup_command_factory.is_valid():
+		return {}
+	var command: Variant = loot_pickup_command_factory.call(loot_entity_id)
+	return (command as Dictionary).duplicate(true) if command is Dictionary else {}
+
+
 func pointer_over_interface() -> bool:
 	return bool(pointer_interface_query.call()) if pointer_interface_query.is_valid() else false
 
@@ -80,7 +99,12 @@ func active() -> bool:
 
 func capture_actions(event: InputEvent, snapshot: Dictionary) -> void:
 	_snapshot = snapshot
-	if not active() or (event is InputEventKey and event.echo):
+	if event is InputEventKey and event.echo:
+		return
+	if event.is_action_pressed("loot_pickup"):
+		request_loot_pickup(snapshot)
+		return
+	if not active():
 		return
 	if event.is_action_pressed("dodge") and (not event is InputEventMouseButton or not pointer_over_interface()):
 		command_source.dodge_requested = true
@@ -112,6 +136,7 @@ func request_skill(ability: String, snapshot: Dictionary) -> void:
 
 func reset_intent() -> void:
 	command_source.reset_intent()
+	_loot_pickup_requested_id = ""
 	clear_pointer_lock()
 	manual_combat_input.reset()
 	feedback.reset_input()
@@ -148,7 +173,60 @@ func view_state(snapshot: Dictionary) -> Dictionary:
 		"edge_target_id": command_source.attack_requested_target_entity_id,
 		"request_sources": feedback.attack_request_sources.duplicate(true),
 		"input_feedback": feedback.active_input_feedback(int(snapshot.get("sim_tick", 0))),
+		"loot_pickup_pending_id": _loot_pickup_requested_id,
+		"loot_input_active": loot_input_active(snapshot),
 	}
+
+
+func loot_input_active(snapshot: Dictionary) -> bool:
+	if not bool(snapshot.get("in_arena", false)):
+		return false
+	if bool(snapshot.get("battle_over", false)) and not bool(snapshot.get("battle_victory", false)):
+		return false
+	var room_loot_value: Variant = snapshot.get("room_loot", {})
+	if not room_loot_value is Dictionary:
+		return false
+	for entity_value: Variant in (room_loot_value as Dictionary).get("entities", []):
+		if entity_value is Dictionary and String((entity_value as Dictionary).get("state", "")) == "available" \
+			and not String((entity_value as Dictionary).get("loot_entity_id", "")).strip_edges().is_empty():
+			return true
+	return false
+
+
+func request_loot_pickup(snapshot: Dictionary) -> void:
+	_snapshot = snapshot
+	if not loot_input_active(snapshot):
+		return
+	var target := _nearest_available_loot(snapshot)
+	if target.is_empty():
+		show_feedback("附近没有可拾取掉落")
+		return
+	_loot_pickup_requested_id = String(target.get("loot_entity_id", ""))
+	clear_feedback()
+
+
+func _nearest_available_loot(snapshot: Dictionary) -> Dictionary:
+	var room_loot_value: Variant = snapshot.get("room_loot", {})
+	if not room_loot_value is Dictionary:
+		return {}
+	var player_position_value: Variant = snapshot.get("player_position", Vector2.ZERO)
+	var player_position := player_position_value as Vector2 if player_position_value is Vector2 else Vector2.ZERO
+	var nearest: Dictionary = {}
+	var nearest_distance := INF
+	for entity_value: Variant in (room_loot_value as Dictionary).get("entities", []):
+		if not entity_value is Dictionary:
+			continue
+		var entity: Dictionary = entity_value
+		var loot_entity_id := String(entity.get("loot_entity_id", "")).strip_edges()
+		if String(entity.get("state", "")) != "available" or loot_entity_id.is_empty():
+			continue
+		var position_value: Variant = entity.get("position", Vector2.ZERO)
+		var position := position_value as Vector2 if position_value is Vector2 else Vector2.ZERO
+		var distance := player_position.distance_squared_to(position)
+		if distance < nearest_distance or (is_equal_approx(distance, nearest_distance) and (nearest.is_empty() or loot_entity_id < String(nearest.get("loot_entity_id", "")))):
+			nearest_distance = distance
+			nearest = entity.duplicate(true)
+	return nearest
 
 
 func _screen_to_gameplay(point: Vector2) -> Vector2:

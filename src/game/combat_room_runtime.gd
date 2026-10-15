@@ -212,6 +212,12 @@ func _process(_delta: float) -> void:
 	if not _session_is_active():
 		return
 	if bool(_room_instance.get("battle_over")):
+		# Victory and room settlement are separate phases when the room spawned
+		# loot. Keep the mounted room alive until the player explicitly leaves so
+		# queued pickups can commit against the room ledger. Defeat still closes
+		# immediately because its loot is forfeited.
+		if bool(_room_instance.get("battle_victory")) and bool(_room_instance.get("room_loot_window_open")):
+			return
 		_finish_completed()
 
 

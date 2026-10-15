@@ -35,6 +35,7 @@ const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.
 const CombatCommandSourceScript = preload("res://src/systems/combat_command_source.gd")
 const CombatSimulationScript = preload("res://src/systems/combat_simulation.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
+const CombatLootPickupProtocolScript := preload("res://src/systems/combat_loot_pickup_protocol.gd")
 const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
 
 const ARENA_MARGIN: float = 42.0
@@ -165,6 +166,7 @@ var attack_requested_pointer_gameplay: Vector2:
 		return command_source.attack_requested_pointer_gameplay if command_source != null else Vector2.ZERO
 var command_sequence: int = 0
 var last_command_receipts: Array[Dictionary] = []
+var last_loot_pickup_command_receipt: Dictionary = {}
 var last_attack_outcome: Dictionary:
 	get:
 		return combat_system.last_attack_outcome
@@ -215,6 +217,9 @@ var room_loot_snapshot: Dictionary:
 var room_loot_settlement: Dictionary:
 	get:
 		return _room_loot.settlement_snapshot() if _room_loot != null else {}
+var room_loot_window_open: bool:
+	get:
+		return battle_victory and _room_loot != null and _room_loot.has_unsettled_entities()
 var hazard_states: Array[Dictionary]:
 	get:
 		return encounter_director.hazard_states
@@ -438,7 +443,7 @@ func _process(delta: float) -> void:
 
 
 func _can_simulate_tick() -> bool:
-	return in_arena and not battle_over
+	return in_arena and (not battle_over or room_loot_window_open)
 func _unhandled_input(event: InputEvent) -> void:
 	input_adapter.capture_actions(event, gameplay_snapshot())
 
@@ -481,6 +486,10 @@ func _initialize_runtime() -> void:
 		simulation_world.configure(SIM_TICKS_PER_SECOND, "combat/unmounted", 0)
 	content_registry = ContentRegistryScript.new()
 	startup_errors = content_registry.load_all()
+	if content_registry.early_enemy_profile_registry != null and startup_errors.is_empty():
+		var enemy_profiles_ready: Dictionary = encounter_director.set_enemy_profile_registry(content_registry.early_enemy_profile_registry)
+		if not bool(enemy_profiles_ready.get("ok", false)):
+			startup_errors.append("enemy_profiles: %s" % String(enemy_profiles_ready.get("error", "unavailable")))
 	proxy_runtime = ProxyRuntimeScript.new()
 	proxy_intent_system = ProxyIntentSystemScript.new()
 	input_adapter.reset_intent()
@@ -699,6 +708,7 @@ func start_room() -> void:
 	input_adapter.reset_intent()
 	command_sequence = 0
 	last_command_receipts.clear()
+	last_loot_pickup_command_receipt.clear()
 	presentation.reset_battle()
 	combat_event_stream.reset()
 	automation_smoke_failure = ""
@@ -821,12 +831,20 @@ func _spawn_room_loot_for_source(source: String, source_entity_id: int, position
 
 
 func request_loot_pickup(loot_entity_id: String) -> Dictionary:
-	return _room_loot.request_pickup(sim_tick, in_arena, battle_over, loot_entity_id)
+	return _room_loot.request_pickup(sim_tick, in_arena, battle_over, battle_victory, loot_entity_id)
 
 
 func _process_room_loot_pickups_tick() -> void:
 	var player := player_combat_state.snapshot(sim_tick)
-	_room_loot.process_pickups(sim_tick, float(player.get("player_health", 0.0)), player.player_position, battle_over)
+	var receipts_before: Array = (_room_loot.snapshot().get("pickup_receipts", []) as Array).duplicate(true)
+	_room_loot.process_pickups(sim_tick, float(player.get("player_health", 0.0)), player.player_position, battle_over, battle_victory)
+	var receipts_after: Array = _room_loot.snapshot().get("pickup_receipts", [])
+	if receipts_after.size() > receipts_before.size() and presentation != null and presentation.feedback != null:
+		var receipt_value: Variant = receipts_after[receipts_after.size() - 1]
+		if receipt_value is Dictionary and bool((receipt_value as Dictionary).get("ok", false)):
+			presentation.feedback.show_input_feedback("掉落已拾取 · 离场后计入结算", sim_tick)
+		elif receipt_value is Dictionary:
+			presentation.feedback.show_input_feedback("掉落未拾取 · %s" % String((receipt_value as Dictionary).get("error", "请求失效")), sim_tick)
 
 
 func _settle_room_loot(outcome: String) -> void:
@@ -999,6 +1017,12 @@ func _simulation_set_elapsed(value: float) -> void:
 
 
 func _simulation_collect_commands() -> Array[Dictionary]:
+	var snapshot := gameplay_snapshot()
+	var loot_command: Dictionary = input_adapter.collect_loot_pickup_command(snapshot)
+	if loot_command.is_empty() and selected_mode == "Auto":
+		loot_command = _auto_loot_pickup_command(snapshot)
+	if not loot_command.is_empty():
+		_submit_loot_pickup_command(loot_command)
 	if embedded_session and automation_smoke and selected_mode == "Manual":
 		var result: Dictionary = smoke_input_driver.decide({
 			"player": player_combat_state.snapshot(sim_tick), "targets": _read_only_targets(),
@@ -1008,6 +1032,56 @@ func _simulation_collect_commands() -> Array[Dictionary]:
 		command_sequence = int(result.next_sequence)
 		return result.commands
 	return _auto_commands() if selected_mode == "Auto" else input_adapter.collect_commands(gameplay_snapshot())
+
+
+func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
+	var arbitration: Dictionary = CombatLootPickupProtocolScript.arbitrate([command], sim_tick, "ranger")
+	var receipts: Array = arbitration.get("receipts", [])
+	var receipt: Dictionary = receipts[0].duplicate(true) if not receipts.is_empty() and receipts[0] is Dictionary else {"status": "rejected", "reason": "invalid_receipt", "command": command.duplicate(true)}
+	if String(receipt.get("status", "")) == CombatLootPickupProtocolScript.STATUS_ACCEPTED:
+		var normalized: Dictionary = receipt.get("command", {})
+		var room_receipt := request_loot_pickup(String(normalized.get("loot_entity_id", "")))
+		receipt["room_receipt"] = room_receipt.duplicate(true)
+		if not bool(room_receipt.get("accepted", false)) and selected_mode == "Manual" and presentation != null and presentation.feedback != null:
+			presentation.feedback.show_input_feedback("掉落未进入拾取范围 · 靠近后再按 F", sim_tick)
+	last_loot_pickup_command_receipt = receipt.duplicate(true)
+	return last_loot_pickup_command_receipt.duplicate(true)
+
+
+func _auto_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
+	if not bool(snapshot.get("in_arena", false)) or (bool(snapshot.get("battle_over", false)) and not bool(snapshot.get("battle_victory", false))):
+		return {}
+	var room_loot_value: Variant = snapshot.get("room_loot", {})
+	if not room_loot_value is Dictionary:
+		return {}
+	var room_loot: Dictionary = room_loot_value
+	var pending_ids: Dictionary = {}
+	for pending_value: Variant in room_loot.get("pending_pickup_requests", []):
+		if pending_value is Dictionary:
+			pending_ids[String((pending_value as Dictionary).get("loot_entity_id", ""))] = true
+	var player_position_value: Variant = snapshot.get("player_position", Vector2.ZERO)
+	var player_position := player_position_value as Vector2 if player_position_value is Vector2 else Vector2.ZERO
+	var nearest_id := ""
+	var nearest_distance := INF
+	for entity_value: Variant in room_loot.get("entities", []):
+		if not entity_value is Dictionary:
+			continue
+		var entity: Dictionary = entity_value
+		var loot_id := String(entity.get("loot_entity_id", "")).strip_edges()
+		if loot_id.is_empty() or String(entity.get("state", "")) != "available" or pending_ids.has(loot_id):
+			continue
+		var position_value: Variant = entity.get("position", Vector2.ZERO)
+		var position := position_value as Vector2 if position_value is Vector2 else Vector2.ZERO
+		var radius := maxf(0.0, float(entity.get("pickup_radius", 0.0)))
+		var distance := player_position.distance_squared_to(position)
+		if distance > radius * radius + 0.000001:
+			continue
+		if distance < nearest_distance or (is_equal_approx(distance, nearest_distance) and (nearest_id.is_empty() or loot_id < nearest_id)):
+			nearest_distance = distance
+			nearest_id = loot_id
+	if nearest_id.is_empty():
+		return {}
+	return _loot_pickup_command(nearest_id)
 
 
 func _simulation_check_timeout() -> void:
@@ -1186,6 +1260,12 @@ func _cast_command(ability_id: String, target_entity_id: int, direction: Vector2
 		result = CombatCommandProtocolScript.cast(sim_tick, "ranger", command_sequence, ability_id, target_entity_id, direction_milli.x, direction_milli.y)
 	else:
 		result = CombatCommandProtocolScript.cast(sim_tick, "ranger", command_sequence, ability_id, target_entity_id)
+	command_sequence += 1
+	return result
+
+
+func _loot_pickup_command(loot_entity_id: String) -> Dictionary:
+	var result := CombatLootPickupProtocolScript.make_request(sim_tick, "ranger", command_sequence, loot_entity_id)
 	command_sequence += 1
 	return result
 
@@ -1544,7 +1624,8 @@ func _check_battle_end() -> void:
 	battle_report = String(observed.state.report)
 	if battle_victory:
 		_spawn_room_loot_for_source("wave_clear", 0, player_position)
-	_settle_room_loot("victory" if battle_victory else "defeat")
+	if not battle_victory:
+		_settle_room_loot("defeat")
 	if battle_victory:
 		if automation_smoke:
 			var smoke_valid := false
@@ -1857,6 +1938,7 @@ func _ensure_command_source() -> void:
 		"make_move": Callable(self, "_move_command"),
 		"make_dodge": Callable(self, "_dodge_command"),
 		"make_cast": Callable(self, "_cast_command"),
+		"make_loot_pickup": Callable(self, "_loot_pickup_command"),
 	}, presentation.feedback, presentation.screen_to_gameplay, presentation.is_pointer_over_interface)
 
 
@@ -1919,6 +2001,7 @@ func gameplay_snapshot() -> Dictionary:
 		"reinforcements_summoned": reinforcements_summoned,
 		"timed_bonus_available": timed_bonus_available,
 		"last_attack_outcome": last_attack_outcome,
+		"last_loot_pickup_command_receipt": last_loot_pickup_command_receipt.duplicate(true),
 		"proxy_prediction": proxy_prediction,
 		"selected_mode": selected_mode,
 		"arena_rect": _arena_rect(), "walkable_geometry": _walkable_geometry(14.0),

@@ -35,6 +35,27 @@ func _initialize() -> void:
 	_expect(is_equal_approx(fast_position.x, 10.0 + 144.0 / 30.0), "stats runtime: fast move_speed was not consumed")
 	_expect(fast_position.x > slow_position.x and slow.registry.is_position_clear(slow_position), "stats runtime: same command did not produce two valid movement outcomes")
 
+	# Flare-style resolved stats keep the movement model explicit. An authored
+	# accelerated sheet ramps toward the same max speed on fixed ticks instead
+	# of silently treating acceleration as dead content.
+	var accelerated := _session("accelerated", 120.0, 96.0, 6, 12, 30, "accelerated", 60.0)
+	_expect(bool(accelerated.get("ok", false)), "stats runtime: accelerated combat sheet was rejected")
+	if bool(accelerated.get("ok", false)):
+		var accelerated_world: Object = accelerated.world
+		var accelerated_rules: Object = accelerated.rules
+		var accelerated_state: Object = accelerated.state
+		accelerated_world.step()
+		_expect(bool(accelerated_rules.advance_tick(accelerated_world.tick, intent, no_targets).get("ok", false)), "stats runtime: accelerated first tick failed")
+		var first_accelerated_position: Vector2 = accelerated_state.position()
+		accelerated_world.step()
+		_expect(bool(accelerated_rules.advance_tick(accelerated_world.tick, intent, no_targets).get("ok", false)), "stats runtime: accelerated second tick failed")
+		var second_accelerated_position: Vector2 = accelerated_state.position()
+		_expect(second_accelerated_position.x > first_accelerated_position.x and first_accelerated_position.x > 10.0, "stats runtime: acceleration did not ramp committed movement")
+		_expect(first_accelerated_position.x - 10.0 < 120.0 / 30.0, "stats runtime: accelerated first tick bypassed the acceleration limit")
+		var accelerated_slice: Dictionary = accelerated_state.snapshot(accelerated_world.tick)
+		_expect(String((accelerated_slice.get("combat_stats", {}) as Dictionary).get("movement_model", "")) == "accelerated", "stats runtime: movement model was lost in the detached sheet")
+		_expect(float(accelerated_slice.get("player_velocity", Vector2.ZERO).x) > 0.0, "stats runtime: accelerated velocity was not retained in the room state")
+
 	var slow_snapshot: Dictionary = slow.state.snapshot(slow_world.tick)
 	_expect(bool(slow_snapshot.get("combat_stats", {}).get("move_speed", 0.0) == 72.0), "stats runtime: detached player slice omitted resolved stats")
 	(slow_snapshot.combat_stats as Dictionary)["move_speed"] = 9999.0
@@ -81,7 +102,7 @@ func _initialize() -> void:
 	_finish()
 
 
-func _session(room_id: String, move_speed: float, dodge_distance: float, dodge_duration: int, attack_cooldown: int, dodge_cooldown: int) -> Dictionary:
+func _session(room_id: String, move_speed: float, dodge_distance: float, dodge_duration: int, attack_cooldown: int, dodge_cooldown: int, movement_model: String = "direct", acceleration: float = -1.0) -> Dictionary:
 	var registry := Registry.new()
 	var configured := registry.configure(room_id, 1)
 	if not bool(configured.get("ok", false)) or not bool(registry.register_actor("ranger", Vector2(10.0, 20.0), 14.0).get("ok", false)):
@@ -100,6 +121,10 @@ func _session(room_id: String, move_speed: float, dodge_distance: float, dodge_d
 			"resistances": {"physical": 0.0},
 		},
 	}
+	if acceleration > 0.0:
+		(build.combat_stats as Dictionary)["acceleration"] = acceleration
+	if movement_model != "direct":
+		(build.combat_stats as Dictionary)["movement_model"] = movement_model
 	var provenance := {}
 	for field: String in ["move_speed", "acceleration", "dodge_distance", "attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks"]:
 		provenance[field] = ["fixture:%s" % field]
