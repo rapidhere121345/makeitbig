@@ -1,8 +1,8 @@
 # Runtime architecture review — 2026-10-15
 
-This review is based on committed `HEAD` `7cc2bfb` and the current runtime
-architecture described in [ARCHITECTURE.md](ARCHITECTURE.md). The repository
-was clean when the review started. The review covers the next product step:
+This review was refreshed after the room-local loot slice at committed `HEAD`
+`666a30b` and the mounted regression in `tests/test_real_combat_room.gd`. The
+repository was clean before that slice. It covers the next product step:
 authored combat rooms, room-local drops, and a more expressive ranger build.
 
 The fixed 30 Hz simulation, native geometry, actor footprint checks, projectile
@@ -125,15 +125,17 @@ ledgers: `CombatStats`, `ActionTelegraph`, `StatusEffectLedger`, and
 facade during migration; new methods should expose snapshots rather than new
 writable aliases.
 
-### 6. Drops are generated at contract completion, not in a room
+### 6. Drops are now room-local only when a room opts in
 
 `EquipmentDropGenerator` is already deterministic and independently tested.
-The production settlement path, however, is in
-`src/game/application_state.gd:1073-1090` and `:1915-2011`. It replays the
-contract room plan and generates equipment after the contract result. There is
-no room-local loot entity, pickup command, pickup event, or room loot ledger.
+The production path now has an opt-in `CombatLootLedger`, and the mounted
+regression proves enemy death → room entity → next-tick pickup → victory
+settlement. The ledger is still configured, queued, and settled by Main, while
+`CombatRoomRuntime` repeats the idempotent settle call at its result boundary.
+That keeps the current slice safe but leaves the composition root owning a
+room lifecycle that belongs beside `CombatRoomRules`.
 
-Consequences for the next milestone:
+The remaining consequences apply to authored rooms that have not opted in:
 
 * a player cannot decide whether to pick up an item before leaving the room;
 * a room snapshot cannot prove which item was spawned or picked up;
@@ -143,11 +145,11 @@ Consequences for the next milestone:
 * the existing deterministic RNG order is not a suitable substitute for
   room-local settlement state.
 
-**Target boundary:** add a room-owned `LootLedger` that records spawn,
-availability, pickup, and settlement. Keep `EquipmentDropGenerator` pure; the
-ledger is the authority that calls it exactly once per eligible drop slot.
-`ApplicationState` should consume the ledger's detached settlement receipt
-instead of reconstructing room drops from `room_plan`.
+**Target boundary:** keep `EquipmentDropGenerator` pure, but move slot
+normalization, pickup queueing, and the one settlement call behind a room-owned
+facade. Main should only pass room content and relay commands. `ApplicationState`
+should consume the ledger's detached settlement receipt instead of
+reconstructing room drops from `room_plan`.
 
 ### 7. Result and snapshot code still reflect the composition root
 
@@ -173,15 +175,15 @@ clearance, enemy telegraphs, projectile sweeps, multipart damage groups,
 terminal priority, and detached presentation. It can therefore host the first
 real room without replacing the physics or replay foundation.
 
-It does not yet express these as first-class room facts:
+It does not yet express these as first-class room facts across the authored
+campaign:
 
 * a wave definition with spawn, active, cleared, and delayed-reinforcement
   states;
-* an item existing in the room with a stable entity ID and a pickup event;
+* an item existing in every authored room with a stable entity ID and a pickup event;
 * a status effect with source, start tick, expiry, stack policy, and modifier;
 * a resolved player combat stat sheet with provenance from build/equipment;
-* one room settlement receipt that proves all loot was either picked up or
-  intentionally left behind;
+* one room settlement receipt owned by the room facade rather than Main;
 * a typed simulation port that separates phase orchestration from Main.
 
 These are domain gaps, not geometry gaps. Extending ActorMotor or presentation
@@ -190,16 +192,18 @@ sorting will not solve them.
 ## Migration order
 
 1. Add detached stat, wave, loot, and room-result contracts with standalone
-   tests. Do not change Main yet.
-2. Add `LootLedger` and wire one room's spawn/pickup/settlement through
-   `CombatRoomRules`; retain the old `ApplicationState` path only for rooms
-   without a ledger and mark that path as legacy in tests.
+   tests. This is complete for the current opt-in ledger slice.
+2. Move the existing slot normalization, pickup queue, and settlement relay
+   from Main into a room facade; then enable one authored campaign room and
+   retain the old `ApplicationState` path only for rooms without a ledger.
 3. Add a typed `RoomEncounter` facade around EncounterDirector. Move wave state
    and enemy add/remove through it, then migrate CombatSystem's encounter
    callbacks to the facade.
 4. Replace PlayerCombatState's untyped stat keys with a `CombatStatsSnapshot`
    and retain the current action/timeline state until behavior tests use the
-   public snapshots.
+   public snapshots. The current `CombatStatsSnapshot` is a validated domain
+   contract, but the production player still uses fixed movement and cooldown
+   constants.
 5. Migrate CombatSimulation to grouped ports and delete its string callback
    adapter after the old fixtures are gone.
 6. Remove Main's writable projections and dynamic result reads. Rebuild the
