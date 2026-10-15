@@ -2,7 +2,7 @@
 
 更新时间：2026-10-15
 
-本轮碰撞与遮挡收口基线为 `eb95c57`（`Align concept boundaries with authoritative geometry`）。当前新增修复待提交：表现层 world frame 保留 ring 布局，并传递 detached 权威 walkable geometry。
+本轮碰撞与遮挡收口提交为 `91bc7c3`（`Keep ring layout in world presentation frame`）。发布页 build 为 `20261015-015723-91bc7c3318f1`，正式静态发布根在 `build/releases/`。
 
 ## 当前验收
 
