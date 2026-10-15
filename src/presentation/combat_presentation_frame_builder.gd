@@ -34,7 +34,8 @@ func world_frame(snapshot: Dictionary, viewport: Rect2, pending_reason: String) 
 		"presentation_enabled": true, "in_arena": snapshot["in_arena"],
 		"viewport_rect": viewport, "arena_rect": snapshot["arena_rect"],
 		"focus_gameplay": snapshot["player_position"],
-		"layout_id": "rectangle_arena" if snapshot["layout_id"] == "ring" else snapshot["layout_id"],
+		"layout_id": snapshot["layout_id"],
+		"walkable_geometry": snapshot["walkable_geometry"].duplicate(true),
 		"sim_tick": snapshot["sim_tick"], "pending_reason": pending_reason,
 	}
 
