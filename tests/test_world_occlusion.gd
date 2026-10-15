@@ -51,6 +51,7 @@ func _run() -> void:
 	_test_pieces()
 	await _test_town_scene()
 	_test_arena()
+	_test_room_concept_geometry()
 	_test_posed_boss_geometry()
 	if failures.is_empty():
 		print("PASS  test_world_occlusion.gd")
@@ -94,6 +95,24 @@ func _test_posed_boss_geometry() -> void:
 					view.prepare_actor_occlusion(cells, hero)
 					var report: Dictionary = view.occlusion_report(hero)
 					_expect(float(report.get("local_opacity_total", 1.0)) <= LOCAL_OPACITY_CEILING, "posed parts exceed shared opacity budget")
+
+
+func _test_room_concept_geometry() -> void:
+	var view = ArenaWorldViewScript.new()
+	view.begin_frame(ARENA_VIEWPORT, Vector2(430.0, 360.0), ARENA_RECT)
+	var gameplay_bounds := Rect2(Vector2(56.0, 204.0), Vector2(1168.0, 460.0))
+	var geometry := {
+		"bounds": gameplay_bounds,
+		"center": gameplay_bounds.get_center(),
+		"corridor_half_height": 72.0,
+		"inner_radius": 97.6,
+		"outer_radius": 209.84,
+	}
+	var world_bounds: Rect2 = view._concept_bounds_world(geometry)
+	_expect(world_bounds == Rect2(view.gameplay_to_world(gameplay_bounds.position), gameplay_bounds.size * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: room landmarks did not use gameplay bounds")
+	_expect(view._concept_center_world(geometry, world_bounds) == view.gameplay_to_world(gameplay_bounds.get_center()), "concept: room landmarks did not use gameplay center")
+	_expect(is_equal_approx(view._concept_radius_world(geometry, "corridor_half_height", 62.0), 72.0 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: corridor landmark used a stale visual half-height")
+	_expect(is_equal_approx(view._concept_radius_world(geometry, "outer_radius", 152.0), 209.84 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: ring landmark used a stale visual radius")
 
 
 ## The local opacity budget is the whole point of the pass: whatever a frame stacks

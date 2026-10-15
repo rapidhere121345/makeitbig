@@ -402,21 +402,48 @@ func room_concept_report(layout_id: String) -> Dictionary:
 ## A low-contrast landmark pass gives each published layout a spatial identity.
 ## It is drawn under actors and telegraphs, and reads only the fixed layout id plus
 ## the already-running simulation tick for a bounded lantern pulse.
-func draw_room_concept(canvas: CanvasItem, layout_id: String, phase_ticks: int = 0) -> void:
+func draw_room_concept(canvas: CanvasItem, layout_id: String, phase_ticks: int = 0, walkable_geometry: Dictionary = {}) -> void:
 	if canvas == null:
 		return
 	var phase := fmod(float(phase_ticks), 60.0) / 60.0
 	match layout_id:
 		"ring":
-			_draw_ring_concept(canvas, phase)
+			_draw_ring_concept(canvas, phase, walkable_geometry)
 		"corridor":
-			_draw_corridor_concept(canvas, phase)
+			_draw_corridor_concept(canvas, phase, walkable_geometry)
 		_:
-			_draw_outpost_concept(canvas, phase)
+			_draw_outpost_concept(canvas, phase, walkable_geometry)
 
 
-func _draw_outpost_concept(canvas: CanvasItem, phase: float) -> void:
-	var field := Rect2(Vector2(92.0, 194.0), Vector2(840.0, 386.0))
+## Concept landmarks use the same detached geometry snapshot as the authoritative
+## boundary guide.  The presentation never owns this geometry; it only maps the
+## gameplay-space values into the native art space for drawing.
+func _concept_bounds_world(geometry: Dictionary) -> Rect2:
+	var gameplay_bounds := _arena
+	var candidate: Variant = geometry.get("bounds", null)
+	if candidate is Rect2 and (candidate as Rect2).size.x > 0.0 and (candidate as Rect2).size.y > 0.0:
+		gameplay_bounds = candidate as Rect2
+	if gameplay_bounds.size.x <= 0.0 or gameplay_bounds.size.y <= 0.0:
+		return Rect2(Vector2(92.0, 194.0), Vector2(840.0, 386.0))
+	return Rect2(gameplay_to_world(gameplay_bounds.position), gameplay_bounds.size * GAMEPLAY_TO_WORLD)
+
+
+func _concept_center_world(geometry: Dictionary, bounds: Rect2) -> Vector2:
+	var candidate: Variant = geometry.get("center", null)
+	if candidate is Vector2 and (candidate as Vector2).is_finite():
+		return gameplay_to_world(candidate as Vector2)
+	return bounds.get_center()
+
+
+func _concept_radius_world(geometry: Dictionary, key: String, fallback: float) -> float:
+	var candidate: Variant = geometry.get(key, null)
+	if candidate is int or candidate is float:
+		return maxf(0.0, float(candidate) * GAMEPLAY_TO_WORLD)
+	return fallback
+
+
+func _draw_outpost_concept(canvas: CanvasItem, phase: float, geometry: Dictionary = {}) -> void:
+	var field := _concept_bounds_world(geometry)
 	canvas.draw_rect(field, Color(PaletteScript.SLATE_0, 0.25), true)
 	canvas.draw_rect(field.grow(-5.0), Color(PaletteScript.COPPER_DULL, 0.52), false, 3.0)
 	canvas.draw_rect(field.grow(-15.0), Color(PaletteScript.BONE_DIM, 0.12), false, 1.0)
@@ -425,35 +452,44 @@ func _draw_outpost_concept(canvas: CanvasItem, phase: float) -> void:
 	var lamp_alpha := 0.28 + 0.18 * (0.5 + 0.5 * sin(phase * TAU))
 	_draw_room_gate(canvas, Vector2(field.position.x + 8.0, field.get_center().y), Vector2.RIGHT, Color(PaletteScript.COLD, lamp_alpha), false)
 	_draw_room_gate(canvas, Vector2(field.end.x - 8.0, field.get_center().y), Vector2.LEFT, Color(PaletteScript.COPPER, lamp_alpha), true)
-	for x in range(190, 900, 140):
+	var x := field.position.x + 98.0
+	while x < field.end.x - 30.0:
 		canvas.draw_line(Vector2(x, field.position.y + 24.0), Vector2(x + 38.0, field.position.y + 24.0), Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
 		canvas.draw_line(Vector2(x, field.end.y - 24.0), Vector2(x + 38.0, field.end.y - 24.0), Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
+		x += 140.0
 
 
-func _draw_ring_concept(canvas: CanvasItem, phase: float) -> void:
-	var center := WORLD_FOCUS
-	canvas.draw_circle(center, 164.0, Color(PaletteScript.SLATE_0, 0.31))
-	canvas.draw_circle(center, 70.0, Color(PaletteScript.INK, 0.38))
-	canvas.draw_arc(center, 152.0, 0.0, TAU, 64, Color(PaletteScript.COPPER_DULL, 0.66), 4.0, false)
-	canvas.draw_arc(center, 70.0, 0.0, TAU, 48, Color(PaletteScript.BONE_DIM, 0.34), 2.0, false)
+func _draw_ring_concept(canvas: CanvasItem, phase: float, geometry: Dictionary = {}) -> void:
+	var bounds := _concept_bounds_world(geometry)
+	var center := _concept_center_world(geometry, bounds)
+	var inner_radius := _concept_radius_world(geometry, "inner_radius", 70.0)
+	var outer_radius := _concept_radius_world(geometry, "outer_radius", 152.0)
+	canvas.draw_circle(center, outer_radius + 12.0, Color(PaletteScript.SLATE_0, 0.31))
+	canvas.draw_circle(center, inner_radius, Color(PaletteScript.INK, 0.38))
+	canvas.draw_arc(center, outer_radius, 0.0, TAU, 64, Color(PaletteScript.COPPER_DULL, 0.66), 4.0, false)
+	canvas.draw_arc(center, inner_radius, 0.0, TAU, 48, Color(PaletteScript.BONE_DIM, 0.34), 2.0, false)
 	for index in 8:
 		var angle := TAU * float(index) / 8.0
-		var point := center + Vector2(cos(angle), sin(angle)) * 152.0
+		var point := center + Vector2(cos(angle), sin(angle)) * outer_radius
 		canvas.draw_rect(Rect2(point - Vector2(5.0, 7.0), Vector2(10.0, 14.0)), Color(PaletteScript.SLATE_2, 0.54), true)
 		var glow := 0.18 + 0.11 * (0.5 + 0.5 * sin(phase * TAU + float(index) * 0.6))
 		canvas.draw_circle(point + Vector2(0.0, -5.0), 2.5, Color(PaletteScript.COPPER, glow))
 	canvas.draw_arc(center, 138.0, phase * TAU, phase * TAU + PI * 0.42, 12, Color(PaletteScript.COLD, 0.42), 3.0, false)
-	_draw_room_gate(canvas, center + Vector2(152.0, 0.0), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
-	_draw_room_gate(canvas, center + Vector2(107.0, 107.0), Vector2.UP, Color(PaletteScript.COLD, 0.48), false)
+	_draw_room_gate(canvas, center + Vector2(outer_radius, 0.0), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
+	_draw_room_gate(canvas, center + Vector2(outer_radius * 0.70, outer_radius * 0.70), Vector2.UP, Color(PaletteScript.COLD, 0.48), false)
 
 
-func _draw_corridor_concept(canvas: CanvasItem, phase: float) -> void:
-	var center_y := WORLD_FOCUS.y
-	var left := 92.0
-	var right := WORLD_SIZE.x - 92.0
-	var lane := Rect2(Vector2(left, center_y - 62.0), Vector2(right - left, 124.0))
-	canvas.draw_rect(Rect2(Vector2(left, 80.0), Vector2(right - left, lane.position.y - 80.0)), Color(PaletteScript.INK, 0.24), true)
-	canvas.draw_rect(Rect2(Vector2(left, lane.end.y), Vector2(right - left, WORLD_SIZE.y - lane.end.y - 80.0)), Color(PaletteScript.INK, 0.24), true)
+func _draw_corridor_concept(canvas: CanvasItem, phase: float, geometry: Dictionary = {}) -> void:
+	var bounds := _concept_bounds_world(geometry)
+	var center_y := _concept_center_world(geometry, bounds).y
+	var half_height := _concept_radius_world(geometry, "corridor_half_height", 62.0)
+	var left := bounds.position.x
+	var right := bounds.end.x
+	var lane := Rect2(Vector2(left, center_y - half_height), Vector2(right - left, half_height * 2.0))
+	var top := maxf(0.0, bounds.position.y - 114.0)
+	var bottom := minf(WORLD_SIZE.y, bounds.end.y + 114.0)
+	canvas.draw_rect(Rect2(Vector2(left, top), Vector2(right - left, lane.position.y - top)), Color(PaletteScript.INK, 0.24), true)
+	canvas.draw_rect(Rect2(Vector2(left, lane.end.y), Vector2(right - left, bottom - lane.end.y)), Color(PaletteScript.INK, 0.24), true)
 	canvas.draw_rect(lane, Color(PaletteScript.SLATE_1, 0.28), true)
 	for side in [-1.0, 1.0]:
 		var y: float = center_y + float(side) * 62.0
