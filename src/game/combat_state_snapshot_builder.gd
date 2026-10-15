@@ -242,6 +242,8 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 		"targeting_distance_milli": roundi(float(_runtime_value(runtime, "locked_targeting_distance", 0.0)) * 1000.0),
 		"tick": int(_runtime_value(runtime, "sim_tick", 0)),
 	}
+	if player.has("combat_stats"):
+		state["combat_stats"] = CombatStateCodecScript.hash_safe(player.get("combat_stats", {}))
 	var talent_capabilities: Variant = player.get("talent_capabilities", {})
 	if talent_capabilities is Dictionary and not (talent_capabilities as Dictionary).is_empty():
 		state["talent_runtime"] = {

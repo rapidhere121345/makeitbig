@@ -29,13 +29,14 @@ const NODE_FIELDS: Array[String] = [
 ]
 const ROOM_FIELDS: Array[String] = [
 	"id", "layout_id", "objective_id", "hazard_ids", "enemy_ids", "elite_rule_ids", "boss_id",
-	"drop_tags", "new_problem_id",
+	"drop_tags", "new_problem_id", "loot_slots", "combat_stats",
 ]
 const LAYOUT_FIELDS: Array[String] = [
 	"id", "display_name", "concept", "landmark", "entry_hint", "exit_hint",
 ]
 const TEMPLATE_FIELDS: Array[String] = [
 	"room_count", "layout_ids", "objective_ids", "hazard_ids", "enemy_ids", "elite_rule_ids", "drop_tags",
+	"room_overrides",
 ]
 
 var _data: Dictionary = {}
@@ -161,6 +162,13 @@ func instantiate_branch(template_id: String, seed: int, mode: String = "Manual")
 			"drop_tags": [_pick(spec.drop_tags, rng)],
 			"new_problem_id": "",
 		}
+		for override_value: Variant in spec.get("room_overrides", []):
+			if override_value is Dictionary and int((override_value as Dictionary).get("index", -1)) == index:
+				var override: Dictionary = override_value
+				for authored_field: String in ["loot_slots", "combat_stats"]:
+					if override.has(authored_field):
+						var authored_value: Variant = override.get(authored_field)
+						room[authored_field] = authored_value.duplicate(true) if authored_value is Array or authored_value is Dictionary else authored_value
 		rooms.append(room)
 	return {"ok": true, "plan": {
 		"schema_version": SCHEMA_VERSION,
@@ -330,6 +338,7 @@ func _validate_room(value: Variant, node_id: String, catalogs: Dictionary, globa
 	var problem: Variant = room.get("new_problem_id", null)
 	if not (problem is String):
 		failures.append("room %s: new_problem_id must be a string" % room_id)
+	_validate_room_features(room, "room %s" % room_id, catalogs, failures)
 
 
 func _validate_template(spec: Dictionary, node_id: String, catalogs: Dictionary, failures: Array[String]) -> void:
@@ -343,6 +352,78 @@ func _validate_template(spec: Dictionary, node_id: String, catalogs: Dictionary,
 	_validate_string_references(spec.get("enemy_ids", null), catalogs.get("normal_enemies", {}), "template %s enemy_ids" % node_id, true, failures)
 	_validate_string_references(spec.get("elite_rule_ids", null), catalogs.get("elite_rules", {}), "template %s elite_rule_ids" % node_id, true, failures, true)
 	_validate_string_references(spec.get("drop_tags", null), catalogs.get("drop_tags", {}), "template %s drop_tags" % node_id, true, failures)
+	if spec.has("room_overrides"):
+		var overrides: Variant = spec.get("room_overrides")
+		if not overrides is Array or (overrides as Array).is_empty():
+			failures.append("template %s: room_overrides must be a non-empty array" % node_id)
+		else:
+			var seen_indexes := {}
+			for override_value: Variant in overrides:
+				if not override_value is Dictionary:
+					failures.append("template %s: room override must be an object" % node_id)
+					continue
+				var override: Dictionary = override_value
+				_validate_fields(override, ["index", "loot_slots", "combat_stats"], "template %s room override" % node_id, failures)
+				var index_value: Variant = override.get("index", null)
+				if not _is_integer_number(index_value) or int(index_value) < 0 or int(index_value) >= int(raw_room_count):
+					failures.append("template %s: room override index is out of range" % node_id)
+				else:
+					var index := int(index_value)
+					if seen_indexes.has(index):
+						failures.append("template %s: duplicate room override index %d" % [node_id, index])
+					seen_indexes[index] = true
+				if not override.has("loot_slots") and not override.has("combat_stats"):
+					failures.append("template %s: room override has no authored content" % node_id)
+				_validate_room_features(override, "template %s room override" % node_id, catalogs, failures)
+
+
+func _validate_room_features(room: Dictionary, context: String, catalogs: Dictionary, failures: Array[String]) -> void:
+	if room.has("loot_slots"):
+		var slots_value: Variant = room.get("loot_slots")
+		if not slots_value is Array or (slots_value as Array).is_empty():
+			failures.append("%s: loot_slots must be a non-empty array" % context)
+		else:
+			var seen_slots := {}
+			for slot_value: Variant in slots_value:
+				if not slot_value is Dictionary:
+					failures.append("%s: loot slot must be an object" % context)
+					continue
+				var slot: Dictionary = slot_value
+				_validate_fields(slot, ["slot_id", "source", "tags", "pickup_radius", "guaranteed", "guarantee_family"], "%s loot slot" % context, failures)
+				var slot_id := String(slot.get("slot_id", "")).strip_edges()
+				if slot_id.is_empty() or seen_slots.has(slot_id):
+					failures.append("%s: loot slot id must be unique and non-empty" % context)
+				seen_slots[slot_id] = true
+				if String(slot.get("source", "")) not in ["enemy_death", "wave_clear"]:
+					failures.append("%s: loot slot source is invalid" % context)
+				_validate_string_references(slot.get("tags", null), catalogs.get("drop_tags", {}), "%s loot slot tags" % context, true, failures)
+				if not _is_finite_number(slot.get("pickup_radius", null)) or float(slot.get("pickup_radius")) <= 0.0:
+					failures.append("%s: loot slot pickup_radius must be positive" % context)
+				if slot.has("guaranteed") and not slot.get("guaranteed") is bool:
+					failures.append("%s: loot slot guaranteed must be boolean" % context)
+				if slot.has("guarantee_family") and not slot.get("guarantee_family") is String:
+					failures.append("%s: loot slot guarantee_family must be a string" % context)
+	if room.has("combat_stats"):
+		var stats_value: Variant = room.get("combat_stats")
+		if not stats_value is Dictionary:
+			failures.append("%s: combat_stats must be an object" % context)
+		else:
+			var stats: Dictionary = stats_value
+			var allowed: Array[String] = ["move_speed", "acceleration", "dodge_distance", "attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks", "resistances"]
+			_validate_fields(stats, allowed, "%s combat_stats" % context, failures)
+			for field: String in ["move_speed", "acceleration", "dodge_distance"]:
+				if not _is_finite_number(stats.get(field, null)) or float(stats.get(field)) <= 0.0:
+					failures.append("%s combat_stats.%s must be positive" % [context, field])
+			for field: String in ["attack_cooldown_ticks", "dodge_duration_ticks", "dodge_cooldown_ticks"]:
+				if not _is_integer_number(stats.get(field, null)) or int(stats.get(field)) < 0:
+					failures.append("%s combat_stats.%s must be a non-negative integer" % [context, field])
+			var resistances: Variant = stats.get("resistances", null)
+			if not resistances is Dictionary:
+				failures.append("%s combat_stats.resistances must be an object" % context)
+			else:
+				for resistance_id: Variant in resistances.keys():
+					if not resistance_id is String or not _is_finite_number(resistances[resistance_id]) or float(resistances[resistance_id]) < 0.0 or float(resistances[resistance_id]) > 1.0:
+						failures.append("%s combat_stats resistance is invalid" % context)
 
 
 func _validate_progression(fixed: Array, templates: Array, all_nodes: Dictionary, failures: Array[String]) -> void:
@@ -470,6 +551,14 @@ func _register_id(id: String, context: String, local_ids: Dictionary, global_ids
 		failures.append("campaign: id '%s' is reused by %s and %s" % [id, String(global_ids[id]), context])
 	local_ids[id] = true
 	global_ids[id] = context
+
+
+func _is_integer_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value)) and float(value) == float(int(value))
+
+
+func _is_finite_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value))
 
 
 func _validate_pure_data(value: Variant, path: String, failures: Array[String]) -> void:

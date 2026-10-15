@@ -109,7 +109,7 @@ static func _build_early_campaign_contract(contract_id: String, seed: int, confi
 		var boss_id := String(source.get("boss_id", ""))
 		var layout_id := String(source.get("layout_id", "rectangle_arena"))
 		var layout_info := registry.layout_info(layout_id)
-		rooms.append({
+		var planned_room := {
 			"index": index,
 			"room_id": room_id,
 			"layout": layout_id,
@@ -130,7 +130,12 @@ static func _build_early_campaign_contract(contract_id: String, seed: int, confi
 			"drop_tag": String(drop_tags_for_room[0]) if not drop_tags_for_room.is_empty() else "",
 			"new_problem_id": String(source.get("new_problem_id", "")),
 			"is_boss": not boss_id.is_empty(),
-		})
+		}
+		for authored_field: String in ["loot_slots", "combat_stats"]:
+			if source.has(authored_field):
+				var authored_value: Variant = source.get(authored_field)
+				planned_room[authored_field] = authored_value.duplicate(true) if authored_value is Array or authored_value is Dictionary else authored_value
+		rooms.append(planned_room)
 	var plan := {
 		"version": 2,
 		"source": "early_campaign",

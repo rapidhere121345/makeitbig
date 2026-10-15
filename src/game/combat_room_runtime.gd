@@ -160,8 +160,9 @@ func start_session(config: Dictionary) -> Dictionary:
 	_room_instance.set("selected_preset", preset_id)
 	_room_instance.call("start_room")
 	if not bool(_room_instance.get("in_arena")):
+		var deployment_reason := String(_room_instance.get("last_save_message"))
 		_cleanup_room_instance()
-		return _error("room_runtime_start_failed")
+		return _error("room_runtime_start_failed", {"reason": deployment_reason})
 	set_process(true)
 	return {"ok": true}
 

@@ -35,6 +35,7 @@ const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.
 const CombatCommandSourceScript = preload("res://src/systems/combat_command_source.gd")
 const CombatSimulationScript = preload("res://src/systems/combat_simulation.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
+const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -656,6 +657,11 @@ func start_room() -> void:
 		_refresh_lab()
 		return
 	_freeze_room_build()
+	var room_stats := _apply_room_combat_stats()
+	if not bool(room_stats.get("ok", false)):
+		last_save_message = "Deployment blocked: %s" % String(room_stats.get("error", "invalid_room_combat_stats"))
+		_refresh_lab()
+		return
 	proxy_runtime.end_contract()
 	if selected_mode == "Auto":
 		var proxy_install: Dictionary = proxy_runtime.install_resolved(
@@ -740,6 +746,20 @@ func _freeze_room_build() -> void:
 	locked_p = float(parameters.p)
 	locked_payload = float(parameters.damage)
 	locked_targeting_distance = float(parameters.d)
+
+
+func _apply_room_combat_stats() -> Dictionary:
+	if not framework_room.has("combat_stats"):
+		return {"ok": true, "error": "", "enabled": false}
+	var authored_room_id := room_id if not room_id.is_empty() else String(framework_room.get("room_id", framework_room.get("id", "")))
+	var result := CombatStatsSnapshotScript.from_room_overlay(locked_build, framework_room.get("combat_stats"), authored_room_id)
+	if not bool(result.get("ok", false)):
+		return result
+	var stats: Variant = result.get("value", null)
+	if not stats is RefCounted or not stats.has_method("snapshot"):
+		return {"ok": false, "error": "invalid_room_combat_stats_snapshot"}
+	locked_build["combat_stats"] = stats.snapshot()
+	return {"ok": true, "error": "", "enabled": true, "combat_stats": locked_build["combat_stats"].duplicate(true)}
 
 
 func _spawn_wave() -> bool:
