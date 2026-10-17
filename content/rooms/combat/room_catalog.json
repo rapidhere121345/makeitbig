@@ -5,8 +5,8 @@
       "layout_id": "rectangle_arena",
       "world_scene_path": "res://content/rooms/combat/rectangle_arena.tscn",
       "manifest_path": "res://content/rooms/combat/rectangle_arena.spatial.json",
-      "gameplay_digest": "combat-gameplay-v1",
-      "presentation_digest": "combat-presentation-v1",
+      "gameplay_digest": "edd3dc4cfe1acdead74577e9a72035711ca8ee4a2f8d50a8fa96f60d456589ee",
+      "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
         "display_name": "破碎前哨",
@@ -53,8 +53,8 @@
       "layout_id": "corridor",
       "world_scene_path": "res://content/rooms/combat/corridor.tscn",
       "manifest_path": "res://content/rooms/combat/corridor.spatial.json",
-      "gameplay_digest": "combat-gameplay-v1",
-      "presentation_digest": "combat-presentation-v1",
+      "gameplay_digest": "355adbbd3bf7c61a752ea5a92cd757d86637b2fa81e42e147fefb08a83b8a4ce",
+      "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
         "display_name": "风切通道",
@@ -83,8 +83,8 @@
       "layout_id": "ring",
       "world_scene_path": "res://content/rooms/combat/ring.tscn",
       "manifest_path": "res://content/rooms/combat/ring.spatial.json",
-      "gameplay_digest": "combat-gameplay-v1",
-      "presentation_digest": "combat-presentation-v1",
+      "gameplay_digest": "9f3ed28278c2d2639844a2a3dd32c436e238b7ec3f1ffa5666e59ace2e7392f1",
+      "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
         "display_name": "回收环场",

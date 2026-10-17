@@ -59,7 +59,7 @@ func _test_tail_buffer(resolved: Dictionary, initial: String, release: bool) -> 
 	arena.start_room()
 	_expect(arena.in_arena, label + "Main start blocked: " + arena.last_save_message)
 	if not arena.in_arena:
-		arena.free()
+		_shutdown_arena(arena)
 		return
 	_expect(bool(arena.teleport_actor("ranger", arena._arena_rect().get_center()).get("ok", false)), label + "player teleport failed")
 	var buffered_kind := "dash" if initial == "dodge" else "dodge"
@@ -85,7 +85,7 @@ func _test_tail_buffer(resolved: Dictionary, initial: String, release: bool) -> 
 	var prior_sequence := arena.command_sequence
 	var prior_receipts: Array = arena.last_command_receipts.duplicate(true)
 	var prior_stream: Dictionary = arena.combat_event_stream.snapshot()
-	var prior_actor: Dictionary = arena.actor_registry.actor("ranger").snapshot()
+	var prior_actor: Dictionary = arena.actor_registry.actor_snapshot("ranger")
 	if release:
 		arena.command_source.dodge_requested = true
 		arena.command_source.dash_requested = true
@@ -95,13 +95,13 @@ func _test_tail_buffer(resolved: Dictionary, initial: String, release: bool) -> 
 		_expect(after.mobility_input_buffer.is_empty(), label + "input release did not clear domain buffer")
 		_expect(not arena.command_source.dodge_requested and not arena.command_source.dash_requested, label + "input release retained device edges")
 		_expect(arena.sim_tick == prior_tick and arena.command_sequence == prior_sequence and arena.last_command_receipts == prior_receipts, label + "release fabricated tick/sequence/receipt")
-		_expect(arena.combat_event_stream.snapshot() == prior_stream and arena.actor_registry.actor("ranger").snapshot() == prior_actor, label + "release advanced events or motor")
+		_expect(arena.combat_event_stream.snapshot() == prior_stream and arena.actor_registry.actor_snapshot("ranger") == prior_actor, label + "release advanced events or motor")
 		for key: String in ["player_health", "player_facing", "player_last_displacement", "dodge_remaining_ticks", "dash_remaining_ticks", "dodge_cooldown_ticks", "dash_cooldown_ticks", "attack_cooldown_ticks", "timeline", "action_phase"]:
 			_expect(after[key] == before[key], label + "release changed " + key)
 	for tick in range(buffer_tick + 1, consume_tick + 1):
 		arena._simulate_tick()
 	var final: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
-	_expect(arena.sim_tick == consume_tick and arena.actor_registry.actor("ranger").last_motor_tick == consume_tick, label + "consume used a fabricated motor tick")
+	_expect(arena.sim_tick == consume_tick and arena.actor_registry.actor("ranger").last_movement_tick == consume_tick, label + "consume used a fabricated motor tick")
 	_expect(arena.command_sequence == prior_sequence, label + "buffer consume allocated a new command sequence")
 	_expect(final.mobility_input_buffer.is_empty(), label + "ready/released buffer remained queued")
 	if release:
@@ -111,6 +111,17 @@ func _test_tail_buffer(resolved: Dictionary, initial: String, release: bool) -> 
 		var expected := queued.duplicate(true)
 		expected.tick = consume_tick
 		_expect(arena.last_command_receipts == Protocol.arbitrate([expected], consume_tick, arena.player_combat_state.equipped_ability_ids()).receipts, label + "unreleased buffer changed Protocol sequence/tick/receipt semantics")
+	_shutdown_arena(arena)
+
+
+func _shutdown_arena(arena: Node) -> void:
+	if arena == null or not is_instance_valid(arena):
+		return
+	var runtime: Variant = arena.get("scene_runtime")
+	if runtime != null and runtime.has_method("unmount"):
+		runtime.unmount()
+	if arena.get_parent() != null:
+		arena.get_parent().remove_child(arena)
 	arena.free()
 
 

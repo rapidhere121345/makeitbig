@@ -3,6 +3,7 @@ extends RefCounted
 const EarlyItemRegistryScript := preload("res://src/content/early_item_registry.gd")
 const BuildResolverScript := preload("res://src/systems/build_resolver.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
+const PhasePort := preload("res://tests/helpers/callable_combat_phase_port.gd")
 
 const CombatRoomRuntimeScript := preload("res://src/game/combat_room_runtime.gd")
 
@@ -126,7 +127,7 @@ func configure_target(arena, offset: Vector2 = Vector2(120.0, 0.0)):
 		assert(bool(arena.teleport_actor("enemy/%d" % other.entity_id, arena.player_position + Vector2(-180.0, -120.0)).get("ok", false)))
 	var arena_id: int = arena.get_instance_id()
 	_command_batches[arena_id] = []
-	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, {
+	var callbacks := {
 		"read_only_targets": Callable(arena, "_read_only_targets"),
 		"set_elapsed": Callable(arena, "_simulation_set_elapsed"),
 		"consume_player_events": Callable(arena, "_consume_player_events"),
@@ -141,7 +142,11 @@ func configure_target(arena, offset: Vector2 = Vector2(120.0, 0.0)):
 		"resolve_hazard_hits": Callable(arena, "_resolve_hazard_hits_tick"),
 		"check_battle_end": Callable(arena, "_check_battle_end"),
 		"check_timeout": Callable(arena, "_simulation_check_timeout"),
-	})
+	}
+	var phase_port = PhasePort.new()
+	var port_result: Dictionary = phase_port.bind(callbacks)
+	assert(bool(port_result.get("ok", false)), "talent phase port bind failed: %s" % str(port_result))
+	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, phase_port)
 	assert(bool(configured.get("ok", false)), "talent tick driver failed: %s" % str(configured))
 	return target
 

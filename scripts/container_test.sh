@@ -2,8 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-# shellcheck source=container_env.sh
-source "${SCRIPT_DIR}/container_env.sh"
+# shellcheck source=project_env.sh
+source "${SCRIPT_DIR}/project_env.sh"
 cd "$MIB_PROJECT_ROOT"
 
 ## Exit codes stay authoritative, but a GDScript runtime error can leave Godot
@@ -14,11 +14,13 @@ cd "$MIB_PROJECT_ROOT"
 ## and keep passing. Override MIB_TEST_RUNNER only to stub the runner in checks.
 MIB_TEST_RUNNER="${MIB_TEST_RUNNER:-${MIB_PROJECT_ROOT}/scripts/test.sh}"
 MIB_TEST_LOG="${MIB_TEST_LOG:-${MIB_PROJECT_ROOT}/build/current/container-test.log}"
+MIB_TEST_TIMEOUT_SEC="${MIB_TEST_TIMEOUT_SEC:-1800}"
 mkdir -p "$(dirname "$MIB_TEST_LOG")"
 
 test_status=0
 set -o pipefail
-"$MIB_TEST_RUNNER" "$@" 2>&1 | tee "$MIB_TEST_LOG" || test_status=$?
+timeout --foreground --kill-after=30s "${MIB_TEST_TIMEOUT_SEC}s" \
+  "$MIB_TEST_RUNNER" "$@" 2>&1 | tee "$MIB_TEST_LOG" || test_status=$?
 set +o pipefail
 
 if [[ "$test_status" -ne 0 ]]; then

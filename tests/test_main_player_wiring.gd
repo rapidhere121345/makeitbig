@@ -1,5 +1,9 @@
 extends SceneTree
 
+const CombatSystemRoomPortScript := preload("res://src/runtime/combat/combat_system_room_port.gd")
+const MainCommandSourcePortScript := preload("res://src/game/main_combat_command_source_port.gd")
+const RoomMovementPolicyPortScript := preload("res://src/runtime/world/room_movement_policy_port.gd")
+
 const Main := preload("res://src/game/main.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Items := preload("res://src/content/early_item_registry.gd")
@@ -47,10 +51,14 @@ func _run() -> void:
 	arena.start_room()
 	_expect(arena.in_arena, "Main start blocked: " + arena.last_save_message)
 	if not arena.in_arena:
-		arena.free()
+		_shutdown_arena(arena)
 		_finish()
 		return
-	_expect(arena.combat_system.get("_player_rule_port") == arena.player_combat_rules, "CombatSystem did not receive the room's configured Rules")
+	_expect(arena.command_source_port is MainCommandSourcePortScript, "Main did not install the typed command source port")
+	_expect(arena.command_source != null and arena.command_source.port == arena.command_source_port, "command source retained a callback bag instead of the typed port")
+	var combat_room_port: Variant = arena.combat_system.get("room_port")
+	_expect(combat_room_port is CombatSystemRoomPortScript and bool(combat_room_port.is_ready()), "CombatSystem did not receive the mounted typed room port")
+	_expect(arena.actor_registry.movement_policy_port is RoomMovementPolicyPortScript, "RoomActorAccess did not receive the typed movement policy port")
 	_expect(arena.combat_simulation.get("_rules") == arena.player_combat_rules, "Simulation did not receive the same Rules")
 	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
 	_expect(player.equipped_skills == ["piercing_arrow", "hunter_mark", "dash"], "room assembly did not freeze skill slots")
@@ -79,7 +87,7 @@ func _run() -> void:
 			arena.supplied_commands.append(Protocol.move(tick, "ranger", 41, 1000, 0, 1000))
 			expected_receipts = Protocol.arbitrate(arena.supplied_commands, tick, arena.player_combat_state.equipped_ability_ids()).receipts
 		arena._simulate_tick()
-	_expect(arena.sim_tick == impact_tick and int(arena.actor_registry.actor("ranger").last_motor_tick) == impact_tick, "Main did not use the committed world tick")
+	_expect(arena.sim_tick == impact_tick and int(arena.actor_registry.actor("ranger").last_movement_tick) == impact_tick, "Main did not use the committed world tick")
 	_expect(arena.last_command_receipts == expected_receipts, "Main saved gameplay receipts instead of protocol receipts")
 	_expect(arena.shots == 1 and arena.projectiles.size() == 1, "action impact did not resolve through CombatSystem")
 	if arena.projectiles.size() == 1:
@@ -104,6 +112,10 @@ func _run() -> void:
 	_expect(arena.boss_maximum.magnitude == 1.0e12 and arena.encounter_director.boss_maximum.magnitude == 1.0e12, "Main/Encounter exposed mutable outcome ledger values")
 	arena._encounter_context()
 	arena.encounter_director._resolve_hostile_attack(target, 3.0, true)
+	# Hostile contacts are queued during the room phase and committed by the
+	# next fixed tick through RoomCombatPort; direct invocation must not bypass
+	# that boundary.
+	arena._simulate_tick()
 	var damage_slice: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
 	_expect(damage_slice.last_damage_source_id == "enemy/%d/%s" % [target.entity_id, target.kind_id] and damage_slice.last_damage_direction.is_equal_approx(target.position.direction_to(arena.player_position)), "hostile source position did not pass directly into Rules")
 	var authoritative: Dictionary = Builder.build_runtime_state(arena, "wiring")
@@ -117,7 +129,7 @@ func _run() -> void:
 	arena.start_room()
 	ledger = arena.combat_system.outcome_snapshot()
 	_expect(arena.shots == 0 and arena.arrow_hits == 0 and arena.defeated == 0 and ledger.boss_damage.magnitude == 0.0 and arena.projectiles.is_empty(), "room entry did not reset the authoritative CombatSystem outcome")
-	arena.free()
+	_shutdown_arena(arena)
 	_test_mounted_reset(resolved)
 	_test_mark_hud(resolved)
 	_finish()
@@ -126,8 +138,11 @@ func _run() -> void:
 func _test_mounted_reset(resolved: Dictionary) -> void:
 	var runtime := RoomRuntime.new()
 	root.add_child(runtime)
+	# Presentation stays on for the mounted section: the mounted Main only
+	# binds the room's native SimulationWorld/RoomActorAccess authorities on
+	# the presentation-enabled path, and the HUD assertions below exercise it.
 	var started: Dictionary = runtime.start_session({
-		"mode": "Manual", "presentation_enabled": false,
+		"mode": "Manual", "presentation_enabled": true,
 		"room": {
 			"room_id": "test.main.mounted", "layout_id": "corridor", "objective_id": "clear",
 			"enemy_ids": ["melee_pursuer"], "hazard_ids": [], "elite_rule_ids": [], "boss_id": "", "drop_tags": [],
@@ -146,7 +161,7 @@ func _test_mounted_reset(resolved: Dictionary) -> void:
 		var spawn: Vector2 = arena._room_socket("combat/spawn")
 		_expect(arena.actor_registry == scene.actor_registry and arena.simulation_world == scene.simulation, "mounted Main replaced native authorities")
 		_expect(arena.player_position == spawn, "domain position did not read the authored native socket")
-		_expect(arena.combat_system.get("_player_rule_port") == arena.player_combat_rules and arena.combat_simulation.get("_rules") == arena.player_combat_rules, "mounted services did not share configured Rules")
+		_expect(arena.combat_simulation.get("_rules") == arena.player_combat_rules and arena.combat_system.get("room_port") != null, "mounted services did not share the typed room authority")
 		var maximum: float = arena.player_health
 		_expect(arena.player_combat_rules.apply_damage(arena.sim_tick, 7.0, "fixture", arena.player_position).get("accepted", false), "mounted damage did not reach Rules")
 		arena.refresh_presentation()
@@ -327,6 +342,17 @@ func _finish() -> void:
 	if failures.is_empty():
 		print("PASS test_main_player_wiring.gd")
 	quit(0 if failures.is_empty() else 1)
+
+
+func _shutdown_arena(arena: Node) -> void:
+	if arena == null or not is_instance_valid(arena):
+		return
+	var runtime: Variant = arena.get("scene_runtime")
+	if runtime != null and runtime.has_method("unmount"):
+		runtime.unmount()
+	if arena.get_parent() != null:
+		arena.get_parent().remove_child(arena)
+	arena.free()
 
 
 func _expect(condition: bool, message: String) -> void:

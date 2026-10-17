@@ -480,6 +480,11 @@ func _test_arena_integration() -> void:
 	for rate in [30, 60, 144]:
 		_configure_room(arena, ["melee_pursuer", "charging_raider", "fan_ranged"])
 		var runner = arena.enemies[0]
+		## The typed movement boundary keeps bodies out of each other, so the
+		## rate lane must be clear: park the runner on the open west side before
+		## driving it east past the other spawn bodies.
+		_expect(bool(arena.teleport_actor("enemy/%d" % runner.entity_id, Vector2(arena._arena_rect().position.x + 96.0, runner.position.y)).get("ok", false)),
+			"rate: the clear walk lane was rejected by teleport")
 		arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 0.0)
 		rate_states[rate] = _drive_render_rate(arena, runner, rate, 1.2)
 	var reference: Dictionary = rate_states[30]
@@ -506,6 +511,15 @@ func _test_arena_integration() -> void:
 	## A zero-tick redraw is what most 144Hz frames are: it must keep both the
 	## inferred motion and the frame it already read.
 	var redraw_enemy = arena.enemies[0]
+	## Capture the held state mid-walk: one real authority tick through the
+	## motor re-establishes the inferred motion the redraws must preserve.
+	fixture.drive(arena, {"enemy_step": func() -> void:
+		_expect(bool(arena._move_enemy_actor(redraw_enemy, Vector2(4.0, 0.0)).get("ok", false)),
+			"rate: the redraw drive rejected the walking tick")
+	})
+	fixture.step(arena)
+	arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 1.0 / 30.0)
+	arena.presentation.animations._refresh_enemy_frames(arena.gameplay_snapshot())
 	var held_state: Dictionary = arena.presentation.animations.enemy_state(arena.gameplay_snapshot(), redraw_enemy)
 	var held_frame: Dictionary = (arena.presentation.animations.enemy_frames[redraw_enemy.entity_id] as Dictionary).duplicate(true)
 	for redraw in 8:

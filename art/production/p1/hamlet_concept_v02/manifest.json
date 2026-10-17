@@ -4,52 +4,52 @@
       "atlas": "edges",
       "bytes": 7100,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/edges.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/edges.png",
       "sha256": "d19bdb3a63eec78745913023e138bdce646cfeee9789a056ba3374c2feff052a"
     },
     {
       "atlas": "facilities",
       "bytes": 17594,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/facilities.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/facilities.png",
       "sha256": "06892346782286029b2bc11873395f2ff5412649f6a23b17a2f920d2af33087d"
     },
     {
       "atlas": "forge",
       "bytes": 11829,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/forge.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/forge.png",
       "sha256": "837e736603d4fbe17a042b2cc0f87174b6ed58a339cc7f010e3a01a4756c0357"
     },
     {
       "atlas": "ground",
       "bytes": 180918,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/ground.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/ground.png",
       "sha256": "db787900068bbcc5a3d26375728bd7241fe0d73b0fe6d0293eec9fcc775813af"
     },
     {
       "atlas": "hearth",
       "bytes": 27189,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/hearth.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/hearth.png",
       "sha256": "5d80697369a083578ec49ad4a1f37f22d90813410a3ed51dbfec2bd35744399e"
     },
     {
       "atlas": "residents",
       "bytes": 4434,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/residents.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/residents.png",
       "sha256": "618ce027cc8b0c6e3ae70f060e1e57e65fde49adcf2aabeac151919d80ffc56b"
     },
     {
       "bytes": 3654,
       "kind": "atlas_contract",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/atlas.json",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/atlas.json",
       "sha256": "3abfaca1e2de58b8628e1be95d63714bb9ed312acca5b5954233ed0d5f4e55b6"
     }
   ],
-  "config_path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/recipe.json",
+  "config_path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/recipe.json",
   "config_sha256": "c5bcffd3d77e8956e5347c4d322bd801c0807cd161a2324bfd1f1cc73c67c9c1",
   "resource_prefix": "res://art/production/p1/hamlet_concept_v02",
   "schema_version": 1,
@@ -67,7 +67,7 @@
         1
       ],
       "height": 1178,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/contract_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/contract_original.png",
       "sha256": "7a71f742ad80d6ae9935374bb8fe5854fcdc3d2c0219ad515adfcdd4781312f1",
       "width": 1335
     },
@@ -84,7 +84,7 @@
         1
       ],
       "height": 724,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/edges_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/edges_original.png",
       "sha256": "215e8611c6f44b3cdcef14db2ef5ef1d2d8a9262f78069b6b3ac10b430e6b5d3",
       "width": 2172
     },
@@ -101,7 +101,7 @@
         1
       ],
       "height": 1111,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/forge_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/forge_original.png",
       "sha256": "8f2abf298d4c62155e95ddfe95ad9b0e3b87c4e8e35aa4cc69eb746454b5f77e",
       "width": 1415
     },
@@ -116,7 +116,7 @@
         1
       ],
       "height": 992,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/ground_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/ground_original.png",
       "sha256": "75fb75188e2e2bc59408d66d016d6732b790b033565e525d9552858310254ef3",
       "width": 1586
     },
@@ -133,7 +133,7 @@
         1
       ],
       "height": 1024,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/hearth_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/hearth_original.png",
       "sha256": "8712101aaf83f178a5de5033b1ea80d159f933ff47fdaea6458b6d3943fa6eb6",
       "width": 1536
     },
@@ -150,7 +150,7 @@
         1
       ],
       "height": 1128,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/loadout_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/loadout_original.png",
       "sha256": "94d0df7e4cdf60a45103ef6315787b9a4574bd20976f6dee746487b5cdda0ff3",
       "width": 1394
     },
@@ -167,7 +167,7 @@
         1
       ],
       "height": 1044,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/proxy_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/proxy_original.png",
       "sha256": "1d0d76d77b341c20a472579890c2ac1c8e19898b8384d2af4aaa47e98cdb3017",
       "width": 1507
     },
@@ -184,7 +184,7 @@
         1
       ],
       "height": 793,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/residents_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/residents_original.png",
       "sha256": "85d14a5379ba4ca2181226a976f6005a832193e11b41f5f46e0679d5a67d9f57",
       "width": 1983
     },
@@ -201,7 +201,7 @@
         1
       ],
       "height": 1272,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-concept-v02/sources/training_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-concept-v02/sources/training_original.png",
       "sha256": "bc074093de2db365307faa9ecbfc08f6ad9941b073274648db1afda29463bea1",
       "width": 1236
     }

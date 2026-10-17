@@ -364,8 +364,12 @@ func _test_proxy_decision_state_runtime(arena: Node, failures: Array[String]) ->
 	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(90.0, 0.0))
 	arena.teleport_actor("enemy/%d" % second.entity_id, arena.player_position + Vector2(20.0, 0.0))
 	fixture.advance_to(arena, 29)
-	var retained_commands: Array[Dictionary] = arena._auto_commands()
-	_expect(_cast_target(retained_commands) == first.entity_id, "proxy: target changed before the 30-tick perception refresh", failures)
+	arena._auto_commands()
+	var retained_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
+	_expect(int(retained_state.get("target_entity_id", 0)) == first.entity_id
+			and int(retained_state.get("next_perception_tick", 0)) == 30
+			and arena._proxy_trace_snapshot().has("perception:retain_target"),
+		"proxy: target changed before the 30-tick perception refresh", failures)
 	fixture.advance_to(arena, 30)
 	var refreshed_commands: Array[Dictionary] = arena._auto_commands()
 	_expect(_cast_target(refreshed_commands) == second.entity_id, "proxy: target did not refresh on the public perception tick", failures)
@@ -466,16 +470,6 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	arena.embedded_session = true
 	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
 	arena.framework_resolved_proxy_build = _white_proxy_build()
-	arena.framework_room = {
-		"room_id": "test.ranger.proxy_retreat",
-		"layout_id": "rectangle_arena",
-		"objective_id": "clear",
-		"hazard_ids": [],
-		"enemy_ids": ["melee_pursuer"],
-		"elite_rule_ids": [],
-		"boss_id": "",
-		"drop_tags": [],
-	}
 	fixture.reset(arena, arena.framework_room, fixture.build({"d": 100.0, "max_health": 1.0e9, "damage": 1.0}))
 	fixture.drive(arena, {"input": true, "enemies": true})
 	arena.teleport_actor("ranger", arena._arena_rect().get_center())

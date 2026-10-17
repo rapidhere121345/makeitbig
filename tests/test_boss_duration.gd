@@ -191,7 +191,11 @@ func _resolve_qualified_build() -> Dictionary:
 
 func _finish(arena: Node) -> void:
 	if arena != null and is_instance_valid(arena):
-		root.remove_child(arena)
+		var runtime: Variant = arena.get("scene_runtime")
+		if runtime != null and runtime.has_method("unmount"):
+			runtime.unmount()
+		if arena.get_parent() != null:
+			arena.get_parent().remove_child(arena)
 		arena.free()
 	if failures.is_empty():
 		print("PASS  tests/test_boss_duration.gd")

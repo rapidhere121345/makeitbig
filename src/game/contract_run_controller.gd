@@ -6,6 +6,7 @@ signal abandoned(result: Dictionary)
 signal room_changed(room_index: int, room_count: int, room: Dictionary)
 
 const DEFAULT_ROOM_RUNTIME_SCRIPT := preload("res://src/game/combat_room_runtime.gd")
+const ContractRoomCommitPortScript := preload("res://src/game/contract_room_commit_port.gd")
 const ERROR_ALREADY_STARTED := "already_started"
 const ERROR_INVALID_ROOM_COUNT := "invalid_room_count"
 const ERROR_INVALID_ROOM_PLAN := "invalid_room_plan"
@@ -18,7 +19,7 @@ const ERROR_ROOM_COMMIT_FAILED := "room_commit_failed"
 ## before this node enters the tree.
 var room_runtime_factory: Callable
 
-## Framework port for the room-victory path. When set, it is called with
+## Framework port for the room-victory path. When set, it receives
 ## (room_index, room_result) after a room victory and before the next room
 ## starts. It must return the ApplicationState boundary result
 ## Dictionary{ok,error,committed_items,resolved_build,active_build}. On success
@@ -26,7 +27,7 @@ var room_runtime_factory: Callable
 ## the returned active_build/resolved_build; room plan, results and runtime
 ## authority stay unchanged. When unset, room transitions keep the launch-time
 ## framework context.
-var room_commit_port: Callable
+var room_commit_port: RefCounted = null
 
 var current_config: Dictionary:
 	get:
@@ -173,8 +174,8 @@ func _on_runtime_completed(result: Dictionary, runtime: Node, index: int) -> voi
 	if outcome == "victory":
 		_rooms_completed += 1
 		if index + 1 < _rooms.size():
-			if room_commit_port.is_valid():
-				var committed: Variant = room_commit_port.call(index, isolated_result.duplicate(true))
+			if room_commit_port is ContractRoomCommitPortScript:
+				var committed: Variant = (room_commit_port as ContractRoomCommitPortScript).commit(index, isolated_result.duplicate(true))
 				if not (committed is Dictionary) or not bool((committed as Dictionary).get("ok", false)):
 					_retire_current_runtime()
 					var commit_error := "invalid_commit_result"

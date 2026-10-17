@@ -117,7 +117,7 @@ func _test_formal_town_residents() -> void:
 	_expect(changed == 5, "town life: every resident must advance its actual cycle")
 	var audit := view.render_audit()
 	_expect(audit.native_count == 35 and audit.runtime_background_patches == 0, "town life: runtime background patch survived")
-	hub.free()
+	_shutdown_hub(hub)
 
 
 func _read_package() -> Dictionary:
@@ -393,6 +393,19 @@ func _test_no_gameplay_writes() -> void:
 	_expect(town.snapshot() == before and town.registry.snapshot() == actors and town.simulation.tick == before.tick, "town life: presentation wrote gameplay or moved authority clock")
 	_expect(view.world_presenter.sort_root.get_child_count() == nodes, "town life: animation generated background/cutaway nodes")
 	_expect(_user_state() == before_user, "town life: presentation wrote saves")
+	_shutdown_hub(hub)
+
+
+func _shutdown_hub(hub: Node) -> void:
+	if hub == null or not is_instance_valid(hub):
+		return
+	var controller: Variant = hub.get("_town_controller")
+	if controller != null:
+		var runtime: Variant = controller.get("scene_runtime")
+		if runtime != null and runtime.has_method("unmount"):
+			runtime.unmount()
+	if hub.get_parent() != null:
+		hub.get_parent().remove_child(hub)
 	hub.free()
 
 

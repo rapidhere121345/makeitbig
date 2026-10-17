@@ -9,6 +9,7 @@ const ApplicationStateScript = preload("res://src/game/application_state.gd")
 const SceneRouterScript = preload("res://src/game/scene_router.gd")
 const ContractPlanScript = preload("res://src/game/contract_plan.gd")
 const ContractRunControllerScript = preload("res://src/game/contract_run_controller.gd")
+const ContractRoomCommitPortScript = preload("res://src/game/contract_room_commit_port.gd")
 const SaveStoreScript = preload("res://src/persistence/save_store.gd")
 const PlaytestLogScript = preload("res://src/game/playtest_log.gd")
 const EarlyCampaignRegistryScript = preload("res://src/content/early_campaign_registry.gd")
@@ -1905,8 +1906,11 @@ func _make_arena_screen() -> Node:
 		var candidate: Variant = room_runtime_factory.call()
 		return candidate as Node if candidate is Node else null
 	var controller: Node = ContractRunControllerScript.new()
-	if application_state != null and application_state.has_method("commit_room_victory_and_resolve_next_build"):
-		controller.set("room_commit_port", Callable(application_state, "commit_room_victory_and_resolve_next_build"))
+	if application_state != null:
+		var commit_port := MainContractRoomCommitPort.new()
+		var bound: Dictionary = commit_port.bind(application_state)
+		if bool(bound.get("ok", false)):
+			controller.set("room_commit_port", commit_port)
 	return controller
 
 
@@ -2574,3 +2578,22 @@ func _profile_elapsed_msec() -> int:
 
 func _failure(error_code: String) -> Dictionary:
 	return {"ok": false, "error": error_code}
+
+
+## Typed bridge from the route composition root to ApplicationState. The
+## controller never receives a Callable for framework settlement.
+class MainContractRoomCommitPort extends ContractRoomCommitPortScript:
+
+	var _owner: ApplicationState = null
+
+	func bind(owner: ApplicationState) -> Dictionary:
+		if owner == null:
+			_owner = null
+			return {"ok": false, "error": "contract_commit_owner_unavailable"}
+		_owner = owner
+		return {"ok": true, "error": ""}
+
+	func commit(room_index: int, room_result: Dictionary) -> Dictionary:
+		if _owner == null:
+			return {"ok": false, "error": "contract_commit_owner_unavailable"}
+		return _owner.commit_room_victory_and_resolve_next_build(room_index, room_result)

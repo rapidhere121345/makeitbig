@@ -4,72 +4,72 @@
       "atlas": "boss_body",
       "bytes": 9235,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/boss_body.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/boss_body.png",
       "sha256": "3548769292abe995202f8b7aa9e57bad59f2c29e4e9b2e485b289b3940ecde8d"
     },
     {
       "atlas": "boss_core",
       "bytes": 2403,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/boss_core.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/boss_core.png",
       "sha256": "5c748e908a890ceb044d8008e64c3554823e301ff04a7c44d5db0d02db977643"
     },
     {
       "atlas": "boss_hands",
       "bytes": 3469,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/boss_hands.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/boss_hands.png",
       "sha256": "3097b27e7d1df8a75f5360af3d5c2d78315c21ba4c98c7e5281e938546dbfa9d"
     },
     {
       "atlas": "enemies",
       "bytes": 9273,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/enemies.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/enemies.png",
       "sha256": "a9de5b5c997247b48c742e2bd61f54d4599594f391523a46e42007b71036c2e2"
     },
     {
       "atlas": "ground",
       "bytes": 584,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/ground.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/ground.png",
       "sha256": "68d91d57bf60adadf9375fe6ac750861b680bf20ffd7851c1db3f98986981daa"
     },
     {
       "atlas": "ranger",
       "bytes": 9396,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/ranger.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/ranger.png",
       "sha256": "3a3ca43f910870bc46d6bf1289a0bf45d307c772c8671c4de3e8f607a9dbfdb0"
     },
     {
       "atlas": "terrain",
       "bytes": 4668,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/terrain.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/terrain.png",
       "sha256": "52f82540fdcfbfc277ff90a08964e4edd959680624b29b4bc6dbfe8fdc959060"
     },
     {
       "atlas": "tower",
       "bytes": 8610,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/tower.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/tower.png",
       "sha256": "f7f3b8b91d54a14ead697ff9f322f22ce4795992fd40609bfbc1d8737ad57c31"
     },
     {
       "bytes": 10992,
       "kind": "atlas_contract",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/atlas.json",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/atlas.json",
       "sha256": "776e6d251384e10011737f3a9cbf65645be1108c50816f85e0d1ee9f30c2fd5e"
     },
     {
       "bytes": 102788,
       "kind": "contact_sheet",
-      "path": "/data/repo/makeitbig/art/production/p1/calibration_v01/contact_sheet.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/calibration_v01/contact_sheet.png",
       "sha256": "57aa09075d5fc917acae6ac07b9f33710600006323518da594ae06535d5d3c10"
     }
   ],
-  "config_path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/recipe.json",
+  "config_path": "/data/paseo-makeitbig/project/docs/art-production/p1-calibration-v01/recipe.json",
   "config_sha256": "06ca99cd0b5098b63eca33b1137cbf452ee803fbbd2129ceedf69cb67337ebec",
   "resource_prefix": "res://art/production/p1/calibration_v01",
   "schema_version": 1,
@@ -87,7 +87,7 @@
         3
       ],
       "height": 1536,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/boss_source_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-calibration-v01/sources/boss_source_keyed.png",
       "sha256": "16be5437bf6fe38703e55236d9ff97df0c1df804e9511880a7d488082242d029",
       "width": 1024
     },
@@ -104,7 +104,7 @@
         3
       ],
       "height": 1086,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/enemies_source_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-calibration-v01/sources/enemies_source_keyed.png",
       "sha256": "03dade88c64583453e7d87c07db5dca6d14b2e9e806d4a23f8c6fe546a1b7175",
       "width": 1448
     },
@@ -119,7 +119,7 @@
         1
       ],
       "height": 1254,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/ground_source_borderless.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-calibration-v01/sources/ground_source_borderless.png",
       "sha256": "9abcde899a1d05a579905543d087ea7f2cc4848b572901ba6eb7814513d69fd7",
       "width": 1254
     },
@@ -136,7 +136,7 @@
         4
       ],
       "height": 1536,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/ranger_source_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-calibration-v01/sources/ranger_source_keyed.png",
       "sha256": "6e9b6f4309260d448d70bfd0036fe73613eb08103e3b81b47621fd765b6579b2",
       "width": 1024
     },
@@ -153,7 +153,7 @@
         2
       ],
       "height": 1536,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/ranger_vertical_shoot.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-calibration-v01/sources/ranger_vertical_shoot.png",
       "sha256": "b8377048c51e89ecc5eb2399f472c01575b0f39a751210b251b4e1e8559f005f",
       "width": 1024
     },
@@ -170,7 +170,7 @@
         2
       ],
       "height": 1254,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/terrain_source_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-calibration-v01/sources/terrain_source_keyed.png",
       "sha256": "797e917681ae20871475bfb40fa4e904304fdb12c4234ff247ce9a6dbbdf5269",
       "width": 1254
     },
@@ -187,7 +187,7 @@
         1
       ],
       "height": 1536,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-calibration-v01/sources/tower_source_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-calibration-v01/sources/tower_source_keyed.png",
       "sha256": "028fd45c078885e595b5775b39faa30d4f356a8dcde7e480c27cd3234c639dfa",
       "width": 1024
     }

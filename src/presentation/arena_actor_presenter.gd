@@ -310,6 +310,36 @@ func release_sort_views() -> void:
 	_sort_domain = null
 
 
+## Applies presentation-only occlusion alpha from the detached
+## PresentationFrame/OcclusionPlan pipeline to the drawn sort views. This is
+## display truth only: nothing here can reach simulation state. Keys are the
+## simulation stable ids ("ranger", "enemy/3"); a drawn view id matches its
+## own id and every drawn part beneath it ("<sim id>/part"). An empty mapping
+## resets every view to full alpha, so an unavailable plan can never leave
+## stale dimming behind.
+func apply_occlusion_alpha(alphas: Dictionary) -> void:
+	for id: String in _sort_views.keys():
+		var alpha := 1.0
+		for sim_id: Variant in alphas.keys():
+			var candidate := String(sim_id)
+			if candidate == id or id.begins_with(candidate + "/"):
+				var value: Variant = alphas[sim_id]
+				if value is float or value is int:
+					alpha = minf(alpha, float(value))
+		var view: SortView = _sort_views[id]
+		if is_instance_valid(view):
+			view.modulate.a = alpha
+
+
+## Read-only display probe for mounted production gates: the modulate alpha a
+## drawn sort view currently carries from the occlusion pipeline.
+func drawn_alpha(view_id: String) -> float:
+	var view: SortView = _sort_views.get(view_id, null)
+	if view == null or not is_instance_valid(view):
+		return 1.0
+	return view.modulate.a
+
+
 func _frame_is_drawable(frame: Dictionary) -> bool:
 	var error := validate_frame(frame)
 	if not error.is_empty():

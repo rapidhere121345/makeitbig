@@ -221,7 +221,7 @@ func _test_live_view() -> void:
 	var town = hub.get_town_runtime()
 	_expect(bool(hub.town_load_report.get("ok", false)), "native town failed to load: " + str(hub.town_load_report))
 	if not town.is_ready():
-		hub.free()
+		_shutdown_hub(hub)
 		return
 	view.set_world_scale(2, Vector2(1280, 720))
 	_expect(view.world_viewport.size == Vector2i(640, 360), "town lost close follow camera")
@@ -237,4 +237,17 @@ func _test_live_view() -> void:
 	town.place_hero(town.route_points("contract")[0])
 	hub.move_hero(Vector2.DOWN, 1.5)
 	_expect(town.hero_position_is_clear(town.hero_world_position()), "fixed motor produced invalid feet")
+	_shutdown_hub(hub)
+
+
+func _shutdown_hub(hub: Node) -> void:
+	if hub == null or not is_instance_valid(hub):
+		return
+	var controller: Variant = hub.get("_town_controller")
+	if controller != null:
+		var runtime: Variant = controller.get("scene_runtime")
+		if runtime != null and runtime.has_method("unmount"):
+			runtime.unmount()
+	if hub.get_parent() != null:
+		hub.get_parent().remove_child(hub)
 	hub.free()

@@ -43,7 +43,7 @@
   ],
   "sources": {
     "background": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hearth-return-v01/sources/background_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hearth-return-v01/sources/background_original.png",
       "grid": [
         1,
         1
@@ -53,7 +53,7 @@
       }
     },
     "props": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hearth-return-v01/sources/props_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hearth-return-v01/sources/props_keyed.png",
       "grid": [
         1,
         1

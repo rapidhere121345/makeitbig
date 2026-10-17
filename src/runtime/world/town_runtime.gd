@@ -3,6 +3,7 @@ extends RefCounted
 
 ## Town gameplay consumes the room's one clock and one actor registry. No
 ## presentation node owns a second position, route cursor, or movement clock.
+const SimCommandScript := preload("res://src/runtime/simulation/sim_command.gd")
 signal state_changed(snapshot: Dictionary)
 
 const HERO_ID := "town/ranger"
@@ -65,21 +66,16 @@ func advance_frame(display_delta: float) -> Dictionary:
 func step_tick() -> Dictionary:
 	if not is_ready():
 		return _failure("town_not_ready")
-	var queued: Dictionary = simulation.queue_command({"kind": "town_move", "entity_id": HERO_ID, "direction": _input_direction})
-	if not bool(queued.get("ok", false)):
-		return queued
-	var committed: Dictionary = simulation.step()
-	var direction := Vector2.ZERO
-	for command: Dictionary in committed.commands:
-		if String(command.get("kind", "")) == "town_move" and String(command.get("entity_id", "")) == HERO_ID:
-			direction = command.get("direction", Vector2.ZERO)
-	var displacement := direction * HERO_SPEED / float(simulation.tick_rate)
-	var moved: Dictionary = registry.move_actor(HERO_ID, displacement, int(committed.tick))
-	if not bool(moved.get("ok", false)):
-		return moved
+	var displacement := _input_direction * HERO_SPEED / float(simulation.tick_rate)
+	var queued: SimOutcome = simulation.queue_command(SimCommandScript.control(registry.actor_handle(HERO_ID), displacement, false))
+	if not queued.ok:
+		return _failure(String(queued.error))
+	var committed: SimOutcome = simulation.step_tick()
+	if not committed.ok:
+		return _failure(String(committed.error))
 	_update_route_progress()
 	state_changed.emit(snapshot())
-	return moved
+	return {"ok": true, "error": "", "tick": simulation.tick, "position": hero_world_position(), "displacement": registry.actor(HERO_ID).velocity}
 
 
 func hero_world_position() -> Vector2:

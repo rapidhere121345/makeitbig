@@ -2,7 +2,9 @@ extends RefCounted
 
 const TalentFixture := preload("res://tests/helpers/talent_runtime_fixture.gd")
 const RoomRuntime := preload("res://src/game/combat_room_runtime.gd")
+const RoomEncounterScript := preload("res://src/runtime/encounter/room_encounter.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
+const PhasePort := preload("res://tests/helpers/callable_combat_phase_port.gd")
 
 var talent := TalentFixture.new()
 var _batches: Dictionary = {}
@@ -51,6 +53,28 @@ func reset(arena, room: Dictionary = {}, resolved: Dictionary = {}, skills: Arra
 	arena.release_manual_controls()
 	if not room.is_empty():
 		arena.framework_room = room.duplicate(true)
+		var encounter = RoomEncounterScript.new()
+		var spawns: Array = []
+		var roster: Array = (room.get("enemy_ids", []) as Array).duplicate()
+		var boss_id := String(room.get("boss_id", "")).strip_edges()
+		if not boss_id.is_empty():
+			roster.append(boss_id)
+		for index in roster.size():
+			var archetype := String(roster[index])
+			spawns.append({
+				"spawn_id": "fixture.%02d.%s" % [index, archetype],
+				"archetype_id": archetype,
+				"socket_id": "combat/encounter-origin",
+				"count": 1,
+			})
+		var configured: Dictionary = encounter.configure(String(room.get("room_id", "fixture.room")), [{
+			"wave_id": "fixture.wave",
+			"clear_policy": "all_dead",
+			"spawns": spawns,
+		}])
+		assert(bool(configured.get("ok", false)), "behavior fixture encounter rebind failed: %s" % str(configured))
+		var bound: Dictionary = arena.scene_runtime.bind_encounter(encounter, arena.encounter_spawn_port)
+		assert(bool(bound.get("ok", false)), "behavior fixture encounter port rebind failed: %s" % str(bound))
 	if not resolved.is_empty():
 		arena.framework_resolved_build = resolved.duplicate(true)
 	arena.framework_active_build = {"skills": skills.duplicate()}
@@ -68,7 +92,7 @@ func drive(arena, options: Dictionary = {}) -> void:
 	_release_frames[arena_id] = {}
 	var enemy_step: Callable = options.get("enemy_step", Callable(arena, "_update_enemies_tick") if bool(options.get("enemies", false)) else func() -> void: pass)
 	var collect: Callable = Callable(arena, "_simulation_collect_commands") if bool(options.get("input", false)) else func() -> Array[Dictionary]: return _collect(arena_id)
-	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, {
+	var callbacks := {
 		"read_only_targets": Callable(arena, "_read_only_targets"),
 		"set_elapsed": Callable(arena, "_simulation_set_elapsed"),
 		"consume_player_events": Callable(arena, "_consume_player_events"),
@@ -80,7 +104,11 @@ func drive(arena, options: Dictionary = {}) -> void:
 		"resolve_hazard_hits": Callable(arena, "_resolve_hazard_hits_tick"),
 		"check_battle_end": Callable(arena, "_check_battle_end"),
 		"check_timeout": Callable(arena, "_simulation_check_timeout"),
-	})
+	}
+	var phase_port = PhasePort.new()
+	var port_result: Dictionary = phase_port.bind(callbacks)
+	assert(bool(port_result.get("ok", false)), "behavior phase port bind failed: %s" % str(port_result))
+	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, phase_port)
 	assert(bool(configured.get("ok", false)), "behavior tick driver failed: %s" % str(configured))
 
 

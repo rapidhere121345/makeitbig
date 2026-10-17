@@ -385,14 +385,14 @@
     {
       "bytes": 61503,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/ranger_actions_v01/ranger.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/ranger_actions_v01/ranger.png",
       "sha256": "c0bd20d7767899db9a8319aca6dca68f034a47eb84c9d5016543a131802f888b",
       "texture": "ranger"
     },
     {
       "bytes": 26720,
       "kind": "atlas_contract",
-      "path": "/data/repo/makeitbig/art/production/p1/ranger_actions_v01/atlas.json",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/ranger_actions_v01/atlas.json",
       "sha256": "5f5aa176fd862ce896dd1c8b92141af6003bf3d37cde7dd5ba094e9bc0c5ed41"
     }
   ],
@@ -401,7 +401,7 @@
     48
   ],
   "columns": 4,
-  "config_path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/recipe.final.json",
+  "config_path": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/recipe.final.json",
   "config_sha256": "7e42724b4fbf3a1bb7f6f6cf0f7850a5055956ae506f88c024b48be966999c74",
   "disclosure": {
     "east": "Built-in imagegen; explicit green-key because output RGB, no automatic checkerboard removal. One fixed scale for all poses; manually chosen ground/body anchors. Idle reuses shoot recovery pose; all other 16 source poses separate.",
@@ -5132,7 +5132,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1254,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/east_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/east_original.png",
       "sha256": "eda1ef3ab9174594debc4f96905d99b39c85213d3a6ca218c6afb4143de3eb7e",
       "transparent_pixels": 0,
       "width": 1254
@@ -5150,7 +5150,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1254,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/north_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/north_original.png",
       "sha256": "b336dd583c8808cbcf2a3588ac879ae04049fdbc7ceefa114c1f2fc3423f9b2f",
       "transparent_pixels": 0,
       "width": 1254
@@ -5168,7 +5168,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1254,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/north_shoot_fixed_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/north_shoot_fixed_original.png",
       "sha256": "506a206c2e15d938001c341645480acac6fe3d5dcbd59c1d27e000d77b310416",
       "transparent_pixels": 0,
       "width": 1254
@@ -5186,7 +5186,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1254,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/south_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/south_original.png",
       "sha256": "ddce51ede6644f7e1042b5d0d02d9fcffd79e1711ddf3743f22c4d956edee2a5",
       "transparent_pixels": 0,
       "width": 1254
@@ -5204,7 +5204,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1254,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/west_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/west_original.png",
       "sha256": "99d03ea215e74c7a7a7c8fc62232d3896fab6007f6e3fc61d14a0536dc5ae4ce",
       "transparent_pixels": 0,
       "width": 1254

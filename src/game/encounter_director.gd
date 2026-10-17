@@ -5,14 +5,19 @@ extends RefCounted
 ##
 ## This service owns enemy intent execution, enemy action state, Boss phases,
 ## hazard timing, and encounter rules. It has no scene-tree or input dependency.
-## Cross-domain effects are explicit callbacks supplied by the room authority:
-## movement, player damage, event publication, and actor registration.
+## Cross-domain effects dispatch through the typed EncounterRoomPort supplied
+## by the room authority: movement, actor registration, collision-class
+## updates, spawn sockets, spatial projection, player damage and combat
+## outcomes. The director runtime has no string-call ABI, callback bag or
+## silently valid fallback for a missing or invalid room dependency;
+## bind_room() is its only composition entry.
 
 const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 const EnemyCombatProfileScript := preload("res://src/game/enemy_combat_profile.gd")
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const HazardReadPortScript := preload("res://src/runtime/combat/combat_hazard_read_port.gd")
 
 const VALID_OBJECTIVE_IDS: Array[String] = ["clear", "hunt_elite", "timed_break"]
 const VALID_ENEMY_IDS: Array[String] = ["melee_pursuer", "charging_raider", "fan_ranged"]
@@ -52,28 +57,35 @@ var reinforcements_summoned: bool = false
 var timed_bonus_available: bool = true
 var next_entity_id: int = 1
 var next_enemy_action_instance_id: int = 1
+var room_origin := Vector2.ZERO
+var room_spawn_offsets: Array[Vector2] = []
 var enemy_profile_registry: RefCounted
 var _enemy_profiles: Dictionary = {}
 var combat_outcome_port: RefCounted
 var boss_damage: BigValue:
 	get:
+		if combat_outcome_port == null:
+			_room_dependency_failure("outcome_snapshot", "combat_outcome_port_unavailable")
+			return BigValue.from_float(0.0)
 		return combat_outcome_port.outcome_snapshot().boss_damage
 var boss_maximum: BigValue:
 	get:
+		if combat_outcome_port == null:
+			_room_dependency_failure("outcome_snapshot", "combat_outcome_port_unavailable")
+			return BigValue.from_float(0.0)
 		return combat_outcome_port.outcome_snapshot().boss_maximum
 var battle_report := ""
 var combat_event_stream
 var enemy_tactics = EnemyTacticsScript.new()
-
-var move_enemy_callback: Callable
+## Typed room-owned dependency object. Every cross-domain operation validates
+## its result and fails closed; the director never reconstructs dependencies
+## from string keys or silently valid Callables.
+var room_port: EncounterRoomPort = null
+var hazard_read_port: CombatHazardReadPort = null
 var player_rule_port: RefCounted
-var register_enemy_callback: Callable
-var walkable_geometry_callback: Callable
-var collision_geometry_callback: Callable
-var layout_spawn_offsets_callback: Callable
-var clamp_to_arena_callback: Callable
-var quantize_position_callback: Callable
 var _configured := false
+var _active_entity_filter_enabled := false
+var _active_entity_ids: Dictionary = {}
 
 
 static func validate_room(room: Variant, room_catalog: Variant) -> String:
@@ -123,32 +135,21 @@ static func validate_room(room: Variant, room_catalog: Variant) -> String:
 	return ""
 
 
-func configure(callbacks: Dictionary) -> Dictionary:
-	for key: String in ["move_enemy", "register_enemy", "walkable_geometry", "layout_spawn_offsets", "clamp_to_arena", "quantize_position"]:
-		var callback_value: Variant = callbacks.get(key, Callable())
-		if not callback_value is Callable or not (callback_value as Callable).is_valid():
-			return {"ok": false, "error": "missing_callback:%s" % key}
-	move_enemy_callback = callbacks.get("move_enemy", Callable())
-	var port: Variant = callbacks.get("player_rule_port")
-	if not port is RefCounted or not port.has_method("apply_damage"):
+func bind_room(room: Variant) -> Dictionary:
+	## Typed composition boundary. The room authority passes one object; the
+	## director accepts nothing else and never falls back for a missing port.
+	if room == null or not room is EncounterRoomPort:
+		return {"ok": false, "error": "encounter_room_port_unavailable"}
+	var typed_room: EncounterRoomPort = room
+	var rules_port: Variant = typed_room.player_rule_port
+	if not rules_port is RefCounted or not (rules_port as RefCounted).has_method("apply_damage"):
 		return {"ok": false, "error": "player_rule_port_unavailable"}
-	var outcome_port: Variant = callbacks.get("combat_outcome_port")
-	if not outcome_port is RefCounted or not outcome_port.has_method("outcome_snapshot"):
+	var outcome_port: Variant = typed_room.combat_outcome_port
+	if not outcome_port is RefCounted or not (outcome_port as RefCounted).has_method("outcome_snapshot"):
 		return {"ok": false, "error": "combat_outcome_port_unavailable"}
-	player_rule_port = port
+	room_port = typed_room
+	player_rule_port = rules_port
 	combat_outcome_port = outcome_port
-	register_enemy_callback = callbacks.get("register_enemy", Callable())
-	walkable_geometry_callback = callbacks.get("walkable_geometry", Callable())
-	if callbacks.has("collision_geometry"):
-		var collision_geometry_value: Variant = callbacks.get("collision_geometry")
-		if not collision_geometry_value is Callable or not (collision_geometry_value as Callable).is_valid():
-			return {"ok": false, "error": "invalid_callback:collision_geometry"}
-		collision_geometry_callback = collision_geometry_value as Callable
-	else:
-		collision_geometry_callback = Callable()
-	layout_spawn_offsets_callback = callbacks.get("layout_spawn_offsets", Callable())
-	clamp_to_arena_callback = callbacks.get("clamp_to_arena", Callable())
-	quantize_position_callback = callbacks.get("quantize_position", Callable())
 	_configured = true
 	return {"ok": true, "error": ""}
 
@@ -157,6 +158,13 @@ func set_enemy_profile_registry(value: Variant) -> Dictionary:
 	if not value is RefCounted or not value.has_method("resolve"):
 		return {"ok": false, "error": "enemy_profile_registry_unavailable"}
 	enemy_profile_registry = value
+	return {"ok": true, "error": ""}
+
+
+func set_hazard_read_port(value: Variant) -> Dictionary:
+	if not value is HazardReadPortScript:
+		return {"ok": false, "error": "hazard_read_port_unavailable"}
+	hazard_read_port = value
 	return {"ok": true, "error": ""}
 
 
@@ -177,6 +185,43 @@ func set_context(
 
 
 func spawn_wave(room: Dictionary, center: Vector2) -> Dictionary:
+	var prepared: Dictionary = prepare_room(room, center)
+	if not bool(prepared.get("ok", false)):
+		return prepared
+	var roster: Array = prepared.get("roster", [])
+	var boss_id := String(prepared.get("boss_id", ""))
+	var room_center: Vector2 = prepared.get("center", center)
+	var room_offsets: Array[Vector2] = prepared.get("room_offsets", [])
+	for index in roster.size():
+		var kind_id := String(roster[index])
+		var profile: RefCounted = _resolve_enemy_profile(kind_id)
+		if profile == null:
+			return {"ok": false, "error": "unknown_enemy_profile_id"}
+		enemies.append(CombatEnemyStateScript.new(room_center + room_offsets[index], float(profile.get("normal_health")), false, _allocate_entity_id(), kind_id))
+	if boss_id == "threshold_colossus":
+		var boss_profile_position: Vector2 = room_center + room_offsets[roster.size()]
+		boss = CombatEnemyStateScript.new(boss_profile_position, 1200.0, true, _allocate_entity_id(), boss_id)
+		boss.core_vulnerable = true
+		enemies.append(boss)
+	if objective_id == "hunt_elite" and not enemies.is_empty() and not enemies[0].is_boss:
+		_set_elite_enemy(enemies[0])
+	update_room_rules_tick()
+	return {
+		"ok": true,
+		"room_id": room_id,
+		"layout_id": layout_id,
+		"objective_id": objective_id,
+		"enemies": enemies,
+		"boss": boss,
+		"hazard_states": hazard_states,
+		"elite_rule_ids": elite_rule_ids,
+	}
+
+
+## Resets the director's room metadata without deploying actors. Mounted
+## production uses this before RoomEncounter materializes each typed spawn
+## request; standalone fixtures may continue to use spawn_wave directly.
+func prepare_room(room: Dictionary, center: Vector2) -> Dictionary:
 	if not _configured:
 		return {"ok": false, "error": "encounter_not_configured"}
 	if not center.is_finite():
@@ -185,6 +230,8 @@ func spawn_wave(room: Dictionary, center: Vector2) -> Dictionary:
 	if not type_error.is_empty():
 		return {"ok": false, "error": type_error}
 	enemies.clear()
+	_active_entity_filter_enabled = false
+	_active_entity_ids.clear()
 	boss = null
 	_enemy_profiles.clear()
 	hazard_states.clear()
@@ -215,37 +262,15 @@ func spawn_wave(room: Dictionary, center: Vector2) -> Dictionary:
 		return {"ok": false, "error": "enemy_profile_registry_unavailable"}
 	var required_offsets := roster.size() + (1 if not boss_id.is_empty() else 0)
 	var room_offsets := _layout_spawn_offsets(layout_id, required_offsets)
-	if not layout_spawn_offsets_callback.is_valid():
-		return {"ok": false, "error": "spawn_socket_callback_unavailable"}
 	if room_offsets.size() != required_offsets:
 		return {"ok": false, "error": "insufficient_spawn_offsets"}
 	for offset: Vector2 in room_offsets:
 		if not offset.is_finite():
 			return {"ok": false, "error": "invalid_spawn_socket"}
-	for index in roster.size():
-		var kind_id := String(roster[index])
-		var profile: RefCounted = _resolve_enemy_profile(kind_id)
-		if profile == null:
-			return {"ok": false, "error": "unknown_enemy_profile_id"}
-		enemies.append(CombatEnemyStateScript.new(center + room_offsets[index], float(profile.get("normal_health")), false, index + 1, kind_id))
-	next_entity_id = roster.size() + 1
-	if boss_id == "threshold_colossus":
-		boss = CombatEnemyStateScript.new(center + room_offsets[roster.size()], 1200.0, true, next_entity_id, boss_id)
-		next_entity_id += 1
-		boss.core_vulnerable = true
-		enemies.append(boss)
-	elif not boss_id.is_empty():
-		return {"ok": false, "error": "unknown_boss_id"}
+	room_origin = center
+	room_spawn_offsets = room_offsets.duplicate()
 	for value in room.get("elite_rule_ids", []):
 		elite_rule_ids.append(String(value))
-	if objective_id == "hunt_elite" and not enemies.is_empty() and not enemies[0].is_boss:
-		elite_entity_id = enemies[0].entity_id
-		var elite_profile: RefCounted = _profile_for_enemy(enemies[0])
-		if elite_profile == null:
-			return {"ok": false, "error": "unknown_enemy_profile_id"}
-		var elite_health: float = float(elite_profile.get("elite_health"))
-		enemies[0].health = elite_health
-		enemies[0].maximum_health = elite_health
 	for value in room.get("hazard_ids", []):
 		hazard_states.append(new_hazard_state(String(value), center))
 	update_room_rules_tick()
@@ -258,55 +283,124 @@ func spawn_wave(room: Dictionary, center: Vector2) -> Dictionary:
 		"boss": boss,
 		"hazard_states": hazard_states,
 		"elite_rule_ids": elite_rule_ids,
+		"roster": roster,
+		"boss_id": boss_id,
+		"center": center,
+		"room_offsets": room_offsets,
 	}
+
+
+func create_encounter_enemy(archetype_id: String, position: Vector2) -> Dictionary:
+	if not _configured:
+		return {"ok": false, "error": "encounter_not_configured"}
+	if archetype_id.strip_edges().is_empty() or not position.is_finite():
+		return {"ok": false, "error": "invalid_encounter_spawn"}
+	var is_boss := archetype_id == "threshold_colossus"
+	if not is_boss and archetype_id not in VALID_ENEMY_IDS:
+		return {"ok": false, "error": "unknown_enemy_id"}
+	if is_boss and boss != null:
+		return {"ok": false, "error": "boss_already_deployed"}
+	var health := 1200.0
+	if not is_boss:
+		var profile: RefCounted = _resolve_enemy_profile(archetype_id)
+		if profile == null:
+			return {"ok": false, "error": "unknown_enemy_profile_id"}
+		health = float(profile.get("normal_health"))
+	var enemy := CombatEnemyStateScript.new(position, health, is_boss, _allocate_entity_id(), archetype_id)
+	if is_boss:
+		boss = enemy
+		enemy.core_vulnerable = true
+	if objective_id == "hunt_elite" and enemies.is_empty() and not is_boss:
+		_set_elite_enemy(enemy)
+	enemies.append(enemy)
+	return {"ok": true, "error": "", "enemy": enemy}
+
+
+func encounter_spawn_position(socket_position: Vector2) -> Vector2:
+	var slot := next_entity_id - 1
+	if slot >= 0 and slot < room_spawn_offsets.size():
+		var authored := room_origin + room_spawn_offsets[slot]
+		if authored.is_finite():
+			return authored
+	return socket_position
+
+
+func discard_encounter_enemy(enemy: CombatEnemyState) -> void:
+	if enemy == null:
+		return
+	enemies.erase(enemy)
+	if boss == enemy:
+		boss = null
+	if elite_entity_id == enemy.entity_id:
+		elite_entity_id = 0
+
+
+func _set_elite_enemy(enemy: CombatEnemyState) -> void:
+	if enemy == null or enemy.is_boss:
+		return
+	var elite_profile: RefCounted = _profile_for_enemy(enemy)
+	if elite_profile == null:
+		return
+	elite_entity_id = enemy.entity_id
+	var elite_health := float(elite_profile.get("elite_health"))
+	enemy.health = elite_health
+	enemy.maximum_health = elite_health
 
 
 func _arena_rect() -> Rect2:
 	return arena_rect
 
 
-func _walkable_geometry(padding: float) -> Dictionary:
-	if not walkable_geometry_callback.is_valid():
-		return {}
-	var result: Variant = walkable_geometry_callback.call(padding)
-	return result if result is Dictionary else {}
-
-
 func _collision_geometry(padding: float) -> Dictionary:
-	if collision_geometry_callback.is_valid():
-		var result: Variant = collision_geometry_callback.call(padding)
-		return result if result is Dictionary else {}
-	return _walkable_geometry(padding)
+	## Spatial truth comes only from the typed room port. An invalid or empty
+	## geometry result fails closed: AI planning rejects the snapshot instead
+	## of silently substituting walkable or layout-derived geometry.
+	if room_port == null:
+		_room_dependency_failure("collision_geometry", "encounter_room_port_unavailable")
+		return {}
+	var result: Variant = room_port.collision_geometry(padding)
+	if result is Dictionary and not (result as Dictionary).is_empty():
+		return result
+	_room_dependency_failure("collision_geometry", "invalid_geometry_result")
+	return {}
 
 
 func _quantize_position(value: Vector2) -> Vector2:
-	if quantize_position_callback.is_valid():
-		return Vector2(quantize_position_callback.call(value))
-	return Vector2(snappedf(value.x, 0.001), snappedf(value.y, 0.001))
+	## Returns a non-finite vector on failure so hazard refresh can freeze the
+	## affected origin instead of silently re-deriving the authority grid.
+	if room_port == null:
+		_room_dependency_failure("quantize_position", "encounter_room_port_unavailable")
+		return Vector2(INF, INF)
+	var result: Variant = room_port.quantize_position(value)
+	if result is Vector2 and (result as Vector2).is_finite():
+		return result
+	_room_dependency_failure("quantize_position", "invalid_position_result")
+	return Vector2(INF, INF)
 
 
 func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
-	if collision_geometry_callback.is_valid():
-		var geometry := _collision_geometry(padding)
-		var projected := ArenaGeometryScript.project(value, geometry)
-		if bool(projected.get("ok", false)):
-			return Vector2(projected["position"])
+	if room_port == null:
+		_room_dependency_failure("clamp_to_arena", "encounter_room_port_unavailable")
 		return value
-	if clamp_to_arena_callback.is_valid():
-		return Vector2(clamp_to_arena_callback.call(value, padding))
-	return value.clamp(arena_rect.position + Vector2.ONE * padding, arena_rect.end - Vector2.ONE * padding)
+	var result: Variant = room_port.clamp_to_arena(value, padding)
+	if result is Vector2 and (result as Vector2).is_finite():
+		return result
+	_room_dependency_failure("clamp_to_arena", "invalid_position_result")
+	return value
 
 
 func _move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
-	if not move_enemy_callback.is_valid():
-		return {"ok": false, "error": "move_callback_unavailable"}
-	var result: Variant = move_enemy_callback.call(enemy, displacement)
-	return result if result is Dictionary else {"ok": false, "error": "invalid_move_callback_result"}
-
-
-func _damage_player(amount: float, source_id: String, source_position: Vector2) -> bool:
-	var receipt: Dictionary = player_rule_port.apply_damage(tick, amount, source_id, source_position)
-	return bool(receipt.get("accepted", false))
+	if room_port == null:
+		return {"ok": false, "error": "move_room_unavailable"}
+	var result: Variant = room_port.move_enemy(enemy, displacement)
+	if not result is Dictionary:
+		return {"ok": false, "error": "invalid_move_result"}
+	var move: Dictionary = result
+	if bool(move.get("ok", false)):
+		var position_value: Variant = move.get("position", null)
+		if not position_value is Vector2 or not (position_value as Vector2).is_finite():
+			return {"ok": false, "error": "invalid_move_position"}
+	return move
 
 
 func is_target_blocked(target: CombatEnemyState) -> bool:
@@ -317,22 +411,44 @@ func is_targetable(target: CombatEnemyState) -> bool:
 	return target != null and target.health > 0.0 and not is_target_blocked(target)
 
 
-func _register_enemy_actor(enemy: CombatEnemyState) -> bool:
-	if not register_enemy_callback.is_valid():
-		return false
-	return bool(register_enemy_callback.call(enemy))
+func register_enemy(enemy: CombatEnemyState) -> Dictionary:
+	## Typed registration entry. A failed receipt must never leave an
+	## unregistered actor in the encounter roster.
+	if room_port == null:
+		return {"ok": false, "error": "encounter_room_port_unavailable"}
+	var result: Variant = room_port.register_enemy(enemy)
+	if not result is Dictionary:
+		return {"ok": false, "error": "invalid_registration_result"}
+	return result
 
 
 func _layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
-	if not layout_spawn_offsets_callback.is_valid():
+	if room_port == null:
+		_room_dependency_failure("layout_spawn_offsets", "encounter_room_port_unavailable")
 		return []
-	var value: Variant = layout_spawn_offsets_callback.call(id, count)
+	var value: Variant = room_port.layout_spawn_offsets(id, count)
 	var result: Array[Vector2] = []
 	if value is Array:
 		for point: Variant in value:
 			if point is Vector2:
 				result.append(point)
 	return result
+
+
+func _set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> void:
+	if room_port == null:
+		_room_dependency_failure("set_enemy_collision_class", "encounter_room_port_unavailable")
+		return
+	if not room_port.set_enemy_collision_class(enemy, collision_class):
+		_room_dependency_failure("set_enemy_collision_class", "collision_class_rejected:%d" % enemy.entity_id)
+
+
+func _room_dependency_failure(operation: String, error: String) -> void:
+	## Single loud failure channel for the typed room boundary. A failed or
+	## missing room operation is reported; it is never silently substituted.
+	var message := "encounter_room_dependency_failed:%s:%s" % [operation, error]
+	push_error(message)
+	battle_report = message
 
 
 func _validate_spawn_room(room: Dictionary) -> String:
@@ -383,8 +499,17 @@ static func _validate_field_types(room: Dictionary) -> String:
 
 
 func update_tick() -> void:
-	refresh_hazard_states_tick()
+	## Production hazard timing and contact resolution are owned by Main's
+	## CombatHazardDomain phase.  The direct hazard methods below remain
+	## available for isolated EncounterDirector tests and legacy fixtures, but
+	## update_tick() must not advance that second hazard authority.
 	var ordered: Array[CombatEnemyState] = enemies.duplicate()
+	if _active_entity_filter_enabled:
+		var active_ordered: Array[CombatEnemyState] = []
+		for enemy: CombatEnemyState in ordered:
+			if _active_entity_ids.has(enemy.entity_id):
+				active_ordered.append(enemy)
+		ordered = active_ordered
 	ordered.sort_custom(func(left: CombatEnemyState, right: CombatEnemyState) -> bool: return left.entity_id < right.entity_id)
 	for enemy: CombatEnemyState in ordered:
 		_finish_enemy_recovery_if_due(enemy)
@@ -402,8 +527,16 @@ func update_tick() -> void:
 
 func enemy_tactics_snapshot() -> Dictionary:
 	var geometry := _collision_geometry(16.0)
+	var bounds_value: Variant = geometry.get("bounds", null) if not geometry.is_empty() else null
+	if not bounds_value is Rect2:
+		# The typed room port has already recorded the dependency failure.  Do
+		# not dereference a fabricated geometry shape or let AI planning crash;
+		# an empty snapshot makes EnemyTactics reject the plan fail-closed.
+		return {}
 	var actors: Array[Dictionary] = []
 	for enemy: CombatEnemyState in enemies:
+		if _active_entity_filter_enabled and not _active_entity_ids.has(enemy.entity_id):
+			continue
 		var planning_state := enemy.action_state
 		if planning_state == "none":
 			planning_state = "range_hold" if enemy.kind_id == "fan_ranged" and enemy.tactic_state == "range_hold" else "idle"
@@ -424,14 +557,30 @@ func enemy_tactics_snapshot() -> Dictionary:
 		"snapshot_version": EnemyTacticsScript.SNAPSHOT_VERSION,
 		"tick": tick,
 		"player_position": player_position,
-		"arena_rect": geometry.bounds,
+		"arena_rect": bounds_value,
 		"walkable_geometry": geometry,
 		"enemies": actors,
 		"hazards": enemy_tactics_hazards(),
 	}
 
 
+## Production active-member gate.  RoomEncounter is the deployment authority;
+## this filter limits AI planning to actors materialized for the current wave.
+## Isolated director tests leave the filter disabled and therefore preserve
+## their direct-domain setup semantics.
+func set_active_entity_ids(entity_ids: Array) -> Dictionary:
+	var next: Dictionary = {}
+	for value: Variant in entity_ids:
+		if value is int and int(value) > 0:
+			next[int(value)] = true
+	_active_entity_ids = next
+	_active_entity_filter_enabled = true
+	return {"ok": true, "error": "", "active_entity_ids": next.keys()}
+
+
 func enemy_tactics_hazards() -> Array[Dictionary]:
+	if hazard_read_port != null:
+		return hazard_read_port.active_geometry()
 	var result: Array[Dictionary] = []
 	for hazard: Dictionary in hazard_states:
 		var phase := String(hazard.get("phase", ""))
@@ -473,8 +622,16 @@ func _maybe_summon_reinforcements(elite: CombatEnemyState) -> void:
 		return
 	var reinforcement := CombatEnemyStateScript.new(_arena_rect().get_center() + spawn, float(reinforcement_profile.get("normal_health")), false, reinforcement_id, "melee_pursuer")
 	enemies.append(reinforcement)
-	if register_enemy_callback.is_valid() and not _register_enemy_actor(reinforcement):
-		push_error("reinforcement_actor_registration_failed:%d" % reinforcement_id)
+	## Fail closed on a rejected registration receipt: the reinforcement is
+	## removed from the roster so no unregistered ghost actor can plan AI,
+	## enter spatial queries or become a proxy target. The summon flag stays
+	## consumed so a broken registration port cannot re-summon every tick.
+	var registration := register_enemy(reinforcement)
+	if not bool(registration.get("ok", false)):
+		enemies.erase(reinforcement)
+		var rejection := "reinforcement_actor_registration_failed:%d:%s" % [reinforcement_id, String(registration.get("error", "unknown"))]
+		battle_report = rejection
+		push_error(rejection)
 
 
 func update_room_rules_tick() -> void:
@@ -498,7 +655,9 @@ func refresh_hazard_states_tick() -> void:
 		if String(state.id) == "moving_fireline":
 			var rect := _arena_rect()
 			var progress := float(cycle_tick) / float(HAZARD_CYCLE_TICKS - 1)
-			state["origin"] = _quantize_position(Vector2(lerpf(rect.position.x, rect.end.x, progress), rect.position.y))
+			var quantized := _quantize_position(Vector2(lerpf(rect.position.x, rect.end.x, progress), rect.position.y))
+			if quantized.is_finite():
+				state["origin"] = quantized
 
 
 func resolve_hazard_hits_tick() -> void:
@@ -507,12 +666,18 @@ func resolve_hazard_hits_tick() -> void:
 		if state.phase == "active" and int(state.last_hit_cycle) != cycle and hazard_contains(state, player_position):
 			state["last_hit_cycle"] = cycle
 			var source_id := "hazard/%s" % String(state.id)
-			var applied := _damage_player(9.0 if String(state.id) == "moving_fireline" else 7.0, source_id, state.origin)
+			var queued: Variant = room_port.queue_player_hazard_hit(
+				tick,
+				9.0 if String(state.id) == "moving_fireline" else 7.0,
+				source_id,
+				state.origin
+			)
+			var accepted := queued is Dictionary and bool((queued as Dictionary).get("ok", false))
 			combat_event_stream.emit(tick, "attack_resolved", {
 				"action_instance_id": 0,
 				"source_id": source_id,
 				"target_id": "ranger",
-				"outcome": "damage" if applied else "avoided",
+				"outcome": "queued" if accepted else "avoided",
 				"contact_point": player_position,
 			})
 
@@ -595,6 +760,7 @@ func _advance_action_state(enemy: CombatEnemyState, active_ticks: int, recovery_
 func _finish_enemy_recovery_if_due(enemy: CombatEnemyState) -> bool:
 	if enemy.action_state != "recovery" or tick < enemy.state_ends_tick:
 		return false
+	var was_charge := enemy.action_id == "charge"
 	var finished_action := enemy.action_id
 	combat_event_stream.emit(tick, "action_ended", {
 		"action_instance_id": enemy.action_instance_id,
@@ -610,6 +776,8 @@ func _finish_enemy_recovery_if_due(enemy: CombatEnemyState) -> bool:
 	enemy.impact_resolved = false
 	enemy.target_shape = {}
 	enemy.next_action_ready_tick = tick + _enemy_breath_ticks(enemy.kind_id)
+	if was_charge:
+		_set_enemy_collision_class(enemy, &"soft")
 	return true
 
 
@@ -693,6 +861,7 @@ func _start_charger_action(enemy: CombatEnemyState, direction: Vector2, action_d
 	if action.is_empty():
 		return false
 	_begin_action(enemy, "charge", int(action.get("windup_ticks", 0)))
+	_set_enemy_collision_class(enemy, &"ghost")
 	enemy.charge_origin = enemy.position
 	enemy.charge_direction = direction.normalized()
 	enemy.facing = enemy.charge_direction
@@ -820,7 +989,9 @@ func _resolve_hostile_attack(enemy: CombatEnemyState, amount: float, shape_hit: 
 	})
 	var outcome := "miss"
 	if shape_hit:
-		outcome = "damage" if _damage_player(amount, source_id, enemy.position) else "avoided"
+		var queued: Variant = room_port.queue_player_hazard_hit(tick, amount, source_id, enemy.position) if room_port != null else null
+		var accepted := queued is Dictionary and bool((queued as Dictionary).get("ok", false))
+		outcome = "queued" if accepted else "avoided"
 	combat_event_stream.emit(tick, "attack_resolved", {
 		"action_instance_id": enemy.action_instance_id,
 		"source_id": source_id,

@@ -279,14 +279,14 @@
     {
       "bytes": 30319,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/enemy_actions_v01/enemies.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/enemy_actions_v01/enemies.png",
       "sha256": "f432816323740b26897ca84d30d734919ebcf559be263e9918e92ad30f4da011",
       "texture": "enemies"
     },
     {
       "bytes": 16638,
       "kind": "atlas_contract",
-      "path": "/data/repo/makeitbig/art/production/p1/enemy_actions_v01/atlas.json",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/enemy_actions_v01/atlas.json",
       "sha256": "ec79c7330c2f562086329c797826e10b3b39ec75502bb772d49790d6c9f9b97a"
     }
   ],
@@ -295,7 +295,7 @@
     48
   ],
   "columns": 13,
-  "config_path": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/recipe.final.json",
+  "config_path": "/data/paseo-makeitbig/project/docs/art-production/p1-enemy-actions-v01/recipe.final.json",
   "config_sha256": "fb9f245ec2710bba6dfa80abec4144608e704fba6918292190420c5e1ec26d23",
   "disclosure": {},
   "duplicate_pixel_frames": [
@@ -3043,7 +3043,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1086,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/charger_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-enemy-actions-v01/sources/charger_original.png",
       "sha256": "9a94aae13cc077a783e4a8ef7b3b2e506bf70d0a002bc9aea9d2d2c43e5ea69f",
       "transparent_pixels": 0,
       "width": 1448
@@ -3061,7 +3061,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1086,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/melee_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-enemy-actions-v01/sources/melee_original.png",
       "sha256": "ed1d4ced27b0052ba9ccf62cb5d5fad2d7ea472fe46135b2d0cedd22424e4944",
       "transparent_pixels": 0,
       "width": 1448
@@ -3079,7 +3079,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1086,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/ranged_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-enemy-actions-v01/sources/ranged_original.png",
       "sha256": "e99472ddb9e290a637950197d7d781896f4dda429a39115c4950f27ff054065c",
       "transparent_pixels": 0,
       "width": 1448

@@ -14,15 +14,15 @@ cd makeitbig
 godot --path .
 ```
 
-当前 Docker 工作区使用固定入口：
+当前宿主机工作区使用固定入口：
 
 ```bash
-cd /data/repo/makeitbig
-source scripts/container_env.sh
+cd /data/paseo-makeitbig/project
+source scripts/project_env.sh
 ./scripts/container_build.sh
 ```
 
-容器内的版本、可写目录、导出模板和分阶段命令见[容器工作流](docs/CONTAINER_WORKFLOW.md)。
+宿主机上的版本、可写目录、导出模板和分阶段命令见[宿主机工作流](docs/HOST_WORKFLOW.md)。
 
 ## 操作
 
@@ -39,7 +39,7 @@ source scripts/container_env.sh
 
 ## 检查与导出
 
-容器内的完整验收顺序是：全量测试、Linux/Windows 导出、Linux 正式包空目录 smoke。
+宿主机上的完整验收顺序是：全量测试、Linux/Windows 导出、Linux 正式包空目录 smoke。
 
 ```bash
 ./scripts/container_test.sh
@@ -50,15 +50,15 @@ source scripts/container_env.sh
 已经配置好 Godot 的环境也可以直接运行：
 
 ```bash
-GODOT_BIN=godot ./scripts/test.sh
-GODOT_BIN=godot ./scripts/export_all.sh
+./scripts/test.sh
+./scripts/export_all.sh
 ```
 
 Linux 正式包位于 `build/current/linux/make-it-big.x86_64`，Windows 包位于 `build/current/windows/make-it-big.exe`。Windows 导出不等于 Windows 实机验证，公开 CI 负责交叉平台检查。
 
 ## 发布页
 
-构建通过后，在容器内生成最近 20 个 build 的静态发布页：
+构建通过后，在宿主机生成最近 20 个 build 的静态发布页：
 
 ```bash
 ./scripts/release.sh all
@@ -69,15 +69,15 @@ Linux 正式包位于 `build/current/linux/make-it-big.x86_64`，Windows 包位�
 
 当前 Tailnet-only 发布页：<https://rapidhere-home.tail99c4e8.ts.net:8448>。
 
-需要通过 Tailscale 访问时，先在容器内运行 `./deploy/tailscale/stage_release_page.sh` 校验 `build/releases/`，再在宿主机运行目录中的 `serve_host.sh.example`。默认使用 tailnet-only `tailscale serve`；容器没有 tailscaled 或 TUN，宿主机步骤、端口和上线前检查见 [Tailscale 发布说明](deploy/tailscale/README.md)。
+需要通过 Tailscale 访问时，运行 `./deploy/tailscale/stage_release_page.sh` 校验 `build/releases/`，再按 [Tailscale 发布说明](deploy/tailscale/README.md) 执行宿主机的 `tailscale serve`。
 
 ## 文档入口
 
 - [AGENTS.md](AGENTS.md)：项目整体说明、权威来源和协作规则。
 - [HANDOFF.md](HANDOFF.md)：当前工作状态与最近一次验证，滚动维护。
 - [design/](design/README.md)：设计、UI 方法和视觉参考。
-- [docs/](docs/README.md)：系统、叙事、容器和美术生产的详细说明。
-- [docs/GRAPHICAL_VALIDATION.md](docs/GRAPHICAL_VALIDATION.md)：容器 X11 界面验收和宿主机 RTX 4080 SUPER 窗口调试。
+- [docs/](docs/README.md)：系统、叙事、宿主机工作流和美术生产的详细说明。
+- [docs/GRAPHICAL_VALIDATION.md](docs/GRAPHICAL_VALIDATION.md)：宿主机窗口和 headless 界面验收。
 - [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md)：发布页、build 保留和 Tailscale 上线规范。
 - [content/](content/) 与 `src/`：当前实现和内容的事实来源。
 

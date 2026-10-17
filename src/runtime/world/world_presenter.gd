@@ -1,6 +1,8 @@
 class_name WorldPresenter
 extends Node2D
 
+const RoomSceneSetupPortScript := preload("res://src/runtime/world/room_scene_setup_port.gd")
+
 ## Presentation-only world tree. Gameplay systems submit positions and states;
 ## this node never writes them back and never draws collision geometry.
 
@@ -48,15 +50,15 @@ func _ensure_layers() -> void:
 	add_child(foreground_layer)
 
 
-func mount_world_scene(scene: PackedScene, setup: Callable = Callable(), native_contract: Dictionary = {}) -> Node:
+func mount_world_scene(scene: PackedScene, setup: RoomSceneSetupPort = null, native_contract: Dictionary = {}) -> Node:
 	_ensure_layers()
 	if scene == null or is_instance_valid(_native_scene):
 		return null
 	var instance := scene.instantiate()
 	if instance == null:
 		return null
-	if setup.is_valid():
-		setup.call(instance)
+	if setup != null:
+		setup.setup(instance)
 	var contract_path := String(native_contract.get("native_contract_path", ""))
 	var author_root := instance.get_node_or_null(contract_path) if not contract_path.is_empty() else null
 	if author_root == null:

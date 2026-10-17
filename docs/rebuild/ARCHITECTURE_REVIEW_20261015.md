@@ -251,4 +251,4 @@ import. `build/releases` remains managed by the release script.
 
 The release page and current commit are separate from the next milestone. A
 new release should only be produced after the vertical slice has its focused
-tests, full container build, export, and Linux smoke evidence.
+tests, full host build, export, and Linux smoke evidence.

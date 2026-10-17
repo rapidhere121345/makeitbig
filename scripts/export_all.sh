@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GODOT_BIN="${GODOT_BIN:-godot}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=project_env.sh
+source "${SCRIPT_DIR}/project_env.sh"
+cd "$MIB_PROJECT_ROOT"
 mkdir -p build/current/linux build/current/windows
 "$GODOT_BIN" --headless --path . --export-release "Linux x86_64"
 "$GODOT_BIN" --headless --path . --export-release "Windows x86_64"

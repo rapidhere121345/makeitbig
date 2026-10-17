@@ -21,12 +21,12 @@
   },
   {
     "id": "edges",
-    "path": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/edges.png",
+    "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/edges.png",
     "prompt": "Use case: style-transfer. Edit the FIRST image, a production pixel-art sprite strip, to unify it with the snowy medieval hamlet style in the SECOND reference. TRUE TRANSPARENT background, preserve three equally sized square cells in one horizontal row, canvas aspect exactly 3:1. Keep this left-to-right order and original footprints: 1) three squat weathered stone gate posts linked by short timber rails, snow caps; 2) a small winter evergreen pine in place of the bare tree, with its trunk on the same feet anchor and the same overall maximum silhouette height/width, slate-green needles and uneven ivory snow; 3) a short two-post rustic timber fence panel with slate stone footings and a little snow. No people, no ground slab, no additional props, no text, no cell borders. Match reference dark weathered wood, chipped blue-gray stone, snowy highlights, copper fittings, high three-quarter orthographic camera, crisp readable hand-authored pixel clusters. Each sprite completely inside its own cell with original transparent padding and bottom position. Keep these as small boundary props, not buildings."
   },
   {
     "id": "residents",
-    "path": "/data/repo/makeitbig/art/production/p1/hamlet_life_v01/residents.png",
+    "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_life_v01/residents.png",
     "prompt": "Use case: style-transfer with identity-preserve. Edit FIRST image, the existing production animation atlas, to match the materials and palette of SECOND snowy medieval town reference. Keep EXACTLY the existing 4 columns by 5 rows, 20 character cells total, canvas aspect 4:5, true transparent background. Preserve every pose, occupied cell, relative size, ground foot anchor and timing correspondence. Each row must remain the SAME person across four subtly different work-cycle frames: row 1 hooded quartermaster sorting a small barrel; row 2 dark-haired ledger/clerk sorting notes; row 3 rugged outfitter tending gear; row 4 standing pale-haired field researcher handling a scroll; row 5 smith working at a small anvil. Use the exact existing silhouettes and actions as template. Refine with consistent winter cloth, muted blue-gray wool, old copper-brown leather, bone-white hoods, weathered timber. Same high three-quarter/top-down camera and restrained warm lighting across all twenty cells. Crisp pixel clusters designed for 48x48 per native cell, do not add subpixel detail, outlines, halos, scenery, new props beyond the work props already in the target, text, or boxes. No empty/missing/repeated cells; retain distinct animation poses. Do not introduce snow under their feet. Each character grounded at its original cell bottom, no cropping or cross-cell overlaps."
   }
 ]

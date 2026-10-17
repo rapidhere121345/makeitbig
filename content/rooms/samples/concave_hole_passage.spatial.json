@@ -10,12 +10,28 @@
 	"regions_and_portals": [],
 	"spawn_interaction_exit_sockets": [
 		{
-			"kind": "spawn",
+			"kind": "interaction",
 			"position": [
-				60.0,
-				60.0
+				660.0,
+				440.0
 			],
-			"socket_id": "socket/Spawn"
+			"socket_id": "socket/CornerApproach"
+		},
+		{
+			"kind": "interaction",
+			"position": [
+				360.0,
+				230.0
+			],
+			"socket_id": "socket/CriticalApproach"
+		},
+		{
+			"kind": "exit",
+			"position": [
+				740.0,
+				560.0
+			],
+			"socket_id": "socket/Exit"
 		},
 		{
 			"kind": "interaction",
@@ -28,22 +44,6 @@
 		{
 			"kind": "interaction",
 			"position": [
-				140.0,
-				310.0
-			],
-			"socket_id": "socket/SlideApproach"
-		},
-		{
-			"kind": "interaction",
-			"position": [
-				660.0,
-				440.0
-			],
-			"socket_id": "socket/CornerApproach"
-		},
-		{
-			"kind": "interaction",
-			"position": [
 				360.0,
 				109.75
 			],
@@ -52,10 +52,18 @@
 		{
 			"kind": "interaction",
 			"position": [
-				360.0,
-				230.0
+				140.0,
+				310.0
 			],
-			"socket_id": "socket/CriticalApproach"
+			"socket_id": "socket/SlideApproach"
+		},
+		{
+			"kind": "spawn",
+			"position": [
+				60.0,
+				60.0
+			],
+			"socket_id": "socket/Spawn"
 		},
 		{
 			"kind": "interaction",
@@ -64,39 +72,11 @@
 				351.0
 			],
 			"socket_id": "socket/WideApproach"
-		},
-		{
-			"kind": "exit",
-			"position": [
-				740.0,
-				560.0
-			],
-			"socket_id": "socket/Exit"
 		}
 	],
 	"stable_bindings": [
 		{
-			"binding_id": "world/outer-boundary",
-			"channels": {
-				"movement": true,
-				"navigation": false,
-				"occlusion": false,
-				"projectile": false,
-				"vision": false
-			},
-			"geometry": {
-				"rect": [
-					0.0,
-					0.0,
-					800.0,
-					600.0
-				],
-				"type": "rect"
-			},
-			"source": "native.boundary.v1"
-		},
-		{
-			"binding_id": "solid/Notch",
+			"binding_id": "solid/CornerHorizontal",
 			"channels": {
 				"movement": true,
 				"navigation": false,
@@ -107,53 +87,20 @@
 			"geometry": {
 				"points": [
 					[
-						600.0,
-						0.0
+						620.0,
+						380.0
 					],
 					[
-						800.0,
-						0.0
+						760.0,
+						380.0
 					],
 					[
-						800.0,
-						180.0
+						760.0,
+						400.0
 					],
 					[
-						600.0,
-						180.0
-					]
-				],
-				"type": "polygon"
-			},
-			"kind": "static_blocker",
-			"source": "native.static.convex.v1"
-		},
-		{
-			"binding_id": "solid/Hole",
-			"channels": {
-				"movement": true,
-				"navigation": false,
-				"occlusion": false,
-				"projectile": false,
-				"vision": false
-			},
-			"geometry": {
-				"points": [
-					[
-						180.0,
-						280.0
-					],
-					[
-						250.0,
-						280.0
-					],
-					[
-						250.0,
-						350.0
-					],
-					[
-						180.0,
-						350.0
+						620.0,
+						400.0
 					]
 				],
 				"type": "polygon"
@@ -195,7 +142,7 @@
 			"source": "native.static.convex.v1"
 		},
 		{
-			"binding_id": "solid/CornerHorizontal",
+			"binding_id": "solid/GateBottom",
 			"channels": {
 				"movement": true,
 				"navigation": false,
@@ -206,20 +153,53 @@
 			"geometry": {
 				"points": [
 					[
-						620.0,
-						380.0
+						400.0,
+						362.0
 					],
 					[
-						760.0,
-						380.0
+						430.0,
+						362.0
 					],
 					[
-						760.0,
-						400.0
+						430.0,
+						600.0
 					],
 					[
-						620.0,
-						400.0
+						400.0,
+						600.0
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "native.static.convex.v1"
+		},
+		{
+			"binding_id": "solid/GateLower",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						400.0,
+						240.0
+					],
+					[
+						430.0,
+						240.0
+					],
+					[
+						430.0,
+						340.0
+					],
+					[
+						400.0,
+						340.0
 					]
 				],
 				"type": "polygon"
@@ -294,7 +274,7 @@
 			"source": "native.static.convex.v1"
 		},
 		{
-			"binding_id": "solid/GateLower",
+			"binding_id": "solid/Hole",
 			"channels": {
 				"movement": true,
 				"navigation": false,
@@ -305,20 +285,20 @@
 			"geometry": {
 				"points": [
 					[
-						400.0,
-						240.0
+						180.0,
+						280.0
 					],
 					[
-						430.0,
-						240.0
+						250.0,
+						280.0
 					],
 					[
-						430.0,
-						340.0
+						250.0,
+						350.0
 					],
 					[
-						400.0,
-						340.0
+						180.0,
+						350.0
 					]
 				],
 				"type": "polygon"
@@ -327,7 +307,7 @@
 			"source": "native.static.convex.v1"
 		},
 		{
-			"binding_id": "solid/GateBottom",
+			"binding_id": "solid/Notch",
 			"channels": {
 				"movement": true,
 				"navigation": false,
@@ -338,26 +318,46 @@
 			"geometry": {
 				"points": [
 					[
-						400.0,
-						362.0
+						600.0,
+						0.0
 					],
 					[
-						430.0,
-						362.0
+						800.0,
+						0.0
 					],
 					[
-						430.0,
-						600.0
+						800.0,
+						180.0
 					],
 					[
-						400.0,
-						600.0
+						600.0,
+						180.0
 					]
 				],
 				"type": "polygon"
 			},
 			"kind": "static_blocker",
 			"source": "native.static.convex.v1"
+		},
+		{
+			"binding_id": "world/outer-boundary",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"rect": [
+					0.0,
+					0.0,
+					800.0,
+					600.0
+				],
+				"type": "rect"
+			},
+			"source": "native.boundary.v1"
 		}
 	],
 	"traversal_profiles": [

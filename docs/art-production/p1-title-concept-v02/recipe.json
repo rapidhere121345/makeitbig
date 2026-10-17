@@ -3,7 +3,7 @@
   "resource_prefix": "res://art/production/p1/title_concept_v02",
   "native_view": [640, 360],
   "palette": ["#111820", "#1D2731", "#2D3943", "#35434F", "#414F5A", "#46515A", "#58616B", "#71808A", "#8C9296", "#AAAFAB", "#7F94AD", "#B0C4D8", "#DBE6F4", "#5B4036", "#72533E", "#896043", "#AD7950", "#C49364", "#4A3430", "#332C30", "#9B8A78", "#B6A28C", "#D3BDA0", "#D3CBB5", "#E9DDC3", "#FFF0D6", "#BB713D", "#EEAD56", "#F4CE77", "#70578D", "#B17CC4", "#796958"],
-  "sources": {"title": {"path": "/data/repo/makeitbig/docs/art-production/p1-title-concept-v02/sources/title_original.png", "grid": [1, 1], "background": {"mode": "opaque"}}},
+  "sources": {"title": {"path": "/data/paseo-makeitbig/project/docs/art-production/p1-title-concept-v02/sources/title_original.png", "grid": [1, 1], "background": {"mode": "opaque"}}},
   "atlases": {"background": {"cell_size": [640, 360], "columns": 1, "padding": 0}},
   "sprites": [{"id": "title.background", "source": "title", "cell": [0, 0], "atlas": "background", "anchor": [320, 360], "fit": [640, 360], "crop": [0, 0, 1664, 936]}],
   "animations": {}

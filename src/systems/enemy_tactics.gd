@@ -44,11 +44,12 @@ const KIND_COLOSSUS := "threshold_colossus"
 const LOCKED_ACTION_STATES := [&"windup", &"active", &"recovery", &"transition"]
 const VALID_ACTION_STATES := [&"idle", &"locomotion", &"range_hold", &"windup", &"active", &"recovery", &"transition"]
 
-## Contact resolution in the arena uses a true 23-unit radius. Slots therefore
-## sit inside that radius: reaching formation must always lead to an attack
-## instead of orbiting forever just outside the resolver.
+## Dynamic actor bodies meet at the sum of their authored footprints (14 for
+## the ranger and 16 for a normal enemy).  The melee action must therefore
+## trigger at the same center distance that soft separation can actually
+## reach; otherwise the planner keeps requesting inward movement forever.
 const MELEE_RING_RADIUS := 20.0
-const MELEE_ATTACK_RANGE := 23.0
+const MELEE_ATTACK_RANGE := 30.25
 const MELEE_SLOT_COUNT := 12
 const MELEE_SEPARATION_RADIUS := 28.0
 const MELEE_SEPARATION_WEIGHT := 0.85

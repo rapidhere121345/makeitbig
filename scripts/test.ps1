@@ -29,6 +29,42 @@ if ($LASTEXITCODE -ne 0) { throw "Godot tests failed with exit code $LASTEXITCOD
 if ($LASTEXITCODE -ne 0) { throw "Runtime world tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_combat_simulation.gd
 if ($LASTEXITCODE -ne 0) { throw "Combat simulation tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_simulation_kernel.gd
+if ($LASTEXITCODE -ne 0) { throw "Simulation kernel tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_spatial_kernel.gd
+if ($LASTEXITCODE -ne 0) { throw "Spatial kernel tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_target_combat_domains.gd
+if ($LASTEXITCODE -ne 0) { throw "Target combat domain tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_death_settlement_loot.gd
+if ($LASTEXITCODE -ne 0) { throw "Death settlement tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_enemy_death_actor_deregistration.gd
+if ($LASTEXITCODE -ne 0) { throw "Enemy death actor deregistration tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_presentation_occlusion_boundary.gd
+if ($LASTEXITCODE -ne 0) { throw "Presentation occlusion tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_world_asset_pipeline.gd
+if ($LASTEXITCODE -ne 0) { throw "World asset pipeline tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_room_combat_port.gd
+if ($LASTEXITCODE -ne 0) { throw "Room combat port tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_spatial_room_port.gd
+if ($LASTEXITCODE -ne 0) { throw "Spatial room port tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_presentation_room_port.gd
+if ($LASTEXITCODE -ne 0) { throw "Presentation room port tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_kernel_lifecycle.gd
+if ($LASTEXITCODE -ne 0) { throw "Kernel lifecycle tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_kernel_production_combat.gd
+if ($LASTEXITCODE -ne 0) { throw "Kernel production combat tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_kernel_boss_combat.gd
+if ($LASTEXITCODE -ne 0) { throw "Kernel Boss combat tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_kernel_production_boss.gd
+if ($LASTEXITCODE -ne 0) { throw "Kernel production Boss tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_room_encounter_production.gd
+if ($LASTEXITCODE -ne 0) { throw "RoomEncounter production tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_room_terminal_authority.gd
+if ($LASTEXITCODE -ne 0) { throw "Room terminal authority tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_kernel_authority_boundary.gd
+if ($LASTEXITCODE -ne 0) { throw "Kernel authority boundary tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_hazard_domain.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat hazard domain tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_arena_presenter.gd
 if ($LASTEXITCODE -ne 0) { throw "Arena presenter tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_arena_actor_presenter.gd
@@ -272,8 +308,8 @@ if ($LASTEXITCODE -ne 0) { throw "Game flow smoke failed with exit code $LASTEXI
 
 $StateDir = if ($env:MIB_TEST_STATE_DIR) { $env:MIB_TEST_STATE_DIR } else { Join-Path (Get-Location) "build/test-state" }
 New-Item -ItemType Directory -Force -Path $StateDir | Out-Null
-# Frozen historical automation hash, recorded before the runtime replacement.
-$ExpectedHash = "5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900"
+# Versioned historical-geometry replay hash for the current runtime authority.
+$ExpectedHash = "b98adeadd44d9fb428f1cb762304f8e09c252b2f00ce00583efb40bc8147200b"
 $HistoricalReplayProfile = "historical_circle_v1"
 foreach ($RenderRate in 30, 60, 144) {
     $HashPath = Join-Path $StateDir "${RenderRate}hz.sha256"

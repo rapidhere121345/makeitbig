@@ -544,7 +544,7 @@ func _build_ui() -> void:
 	if bool(town_load_report.get("ok", false)):
 		town_load_report = _town_controller.mount(_view.world_viewport)
 	if bool(town_load_report.get("ok", false)):
-		town_load_report = _view.attach(_town_controller.scene_runtime.presenter, _town.snapshot())
+		town_load_report = _view.attach(_town_controller.scene_runtime.presenter, _town.snapshot(), _town_controller.scene_runtime)
 	if bool(town_load_report.get("ok", false)):
 		_town.state_changed.connect(_on_town_state_changed)
 	else:

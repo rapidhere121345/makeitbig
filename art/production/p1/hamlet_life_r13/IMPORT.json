@@ -1,6 +1,6 @@
 {
 	"operation": "transparent-margin crop, native nearest-neighbour fit, fixed cell packing",
-	"recipe": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/life-recipe.json",
+	"recipe": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/life-recipe.json",
 	"recipe_sha256": "533576e01bc53556036c2d8e8440018931aa2adcff6a423f77b1489f4b2d1202",
 	"sheets": [
 		{
@@ -312,7 +312,7 @@
 				192,
 				240
 			],
-			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
+			"source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
 			"source_sha256": "8491083522931fd493cc4f98f75cd698551e3e293ba84a4290b0eb0615c54d3a"
 		}
 	]

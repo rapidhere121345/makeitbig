@@ -1,9 +1,19 @@
 extends SceneTree
 const TownControllerScript := preload("res://src/runtime/world/town_controller.gd")
 const TownRuntimeScript := preload("res://src/runtime/world/town_runtime.gd")
-const ActorRegistryScript := preload("res://src/runtime/world/actor_registry.gd")
 const SimulationWorldScript := preload("res://src/runtime/world/simulation_world.gd")
+const RoomActorAccessScript := preload("res://src/runtime/world/room_actor_access.gd")
+const RoomSpatialPortScript := preload("res://src/runtime/world/room_spatial_port.gd")
+const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spatial_index.gd")
+const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
+const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay.gd")
+const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
+const SpatialChannelsScript := preload("res://src/runtime/spatial/spatial_channels.gd")
 var failures: Array[String] = []
+## Kernel graphs created by this harness; shutdown severs the kernel -> port
+## -> access -> registry borrow cycle so the engine exits without leaking
+## the town fixtures' room graphs.
+var _worlds: Array = []
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -20,21 +30,50 @@ func _run() -> void:
 		_expect(town.hero_position_is_clear(town.hero_world_position()), "native spawn blocked")
 		_test_routes(town)
 		_test_travel(town)
-		print("TOWN_NATIVE ready blockers=%d native=%d" % [town.registry.snapshot().blockers.size(), controller.scene_runtime.presenter.sort_root.get_child_count()])
+		print("TOWN_NATIVE ready blockers=%d native=%d" % [controller.scene_runtime.static_spatial_index.surface_ids(SpatialChannelsScript.MOVEMENT).size(), controller.scene_runtime.presenter.sort_root.get_child_count()])
+	if controller.scene_runtime != null and controller.scene_runtime.simulation != null and controller.scene_runtime.simulation.kernel != null:
+		controller.scene_runtime.simulation.kernel.shutdown()
 	controller.free()
 	for failure: String in failures:
 		printerr(failure)
+	for world in _worlds:
+		if world != null and world.kernel != null:
+			world.kernel.shutdown()
+	_worlds.clear()
 	print("TOWN_RUNTIME ", "PASS" if failures.is_empty() else "FAIL")
 	quit(0 if failures.is_empty() else 1)
 
 func _fixture():
-	var registry := ActorRegistryScript.new()
-	var simulation := SimulationWorldScript.new()
-	registry.configure("town/test", 0)
-	simulation.configure(30, "town/test", 0)
-	registry.set_boundary({"type": "rect", "rect": Rect2(0, 0, 500, 500)})
-	registry.register_rect("wall", Rect2(200, 100, 40, 240))
-	registry.register_actor(TownRuntimeScript.HERO_ID, Vector2(180, 150), 6)
+	var spatial_port := RoomSpatialPortScript.new()
+	var simulation := SimulationWorldScript.new(spatial_port)
+	var configured: SimOutcome = simulation.configure("town/test", 0, 30)
+	_expect(configured.ok, "town fixture: simulation configuration failed")
+	_worlds.append(simulation)
+	var static_build: Dictionary = StaticSpatialIndexScript.build({
+		"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION,
+		"asset_id": "test/town",
+		"surfaces": [{
+			"id": "wall",
+			"shape": {"kind": "rect", "rect": Rect2(200.0, 100.0, 40.0, 240.0)},
+			"channels": [SpatialChannelsScript.MOVEMENT],
+			"opaque": true,
+			"vision_mode": "opaque",
+			"attenuation": 0.0,
+			"occlusion_rank": 0,
+		}],
+		"movement_boundary": {"kind": "rect", "rect": Rect2(0.0, 0.0, 500.0, 500.0)},
+	})
+	_expect(bool(static_build.get("ok", false)), "town fixture: static index rejected the room")
+	var dynamic := DynamicSpatialIndexScript.new()
+	var overlay := SpatialOverlayScript.new()
+	var resolver_build: Dictionary = MovementResolverScript.make(static_build.get("value"), overlay, dynamic)
+	_expect(bool(resolver_build.get("ok", false)), "town fixture: movement resolver rejected the room")
+	var registry := RoomActorAccessScript.new()
+	var access_result: Dictionary = registry.configure(simulation, simulation.actor_registry, static_build.get("value"), dynamic, resolver_build.get("value"), overlay)
+	_expect(bool(access_result.get("ok", false)), "town fixture: room actor access rejected the room")
+	spatial_port.bind(registry)
+	var registered: Dictionary = registry.register_actor(TownRuntimeScript.HERO_ID, Vector2(180.0, 150.0), 6.0)
+	_expect(bool(registered.get("ok", false)), "town fixture: hero registration failed")
 	var town := TownRuntimeScript.new()
 	town.configure(simulation, registry, {"world_size": [500, 500]})
 	return town

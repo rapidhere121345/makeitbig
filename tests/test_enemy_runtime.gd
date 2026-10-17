@@ -145,13 +145,17 @@ func _test_fan_sequence(arena: Node, failures: Array[String]) -> void:
 	_expect(fan.action_state == "windup" and fan.impact_tick == 61, "fan: windup or impact tick is wrong", failures)
 	fixture.drive(arena, {"enemy_step": func() -> void: arena._update_fan_tick(fan)})
 	fixture.advance_to(arena, fan.impact_tick)
-	var after_impact: float = arena.player_health
+	var recovery_tick: int = fan.state_ends_tick
 	_expect(fan.action_state == "active" and fan.impact_resolved, "fan: did not enter resolved active state", failures)
+	# The enemy phase queues a typed player contact.  Damage is committed at the
+	# next fixed tick after the kernel has consumed that contact.
+	fixture.step(arena)
+	var after_impact: float = arena.player_health
 	_expect(is_equal_approx(after_impact, 92.0), "fan: authoritative cone did not deal expected impact damage", failures)
 	# Repeated resolver submission at the same committed world tick cannot hit twice.
 	arena._update_fan_tick(fan)
 	_expect(is_equal_approx(arena.player_health, after_impact), "fan: impact dealt damage more than once", failures)
-	fixture.advance_to(arena, fan.state_ends_tick)
+	fixture.advance_to(arena, recovery_tick)
 	_expect(fan.action_state == "recovery", "fan: active did not advance to recovery", failures)
 
 
@@ -171,6 +175,7 @@ func _test_fan_attack_radius_runtime(arena: Node, failures: Array[String]) -> vo
 	fixture.step(arena)
 	_expect(fan.action_state == "windup" and is_equal_approx(float(fan.target_shape.get("radius", 0.0)), arena.EnemyTacticsScript.FAN_ATTACK_RADIUS), "fan radius: legal start did not freeze the shared target shape", failures)
 	fixture.advance_to(arena, fan.impact_tick)
+	fixture.step(arena)
 	_expect(is_equal_approx(arena.player_health, 92.0), "fan radius: stationary target at the legal boundary was not hit", failures)
 	_default_room()
 
@@ -192,9 +197,11 @@ func _test_same_role_action_lane_runtime(arena: Node, failures: Array[String]) -
 	for tick in range(2, 23):
 
 		fixture.step(arena)
+	# Tick 22 queues the contact; tick 23 commits it through RoomCombatPort.
+	fixture.step(arena)
 	var damage_events_at_first_impact := 0
 	for event: Dictionary in arena.combat_event_stream.snapshot().events:
-		if String(event.get("type", "")) == "damage_applied" and int(event.get("tick", -1)) == 22:
+		if String(event.get("type", "")) == "attack_resolved" and String(event.get("outcome", "")) == "damage" and int(event.get("tick", -1)) == 23:
 			damage_events_at_first_impact += 1
 	_expect(is_equal_approx(arena.player_health, 92.0) and damage_events_at_first_impact == 1, "action lane: one telegraph still produced stacked same-tick fan damage", failures)
 	_expect(waiting.action_state == "none", "action lane: waiting fan entered windup before the active lane released", failures)
@@ -468,12 +475,16 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 			completed_cycles += 1
 		if completed_cycles >= 1:
 			break
+	# The impact tick queues the hostile contact; allow the following kernel
+	# tick to commit it before inspecting the authoritative receipt.
+	if launch_count >= 1:
+		fixture.step(arena)
 
 	var first_resolution: Dictionary = {}
 	if charge_action_instance_ids.size() >= 1:
 		var first_action_instance_id := charge_action_instance_ids[0]
 		for event: Dictionary in arena.combat_event_stream.snapshot().events:
-			if String(event.get("type", "")) == "attack_resolved" and int(event.get("action_instance_id", -1)) == first_action_instance_id:
+			if String(event.get("type", "")) == "attack_resolved" and int(event.get("action_instance_id", -1)) == first_action_instance_id and String(event.get("outcome", "")) == "damage":
 				first_resolution = event
 				break
 	_expect(is_zero_approx(setup_displacement), "ring runtime: an in-band launch produced unexpected setup movement", failures)
@@ -664,9 +675,10 @@ func _test_hazards(arena: Node, failures: Array[String]) -> void:
 		var state: Dictionary = arena.hazard_states[0]
 		var hit_position: Vector2 = state.origin + Vector2(0.0, state.length * 0.5) if hazard_id == "moving_fireline" else state.origin
 		arena.teleport_actor("ranger", hit_position)
-		arena._update_hazards_tick()
+		fixture.step(arena)
+		fixture.step(arena)
 		var after_hit: float = arena.player_health
-		arena._update_hazards_tick()
+		fixture.step(arena)
 		_expect(after_hit < 100.0 and is_equal_approx(arena.player_health, after_hit), "%s did not deal exactly one hit per cycle" % hazard_id, failures)
 		arena.teleport_actor("ranger", center + Vector2(350.0, 100.0))
 		fixture.advance_to(arena, 119)

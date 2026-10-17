@@ -28,8 +28,14 @@ func run() -> Array[String]:
 	var temporary_root := Node.new()
 	var scene_tree := Engine.get_main_loop() as SceneTree
 	scene_tree.root.add_child(temporary_root)
+	## Mounted rooms fail closed on tree exit (SceneRuntime unmounts in
+	## _exit_tree), so the session-menu host must be an ancestor from the
+	## start; reparenting the hub mid-suite would silently unmount the town.
+	var menu_host := MenuHost.new()
+	temporary_root.add_child(menu_host)
+	menu_host.add_child(menu_host.menu)
 	var hub = BaseHubScreenScript.new()
-	temporary_root.add_child(hub)
+	menu_host.add_child(hub)
 	hub._ready()
 
 	_test_entry_table(hub, failures)
@@ -644,11 +650,7 @@ func _test_growth_story_and_settings(hub, failures: Array[String]) -> void:
 	hub._character_button.pressed.emit()
 	hub._story_button.pressed.emit()
 	_expect(events == ["growth", "story", "growth", "story"], "base hub: growth/story key and mouse actions changed", failures)
-	var parent: Node = hub.get_parent()
-	var host := MenuHost.new()
-	(Engine.get_main_loop() as SceneTree).root.add_child(host)
-	host.add_child(host.menu)
-	hub.reparent(host)
+	var host: MenuHost = hub.get_parent()
 	hub.set_information_details_expanded(true)
 	(hub.find_child("HubSettings", true, false) as Button).pressed.emit()
 	_expect(host.menu.opened == 1 and not hub.information_details_expanded(),
@@ -661,8 +663,7 @@ func _test_growth_story_and_settings(hub, failures: Array[String]) -> void:
 	escape.pressed = true
 	hub._unhandled_key_input(escape)
 	_expect(not hub.information_details_expanded(), "base hub: Escape did not close optional narrative", failures)
-	hub.reparent(parent)
-	host.free()
+	## The menu host stays an ancestor until the suite teardown frees it.
 
 
 func _test_resident_prompt(hub, failures: Array[String]) -> void:

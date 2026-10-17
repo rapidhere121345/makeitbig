@@ -17,6 +17,7 @@ const ArenaPresenter := preload("res://src/presentation/arena_presenter.gd")
 const ArenaCombatPresenter := preload("res://src/presentation/arena_combat_presenter.gd")
 const ArenaActorPresenter := preload("res://src/presentation/arena_actor_presenter.gd")
 const ArenaWorldView := preload("res://src/presentation/arena_world_view.gd")
+const OcclusionControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
 const ShellTheme := preload("res://src/presentation/shell_theme.gd")
 const PaletteScript := preload("res://src/presentation/combat_palette.gd")
 const ROOM_ENTRY_DURATION_TICKS := 36
@@ -56,6 +57,8 @@ var _accept_frames := true
 var _terminated := false
 var _render_active := false
 var _sort_report: Dictionary = {"ok": false, "error": "sort_binding_unconfigured"}
+var _occlusion := OcclusionControllerScript.new()
+var _occlusion_report: Dictionary = {"available": false, "reason": "binding_unavailable"}
 var _ground_pass: Node2D
 
 
@@ -126,10 +129,15 @@ func _resolve_sort_domain() -> Dictionary:
 		var domain_value: Variant = source.presenter
 		if not is_instance_valid(domain_value) or not domain_value is WorldPresenterScript or domain_value.is_queued_for_deletion():
 			return {"ok": false, "error": "native_sort_domain_unavailable"}
-		if _room_identity.is_empty():
+		if _room_identity.is_empty() or _room_identity != source.room_instance_id:
+			## SceneRuntime.restart_room_instance() mints a new room instance id
+			## for the same mounted room shell. The checks above already reject
+			## any presentation whose host is not the currently mounted scene,
+			## so an id change here is exactly the sanctioned in-place restart
+			## boundary: re-latch the identity the way the runtime side
+			## replace_projector() does, instead of permanently dropping event
+			## consumption and drawing for the restarted room.
 			_room_identity = source.room_instance_id
-		elif _room_identity != source.room_instance_id:
-			return {"ok": false, "error": "presentation_room_changed"}
 		if _domain != domain_value:
 			actor_presenter.release_sort_views()
 			_domain = domain_value
@@ -157,6 +165,7 @@ func sort_report() -> Dictionary:
 	result["binding_mode"] = _binding_mode
 	result["render_active"] = _render_active
 	result["actor_ids"] = _domain.actor_ids() if is_instance_valid(_domain) else []
+	result["occlusion"] = _occlusion_report.duplicate(true)
 	return result
 
 
@@ -174,6 +183,8 @@ func _set_native_visible(value: bool) -> void:
 func _clear_render_state(reason: String = "") -> void:
 	_render_active = false
 	actor_presenter.release_sort_views()
+	actor_presenter.apply_occlusion_alpha({})
+	_occlusion_report = {"available": false, "reason": "presentation_session_closed"}
 	_set_native_visible(false)
 	if is_instance_valid(_domain):
 		_domain.transform = _domain_original_transform
@@ -327,6 +338,7 @@ func commit(snapshot: Dictionary, input_view: Dictionary, display_delta: float =
 		_clear_render_state(String(submitted.error))
 		return submitted
 	_sort_report = submitted.duplicate(true)
+	_apply_detached_occlusion(display_delta)
 	_render_active = true
 	arena_presenter.show()
 	_ground_pass.queue_redraw()
@@ -334,6 +346,62 @@ func commit(snapshot: Dictionary, input_view: Dictionary, display_delta: float =
 	if is_instance_valid(arena_presenter):
 		arena_presenter.request_redraw()
 	return _sort_report.duplicate(true)
+
+
+## Drives the drawn actor views from the mounted room's detached
+## PresentationFrame/OcclusionPlan through the presentation-only
+## OcclusionController. Every input is a detached plain-value plan and every
+## output lands on drawn sort views, so occlusion display state can never
+## reach simulation state. An unavailable plan resets all alphas instead of
+## leaving stale dimming on screen.
+func _apply_detached_occlusion(display_delta: float) -> void:
+	if _binding_mode != "mounted" or _terminated:
+		_record_occlusion(false, "binding_unavailable")
+		return
+	var source: Variant = _runtime_source.get_ref() if _runtime_source != null else null
+	var port_value: Variant = source.get("presentation_port") if source != null else null
+	if port_value == null or not port_value.has_method("latest_occlusion_plan"):
+		actor_presenter.apply_occlusion_alpha({})
+		_record_occlusion(false, "presentation_port_unavailable")
+		return
+	var plan_result: Dictionary = port_value.call("latest_occlusion_plan")
+	if not bool(plan_result.get("ok", false)):
+		actor_presenter.apply_occlusion_alpha({})
+		var errors: Array = (plan_result.get("errors", []) as Array).slice(0, 3)
+		_record_occlusion(false, "plan_unavailable", errors)
+		return
+	var plan: Variant = plan_result.get("value", null)
+	if plan == null or not bool(_occlusion.call("sync_plan", plan).get("ok", false)):
+		actor_presenter.apply_occlusion_alpha({})
+		_record_occlusion(false, "plan_sync_failed")
+		return
+	var entries: Array = plan.call("entries")
+	for entry: Variant in entries:
+		var stable_id := String((entry as Dictionary)["stable_id"])
+		var report: Dictionary = plan.call("occlusion_report", stable_id)
+		if bool(report.get("ok", false)):
+			_occlusion.call("set_cover", stable_id, float(report.get("cover_fraction", 0.0)))
+	_occlusion.call("update", maxf(display_delta, 0.0))
+	var alphas: Dictionary = {}
+	var occluded_ids: Array[String] = []
+	for entry: Variant in entries:
+		var stable_id := String((entry as Dictionary)["stable_id"])
+		var alpha: float = float(_occlusion.call("alpha", stable_id))
+		alphas[stable_id] = alpha
+		if alpha < 0.999:
+			occluded_ids.append(stable_id)
+	actor_presenter.apply_occlusion_alpha(alphas)
+	_record_occlusion(true, "", [], {
+		"plan_size": entries.size(),
+		"occluded_ids": occluded_ids,
+		"alphas": alphas.duplicate(),
+	})
+
+
+func _record_occlusion(available: bool, reason: String = "", errors: Array = [], detail: Dictionary = {}) -> void:
+	_occlusion_report = {"available": available, "reason": reason, "errors": errors.duplicate()}
+	if available:
+		_occlusion_report.merge(detail, true)
 
 
 func world_frame() -> Dictionary:

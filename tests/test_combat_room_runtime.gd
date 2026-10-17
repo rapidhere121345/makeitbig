@@ -7,6 +7,8 @@ const ContentRegistryScript := preload("res://src/content/content_registry.gd")
 const ProxyBuildScript := preload("res://src/systems/proxy_build.gd")
 const RangerAnimationScript := preload("res://src/presentation/ranger_animation.gd")
 const ContractPlanScript := preload("res://src/game/contract_plan.gd")
+const SimTickContextScript := preload("res://src/runtime/simulation/sim_tick_context.gd")
+const DeathSettlementNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
 
 
 class FakeSaveStore:
@@ -107,7 +109,8 @@ func _run() -> void:
 		room_node.set("last_drop_id", "legacy.sentinel")
 		room_node.set("last_drop", "Legacy Sentinel")
 		var embedded_state_before: Dictionary = room_node.call("_embedded_authority_state_snapshot")
-		(room_node.get("enemies") as Array).clear()
+		var typed_clear := _settle_first_encounter_member(room_node)
+		_expect(bool(typed_clear.get("ok", false)), "runtime: typed encounter member settlement was rejected", failures)
 		room_node.call("_check_battle_end")
 		room_node.call("_check_battle_end")
 		_expect(room_node.call("_embedded_authority_state_snapshot") == embedded_state_before and fake_store.save_calls == 0, "runtime: repeated terminal checks polluted embedded persistence", failures)
@@ -243,6 +246,10 @@ func _run() -> void:
 			presented_node.call("_process", 1.0 / 30.0)
 			headless_node.call("_process", 1.0 / 30.0)
 		_expect(int(presented_node.get("sim_tick")) == TWIN_TICKS, "presentation twins: presented arena did not consume %d fixed ticks" % TWIN_TICKS, failures)
+		var presented_scene: Variant = presented_runtime.get("scene_runtime")
+		var presented_port: Variant = presented_scene.get("presentation_port") if presented_scene != null else null
+		var projection_errors: Array = presented_port.get("last_projection_errors") if presented_port != null else ["presentation_port_unavailable"]
+		_expect(projection_errors.is_empty() and presented_port != null and presented_port.get("latest_frame") != null, "presentation twins: presented room rejected its kernel snapshots at the actor-movement seam: %s" % str(projection_errors.slice(0, 3)), failures)
 		var presented_state: Dictionary = _semantic_snapshot(presented_node)
 		var headless_state: Dictionary = _semantic_snapshot(headless_node)
 		_expect(presented_state == headless_state, "presentation twins: semantic state diverged after %d fixed ticks" % TWIN_TICKS, failures)
@@ -424,6 +431,37 @@ func _lethal_damage(arena: Node, failures: Array[String]) -> void:
 	var player: Dictionary = arena.get("player_combat_state").snapshot(tick)
 	var applied: Dictionary = arena.get("player_combat_rules").apply_damage(tick, float(player.player_health) + 1.0, "fixture/defeat", player.player_position)
 	_expect(bool(applied.get("accepted", false)), "ranger wiring: real lethal damage was rejected", failures)
+
+
+func _settle_first_encounter_member(arena: Node) -> Dictionary:
+	# Exercise the mounted RoomEncounter authority through its typed death
+	# notification.  The old test cleared Main.enemies directly, which bypassed
+	# the encounter member state and could no longer prove terminal semantics.
+	arena.call("_simulate_tick")
+	var port: Variant = arena.get("room_encounter_port")
+	if port == null:
+		return {"ok": false, "error": "encounter_port_unavailable"}
+	var snapshot: Dictionary = port.snapshot()
+	var notifications: Array = snapshot.get("spawned_notifications", [])
+	if notifications.is_empty() or not notifications[0] is Dictionary:
+		return {"ok": false, "error": "encounter_member_not_spawned"}
+	var notification: Dictionary = notifications[0]
+	var context := SimTickContextScript.new()
+	context.tick = int(arena.get("sim_tick"))
+	var scene_runtime: Variant = arena.get("scene_runtime")
+	context.room_instance_id = String(scene_runtime.get("room_instance_id"))
+	context.world_revision = int(scene_runtime.get("world_revision"))
+	var typed_death := DeathSettlementNotificationScript.new()
+	typed_death.entity_key = String(notification.get("entity_key", ""))
+	typed_death.tick = context.tick
+	typed_death.room_id = context.room_instance_id
+	typed_death.world_revision = context.world_revision
+	port.on_death_settlement(typed_death, context)
+	var encounter_state: Dictionary = port.snapshot().get("encounter", {})
+	var records: Array = encounter_state.get("spawn_records", [])
+	if records.is_empty() or String((records[0] as Dictionary).get("state", "")) != "dead":
+		return {"ok": false, "error": "encounter_member_not_dead"}
+	return {"ok": true, "error": ""}
 	arena.call("_check_battle_end")
 
 

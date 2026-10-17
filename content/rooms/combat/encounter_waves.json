@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "rooms": {
+    "priority_charge": {
+      "waves": [
+        {
+          "wave_id": "wave.01.charge",
+          "start_delay_ticks": 0,
+          "next_wave_delay_ticks": 15,
+          "clear_policy": "all_dead",
+          "objective_tag": "telegraphed_charge",
+          "spawns": [
+            {
+              "spawn_id": "charger",
+              "archetype_id": "charging_raider",
+              "socket_id": "combat/encounter-origin",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "wave_id": "wave.02.pursuit",
+          "start_delay_ticks": 0,
+          "next_wave_delay_ticks": 0,
+          "clear_policy": "all_dead",
+          "objective_tag": "pursuit_followup",
+          "spawns": [
+            {
+              "spawn_id": "pursuer",
+              "archetype_id": "melee_pursuer",
+              "socket_id": "combat/encounter-origin",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    "auto_certification_clear": {
+      "waves": [
+        {
+          "wave_id": "wave.01.fan",
+          "start_delay_ticks": 0,
+          "next_wave_delay_ticks": 15,
+          "clear_policy": "all_dead",
+          "objective_tag": "ranged_fan_break",
+          "spawns": [
+            {
+              "spawn_id": "fan",
+              "archetype_id": "fan_ranged",
+              "socket_id": "combat/encounter-origin",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "wave_id": "wave.02.pursuit",
+          "start_delay_ticks": 0,
+          "next_wave_delay_ticks": 0,
+          "clear_policy": "all_dead",
+          "objective_tag": "pursuit_followup",
+          "spawns": [
+            {
+              "spawn_id": "pursuer",
+              "archetype_id": "melee_pursuer",
+              "socket_id": "combat/encounter-origin",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

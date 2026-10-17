@@ -109,13 +109,13 @@ and reproduces `ranger.png` byte for byte.
 ```bash
 python3 tools/art_pipeline/p1_ranger_actions_v01/build.py \
   --config /path/to/recipe.json \
-  --output /data/repo/makeitbig/art/production/p1/ranger_actions_v01
+  --output /data/paseo-makeitbig/project/art/production/p1/ranger_actions_v01
 
 python3 tools/art_pipeline/p1_ranger_actions_v01/verify.py \
-  --output /data/repo/makeitbig/art/production/p1/ranger_actions_v01 [--update-manifest]
+  --output /data/paseo-makeitbig/project/art/production/p1/ranger_actions_v01 [--update-manifest]
 
 python3 tools/art_pipeline/p1_ranger_actions_v01/review.py \
-  --output /data/repo/makeitbig/art/production/p1/ranger_actions_v01 \
+  --output /data/paseo-makeitbig/project/art/production/p1/ranger_actions_v01 \
   [--out /path/to/preview-dir] [--scale 1|2|0.25] [--gray] [--gif] [--anim ranger.east.attack] [--colors]
 
 python3 -m unittest discover -s tools/art_pipeline/p1_ranger_actions_v01/tests -v

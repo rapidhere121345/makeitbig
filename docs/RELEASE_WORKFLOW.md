@@ -33,19 +33,17 @@ git status --short
 
 ## Tailscale 上线
 
-容器只负责生成和校验文件：
+宿主机项目脚本负责生成和校验文件：
 
 ```bash
 ./deploy/tailscale/stage_release_page.sh
 ```
 
-该脚本校验 `build/releases/` 这一唯一静态发布根，并要求最新 build 同时包含 Linux 和 Windows 下载。历史 build、索引和页面资源都由 `release.sh all` 写入同一目录，Tailscale 不再使用另一套单 build 页面。因为当前容器没有 Tailscale 客户端/TUN，实际暴露由宿主机执行 `deploy/tailscale/serve_host.sh.example serve` 完成；宿主机必须先确认 bind mount 的路径与发布根可见。默认入口是 tailnet-only `tailscale serve`，监听节点 HTTPS；`funnel` 属于公开互联网暴露，必须单独检查 tailnet policy、ACL 和未签名二进制风险。
-
-若宿主机不能直接看到 bind mount，才考虑容器 HTTP 服务路径：容器服务绑定 8080，宿主机以 `127.0.0.1:8080:8080` 发布后再让 Tailscale serve 代理 `127.0.0.1`。这需要宿主机按 Paseo 的容器生命周期流程重建或更新端口映射；项目脚本不会执行这一步。
+该脚本校验 `build/releases/` 这一唯一静态发布根，并要求最新 build 同时包含 Linux 和 Windows 下载。历史 build、索引和页面资源都由 `release.sh all` 写入同一目录，Tailscale 不再使用另一套单 build 页面。Tailscale 客户端和 TUN 由宿主机运维控制，实际暴露由宿主机执行 `deploy/tailscale/serve_host.sh.example serve` 完成；宿主机必须先确认发布根可见。默认入口是 tailnet-only `tailscale serve`，监听节点 HTTPS；`funnel` 属于公开互联网暴露，必须单独检查 tailnet policy、ACL 和未签名二进制风险。
 
 上线前至少确认：`./deploy/tailscale/validate.sh` 和 `./deploy/tailscale/stage_release_page.sh --check` 通过、发布根不包含源码、宿主机 `tailscale serve status` 指向 `build/releases/`、tailnet 内能打开 `/` 并下载两个平台文件。发布页只提供下载，不承担账号鉴权；访问控制由 Tailscale tailnet/ACL 负责。
 # 当前发布入口
 
 Tailnet-only 发布页：<https://rapidhere-home.tail99c4e8.ts.net:8448>。
 
-静态发布根固定为 `build/releases/`，由宿主机 Tailscale Serve 暴露；容器内不运行 `tailscaled`。
+静态发布根固定为 `build/releases/`，由宿主机 Tailscale Serve 暴露；项目脚本不运行 `tailscaled`。

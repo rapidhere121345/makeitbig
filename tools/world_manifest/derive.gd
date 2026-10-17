@@ -1,15 +1,23 @@
 extends SceneTree
 
-## Offline native-source manifest build. Never patch or merge a second map.
-## Usage: godot --headless --path . --script res://tools/world_manifest/derive.gd -- --scene=res://...tscn --output=res://...spatial.json
+const BakeCore := preload("res://tools/world_manifest/bake_core.gd")
+
+## Offline native-source bake. Never patches or merges a second map; the
+## native scene is the only authoring input and every failure fails closed.
+## Usage:
+##   godot --headless --path . --script res://tools/world_manifest/derive.gd -- \
+##     --scene=res://...tscn --output=res://...spatial.json [--asset-out=res://...asset.json]
 func _initialize() -> void:
 	var scene_path := ""
 	var output_path := ""
+	var asset_out_path := ""
 	for argument: String in OS.get_cmdline_user_args():
 		if argument.begins_with("--scene="):
 			scene_path = argument.trim_prefix("--scene=")
 		elif argument.begins_with("--output="):
 			output_path = argument.trim_prefix("--output=")
+		elif argument.begins_with("--asset-out="):
+			asset_out_path = argument.trim_prefix("--asset-out=")
 		else:
 			printerr("unknown_argument:" + argument)
 			quit(1)
@@ -18,32 +26,22 @@ func _initialize() -> void:
 		printerr("--scene and --output required")
 		quit(1)
 		return
-	var packed := load(scene_path) as PackedScene
-	if packed == null:
-		printerr("invalid_native_scene")
+	var result: Dictionary = BakeCore.bake_scene(scene_path, output_path)
+	if not bool(result.get("ok", false)):
+		printerr("bake_failed:" + str(result.get("errors", [])))
 		quit(1)
 		return
-	var scene := packed.instantiate()
-	var author := scene if scene.has_method("validate_contract") else scene.get_node_or_null("RoomAsset")
-	if author == null or not author.has_method("derive_spatial_manifest"):
-		printerr("missing_native_author")
-		scene.free()
-		quit(1)
-		return
-	var report: Dictionary = author.validate_contract({"gameplay_source": output_path.get_file()})
-	if not bool(report.ok):
-		printerr("native_contract_invalid:" + str(report.errors))
-		scene.free()
-		quit(1)
-		return
-	var file := FileAccess.open(output_path, FileAccess.WRITE)
-	if file == null:
+	var written := BakeCore.write_manifest(result, output_path)
+	if not bool(written.get("ok", false)):
 		printerr("manifest_output_unwritable")
-		scene.free()
 		quit(1)
 		return
-	file.store_string(JSON.stringify(author.derive_spatial_manifest(), "\t", true, true) + "\n")
-	file.close()
-	scene.free()
+	if not asset_out_path.is_empty():
+		var asset_written := BakeCore.write_world_asset(result, asset_out_path)
+		if not bool(asset_written.get("ok", false)):
+			printerr("asset_output_unwritable")
+			quit(1)
+			return
+		print("NATIVE_WORLD_ASSET_BAKED " + scene_path + " -> " + asset_out_path)
 	print("NATIVE_MANIFEST_DERIVED " + scene_path + " -> " + output_path)
 	quit(0)

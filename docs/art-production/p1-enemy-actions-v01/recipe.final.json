@@ -21,9 +21,9 @@
     "#71808a"
   ],
   "sources": {
-    "melee": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/melee_original.png",
-    "charger": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/charger_original.png",
-    "ranged": "/data/repo/makeitbig/docs/art-production/p1-enemy-actions-v01/sources/ranged_original.png"
+    "melee": "/data/paseo-makeitbig/project/docs/art-production/p1-enemy-actions-v01/sources/melee_original.png",
+    "charger": "/data/paseo-makeitbig/project/docs/art-production/p1-enemy-actions-v01/sources/charger_original.png",
+    "ranged": "/data/paseo-makeitbig/project/docs/art-production/p1-enemy-actions-v01/sources/ranged_original.png"
   },
   "background": {
     "melee": {

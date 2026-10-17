@@ -70,7 +70,7 @@ func validate_contract(expected: Dictionary = {}) -> Dictionary:
 		"scene_id": scene_id, "world_asset_id": world_asset_id, "gameplay_source": gameplay_source,
 		"presentation_source": presentation_source, "groups": GROUPS.duplicate(), "bindings": bindings,
 		"movement_binding": "town/movement-boundary", "authored_bounds": Rect2(Vector2.ZERO, world_size),
-		"spatial_manifest": manifest.snapshot(), "unknown_underplate": "transparent", "supports_cutaway": false, "supports_fade": false,
+		"spatial_manifest": manifest.snapshot(), "unknown_underplate": "transparent", "supports_cutaway": true, "supports_fade": true,
 	}
 	for key: String in expected:
 		if contract.has(key) and contract[key] != expected[key]:
@@ -192,7 +192,7 @@ func _collect_bindings(node: Node, bindings: Dictionary, errors: Array[String]) 
 static func _has_static_layer_policy(value: Variant) -> bool:
 	if not value is Dictionary:
 		return false
-	return value.get("unknown_underplate", "") == "transparent" and value.get("supports_cutaway", null) is bool and value.supports_cutaway == false and value.get("supports_fade", null) is bool and value.supports_fade == false
+	return value.get("unknown_underplate", "") == "transparent" and value.get("supports_cutaway", null) is bool and value.supports_cutaway == true and value.get("supports_fade", null) is bool and value.supports_fade == true
 
 
 ## Only the native gameplay derivative is snapped. Registry actor feet keep

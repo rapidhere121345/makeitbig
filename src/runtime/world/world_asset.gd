@@ -4,6 +4,11 @@ extends RefCounted
 ## Static references and build digests for a world asset.  This object has no
 ## runtime node, instance identifier, transform or mutable simulation state.
 
+const SpatialManifestScript = preload("res://src/runtime/world/spatial_manifest.gd")
+
+## The only schema version the pipeline bakes and verifies.
+const SCHEMA_VERSION: int = 1
+
 const FIELDS: Array[String] = [
 	"world_scene_path",
 	"manifest_path",
@@ -38,6 +43,45 @@ func _init(
 
 static func from_dict(value: Variant) -> RefCounted:
 	return _new_instance(value if value is Dictionary else {})
+
+
+## Rebuilds the runtime asset record from an offline bake result (the
+## dictionary produced by the tools/world_manifest baker).  Unknown bake
+## shapes normalize to an invalid asset instead of being guessed.
+static func from_bake(bake: Variant) -> RefCounted:
+	if not bake is Dictionary:
+		return _new_instance({})
+	var payload: Dictionary = bake
+	if payload.has("world_asset") and payload["world_asset"] is Dictionary:
+		payload = payload["world_asset"]
+	return _new_instance(payload)
+
+
+## Pipeline verification gate between bake and mount: the manifest that is
+## actually loaded must still reproduce both baked digests.  Accepts a
+## SpatialManifest instance or an already canonical manifest dictionary.
+func matches_manifest(manifest_value: Variant) -> Dictionary:
+	var asset_errors := validate()
+	if not asset_errors.is_empty():
+		return {"ok": false, "errors": asset_errors, "value": {}}
+	var manifest_payload: Variant = manifest_value
+	if manifest_value is SpatialManifestScript:
+		manifest_payload = manifest_value.call("snapshot")
+	if not manifest_payload is Dictionary or not SpatialManifestScript.validate_data(manifest_payload).is_empty():
+		return {"ok": false, "errors": ["invalid_manifest"], "value": {}}
+	var manifest: Dictionary = manifest_payload
+	var errors: Array[String] = []
+	var gameplay := SpatialManifestScript.digest_payload_sha256(SpatialManifestScript.gameplay_digest_input(manifest))
+	if gameplay != gameplay_digest:
+		errors.append("digest_mismatch:gameplay")
+	var presentation := SpatialManifestScript.digest_payload_sha256(SpatialManifestScript.presentation_digest_input(manifest))
+	if presentation != presentation_digest:
+		errors.append("digest_mismatch:presentation")
+	return {
+		"ok": errors.is_empty(),
+		"errors": errors,
+		"value": {"gameplay_digest": gameplay, "presentation_digest": presentation},
+	}
 
 
 func validate() -> Array[String]:
