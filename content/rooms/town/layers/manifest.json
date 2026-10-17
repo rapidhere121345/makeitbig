@@ -612,8 +612,8 @@
     1536,
     1024
   ],
-  "supports_cutaway": false,
-  "supports_fade": false,
+  "supports_cutaway": true,
+  "supports_fade": true,
   "unknown_underplate": "transparent",
   "world_size": [
     1536,

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-# shellcheck source=container_env.sh
-source "${SCRIPT_DIR}/container_env.sh"
+# shellcheck source=project_env.sh
+source "${SCRIPT_DIR}/project_env.sh"
 mib_require_export_templates
 cd "$MIB_PROJECT_ROOT"
 

@@ -5,7 +5,7 @@
   "palette": ["#2D3943", "#35434F", "#414F5A", "#46515A", "#58616B", "#796958", "#7F94AD", "#B0C4D8", "#DBE6F4"],
   "sources": {
     "ground": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-ground-v03/sources/ground_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-ground-v03/sources/ground_original.png",
       "grid": [1, 1],
       "background": {"mode": "opaque"}
     }

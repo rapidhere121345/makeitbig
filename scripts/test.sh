@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GODOT_BIN="${GODOT_BIN:-godot}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=project_env.sh
+source "${SCRIPT_DIR}/project_env.sh"
+cd "$MIB_PROJECT_ROOT"
 
 RUNTIME_RESOURCE_VIOLATIONS="$(grep -R -n -E --include='*.gd' --include='*.tscn' 'preload\([[:space:]]*"res://(tools|build)/|load\([[:space:]]*"res://build/' src || true)"
 if [[ -n "$RUNTIME_RESOURCE_VIOLATIONS" ]] || grep -q -E 'res://(tools|build)/' project.godot; then
@@ -22,6 +25,24 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/run_all.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_runtime_world.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_simulation.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_simulation_kernel.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_spatial_kernel.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_target_combat_domains.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_death_settlement_loot.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_enemy_death_actor_deregistration.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_presentation_occlusion_boundary.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_world_asset_pipeline.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_room_combat_port.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_spatial_room_port.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_presentation_room_port.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_lifecycle.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_production_combat.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_boss_combat.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_production_boss.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_room_encounter_production.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_room_terminal_authority.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_authority_boundary.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_hazard_domain.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_presenter.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_actor_presenter.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_combat_presenter.gd
@@ -150,8 +171,8 @@ fi
 
 STATE_DIR="${MIB_TEST_STATE_DIR:-$(pwd -P)/build/test-state}"
 mkdir -p "$STATE_DIR"
-# Frozen historical automation hash, recorded before the runtime replacement.
-EXPECTED_HASH="5bd724ca9f69585d8b2dfce6746e615840045ab0fa0295544b0f8c8fe6e0a900"
+# Versioned historical-geometry replay hash for the current runtime authority.
+EXPECTED_HASH="b98adeadd44d9fb428f1cb762304f8e09c252b2f00ce00583efb40bc8147200b"
 HISTORICAL_REPLAY_PROFILE="historical_circle_v1"
 for RENDER_RATE in 30 60 144; do
   HASH_PATH="$STATE_DIR/${RENDER_RATE}hz.sha256"

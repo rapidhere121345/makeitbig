@@ -15,6 +15,7 @@ const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
 const CombatArrowProjectileScript := preload("res://src/runtime/world/combat_arrow_projectile.gd")
 const PiercingArrowModelScript := preload("res://src/systems/piercing_arrow_model.gd")
 const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
+const CombatSystemRoomPortScript := preload("res://src/runtime/combat/combat_system_room_port.gd")
 
 const SIM_STEP_SECONDS: float = 1.0 / 30.0
 const HUNTER_MARK_DAMAGE_MULTIPLIER: float = RangerSkillRulesScript.HUNTER_MARK_DAMAGE_MULTIPLIER
@@ -55,56 +56,30 @@ var _hit_window_tick := -1
 var _settled_groups: Dictionary = {}
 var _advancing_projectiles := false
 var _contact_submission_depth := 0
-var _part_commit_targets: Array[CombatEnemyState] = []
 var combat_event_stream
 var manual_aim_resolver
-var _player_rule_port: Object
+var room_port: RefCounted = null
 var _configured := false
 var _configuration_error := "player_rule_port_unavailable"
 var query_profile: String = QUERY_PROFILE_MULTIPART_V2
 
-var target_by_id_callback: Callable
-var aim_candidate_callback: Callable
-var current_model_callback: Callable
-var target_blocked_callback: Callable
-var maybe_summon_callback: Callable
-var remove_target_callback: Callable
-var cancel_buffered_target_callback: Callable
-var update_mark_callback: Callable
-var advance_sequence_callback: Callable
-var reset_sequence_callback: Callable
-var erase_attack_request_callback: Callable
+## All room interactions go through the typed room port below.
 
 
-func configure(callbacks: Dictionary) -> Dictionary:
+func bind_room(port: Variant, requested_query_profile: String = QUERY_PROFILE_MULTIPART_V2) -> Dictionary:
 	_configured = false
-	_player_rule_port = null
-	_configuration_error = "player_rule_port_unavailable"
+	room_port = null
+	_configuration_error = "combat_room_port_unavailable"
 	query_profile = QUERY_PROFILE_MULTIPART_V2
-	var player_rule_port_value: Variant = callbacks.get("player_rule_port", null)
-	if not _is_valid_player_rule_port(player_rule_port_value):
+	if not port is CombatSystemRoomPortScript or not is_instance_valid(port):
 		return _failure(_configuration_error)
-	var blocked_port: Variant = callbacks.get("target_blocked", null)
-	if not blocked_port is Callable or not (blocked_port as Callable).is_valid():
-		_configuration_error = "target_blocked_port_unavailable"
+	if requested_query_profile not in [QUERY_PROFILE_MULTIPART_V2, QUERY_PROFILE_HISTORICAL_CIRCLE_V1]:
+		return _failure("invalid_query_profile")
+	var typed_port = port
+	if not typed_port.is_ready():
 		return _failure(_configuration_error)
-	var query_profile_value: Variant = callbacks.get("query_profile", QUERY_PROFILE_MULTIPART_V2)
-	if typeof(query_profile_value) != TYPE_STRING or String(query_profile_value) not in [QUERY_PROFILE_MULTIPART_V2, QUERY_PROFILE_HISTORICAL_CIRCLE_V1]:
-		_configuration_error = "invalid_query_profile"
-		return _failure(_configuration_error)
-	query_profile = String(query_profile_value)
-	_player_rule_port = player_rule_port_value as Object
-	target_by_id_callback = callbacks.get("target_by_id", Callable())
-	aim_candidate_callback = callbacks.get("aim_candidate", Callable())
-	current_model_callback = callbacks.get("current_model", Callable())
-	target_blocked_callback = callbacks.get("target_blocked", Callable())
-	maybe_summon_callback = callbacks.get("maybe_summon", Callable())
-	remove_target_callback = callbacks.get("remove_target", Callable())
-	cancel_buffered_target_callback = callbacks.get("cancel_buffered_target", Callable())
-	update_mark_callback = callbacks.get("update_mark", Callable())
-	advance_sequence_callback = callbacks.get("advance_sequence", Callable())
-	reset_sequence_callback = callbacks.get("reset_sequence", Callable())
-	erase_attack_request_callback = callbacks.get("erase_attack_request", Callable())
+	room_port = typed_port
+	query_profile = requested_query_profile
 	_configured = true
 	_configuration_error = ""
 	return {"ok": true, "error": ""}
@@ -140,8 +115,9 @@ func set_context(
 
 
 func _target_by_id(id: int) -> CombatEnemyState:
-	if target_by_id_callback.is_valid():
-		return target_by_id_callback.call(id)
+	var resolved: Variant = room_port.target_by_id(id) if room_port != null else null
+	if resolved != null:
+		return resolved
 	for enemy: CombatEnemyState in enemies:
 		if enemy.entity_id == id:
 			return enemy
@@ -149,50 +125,48 @@ func _target_by_id(id: int) -> CombatEnemyState:
 
 
 func _aim_candidate(enemy: CombatEnemyState) -> Dictionary:
-	if aim_candidate_callback.is_valid():
-		var value: Variant = aim_candidate_callback.call(enemy)
-		return value if value is Dictionary else {}
+	if room_port != null:
+		var candidate: Variant = room_port.aim_candidate(enemy)
+		if not candidate.is_empty():
+			return candidate
 	return {"entity_id": enemy.entity_id, "kind_id": enemy.kind_id, "position": enemy.position, "health": enemy.health, "is_boss": enemy.is_boss}
 
 
 func _current_model() -> Dictionary:
-	if not current_model_callback.is_valid():
-		return {}
-	var value: Variant = current_model_callback.call()
-	return value if value is Dictionary else {}
+	return room_port.current_model() if room_port != null else {}
 
 
 func _maybe_summon(enemy: CombatEnemyState) -> void:
-	if maybe_summon_callback.is_valid():
-		maybe_summon_callback.call(enemy)
+	if room_port != null:
+		room_port.maybe_summon(enemy)
 
 
 func _remove_target(enemy: CombatEnemyState) -> void:
-	if remove_target_callback.is_valid():
-		remove_target_callback.call(enemy)
-	else:
-		enemies.erase(enemy)
+	if room_port != null:
+		room_port.remove_target(enemy)
+	# The coordinator's local fixture roster is a read-through cache.  The
+	# mounted room port owns the authoritative actor removal; erasing the same
+	# object from this cache keeps isolated domain fixtures deterministic.
+	enemies.erase(enemy)
 
 
 func _cancel_buffered_target(entity_id: int) -> int:
-	if not cancel_buffered_target_callback.is_valid():
-		return 0
-	return int(cancel_buffered_target_callback.call(entity_id))
+	return room_port.cancel_buffered_target(entity_id) if room_port != null else 0
 
 
 func _update_mark() -> void:
-	if update_mark_callback.is_valid():
-		update_mark_callback.call()
+	if room_port != null:
+		room_port.update_mark()
 
 
 func _advance_sequence(kind: String) -> void:
-	if advance_sequence_callback.is_valid():
-		advance_sequence_callback.call(kind)
+	if room_port != null:
+		room_port.advance_sequence(kind)
 
 
 func _reset_sequence() -> void:
-	if reset_sequence_callback.is_valid():
-		reset_sequence_callback.call()
+	if room_port != null:
+		room_port.reset_sequence()
 
 
 ## Explicit room boundary. Context updates never write the outcome ledger.
@@ -212,7 +186,6 @@ func reset_room(new_boss_maximum: BigValue) -> Dictionary:
 	enemies = []
 	_hit_window_tick = -1
 	_settled_groups.clear()
-	_part_commit_targets.clear()
 	last_attack_outcome = {}
 	battle_report = ""
 	_room_ready = true
@@ -227,20 +200,9 @@ func outcome_snapshot() -> Dictionary:
 	}
 
 
-## Preserve the previous display subtraction exactly. Defeat uses compare().
-func remaining_boss_health() -> BigValue:
-	if not enemies.any(func(enemy: CombatEnemyState) -> bool: return enemy.is_boss):
-		return BigValue.from_float(0.0)
-	if _boss_damage.compare(_boss_maximum) >= 0:
-		return BigValue.from_float(0.0)
-	if _boss_damage.layer == 0 and _boss_maximum.layer == 0:
-		return BigValue.from_float(maxf(0.0, _boss_maximum.magnitude - _boss_damage.magnitude))
-	return _boss_maximum.duplicate_value()
-
-
 func _erase_attack_request(request_id: int) -> void:
-	if erase_attack_request_callback.is_valid() and request_id > 0:
-		erase_attack_request_callback.call(request_id)
+	if room_port != null and request_id > 0:
+		room_port.erase_attack_request(request_id)
 
 
 func resolve_piercing_arrow(action_event: Dictionary) -> void:
@@ -318,6 +280,10 @@ func current_projectile_speed() -> float:
 	return projectile_speed
 
 
+## Advances the legacy player-domain flight loop for normal targets only.
+## Production ranger arrows fly through the kernel flight drivers; multipart
+## Boss targets resolve exclusively in BossCombatDomain and are rejected by
+## resolve_projectile_sweep before any contact can settle here.
 func advance_projectiles_tick() -> void:
 	if not _combat_ports_ready():
 		_reject_player_rule_action()
@@ -355,7 +321,179 @@ func advance_projectiles_tick() -> void:
 			projectiles.remove_at(index)
 
 	_advancing_projectiles = false
-	_commit_part_states()
+
+
+## Kernel-path contact bookkeeping. The room already resolved damage through
+## DamageResolution and mirrored the committed health; this method only owns
+## the player-domain telemetry and event publication that legacy contacts
+## produced, with identical payloads.
+func apply_kernel_contact(
+	projectile: CombatArrowProjectile,
+	target: CombatEnemyState,
+	contact_point: Vector2,
+	part_hit: Dictionary,
+	health_before: float,
+	health_after: float,
+	aggregate: BigValue
+) -> void:
+	if not _combat_ports_ready():
+		return
+	combat_event_stream.emit(tick, "action_impact", {
+		"action_instance_id": projectile.action_instance_id,
+		"actor_id": "ranger",
+		"action_id": "piercing_arrow",
+		"target_entity_id": target.entity_id,
+		"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"),
+		"contact_point": contact_point,
+	})
+	_arrow_hits += 1
+	_advance_sequence("piercing_arrow")
+	impact_trace_requested.emit(contact_point, projectile.direction, int(_current_model()["g"]))
+	var outcome := "killed" if health_after <= 0.0 else "damage"
+	last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
+		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"target_entity_id": target.entity_id,
+		"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"), "outcome": outcome,
+		"contact_point": contact_point, "aggregate_damage": aggregate.to_short_string(6),
+	})
+	combat_event_stream.emit(tick, "damage_applied", {
+		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"target_id": "enemy/%d" % target.entity_id, "target_entity_id": target.entity_id,
+		"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"),
+		"amount": aggregate.to_short_string(6),
+		"health_before_milli": roundi(health_before * 1000.0), "health_after_milli": roundi(health_after * 1000.0),
+		"boss_remaining_before": "",
+		"boss_remaining_after": "",
+		"contact_point": contact_point, "incoming_direction": projectile.direction,
+	})
+	battle_report = "穿刺箭命中：%s 次箭事件 × %.0f 载荷 → %s 总伤害。" % [projectile.event_count.to_short_string(4), projectile.payload, aggregate.to_short_string(4)]
+
+
+## Kernel-path blocked contact: the room's hit admission gate suppressed the
+## hit before DamageResolution, so only the blocked telemetry remains.
+func apply_kernel_blocked(
+	projectile: CombatArrowProjectile,
+	target: CombatEnemyState,
+	contact_point: Vector2
+) -> void:
+	if not _combat_ports_ready() or target == null:
+		return
+	combat_event_stream.emit(tick, "action_impact", {
+		"action_instance_id": projectile.action_instance_id,
+		"actor_id": "ranger",
+		"action_id": "piercing_arrow",
+		"target_entity_id": target.entity_id,
+		"part_id": "body", "damage_group_id": "body",
+		"contact_point": contact_point,
+	})
+	_reset_sequence()
+	impact_trace_requested.emit(contact_point, projectile.direction, 1)
+	last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
+		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"target_entity_id": target.entity_id,
+		"part_id": "body", "damage_group_id": "body", "outcome": "blocked",
+		"contact_point": contact_point, "barrier_id": "periodic_barrier",
+	})
+	battle_report = "穿刺箭被周期屏障阻断。"
+
+
+## Mirrors the Boss domain's committed BigValue result for the legacy phase
+## transition and presentation readers. This is telemetry only: the value is
+## derived from DamageResolution output and never feeds back into resolution.
+func sync_boss_domain_resolution(maximum: BigValue, applied: BigValue, remaining: BigValue) -> Dictionary:
+	if maximum == null or applied == null or remaining == null:
+		return _failure("invalid_boss_domain_resolution_mirror")
+	if maximum.compare(remaining) < 0 or remaining.layer < 0 or not is_finite(remaining.magnitude):
+		return _failure("invalid_boss_domain_resolution_mirror")
+	if _boss_maximum.compare(maximum) != 0:
+		_boss_maximum = maximum.duplicate_value()
+		_boss_damage = BigValue.from_float(0.0)
+	_boss_damage = _boss_damage.add(applied)
+	if _boss_damage.compare(_boss_maximum) >= 0:
+		_boss_damage = _boss_maximum.duplicate_value()
+	return {"ok": true, "error": ""}
+
+
+## Kernel-path Boss contact telemetry. BossCombatDomain already resolved the
+## multipart BigValue payload and committed detached health; this boundary only
+## publishes the same player-domain events the legacy contact produced.
+func apply_boss_kernel_contact(
+	projectile: CombatArrowProjectile,
+	target: CombatEnemyState,
+	contact_point: Vector2,
+	part_hit: Dictionary,
+	health_before: BigValue,
+	health_after: BigValue,
+	aggregate: BigValue
+) -> void:
+	if not _combat_ports_ready() or target == null:
+		return
+	combat_event_stream.emit(tick, "action_impact", {
+		"action_instance_id": projectile.action_instance_id,
+		"actor_id": "ranger",
+		"action_id": "piercing_arrow",
+		"target_entity_id": target.entity_id,
+		"part_id": part_hit.get("part_id", "body"),
+		"damage_group_id": part_hit.get("damage_group_id", "body"),
+		"contact_point": contact_point,
+	})
+	_arrow_hits += 1
+	_advance_sequence("piercing_arrow")
+	impact_trace_requested.emit(contact_point, projectile.direction, int(_current_model()["g"]))
+	var outcome := "killed" if health_after.is_zero() else "damage"
+	last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
+		"action_instance_id": projectile.action_instance_id,
+		"source_id": "ranger/piercing_arrow",
+		"target_entity_id": target.entity_id,
+		"part_id": part_hit.get("part_id", "body"),
+		"damage_group_id": part_hit.get("damage_group_id", "body"),
+		"outcome": outcome,
+		"contact_point": contact_point,
+		"aggregate_damage": aggregate.to_short_string(6),
+	})
+	combat_event_stream.emit(tick, "damage_applied", {
+		"action_instance_id": projectile.action_instance_id,
+		"source_id": "ranger/piercing_arrow",
+		"target_id": "enemy/%d" % target.entity_id,
+		"target_entity_id": target.entity_id,
+		"part_id": part_hit.get("part_id", "body"),
+		"damage_group_id": part_hit.get("damage_group_id", "body"),
+		"amount": aggregate.to_short_string(6),
+		"health_before_milli": 0,
+		"health_after_milli": 0,
+		"boss_remaining_before": health_before.to_short_string(6) if health_before != null else "",
+		"boss_remaining_after": health_after.to_short_string(6) if health_after != null else "",
+		"contact_point": contact_point,
+		"incoming_direction": projectile.direction,
+	})
+	battle_report = "穿刺箭命中：%s 次箭事件 × %.0f 载荷 → %s 总伤害。" % [
+		projectile.event_count.to_short_string(4),
+		projectile.payload,
+		aggregate.to_short_string(4),
+	]
+
+
+## Kernel-path death bookkeeping: the kernel already tombstoned the actor and
+## DeathSettlement produced its typed receipt; this publishes the legacy
+## defeat counters, event and detached corpse request.
+func note_kernel_death(target: CombatEnemyState) -> void:
+	if target == null:
+		return
+	_defeated += 1
+	combat_event_stream.emit(tick, "death_applied", {
+		"source_id": "ranger/piercing_arrow", "target_id": "enemy/%d" % target.entity_id,
+		"target_entity_id": target.entity_id,
+		"part_id": "body", "damage_group_id": "body", "position": target.position,
+	})
+	corpse_requested.emit({
+		"entity_id": target.entity_id, "kind_id": target.kind_id,
+		"position": target.position, "facing": target.facing,
+		"is_boss": target.is_boss,
+	})
+
+
+func remove_projectile(projectile: CombatArrowProjectile) -> void:
+	projectiles.erase(projectile)
 
 
 func resolve_projectile_contact(projectile: CombatArrowProjectile, target: CombatEnemyState, contact_point: Vector2) -> void:
@@ -373,14 +511,17 @@ func resolve_projectile_sweep(projectile: CombatArrowProjectile, target: CombatE
 		return _failure(_configuration_error)
 	if projectile == null or projectile.action_instance_id <= 0 or (target != null and projectile.target_entity_id != target.entity_id):
 		return _failure("invalid_projectile_target")
+	# Deleted legacy Boss branch: multipart BigValue targets resolve only in
+	# BossCombatDomain through the kernel flight drivers. A Boss target on this
+	# seam fails closed before any query, damage or ledger write can happen.
+	if target != null and target.is_boss:
+		return _failure("boss_target_requires_boss_domain")
 	var query := query_swept_hits(start, finish, target)
 	if not bool(query.ok):
 		return query
 	if _hit_window_tick != tick:
 		_hit_window_tick = tick
 		_settled_groups.clear()
-	if target != null and not _part_commit_targets.has(target):
-		_part_commit_targets.append(target)
 	var settled: Array[Dictionary] = []
 	var consumed_retained := false
 	for hit: Dictionary in query.candidates:
@@ -395,25 +536,10 @@ func resolve_projectile_sweep(projectile: CombatArrowProjectile, target: CombatE
 		_contact_submission_depth -= 1
 		if not applied:
 			_settled_groups.erase(key)
-			if not _advancing_projectiles:
-				_commit_part_states()
 			return _failure(_configuration_error)
 		consumed_retained = true
 		settled.append(hit.duplicate(true))
-	if not _advancing_projectiles:
-		_commit_part_states()
 	return {"ok": true, "error": "", "candidates": query.candidates, "settled": settled}
-
-
-func _commit_part_states() -> void:
-	# Include untouched enemies: encounter transitions must commit even when
-	# there are no arrows. Retain contacted targets too if a kill removed them.
-	for target: CombatEnemyState in enemies:
-		if not _part_commit_targets.has(target):
-			_part_commit_targets.append(target)
-	for target: CombatEnemyState in _part_commit_targets:
-		target.commit_part_states()
-	_part_commit_targets.clear()
 
 
 func _apply_projectile_contact(projectile: CombatArrowProjectile, target: CombatEnemyState, contact_point: Vector2, part_hit: Dictionary = {}, consume_retained: bool = true) -> bool:
@@ -456,14 +582,8 @@ func _apply_projectile_contact(projectile: CombatArrowProjectile, target: Combat
 	_arrow_hits += 1
 	var health_before := target.health
 	_advance_sequence("piercing_arrow")
-	var boss_before := remaining_boss_health().to_short_string(6) if target.is_boss else ""
-	if target.is_boss:
-		_boss_damage = _boss_damage.add(projectile.aggregate_damage)
-		if _boss_damage.compare(_boss_maximum) >= 0:
-			target.health = 0.0
-	else:
-		target.health = snappedf(maxf(0.0, target.health - projectile.ordinary_damage), 0.001)
-		_maybe_summon(target)
+	target.health = snappedf(maxf(0.0, target.health - projectile.ordinary_damage), 0.001)
+	_maybe_summon(target)
 	target.hit_flash_until_tick = tick + ENEMY_HIT_FLASH_TICKS
 	impact_trace_requested.emit(contact_point, projectile.direction, int(_current_model()["g"]))
 	var outcome := "killed" if target.health <= 0.0 else "damage"
@@ -479,8 +599,8 @@ func _apply_projectile_contact(projectile: CombatArrowProjectile, target: Combat
 		"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"),
 		"amount": projectile.aggregate_damage.to_short_string(6),
 		"health_before_milli": roundi(health_before * 1000.0), "health_after_milli": roundi(target.health * 1000.0),
-		"boss_remaining_before": boss_before,
-		"boss_remaining_after": remaining_boss_health().to_short_string(6) if target.is_boss else "",
+			"boss_remaining_before": "",
+			"boss_remaining_after": "",
 		"contact_point": contact_point, "incoming_direction": projectile.direction,
 	})
 	battle_report = "穿刺箭命中：%s 次箭事件 × %.0f 载荷 → %s 总伤害。" % [projectile.event_count.to_short_string(4), projectile.payload, projectile.aggregate_damage.to_short_string(4)]
@@ -536,12 +656,17 @@ func resolve_projectile_miss(projectile: CombatArrowProjectile) -> void:
 
 ## Read-only encounter port. A malformed answer is a rejection, never damage.
 func target_is_currently_blocked(target: CombatEnemyState) -> Dictionary:
-	if not _configured or not target_blocked_callback.is_valid():
-		return _failure("target_blocked_port_unavailable")
-	var value: Variant = target_blocked_callback.call(target)
-	if typeof(value) != TYPE_BOOL:
+	if not _configured or room_port == null:
+		return _failure("combat_room_port_unavailable")
+	var value: Variant = room_port.target_blocked(target)
+	if not value is Dictionary:
 		return _failure("target_blocked_port_invalid_result")
-	return {"ok": true, "error": "", "blocked": value}
+	var verdict: Dictionary = value
+	if not bool(verdict.get("ok", false)):
+		return _failure(String(verdict.get("error", "target_blocked_port_unavailable")))
+	if typeof(verdict.get("blocked", null)) != TYPE_BOOL:
+		return _failure("target_blocked_port_invalid_result")
+	return {"ok": true, "error": "", "blocked": bool(verdict.get("blocked", false))}
 
 
 ## Pure query with an explicit failure result; missing Boss shapes never fall
@@ -587,28 +712,13 @@ func swept_contact(start: Vector2, finish: Vector2, target: CombatEnemyState) ->
 	return result.candidates[0].contact_point
 
 
-func _is_valid_player_rule_port(value: Variant) -> bool:
-	if not value is Object:
-		return false
-	var port := value as Object
-	if not is_instance_valid(port):
-		return false
-	for method: String in ["consume_first_critical_bonus", "retain_missed_arrow", "take_retained_arrow"]:
-		if not port.has_method(method):
-			return false
-	return true
-
-
 func _combat_ports_ready() -> bool:
 	if not _configured:
 		if _configuration_error.is_empty():
 			_configuration_error = "player_rule_port_unavailable"
 		return false
-	if not _is_valid_player_rule_port(_player_rule_port):
-		_configuration_error = "player_rule_port_unavailable"
-		return false
-	if not target_blocked_callback.is_valid():
-		_configuration_error = "target_blocked_port_unavailable"
+	if room_port == null or not room_port.is_ready():
+		_configuration_error = "combat_room_port_unavailable"
 		return false
 	if not _room_ready:
 		_configuration_error = "combat_room_not_reset"
@@ -620,7 +730,7 @@ func _combat_ports_ready() -> bool:
 func _consume_first_critical_bonus() -> int:
 	if not _combat_ports_ready():
 		return -1
-	var value: Variant = _player_rule_port.call("consume_first_critical_bonus")
+	var value: Variant = room_port.consume_first_critical_bonus()
 	if typeof(value) != TYPE_INT or int(value) < 0:
 		_configuration_error = "player_rule_port_invalid_critical_result"
 		return -1
@@ -631,14 +741,13 @@ func _retain_missed_arrow(aggregate: BigValue, ordinary: float) -> bool:
 	if not _combat_ports_ready() or aggregate == null or not is_finite(ordinary):
 		_configuration_error = "player_rule_port_invalid_retention_input"
 		return false
-	_player_rule_port.call("retain_missed_arrow", aggregate, ordinary)
-	return true
+	return room_port.retain_missed_arrow(aggregate, ordinary)
 
 
 func _take_retained_arrow() -> Dictionary:
 	if not _combat_ports_ready():
 		return {"ok": false, "error": _configuration_error}
-	var value: Variant = _player_rule_port.call("take_retained_arrow")
+	var value: Variant = room_port.take_retained_arrow()
 	if not value is Dictionary:
 		_configuration_error = "player_rule_port_invalid_retained_result"
 		return {"ok": false, "error": _configuration_error}

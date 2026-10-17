@@ -204,7 +204,7 @@ func _test_town_scene() -> void:
 	_expect(bool(hub.town_load_report.get("ok", false)), "town: native scene failed to load")
 	var audit := view.render_audit()
 	_expect(audit.ground_source_path == "res://content/rooms/town/layers/ground.png" and audit.runtime_background_patches == 0, "town: legacy background patch path survived")
-	_expect(audit.unknown_underplate == "transparent" and not audit.supports_cutaway and not audit.supports_fade, "town: incomplete underplate capabilities were hidden")
+	_expect(audit.unknown_underplate == "transparent" and audit.supports_cutaway and audit.supports_fade, "town: authored opacity capabilities were hidden")
 	var shared: Node2D = view.world_presenter.sort_root
 	_expect(shared.y_sort_enabled and view._hero_sprite.get_parent() == shared, "town: hero has a parallel sort domain")
 	var native_count := 0

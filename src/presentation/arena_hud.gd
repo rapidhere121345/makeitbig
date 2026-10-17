@@ -201,6 +201,11 @@ func present(snapshot: Dictionary) -> void:
 	var room_concept := String(snapshot.get("room_concept", ""))
 	var room_landmark := String(snapshot.get("room_landmark", ""))
 	var room_exit_hint := String(snapshot.get("room_exit_hint", ""))
+	var attack_target_label := String(snapshot.get("attack_target_label", "")).strip_edges()
+	var attack_target_health := maxf(0.0, float(snapshot.get("attack_target_health", 0.0)))
+	var attack_target_maximum_health := maxf(0.0, float(snapshot.get("attack_target_maximum_health", 0.0)))
+	var has_live_attack_target := not attack_target_label.is_empty() and attack_target_maximum_health > 0.0 and attack_target_health > 0.0
+	var attack_target_in_range := bool(snapshot.get("attack_target_in_range", false))
 	if has_room_progress:
 		var room_title := "阈门巨像" if has_boss else room_display_name
 		var room_objective := "首领" if has_boss else objective_label
@@ -227,7 +232,18 @@ func present(snapshot: Dictionary) -> void:
 	_boss_hp_label.visible = has_boss
 	_boss_ratio_label.text = ("同层真实比例  %.1f%%" % _boss_health_bar.value if ratio_known else "结构层级不同 · 比例不可比") if has_boss else "留意敌人的攻击预警"
 	_boss_damage_label.text = "对 Boss 伤害  %s" % String(snapshot.get("damage", "0")) if has_boss else "目标 %s · 存活 %d" % [String(snapshot.get("objective_label", "清理敌人")), int(snapshot.get("living_targets", 0))]
-	_boss_state_label.text = ("真实比例已知" if ratio_known else "比例不可比") if has_boss else "剩余目标  %d" % int(snapshot.get("living_targets", 0))
+	if has_boss:
+		_boss_state_label.text = "真实比例已知" if ratio_known else "比例不可比"
+	elif has_live_attack_target:
+		var target_range := "射程内" if attack_target_in_range else "射程外"
+		_boss_state_label.text = "当前目标  %s  ·  %s / %s  ·  %s" % [
+			attack_target_label,
+			_plain_number(attack_target_health),
+			_plain_number(attack_target_maximum_health),
+			target_range,
+		]
+	else:
+		_boss_state_label.text = "剩余目标  %d" % int(snapshot.get("living_targets", 0))
 	var hazards := String(snapshot.get("hazard_status", "无"))
 	var elites := String(snapshot.get("elite_status", "无"))
 	_summary_encounter_label.text = "场域：%s · %s\n%s\n危害：%s\n精英：%s" % [room_display_name, room_landmark, room_concept, _encounter_status_text(hazards), _encounter_status_text(elites)]

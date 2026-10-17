@@ -7,6 +7,8 @@ extends SceneTree
 const ApplicationStateScript = preload("res://src/game/application_state.gd")
 const ContractRunControllerScript = preload("res://src/game/contract_run_controller.gd")
 const GameRootScript = preload("res://src/game/game_root.gd")
+const CommitPortScript = preload("res://tests/helpers/callable_contract_room_commit_port.gd")
+const ContractRoomCommitPortScript = preload("res://src/game/contract_room_commit_port.gd")
 
 
 class FakeArena:
@@ -117,9 +119,11 @@ func _test_controller_orders_commit_before_next_room(failures: Array[String]) ->
 		arena.event_log = log
 		_arenas.append(arena)
 		return arena
-	controller.room_commit_port = func(room_index: int, room_result: Dictionary) -> Dictionary:
+	var commit_port := CommitPortScript.new()
+	commit_port.commit_callback = func(room_index: int, room_result: Dictionary) -> Dictionary:
 		log.append("commit:%d" % room_index)
 		return state.commit_room_victory_and_resolve_next_build(room_index, room_result)
+	controller.room_commit_port = commit_port
 	var summary_events: Array[Dictionary] = []
 	controller.completed.connect(func(result: Dictionary) -> void: summary_events.append(result.duplicate(true)))
 	root.add_child(controller)
@@ -155,8 +159,10 @@ func _test_controller_failed_commit_blocks_next_room(failures: Array[String]) ->
 		arena.event_log = log
 		_arenas.append(arena)
 		return arena
-	controller.room_commit_port = func(_room_index: int, _room_result: Dictionary) -> Dictionary:
+	var commit_port := CommitPortScript.new()
+	commit_port.commit_callback = func(_room_index: int, _room_result: Dictionary) -> Dictionary:
 		return {"ok": false, "error": "invalid_room_loot_settlement"}
+	controller.room_commit_port = commit_port
 	var summary_events: Array[Dictionary] = []
 	controller.completed.connect(func(result: Dictionary) -> void: summary_events.append(result.duplicate(true)))
 	root.add_child(controller)
@@ -185,11 +191,11 @@ func _test_game_root_wires_port_to_application_state(failures: Array[String]) ->
 	_expect(screen != null and screen.get_script() == ContractRunControllerScript,
 		"wiring: production arena screen is not the contract controller", failures)
 	if screen != null:
-		var port: Callable = screen.get("room_commit_port")
-		_expect(port.is_valid() and port.get_object() == bare,
+		var port: RefCounted = screen.get("room_commit_port")
+		_expect(port is ContractRoomCommitPortScript,
 			"wiring: room_commit_port is not bound to GameRoot's ApplicationState", failures)
-		if port.is_valid():
-			var rejected: Dictionary = port.call(0, {"outcome": "victory"})
+		if port is ContractRoomCommitPortScript:
+			var rejected: Dictionary = (port as ContractRoomCommitPortScript).commit(0, {"outcome": "victory"})
 			_expect(String(rejected.get("error", "")) == "active_session_required",
 				"wiring: port call did not reach ApplicationState", failures)
 		root.add_child(screen)
@@ -207,7 +213,9 @@ func _test_full_two_room_run_settles_committed_loot_once(failures: Array[String]
 		arena.event_log = log
 		_arenas.append(arena)
 		return arena
-	controller.room_commit_port = Callable(state, "commit_room_victory_and_resolve_next_build")
+	var commit_port := CommitPortScript.new()
+	commit_port.commit_callback = Callable(state, "commit_room_victory_and_resolve_next_build")
+	controller.room_commit_port = commit_port
 	var summary_events: Array[Dictionary] = []
 	controller.completed.connect(func(result: Dictionary) -> void: summary_events.append(result.duplicate(true)))
 	root.add_child(controller)

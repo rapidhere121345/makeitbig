@@ -1,7 +1,7 @@
 {
   "inputs": {
     "recipe": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/recipe.json",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/recipe.json",
       "sha256": "169e16097e98b9a6a3ba2bafe733174804d71b0080b64f08a5aad116ff9c07d7"
     },
     "sources": [
@@ -11,7 +11,7 @@
           1269
         ],
         "id": "equipment.lineage_quiver",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/lineage_quiver.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/lineage_quiver.png",
         "sha256": "dbc8edbcf66e0114c6df79edfc8bc188ea0b6dec8bcabfdbc184615eb85aae32"
       },
       {
@@ -20,7 +20,7 @@
           1292
         ],
         "id": "equipment.farwatch_quiver",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/farwatch_quiver.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/farwatch_quiver.png",
         "sha256": "6c359d54218f6e4ed097499db52025cc470d1957597671d6159f84021e2654cf"
       },
       {
@@ -29,7 +29,7 @@
           1254
         ],
         "id": "equipment.turnfeather_gloves",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/turnfeather_gloves.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/turnfeather_gloves.png",
         "sha256": "d4ef0e3c8df700d713723c6b0695521e96beab08876199f33a09f4c1275788c6"
       },
       {
@@ -38,7 +38,7 @@
           1295
         ],
         "id": "equipment.piercer_gloves",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/piercer_gloves.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/piercer_gloves.png",
         "sha256": "e733ffb4798544595ed57f3a4c64a17d2a88eb9dcdcdd89f9495e1a7b58eeeff"
       },
       {
@@ -47,7 +47,7 @@
           1269
         ],
         "id": "equipment_slot.off_hand",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/slot_off_hand.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/slot_off_hand.png",
         "sha256": "ae5468129893882a7142c5b5c37f8eca403514df881dcc071a7615f8a4b59651"
       },
       {
@@ -56,7 +56,7 @@
           1254
         ],
         "id": "equipment_slot.gloves",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/slot_gloves.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/slot_gloves.png",
         "sha256": "96298616d6a6472dd10353425bcc5d1e1c276ca605f8f0deafa57a26ca5922e7"
       }
     ]
@@ -151,7 +151,7 @@
         "sha256": "7cc7dbf4696dc31eb463b3a43bec3d1b8852d351324d356e1a6133130539ee5c"
       }
     ],
-    "directory": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/review"
+    "directory": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/review"
   },
   "schema_version": 1,
   "sprites": [
@@ -184,7 +184,7 @@
         32,
         32
       ],
-      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/lineage_quiver.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/lineage_quiver.png",
       "source_dimensions": [
         1240,
         1269
@@ -234,7 +234,7 @@
         32,
         32
       ],
-      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/farwatch_quiver.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/farwatch_quiver.png",
       "source_dimensions": [
         1218,
         1292
@@ -284,7 +284,7 @@
         32,
         32
       ],
-      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/turnfeather_gloves.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/turnfeather_gloves.png",
       "source_dimensions": [
         1254,
         1254
@@ -334,7 +334,7 @@
         32,
         32
       ],
-      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/piercer_gloves.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/piercer_gloves.png",
       "source_dimensions": [
         1215,
         1295
@@ -375,7 +375,7 @@
         32,
         32
       ],
-      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/slot_off_hand.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/slot_off_hand.png",
       "source_dimensions": [
         1240,
         1269
@@ -416,7 +416,7 @@
         32,
         32
       ],
-      "source": "/data/repo/makeitbig/docs/art-production/p1-equipment-readability-v02/sources/slot_gloves.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-equipment-readability-v02/sources/slot_gloves.png",
       "source_dimensions": [
         1254,
         1254

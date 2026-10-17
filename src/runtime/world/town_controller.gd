@@ -4,7 +4,9 @@ extends Node
 ## Assembles the town room and forwards input to its gameplay domain. It never
 ## draws actors, solves collision, or owns an independent authority clock.
 const SceneRuntimeScript := preload("res://src/runtime/world/scene_runtime.gd")
+const RoomSceneSetupPortScript := preload("res://src/runtime/world/room_scene_setup_port.gd")
 const TownRuntimeScript := preload("res://src/runtime/world/town_runtime.gd")
+const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const SCENE_PATH := "res://content/rooms/town/hearthside.tscn"
 const MANIFEST_PATH := "res://content/rooms/town/hearthside.spatial.json"
 const LAYER_PATH := "res://content/rooms/town/layers/manifest.json"
@@ -20,33 +22,27 @@ func mount(world_parent: Node) -> Dictionary:
 	if not FileAccess.file_exists(MANIFEST_PATH) or not ResourceLoader.exists(SCENE_PATH):
 		load_report = {"ok": false, "error": "town_native_source_missing"}
 		return load_report
+	var manifest_payload: Variant = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST_PATH))
+	var manifest := SpatialManifestScript.new(manifest_payload)
+	if not manifest.is_valid():
+		load_report = {"ok": false, "error": "town_manifest_invalid"}
+		return load_report
 	scene_runtime = SceneRuntimeScript.new()
 	scene_runtime.name = "TownSceneRuntime"
 	world_parent.add_child(scene_runtime)
 	load_report = scene_runtime.mount(
 		{"room_id": "town/hearthside", "world_asset_id": "town/hearthside", "encounter_id": "town/exploration", "ruleset_id": "town/v1", "tags": ["town", "chapter_one"]},
 		{"world_scene_path": SCENE_PATH, "manifest_path": MANIFEST_PATH,
-			"gameplay_digest": FileAccess.get_sha256(MANIFEST_PATH), "presentation_digest": FileAccess.get_sha256(LAYER_PATH), "schema_version": 1},
-		null, null, 0, 30, func(source: Node): source.bind_native_art())
+			"gameplay_digest": manifest.gameplay_digest_sha256(), "presentation_digest": manifest.presentation_digest_sha256(), "schema_version": 1},
+		null, null, 0, 30, TownSetupPort.new().bind(self))
 	if not bool(load_report.get("ok", false)):
 		return load_report
 	var metadata: Dictionary = scene_runtime.manifest.snapshot().get("gameplay_spatial_metadata", {})
 	var registry: Variant = scene_runtime.actor_registry
-	for shape: Dictionary in metadata.get("static_geometry", []):
-		var registered := false
-		if String(shape.kind) == "circle":
-			registered = registry.register_circle(String(shape.id), _point(shape.center), float(shape.radius))
-		elif String(shape.kind) == "polygon":
-			var points := PackedVector2Array()
-			for pair: Array in shape.points:
-				points.append(_point(pair))
-			registered = registry.register_polygon(String(shape.id), points)
-		if not registered:
-			return _fail("town_static_geometry_invalid:" + String(shape.id))
 	for resident: Dictionary in metadata.get("residents", []):
 		var position := _point(resident.position)
 		var result: Dictionary = registry.register_actor("town/npc/" + String(resident.id), position, float(resident.radius))
-		if not bool(result.get("ok", false)) or not registry.register_circle("town/npc-feet/" + String(resident.id), position, float(resident.radius)):
+		if not bool(result.get("ok", false)):
 			return _fail("town_resident_registration_failed:" + String(resident.id))
 	var spawn := Vector2.INF
 	for socket: Dictionary in scene_runtime.spawn_socket_bindings:
@@ -81,3 +77,16 @@ func _fail(error: String) -> Dictionary:
 
 static func _point(pair: Array) -> Vector2:
 	return Vector2(float(pair[0]), float(pair[1]))
+
+
+class TownSetupPort extends "res://src/runtime/world/room_scene_setup_port.gd":
+
+	var _owner: TownController = null
+
+	func bind(owner: TownController) -> TownSetupPort:
+		_owner = owner
+		return self
+
+	func setup(source: Node) -> void:
+		if source != null and source.has_method("bind_native_art"):
+			source.bind_native_art()

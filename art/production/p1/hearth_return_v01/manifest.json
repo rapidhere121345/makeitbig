@@ -4,31 +4,31 @@
       "atlas": "background",
       "bytes": 108522,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hearth_return_v01/background.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hearth_return_v01/background.png",
       "sha256": "c33b6d42539a5c4c5b571d313877b8878b2123447071ccec2ea2ba7b8d8d03eb"
     },
     {
       "atlas": "bench",
       "bytes": 1275,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hearth_return_v01/bench.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hearth_return_v01/bench.png",
       "sha256": "f5575f73ded0ede717b76a503d820f00c36c4c72d3cf799979636ee59d45b3f3"
     },
     {
       "atlas": "workers",
       "bytes": 2436,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hearth_return_v01/workers.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hearth_return_v01/workers.png",
       "sha256": "676acaa3ae4549cd2597ed778716e77b0136e98bd7115f2cbaa284d716bded6e"
     },
     {
       "bytes": 1342,
       "kind": "atlas_contract",
-      "path": "/data/repo/makeitbig/art/production/p1/hearth_return_v01/atlas.json",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hearth_return_v01/atlas.json",
       "sha256": "82a8b1766b9a78392257de8a9b03dba6909ae8965564c5ab9d39a765cc8ae9cf"
     }
   ],
-  "config_path": "/data/repo/makeitbig/docs/art-production/p1-hearth-return-v01/recipe.json",
+  "config_path": "/data/paseo-makeitbig/project/docs/art-production/p1-hearth-return-v01/recipe.json",
   "config_sha256": "29b0101b0ce2bf76ee61f57c562947d3288cac49aa9bcb56e76a7ad8eae1f709",
   "resource_prefix": "res://art/production/p1/hearth_return_v01",
   "schema_version": 1,
@@ -44,7 +44,7 @@
         1
       ],
       "height": 941,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hearth-return-v01/sources/background_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hearth-return-v01/sources/background_original.png",
       "sha256": "f61b7723642c3216351b94076e5baed57c1d44e76ebb027c7842ee77d1e847a6",
       "width": 1672
     },
@@ -61,7 +61,7 @@
         1
       ],
       "height": 793,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hearth-return-v01/sources/props_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hearth-return-v01/sources/props_keyed.png",
       "sha256": "7a8764e4607a32c71321442a59c1c4bd2351d13bb7a2f6442eb12f4a447f20ac",
       "width": 1983
     }

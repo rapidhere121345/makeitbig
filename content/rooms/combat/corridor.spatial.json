@@ -1,72 +1,72 @@
 {
-  "coordinate_convention": {
-    "scale": 1.0,
-    "units": "design_pixel",
-    "up": "negative_y"
-  },
-  "gameplay_spatial_metadata": {
-    "authored_arena_rect": [
-      42.0,
-      190.0,
-      1196.0,
-      488.0
-    ],
-    "geometry_source": "arena.geometry.v1",
-    "layout_id": "corridor",
-    "room_kind": "combat"
-  },
-  "regions_and_portals": [
-    {
-      "portals": [],
-      "region_id": "combat"
-    }
-  ],
-  "spawn_interaction_exit_sockets": [
-    {
-      "kind": "spawn",
-      "position": [
-        640.0,
-        434.0
-      ],
-      "socket_id": "combat/encounter-origin"
-    },
-    {
-      "kind": "spawn",
-      "position": [
-        420.0,
-        492.0
-      ],
-      "socket_id": "combat/spawn"
-    }
-  ],
-  "stable_bindings": [
-    {
-      "binding_id": "combat/movement-boundary",
-      "channels": {
-        "movement": true,
-        "navigation": true,
-        "occlusion": false,
-        "projectile": true,
-        "vision": true
-      },
-      "geometry": {
-        "axis": "horizontal",
-        "half_height": 72.0,
-        "rect": [
-          42.0,
-          190.0,
-          1196.0,
-          488.0
-        ],
-        "type": "corridor"
-      },
-      "source": "arena.geometry.v1"
-    }
-  ],
-  "traversal_profiles": [
-    {
-      "profile_id": "standard",
-      "radius": 14.0
-    }
-  ]
+	"coordinate_convention": {
+		"scale": 1.0,
+		"units": "design_pixel",
+		"up": "negative_y"
+	},
+	"gameplay_spatial_metadata": {
+		"authored_arena_rect": [
+			42.0,
+			190.0,
+			1196.0,
+			488.0
+		],
+		"geometry_source": "arena.geometry.v1",
+		"layout_id": "corridor",
+		"room_kind": "combat"
+	},
+	"regions_and_portals": [
+		{
+			"portals": [],
+			"region_id": "combat"
+		}
+	],
+	"spawn_interaction_exit_sockets": [
+		{
+			"kind": "spawn",
+			"position": [
+				640.0,
+				434.0
+			],
+			"socket_id": "combat/encounter-origin"
+		},
+		{
+			"kind": "spawn",
+			"position": [
+				420.0,
+				492.0
+			],
+			"socket_id": "combat/spawn"
+		}
+	],
+	"stable_bindings": [
+		{
+			"binding_id": "combat/movement-boundary",
+			"channels": {
+				"movement": true,
+				"navigation": true,
+				"occlusion": false,
+				"projectile": true,
+				"vision": true
+			},
+			"geometry": {
+				"axis": "horizontal",
+				"half_height": 72.0,
+				"rect": [
+					42.0,
+					190.0,
+					1196.0,
+					488.0
+				],
+				"type": "corridor"
+			},
+			"source": "arena.geometry.v1"
+		}
+	],
+	"traversal_profiles": [
+		{
+			"profile_id": "standard",
+			"radius": 14.0
+		}
+	]
 }

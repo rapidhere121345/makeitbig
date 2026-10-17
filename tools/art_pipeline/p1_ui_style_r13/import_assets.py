@@ -11,7 +11,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[3]
 SCOPE = Path("/data/tmp/mib-r13-ui-style-20261007-import")
 REL = Path("art/production/p1/ui_style_r13")
-GODOT = "/data/tools/godot-4.7.2/Godot_v4.7.2-stable_linux.x86_64"
+GODOT = os.environ.get("GODOT_BIN", "/data/paseo-makeitbig/bin/godot")
 
 
 def main():

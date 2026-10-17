@@ -5,7 +5,9 @@ extends Node2D
 ## the camera, and puts every actor in the shared WorldPresenter sort root.
 const RangerAnimationScript := preload("res://src/presentation/ranger_animation.gd")
 const HamletLifeAnimationScript := preload("res://src/presentation/hamlet_life_animation.gd")
+const OcclusionControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
 const HERO_ID := "town/ranger"
+const HERO_VISUAL_ID := "ranger.town.idle"
 const DESTINATION_EDGE_MARGIN := Vector2(22, 96)
 const HERO_SPEED := 96.0
 
@@ -23,6 +25,9 @@ var _destination_occluded := false
 var _load_errors: Array[String] = []
 var _attached := false
 var _hero_frame: Dictionary = {}
+var _presentation_runtime: Variant = null
+var _occlusion_controller = OcclusionControllerScript.new()
+var _occlusion_report: Dictionary = {"available": false, "reason": "presentation_unbound", "alphas": {}}
 
 
 func _ready() -> void:
@@ -61,10 +66,13 @@ func load_character_assets() -> Dictionary:
 	return {"ok": _load_errors.is_empty(), "error": "" if _load_errors.is_empty() else "town_character_assets_missing", "errors": _load_errors.duplicate()}
 
 
-func attach(presenter: Variant, initial_state: Dictionary) -> Dictionary:
+func attach(presenter: Variant, initial_state: Dictionary, presentation_runtime: Variant = null) -> Dictionary:
 	if not _load_errors.is_empty() or ranger_animation == null or life_animation == null or not ranger_animation.has_real_art() or not life_animation.has_real_art():
 		return {"ok": false, "error": "town_character_assets_missing", "errors": _load_errors.duplicate()}
 	world_presenter = presenter
+	_presentation_runtime = presentation_runtime
+	_occlusion_controller = OcclusionControllerScript.new()
+	_occlusion_report = {"available": false, "reason": "presentation_unbound", "alphas": {}}
 	_hero_sprite = _actor_sprite("Ranger")
 	world_presenter.register_actor_view(HERO_ID, _hero_sprite)
 	var clips := {}
@@ -90,7 +98,67 @@ func attach(presenter: Variant, initial_state: Dictionary) -> Dictionary:
 	world_viewport.add_child(_destination_indicator)
 	_attached = true
 	consume(initial_state)
+	var presentation_errors: Array[String] = []
+	if presentation_runtime != null:
+		presentation_errors = _bind_actor_presentations(presentation_runtime)
+		if not presentation_errors.is_empty():
+			return {"ok": false, "error": presentation_errors[0], "errors": presentation_errors}
 	return {"ok": true, "error": ""}
+
+
+## Pushes every registered actor's real drawn cell into the mounted
+## SceneRuntime presentation projector. The box is the animation cell the
+## sprite really samples, bottom-center anchored on the authoritative sim
+## feet (rect.size minus the cell anchor) — never collision geometry, and
+## any rejection fails the attach so a mounted town can never pass READY
+## with a half-bound presentation domain.
+func _bind_actor_presentations(runtime: Variant) -> Array[String]:
+	if runtime == null or not runtime.has_method("bind_actor_presentation"):
+		return ["town_presentation_runtime_invalid"]
+	var metadata := hero_visual_metadata()
+	var hero_rect: Array = metadata.get("rect", [])
+	var hero_anchor: Array = metadata.get("anchor", [])
+	if hero_rect.size() != 4 or hero_anchor.size() != 2:
+		return ["town_hero_visual_metadata_invalid"]
+	var hero_bound: Dictionary = runtime.bind_actor_presentation(
+		HERO_ID,
+		HERO_VISUAL_ID,
+		1,
+		Rect2(-float(hero_anchor[0]), -float(hero_anchor[1]), float(hero_rect[2]), float(hero_rect[3]))
+	)
+	if not bool(hero_bound.get("ok", false)):
+		return ["town_hero_presentation_binding_failed:%s" % String(hero_bound.get("error", "unknown"))]
+	for id: String in _resident_views.keys():
+		var record: Dictionary = _resident_views[id]
+		var clip := String(record["clip"])
+		var frame: Dictionary = life_animation.frame_at(clip, 0.0)
+		var cell: Rect2 = frame.get("rect", Rect2())
+		var anchor: Vector2 = frame.get("anchor", Vector2.ZERO)
+		if cell.size.x <= 0.0 or cell.size.y <= 0.0:
+			return ["town_resident_visual_metadata_invalid:" + id]
+		var resident_bound: Dictionary = runtime.bind_actor_presentation(
+			"town/npc/" + id,
+			clip,
+			1,
+			Rect2(-anchor.x, -anchor.y, cell.size.x, cell.size.y)
+		)
+		if not bool(resident_bound.get("ok", false)):
+			return ["town_resident_presentation_binding_failed:%s:%s" % [id, String(resident_bound.get("error", "unknown"))]]
+	return []
+
+
+## Stable identities of every actor this presenter binds, for mounted
+## production gates to cross-check the projector against this file's real
+## metadata sources.
+func actor_presentation_report() -> Array[Dictionary]:
+	var report: Array[Dictionary] = []
+	report.append({"stable_id": HERO_ID, "visual_id": HERO_VISUAL_ID})
+	for id: String in _resident_views.keys():
+		report.append({
+			"stable_id": "town/npc/" + id,
+			"visual_id": String((_resident_views[id] as Dictionary)["clip"]),
+		})
+	return report
 
 
 func consume(state: Dictionary) -> void:
@@ -107,12 +175,92 @@ func consume(state: Dictionary) -> void:
 		world_presenter.sync_actor("town/npc/" + id, (_state.get("residents", {}) as Dictionary).get(id, Vector2.ZERO))
 	_update_life()
 	_update_destination()
+	_sync_occlusion(0.0)
 
 
 func _process(delta: float) -> void:
 	if _attached:
 		life_animation.tick(delta)
 		_update_life()
+		_sync_occlusion(delta)
+
+
+## Applies only the detached presentation plan to the town's drawn actor
+## sprites. The plan is never fed back into TownRuntime or SceneRuntime; a
+## missing plan resets display alpha to full and records the failure.
+func _sync_occlusion(display_delta: float) -> void:
+	if _presentation_runtime == null:
+		_reset_occlusion("presentation_runtime_unbound")
+		return
+	var port: Variant = _presentation_runtime.get("presentation_port") if _presentation_runtime is Object else null
+	if port == null or not port.has_method("latest_occlusion_plan"):
+		_reset_occlusion("presentation_port_unavailable")
+		return
+	var plan_result: Dictionary = port.latest_occlusion_plan()
+	if not bool(plan_result.get("ok", false)):
+		_reset_occlusion("plan_unavailable", (plan_result.get("errors", []) as Array).slice(0, 3))
+		return
+	var plan: Variant = plan_result.get("value", null)
+	var synced: Dictionary = _occlusion_controller.sync_plan(plan)
+	if not bool(synced.get("ok", false)):
+		_reset_occlusion("plan_sync_failed")
+		return
+	var entries: Array = plan.entries()
+	for entry: Dictionary in entries:
+		var stable_id := String(entry.get("stable_id", ""))
+		var report: Dictionary = plan.occlusion_report(stable_id)
+		if bool(report.get("ok", false)):
+			_occlusion_controller.set_cover(stable_id, float(report.get("cover_fraction", 0.0)))
+	_occlusion_controller.update(maxf(display_delta, 0.0))
+	var alphas: Dictionary = {}
+	var occluded_ids: Array[String] = []
+	for actor_id: String in actor_presentation_ids():
+		var alpha := float(_occlusion_controller.alpha(actor_id))
+		alphas[actor_id] = alpha
+		if alpha < 0.999:
+			occluded_ids.append(actor_id)
+		_apply_actor_alpha(actor_id, alpha)
+	_occlusion_report = {"available": true, "reason": "", "plan_size": entries.size(),
+		"occluded_ids": occluded_ids, "alphas": alphas}
+
+
+func _reset_occlusion(reason: String, errors: Array = []) -> void:
+	for actor_id: String in actor_presentation_ids():
+		_apply_actor_alpha(actor_id, 1.0)
+	_occlusion_report = {"available": false, "reason": reason, "errors": errors.duplicate(), "alphas": {}}
+
+
+func _apply_actor_alpha(actor_id: String, alpha: float) -> void:
+	var sprite: Sprite2D = _hero_sprite if actor_id == HERO_ID else null
+	if sprite == null and actor_id.begins_with("town/npc/"):
+		var resident_id := actor_id.trim_prefix("town/npc/")
+		var record: Variant = _resident_views.get(resident_id, null)
+		sprite = record.get("node", null) if record is Dictionary else null
+	if sprite != null and is_instance_valid(sprite):
+		sprite.modulate.a = clampf(alpha, 0.0, 1.0)
+
+
+func actor_presentation_ids() -> Array[String]:
+	var ids: Array[String] = [HERO_ID]
+	for id: String in _resident_views.keys():
+		ids.append("town/npc/" + id)
+	ids.sort()
+	return ids
+
+
+func occlusion_report() -> Dictionary:
+	return _occlusion_report.duplicate(true)
+
+
+func actor_alpha(stable_id: String) -> float:
+	if stable_id == HERO_ID and _hero_sprite != null and is_instance_valid(_hero_sprite):
+		return _hero_sprite.modulate.a
+	if stable_id.begins_with("town/npc/"):
+		var record: Variant = _resident_views.get(stable_id.trim_prefix("town/npc/"), null)
+		var sprite: Variant = record.get("node", null) if record is Dictionary else null
+		if sprite is CanvasItem and is_instance_valid(sprite):
+			return (sprite as CanvasItem).modulate.a
+	return 1.0
 
 
 func _update_life() -> void:
@@ -282,6 +430,7 @@ func life_report() -> Dictionary:
 
 func render_audit() -> Dictionary:
 	return {"ready": is_ready(), "view_size": Vector2(world_viewport.size), "ground_source_path": "res://content/rooms/town/layers/ground.png", "runtime_background_patches": 0,
-		"unknown_underplate": "transparent", "supports_cutaway": false, "supports_fade": false,
+		"unknown_underplate": "transparent", "supports_cutaway": true, "supports_fade": true,
+		"occlusion_available": bool(_occlusion_report.get("available", false)),
 		"shared_sort_root": world_presenter != null and world_presenter.sort_root.y_sort_enabled,
 		"native_count": world_presenter.sort_root.get_child_count() - world_presenter.actor_ids().size() if world_presenter != null else 0}

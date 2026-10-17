@@ -20,11 +20,11 @@
     "#71808a"
   ],
   "sources": {
-    "south": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/south_original.png",
-    "north": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/north_original.png",
-    "east": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/east_original.png",
-    "west": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/west_original.png",
-    "north_shoot": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/north_shoot_fixed_original.png"
+    "south": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/south_original.png",
+    "north": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/north_original.png",
+    "east": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/east_original.png",
+    "west": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/west_original.png",
+    "north_shoot": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/north_shoot_fixed_original.png"
   },
   "background": {
     "south": {

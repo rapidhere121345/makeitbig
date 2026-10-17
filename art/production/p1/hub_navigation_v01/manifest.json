@@ -2,7 +2,7 @@
   "inputs": {
     "recipe": {
       "bytes": 859,
-      "directory": "/data/repo/makeitbig/docs/art-production/p1-hub-navigation-v01",
+      "directory": "/data/paseo-makeitbig/project/docs/art-production/p1-hub-navigation-v01",
       "file": "recipe.json",
       "sha256": "2b557fd9ec533b8bffe0abf9220f5e28ba6d3c17991377490a7699026bba1a65"
     },
@@ -13,7 +13,7 @@
         1024
       ],
       "file": "navigation_keyed.png",
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hub-navigation-v01/sources/navigation_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hub-navigation-v01/sources/navigation_keyed.png",
       "sha256": "40bf052ab1471141c159a4f91e79df271f85f0ba4f9068dc970fb14349f639bd"
     }
   },

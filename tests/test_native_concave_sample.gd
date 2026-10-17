@@ -4,6 +4,8 @@ const NativeScene := preload("res://content/rooms/samples/concave_hole_passage.t
 const Runtime := preload("res://src/runtime/world/scene_runtime.gd")
 const Spatial := preload("res://src/runtime/world/spatial_manifest.gd")
 const Arena := preload("res://src/runtime/geometry/arena_geometry.gd")
+const SpatialChannels := preload("res://src/runtime/spatial/spatial_channels.gd")
+const SpatialContactScript := preload("res://src/runtime/spatial/spatial_contact.gd")
 const MANIFEST_PATH := "res://content/rooms/samples/concave_hole_passage.spatial.json"
 const RADIUS := 10.0
 var failures: Array[String] = []
@@ -35,7 +37,8 @@ func _definition() -> Dictionary:
 
 
 func _asset() -> Dictionary:
-	return {"world_scene_path": NativeScene.resource_path, "manifest_path": MANIFEST_PATH, "gameplay_digest": FileAccess.get_sha256(MANIFEST_PATH), "presentation_digest": FileAccess.get_sha256(NativeScene.resource_path), "schema_version": 1}
+	var manifest := Spatial.new(_manifest())
+	return {"world_scene_path": NativeScene.resource_path, "manifest_path": MANIFEST_PATH, "gameplay_digest": manifest.gameplay_digest_sha256(), "presentation_digest": manifest.presentation_digest_sha256(), "schema_version": 1}
 
 
 func _manifest() -> Dictionary:
@@ -67,7 +70,7 @@ func _test_joint_runtime() -> void:
 	root.add_child(runtime)
 	var ready_blocker_counts: Array[int] = []
 	runtime.ready_changed.connect(func(ready: bool, report: Dictionary):
-		if ready: ready_blocker_counts.append((report.actors.blockers as Array).size()))
+		if ready: ready_blocker_counts.append(int((report.static_spatial_index as Dictionary).get("surface_count", 0))))
 	var loaded: Dictionary = runtime.mount(_definition(), _asset())
 	_expect(bool(loaded.ok) and runtime.is_ready(), "native runtime mount failed: " + str(loaded))
 	if not runtime.is_ready():
@@ -76,13 +79,13 @@ func _test_joint_runtime() -> void:
 	var registry = runtime.actor_registry
 	var world = runtime.simulation
 	_expect(ready_blocker_counts == [8], "READY preceded static registration")
-	_expect(not registry.is_position_clear(Vector2(700,60), Rect2(), RADIUS), "outer notch did not make an irregular walkable region")
-	_expect(registry.is_position_clear(Vector2(550,60), Rect2(), RADIUS), "legal side of outer notch blocked")
-	_expect(not registry.is_position_clear(Vector2(215,315), Rect2(), RADIUS), "closed hole interior was walkable")
-	_expect(not registry.is_position_clear(Vector2(175,315), Rect2(), RADIUS), "center outside hole hid footprint overlap")
-	_expect(registry.is_position_clear(Vector2(415,230), Rect2(), RADIUS), "exact diameter opening rejected a tangent footprint")
-	_expect(not registry.is_position_clear(Vector2(415,230), Rect2(), RADIUS + 0.01), "critical opening accepted oversized footprint")
-	_expect(not registry.is_position_clear(Vector2(415,230.01), Rect2(), RADIUS), "critical opening ignored off-center overlap")
+	_expect(not registry.is_position_clear(Vector2(700,60), RADIUS), "outer notch did not make an irregular walkable region")
+	_expect(registry.is_position_clear(Vector2(550,60), RADIUS), "legal side of outer notch blocked")
+	_expect(not registry.is_position_clear(Vector2(215,315), RADIUS), "closed hole interior was walkable")
+	_expect(not registry.is_position_clear(Vector2(175,315), RADIUS), "center outside hole hid footprint overlap")
+	_expect(registry.is_position_clear(Vector2(415,230), RADIUS), "exact diameter opening rejected a tangent footprint")
+	_expect(not registry.is_position_clear(Vector2(415,230), RADIUS + 0.01), "critical opening accepted oversized footprint")
+	_expect(not registry.is_position_clear(Vector2(415,230.01), RADIUS), "critical opening ignored off-center overlap")
 	var registered: Dictionary = runtime.register_actor("survey/ranger", _socket(runtime, "Spawn"), RADIUS)
 	_expect(bool(registered.ok), "authored spawn failed registration")
 	var view := Node2D.new()
@@ -121,14 +124,14 @@ func _test_joint_runtime() -> void:
 	var revision := runtime.world_revision
 	var unmounted: Dictionary = runtime.unmount()
 	_expect(bool(unmounted.ok) and not runtime.is_ready() and runtime.mounted_scene == null, "unmount left native room ready")
-	_expect(registry.actor_ids().is_empty() and registry.snapshot().blockers.is_empty() and not registry.has_movement_boundary(), "unmount left registrations on retained registry")
-	_expect(runtime.actor_registry.snapshot().blockers.is_empty() and runtime.presenter.actor_ids().is_empty(), "unmount left current geometry/visual registrations")
+	_expect(registry.actor_ids().is_empty() and registry.dynamic_index.snapshot().body_count == 0, "unmount left actor bodies on retained access")
+	_expect(runtime.actor_registry == null and runtime.static_spatial_index == null and runtime.presenter.actor_ids().is_empty(), "unmount left current room registrations")
 	_expect(runtime.presenter.native_binding_node("island.visual") == null, "unmount retained native visual binding")
 	_expect(runtime.move_actor("survey/ranger", Vector2.ONE, world.tick).error == "runtime_not_ready", "stale movement accepted after unload")
 	_expect(not runtime.accepts_version(instance_id, revision), "unloaded identity remained accepted")
 	var remount: Dictionary = runtime.mount(_definition(), _asset(), null, null, revision + 1)
 	_expect(bool(remount.ok) and runtime.room_instance_id != instance_id and runtime.actor_registry != registry, "remount reused stale identity/registry")
-	_expect(runtime.actor_registry.snapshot().blockers.size() == 8 and runtime.actor_registry.actor_ids().is_empty(), "remount duplicated solids or retained actors")
+	_expect(runtime.static_spatial_index.surface_ids(SpatialChannels.MOVEMENT).size() == 8 and runtime.actor_registry.actor_ids().is_empty(), "remount duplicated solids or retained actors")
 	runtime.unmount()
 	runtime.free()
 
@@ -143,17 +146,19 @@ func _socket(runtime: Node, name: String) -> Vector2:
 
 func _place(runtime: Node, name: String) -> void:
 	var point := _socket(runtime, name)
-	_expect(runtime.actor_registry.is_position_clear(point, Rect2(), RADIUS), "authored probe footprint blocked: " + name)
+	_expect(runtime.actor_registry.is_position_clear(point, RADIUS), "authored probe footprint blocked: " + name)
 	_expect(bool(runtime.actor_registry.teleport_actor("survey/ranger", point).ok), "probe placement failed")
 
 
 func _move(runtime: Node, displacement: Vector2, label: String) -> Dictionary:
-	var tick: int = runtime.simulation.step().tick
-	var moved: Dictionary = runtime.move_actor("survey/ranger", displacement, tick)
+	var stepped: SimOutcome = runtime.simulation.step_tick()
+	var tick: int = runtime.simulation.tick
+	_expect(stepped.ok, label + ": kernel tick rejected")
+	var moved: Dictionary = runtime.actor_registry.move_actor("survey/ranger", displacement, tick)
 	_expect(bool(moved.get("ok", false)), label + ": registry movement rejected")
 	var actor = runtime.actor_registry.actor("survey/ranger")
-	_expect(actor.feet_position == moved.position and actor.last_motor_tick == tick, label + ": position/tick bypassed registry")
-	_expect(runtime.actor_registry.is_position_clear(moved.position, Rect2(), RADIUS), label + ": movement ended with footprint penetration")
+	_expect(actor.feet_position == moved.position and actor.last_movement_tick == tick, label + ": position/tick bypassed registry")
+	_expect(runtime.actor_registry.is_position_clear(moved.position, RADIUS), label + ": movement ended with footprint penetration")
 	_expect(bool(runtime.presenter.sync_actor("survey/ranger", actor.feet_position).ok), label + ": committed feet did not reach presenter")
 	_expect(runtime.presenter.native_group("SortRoot").get_node("SurveyRanger").position == actor.feet_position, label + ": presenter changed feet transform")
 	traces.append({"probe": label, "tick": tick, "position": [moved.position.x,moved.position.y], "blocked": moved.blocked})
@@ -161,8 +166,9 @@ func _move(runtime: Node, displacement: Vector2, label: String) -> Dictionary:
 
 
 func _has_contact(moved: Dictionary, id: String) -> bool:
-	for contact: Dictionary in moved.contacts:
-		if contact.get("blocker_id", "") == id: return true
+	for value: Variant in moved.contacts:
+		var contact := value as SpatialContactScript
+		if contact != null and contact.source_id == id: return true
 	return false
 
 
@@ -178,8 +184,8 @@ func _test_manifest_drift() -> void:
 			"gameplay_spatial_metadata": changed[field].unapproved = true
 		var runtime := Runtime.new()
 		var result: Dictionary = runtime.mount(_definition(), _asset(), null, changed)
-		_expect(not bool(result.ok) and result.error == "native_manifest_mismatch", "drift accepted or wrong error for " + field + ": " + str(result))
-		_expect(not runtime.is_ready() and runtime.actor_registry.snapshot().blockers.is_empty(), "drift left registered geometry")
+		_expect(not bool(result.ok) and result.error == "world_asset_manifest_mismatch", "drift accepted or wrong error for " + field + ": " + str(result))
+		_expect(not runtime.is_ready() and runtime.actor_registry == null and runtime.static_spatial_index == null, "drift left registered geometry")
 		runtime.free()
 
 
@@ -202,7 +208,7 @@ func _test_native_failures() -> void:
 		var runtime := Runtime.new()
 		var result: Dictionary = runtime.mount(_definition(), _asset(), packed)
 		_expect(not bool(result.ok) and result.error == "native_scene_contract_invalid", mutation + ": invalid scene mounted: " + str(result))
-		_expect(not runtime.is_ready() and runtime.actor_registry.snapshot().blockers.is_empty(), mutation + ": invalid source left geometry")
+		_expect(not runtime.is_ready() and runtime.actor_registry == null and runtime.static_spatial_index == null, mutation + ": invalid source left geometry")
 		runtime.free()
 
 

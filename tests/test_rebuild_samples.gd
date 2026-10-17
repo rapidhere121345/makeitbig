@@ -77,9 +77,8 @@ func _test_multipart_boss_keeps_one_logical_identity() -> void:
 		],
 	})
 	_expect(bool(definition_result.ok), "boss: multipart definition was rejected")
-	var state_result: Dictionary = ActorStateScript.create("threshold_colossus", Vector2(80.0, 80.0), 18.0, "room/boss", 2)
-	_expect(bool(state_result.ok), "boss: runtime state was rejected")
-	var state: ActorState = state_result.value as ActorState
+	var state: ActorState = ActorStateScript.create(Vector2(80.0, 80.0), 18.0, "room/boss", 2)
+	_expect(state != null, "boss: runtime state was rejected")
 	state.part_ids = ["core", "right_hand", "left_hand"]
 	var presenter := WorldPresenterScript.new()
 	get_root().add_child(presenter)

@@ -4,23 +4,23 @@
       "atlas": "facilities",
       "bytes": 19400,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/base_facilities_v01/facilities.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/base_facilities_v01/facilities.png",
       "sha256": "e1ef37d18f94b48a7850a9436d7d23d1dcebad82b2aaf878e38a1aa9b8275b63"
     },
     {
       "bytes": 1320,
       "kind": "atlas_contract",
-      "path": "/data/repo/makeitbig/art/production/p1/base_facilities_v01/atlas.json",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/base_facilities_v01/atlas.json",
       "sha256": "d050b3e3dfde67c5a887464f922a8054f5d54128bfa10eb3e81cb5bfcd68839c"
     },
     {
       "bytes": 39421,
       "kind": "contact_sheet",
-      "path": "/data/repo/makeitbig/art/production/p1/base_facilities_v01/contact_sheet.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/base_facilities_v01/contact_sheet.png",
       "sha256": "9babfc98387457dfc75b0e1d1809a0e9da1d126b9cd0fc7147dc222d831808b3"
     }
   ],
-  "config_path": "/data/repo/makeitbig/docs/art-production/p1-base-facilities-v01/recipe.json",
+  "config_path": "/data/paseo-makeitbig/project/docs/art-production/p1-base-facilities-v01/recipe.json",
   "config_sha256": "3567e0db2740f5775b92e694ed673794b5a590ce38dc21b0943a8778c67dc040",
   "resource_prefix": "res://art/production/p1/base_facilities_v01",
   "schema_version": 1,
@@ -38,7 +38,7 @@
         1
       ],
       "height": 1196,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-base-facilities-v01/sources/contract_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-base-facilities-v01/sources/contract_original.png",
       "sha256": "1fd08ff54f08fea20a9d84cf066d5bba1b54b1aa6398ea2e061b95c5ab845f20",
       "width": 1315
     },
@@ -55,7 +55,7 @@
         1
       ],
       "height": 1068,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-base-facilities-v01/sources/forge_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-base-facilities-v01/sources/forge_original.png",
       "sha256": "dae1c8cef0fc417dfae736bef38d0eb583de2b280502bc052cdcb7524ca77f58",
       "width": 1473
     },
@@ -72,7 +72,7 @@
         1
       ],
       "height": 1239,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-base-facilities-v01/sources/loadout_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-base-facilities-v01/sources/loadout_original.png",
       "sha256": "c328a4d4d9c286aa39e7b678d987cb174c7eff3fb6a109c247ffbf99a83b7e13",
       "width": 1269
     },
@@ -89,7 +89,7 @@
         1
       ],
       "height": 1295,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-base-facilities-v01/sources/proxy_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-base-facilities-v01/sources/proxy_original.png",
       "sha256": "2dc6ed63b9dba1165bda89bef5f1a3ba8f81553b24a9c55f4c2cf28664dc1f69",
       "width": 1214
     },
@@ -106,7 +106,7 @@
         1
       ],
       "height": 1190,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-base-facilities-v01/sources/training_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-base-facilities-v01/sources/training_original.png",
       "sha256": "dfd0b437ae59895be5fb9130a115f122fc357b5d0ca3d00df239120c85b3dca4",
       "width": 1322
     }

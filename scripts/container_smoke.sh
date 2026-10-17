@@ -2,13 +2,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-# shellcheck source=container_env.sh
-source "${SCRIPT_DIR}/container_env.sh"
+# shellcheck source=project_env.sh
+source "${SCRIPT_DIR}/project_env.sh"
 
 MIB_LINUX_EXPORT="${MIB_LINUX_EXPORT:-${MIB_PROJECT_ROOT}/build/current/linux/make-it-big.x86_64}"
 if [[ ! -x "$MIB_LINUX_EXPORT" ]]; then
   echo "Linux export is missing or not executable: ${MIB_LINUX_EXPORT}" >&2
-  echo "Run ./scripts/container_export.sh first." >&2
+  echo "Run ./scripts/export_all.sh first." >&2
   exit 1
 fi
 

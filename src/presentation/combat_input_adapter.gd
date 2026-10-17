@@ -10,6 +10,7 @@ const ManualCombatInputScript := preload("res://src/systems/manual_combat_input.
 const ManualAimResolverScript := preload("res://src/systems/manual_aim_resolver.gd")
 const Rules := preload("res://src/systems/ranger_skill_rules.gd")
 const CommandSource := preload("res://src/systems/combat_command_source.gd")
+const CommandSourcePort := preload("res://src/systems/combat_command_source_port.gd")
 const ATTACK_SOURCE_ASSISTED := "assisted"
 const ATTACK_SOURCE_POINTER := "pointer"
 const POINTER_STATUS_NONE := "none"
@@ -22,9 +23,9 @@ var manual_combat_input := ManualCombatInputScript.new()
 var manual_aim_resolver := ManualAimResolverScript.new()
 var command_source
 var feedback
+var command_source_port: RefCounted = null
 var screen_mapper: Callable
 var pointer_interface_query: Callable
-var loot_pickup_command_factory: Callable
 var manual_pointer_target_entity_id := 0
 var manual_pointer_gameplay := Vector2.ZERO
 var manual_pointer_target_anchor := Vector2.ZERO
@@ -34,32 +35,16 @@ var _loot_pickup_requested_id := ""
 var _snapshot: Dictionary = {}
 
 
-func configure(source: RefCounted, command_factories: Dictionary, feedback_owner: Node,
+func configure(source: RefCounted, source_port: RefCounted, feedback_owner: Node,
 	mapper: Callable, interface_query: Callable) -> void:
 	command_source = source
+	command_source_port = source_port
 	feedback = feedback_owner
 	screen_mapper = mapper
 	pointer_interface_query = interface_query
-	var callbacks := command_factories.duplicate()
-	loot_pickup_command_factory = callbacks.get("make_loot_pickup", Callable())
-	callbacks.merge({
-		"player_position": Callable(self, "player_position"),
-		"player_facing": Callable(self, "player_facing"),
-		"locked_targeting_distance": Callable(self, "targeting_distance"),
-		"hunter_mark_range": Callable(self, "mark_range"),
-		"nearest_target": Callable(self, "nearest_target"),
-		"preferred_target": Callable(self, "preferred_target"),
-		"target_by_id": Callable(self, "target_by_id"),
-		"pointer_target_entity_id": Callable(self, "pointer_target_id"),
-		"refresh_pointer_lock": Callable(self, "refresh_pointer_lock"),
-		"mark_pointer_lost": Callable(self, "mark_pointer_lost"),
-		"mark_pointer_out_of_range": Callable(self, "mark_pointer_out_of_range"),
-		"held_attack_window_open": Callable(self, "held_attack_window_open"),
-		"register_attack_source": Callable(self, "register_attack_source"),
-		"clear_input_feedback": Callable(self, "clear_feedback"),
-		"show_assisted_rejection_feedback": Callable(self, "show_assisted_rejection"),
-	})
-	command_source.configure(callbacks)
+	if command_source == null or command_source_port == null:
+		return
+	command_source.configure(command_source_port)
 
 
 func collect_commands(snapshot: Dictionary) -> Array[Dictionary]:
@@ -83,9 +68,9 @@ func collect_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
 		return {}
 	var loot_entity_id := _loot_pickup_requested_id
 	_loot_pickup_requested_id = ""
-	if not loot_pickup_command_factory.is_valid():
+	if command_source_port == null:
 		return {}
-	var command: Variant = loot_pickup_command_factory.call(loot_entity_id)
+	var command: Variant = command_source_port.make_loot_pickup(loot_entity_id)
 	return (command as Dictionary).duplicate(true) if command is Dictionary else {}
 
 

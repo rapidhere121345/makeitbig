@@ -319,6 +319,6 @@ acceptance gate.
 ## Definition of done
 
 The milestone is ready for a release candidate only when the focused domain
-tests, real mounted room test, full container build, export, Linux empty-folder
+tests, real mounted room test, full host build, export, Linux empty-folder
 smoke, and the agreed replay/golden policy pass. A design document or an
 isolated ledger test alone is not a real combat-room acceptance.

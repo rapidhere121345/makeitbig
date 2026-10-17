@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -15,7 +16,7 @@ def sha(path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--evidence-dir", required=True)
-    parser.add_argument("--godot", default="/data/tools/godot-4.7.2/Godot_v4.7.2-stable_linux.x86_64")
+    parser.add_argument("--godot", default=os.environ.get("GODOT_BIN", "/data/paseo-makeitbig/bin/godot"))
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[3]
     relative = Path("art/production/p1/combat_style_r13/v03")

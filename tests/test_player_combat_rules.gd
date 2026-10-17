@@ -1,16 +1,23 @@
 extends SceneTree
 
 const State := preload("res://src/runtime/world/player_combat_state.gd")
-const Registry := preload("res://src/runtime/world/actor_registry.gd")
 const World := preload("res://src/runtime/world/simulation_world.gd")
+const RoomSpatialPortScript := preload("res://src/runtime/world/room_spatial_port.gd")
+const RoomActorAccessScript := preload("res://src/runtime/world/room_actor_access.gd")
+const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spatial_index.gd")
+const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
+const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay.gd")
+const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
 const Rules := preload("res://src/systems/player_combat_rules.gd")
 const Stream := preload("res://src/systems/combat_event_stream.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Big := preload("res://src/core/big_value.gd")
 
 var failures: Array[String] = []
-var registry := Registry.new()
-var world := World.new()
+var spatial_port := RoomSpatialPortScript.new()
+var world: SimulationWorld = World.new(spatial_port)
+var access := RoomActorAccessScript.new()
+var registry
 var state := State.new()
 var rules := Rules.new()
 var stream := Stream.new()
@@ -97,20 +104,20 @@ func _initialize() -> void:
 	_reset({})
 	var unready := rules.request_cast(world.tick, "dash", 0, Vector2(NAN, 0))
 	_expect(unready.reason == "invalid_aim_direction" and state.snapshot(world.tick).dash_remaining_ticks == 0, "invalid mobility aim mutated domain")
-	world.step()
+	world.step_tick()
 	count = stream.latest_event_id()
 	_expect(rules.advance_tick(world.tick, {"movement": Vector2(NAN, 0)}, targets).error == "invalid_motion", "invalid routed motion accepted")
-	_expect(stream.latest_event_id() == count and registry.actor("ranger").last_motor_tick == -1, "invalid routed motion emitted events or committed motor")
+	_expect(stream.latest_event_id() == count and access.actor("ranger").last_movement_tick == -1, "invalid routed motion emitted events or committed motor")
 	_expect(rules.advance_tick(world.tick, {}, targets).ok, "rejected malformed tick prevented valid retry")
 	# Pre-existing registry motion rejects before any counters or events change.
 	_reset({})
-	world.step()
-	registry.move_actor("ranger", Vector2.ONE, world.tick)
+	world.step_tick()
+	access.move_actor("ranger", Vector2.ONE, world.tick)
 	count = stream.latest_event_id()
 	_expect(rules.advance_tick(world.tick, {}, targets).error == "non_monotonic_motor_tick", "rules bypassed existing registry motor submission")
 	_expect(stream.latest_event_id() == count and state.snapshot(world.tick).attack_cooldown_ticks == 0, "rejected motor tick mutated player rules")
 	_reset({})
-	state.reset_for_room({}, registry, "ranger", world.tick)
+	state.reset_for_room({}, access, "ranger", world.tick)
 	rules.configure(state, world, stream)
 	_expect(rules.request_cast(world.tick, "dash").reason == "ability_not_equipped" and rules.request_cast(world.tick, "hunter_mark", 7, Vector2.ZERO, targets).reason == "ability_not_equipped", "unequipped skills were accepted")
 	targets[0].position = Vector2(1000, 0)
@@ -124,6 +131,10 @@ func _initialize() -> void:
 	var boundary_batch: Dictionary = step.action_batches[0]
 	_expect(boundary_batch.player.marked_entity_id == 7 and boundary_batch.events[0].type == "action_impact", "release-before-mark-update context was lost at exact expiry tick")
 	_test_release_input()
+	# Explicit harness teardown: sever the kernel -> port -> access -> registry
+	# borrow cycle so the room graph frees at exit.
+	if world != null and world.kernel != null:
+		world.kernel.shutdown()
 	for failure: String in failures: printerr("FAIL: " + failure)
 	if failures.is_empty(): print("PLAYER_COMBAT_RULES_PASS")
 	quit(0 if failures.is_empty() else 1)
@@ -142,7 +153,7 @@ func _test_release_input() -> void:
 			for index: int in range(duration - 3): _step([])
 			var queued_kind := "dash" if initial_kind == "dodge" else "dodge"
 			var command := Protocol.cast(world.tick + 1, "ranger", 12, "dash", 0, -1000, 0) if queued_kind == "dash" else Protocol.dodge(world.tick + 1, "ranger", 12, -1000, 0)
-			world.step()
+			world.step_tick()
 			var routed := Protocol.arbitrate([command], world.tick, state.equipped_ability_ids())
 			var tail := rules.advance_tick(world.tick, routed, targets)
 			_expect(tail.ok and tail.receipts[0].reason == "mobility_buffered", "tail did not buffer " + queued_kind)
@@ -173,7 +184,7 @@ func _test_release_input() -> void:
 				_expect(int(consumed.player[queued_kind + "_remaining_ticks"]) > 0 and int(consumed.player[queued_kind + "_started_tick"]) == world.tick, "unreleased buffer did not start on real consume tick")
 			_expect(consumed.player.timeline.active.action_instance_id == 1, "input release or buffered mobility changed active action identity")
 			# A world tick is real but cannot release input before its player phase.
-			world.step()
+			world.step_tick()
 			var unprepared_before := _release_observation()
 			var unprepared := rules.release_input(world.tick)
 			_expect(not unprepared.ok and unprepared.error == "player_tick_not_prepared" and not unprepared.cleared, "unprepared player tick accepted input release")
@@ -189,21 +200,34 @@ func _release_observation() -> Dictionary:
 	var player := state.snapshot(world.tick)
 	var retained: Big = player.retained_arrow_damage
 	player.retained_arrow_damage = {"layer": retained.layer, "magnitude": retained.magnitude}
-	return {"player": player, "world": {"tick": world.tick, "room_instance_id": world.room_instance_id, "world_revision": world.world_revision}, "registry": registry.snapshot(), "stream": stream.snapshot()}
+	return {"player": player, "world": {"tick": world.tick, "room_instance_id": world.room_instance_id, "world_revision": world.world_revision}, "registry": access.actor_snapshot("ranger"), "stream": stream.snapshot()}
 
 
 func _reset(capabilities: Dictionary) -> void:
-	registry.configure("rules-room", 1)
-	registry.register_actor("ranger", Vector2.ZERO, 14.0)
-	world.configure(30, "rules-room", 1)
+	_expect(world.configure("rules-room", 1, 30).ok, "rules world configuration failed")
+	registry = world.actor_registry
+	var static_build: Dictionary = StaticSpatialIndexScript.build({
+		"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION,
+		"asset_id": "test/rules-room",
+		"surfaces": [],
+		"movement_boundary": {"kind": "rect", "rect": Rect2(-1000.0, -1000.0, 2000.0, 2000.0)},
+	})
+	_expect(bool(static_build.get("ok", false)), "rules static index configuration failed")
+	var dynamic := DynamicSpatialIndexScript.new()
+	var overlay := SpatialOverlayScript.new()
+	var movement_build: Dictionary = MovementResolverScript.make(static_build.get("value"), overlay, dynamic)
+	_expect(bool(movement_build.get("ok", false)), "rules movement resolver configuration failed")
+	_expect(bool(access.configure(world, registry, static_build.get("value"), dynamic, movement_build.get("value"), overlay).get("ok", false)), "rules actor access configuration failed")
+	spatial_port.bind(access)
+	_expect(bool(access.register_actor("ranger", Vector2.ZERO, 14.0).get("ok", false)), "rules player registration failed")
 	stream.reset()
-	state.reset_for_room({"final_parameters": {"max_health": 100.0, "d": 225.0}, "skills": ["piercing_arrow", "hunter_mark", "dash"], "talent_capabilities": capabilities}, registry, "ranger", world.tick)
+	_expect(bool(state.reset_for_room({"final_parameters": {"max_health": 100.0, "d": 225.0}, "skills": ["piercing_arrow", "hunter_mark", "dash"], "talent_capabilities": capabilities}, access, "ranger", world.tick).get("ok", false)), "rules player reset failed")
 	_expect(rules.configure(state, world, stream).ok, "rules configure failed")
 	targets[0].position = Vector2(100, 0)
 
 
 func _step(commands: Array) -> Dictionary:
-	world.step()
+	world.step_tick()
 	var result := rules.advance_tick(world.tick, {"commands": commands}, targets)
 	_expect(result.ok, "real tick failed: " + str(result.get("error", "")))
 	return result

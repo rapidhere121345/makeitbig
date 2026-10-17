@@ -84,14 +84,14 @@
     {
       "bytes": 16961,
       "kind": "texture",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_life_v01/residents.png",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_life_v01/residents.png",
       "sha256": "902af6ede321978d64fe953e4d39009dc3122a1ab8fa3cbdd1d55785d9bb5cb6",
       "texture": "residents"
     },
     {
       "bytes": 6836,
       "kind": "atlas_contract",
-      "path": "/data/repo/makeitbig/art/production/p1/hamlet_life_v01/atlas.json",
+      "path": "/data/paseo-makeitbig/project/art/production/p1/hamlet_life_v01/atlas.json",
       "sha256": "9a5ede007ac1ff0bfd23be12074f7ee5908706226a303f9c4568da3393c2e363"
     }
   ],
@@ -100,7 +100,7 @@
     48
   ],
   "columns": 4,
-  "config_path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-life-v01/recipe.json",
+  "config_path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-life-v01/recipe.json",
   "config_sha256": "7054f40bd7c7b6fff5469d3a5afe3dfef80f756eea72c6dc489dc61454b943e4",
   "disclosure": {
     "residents": "New built-in imagegen 20-pose sheet references approved v0.9 sheet03 and current residents.png. Uniform 0.14 nearest scale across all characters/frames; key green100 removes declared source backdrop only. No script painted art. Mira/Oren carried brazier/anvil are part of resident frame, not duplicate buildings."
@@ -1530,7 +1530,7 @@
       },
       "external_to_recipe_dir": false,
       "height": 1402,
-      "path": "/data/repo/makeitbig/docs/art-production/p1-hamlet-life-v01/sources/residents_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-life-v01/sources/residents_original.png",
       "sha256": "5a9ffc74fc11394e79cdd7ff371542a6fc1218a3aa54d598b0766ef9b3c4a841",
       "transparent_pixels": 0,
       "width": 1122

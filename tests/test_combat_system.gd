@@ -5,6 +5,7 @@ const CombatEventStreamScript := preload("res://src/systems/combat_event_stream.
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 const CombatArrowProjectileScript := preload("res://src/runtime/world/combat_arrow_projectile.gd")
 const ManualAimResolverScript := preload("res://src/systems/manual_aim_resolver.gd")
+const RoomPortScript := preload("res://tests/helpers/callable_combat_system_room_port.gd")
 
 class PlayerRulePortStub extends RefCounted:
 	var critical_bonus_generations := 2
@@ -49,7 +50,7 @@ func _initialize() -> void:
 	system.impact_trace_requested.connect(feedback.add_impact_traces)
 	enemy = CombatEnemyStateScript.new(Vector2(100.0, 22.0), 100.0, false, 1, "melee_pursuer")
 	var stream = CombatEventStreamScript.new()
-	var configured: Dictionary = system.configure({
+	var configured: Dictionary = _bind(system, {
 		"player_rule_port": player_rule_port,
 		"target_by_id": Callable(self, "_target_by_id"),
 		"aim_candidate": Callable(self, "_aim_candidate"),
@@ -112,13 +113,22 @@ func _target_blocked(_target) -> bool:
 	return false
 
 
+func _bind(system: CombatSystem, callbacks: Dictionary) -> Dictionary:
+	var port := RoomPortScript.new()
+	var prepared: Dictionary = port.configure(callbacks)
+	if not bool(prepared.get("ok", false)):
+		return prepared
+	var profile := String(callbacks.get("query_profile", CombatSystemScript.QUERY_PROFILE_MULTIPART_V2))
+	return system.bind_room(port, profile)
+
+
 func _remove_target(_target) -> void:
 	pass
 
 
 func _test_missing_player_rule_port() -> void:
 	var system = CombatSystemScript.new()
-	var result: Dictionary = system.configure({})
+	var result: Dictionary = _bind(system, {})
 	_expect(not bool(result.get("ok", true)) and String(result.get("error", "")) == "player_rule_port_unavailable", "combat system: missing player rule port silently configured")
 
 
@@ -180,12 +190,12 @@ func _test_strict_blocked_port() -> void:
 	var system = CombatSystemScript.new()
 	var player_rules := PlayerRulePortStub.new()
 	for port_value: Variant in [null, Callable(), "blocked", true, 0]:
-		var result: Dictionary = system.configure({"player_rule_port": player_rules, "target_blocked": port_value})
-		_expect(not result.ok and result.error == "target_blocked_port_unavailable", "combat system: missing/invalid blocked port configured")
+		var result: Dictionary = _bind(system, {"player_rule_port": player_rules, "target_blocked": port_value})
+		_expect(not result.ok and result.error == "combat_room_port_unavailable", "combat system: missing/invalid blocked port configured")
 	var stream = CombatEventStreamScript.new()
 	var target := CombatEnemyStateScript.new(Vector2(100, 22), 100, false, 71, "melee_pursuer")
 	var targets: Array[CombatEnemyState] = [target]
-	_expect(system.configure({"player_rule_port": player_rules, "target_blocked": _blocked_port_value, "current_model": _current_model}).ok, "combat system: strict blocked port setup rejected")
+	_expect(_bind(system, {"player_rule_port": player_rules, "target_blocked": _blocked_port_value, "current_model": _current_model}).ok, "combat system: strict blocked port setup rejected")
 	var unreset: Dictionary = system.set_context(1, Vector2.ZERO, Vector2.RIGHT, 10.0, 225.0, 3000.0, 0, {}, stream, ManualAimResolverScript.new(), targets)
 	_expect(not unreset.ok and unreset.error == "combat_room_not_reset", "combat system: context silently created room totals without reset")
 	_expect(system.reset_room(BigValue.from_float(0)).ok, "combat system: strict blocked fixture reset failed")
@@ -216,13 +226,13 @@ func _test_strict_blocked_port() -> void:
 	system.advance_projectiles_tick()
 	_expect(system.projectiles.is_empty() and system.last_attack_outcome.outcome == "rejected" and system.last_attack_outcome.reason == "target_blocked_port_invalid_result" and stream.latest_event_id() == before_flight + 1 and target.health == 80 and system.outcome_snapshot().arrow_hits == 1, "combat system: invalid production barrier answer damaged target or failed rejection")
 	var disposable := DisposableBlockedPort.new()
-	_expect(system.configure({"player_rule_port": player_rules, "target_blocked": disposable.is_target_blocked, "current_model": _current_model}).ok, "combat system: disposable blocked dependency configuration failed")
+	_expect(_bind(system, {"player_rule_port": player_rules, "target_blocked": disposable.is_target_blocked, "current_model": _current_model}).ok, "combat system: disposable blocked dependency configuration failed")
 	disposable.free()
 	var unavailable: Dictionary = system.set_context(3, Vector2.ZERO, Vector2.RIGHT, 10.0, 225.0, 3000.0, 0, {}, stream, ManualAimResolverScript.new(), targets)
-	_expect(not unavailable.ok and unavailable.error == "target_blocked_port_unavailable", "combat system: freed blocked dependency accepted new context")
+	_expect(not unavailable.ok and unavailable.error == "combat_room_port_unavailable", "combat system: freed blocked dependency accepted new context")
 	var before_shots: int = system.shots
 	system.resolve_piercing_arrow({"action_instance_id": 202, "tick": 3, "target_entity_id": 71, "aim_direction_milli": {"x": 1000, "y": 0}})
-	_expect(system.shots == before_shots and system.projectiles.is_empty() and system.last_attack_outcome.outcome == "rejected" and system.last_attack_outcome.reason == "target_blocked_port_unavailable", "combat system: missing live barrier dependency spawned a shot")
+	_expect(system.shots == before_shots and system.projectiles.is_empty() and system.last_attack_outcome.outcome == "rejected" and system.last_attack_outcome.reason == "combat_room_port_unavailable", "combat system: missing live barrier dependency spawned a shot")
 	_expect(not system.target_is_currently_blocked(target).ok, "combat system: direct blocked query masked missing dependency")
 
 
@@ -237,18 +247,18 @@ func _test_versioned_query_profiles() -> void:
 		"current_model": Callable(self, "_current_model"),
 		"target_blocked": Callable(self, "_target_blocked"),
 	}
-	_expect(system.configure(common).ok, "combat system: default multipart query profile rejected")
+	_expect(_bind(system, common).ok, "combat system: default multipart query profile rejected")
 	_expect(system.reset_room(BigValue.from_float(0)).ok, "combat system: profile fixture reset rejected")
 	_expect(system.set_context(1, Vector2.ZERO, Vector2.RIGHT, 10.0, 225.0, 3000.0, 0, {}, stream, ManualAimResolverScript.new(), [boss]).ok, "combat system: profile fixture context rejected")
 	var multipart := system.query_swept_hits(Vector2.ZERO, Vector2(200.0, 0.0), boss)
 	_expect(multipart.ok and not multipart.candidates.is_empty() and String(multipart.candidates[0].part_id) == "left_hand", "combat system: default query did not use live multipart hurtboxes")
 	var invalid := common.duplicate(true)
 	invalid["query_profile"] = "implicit_legacy_fallback"
-	var invalid_result: Dictionary = system.configure(invalid)
+	var invalid_result: Dictionary = _bind(system, invalid)
 	_expect(not invalid_result.ok and invalid_result.error == "invalid_query_profile", "combat system: unknown query profile was accepted")
 	var historical := common.duplicate(true)
 	historical["query_profile"] = CombatSystemScript.QUERY_PROFILE_HISTORICAL_CIRCLE_V1
-	_expect(system.configure(historical).ok, "combat system: explicit historical query profile rejected")
+	_expect(_bind(system, historical).ok, "combat system: explicit historical query profile rejected")
 	_expect(system.reset_room(BigValue.from_float(0)).ok, "combat system: historical profile reset rejected")
 	_expect(system.set_context(1, Vector2.ZERO, Vector2.RIGHT, 10.0, 225.0, 3000.0, 0, {}, stream, ManualAimResolverScript.new(), [boss]).ok, "combat system: historical profile context rejected")
 	var legacy := system.query_swept_hits(Vector2.ZERO, Vector2(200.0, 0.0), boss)

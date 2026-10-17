@@ -114,6 +114,7 @@ func hud_frame(snapshot: Dictionary, input_view: Dictionary, action_edge_occlude
 	var mark_target := enemy_by_id(snapshot, snapshot["marked_entity_id"])
 	var mark_range: float = snapshot["locked_targeting_distance"] * HUNTER_MARK_RANGE_MULTIPLIER
 	var room_presentation := room_info(snapshot)
+	var attack_target_enemy := enemy_by_id(snapshot, int(attack_target_ui.get("target_entity_id", 0)))
 	return {
 		"room_id": snapshot["room_id"],
 		"room_index": int(snapshot["framework_room"].get("room_index", 0)),
@@ -155,6 +156,9 @@ func hud_frame(snapshot: Dictionary, input_view: Dictionary, action_edge_occlude
 		"attack_target_entity_id": int(attack_target_ui.get("target_entity_id", 0)),
 		"attack_has_target": bool(attack_target_ui.get("has_target", false)),
 		"attack_target_in_range": bool(attack_target_ui.get("in_range", false)),
+		"attack_target_label": enemy_public_label(attack_target_enemy),
+		"attack_target_health": attack_target_enemy.health if attack_target_enemy != null else 0.0,
+		"attack_target_maximum_health": attack_target_enemy.maximum_health if attack_target_enemy != null else 0.0,
 		"hunter_mark_equipped": skill_equipped(snapshot, 1, "hunter_mark"),
 		"hunter_mark_cooldown_seconds": float(snapshot["hunter_mark_cooldown_ticks"]) / SIM_TICKS_PER_SECOND,
 		"hunter_mark_remaining_seconds": float(maxi(0, snapshot["hunter_mark_expires_tick"] - snapshot["sim_tick"])) / SIM_TICKS_PER_SECOND if mark_target != null else 0.0,

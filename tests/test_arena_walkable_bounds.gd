@@ -11,6 +11,7 @@ const Resolver := preload("res://src/systems/build_resolver.gd")
 const Motion := preload("res://src/systems/player_motion_system.gd")
 
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const PhasePort := preload("res://tests/helpers/callable_combat_phase_port.gd")
 
 class DrivenMain:
 	extends MainScript
@@ -49,8 +50,7 @@ func _run() -> void:
 	_test_public_proxy_geometry(arena)
 	_test_other_layouts_unchanged(arena)
 
-	root.remove_child(arena)
-	arena.free()
+	_shutdown_arena(arena)
 	if failures.is_empty():
 		print("PASS  test_arena_walkable_bounds.gd")
 		quit(0)
@@ -80,7 +80,7 @@ func _configure_room(arena: Node, layout: String, enemy_ids: Array, boss_id: Str
 	arena.drive_enemy_outward = false
 	arena.start_room()
 	_expect(arena.in_arena, "bounds fixture failed to reset a real player room")
-	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, {
+	var callbacks := {
 		"read_only_targets": Callable(arena, "_read_only_targets"),
 		"set_elapsed": Callable(arena, "_simulation_set_elapsed"),
 		"consume_player_events": Callable(arena, "_consume_player_events"),
@@ -93,7 +93,11 @@ func _configure_room(arena: Node, layout: String, enemy_ids: Array, boss_id: Str
 		"resolve_hazard_hits": Callable(arena, "_resolve_hazard_hits_tick"),
 		"check_battle_end": Callable(arena, "_check_battle_end"),
 		"check_timeout": Callable(arena, "_simulation_check_timeout"),
-	})
+	}
+	var phase_port = PhasePort.new()
+	var port_result: Dictionary = phase_port.bind(callbacks)
+	_expect(bool(port_result.get("ok", false)), "bounds fixture failed to bind its typed phase port")
+	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, phase_port)
 	_expect(bool(configured.get("ok", false)), "bounds fixture failed to configure its real command driver")
 
 
@@ -214,8 +218,10 @@ func _test_ring_boss_target(arena: Node) -> void:
 	if boss == null:
 		return
 	var outside: Vector2 = arena._arena_rect().get_center() + Vector2(999.0, -999.0)
-	arena.teleport_actor("ranger", outside)
 	var expected_outside: Dictionary = ArenaGeometryScript.project(outside, arena._collision_geometry(28.0))
+	var rejected_outside: Dictionary = arena.teleport_actor("ranger", outside)
+	_expect(not bool(rejected_outside.get("ok", false)), "ring: out-of-bound setup teleport was accepted")
+	_expect(bool(arena.teleport_actor("ranger", Vector2(expected_outside["position"])).get("ok", false)), "ring: projected outer setup teleport was rejected")
 	arena._start_boss_action(boss, "slam")
 	var outside_shape: Dictionary = boss.target_shape
 	_expect(String(outside_shape.get("type", "")) == "rect", "ring: boss slam target shape changed")
@@ -223,8 +229,8 @@ func _test_ring_boss_target(arena: Node) -> void:
 
 	boss.action_state = "none"
 	var center: Vector2 = arena._arena_rect().get_center()
-	arena.teleport_actor("ranger", center)
 	var expected_center: Dictionary = ArenaGeometryScript.project(center, arena._collision_geometry(28.0))
+	_expect(bool(arena.teleport_actor("ranger", Vector2(expected_center["position"])).get("ok", false)), "ring: projected inner setup teleport was rejected")
 	arena._start_boss_action(boss, "slam")
 	_expect(_near_vector(Rect2(boss.target_shape.get("rect", Rect2())).get_center(), Vector2(expected_center["position"])), "ring: boss slam target entered the inner hole")
 
@@ -256,6 +262,17 @@ func _near(left: float, right: float, tolerance: float = 0.0001) -> bool:
 
 func _near_vector(left: Vector2, right: Vector2, tolerance: float = 0.0001) -> bool:
 	return left.distance_to(right) <= tolerance
+
+
+func _shutdown_arena(arena: Node) -> void:
+	if arena == null or not is_instance_valid(arena):
+		return
+	var runtime: Variant = arena.get("scene_runtime")
+	if runtime != null and runtime.has_method("unmount"):
+		runtime.unmount()
+	if arena.get_parent() != null:
+		arena.get_parent().remove_child(arena)
+	arena.free()
 
 
 func _expect(condition: bool, message: String) -> void:

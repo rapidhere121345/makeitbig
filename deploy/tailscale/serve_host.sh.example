@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Host-only reference. Do not run this inside makeitbig-paseo.
+# Host-only reference. Requires a Tailscale client on the host.
 set -euo pipefail
 
-MIB_RELEASE_HOST_ROOT="${MIB_RELEASE_HOST_ROOT:-/paseo-makeitbig/project}"
+MIB_RELEASE_HOST_ROOT="${MIB_RELEASE_HOST_ROOT:-/data/paseo-makeitbig/project}"
 MIB_RELEASE_PAGE_DIR="${MIB_RELEASE_HOST_PAGE_DIR:-$MIB_RELEASE_HOST_ROOT/build/releases}"
 usage() { echo "Usage: $0 {serve|funnel|status|off}"; }
 command_name=""
@@ -10,11 +10,11 @@ if (($#)); then command_name="$1"; fi
 
 case "$command_name" in
   serve)
-    [[ -f "$MIB_RELEASE_PAGE_DIR/index.html" && -f "$MIB_RELEASE_PAGE_DIR/index.json" ]] || { echo "missing release site at $MIB_RELEASE_PAGE_DIR; run release.sh all and stage inside the container first" >&2; exit 1; }
+    [[ -f "$MIB_RELEASE_PAGE_DIR/index.html" && -f "$MIB_RELEASE_PAGE_DIR/index.json" ]] || { echo "missing release site at $MIB_RELEASE_PAGE_DIR; run scripts/release.sh all and deploy/tailscale/stage_release_page.sh --check first" >&2; exit 1; }
     exec sudo tailscale serve --bg "$MIB_RELEASE_PAGE_DIR"
     ;;
   funnel)
-    [[ -f "$MIB_RELEASE_PAGE_DIR/index.html" && -f "$MIB_RELEASE_PAGE_DIR/index.json" ]] || { echo "missing release site at $MIB_RELEASE_PAGE_DIR; run release.sh all and stage inside the container first" >&2; exit 1; }
+    [[ -f "$MIB_RELEASE_PAGE_DIR/index.html" && -f "$MIB_RELEASE_PAGE_DIR/index.json" ]] || { echo "missing release site at $MIB_RELEASE_PAGE_DIR; run scripts/release.sh all and deploy/tailscale/stage_release_page.sh --check first" >&2; exit 1; }
     echo "WARNING: funnel publishes unauthenticated downloads to the public internet." >&2
     exec sudo tailscale funnel --bg "$MIB_RELEASE_PAGE_DIR"
     ;;

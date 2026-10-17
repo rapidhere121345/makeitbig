@@ -38,7 +38,7 @@
   ],
   "sources": {
     "ground": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ground_original.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-scene-rework-v01/sources/ground_original.png",
       "grid": [
         1,
         1
@@ -48,7 +48,7 @@
       }
     },
     "decals": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/decals_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-scene-rework-v01/sources/decals_keyed.png",
       "grid": [
         2,
         2
@@ -62,7 +62,7 @@
       }
     },
     "ruins": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ruins_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-scene-rework-v01/sources/ruins_keyed.png",
       "grid": [
         2,
         2
@@ -76,7 +76,7 @@
       }
     },
     "ranger": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/ranger_native_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-scene-rework-v01/sources/ranger_native_keyed.png",
       "grid": [
         2,
         2
@@ -90,7 +90,7 @@
       }
     },
     "boss": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-scene-rework-v01/sources/boss_keyed.png",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-scene-rework-v01/sources/boss_keyed.png",
       "grid": [
         2,
         3

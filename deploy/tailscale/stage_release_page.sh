@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ "$(id -u)" == 0 ]]; then
-  echo "run staging as the unprivileged container user" >&2
+  echo "run staging as an unprivileged host user" >&2
   exit 1
 fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
@@ -59,4 +59,4 @@ fi
 
 validate_site
 info "canonical release site: $STAGING_DIR"
-info "run the host-only example after checking the bind mount: deploy/tailscale/serve_host.sh.example serve"
+info "run the host-only example after checking the release root: deploy/tailscale/serve_host.sh.example serve"

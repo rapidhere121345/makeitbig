@@ -11,6 +11,7 @@ const Items = preload("res://src/content/early_item_registry.gd")
 const Resolver = preload("res://src/systems/build_resolver.gd")
 const Content = preload("res://src/content/content_registry.gd")
 const Proxy = preload("res://src/systems/proxy_build.gd")
+const SimCommandScript = preload("res://src/runtime/simulation/sim_command.gd")
 const Spatial = preload("res://src/runtime/world/spatial_manifest.gd")
 const TEMPLATES = ["side_targeted_equipment", "side_affix_and_law_tallies"]
 const MIN_TICKS = 30
@@ -119,9 +120,9 @@ func _observe_actors(arena, registry, world) -> Dictionary:
 			"actor footprint outside authored walkable domain", {"actor_id": id, "tick": world.tick, "position": position, "radius": radius})
 		_expect(actor.room_instance_id == world.room_instance_id and actor.world_revision == world.world_revision,
 			"actor identity differs from shared world", {"actor_id": id, "tick": world.tick})
-		_expect(int(actor.last_motor_tick) <= int(world.tick), "actor motor used future tick", {"actor_id": id})
+		_expect(int(actor.last_movement_tick) <= int(world.tick), "actor motor used future tick", {"actor_id": id})
 		if id == "ranger" and world.tick > 0:
-			_expect(int(actor.last_motor_tick) == int(world.tick), "player did not commit motor on real tick", {"actor_tick": actor.last_motor_tick, "world_tick": world.tick})
+			_expect(int(actor.last_movement_tick) == int(world.tick), "player did not commit motor on real tick", {"actor_tick": actor.last_movement_tick, "world_tick": world.tick})
 		positions[id] = position
 		actor_checks += 1
 	return positions
@@ -178,8 +179,7 @@ func _manual_input(arena, tick: int) -> void:
 
 
 func _empty_registry(registry, label: String) -> void:
-	_expect(registry.actor_ids().is_empty() and registry.snapshot().blockers.is_empty()
-		and not registry.has_movement_boundary() and registry.movement_boundary_snapshot().is_empty(), "unmount retained registry contents: " + label)
+	_expect(registry.actor_ids().is_empty() and registry.dynamic_index.snapshot().body_count == 0, "unmount retained registry contents: " + label)
 
 
 func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Dictionary) -> void:
@@ -210,7 +210,7 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 	_expect(scene.is_ready() and scene.mounted_scene == arena and arena.scene_runtime == scene, "native SceneRuntime ownership missing")
 	_expect(arena.actor_registry == registry and arena.simulation_world == world, "registry/world was duplicated")
 	_expect(arena.player_combat_rules != null and arena.player_combat_state != null and arena.combat_simulation != null, "production domain wiring missing")
-	_expect(arena.player_combat_state.actor_snapshot().entity_id == "ranger", "player State not bound to registry actor")
+	_expect(arena.player_combat_state.actor_snapshot().actor_id == "ranger", "player State not bound to registry actor")
 	var asset: Dictionary = scene.world_asset.snapshot()
 	var expected_path = "res://content/rooms/combat/" + String(room.layout_id)
 	_expect(asset.world_scene_path == expected_path + ".tscn" and asset.manifest_path == expected_path + ".spatial.json", "wrong native asset selected", asset)
@@ -228,9 +228,15 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 	var instance_id = String(scene.room_instance_id)
 	var revision = int(scene.world_revision)
 	_expect(not scene.accepts_version(previous_instance, previous_revision), "prior room version still accepted")
-	var stale_room: Dictionary = world.queue_command({"kind": "move", "entity_id": "ranger", "room_instance_id": previous_instance, "world_revision": previous_revision})
-	var stale_revision: Dictionary = world.queue_command({"kind": "move", "entity_id": "ranger", "room_instance_id": instance_id, "world_revision": revision + 1})
-	_expect(stale_room.get("error") == "stale_room_command" and stale_revision.get("error") == "stale_world_command", "stale command accepted", {"room": stale_room, "revision": stale_revision})
+	var stale_room_command := SimCommandScript.control(registry.actor_handle("ranger"), Vector2.ZERO, false)
+	stale_room_command.room_instance_id = previous_instance
+	stale_room_command.world_revision = previous_revision
+	var stale_revision_command := SimCommandScript.control(registry.actor_handle("ranger"), Vector2.ZERO, false)
+	stale_revision_command.room_instance_id = instance_id
+	stale_revision_command.world_revision = revision + 1
+	var stale_room: SimOutcome = world.queue_command(stale_room_command)
+	var stale_revision: SimOutcome = world.queue_command(stale_revision_command)
+	_expect(stale_room.error == &"stale_room_reference" and stale_revision.error == &"stale_world_revision", "stale command accepted", {"room": stale_room.error, "revision": stale_revision.error})
 	stale_rejections += 2
 	var native_ref = weakref(arena)
 	var actor_ref = weakref(registry.actor("ranger"))
@@ -260,7 +266,7 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 			"production simulation did not commit one real tick", stepped)
 		if not bool(stepped.get("ok", false)):
 			break
-		_expect(stepped.world_step.commands.is_empty(), "stale lifecycle command reached committed tick")
+		_expect(int(stepped.world_step.tick) == tick, "committed world step returned the wrong tick", stepped.world_step)
 		var positions = _observe_actors(arena, registry, world)
 		for id: String in positions:
 			if initial.has(id) and (positions[id] as Vector2).distance_to(initial[id]) > 0.001:
@@ -310,10 +316,11 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 	_expect(int(world.tick) == tick_after and results.size() == 1, "closed encounter advanced or submitted again on tree frame")
 	_expect(bool(scene.unmount().ok), "native unmount rejected")
 	_empty_registry(registry, "retained old")
-	_empty_registry(scene.actor_registry, "current empty")
+	_expect(scene.actor_registry == null and scene.static_spatial_index == null, "unmount retained current room authorities")
 	_expect(not scene.is_ready() and scene.mounted_scene == null and not scene.accepts_version(instance_id, revision), "unmounted version remained ready")
 	_expect(scene.move_actor("ranger", Vector2.ONE, tick + 1).get("error") == "runtime_not_ready", "unmounted movement accepted")
-	_expect(scene.simulation.queue_command({"kind": "move", "room_instance_id": instance_id, "world_revision": revision}).get("error") == "stale_room_command", "unmounted room command accepted")
+	var unmounted_command := SimCommandScript.control(null, Vector2.ZERO, false)
+	_expect(scene.simulation.queue_command(unmounted_command).error == &"kernel_not_configured", "unmounted room command accepted")
 	stale_rejections += 1
 	_expect(scene.presenter.actor_ids().is_empty() and scene.presenter.presentation_report().native_content_count == 0, "presenter kept actor/native registrations")
 	for id: Variant in binding_ids:
@@ -321,7 +328,8 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 	await process_frame
 	await process_frame
 	await process_frame
-	_expect(native_ref.get_ref() == null and actor_ref.get_ref() == null, "native Main or player ActorState survived queue_free")
+	_expect(native_ref.get_ref() == null and actor_ref.get_ref() == null, "native Main or player ActorState survived queue_free",
+		{"native_alive": native_ref.get_ref() != null, "actor_alive": actor_ref.get_ref() != null})
 	for ref: WeakRef in binding_refs:
 		_expect(ref.get_ref() == null, "native bound node survived queue_free")
 	for layer: String in ["Ground", "GroundEffects", "SortRoot", "Foreground"]:
@@ -336,7 +344,7 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 		"room_rules": room_rules, "changed_actor_ids": changed_actors.keys(), "commands": command_count,
 		"accepted_receipts": accepted_receipts, "rejected_receipts": rejected_receipts,
 		"minimum_enemy_distance": minimum_enemy_distance, "ring_probe": ring_result, "presenter_before_unmount": presentation_before,
-		"cleanup": {"old_actors": registry.actor_ids().size(), "old_blockers": registry.snapshot().blockers.size(),
+		"cleanup": {"old_actors": registry.actor_ids().size(), "old_bodies": registry.dynamic_index.snapshot().body_count,
 			"old_boundary": registry.movement_boundary_snapshot(), "native_alive": native_ref.get_ref() != null,
 			"actor_alive": actor_ref.get_ref() != null, "binding_ref_count": binding_refs.size()}, "failures": failures.duplicate()}
 	previous_instance = instance_id

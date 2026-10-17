@@ -105,11 +105,11 @@
   },
   "inputs": {
     "catalog": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/catalog.json",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/catalog.json",
       "sha256": "99c0ff97af2dc7c168441730280f3d23c53e29cc65b3725b1da417fbbb9dceb8"
     },
     "recipe": {
-      "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/recipe.json",
+      "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/recipe.json",
       "sha256": "7ba78117b6cf4af8c7443efed674401195d723dc23157e9e1c6b266aa0033899"
     },
     "sources": [
@@ -119,7 +119,7 @@
           1254
         ],
         "group": "equipment_slots",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/equipment_slots_source.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/sources/equipment_slots_source.png",
         "sha256": "febaed2a9261f07dbb128c6e2b70b879f0957dcee002fcd75186846844d912c2"
       },
       {
@@ -128,7 +128,7 @@
           992
         ],
         "group": "equipment_bases",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/equipment_bases_source.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/sources/equipment_bases_source.png",
         "sha256": "429df59470b0551e6aeb60972f57a78be9f5b0f18538fcf0f711b825c1ed8966"
       },
       {
@@ -137,7 +137,7 @@
           1254
         ],
         "group": "skills_actions",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/skills_actions_source.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/sources/skills_actions_source.png",
         "sha256": "f59ea2afe66a3aa9ef2b6033398574edebf23fab23ceba4be683ac38ef6c868f"
       },
       {
@@ -146,7 +146,7 @@
           1254
         ],
         "group": "runes_law",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/runes_law_source.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/sources/runes_law_source.png",
         "sha256": "7e0c9260cabfbf03dd37337ecc7bd2520538eee95a4f7d4328c0dee687fe37a0"
       },
       {
@@ -155,7 +155,7 @@
           1254
         ],
         "group": "white_cores",
-        "path": "/data/repo/makeitbig/docs/art-production/p1-early-loop-v01/sources/white_cores_source.png",
+        "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/sources/white_cores_source.png",
         "sha256": "148fb5a03dd96c399923ecdeb2c4c435c1c240e6f1230992fcac6bb83df411f6"
       }
     ]

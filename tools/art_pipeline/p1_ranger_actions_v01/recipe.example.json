@@ -7,8 +7,8 @@
     "#bd4653", "#896043", "#bb713d", "#aaafab", "#46515a", "#71808a"
   ],
   "sources": {
-    "raw_actions": "/data/repo/makeitbig/docs/art-production/p1-ranger-actions-v01/sources/ranger_actions_raw.png",
-    "legacy_idle": "/data/repo/makeitbig/art/production/p1/scene_rework_v01/ranger.png"
+    "raw_actions": "/data/paseo-makeitbig/project/docs/art-production/p1-ranger-actions-v01/sources/ranger_actions_raw.png",
+    "legacy_idle": "/data/paseo-makeitbig/project/art/production/p1/scene_rework_v01/ranger.png"
   },
   "background": {
     "raw_actions": {"mode": "color_key", "colors": ["#00ff00"], "tolerance": 60, "scope": "all"}

@@ -393,7 +393,7 @@ func _test_view_integration(failures: Array[String]) -> void:
 	var world = ArenaWorldViewScript.new()
 	var feet := Vector2(512, 320)
 	_expect(world.hero_cell_world(feet) == Rect2(feet - Vector2(24, 44), Vector2(48, 48)), "view: visual occlusion misses extended action cell", failures)
-	hub.free()
+	_shutdown_hub(hub)
 
 
 func _fixture_atlas() -> Dictionary:
@@ -443,3 +443,16 @@ func _fixture_atlas() -> Dictionary:
 func _expect(condition: bool, message: String, failures: Array[String]) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _shutdown_hub(hub: Node) -> void:
+	if hub == null or not is_instance_valid(hub):
+		return
+	var controller: Variant = hub.get("_town_controller")
+	if controller != null:
+		var runtime: Variant = controller.get("scene_runtime")
+		if runtime != null and runtime.has_method("unmount"):
+			runtime.unmount()
+	if hub.get_parent() != null:
+		hub.get_parent().remove_child(hub)
+	hub.free()

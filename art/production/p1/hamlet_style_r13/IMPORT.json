@@ -1,6 +1,6 @@
 {
 	"operation": "transparent-margin crop, native nearest-neighbour fit, fixed cell packing",
-	"recipe": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/style-recipe.json",
+	"recipe": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/style-recipe.json",
 	"recipe_sha256": "be588d940a3eccda8302ab11d190d635230f22aed1c0ce30418697d7639bfac4",
 	"sheets": [
 		{
@@ -72,7 +72,7 @@
 				448,
 				112
 			],
-			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/facilities.png",
+			"source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/facilities.png",
 			"source_sha256": "e2cc7a16c26adb3b0d0945eee9d8fde9d9226ec2c11ac9f26d2caf5fa8c4b4df"
 		},
 		{
@@ -99,7 +99,7 @@
 				320,
 				224
 			],
-			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/hearth.png",
+			"source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/hearth.png",
 			"source_sha256": "55dea8493d9288b4a97cc58e96515de645373e9365712f96495baaa074117979"
 		},
 		{
@@ -126,7 +126,7 @@
 				160,
 				144
 			],
-			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/forge.png",
+			"source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/forge.png",
 			"source_sha256": "a72c0ed23721e62460d0ef1ad70142f39eb9f40ea6673dd103eebbab678ca48c"
 		},
 		{
@@ -183,7 +183,7 @@
 				288,
 				96
 			],
-			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/edges.png",
+			"source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/edges.png",
 			"source_sha256": "126981db0233e354c5a31b55fc584a18b9798ecc12a29234feb453c59b5dae9b"
 		},
 		{
@@ -210,7 +210,7 @@
 				22,
 				52
 			],
-			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/lantern.png",
+			"source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/lantern.png",
 			"source_sha256": "35668903adc5147af289f05289dfe1dcedfacaefa4c88f55cc0e98db1605ddc3"
 		},
 		{
@@ -297,7 +297,7 @@
 				200,
 				48
 			],
-			"source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
+			"source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
 			"source_sha256": "8491083522931fd493cc4f98f75cd698551e3e293ba84a4290b0eb0615c54d3a"
 		}
 	]

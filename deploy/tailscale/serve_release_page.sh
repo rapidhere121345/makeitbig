@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ "$(id -u)" == 0 ]]; then
-  echo "run the release server as the unprivileged container user" >&2
+  echo "run the release server as an unprivileged user" >&2
   exit 1
 fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"

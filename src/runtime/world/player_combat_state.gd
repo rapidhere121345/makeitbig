@@ -21,7 +21,7 @@ var _combat_stats_enabled := false
 
 
 func reset_for_room(locked_build: Dictionary, actor_registry, ranger_id: String, start_tick: int) -> Dictionary:
-	if actor_registry == null or start_tick < 0 or actor_registry.actor(ranger_id) == null:
+	if actor_registry == null or start_tick < 0 or not actor_registry.has_method("actor_snapshot") or actor_registry.actor_snapshot(ranger_id).is_empty():
 		return {"ok": false, "error": "player_actor_unavailable"}
 	var parameters: Dictionary = locked_build.get("final_parameters", {})
 	var maximum := float(parameters.get("max_health", 100.0))
@@ -67,8 +67,7 @@ func reset_for_room(locked_build: Dictionary, actor_registry, ranger_id: String,
 func actor_snapshot() -> Dictionary:
 	if _registry == null or _registry.room_instance_id != _room_instance_id or _registry.world_revision != _world_revision:
 		return {}
-	var actor = _registry.actor(_ranger_id)
-	return actor.snapshot().duplicate(true) if actor != null else {}
+	return _registry.actor_snapshot(_ranger_id).duplicate(true)
 
 
 func position() -> Vector2:

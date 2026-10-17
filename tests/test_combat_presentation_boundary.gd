@@ -49,7 +49,7 @@ func _run() -> void:
 			"enemy_ids": ["melee_pursuer"], "elite_rule_ids": [],
 			"boss_id": "", "drop_tags": [],
 		}
-		_expect(arena._spawn_wave(), "fixture failed to spawn")
+		_expect(not arena.enemies.is_empty(), "mounted fixture did not materialize its first encounter wave")
 		_expect(bool(arena.teleport_actor("ranger", arena._arena_rect().get_center()).get("ok", false)), "fixture failed to place player")
 		var enemy = arena.enemies[0]
 		_expect(bool(arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(100.0, 0.0)).get("ok", false)), "fixture failed to place target")
@@ -96,16 +96,17 @@ func _run() -> void:
 	for arena in [visible, hidden]:
 		arena._simulate_tick()
 	Input.action_release("move_right")
-	_expect(int(visible.actor_registry.actor("ranger").last_motor_tick) == visible.sim_tick, "fixture did not commit movement at the current simulation tick")
+	_expect(int(visible.actor_registry.actor("ranger").last_movement_tick) == visible.sim_tick, "fixture did not commit movement at the current simulation tick")
 	var before_tick: int = visible.sim_tick
 	var before_position: Vector2 = visible.actor_registry.actor("ranger").feet_position
 	var before_hash: String = visible._semantic_state_hash("boundary")
 	var duplicate: Dictionary = visible._commit_actor_move("ranger", Vector2(40.0, 0.0))
-	_expect(not bool(duplicate.get("ok", true)) and duplicate.get("error") == "non_monotonic_motor_tick", "same-tick movement was accepted through Main")
+	_expect(not bool(duplicate.get("ok", true)) and duplicate.get("error") == "non_monotonic_movement_tick", "same-tick movement was accepted through Main")
 	_expect(visible.sim_tick == before_tick and visible.actor_registry.actor("ranger").feet_position == before_position and visible._semantic_state_hash("boundary") == before_hash, "rejected movement changed a tick, actor or replay state")
-	visible.simulation_world.step()
+	var advanced: SimOutcome = visible.simulation_world.step_tick()
+	_expect(advanced.ok, "real SimulationWorld advancement failed")
 	var next: Dictionary = visible._commit_actor_move("ranger", Vector2(4.0, 0.0))
-	_expect(bool(next.get("ok", false)) and int(next.get("tick", -1)) == visible.sim_tick, "real SimulationWorld advancement did not permit the next movement")
+	_expect(bool(next.get("ok", false)) and int(visible.actor_registry.actor("ranger").last_movement_tick) == visible.sim_tick, "real SimulationWorld advancement did not permit the next movement")
 
 	for runtime in runtimes:
 		var domain: WorldPresenter = runtime.scene_runtime.presenter

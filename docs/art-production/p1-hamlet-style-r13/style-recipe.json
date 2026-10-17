@@ -1,10 +1,10 @@
 {
-  "output": "/data/repo/makeitbig/art/production/p1/hamlet_style_r13",
+  "output": "/data/paseo-makeitbig/project/art/production/p1/hamlet_style_r13",
   "sheets": [
     {
       "file": "facilities.png",
-      "source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/facilities.png",
-      "template": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/facilities.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/facilities.png",
+      "template": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/facilities.png",
       "grid": [
         4,
         1
@@ -12,8 +12,8 @@
     },
     {
       "file": "hearth.png",
-      "source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/hearth.png",
-      "template": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/hearth.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/hearth.png",
+      "template": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/hearth.png",
       "grid": [
         1,
         1
@@ -21,8 +21,8 @@
     },
     {
       "file": "forge.png",
-      "source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/forge.png",
-      "template": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/forge.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/forge.png",
+      "template": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/forge.png",
       "grid": [
         1,
         1
@@ -30,8 +30,8 @@
     },
     {
       "file": "edges.png",
-      "source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/edges.png",
-      "template": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/edges.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/edges.png",
+      "template": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/edges.png",
       "grid": [
         3,
         1
@@ -39,7 +39,7 @@
     },
     {
       "file": "lantern.png",
-      "source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/lantern.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/lantern.png",
       "grid": [
         1,
         1
@@ -51,8 +51,8 @@
     },
     {
       "file": "residents.png",
-      "source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
-      "template": "/data/repo/makeitbig/art/production/p1/hamlet_concept_v02/residents.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
+      "template": "/data/paseo-makeitbig/project/art/production/p1/hamlet_concept_v02/residents.png",
       "grid": [
         5,
         1

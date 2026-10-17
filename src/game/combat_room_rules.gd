@@ -5,6 +5,7 @@ extends RefCounted
 ## storage stay in their domains; inputs here are detached observations.
 const Rng := preload("res://src/core/deterministic_rng.gd")
 const Forge := preload("res://src/systems/destiny_forge.gd")
+const RoomRewardPortScript := preload("res://src/runtime/world/room_reward_port.gd")
 const MANUAL_BONUS_CHANCE := 0.35
 
 var _state: Dictionary = {}
@@ -13,7 +14,7 @@ var _embedded := true
 var _mode := "Manual"
 var _seed := 0
 var _legacy: Dictionary = {}
-var _commit_legacy: Callable
+var _reward_port: RoomRewardPort = null
 
 
 func _init() -> void:
@@ -24,17 +25,17 @@ func reset() -> void:
 	_state = {"battle_over": false, "battle_victory": false, "report": "", "room_reward_snapshot": empty_reward()}
 
 
-func reset_for_room(room: Dictionary, embedded: bool, mode: String, seed: int, legacy: Dictionary, commit_legacy: Callable) -> Dictionary:
+func reset_for_room(room: Dictionary, embedded: bool, mode: String, seed: int, legacy: Dictionary, reward_port: RoomRewardPort = null) -> Dictionary:
 	if mode not in ["Manual", "Auto"] or not room.get("drop_tags", []) is Array:
 		return {"ok": false, "error": "invalid_room_rules_context"}
-	if not embedded and (not commit_legacy.is_valid() or (legacy.get("cores", {}) as Dictionary).is_empty()):
+	if not embedded and (reward_port == null or (legacy.get("cores", {}) as Dictionary).is_empty()):
 		return {"ok": false, "error": "legacy_room_reward_port_unavailable"}
 	_room = room.duplicate(true)
 	_embedded = embedded
 	_mode = mode
 	_seed = seed
 	_legacy = legacy.duplicate(true)
-	_commit_legacy = commit_legacy
+	_reward_port = reward_port
 	reset()
 	return {"ok": true, "error": ""}
 
@@ -65,6 +66,22 @@ func observe(player: Dictionary, encounter: Dictionary) -> Dictionary:
 	else:
 		_state.report = "DEFEAT — The ranger fell after %.1fs. Refit at base." % float(encounter.elapsed)
 	return {"changed": true, "state": snapshot()}
+
+
+## Projects a terminal decision already made by RoomEncounter into the legacy
+## reward/profile view.  It does not inspect targets or choose victory; the
+## mounted encounter domain has already made that decision.
+func project_terminal(victory: bool, timed_bonus_available: bool, elapsed: float, shots: int, defeated: int) -> Dictionary:
+	if bool(_state.battle_over):
+		return {"ok": true, "changed": false, "state": snapshot()}
+	_state.battle_over = true
+	_state.battle_victory = victory
+	if victory:
+		var summary := _victory_reward(timed_bonus_available)
+		_state.report = "VICTORY — Room cleared in %.1fs, %d casts, %d targets. %s" % [elapsed, shots, defeated, summary]
+	else:
+		_state.report = "DEFEAT — The ranger fell after %.1fs. Refit at base." % elapsed
+	return {"ok": true, "changed": true, "state": snapshot()}
 
 
 func fail(reason: String) -> void:
@@ -98,7 +115,9 @@ func _victory_reward(timed_bonus_available: bool) -> String:
 	if _mode == "Manual" and rng.next_float() < MANUAL_BONUS_CHANCE:
 		dice += 1
 		bonus = " Manual Hunter Cache triggered."
-	_commit_legacy.call({"contract_wins": wins, "last_drop_id": drop_id, "last_drop": label, "last_loot_rng_state": rng.export_state(), "track": Forge.TRACK_ADD, "dice_awarded": dice, "save_reason": "Contract reward saved"})
+	var committed: Dictionary = _reward_port.commit({"contract_wins": wins, "last_drop_id": drop_id, "last_drop": label, "last_loot_rng_state": rng.export_state(), "track": Forge.TRACK_ADD, "dice_awarded": dice, "save_reason": "Contract reward saved"})
+	if not bool(committed.get("ok", false)):
+		return "Drop commit failed: %s" % String(committed.get("error", "room_reward_commit_failed"))
 	return "Drop: %s; +%d Inscription Tally.%s No timer; no regeneration." % [label, dice, bonus]
 
 

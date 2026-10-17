@@ -120,11 +120,12 @@ func _test_mount_rejects_transformed_source() -> void:
 	var packed := PackedScene.new()
 	_expect(packed.pack(scene) == OK, "negative scene packing failed")
 	scene.free()
+	var manifest := Spatial.new(JSON.parse_string(FileAccess.get_file_as_string(MANIFEST_PATH)))
 	var runtime := Runtime.new()
 	root.add_child(runtime)
 	var report: Dictionary = runtime.mount(
 		{"room_id": "town/hearthside", "world_asset_id": "town/hearthside", "encounter_id": "town/exploration", "ruleset_id": "town/v1", "tags": ["town"]},
-		{"world_scene_path": NativeScene.resource_path, "manifest_path": MANIFEST_PATH, "gameplay_digest": "test", "presentation_digest": "test", "schema_version": 1},
+		{"world_scene_path": NativeScene.resource_path, "manifest_path": MANIFEST_PATH, "gameplay_digest": manifest.gameplay_digest_sha256(), "presentation_digest": manifest.presentation_digest_sha256(), "schema_version": 1},
 		packed)
 	_expect(not bool(report.ok) and report.error == "native_scene_contract_invalid", "mount accepted transformed geometry: " + str(report))
 	_expect(not runtime.is_ready() and runtime.mounted_scene == null, "invalid native scene reached READY")

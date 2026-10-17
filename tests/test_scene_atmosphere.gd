@@ -192,7 +192,7 @@ func _test_hamlet() -> void:
 	_expect(audit.runtime_background_patches == 0 and audit.native_count == 35, "town: native environmental art is missing")
 	_expect(view.world_presenter.get_parent().get_parent() == view.world_viewport, "town: shared world layers escaped the SubViewport")
 	_expect(view.world_presenter.ground_layer.z_index < view.world_presenter.sort_root.z_index, "town: ground covered native buildings")
-	_expect(not audit.supports_fade and not audit.supports_cutaway, "town: transparent underplate advertises opacity effects")
+	_expect(audit.supports_fade and audit.supports_cutaway, "town: native art did not advertise its authored opacity effects")
 	hub.free()
 
 func _test_arena() -> void:

@@ -16,6 +16,71 @@ const ThemeScript := preload("res://src/presentation/shell_theme.gd")
 var failures: Array[String] = []
 
 
+class FixtureCommandPort:
+	extends "res://src/systems/combat_command_source_port.gd"
+
+	var adapter: RefCounted = null
+	var cast_factory := Callable()
+
+	func bind(input_adapter: RefCounted, factory: Callable) -> void:
+		adapter = input_adapter
+		cast_factory = factory
+
+	func make_cast(ability: String, target_entity_id: int, direction: Vector2) -> Dictionary:
+		return cast_factory.call(ability, target_entity_id, direction) if cast_factory.is_valid() else {}
+
+	func player_position() -> Vector2:
+		return adapter.player_position() if adapter != null else Vector2.ZERO
+
+	func player_facing() -> Vector2:
+		return adapter.player_facing() if adapter != null else Vector2.RIGHT
+
+	func locked_targeting_distance() -> float:
+		return adapter.targeting_distance() if adapter != null else 0.0
+
+	func hunter_mark_range() -> float:
+		return adapter.mark_range() if adapter != null else 0.0
+
+	func nearest_target(maximum_distance: float) -> Dictionary:
+		return adapter.nearest_target(maximum_distance) if adapter != null else {}
+
+	func preferred_target() -> Dictionary:
+		return adapter.preferred_target() if adapter != null else {}
+
+	func target_by_id(entity_id: int) -> Dictionary:
+		return adapter.target_by_id(entity_id) if adapter != null else {}
+
+	func pointer_target_entity_id() -> int:
+		return adapter.pointer_target_id() if adapter != null else 0
+
+	func refresh_pointer_lock() -> void:
+		if adapter != null:
+			adapter.refresh_pointer_lock()
+
+	func mark_pointer_lost() -> void:
+		if adapter != null:
+			adapter.mark_pointer_lost()
+
+	func mark_pointer_out_of_range() -> void:
+		if adapter != null:
+			adapter.mark_pointer_out_of_range()
+
+	func held_attack_window_open(target: Dictionary) -> bool:
+		return adapter.held_attack_window_open(target) if adapter != null else false
+
+	func register_attack_source(sequence: int, source: String) -> void:
+		if adapter != null:
+			adapter.register_attack_source(sequence, source)
+
+	func clear_input_feedback() -> void:
+		if adapter != null:
+			adapter.clear_feedback()
+
+	func show_assisted_rejection_feedback() -> void:
+		if adapter != null:
+			adapter.show_assisted_rejection()
+
+
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -47,10 +112,10 @@ func _test_hud_input_without_drawing() -> void:
 		_expect(controller.configure_standalone().ok, "unmounted fixture failed explicit standalone binding")
 		_expect(controller.load_assets(enabled, ThemeScript.create()).is_empty(), "presentation fixture assets failed")
 		var adapter = Adapter.new()
-		adapter.configure(CommandSource.new(), {
-			"make_cast": func(ability: String, target_id: int, direction: Vector2) -> Dictionary:
-				return Protocol.cast(7, "ranger", 0, ability, target_id, roundi(direction.x * 1000.0), roundi(direction.y * 1000.0)),
-		}, controller.feedback, controller.screen_to_gameplay, controller.is_pointer_over_interface)
+		var command_port := FixtureCommandPort.new()
+		command_port.bind(adapter, func(ability: String, target_id: int, direction: Vector2) -> Dictionary:
+			return Protocol.cast(7, "ranger", 0, ability, target_id, roundi(direction.x * 1000.0), roundi(direction.y * 1000.0)))
+		adapter.configure(CommandSource.new(), command_port, controller.feedback, controller.screen_to_gameplay, controller.is_pointer_over_interface)
 		controller.commit(snapshot, adapter.view_state(snapshot))
 		controllers.append(controller)
 		adapters.append(adapter)

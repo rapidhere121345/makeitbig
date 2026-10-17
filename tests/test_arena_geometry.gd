@@ -3,7 +3,16 @@ extends SceneTree
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
 const RoomAssetRootScript := preload("res://src/runtime/world/room_asset_root.gd")
 const SceneRuntimeScript := preload("res://src/runtime/world/scene_runtime.gd")
+const RoomSceneSetupPortScript := preload("res://src/runtime/world/room_scene_setup_port.gd")
+const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 var failures: Array[String] = []
+
+
+class ObserveSetupPort extends RoomSceneSetupPortScript:
+	var observed: Array[bool] = []
+
+	func setup(instance: Node) -> void:
+		observed.append(instance.has_node("RoomAsset/SortRoot/Building"))
 
 func _initialize() -> void:
 	_test_rect_and_corridor()
@@ -62,7 +71,7 @@ func _test_native_scene_contract() -> void:
 		variants.append(changed)
 	for changed: Dictionary in variants:
 		var rejected := runtime.mount(fixture["definition"], fixture["asset"], fixture["scene"], changed)
-		_expect(rejected.get("error", "") == "native_manifest_mismatch" and not runtime.is_ready(), "native source: a changed derived manifest was mounted: %s" % str(rejected))
+		_expect(rejected.get("error", "") == "world_asset_manifest_mismatch" and not runtime.is_ready(), "native source: a changed derived manifest was mounted: %s" % str(rejected))
 	var wrong_identity: Dictionary = fixture["definition"].duplicate(true)
 	wrong_identity["world_asset_id"] = "combat/corridor"
 	var identity := runtime.mount(wrong_identity, fixture["asset"], fixture["scene"], fixture["manifest"])
@@ -73,10 +82,12 @@ func _test_native_scene_contract() -> void:
 	_expect(unknown.get("error", "") == "invalid_spatial_manifest", "native source: unknown manifest fields were silently discarded")
 	var unsafe_fixture := _native_fixture(true)
 	var unsafe := runtime.mount(unsafe_fixture["definition"], unsafe_fixture["asset"], unsafe_fixture["scene"], fixture["manifest"])
-	_expect(unsafe.get("error", "") == "native_scene_contract_invalid", "native source: a player socket in the ring hole was accepted")
+	_expect(unsafe.get("error", "") == "world_asset_manifest_mismatch", "native source: an unsafe scene bypassed the manifest gate: %s" % str(unsafe))
 	var setup_observed: Array[bool] = []
+	var setup_port := ObserveSetupPort.new()
 	var mounted := runtime.mount(fixture["definition"], fixture["asset"], fixture["scene"], fixture["manifest"], 2, 30,
-		func(instance: Node) -> void: setup_observed.append(instance.has_node("RoomAsset/SortRoot/Building")))
+		setup_port)
+	setup_observed = setup_port.observed
 	_expect(bool(mounted.get("ok", false)) and runtime.is_ready(), "native source: valid authored room failed to mount: %s" % str(mounted))
 	if runtime.is_ready():
 		_expect(setup_observed == [true], "native mount: setup could not inspect source before shared-layer binding")
@@ -144,12 +155,14 @@ func _native_fixture(socket_in_hole: bool = false) -> Dictionary:
 	var packed := PackedScene.new()
 	packed.pack(scene_root)
 	var data := author.derive_spatial_manifest()
+	var gameplay_digest := SpatialManifestScript.digest_payload_sha256(SpatialManifestScript.gameplay_digest_input(data))
+	var presentation_digest := SpatialManifestScript.digest_payload_sha256(SpatialManifestScript.presentation_digest_input(data))
 	scene_root.free()
 	return {
 		"scene": packed,
 		"manifest": data,
 		"definition": {"room_id": "native.test", "world_asset_id": "combat/ring", "encounter_id": "encounter/test", "ruleset_id": "combat.rules.v1", "tags": ["combat"]},
-		"asset": {"world_scene_path": "res://content/rooms/combat/ring.tscn", "manifest_path": "res://content/rooms/combat/ring.spatial.json", "gameplay_digest": "test", "presentation_digest": "test", "schema_version": 1},
+		"asset": {"world_scene_path": "res://content/rooms/combat/ring.tscn", "manifest_path": "res://content/rooms/combat/ring.spatial.json", "gameplay_digest": gameplay_digest, "presentation_digest": presentation_digest, "schema_version": 1},
 	}
 
 

@@ -1,10 +1,10 @@
 {
-  "output": "/data/repo/makeitbig/art/production/p1/hamlet_life_r13/v02",
+  "output": "/data/paseo-makeitbig/project/art/production/p1/hamlet_life_r13/v02",
   "sheets": [
     {
       "file": "residents.png",
-      "source": "/data/repo/makeitbig/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
-      "template": "/data/repo/makeitbig/art/production/p1/hamlet_life_v01/residents.png",
+      "source": "/data/paseo-makeitbig/project/docs/art-production/p1-hamlet-style-r13/sources/residents.png",
+      "template": "/data/paseo-makeitbig/project/art/production/p1/hamlet_life_v01/residents.png",
       "grid": [
         4,
         5

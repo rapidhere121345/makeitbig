@@ -130,8 +130,14 @@ func _root_rect(control: Control) -> Rect2:
 func _snapshot(id: int) -> void:
 	game.process_mode = Node.PROCESS_MODE_INHERIT
 	await process_frame
-	RenderingServer.force_draw(false)
-	root.get_texture().get_image().save_png(directory + "/screen.png")
+	# Headless has no ViewportTexture. Keep the state protocol usable for
+	# command/input verification while retaining PNG capture for windowed runs.
+	var viewport_texture := root.get_texture()
+	if viewport_texture != null and DisplayServer.get_name().to_lower() != "headless":
+		RenderingServer.force_draw(false)
+		var frame := viewport_texture.get_image()
+		if frame != null:
+			frame.save_png(directory + "/screen.png")
 	var controls: Array = []
 	_scan(game.current_screen, controls)
 	var result := {"id": id, "route": game.current_route, "controls": controls,

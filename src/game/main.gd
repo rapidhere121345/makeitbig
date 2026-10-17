@@ -1,9 +1,11 @@
+class_name MainArena
 extends Node2D
 
 signal return_requested
 
 const PresentationController := preload("res://src/presentation/combat_presentation_controller.gd")
 const PresentationSnapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
+const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.gd")
 const InputAdapter := preload("res://src/presentation/combat_input_adapter.gd")
 const LabView := preload("res://src/presentation/combat_lab_view.gd")
 
@@ -23,17 +25,41 @@ const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd"
 const PiercingArrowModelScript = preload("res://src/systems/piercing_arrow_model.gd")
 const ActorRegistryScript = preload("res://src/runtime/world/actor_registry.gd")
 const SimulationWorldScript = preload("res://src/runtime/world/simulation_world.gd")
+const SimOutcomeScript = preload("res://src/runtime/simulation/sim_outcome.gd")
+const StaticSpatialIndexScript = preload("res://src/runtime/spatial/static_spatial_index.gd")
+const DynamicSpatialIndexScript = preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
+const SpatialOverlayScript = preload("res://src/runtime/spatial/spatial_overlay.gd")
+const MovementResolverScript = preload("res://src/runtime/spatial/movement_resolver.gd")
+const BodyCollisionPolicyScript = preload("res://src/runtime/spatial/body_collision_policy.gd")
+const RoomActorAccessScript = preload("res://src/runtime/world/room_actor_access.gd")
+const RoomSpatialPortScript = preload("res://src/runtime/world/room_spatial_port.gd")
+const RoomCombatPortScript = preload("res://src/runtime/world/room_combat_port.gd")
+const RoomEncounterPortScript = preload("res://src/runtime/world/room_encounter_port.gd")
+const RoomPresentationPortScript = preload("res://src/runtime/world/room_presentation_port.gd")
 const CombatStateSnapshotBuilderScript = preload("res://src/game/combat_state_snapshot_builder.gd")
 const CombatEnemyStateScript = preload("res://src/runtime/world/combat_enemy_state.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const EncounterDirectorScript = preload("res://src/game/encounter_director.gd")
+const EncounterSpawnRequestScript := preload("res://src/runtime/encounter/encounter_spawn_request.gd")
+const EncounterSpawnResultScript := preload("res://src/runtime/encounter/encounter_spawn_result.gd")
+const RoomTerminalObservationScript := preload("res://src/runtime/encounter/room_terminal_observation.gd")
 const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
 const CombatRoomRulesScript := preload("res://src/game/combat_room_rules.gd")
 const CombatSystemScript = preload("res://src/systems/combat_system.gd")
 const PlayerCombatStateScript := preload("res://src/runtime/world/player_combat_state.gd")
 const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.gd")
 const CombatCommandSourceScript = preload("res://src/systems/combat_command_source.gd")
+const MainCombatCommandSourcePortScript: Script = preload("res://src/game/main_combat_command_source_port.gd")
 const CombatSimulationScript = preload("res://src/systems/combat_simulation.gd")
+const RangerArrowFlightScript := preload("res://src/runtime/combat/ranger_arrow_flight.gd")
+const BossCombatDomainScript := preload("res://src/runtime/combat/boss_combat_domain.gd")
+const BossTargetViewScript := preload("res://src/runtime/combat/boss_target_view.gd")
+const BossHurtboxScript := preload("res://src/runtime/combat/boss_hurtbox.gd")
+const BossArrowFlightScript := preload("res://src/runtime/combat/boss_arrow_flight.gd")
+const CombatHazardDomainScript := preload("res://src/runtime/combat/combat_hazard_domain.gd")
+const DeathSettlementNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
+const RoomEncounterScript := preload("res://src/runtime/encounter/room_encounter.gd")
+const SimTickContextScript := preload("res://src/runtime/simulation/sim_tick_context.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const CombatLootPickupProtocolScript := preload("res://src/systems/combat_loot_pickup_protocol.gd")
 const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
@@ -112,6 +138,8 @@ var boss_damage: BigValue:
 		return combat_system.outcome_snapshot().boss_damage
 var combat_system
 var combat_simulation
+var _charge_movement_policy = null
+var _mobility_movement_policy = null
 var player_combat_state := PlayerCombatStateScript.new()
 var player_combat_rules := PlayerCombatRulesScript.new()
 ## Narrow, read-only observations used by room diagnostics and play_session.
@@ -129,11 +157,10 @@ var sim_tick: int:
 	get:
 		return int(simulation_world.tick) if simulation_world != null else 0
 	set(value):
-		var next_tick := maxi(0, int(value))
-		if simulation_world == null:
-			_ensure_simulation_world()
-		if simulation_world != null:
-			simulation_world.set_tick(next_tick)
+		# Authority ticks are committed only by SimulationWorld.step_tick().
+		# Retain the setter surface for scene/test construction, but never let a
+		# caller fabricate a tick in the live room.
+		pass
 var shots: int:
 	get:
 		return int(combat_system.outcome_snapshot().shots)
@@ -147,9 +174,17 @@ var smoke_input_driver := SmokeInputDriverScript.new()
 var room_rules := CombatRoomRulesScript.new()
 var battle_over: bool:
 	get:
+		if room_encounter_port != null and room_encounter_port.encounter != null and room_encounter_port.encounter.has_method("snapshot"):
+			var terminal: Dictionary = room_encounter_port.snapshot().get("terminal", {})
+			if String(terminal.get("phase", "")) in ["victory", "defeat"]:
+				return true
 		return bool(room_rules.snapshot().battle_over)
 var battle_victory: bool:
 	get:
+		if room_encounter_port != null and room_encounter_port.encounter != null and room_encounter_port.encounter.has_method("snapshot"):
+			var terminal: Dictionary = room_encounter_port.snapshot().get("terminal", {})
+			if String(terminal.get("phase", "")) in ["victory", "defeat"]:
+				return bool(terminal.get("victory", false))
 		return bool(room_rules.snapshot().battle_victory)
 var battle_report: String = ""
 var attack_requested: bool:
@@ -176,11 +211,35 @@ var proxy_intent_system
 var manual_aim_resolver
 var enemy_tactics
 var command_source
+var command_source_port: RefCounted = null
 var actor_registry
 var scene_runtime
 var simulation_world
 var actor_registry_instance_id := ""
 var actor_registry_revision := 0
+## Mounted-room typed ports adopted from SceneRuntime (or the standalone room
+## assembly). The fixed-tick kernel owns combat authority through them.
+var room_spatial_port = null
+var room_combat_port = null
+var room_encounter_port = null
+var encounter_spawn_port: RefCounted = null
+var _hazard_domain = null
+var _kernel_arrow_flight := RangerArrowFlightScript.new()
+var _kernel_boss_flight := BossArrowFlightScript.new()
+var _boss_combat_domain: BossCombatDomain = null
+var _boss_domain_targets: Dictionary = {}
+var _boss_settlement_cursor := 0
+var _boss_encounter_authority := false
+var _terminal_projection_applied := false
+## Detached authority evidence: publication is recorded before any room-domain
+## reconcile mutates legacy room mirrors.
+var last_kernel_snapshot = null
+var kernel_snapshot_publications: Array[Dictionary] = []
+var kernel_reconcile_events: Array[Dictionary] = []
+## Stable entity key ("actor/<key>") to legacy enemy entity id, rebuilt at
+## every room registration boundary for death settlement reconciliation.
+var _enemy_stable_keys: Dictionary = {}
+var _kernel_settlement_cursor := 0
 var combat_event_stream
 var destiny_forge
 var save_store
@@ -222,9 +281,12 @@ var room_loot_window_open: bool:
 		return battle_victory and _room_loot != null and _room_loot.has_unsettled_entities()
 var hazard_states: Array[Dictionary]:
 	get:
+		if _hazard_domain != null and _hazard_domain.is_configured():
+			return _hazard_domain.snapshots()
 		return encounter_director.hazard_states
 	set(value):
-		encounter_director.hazard_states = value
+		if _hazard_domain == null:
+			encounter_director.hazard_states = value
 var elite_rule_ids: Array[String]:
 	get:
 		return encounter_director.elite_rule_ids
@@ -271,6 +333,10 @@ var automation_smoke_failure: String = ""
 var presentation
 var input_adapter
 var lab_view
+## Production fixed-tick phase owner. CombatSimulation never receives Main as a
+## callback bag; it receives the typed RoomPhaseDomain declared at the bottom
+## of this script. Phase dispatch is typed virtual calls only.
+var room_phase_owner: CombatPhasePort = null
 
 ## These read-only input relays are used by CombatStateSnapshotBuilder; the
 ## device adapter is their sole state owner. No physical source ids are replay ids.
@@ -293,6 +359,7 @@ func _init() -> void:
 	_ensure_room_catalog()
 	_ensure_combat_system()
 	_ensure_encounter_director()
+	_ensure_encounter_spawn_port()
 	_ensure_command_source()
 	presentation.skill_requested.connect(_on_skill_requested)
 	presentation.return_requested.connect(_on_return_requested)
@@ -305,9 +372,9 @@ func _ensure_simulation_world() -> void:
 	if simulation_world != null:
 		return
 	simulation_world = SimulationWorldScript.new()
-	var configured: Dictionary = simulation_world.configure(SIM_TICKS_PER_SECOND, "combat/unmounted", 0)
-	if not bool(configured.get("ok", false)):
-		push_error("simulation_world_initialization_failed:%s" % String(configured.get("error", "unknown")))
+	var configured = simulation_world.configure("combat/unmounted", 0, SIM_TICKS_PER_SECOND)
+	if not configured.ok:
+		push_error("simulation_world_initialization_failed:%s" % String(configured.error))
 
 
 func _ensure_room_catalog() -> void:
@@ -324,18 +391,27 @@ func _ensure_encounter_director() -> void:
 	if encounter_director != null:
 		return
 	encounter_director = EncounterDirectorScript.new()
-	encounter_director.configure({
-		"move_enemy": Callable(self, "_move_enemy_actor"),
-		"player_rule_port": player_combat_rules,
-		"combat_outcome_port": combat_system,
-		"register_enemy": Callable(self, "_register_enemy_actor"),
-		"walkable_geometry": Callable(self, "_walkable_geometry"),
-		"collision_geometry": Callable(self, "_collision_geometry"),
-		"layout_spawn_offsets": Callable(self, "_layout_spawn_offsets"),
-		"clamp_to_arena": Callable(self, "_clamp_to_arena"),
-		"quantize_position": Callable(self, "_quantize_position"),
-	})
+	var room_port := MainEncounterRoomPort.new()
+	var room_bound: Dictionary = room_port.bind(self, player_combat_rules, combat_system)
+	if not bool(room_bound.get("ok", false)):
+		push_error("encounter_room_port_bind_failed:%s" % String(room_bound.get("error", "unknown")))
+		return
+	var director_bound: Dictionary = encounter_director.bind_room(room_port)
+	if not bool(director_bound.get("ok", false)):
+		push_error("encounter_director_bind_failed:%s" % String(director_bound.get("error", "unknown")))
+		return
 	enemy_tactics = encounter_director.enemy_tactics
+
+
+func _ensure_encounter_spawn_port() -> void:
+	if encounter_spawn_port != null:
+		return
+	var port := MainEncounterSpawnPort.new()
+	var bound: Dictionary = port.bind(self)
+	if not bool(bound.get("ok", false)):
+		push_error("encounter_spawn_port_bind_failed:%s" % String(bound.get("error", "unknown")))
+		return
+	encounter_spawn_port = port
 
 
 func _ensure_combat_system() -> void:
@@ -354,20 +430,14 @@ func _configure_player_domain(start_tick: int) -> bool:
 		return false
 	if not _configure_combat_ports():
 		return false
-	var configured: Dictionary = combat_simulation.configure(simulation_world, player_combat_rules, {
-		"read_only_targets": Callable(self, "_read_only_targets"),
-		"set_elapsed": Callable(self, "_simulation_set_elapsed"),
-		"consume_player_events": Callable(self, "_consume_player_events"),
-		"update_room_rules": Callable(self, "_update_room_rules_tick"),
-		"refresh_hazard_states": Callable(self, "_refresh_hazard_states_tick"),
-		"collect_commands": Callable(self, "_simulation_collect_commands"),
-		"route_commands": Callable(self, "_route_commands"),
-		"update_enemies": Callable(self, "_update_enemies_tick"),
-		"advance_projectiles": Callable(self, "_advance_piercing_projectiles_tick"),
-		"resolve_hazard_hits": Callable(self, "_resolve_hazard_hits_tick"),
-		"check_battle_end": Callable(self, "_check_battle_end"),
-		"check_timeout": Callable(self, "_simulation_check_timeout"),
-	})
+	_ensure_combat_simulation()
+	var phase_domain := RoomPhaseDomain.new()
+	var phase_bound: Dictionary = phase_domain.bind(self)
+	if not bool(phase_bound.get("ok", false)):
+		last_save_message = "Deployment blocked: %s" % String(phase_bound.get("error", "combat_phase_port_unavailable"))
+		return false
+	room_phase_owner = phase_domain
+	var configured: Dictionary = combat_simulation.configure(simulation_world, player_combat_rules, phase_domain)
 	if not bool(configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "combat_simulation_unavailable"))
 		return false
@@ -378,21 +448,12 @@ func _configure_combat_ports() -> bool:
 	if replay_geometry_profile != CombatSystemScript.QUERY_PROFILE_MULTIPART_V2 and not automation_smoke:
 		last_save_message = "Deployment blocked: historical replay profile requires auto smoke"
 		return false
-	var configured: Dictionary = combat_system.configure({
-		"player_rule_port": player_combat_rules,
-		"target_by_id": Callable(self, "_enemy_by_entity_id"),
-		"aim_candidate": Callable(self, "_manual_aim_candidate"),
-		"current_model": Callable(self, "_current_model"),
-		"target_blocked": Callable(encounter_director, "is_target_blocked"),
-		"maybe_summon": Callable(self, "_maybe_summon_reinforcements"),
-		"remove_target": Callable(self, "_remove_combat_target"),
-		"cancel_buffered_target": Callable(self, "_cancel_buffered_target"),
-		"update_mark": Callable(self, "_refresh_player_mark"),
-		"advance_sequence": player_combat_rules.advance_three_skill_sequence,
-		"reset_sequence": player_combat_rules.reset_three_skill_sequence,
-		"erase_attack_request": Callable(self, "_erase_attack_request"),
-		"query_profile": replay_geometry_profile,
-	})
+	var room_port := MainCombatRoomPort.new()
+	var port_bound: Dictionary = room_port.bind(self)
+	if not bool(port_bound.get("ok", false)):
+		last_save_message = "Deployment blocked: %s" % String(port_bound.get("error", "combat_room_port_unavailable"))
+		return false
+	var configured: Dictionary = combat_system.bind_room(room_port, replay_geometry_profile)
 
 	if not bool(configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "combat_ports_unavailable"))
@@ -477,13 +538,21 @@ func set_effects_volume(value: float) -> void:
 
 func _initialize_runtime() -> void:
 	_ensure_encounter_director()
-	if scene_runtime != null and scene_runtime.has_method("is_ready") and bool(scene_runtime.call("is_ready")):
+	if scene_runtime != null and scene_runtime.has_method("is_ready"):
+		# A mounted Main adopts the SceneRuntime authorities before its first
+		# frame. The scene configures its simulation and actor access before
+		# this node enters the tree, so the LOADING lifecycle is not a fallback
+		# trigger: falling back here would fork the room into two worlds.
 		actor_registry = scene_runtime.get("actor_registry")
 		simulation_world = scene_runtime.get("simulation")
+		if actor_registry == null or simulation_world == null:
+			startup_errors.append("native_room_authorities_unavailable")
 	else:
 		actor_registry = ActorRegistryScript.new()
 		_ensure_simulation_world()
-		simulation_world.configure(SIM_TICKS_PER_SECOND, "combat/unmounted", 0)
+		var configured = simulation_world.configure("combat/unmounted", 0, SIM_TICKS_PER_SECOND)
+		if not configured.ok:
+			startup_errors.append("simulation_world_initialization_failed:%s" % String(configured.error))
 	content_registry = ContentRegistryScript.new()
 	startup_errors = content_registry.load_all()
 	if content_registry.early_enemy_profile_registry != null and startup_errors.is_empty():
@@ -712,9 +781,18 @@ func start_room() -> void:
 	presentation.reset_battle()
 	combat_event_stream.reset()
 	automation_smoke_failure = ""
-	sim_tick = 0
 	room_entry_start_tick = 0
 	elapsed = 0.0
+	_terminal_projection_applied = false
+	if scene_runtime != null and scene_runtime.is_ready() and simulation_world != null and sim_tick > 0:
+		var restarted: Dictionary = scene_runtime.restart_room_instance(SIM_TICKS_PER_SECOND)
+		if not bool(restarted.get("ok", false)):
+			last_save_message = "Deployment blocked: %s" % String(restarted.get("error", "room_restart_failed"))
+			in_arena = false
+			_refresh_lab()
+			return
+		actor_registry = scene_runtime.get("actor_registry")
+		simulation_world = scene_runtime.get("simulation")
 	if simulation_world != null:
 		simulation_world.reset_clock()
 	battle_report = "Deployed: %s / %s. Proxy mode and loadout are locked for this contract." % [_preset_display_name(selected_preset), selected_mode]
@@ -728,6 +806,10 @@ func start_room() -> void:
 	if not _configure_actor_registry():
 		if not last_save_message.begins_with("Deployment blocked:"):
 			last_save_message = "Deployment blocked: actor_registry_configuration_failed"
+		in_arena = false
+		_refresh_lab()
+		return
+	if not _start_mounted_encounter():
 		in_arena = false
 		_refresh_lab()
 		return
@@ -788,9 +870,15 @@ func _spawn_wave() -> bool:
 		last_save_message = "Deployment blocked: missing_combat_encounter_origin"
 		in_arena = false
 		return false
-	var spawned: Dictionary = encounter_director.spawn_wave(spawn_room, origin)
+	var mounted_encounter: bool = scene_runtime != null and scene_runtime.is_ready() and scene_runtime.get("encounter_domain") != null
+	var spawned: Dictionary = encounter_director.prepare_room(spawn_room, origin) if mounted_encounter else encounter_director.spawn_wave(spawn_room, origin)
 	if not bool(spawned.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(spawned.get("error", "room_spawn_failed"))
+		in_arena = false
+		return false
+	var hazard_configured: Dictionary = _configure_hazard_domain(spawn_room.get("hazard_ids", []), origin)
+	if not bool(hazard_configured.get("ok", false)):
+		last_save_message = "Deployment blocked: %s" % String(hazard_configured.get("error", "hazard_domain_failed"))
 		in_arena = false
 		return false
 	room_id = String(spawned.get("room_id", ""))
@@ -798,10 +886,16 @@ func _spawn_wave() -> bool:
 	objective_id = String(spawned.get("objective_id", "clear"))
 	room_drop_tags = (framework_room.get("drop_tags", []) as Array).duplicate(true) if embedded_session else []
 	_encounter_context()
+	var reward_port := MainRewardPort.new()
+	var reward_bound: Dictionary = reward_port.bind(self)
+	if not bool(reward_bound.get("ok", false)):
+		last_save_message = "Deployment blocked: %s" % String(reward_bound.get("error", "room_reward_port_unavailable"))
+		in_arena = false
+		return false
 	var configured: Dictionary = room_rules.reset_for_room(
 		{"objective_id": objective_id, "drop_tags": room_drop_tags}, embedded_session,
 		selected_mode, FATE_SEED, {"contract_wins": contract_wins, "cores": content_registry.cores},
-		Callable(self, "_commit_legacy_room_reward")
+		reward_port
 	)
 	if not bool(configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "room_rules_unavailable"))
@@ -824,6 +918,25 @@ func _configure_room_loot(room: Dictionary) -> Dictionary:
 		_room_loot.reset()
 		return {"ok": false, "error": "loot_item_registry_unavailable"} if room.has("loot_slots") else {"ok": true, "error": "", "enabled": false}
 	return _room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry)
+
+
+func _configure_hazard_domain(hazard_ids: Variant, center: Vector2) -> Dictionary:
+	if encounter_director == null or encounter_director.room_port == null:
+		return {"ok": false, "error": "hazard_room_port_unavailable"}
+	if not hazard_ids is Array:
+		return {"ok": false, "error": "invalid_hazard_ids"}
+	var domain: RefCounted = CombatHazardDomainScript.new()
+	var configured: Dictionary = domain.configure_ids(encounter_director.room_port, _arena_rect(), hazard_ids, center)
+	if not bool(configured.get("ok", false)):
+		return configured
+	_hazard_domain = domain
+	var read_bound: Dictionary = encounter_director.set_hazard_read_port(domain)
+	if not bool(read_bound.get("ok", false)):
+		return read_bound
+	# The director's tactics snapshot consumes the same detached view objects;
+	# it no longer advances or resolves them in production.
+	encounter_director.hazard_states = _hazard_domain.snapshots()
+	return {"ok": true, "error": "", "count": _hazard_domain.hazards.size()}
 
 
 func _spawn_room_loot_for_source(source: String, source_entity_id: int, position: Vector2) -> Dictionary:
@@ -869,52 +982,66 @@ func _load_test_room_fixture() -> Dictionary:
 
 
 func _configure_actor_registry() -> bool:
-	if actor_registry == null:
-		actor_registry = ActorRegistryScript.new()
 	var room_key := room_id.strip_edges()
 	if room_key.is_empty():
+		push_error("actor_registry_configuration_failed:missing_room_id")
 		return false
-	var preserved_sim_tick := sim_tick
 	if scene_runtime != null and not scene_runtime.is_ready():
+		push_error("actor_registry_configuration_failed:scene_runtime_not_ready")
 		return false
 	var injected_runtime: bool = scene_runtime != null
 	if injected_runtime:
+		# SceneRuntime is the only authority for a mounted room: its actor
+		# access, SimulationWorld, and the world's bound ports are adopted
+		# as-is. Main must never rebuild or replace them here, including when
+		# presentation is disabled.
 		actor_registry = scene_runtime.get("actor_registry")
 		simulation_world = scene_runtime.get("simulation")
 		actor_registry_instance_id = String(scene_runtime.get("room_instance_id"))
 		actor_registry_revision = int(scene_runtime.get("world_revision"))
-		if actor_registry == null or actor_registry_instance_id.is_empty():
+		if actor_registry == null or simulation_world == null or actor_registry_instance_id.is_empty():
+			push_error("actor_registry_configuration_failed:injected_access_missing")
 			return false
-		if not actor_registry.has_method("reset_actors") or not bool(actor_registry.call("reset_actors")):
-			return false
-		if simulation_world == null or not bool(simulation_world.configure(SIM_TICKS_PER_SECOND, actor_registry_instance_id, actor_registry_revision).get("ok", false)):
-			return false
+		room_spatial_port = scene_runtime.get("spatial_port")
+		room_combat_port = scene_runtime.get("combat_port")
+		room_encounter_port = scene_runtime.get("encounter_port")
+		if presentation_enabled:
+			scene_runtime.clear_actor_presentation_bindings()
+			var presentation_ready: Dictionary = scene_runtime.prepare_presentation()
+			if not bool(presentation_ready.get("ok", false)):
+				push_error("presentation_projector_configuration_failed:%s" % String(presentation_ready.get("error", "unknown")))
+				return false
 	else:
-		actor_registry_revision += 1
-		actor_registry_instance_id = "combat/%s/%d" % [room_key, actor_registry_revision]
-		var configured: Dictionary = actor_registry.configure(actor_registry_instance_id, actor_registry_revision)
-		if not bool(configured.get("ok", false)):
+		if not _configure_standalone_room_access(room_key):
+			push_error("actor_registry_configuration_failed:standalone_access_failed")
+			return false
+	if not _bind_kernel_room_ports():
+		actor_registry_instance_id = ""
+		return false
+	var movement_policy_port := MainMovementPolicyPort.new()
+	var movement_policy_bound: Dictionary = movement_policy_port.bind(self)
+	if not bool(movement_policy_bound.get("ok", false)):
+		push_error("actor_registry_configuration_failed:movement_policy_port:%s" % String(movement_policy_bound.get("error", "unknown")))
+		actor_registry_instance_id = ""
+		return false
+	actor_registry.set_movement_policy_port(movement_policy_port)
+	var preserved_sim_tick := sim_tick
+	if actor_registry.has_method("reset_actors"):
+		var reset_result: Dictionary = actor_registry.reset_actors()
+		if not bool(reset_result.get("ok", false)):
+			push_error("actor_registry_configuration_failed:actor_reset:%s" % str(reset_result))
 			actor_registry_instance_id = ""
 			return false
-		if simulation_world == null or not bool(simulation_world.configure(SIM_TICKS_PER_SECOND, actor_registry_instance_id, actor_registry_revision).get("ok", false)):
-			actor_registry_instance_id = ""
-			return false
-	if not injected_runtime:
-		if actor_registry.has_method("clear_geometry"):
-			actor_registry.call("clear_geometry")
-		var boundary := ArenaGeometryScript.movement_boundary(layout_id, _arena_rect())
-		if boundary.is_empty() or not actor_registry.set_boundary(boundary):
-			push_error("arena_boundary_registration_failed:%s" % layout_id)
-			actor_registry_instance_id = ""
-			return false
-	elif not actor_registry.has_method("has_movement_boundary") or not bool(actor_registry.call("has_movement_boundary")):
+	if not actor_registry.has_method("has_movement_boundary") or not bool(actor_registry.has_movement_boundary()):
 		push_error("manifest_movement_boundary_missing:%s" % layout_id)
+		push_error("actor_registry_configuration_failed:movement_boundary_missing")
 		actor_registry_instance_id = ""
 		return false
 	var spawn_position: Vector2
 	if injected_runtime:
 		var authored_spawn: Variant = _room_socket("combat/spawn")
-		if not authored_spawn is Vector2 or not actor_registry.is_position_clear(authored_spawn, _arena_rect(), 14.0):
+		if not authored_spawn is Vector2 or not actor_registry.is_position_clear(authored_spawn, 14.0):
+			push_error("actor_registry_configuration_failed:invalid_player_spawn:%s" % str(authored_spawn))
 			return false
 		spawn_position = authored_spawn
 	else:
@@ -922,42 +1049,333 @@ func _configure_actor_registry() -> bool:
 		if not bool(projected.get("ok", false)):
 			return false
 		spawn_position = _quantize_position(projected["position"])
-	var player_result: Dictionary = actor_registry.register_actor("ranger", spawn_position, 14.0)
+	var player_result: Dictionary = actor_registry.register_actor("ranger", spawn_position, 14.0, 1, &"soft", [&"movement", &"hurtbox"])
 	if not bool(player_result.get("ok", false)):
+		push_error("actor_registry_configuration_failed:player_registration:%s" % str(player_result))
 		actor_registry_instance_id = ""
+		return false
+	if injected_runtime and presentation_enabled and not _bind_runtime_actor_presentation("ranger", "ranger.south.idle", 2):
 		return false
 	for enemy: CombatEnemyState in enemies:
 		if not _register_enemy_actor(enemy):
+			push_error("actor_registry_configuration_failed:enemy_registration:%d" % enemy.entity_id)
 			actor_registry_instance_id = ""
 			return false
-	if simulation_world != null and simulation_world.has_method("set_tick"):
-		simulation_world.set_tick(preserved_sim_tick)
+	# Standalone Main fixtures do not own a SceneRuntime/RoomEncounter port.
+	# Mounted production rooms do, and must bind the Boss domain to that typed
+	# encounter authority. Keep the standalone authority self-contained so
+	# geometry and combat tests can exercise a Boss without inventing a second
+	# encounter runtime.
+	if scene_runtime != null and not _bind_boss_production_encounter():
+		actor_registry_instance_id = ""
+		return false
+	# The mounted SimulationWorld starts at tick zero.  A live room never
+	# rewinds or fabricates its authority tick during actor registration.
 	if not _configure_player_domain(preserved_sim_tick):
+		push_error("actor_registry_configuration_failed:player_domain:%s" % last_save_message)
 		actor_registry_instance_id = ""
 		return false
 	return true
 
 
+func _configure_standalone_room_access(room_key: String) -> bool:
+	actor_registry_revision += 1
+	actor_registry_instance_id = "combat/%s/%d" % [room_key, actor_registry_revision]
+	var boundary := ArenaGeometryScript.movement_boundary(layout_id, _arena_rect())
+	if boundary.is_empty():
+		return false
+	var static_build: Dictionary = StaticSpatialIndexScript.build({
+		"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION,
+		"asset_id": "runtime/%s" % layout_id,
+		"surfaces": [],
+		"movement_boundary": _boundary_for_static_index(boundary),
+	})
+	if not bool(static_build.get("ok", false)):
+		return false
+	var static_index = static_build.get("value")
+	var dynamic_index = DynamicSpatialIndexScript.new()
+	var overlay = SpatialOverlayScript.new()
+	var movement_build: Dictionary = MovementResolverScript.make(static_index, overlay, dynamic_index)
+	if not bool(movement_build.get("ok", false)):
+		return false
+	var spatial_port = RoomSpatialPortScript.new()
+	var combat_port = RoomCombatPortScript.new()
+	var encounter_port = RoomEncounterPortScript.new()
+	var presentation_port = RoomPresentationPortScript.new()
+	var raw_registry = ActorRegistryScript.new()
+	simulation_world = SimulationWorldScript.new(spatial_port, combat_port, encounter_port, presentation_port, raw_registry)
+	var configured = simulation_world.configure(actor_registry_instance_id, actor_registry_revision, SIM_TICKS_PER_SECOND)
+	if not configured.ok:
+		return false
+	var access = RoomActorAccessScript.new()
+	var access_result: Dictionary = access.configure(simulation_world, raw_registry, static_index, dynamic_index, movement_build.get("value"), overlay)
+	if not bool(access_result.get("ok", false)):
+		return false
+	actor_registry = access
+	spatial_port.bind(access)
+	combat_port.bind(access)
+	room_spatial_port = spatial_port
+	room_combat_port = combat_port
+	room_encounter_port = encounter_port
+	return true
+
+
+func _boundary_for_static_index(boundary: Dictionary) -> Dictionary:
+	var kind := String(boundary.get("type", boundary.get("kind", "")))
+	match kind:
+		"rect", "corridor":
+			var rect: Variant = boundary.get("rect", null)
+			var value := {"kind": kind, "rect": rect}
+			if kind == "corridor":
+				value["half_height"] = float(boundary.get("half_height", 0.0))
+			return value
+		"ring":
+			return {
+				"kind": "ring",
+				"center": boundary.get("center", Vector2.ZERO),
+				"inner_radius": float(boundary.get("inner_radius", 0.0)),
+				"outer_radius": float(boundary.get("outer_radius", 0.0)),
+			}
+	return {}
+
+
+	## Production encounter materialization for the mounted room. RoomEncounter
+	## owns when and how many actors appear; EncounterDirector only creates the
+	## room-local state object requested by that typed deployment fact.
+## The returned entity key is the kernel settlement identity
+## ("actor/<stable_key>"), so a later DeathSettlement reaches the bound
+## RoomEncounter under the same key. Unmatched requests fail closed; this
+	## method never fabricates a receipt and never registers a duplicate actor.
+func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
+	if request == null or not request is EncounterSpawnRequestScript:
+		return EncounterSpawnResultScript.failed(request, "invalid_encounter_spawn_request")
+	if scene_runtime == null or not scene_runtime.is_ready() or actor_registry == null:
+		return EncounterSpawnResultScript.failed(request, "runtime_not_ready")
+	var archetype := String(request.archetype_id).strip_edges()
+	if archetype.is_empty():
+		return EncounterSpawnResultScript.failed(request, "invalid_encounter_archetype")
+	var position_value: Variant = _room_socket(String(request.socket_id))
+	if not position_value is Vector2 or not (position_value as Vector2).is_finite():
+		return EncounterSpawnResultScript.failed(request, "encounter_spawn_socket_unavailable")
+	var spawn_position: Vector2 = encounter_director.encounter_spawn_position(position_value)
+	var created: Dictionary = encounter_director.create_encounter_enemy(archetype, spawn_position)
+	if not bool(created.get("ok", false)):
+		return EncounterSpawnResultScript.failed(request, String(created.get("error", "encounter_enemy_create_failed")))
+	var enemy: CombatEnemyState = created.get("enemy", null)
+	if enemy == null or not _register_enemy_actor(enemy):
+		encounter_director.discard_encounter_enemy(enemy)
+		return EncounterSpawnResultScript.failed(request, "encounter_actor_registration_failed")
+	var actor_id := "enemy/%d" % enemy.entity_id
+	var handle = actor_registry.actor_handle(actor_id)
+	if handle == null or not handle.is_valid():
+		encounter_director.discard_encounter_enemy(enemy)
+		return EncounterSpawnResultScript.failed(request, "encounter_actor_handle_unavailable")
+	var entity_key: String = actor_registry.entity_key_for_handle(handle)
+	var stable_key := int(actor_registry.actor_snapshot(actor_id).get("stable_key", 0))
+	if entity_key.is_empty() or stable_key < 1:
+		encounter_director.discard_encounter_enemy(enemy)
+		return EncounterSpawnResultScript.failed(request, "encounter_actor_identity_unavailable")
+	_sync_encounter_active_state()
+	return EncounterSpawnResultScript.spawned(
+		request,
+		handle,
+		entity_key,
+		stable_key,
+		handle.generation,
+		String(scene_runtime.room_instance_id),
+		int(scene_runtime.world_revision)
+	)
+
+
+func _start_mounted_encounter() -> bool:
+	if scene_runtime == null or not scene_runtime.is_ready():
+		return true
+	var encounter_domain: Variant = scene_runtime.get("encounter_domain")
+	if encounter_domain == null:
+		return true
+	var phase := String(encounter_domain.snapshot().get("phase", "")) if encounter_domain.has_method("snapshot") else ""
+	if phase != "idle" and sim_tick == 0 and encounter_domain.has_method("restart"):
+		var restarted: Dictionary = encounter_domain.restart(sim_tick)
+		if not bool(restarted.get("ok", false)):
+			last_save_message = "Deployment blocked: %s" % String(restarted.get("error", "encounter_restart_failed"))
+			return false
+		phase = "idle"
+	if phase == "idle":
+		var started: Dictionary = scene_runtime.start_encounter(sim_tick)
+		if not bool(started.get("ok", false)):
+			last_save_message = "Deployment blocked: %s" % String(started.get("error", "encounter_start_failed"))
+			return false
+	var encounter_port = scene_runtime.get("encounter_port")
+	if encounter_port != null and encounter_port.has_method("prime_spawn_requests"):
+		encounter_port.prime_spawn_requests(sim_tick)
+	var materialized: Array[Dictionary] = scene_runtime.materialize_encounter_spawns()
+	for result: Dictionary in materialized:
+		if String(result.get("kind", "")) == "failed":
+			last_save_message = "Deployment blocked: encounter_spawn_failed:%s" % String(result.get("error", "unknown"))
+			return false
+	return true
+
+
+
 func _register_enemy_actor(enemy: CombatEnemyState) -> bool:
 	if actor_registry == null or enemy == null:
+		push_error("enemy_actor_registration_failed:missing_dependency")
 		return false
 	var projected: Dictionary = _project_actor_spawn_position(enemy.position, 16.0)
 	if not bool(projected.get("ok", false)):
+		push_error("enemy_actor_registration_failed:projection:%d:%s" % [enemy.entity_id, str(projected)])
 		return false
 	var position: Vector2 = projected["position"]
-	if scene_runtime != null and not actor_registry.is_position_clear(position, _arena_rect(), 16.0):
+	if not actor_registry.is_position_clear(position, 16.0):
+		push_error("enemy_actor_registration_failed:blocked:%d:%s" % [enemy.entity_id, str(position)])
 		return false
-	var registered: Dictionary = actor_registry.register_actor("enemy/%d" % enemy.entity_id, position, 16.0)
+	var drop_tags: Array[String] = []
+	for tag: Variant in room_drop_tags:
+		drop_tags.append(String(tag))
+	var registered: Dictionary = actor_registry.register_actor(
+		"enemy/%d" % enemy.entity_id, position, 16.0, maxi(1, roundi(enemy.health)), &"soft",
+		[&"movement", &"hurtbox"], PackedStringArray(), maxf(1.0, enemy.maximum_health), {},
+		enemy.kind_id, "enemy/%d" % enemy.entity_id, drop_tags
+	)
+	if not bool(registered.get("ok", false)):
+		push_error("enemy_actor_registration_failed:register:%d:%s" % [enemy.entity_id, str(registered)])
 	if bool(registered.get("ok", false)):
 		enemy.position = position
+		_enemy_stable_keys["actor/%d" % int(registered.stable_key)] = enemy.entity_id
+		if enemy.is_boss and not _register_boss_kernel_target(enemy, int(registered.stable_key), enemies.find(enemy)):
+			return false
+		if scene_runtime != null and presentation_enabled:
+			var role := "melee"
+			match enemy.kind_id:
+				"charging_raider": role = "charger"
+				"fan_ranged": role = "ranged"
+			if not _bind_runtime_actor_presentation("enemy/%d" % enemy.entity_id, "enemy.%s.idle" % role, 1):
+				return false
 	return bool(registered.get("ok", false))
+
+
+func _register_boss_kernel_target(enemy: CombatEnemyState, stable_key: int, ordinal: int) -> bool:
+	if not _boss_domain_room_is_current():
+		push_error("boss_domain_registration_room_mismatch")
+		return false
+	if stable_key < 1 or ordinal < 0:
+		push_error("boss_domain_registration_identity_invalid:%d:%d" % [enemy.entity_id, stable_key])
+		return false
+	var maximum: BigValue = combat_system.outcome_snapshot().boss_maximum
+	if maximum == null or maximum.is_zero():
+		push_error("boss_domain_maximum_unavailable:%d" % enemy.entity_id)
+		return false
+	var target_key := "actor/%d" % stable_key
+	var drop_tags: Array[String] = []
+	for tag: Variant in room_drop_tags:
+		drop_tags.append(String(tag))
+	var target := BossTargetViewScript.make(
+		target_key,
+		maximum,
+		enemy.position,
+		enemy.kind_id,
+		_production_boss_spawn_key(enemy, ordinal),
+		drop_tags
+	)
+	for part: Dictionary in enemy.hurtbox_parts():
+		var hurtbox: Variant = (part.get("hurtbox", {}) as Dictionary).get("radius", null)
+		var boss_part := BossHurtboxScript.make(
+			String(part.get("part_id", "")),
+			String(part.get("damage_group_id", "body")),
+			part.get("pose", Vector2.ZERO),
+			float(hurtbox),
+			bool(part.get("active", true)),
+			bool(part.get("broken", false))
+		)
+		var added: Dictionary = target.add_part(boss_part)
+		if not bool(added.get("ok", false)):
+			push_error("boss_domain_part_registration_failed:%s" % String(added.get("error", "unknown")))
+			return false
+	var registered: Dictionary = _boss_combat_domain.register_target(target)
+	if not bool(registered.get("ok", false)):
+		push_error("boss_domain_target_registration_failed:%s" % String(registered.get("error", "unknown")))
+		return false
+	_boss_domain_targets[int(enemy.entity_id)] = target
+	return true
+
+
+func _production_boss_spawn_key(enemy: CombatEnemyState, ordinal: int) -> String:
+	return "wave.production/%s.%d/0" % [enemy.kind_id, ordinal]
+
+
+func _bind_boss_production_encounter() -> bool:
+	if boss == null:
+		return true
+	if scene_runtime == null or not scene_runtime.is_ready():
+		push_error("boss_encounter_runtime_unavailable")
+		return false
+	# CombatRoomRuntime owns the single mixed-room encounter composition.  Its
+	# production wave includes both ordinary roster actors and this Boss, so a
+	# second Boss-only bind here would replace the shared domain and split
+	# terminal/death authority.  Boss-only Main construction still uses this
+	# fallback binding.
+	var mounted_room_roster: Variant = framework_room.get("enemy_ids", [])
+	if embedded_session and mounted_room_roster is Array and not (mounted_room_roster as Array).is_empty():
+		return true
+	var spawns: Array = []
+	for index: int in enemies.size():
+		var enemy: CombatEnemyState = enemies[index]
+		spawns.append({
+			"spawn_id": "%s.%d" % [enemy.kind_id, index],
+			"archetype_id": enemy.kind_id,
+			"socket_id": "combat/encounter-origin",
+			"count": 1,
+		})
+	var encounter := RoomEncounterScript.new()
+	var configured: Dictionary = encounter.configure(room_id, [{
+		"wave_id": "wave.production",
+		"clear_policy": "all_dead",
+		"spawns": spawns,
+	}])
+	if not bool(configured.get("ok", false)):
+		push_error("boss_encounter_configure_failed:%s" % String(configured.get("error", "unknown")))
+		return false
+	var bound: Dictionary = scene_runtime.bind_encounter(encounter, encounter_spawn_port)
+	if not bool(bound.get("ok", false)):
+		push_error("boss_encounter_bind_failed:%s" % String(bound.get("error", "unknown")))
+		return false
+	var started: Dictionary = scene_runtime.start_encounter(sim_tick)
+	if not bool(started.get("ok", false)):
+		push_error("boss_encounter_start_failed:%s" % String(started.get("error", "unknown")))
+		return false
+	room_encounter_port = scene_runtime.get("encounter_port")
+	_boss_encounter_authority = true
+	return true
+
+
+func _bind_runtime_actor_presentation(actor_id: String, visual_id: String, rank: int) -> bool:
+	if scene_runtime == null or not presentation_enabled:
+		return true
+	var world_view: Variant = presentation.world_view if presentation != null else null
+	if world_view == null or not world_view.has_method("sprite_art_box"):
+		push_error("presentation_art_box_unavailable:%s" % visual_id)
+		return false
+	var world_box: Rect2 = world_view.sprite_art_box(visual_id, Vector2.ZERO)
+	if world_box.size.x <= 0.0 or world_box.size.y <= 0.0:
+		push_error("presentation_art_box_missing:%s" % visual_id)
+		return false
+	# Simulation actors use authored gameplay pixels while the skin draws at its
+	# fixed world scale. Convert the real art box once into the projector's
+	# detached gameplay coordinate domain; never substitute the hurtbox radius.
+	var scale := ArenaWorldViewScript.GAMEPLAY_TO_WORLD
+	var gameplay_box := Rect2(world_box.position / scale, world_box.size / scale)
+	var bound: Dictionary = scene_runtime.bind_actor_presentation(actor_id, visual_id, rank, gameplay_box)
+	if not bool(bound.get("ok", false)):
+		push_error("presentation_binding_failed:%s:%s" % [actor_id, String(bound.get("error", "unknown"))])
+		return false
+	return true
 
 
 func _ensure_actor_registry_ready() -> bool:
 	if actor_registry_instance_id.is_empty():
 		if not _configure_actor_registry():
 			return false
-	return actor_registry != null and actor_registry.actor("ranger") != null
+	return actor_registry != null and actor_registry.has_actor("ranger")
 
 
 func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
@@ -981,24 +1399,74 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 	return result
 
 
-func _commit_actor_move(actor_id: String, displacement: Vector2) -> Dictionary:
+func _commit_actor_move(actor_id: String, displacement: Vector2, movement_policy: Variant = null) -> Dictionary:
 	if not _ensure_actor_registry_ready():
 		return {"ok": false, "error": "actor_registry_not_ready", "position": Vector2.ZERO, "displacement": Vector2.ZERO}
 	var state = actor_registry.actor(actor_id)
 	if state == null:
 		return {"ok": false, "error": "actor_not_registered", "position": Vector2.ZERO, "displacement": Vector2.ZERO}
-	var result: Dictionary = actor_registry.move_actor(actor_id, displacement, sim_tick, _arena_rect())
+	if movement_policy == null and actor_id == "ranger" and _has_active_charge():
+		movement_policy = _charge_movement_policy_value()
+	var result: Dictionary = actor_registry.move_actor(actor_id, displacement, sim_tick, movement_policy)
 	if not bool(result.get("ok", false)):
-		if String(result.get("error", "")) == "non_monotonic_motor_tick":
+		if String(result.get("error", "")) in ["non_monotonic_motor_tick", "non_monotonic_movement_tick"]:
 			return result
 		push_error("actor_move_failed:%s:%s" % [actor_id, String(result.get("error", "unknown"))])
 		return result
 	return result
 
 
+func _charge_movement_policy_value() -> Variant:
+	if _charge_movement_policy != null:
+		return _charge_movement_policy
+	var built: Dictionary = BodyCollisionPolicyScript.make({
+		"solid": {"response": BodyCollisionPolicyScript.RESPONSE_BLOCK, "record": true},
+		"soft": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
+		"ghost": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
+	})
+	if bool(built.get("ok", false)):
+		_charge_movement_policy = built.get("value")
+	return _charge_movement_policy
+
+
+## Main-owned mobility policy seam: an active dash/dodge crosses enemy soft
+## bodies instead of being separated away, while contacts stay recorded for
+## presentation. Normal movement keeps the default soft separation policy.
+func _resolve_ranger_movement_policy(actor_id: String) -> Variant:
+	if actor_id != "ranger" or player_combat_state == null:
+		return null
+	var player: Dictionary = player_combat_state.snapshot(sim_tick)
+	if int(player.get("dash_remaining_ticks", 0)) <= 0 and int(player.get("dodge_remaining_ticks", 0)) <= 0:
+		return null
+	return _mobility_policy_value()
+
+
+func _mobility_policy_value() -> Variant:
+	if _mobility_movement_policy != null:
+		return _mobility_movement_policy
+	var built: Dictionary = BodyCollisionPolicyScript.make({
+		"solid": {"response": BodyCollisionPolicyScript.RESPONSE_BLOCK, "record": true},
+		"soft": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
+		"ghost": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
+	})
+	if bool(built.get("ok", false)):
+		_mobility_movement_policy = built.get("value")
+	return _mobility_movement_policy
+
+
+func _has_active_charge() -> bool:
+	for enemy: CombatEnemyState in enemies:
+		if enemy != null and enemy.action_state == "active" and enemy.action_id == "charge":
+			return true
+	return false
+
+
 func _move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
 	var before := enemy.position
-	var result := _commit_actor_move("enemy/%d" % enemy.entity_id, displacement)
+	var movement_policy: Variant = null
+	if enemy.action_state == "active" and enemy.action_id == "charge":
+		movement_policy = _charge_movement_policy_value()
+	var result := _commit_actor_move("enemy/%d" % enemy.entity_id, displacement, movement_policy)
 	if bool(result.get("ok", false)):
 		enemy.position = result.get("position", before)
 		enemy.facing = result.get("facing", enemy.facing)
@@ -1010,6 +1478,17 @@ func _simulate_tick() -> void:
 	var result: Dictionary = combat_simulation.step()
 	if not bool(result.get("ok", false)):
 		push_error("combat_simulation_step_failed:%s" % String(result.get("error", "unknown")))
+
+
+func _room_domain_is_ready() -> bool:
+	return (
+		in_arena
+		and simulation_world != null
+		and player_combat_rules != null
+		and combat_system != null
+		and encounter_director != null
+		and input_adapter != null
+	)
 
 
 func _simulation_set_elapsed(value: float) -> void:
@@ -1087,6 +1566,516 @@ func _auto_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
 func _simulation_check_timeout() -> void:
 	if automation_smoke and not battle_over and sim_tick >= SIM_TICKS_PER_SECOND * 180:
 		_fail_automation_smoke("timeout ticks=%d casts=%d" % [sim_tick, shots])
+
+
+func _bind_kernel_room_ports() -> bool:
+	if room_spatial_port == null or room_combat_port == null or room_encounter_port == null:
+		push_error("kernel_room_ports_unavailable")
+		return false
+	var hit_admission_port := MainHitAdmissionPort.new()
+	var admission_bound: Dictionary = hit_admission_port.bind(self)
+	if not bool(admission_bound.get("ok", false)):
+		push_error("kernel_hit_admission_port_bind_failed:%s" % String(admission_bound.get("error", "unknown")))
+		return false
+	var filter_bound: Dictionary = room_combat_port.bind_hit_admission_port(hit_admission_port)
+	if not bool(filter_bound.get("ok", false)):
+		push_error("kernel_hit_admission_port_bind_failed:%s" % String(filter_bound.get("error", "unknown")))
+		return false
+	var player_damage_bound: Dictionary = room_combat_port.bind_player_rule_port(player_combat_rules)
+	if not bool(player_damage_bound.get("ok", false)):
+		push_error("kernel_player_damage_port_bind_failed:%s" % String(player_damage_bound.get("error", "unknown")))
+		return false
+	var flight_configured: Dictionary = _kernel_arrow_flight.configure(room_spatial_port)
+	if not bool(flight_configured.get("ok", false)):
+		push_error("kernel_arrow_flight_configure_failed:%s" % String(flight_configured.get("error", "unknown")))
+		return false
+	if not _bind_boss_kernel_domain():
+		return false
+	last_kernel_snapshot = null
+	kernel_snapshot_publications.clear()
+	kernel_reconcile_events.clear()
+	_enemy_stable_keys.clear()
+	_kernel_settlement_cursor = 0
+	_boss_domain_targets.clear()
+	_boss_settlement_cursor = 0
+	_boss_encounter_authority = false
+	return true
+
+
+func _bind_boss_kernel_domain() -> bool:
+	if simulation_world == null or String(simulation_world.room_instance_id).is_empty() or int(simulation_world.world_revision) < 0:
+		push_error("boss_domain_room_identity_unavailable")
+		return false
+	var domain := BossCombatDomainScript.new()
+	var configured: Dictionary = domain.configure(String(simulation_world.room_instance_id), int(simulation_world.world_revision))
+	if not bool(configured.get("ok", false)):
+		push_error("boss_domain_configure_failed:%s" % String(configured.get("error", "unknown")))
+		return false
+	var spatial_bound: Dictionary = room_spatial_port.bind_boss_domain(domain)
+	if not bool(spatial_bound.get("ok", false)):
+		push_error("boss_spatial_domain_bind_failed:%s" % String(spatial_bound.get("error", "unknown")))
+		return false
+	var combat_bound: Dictionary = room_combat_port.bind_boss_domain(domain)
+	if not bool(combat_bound.get("ok", false)):
+		push_error("boss_combat_domain_bind_failed:%s" % String(combat_bound.get("error", "unknown")))
+		return false
+	if room_spatial_port.boss_domain != domain or room_combat_port.boss_domain != domain:
+		push_error("boss_domain_instance_mismatch")
+		return false
+	var boss_flight_configured: Dictionary = _kernel_boss_flight.configure(room_spatial_port)
+	if not bool(boss_flight_configured.get("ok", false)):
+		push_error("kernel_boss_flight_configure_failed:%s" % String(boss_flight_configured.get("error", "unknown")))
+		return false
+	_boss_combat_domain = domain
+	return true
+
+
+func _boss_domain_room_is_current() -> bool:
+	return (
+		_boss_combat_domain != null
+		and room_spatial_port != null
+		and room_spatial_port.boss_domain == _boss_combat_domain
+		and room_combat_port != null
+		and room_combat_port.boss_domain == _boss_combat_domain
+		and simulation_world != null
+		and _boss_combat_domain.room_id == String(simulation_world.room_instance_id)
+		and int(_boss_combat_domain.world_revision) == int(simulation_world.world_revision)
+	)
+
+
+func _is_boss_kernel_projectile(projectile) -> bool:
+	if projectile == null:
+		return false
+	var enemy := _enemy_by_entity_id(int(projectile.target_entity_id))
+	return enemy != null and enemy.is_boss and _boss_domain_room_is_current()
+
+
+func _is_normal_kernel_projectile(projectile) -> bool:
+	if projectile == null or room_spatial_port == null or room_combat_port == null:
+		return false
+	var enemy := _enemy_by_entity_id(int(projectile.target_entity_id))
+	return enemy == null or not enemy.is_boss
+
+
+func _is_kernel_projectile(projectile) -> bool:
+	if projectile == null or room_spatial_port == null or room_combat_port == null:
+		return false
+	return _is_normal_kernel_projectile(projectile) or _is_boss_kernel_projectile(projectile)
+
+
+## The room-facing enemy record remains the health record other migrating
+## systems read; the actor store is the kernel resolution substrate. They are
+## synced at query submission so DamageResolution always resolves the current
+## committed health, and the reconcile mirrors the result back.
+## The room-facing enemy record remains the record other migrating systems
+## read and mutate; the actor store is the kernel resolution substrate. Both
+## health and pose are synced at query submission so the spatial indexes and
+## DamageResolution always resolve the current committed room-facing record.
+## In production the mirror is written after actor commits, so the pose sync
+## is a no-op; a failed relocation keeps the authoritative actor pose.
+func _sync_kernel_target_record(projectile) -> void:
+	var enemy := _enemy_by_entity_id(int(projectile.target_entity_id))
+	if enemy == null or enemy.is_boss:
+		return
+	var actor_id := "enemy/%d" % enemy.entity_id
+	if actor_registry == null or not actor_registry.has_actor(actor_id):
+		return
+	var state = actor_registry.actor(actor_id)
+	if state == null or not state.alive:
+		return
+	if state.feet_position.distance_squared_to(enemy.position) > 0.000001:
+		var relocated: Dictionary = actor_registry.teleport_actor(actor_id, enemy.position)
+		if bool(relocated.get("ok", false)):
+			enemy.position = relocated.get("position", enemy.position)
+	# The room-facing record may legally sit above its spawn maximum (legacy
+	# fixtures raise health without raising maximum); the actor store must be
+	# able to hold the current committed value.
+	state.maximum_health = maxf(state.maximum_health, maxf(maxf(1.0, enemy.health), enemy.maximum_health))
+	if absf(state.health - enemy.health) > 0.0005:
+		state.commit_resolved_health(maxf(0.0, enemy.health))
+
+
+## Keeps the detached BossTargetView pose/part facts equal to the actor-backed
+## room mirror before a query. Health is deliberately not copied: once the room
+## starts, BossCombatDomain owns BigValue health and mortality.
+func _sync_boss_kernel_target(projectile) -> BossTargetView:
+	var enemy := _enemy_by_entity_id(int(projectile.target_entity_id))
+	if enemy == null or not enemy.is_boss or not _boss_domain_room_is_current():
+		return null
+	var target: BossTargetView = _boss_domain_targets.get(int(enemy.entity_id), null)
+	if target == null or not target.alive:
+		return null
+	var actor_id := "enemy/%d" % enemy.entity_id
+	if actor_registry != null and actor_registry.has_actor(actor_id):
+		var state = actor_registry.actor(actor_id)
+		if state == null or not state.alive:
+			return null
+		enemy.position = state.feet_position
+	target.position = enemy.position
+	var admission_blocked: bool = encounter_director != null and encounter_director.is_target_blocked(enemy)
+	var admission := target.set_admission(admission_blocked, "periodic_barrier" if admission_blocked else "")
+	if not bool(admission.get("ok", false)):
+		push_error("boss_domain_admission_sync_failed:%s" % String(admission.get("error", "unknown")))
+		return null
+	for room_part: Dictionary in enemy.hurtbox_parts():
+		for boss_part: BossHurtbox in target.parts:
+			if boss_part.part_id != String(room_part.get("part_id", "")):
+				continue
+			boss_part.local_offset = room_part.get("pose", boss_part.local_offset)
+			var state_result: Dictionary = target.set_part_state(
+				boss_part.part_id,
+				bool(room_part.get("active", true)),
+				bool(room_part.get("broken", false))
+			)
+			if not bool(state_result.get("ok", false)):
+				push_error("boss_domain_part_sync_failed:%s" % boss_part.part_id)
+				return null
+	return target
+
+
+## Hit admission at the damage boundary. Keeps the legacy arrow contract
+## while the sweep itself moved to the kernel's typed path queries: only the
+## locked non-boss target is admitted, and the elite periodic barrier
+## suppresses the hit before DamageResolution.
+func _admit_kernel_hit(hit: Dictionary) -> Dictionary:
+	var attack_id := String(hit.get("attack_instance_id", ""))
+	if not attack_id.begins_with("arrow/"):
+		return {"allowed": true, "reason": ""}
+	var action_id := int(attack_id.trim_prefix("arrow/"))
+	var projectile = null
+	for candidate in combat_system.projectiles:
+		if int(candidate.action_instance_id) == action_id:
+			projectile = candidate
+			break
+	if projectile == null:
+		return {"allowed": false, "reason": "arrow_not_in_flight"}
+	var enemy := _enemy_by_entity_id(int(projectile.target_entity_id))
+	if enemy == null or enemy.is_boss:
+		return {"allowed": false, "reason": "legacy_big_value_target"}
+	var hit_entity_id := int(_enemy_stable_keys.get(String(hit.get("target_key", "")), 0))
+	if hit_entity_id != int(projectile.target_entity_id):
+		return {"allowed": false, "reason": "not_locked_target"}
+	if encounter_director != null and encounter_director.is_target_blocked(enemy):
+		return {"allowed": false, "reason": "periodic_barrier"}
+	return {"allowed": true, "reason": ""}
+
+
+func _enemy_by_stable_key(target_key: String) -> CombatEnemyState:
+	var entity_id := int(_enemy_stable_keys.get(target_key, 0))
+	if entity_id <= 0:
+		return null
+	return _enemy_by_entity_id(entity_id)
+
+
+func _consume_kernel_room_combat() -> void:
+	if room_spatial_port == null or room_combat_port == null or not _kernel_arrow_flight.is_configured():
+		return
+	var published_snapshot = simulation_world.latest_snapshot() if simulation_world != null else null
+	if published_snapshot != null and published_snapshot.has_method("sha256_hex"):
+		var published_tick := int(published_snapshot.tick)
+		if last_kernel_snapshot == null or int(last_kernel_snapshot.tick) != published_tick:
+			last_kernel_snapshot = published_snapshot
+			kernel_snapshot_publications.append({
+				"tick": published_tick,
+				"room_instance_id": String(published_snapshot.room_instance_id),
+				"world_revision": int(published_snapshot.world_revision),
+				"phase": "kernel.snapshot.published",
+				"hash": published_snapshot.sha256_hex(),
+			})
+	_combat_context()
+	var previous_report := String(combat_system.battle_report)
+	var previous_event_id: int = combat_event_stream.latest_event_id()
+	var results: Array = room_spatial_port.take_path_results()
+	var records: Array = _kernel_arrow_flight.pending_records()
+	var published_tick := int(last_kernel_snapshot.tick) if last_kernel_snapshot != null else -1
+	var published_hash: String = last_kernel_snapshot.sha256_hex() if last_kernel_snapshot != null and last_kernel_snapshot.has_method("sha256_hex") else ""
+	kernel_reconcile_events.append({
+		"phase": "room.reconcile.begin",
+		"tick": sim_tick,
+		"snapshot_tick": published_tick,
+		"snapshot_hash": published_hash,
+		"path_results": results.size(),
+		"pending_arrows": records.size(),
+	})
+	var admitted: Dictionary = {}
+	for hit: Dictionary in room_combat_port.last_hits:
+		admitted[String(hit.get("attack_instance_id", ""))] = hit
+	var suppressed: Dictionary = {}
+	for entry: Variant in room_combat_port.last_batch.get("suppressed", []):
+		if entry is Dictionary:
+			suppressed[String((entry as Dictionary).get("attack_instance_id", ""))] = entry
+	var outcome_by_attack: Dictionary = {}
+	for outcome: Variant in room_combat_port.last_batch.get("outcomes", []):
+		if outcome is Dictionary:
+			outcome_by_attack[String((outcome as Dictionary).get("attack_instance_id", ""))] = outcome
+	var count := mini(results.size(), records.size())
+	for index in count:
+		var result = results[index]
+		var record = records[index]
+		var projectile = record.projectile
+		if projectile == null or not combat_system.projectiles.has(projectile):
+			continue
+		var attack_key: String = record.attack_key
+		if admitted.has(attack_key) and outcome_by_attack.has(attack_key):
+			_reconcile_kernel_hit(projectile, record, admitted[attack_key], outcome_by_attack[attack_key])
+			kernel_reconcile_events.append({
+				"phase": "room.reconcile.arrow_hit",
+				"tick": sim_tick,
+				"snapshot_tick": published_tick,
+				"snapshot_hash": published_hash,
+				"attack_instance_id": attack_key,
+				"target_key": String(admitted[attack_key].get("target_key", "")),
+			})
+			_retire_kernel_projectile(projectile, attack_key)
+			continue
+		if suppressed.has(attack_key):
+			var rejection: Dictionary = suppressed[attack_key]
+			# Only a barrier block on the locked target consumes the arrow.
+			# Every other suppression (a piercing pass-through on a non-locked
+			# hurtbox, a legacy BigValue target) leaves the arrow in flight.
+			if String(rejection.get("reason", "")) == "periodic_barrier":
+				var blocked_enemy := _enemy_by_stable_key(String(rejection.get("target_key", "")))
+				var blocked_point_value: Variant = rejection.get("contact_point", projectile.position)
+				var blocked_point: Vector2 = blocked_point_value if blocked_point_value is Vector2 else projectile.position
+				projectile.position = blocked_point
+				combat_system.apply_kernel_blocked(projectile, blocked_enemy, blocked_point)
+				_retire_kernel_projectile(projectile, attack_key)
+				continue
+		if result != null and bool(result.clipped):
+			projectile.position = result.end_point
+			combat_system.resolve_projectile_miss(projectile)
+			_retire_kernel_projectile(projectile, attack_key)
+			continue
+		if projectile.distance_travelled >= projectile.maximum_range:
+			combat_system.resolve_projectile_miss(projectile)
+			_retire_kernel_projectile(projectile, attack_key)
+	_kernel_arrow_flight.clear_pending()
+	_reconcile_kernel_deaths()
+	_consume_kernel_boss_combat(published_tick, published_hash)
+	kernel_reconcile_events.append({
+		"phase": "room.reconcile.end",
+		"tick": sim_tick,
+		"snapshot_tick": published_tick,
+		"snapshot_hash": published_hash,
+		"path_results": results.size(),
+		"pending_arrows": records.size(),
+	})
+	_combat_report(previous_report, previous_event_id)
+
+
+func _retire_kernel_projectile(projectile, attack_key: String) -> void:
+	combat_system.remove_projectile(projectile)
+	_kernel_arrow_flight.forget_arrow(attack_key)
+
+
+func _consume_kernel_boss_combat(published_tick: int, published_hash: String) -> void:
+	if not _kernel_boss_flight.is_configured():
+		return
+	if not _boss_domain_room_is_current():
+		push_error("boss_domain_room_mismatch:%s:%d" % [String(_boss_combat_domain.room_id), int(_boss_combat_domain.world_revision)])
+		_kernel_boss_flight.clear_pending()
+		return
+	var results: Array = room_spatial_port.take_boss_path_results()
+	var records: Array = _kernel_boss_flight.pending_records()
+	var batch: Dictionary = room_combat_port.last_boss_batch
+	if not (batch.get("rejected", []) as Array).is_empty():
+		push_error("boss_damage_resolution_rejected:%s" % str(batch.get("rejected", [])))
+	var outcome_by_attack: Dictionary = {}
+	for outcome: Variant in batch.get("outcomes", []):
+		if outcome is Dictionary:
+			outcome_by_attack[String((outcome as Dictionary).get("attack_instance_id", ""))] = outcome
+	var suppressed_by_attack: Dictionary = {}
+	for suppressed: Variant in batch.get("suppressed", []):
+		if suppressed is Dictionary:
+			var suppressed_value: Dictionary = suppressed as Dictionary
+			suppressed_by_attack[String(suppressed_value.get("attack_instance_id", ""))] = suppressed_value
+	var count := mini(results.size(), records.size())
+	for index in count:
+		var result = results[index]
+		var record = records[index]
+		var projectile = record.projectile
+		if projectile == null or not combat_system.projectiles.has(projectile):
+			continue
+		var attack_key: String = record.attack_key
+		if not outcome_by_attack.has(attack_key):
+			if suppressed_by_attack.has(attack_key):
+				var suppression: Dictionary = suppressed_by_attack[attack_key]
+				if String(suppression.get("reason", "")) == "periodic_barrier":
+					var blocked_enemy := _enemy_by_entity_id(int(projectile.target_entity_id))
+					var blocked_point_value: Variant = suppression.get("contact_point", projectile.position)
+					var blocked_point: Vector2 = blocked_point_value if blocked_point_value is Vector2 else projectile.position
+					projectile.position = blocked_point
+					combat_system.apply_kernel_blocked(projectile, blocked_enemy, blocked_point)
+					_retire_boss_kernel_projectile(projectile, attack_key)
+					continue
+			if result != null and bool(result.clipped):
+				projectile.position = result.end_point
+				combat_system.resolve_projectile_miss(projectile)
+				_retire_boss_kernel_projectile(projectile, attack_key)
+			elif projectile.distance_travelled >= projectile.maximum_range:
+				combat_system.resolve_projectile_miss(projectile)
+				_retire_boss_kernel_projectile(projectile, attack_key)
+			continue
+		var outcome: Dictionary = outcome_by_attack[attack_key]
+		var enemy := _enemy_by_entity_id(int(projectile.target_entity_id))
+		if enemy == null or not enemy.is_boss:
+			push_error("boss_kernel_target_mirror_unresolved:%s" % attack_key)
+			continue
+		var target: BossTargetView = _boss_domain_targets.get(int(enemy.entity_id), null)
+		if target == null or record.health_before == null:
+			push_error("boss_kernel_target_domain_unresolved:%s" % attack_key)
+			continue
+		var applied: BigValue = _big_value_from_snapshot(outcome.get("applied_damage", {}).get("big", {}))
+		var remaining: BigValue = _big_value_from_snapshot(outcome.get("remaining_health", {}))
+		if applied == null or remaining == null:
+			push_error("boss_kernel_outcome_big_value_invalid:%s" % attack_key)
+			continue
+		var mirrored: Dictionary = combat_system.sync_boss_domain_resolution(target.maximum_health, applied, remaining)
+		if not bool(mirrored.get("ok", false)):
+			push_error("boss_domain_mirror_failed:%s" % String(mirrored.get("error", "unknown")))
+			continue
+		var contact := _boss_contact_for_outcome(result, outcome)
+		var contact_point: Vector2 = contact.get("contact_point", projectile.position) if contact.get("contact_point", null) is Vector2 else projectile.position
+		projectile.position = contact_point
+		enemy.hit_flash_until_tick = sim_tick + ENEMY_HIT_FLASH_TICKS
+		combat_system.apply_boss_kernel_contact(
+			projectile,
+			enemy,
+			contact_point,
+			contact,
+			record.health_before,
+			remaining,
+			record.aggregate
+		)
+		kernel_reconcile_events.append({
+			"phase": "room.reconcile.boss_arrow_hit",
+			"tick": sim_tick,
+			"snapshot_tick": published_tick,
+			"snapshot_hash": published_hash,
+			"attack_instance_id": attack_key,
+			"target_key": target.target_key,
+			"part_id": String(outcome.get("part_id", "body")),
+		})
+		_retire_boss_kernel_projectile(projectile, attack_key)
+		if bool(outcome.get("lethal", false)):
+			enemy.health = 0.0
+			_finalize_boss_kernel_death(enemy, target)
+	_kernel_boss_flight.clear_pending()
+	_settle_boss_kernel_deaths(published_tick)
+
+
+func _boss_contact_for_outcome(result: Variant, outcome: Dictionary) -> Dictionary:
+	if result == null:
+		return {}
+	var part_id := String(outcome.get("part_id", ""))
+	for contact: BossHitContact in result.hit_contacts:
+		if contact.part_id == part_id:
+			return {"part_id": contact.part_id, "damage_group_id": contact.damage_group_id, "contact_point": contact.contact_point}
+	if not result.hit_contacts.is_empty():
+		var first: BossHitContact = result.hit_contacts[0]
+		return {"part_id": first.part_id, "damage_group_id": first.damage_group_id, "contact_point": first.contact_point}
+	return {}
+
+
+func _big_value_from_snapshot(value: Variant) -> BigValue:
+	if not value is Dictionary:
+		return null
+	var data: Dictionary = value
+	return BigValue.from_components(int(data.get("layer", -1)), float(data.get("magnitude", NAN)))
+
+
+func _retire_boss_kernel_projectile(projectile, attack_key: String) -> void:
+	combat_system.remove_projectile(projectile)
+	_kernel_boss_flight.forget_arrow(attack_key)
+
+
+func _finalize_boss_kernel_death(enemy: CombatEnemyState, target: BossTargetView) -> void:
+	var actor_id := "enemy/%d" % enemy.entity_id
+	if actor_registry != null and actor_registry.has_actor(actor_id):
+		var unregistered: Dictionary = actor_registry.unregister_actor(actor_id)
+		if not bool(unregistered.get("ok", false)):
+			push_error("boss_actor_unregister_failed:%d:%s" % [enemy.entity_id, String(unregistered.get("error", "unknown"))])
+	_boss_domain_targets.erase(int(enemy.entity_id))
+	_finalize_kernel_enemy_death(enemy)
+
+
+func _settle_boss_kernel_deaths(settlement_tick: int) -> void:
+	if not _boss_domain_room_is_current():
+		return
+	if settlement_tick < 0:
+		return
+	var settled: Dictionary = room_combat_port.settle_boss_deaths(settlement_tick)
+	if not bool(settled.get("ok", false)):
+		push_error("boss_death_settlement_failed:%s" % String(settled.get("error", "unknown")))
+		return
+	var settlements: Array[Dictionary] = room_combat_port.last_boss_settlements
+	var notifications: Array[RefCounted] = room_combat_port.last_boss_death_notifications
+	var context := SimTickContextScript.new()
+	context.tick = settlement_tick
+	context.room_instance_id = String(simulation_world.room_instance_id)
+	context.world_revision = int(simulation_world.world_revision)
+	while _boss_settlement_cursor < settlements.size():
+		var settlement: Dictionary = settlements[_boss_settlement_cursor]
+		var notification: Variant = notifications[_boss_settlement_cursor] if _boss_settlement_cursor < notifications.size() else null
+		_boss_settlement_cursor += 1
+		if room_encounter_port != null and notification is DeathSettlementNotificationScript:
+			room_encounter_port.on_death_settlement(notification, context)
+		elif room_encounter_port != null:
+			push_error("boss_death_notification_missing:%s" % String(settlement.get("entity_key", "")))
+		var loot_value: Variant = settlement.get("loot_spawn_request", {})
+		if loot_value is Dictionary and not (loot_value as Dictionary).is_empty():
+			var entity_id := int(_enemy_stable_keys.get(String(settlement.get("entity_key", "")), 0))
+			if entity_id <= 0:
+				push_error("boss_death_loot_entity_unresolved:%s" % String(settlement.get("entity_key", "")))
+				continue
+			var position_value: Variant = (loot_value as Dictionary).get("position", Vector2.ZERO)
+			var position: Vector2 = position_value if position_value is Vector2 else Vector2.ZERO
+			_spawn_room_loot_for_source("enemy_death", entity_id, position)
+
+
+func _reconcile_kernel_hit(projectile, record: Variant, hit: Dictionary, outcome: Dictionary) -> void:
+	var enemy := _enemy_by_stable_key(String(hit.get("target_key", "")))
+	if enemy == null:
+		return
+	var health_before: float = enemy.health
+	var remaining: float = clampf(float(outcome.get("remaining_health", 0.0)), 0.0, maxf(enemy.maximum_health, health_before))
+	# The resolver reports the target-side surface point; the authoritative
+	# contact for events and traces is the point on the frozen arrow path.
+	var toi := clampf(float(hit.get("toi", 0.0)), 0.0, 1.0)
+	var contact: Vector2 = record.query_start + record.query_displacement * toi
+	enemy.health = snappedf(remaining, 0.001)
+	enemy.hit_flash_until_tick = sim_tick + ENEMY_HIT_FLASH_TICKS
+	projectile.position = contact
+	combat_system.apply_kernel_contact(projectile, enemy, contact, hit, health_before, enemy.health, record.aggregate)
+	_maybe_summon_reinforcements(enemy)
+	if enemy.health <= 0.0:
+		_finalize_kernel_enemy_death(enemy)
+
+
+func _finalize_kernel_enemy_death(enemy: CombatEnemyState) -> void:
+	enemies.erase(enemy)
+	combat_system.note_kernel_death(enemy)
+	var canceled_request_id: int = _cancel_buffered_target(enemy.entity_id)
+	if canceled_request_id > 0:
+		_erase_attack_request(canceled_request_id)
+	_refresh_player_mark()
+
+
+func _reconcile_kernel_deaths() -> void:
+	var settlements: Array[Dictionary] = room_combat_port.last_settlements
+	while _kernel_settlement_cursor < settlements.size():
+		var settlement: Dictionary = settlements[_kernel_settlement_cursor]
+		_kernel_settlement_cursor += 1
+		var loot_value: Variant = settlement.get("loot_spawn_request", {})
+		if not loot_value is Dictionary or (loot_value as Dictionary).is_empty():
+			continue
+		var entity_id := int(_enemy_stable_keys.get(String(settlement.get("entity_key", "")), 0))
+		if entity_id <= 0:
+			push_error("kernel_death_loot_entity_unresolved:%s" % String(settlement.get("entity_key", "")))
+			continue
+		var position_value: Variant = (loot_value as Dictionary).get("position", Vector2.ZERO)
+		var position: Vector2 = position_value if position_value is Vector2 else Vector2.ZERO
+		_spawn_room_loot_for_source("enemy_death", entity_id, position)
 
 
 func _route_commands(commands: Array[Dictionary]) -> Dictionary:
@@ -1204,7 +2193,7 @@ func _public_proxy_snapshot() -> Dictionary:
 			"health": enemy.health,
 			## Action legality is part of enemy.basic. It reveals no barrier rule,
 			## phase duration, or future opening tick.
-			"targetable": encounter_director.is_targetable(enemy),
+			"targetable": encounter_director.is_targetable(enemy) and _is_enemy_actor_active(enemy),
 		}
 		if include_classification:
 			var classification_tags: Array[String] = []
@@ -1344,7 +2333,26 @@ func _advance_piercing_projectiles_tick() -> void:
 	_combat_context()
 	var previous_report := String(combat_system.battle_report)
 	var previous_event_id: int = combat_event_stream.latest_event_id()
-	combat_system.advance_projectiles_tick()
+	# Every production ranger arrow flies through the mounted kernel. Normal
+	# targets use PathQuery/SimHit; Boss targets use BossAttackQuery and the
+	# multipart BossHitBuffer. Both paths resolve in the fixed
+	# CONTINUOUS_QUERIES/DAMAGE_STATUS phases; neither may settle here.
+	if room_spatial_port != null and room_combat_port != null and _kernel_arrow_flight.is_configured():
+		var ranger_handle = actor_registry.actor_handle("ranger") if actor_registry != null else null
+		_kernel_arrow_flight.submit_tick(
+			combat_system.projectiles,
+			ranger_handle,
+			sim_tick,
+			combat_system.room_port
+		)
+	if room_spatial_port != null and room_combat_port != null and _kernel_boss_flight.is_configured() and _boss_domain_room_is_current():
+		var ranger_handle = actor_registry.actor_handle("ranger") if actor_registry != null else null
+		_kernel_boss_flight.submit_tick(
+			combat_system.projectiles,
+			ranger_handle,
+			sim_tick,
+			combat_system.room_port
+		)
 	_combat_report(previous_report, previous_event_id)
 
 func _resolve_piercing_arrow_contact(projectile: CombatArrowProjectile, target: CombatEnemyState, contact_point: Vector2) -> void:
@@ -1368,8 +2376,14 @@ func _piercing_arrow_swept_contact(start: Vector2, finish: Vector2, target: Comb
 
 func _remove_combat_target(target: CombatEnemyState) -> void:
 	enemies.erase(target)
-	if target != null and target.health <= 0.0:
-		_spawn_room_loot_for_source("enemy_death", target.entity_id, target.position)
+	if target == null or target.health > 0.0:
+		return
+	var actor_id := "enemy/%d" % target.entity_id
+	if actor_registry != null and actor_registry.has_actor(actor_id):
+		var unregistered: Dictionary = actor_registry.unregister_actor(actor_id)
+		if not bool(unregistered.get("ok", false)):
+			push_error("enemy_actor_unregister_failed:%d:%s" % [target.entity_id, String(unregistered.get("error", "unknown"))])
+	_spawn_room_loot_for_source("enemy_death", target.entity_id, target.position)
 
 
 func _cancel_buffered_target(entity_id: int) -> int:
@@ -1384,6 +2398,7 @@ func _erase_attack_request(request_id: int) -> void:
 func _encounter_context() -> void:
 	if encounter_director == null:
 		return
+	_sync_encounter_active_state()
 	encounter_director.set_context(
 		sim_tick,
 		player_position,
@@ -1392,6 +2407,19 @@ func _encounter_context() -> void:
 		layout_id,
 		objective_id
 	)
+
+
+func _sync_encounter_active_state() -> void:
+	if encounter_director == null or room_encounter_port == null or room_encounter_port.encounter == null:
+		return
+	if actor_registry == null or not actor_registry.has_method("is_actor_active"):
+		return
+	var active_ids: Array[int] = []
+	for enemy: CombatEnemyState in encounter_director.enemies:
+		var actor_id := "enemy/%d" % enemy.entity_id
+		if actor_registry.has_actor(actor_id) and actor_registry.is_actor_active(actor_id):
+			active_ids.append(enemy.entity_id)
+	encounter_director.set_active_entity_ids(active_ids)
 
 
 func _encounter_report(previous_report: String) -> void:
@@ -1413,6 +2441,8 @@ func _enemy_tactics_snapshot() -> Dictionary:
 
 
 func _enemy_tactics_hazards() -> Array[Dictionary]:
+	if _hazard_domain != null and _hazard_domain.is_configured():
+		return _hazard_domain.active_geometry()
 	_encounter_context()
 	return encounter_director.enemy_tactics_hazards()
 
@@ -1425,27 +2455,136 @@ func _maybe_summon_reinforcements(elite: CombatEnemyState) -> void:
 
 
 func _update_room_rules_tick() -> void:
+	# CombatSimulation submits the kernel tick through SimulationWorld directly,
+	# bypassing SceneRuntime.step_tick(). Drain pending kernel encounter spawn
+	# requests here - after this tick's snapshot was published, before the
+	# reconciliation binding adopts legacy actors - so structural spawn acks
+	# land in the between-tick window exactly once.
+	if scene_runtime != null and scene_runtime.is_ready():
+		scene_runtime.materialize_encounter_spawns()
+	# Consume the kernel's typed combat output for the queries submitted last
+	# tick: PathQuery results, the HitBuffer-derived batch RoomCombatPort
+	# resolved through DamageResolution, and DeathSettlement receipts. Damage
+	# and deaths commit here, before buffered casts start and before enemies,
+	# hazards or the battle-end check observe the room.
+	_consume_kernel_room_combat()
 	_encounter_context()
 	encounter_director.update_room_rules_tick()
 
 
 func _update_hazards_tick() -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director.update_hazards_tick()
-	_encounter_report(previous_report)
+	_refresh_hazard_states_tick()
+	_resolve_hazard_hits_tick()
 
 
 func _refresh_hazard_states_tick() -> void:
+	if _hazard_domain != null and _hazard_domain.is_configured():
+		var refreshed: Dictionary = _hazard_domain.refresh(sim_tick)
+		if not bool(refreshed.get("ok", false)):
+			battle_report = "hazard_refresh_failed:%s" % String(refreshed.get("error", "unknown"))
+		encounter_director.hazard_states = _hazard_domain.snapshots()
+		return
 	_encounter_context()
 	encounter_director.refresh_hazard_states_tick()
 
 
 func _resolve_hazard_hits_tick() -> void:
+	if _hazard_domain != null and _hazard_domain.is_configured():
+		var resolved: Dictionary = _hazard_domain.resolve(sim_tick, player_position)
+		if not bool(resolved.get("ok", false)):
+			battle_report = "hazard_resolve_failed:%s" % String(resolved.get("error", "unknown"))
+		else:
+			for contact: Dictionary in resolved.get("contacts", []):
+				combat_event_stream.emit(sim_tick, "attack_resolved", {
+					"action_instance_id": 0,
+					"source_id": String(contact.get("source_id", "")),
+					"target_id": "ranger",
+					"outcome": "queued",
+					"contact_point": contact.get("contact_point", player_position),
+				})
+		# Player contacts are consumed after staging and after the kernel has
+		# published this tick, preserving the existing fixed-tick boundary.
+		if room_combat_port != null:
+			var receipts: Array[Dictionary] = room_combat_port.commit_player_contacts(sim_tick)
+			for receipt: Dictionary in receipts:
+				if String(receipt.get("contact_kind", "")) != "hostile_attack":
+					continue
+				combat_event_stream.emit(sim_tick, "attack_resolved", {
+					"action_instance_id": int(String(receipt.get("attack_instance_id", "0"))),
+					"source_id": String(receipt.get("source_id", "")),
+					"target_id": "ranger",
+					"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
+					"contact_point": player_position,
+				})
+		return
 	_encounter_context()
 	var previous_report := String(encounter_director.battle_report)
 	encounter_director.resolve_hazard_hits_tick()
+	if room_combat_port != null:
+		var receipts: Array[Dictionary] = room_combat_port.commit_player_contacts(sim_tick)
+		for receipt: Dictionary in receipts:
+			if String(receipt.get("contact_kind", "")) != "hostile_attack":
+				continue
+			combat_event_stream.emit(sim_tick, "attack_resolved", {
+				"action_instance_id": int(String(receipt.get("attack_instance_id", "0"))),
+				"source_id": String(receipt.get("source_id", "")),
+				"target_id": "ranger",
+				"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
+				"contact_point": player_position,
+			})
 	_encounter_report(previous_report)
+
+
+func _queue_kernel_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
+	return _queue_kernel_player_hit(tick, amount, source_id, source_position)
+
+
+## Stages one room-owned player contact for the next kernel tick. Hazard
+## amounts stay integer-valued; enemy impacts use milli units so the existing
+## 1.2/1.8 damage values cross SimHit without rounding.
+func _queue_kernel_player_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
+	if room_spatial_port == null or actor_registry == null:
+		return {"ok": false, "error": "kernel_player_contact_port_unavailable"}
+	if tick != sim_tick or not is_finite(amount) or amount <= 0.0 or not source_position.is_finite():
+		return {"ok": false, "error": "invalid_kernel_player_contact_context"}
+	var contact_kind: StringName
+	var encoded_amount: int
+	var attack_instance_id := ""
+	if source_id.begins_with("hazard/"):
+		contact_kind = &"hazard"
+		encoded_amount = maxi(1, roundi(amount))
+		attack_instance_id = "hazard/%s/%d" % [source_id, tick]
+	elif source_id.begins_with("enemy/") or source_id.begins_with("boss/"):
+		contact_kind = &"hostile_attack"
+		encoded_amount = maxi(1, roundi(amount * 1000.0))
+		var action_instance_id := _hostile_action_instance_id(source_id)
+		attack_instance_id = str(action_instance_id) if action_instance_id > 0 else "hostile/%s/%d" % [source_id, tick]
+	else:
+		return {"ok": false, "error": "invalid_kernel_player_contact_source"}
+	var target: Variant = actor_registry.actor_handle("ranger")
+	if target == null:
+		return {"ok": false, "error": "player_actor_unavailable"}
+	return room_spatial_port.queue_player_hit(
+		target,
+		encoded_amount,
+		source_id,
+		source_position,
+		attack_instance_id,
+		contact_kind
+	)
+
+
+func _hostile_action_instance_id(source_id: String) -> int:
+	if encounter_director == null:
+		return 0
+	if source_id.begins_with("enemy/"):
+		var parts := source_id.split("/")
+		if parts.size() >= 2:
+			var enemy: CombatEnemyState = encounter_director._enemy_by_entity_id(int(parts[1]))
+			return int(enemy.action_instance_id) if enemy != null else 0
+	if source_id.begins_with("boss/") and encounter_director.boss != null:
+		return int(encounter_director.boss.action_instance_id)
+	return 0
 
 
 func _new_hazard_state(id: String, center: Vector2) -> Dictionary:
@@ -1531,6 +2670,16 @@ func _start_charger_action(enemy: CombatEnemyState, direction: Vector2, action_d
 	return result
 
 
+func _set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
+	if enemy == null or actor_registry == null or not actor_registry.has_method("set_collision_class"):
+		return false
+	var result: Dictionary = actor_registry.set_collision_class("enemy/%d" % enemy.entity_id, collision_class)
+	if not bool(result.get("ok", false)):
+		push_error("enemy_collision_class_update_failed:%d:%s" % [enemy.entity_id, String(result.get("error", "unknown"))])
+		return false
+	return true
+
+
 func _update_charger_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
 	_encounter_context()
 	var previous_report := String(encounter_director.battle_report)
@@ -1612,6 +2761,27 @@ func _check_battle_end() -> void:
 	# Pickup is a committed post-movement phase. Requests are queued by the
 	# public input boundary and can only mutate the room ledger here.
 	_process_room_loot_pickups_tick()
+	if _mounted_encounter_terminal_active():
+		var terminal_result := _observe_mounted_encounter_terminal()
+		if not bool(terminal_result.get("ok", false)):
+			push_error("room_terminal_observation_failed:%s" % String(terminal_result.get("error", "unknown")))
+			return
+		var terminal_phase := String(terminal_result.get("phase", ""))
+		if terminal_phase not in ["victory", "defeat"] or _terminal_projection_applied:
+			return
+		_terminal_projection_applied = true
+		var victory := terminal_phase == "victory"
+		battle_report = "VICTORY — Room encounter cleared." if victory else "DEFEAT — The ranger fell. Refit at base."
+		var projected := room_rules.project_terminal(victory, timed_bonus_available, elapsed, shots, defeated)
+		if not bool(projected.get("ok", false)):
+			push_error("room_terminal_reward_projection_failed:%s" % String(projected.get("error", "unknown")))
+			return
+		if victory:
+			_spawn_room_loot_for_source("wave_clear", 0, player_position)
+		else:
+			_settle_room_loot("defeat")
+		_handle_terminal_automation(victory, embedded_state_before)
+		return
 	var observed: Dictionary = room_rules.observe(player_combat_state.snapshot(sim_tick), {
 		"has_boss": boss != null, "boss_health": boss.health if boss != null else 0.0,
 		"enemy_count": enemies.size(), "elite_entity_id": elite_entity_id,
@@ -1658,6 +2828,67 @@ func _check_battle_end() -> void:
 		printerr("AUTO_SMOKE_FAIL elapsed=%.2f casts=%d" % [elapsed, shots])
 		Engine.time_scale = 1.0
 		get_tree().quit(1)
+
+
+func _mounted_encounter_terminal_active() -> bool:
+	return room_encounter_port != null and room_encounter_port.encounter != null and room_encounter_port.encounter.has_method("observe_terminal")
+
+
+func _observe_mounted_encounter_terminal() -> Dictionary:
+	var observation := RoomTerminalObservationScript.new()
+	observation.tick = sim_tick
+	observation.room_instance_id = String(simulation_world.room_instance_id)
+	observation.world_revision = int(simulation_world.world_revision)
+	var player := player_combat_state.snapshot(sim_tick)
+	observation.player_alive = float(player.get("player_health", 0.0)) > 0.0
+	var encounter_state: Dictionary = room_encounter_port.encounter.snapshot()
+	observation.current_wave_index = int(encounter_state.get("current_wave_index", -1))
+	var waves: Array = encounter_state.get("waves", [])
+	var wave_id := ""
+	if observation.current_wave_index >= 0 and observation.current_wave_index < waves.size() and waves[observation.current_wave_index] is Dictionary:
+		wave_id = String((waves[observation.current_wave_index] as Dictionary).get("wave_id", ""))
+	for raw_record: Variant in encounter_state.get("spawn_records", []):
+		if not raw_record is Dictionary or String((raw_record as Dictionary).get("wave_id", "")) != wave_id:
+			continue
+		observation.requested_member_count += 1
+		var state := String((raw_record as Dictionary).get("state", ""))
+		if state == "alive":
+			observation.alive_member_count += 1
+		if state in ["requested", "alive"]:
+			observation.unresolved_member_count += 1
+	var objective := String(framework_room.get("objective_id", objective_id))
+	if objective == "hunt_elite" and elite_entity_id > 0:
+		var elite_alive := _enemy_by_entity_id(elite_entity_id) != null
+		var requires_full_clear := "summon_reinforcements" in elite_rule_ids
+		observation.objective_satisfied = not elite_alive and (not requires_full_clear or enemies.is_empty())
+	var result: RoomTerminalResult = room_encounter_port.observe_terminal(observation)
+	return result.snapshot()
+
+
+func _handle_terminal_automation(victory: bool, embedded_state_before: Dictionary) -> void:
+	if not automation_smoke:
+		return
+	if embedded_session:
+		if not victory:
+			automation_smoke_failure = "defeat elapsed=%.2f casts=%d" % [elapsed, shots]
+			return
+		var smoke_valid := not framework_room.is_empty() and battle_victory and (selected_mode != "Auto" or proxy_prediction == "stable") and _embedded_authority_state_snapshot() == embedded_state_before
+		if not smoke_valid:
+			_fail_automation_smoke("integrated room/proxy/reward state is invalid")
+		return
+	if not victory:
+		printerr("AUTO_SMOKE_FAIL elapsed=%.2f casts=%d" % [elapsed, shots])
+		Engine.time_scale = 1.0
+		get_tree().quit(1)
+		return
+	var state_hash := _semantic_state_hash("victory")
+	if not _write_state_hash(state_hash):
+		Engine.time_scale = 1.0
+		get_tree().quit(1)
+		return
+	print("AUTO_SMOKE_PASS elapsed=%.2f ticks=%d casts=%d damage=%s state_hash=%s" % [elapsed, sim_tick, shots, boss_damage.to_short_string(5), state_hash])
+	Engine.time_scale = 1.0
+	get_tree().quit(0)
 
 
 func _fail_automation_smoke(reason: String) -> void:
@@ -1765,11 +2996,11 @@ func _manual_aim_candidate(enemy: CombatEnemyState) -> Dictionary:
 func _preferred_skill_one_target() -> CombatEnemyState:
 	var player := player_combat_state.snapshot(sim_tick)
 	var marked := _enemy_by_entity_id(player["marked_entity_id"])
-	if marked != null and marked.health > 0.0 and sim_tick < player["hunter_mark_expires_tick"] and player_position.distance_to(marked.position) <= locked_targeting_distance:
+	if marked != null and _is_enemy_actor_active(marked) and marked.health > 0.0 and sim_tick < player["hunter_mark_expires_tick"] and player_position.distance_to(marked.position) <= locked_targeting_distance:
 		return marked
 	if player["hunter_mark_candidate_entity_id"] > 0 and sim_tick <= player["hunter_mark_candidate_expires_tick"]:
 		var candidate := _enemy_by_entity_id(player["hunter_mark_candidate_entity_id"])
-		if candidate != null and candidate.health > 0.0 and player_position.distance_to(candidate.position) <= locked_targeting_distance:
+		if candidate != null and _is_enemy_actor_active(candidate) and candidate.health > 0.0 and player_position.distance_to(candidate.position) <= locked_targeting_distance:
 			return candidate
 	return _nearest_enemy()
 
@@ -1778,13 +3009,21 @@ func _nearest_enemy(maximum_distance: float = INF) -> CombatEnemyState:
 	var nearest: CombatEnemyState
 	var best_distance: float = maximum_distance * maximum_distance
 	for enemy: CombatEnemyState in enemies:
-		if enemy.health <= 0.0:
+		if enemy.health <= 0.0 or not _is_enemy_actor_active(enemy):
 			continue
 		var distance: float = player_position.distance_squared_to(enemy.position)
 		if distance < best_distance or (is_equal_approx(distance, best_distance) and (nearest == null or enemy.entity_id < nearest.entity_id)):
 			best_distance = distance
 			nearest = enemy
 	return nearest
+
+
+func _is_enemy_actor_active(enemy: CombatEnemyState) -> bool:
+	if enemy == null:
+		return false
+	if actor_registry != null and actor_registry.has_method("is_actor_active"):
+		return bool(actor_registry.is_actor_active("enemy/%d" % enemy.entity_id))
+	return true
 
 
 func _is_skill_equipped(slot_index: int, expected_id: String) -> bool:
@@ -1934,12 +3173,14 @@ func _ensure_command_source() -> void:
 	if command_source != null:
 		return
 	command_source = CombatCommandSourceScript.new()
-	input_adapter.configure(command_source, {
-		"make_move": Callable(self, "_move_command"),
-		"make_dodge": Callable(self, "_dodge_command"),
-		"make_cast": Callable(self, "_cast_command"),
-		"make_loot_pickup": Callable(self, "_loot_pickup_command"),
-	}, presentation.feedback, presentation.screen_to_gameplay, presentation.is_pointer_over_interface)
+	command_source_port = MainCombatCommandSourcePortScript.new()
+	var port_result: Dictionary = command_source_port.bind(self, input_adapter)
+	if not bool(port_result.get("ok", false)):
+		push_error("command_source_port_bind_failed:%s" % String(port_result.get("error", "unknown")))
+		command_source = null
+		command_source_port = null
+		return
+	input_adapter.configure(command_source, command_source_port, presentation.feedback, presentation.screen_to_gameplay, presentation.is_pointer_over_interface)
 
 
 func _on_skill_requested(ability: String) -> void:
@@ -2048,3 +3289,265 @@ func defeat_skip_presentation(reason: String = "skipped") -> void:
 
 func defeat_presentation_report() -> Dictionary:
 	return presentation.animations.defeat_presentation_report(gameplay_snapshot())
+
+
+## Typed combat-system composition owned by Main.  The production ranged
+## coordinator receives this object once and never receives a callback bag.
+## Player-domain retention/sequence state and encounter admission remain room
+## owned, while the coordinator only invokes these typed operations.
+class MainCombatRoomPort extends "res://src/runtime/combat/combat_system_room_port.gd":
+
+	var _owner: MainArena = null
+
+	func bind(owner: MainArena) -> Dictionary:
+		if owner == null or not is_instance_valid(owner):
+			return {"ok": false, "error": "combat_room_owner_unavailable"}
+		if owner.player_combat_rules == null or owner.encounter_director == null:
+			return {"ok": false, "error": "combat_room_dependencies_unavailable"}
+		_owner = owner
+		return {"ok": true, "error": ""}
+
+	func is_ready() -> bool:
+		return _owner != null and is_instance_valid(_owner)
+
+	func target_by_id(entity_id: int) -> CombatEnemyState:
+		return _owner._enemy_by_entity_id(entity_id)
+
+	func aim_candidate(target: CombatEnemyState) -> Dictionary:
+		return _owner._manual_aim_candidate(target)
+
+	func current_model() -> Dictionary:
+		return _owner._current_model()
+
+	func target_blocked(target: CombatEnemyState) -> Dictionary:
+		if target == null or _owner.encounter_director == null:
+			return {"ok": false, "error": "target_blocked_port_unavailable"}
+		return {"ok": true, "error": "", "blocked": _owner.encounter_director.is_target_blocked(target)}
+
+	func maybe_summon(target: CombatEnemyState) -> void:
+		_owner._maybe_summon_reinforcements(target)
+
+	func remove_target(target: CombatEnemyState) -> void:
+		_owner._remove_combat_target(target)
+
+	func cancel_buffered_target(entity_id: int) -> int:
+		return _owner._cancel_buffered_target(entity_id)
+
+	func update_mark() -> void:
+		_owner._refresh_player_mark()
+
+	func advance_sequence(skill_id: String) -> void:
+		_owner.player_combat_rules.advance_three_skill_sequence(skill_id)
+
+	func reset_sequence() -> void:
+		_owner.player_combat_rules.reset_three_skill_sequence()
+
+	func erase_attack_request(request_id: int) -> void:
+		_owner._erase_attack_request(request_id)
+
+	func consume_first_critical_bonus() -> int:
+		return _owner.player_combat_rules.consume_first_critical_bonus()
+
+	func retain_missed_arrow(aggregate: BigValue, ordinary: float) -> bool:
+		_owner.player_combat_rules.retain_missed_arrow(aggregate, ordinary)
+		return true
+
+	func take_retained_arrow() -> Dictionary:
+		return _owner.player_combat_rules.take_retained_arrow()
+
+	func is_normal_kernel_projectile(projectile) -> bool:
+		return _owner._is_normal_kernel_projectile(projectile)
+
+	func is_boss_kernel_projectile(projectile) -> bool:
+		return _owner._is_boss_kernel_projectile(projectile)
+
+	func sync_kernel_target_record(projectile) -> void:
+		_owner._sync_kernel_target_record(projectile)
+
+	func sync_boss_kernel_target(projectile) -> Variant:
+		return _owner._sync_boss_kernel_target(projectile)
+
+
+class MainHitAdmissionPort extends "res://src/runtime/combat/room_hit_admission_port.gd":
+
+	var _owner: MainArena = null
+
+	func bind(owner: MainArena) -> Dictionary:
+		if owner == null or not is_instance_valid(owner):
+			return {"ok": false, "error": "hit_admission_owner_unavailable"}
+		_owner = owner
+		return {"ok": true, "error": ""}
+
+	func admit(hit: Dictionary) -> Dictionary:
+		if _owner == null or not is_instance_valid(_owner):
+			return {"allowed": false, "reason": "hit_admission_owner_unavailable"}
+		return _owner._admit_kernel_hit(hit)
+
+
+class MainRewardPort extends "res://src/runtime/world/room_reward_port.gd":
+
+	var _owner: MainArena = null
+
+	func bind(owner: MainArena) -> Dictionary:
+		if owner == null or not is_instance_valid(owner):
+			return {"ok": false, "error": "reward_owner_unavailable"}
+		_owner = owner
+		return {"ok": true, "error": ""}
+
+	func commit(reward: Dictionary) -> Dictionary:
+		if _owner == null or not is_instance_valid(_owner):
+			return {"ok": false, "error": "reward_owner_unavailable"}
+		_owner._commit_legacy_room_reward(reward)
+		return {"ok": true, "error": ""}
+
+
+class MainMovementPolicyPort extends "res://src/runtime/world/room_movement_policy_port.gd":
+
+	var _owner: MainArena = null
+
+	func bind(owner: MainArena) -> Dictionary:
+		if owner == null or not is_instance_valid(owner):
+			return {"ok": false, "error": "movement_policy_owner_unavailable"}
+		_owner = owner
+		return {"ok": true, "error": ""}
+
+	func resolve(actor_id: String) -> Variant:
+		if _owner == null or not is_instance_valid(_owner):
+			return null
+		return _owner._resolve_ranger_movement_policy(actor_id)
+
+
+## Typed production phase domain for the fixed combat tick.
+##
+## This is the room-domain side of the CombatSimulation authority seam. It is
+## a CombatPhasePort subclass declared by the room owner itself, and every
+## phase dispatches through a typed owner reference. There is deliberately no
+## has_method protocol, no string .call() indirection and no separate adapter
+## script. When the remaining Main-owned phases migrate into the runtime room
+## domain, this class shrinks with them.
+class RoomPhaseDomain extends "res://src/runtime/combat/combat_phase_port.gd":
+
+	var _owner: MainArena = null
+
+	func bind(owner: MainArena) -> Dictionary:
+		if owner == null or not is_instance_valid(owner):
+			return {"ok": false, "error": "combat_phase_room_unavailable"}
+		_owner = owner
+		return {"ok": true, "error": ""}
+
+	func is_ready() -> bool:
+		return _owner != null and is_instance_valid(_owner)
+
+	func read_only_targets() -> Array[Dictionary]:
+		return _owner._read_only_targets()
+
+	func set_elapsed(value: float) -> void:
+		_owner._simulation_set_elapsed(value)
+
+	func consume_player_events(result: Dictionary) -> void:
+		_owner._consume_player_events(result)
+
+	func update_room_rules() -> void:
+		_owner._update_room_rules_tick()
+
+	func refresh_hazard_states() -> void:
+		_owner._refresh_hazard_states_tick()
+
+	func collect_commands() -> Array[Dictionary]:
+		return _owner._simulation_collect_commands()
+
+	func route_commands(commands: Array[Dictionary]) -> Dictionary:
+		return _owner._route_commands(commands)
+
+	func update_enemies() -> void:
+		_owner._update_enemies_tick()
+
+	func advance_projectiles() -> void:
+		_owner._advance_piercing_projectiles_tick()
+
+	func resolve_hazard_hits() -> void:
+		_owner._resolve_hazard_hits_tick()
+
+	func check_battle_end() -> void:
+		_owner._check_battle_end()
+
+	func check_timeout() -> void:
+		_owner._simulation_check_timeout()
+
+
+## Typed EncounterDirector composition owned by Main.  The director receives
+## this object once at construction and never receives a callback dictionary;
+## each operation dispatches directly to the room owner through a typed method.
+class MainEncounterRoomPort extends "res://src/game/encounter_room_port.gd":
+
+	var _owner: MainArena = null
+
+	func bind(owner: MainArena, rules: RefCounted, outcome: RefCounted) -> Dictionary:
+		if owner == null or not is_instance_valid(owner):
+			return {"ok": false, "error": "encounter_room_owner_unavailable"}
+		if rules == null or not rules.has_method("apply_damage"):
+			return {"ok": false, "error": "player_rule_port_unavailable"}
+		if outcome == null or not outcome.has_method("outcome_snapshot"):
+			return {"ok": false, "error": "combat_outcome_port_unavailable"}
+		_owner = owner
+		player_rule_port = rules
+		combat_outcome_port = outcome
+		return {"ok": true, "error": ""}
+
+	func move_enemy(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
+		if not _ready():
+			return {"ok": false, "error": "encounter_room_owner_unavailable"}
+		return _owner._move_enemy_actor(enemy, displacement)
+
+	func set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
+		return _ready() and _owner._set_enemy_collision_class(enemy, collision_class)
+
+	func register_enemy(enemy: CombatEnemyState) -> Dictionary:
+		if not _ready():
+			return {"ok": false, "error": "encounter_room_owner_unavailable"}
+		var accepted: bool = _owner._register_enemy_actor(enemy)
+		return {"ok": accepted, "error": "" if accepted else "register_enemy_rejected"}
+
+	func collision_geometry(padding: float) -> Dictionary:
+		if not _ready():
+			return {}
+		return _owner._collision_geometry(padding)
+
+	func layout_spawn_offsets(layout_id: String, count: int) -> Array[Vector2]:
+		if not _ready():
+			return []
+		return _owner._layout_spawn_offsets(layout_id, count)
+
+	func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
+		if not _ready():
+			return Vector2(INF, INF)
+		return _owner._clamp_to_arena(value, padding)
+
+	func quantize_position(value: Vector2) -> Vector2:
+		if not _ready():
+			return Vector2(INF, INF)
+		return _owner._quantize_position(value)
+
+	func queue_player_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
+		if not _ready():
+			return {"ok": false, "error": "encounter_room_owner_unavailable"}
+		return _owner._queue_kernel_player_hit(tick, amount, source_id, source_position)
+
+	func _ready() -> bool:
+		return _owner != null and is_instance_valid(_owner)
+
+
+class MainEncounterSpawnPort extends "res://src/runtime/world/room_encounter_spawn_port.gd":
+
+	var _owner: MainArena = null
+
+	func bind(owner: MainArena) -> Dictionary:
+		if owner == null or not is_instance_valid(owner):
+			return {"ok": false, "error": "encounter_spawn_owner_unavailable"}
+		_owner = owner
+		return {"ok": true, "error": ""}
+
+	func spawn(request: EncounterSpawnRequest, context: Dictionary) -> Variant:
+		if _owner == null or not is_instance_valid(_owner):
+			return EncounterSpawnResultScript.failed(request, "encounter_spawn_owner_unavailable")
+		return _owner.reconcile_encounter_spawn(request, context)

@@ -3,6 +3,7 @@ extends SceneTree
 const ControllerScript := preload("res://src/game/contract_run_controller.gd")
 const ApplicationStateScript := preload("res://src/game/application_state.gd")
 const ContractPlanScript := preload("res://src/game/contract_plan.gd")
+const CommitPortScript := preload("res://tests/helpers/callable_contract_room_commit_port.gd")
 
 class FakeArena:
 	extends Node
@@ -200,9 +201,11 @@ func _test_commit_port_orders_framework_commit(failures: Array[String]) -> void:
 	})
 	state.begin_session()
 	var controller = _create_controller()
-	controller.room_commit_port = func(room_index: int, room_result: Dictionary) -> Dictionary:
+	var commit_port := CommitPortScript.new()
+	commit_port.commit_callback = func(room_index: int, room_result: Dictionary) -> Dictionary:
 		_event_log.append("commit:%d" % room_index)
 		return state.commit_room_victory_and_resolve_next_build(room_index, room_result)
+	controller.room_commit_port = commit_port
 	var config := _config(2)
 	config["room_plan"] = {"rooms": [{"id": "a"}, {"id": "b"}]}
 	config["framework_context"] = {"active_build": state.profile.active_build, "resolved_build": {"build_fingerprint": "stale"}}
@@ -228,8 +231,10 @@ func _test_commit_port_orders_framework_commit(failures: Array[String]) -> void:
 
 func _test_commit_failure_blocks_next_room(failures: Array[String]) -> void:
 	var controller = _create_controller()
-	controller.room_commit_port = func(_room_index: int, _room_result: Dictionary) -> Dictionary:
+	var commit_port := CommitPortScript.new()
+	commit_port.commit_callback = func(_room_index: int, _room_result: Dictionary) -> Dictionary:
 		return {"ok": false, "error": "room_index_mismatch"}
+	controller.room_commit_port = commit_port
 	controller.start_session(_config(2))
 	_created[0].resolve(_handoff_victory([]))
 	_expect(_created.size() == 1, "commit failure: next room must not start", failures)
@@ -285,6 +290,11 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 		if scenario == "pointer":
 			# One real first-room target lets a continuously held explicit lock win the room.
 			scenario_config.room_plan.rooms[0].enemy_ids = ["melee_pursuer"]
+			# The authored priority_charge entry intentionally requires its full
+			# charging_raider + melee roster. This input-routing fixture changes the
+			# roster, so give it a distinct room identity and exercise the typed
+			# roster-derived fallback instead of bypassing the authored mismatch gate.
+			scenario_config.room_plan.rooms[0].room_id = "controller.pointer_fixture"
 		elif scenario == "held":
 			## 2026-10-10 whole-map fix: this scenario proves input continuity, so
 			## room two keeps one real melee target. A fully stationary player can

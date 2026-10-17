@@ -76,10 +76,10 @@ python3 tools/town_layers/bake.py
 ```
 
 需要一次性重做作者输入转换时，使用 `bake.py --author-scene`；之后派生
-当前原生空间数据。Godot 必须在容器普通用户下运行：
+当前原生空间数据。Godot 必须在宿主机普通用户下运行：
 
 ```bash
-source scripts/container_env.sh
+source scripts/project_env.sh
 mib_godot --headless --path . --script res://tools/town_layers/bake_spatial.gd
 ```
 
@@ -92,5 +92,5 @@ SHA、尺寸、feet/crop、native 绑定、透明孔洞及权威边界源码，�
 或重组。25 个负向输入被拒绝，修正后的装载日志无脚本错误。
 
 本次仅对负向门禁作补充，未运行图形穿行、完整构建、导出、发布或 golden
-更新。静态遮挡与贴边穿行的实际画面还需后续图形验收；容器 llvmpipe 与
-宿主真实 GPU 的证据范围仍须分别记录。
+更新。静态遮挡与贴边穿行的实际画面还需后续图形验收；宿主机虚拟显示的
+llvmpipe 与真实 GPU 的证据范围仍须分别记录。
