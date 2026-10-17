@@ -418,8 +418,25 @@ func screen_to_gameplay(screen_point: Vector2, snapshot: Dictionary) -> Vector2:
 	return _input_projection.screen_to_gameplay(screen_point)
 
 
-func is_pointer_over_interface() -> bool:
-	return hud != null and hud.visible and bool(hud.call("is_pointer_over_interface"))
+func is_pointer_over_interface(point: Vector2 = Vector2(-INF, -INF)) -> bool:
+	if hud == null or not hud.visible:
+		return false
+	# Production ArenaHud accepts the event coordinate so a physical click is
+	# classified before Control hover state catches up. Lightweight HUD doubles
+	# used by presentation tests still expose the original zero-argument query;
+	# preserve that contract instead of sending an invalid call into the double.
+	if _pointer_query_accepts_point(hud):
+		return bool(hud.call("is_pointer_over_interface", point))
+	return bool(hud.call("is_pointer_over_interface"))
+
+
+func _pointer_query_accepts_point(node: Object) -> bool:
+	for method: Dictionary in node.get_method_list():
+		if String(method.get("name", "")) != "is_pointer_over_interface":
+			continue
+		var arguments = method.get("args", [])
+		return arguments is Array and not (arguments as Array).is_empty()
+	return false
 
 
 func draw_ground_pass(canvas: CanvasItem) -> void:

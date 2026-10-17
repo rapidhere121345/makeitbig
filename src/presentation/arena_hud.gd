@@ -231,9 +231,16 @@ func present(snapshot: Dictionary) -> void:
 	_boss_hp_label.text = "%.1f%%" % _boss_health_bar.value if ratio_known else "比例不可比"
 	_boss_hp_label.visible = has_boss
 	_boss_ratio_label.text = ("同层真实比例  %.1f%%" % _boss_health_bar.value if ratio_known else "结构层级不同 · 比例不可比") if has_boss else "留意敌人的攻击预警"
-	_boss_damage_label.text = "对 Boss 伤害  %s" % String(snapshot.get("damage", "0")) if has_boss else "目标 %s · 存活 %d" % [String(snapshot.get("objective_label", "清理敌人")), int(snapshot.get("living_targets", 0))]
+	# Ordinary rooms already expose their objective and living count in
+	# BossValueLabel.  The old fallback repeated that same line in the damage
+	# slot, making the open battle report look like two separate facts. Keep the
+	# damage row for the Boss contract where it has a distinct meaning, and fold
+	# it out of the ordinary-room summary entirely.
+	_boss_damage_label.visible = has_boss
+	_boss_damage_label.text = "对 Boss 伤害  %s" % String(snapshot.get("damage", "0")) if has_boss else ""
 	if has_boss:
 		_boss_state_label.text = "真实比例已知" if ratio_known else "比例不可比"
+		_boss_state_label.add_theme_color_override("font_color", COLOR_NEUTRAL)
 	elif has_live_attack_target:
 		var target_range := "射程内" if attack_target_in_range else "射程外"
 		_boss_state_label.text = "当前目标  %s  ·  %s / %s  ·  %s" % [
@@ -242,8 +249,13 @@ func present(snapshot: Dictionary) -> void:
 			_plain_number(attack_target_maximum_health),
 			target_range,
 		]
+		# The target line drives the immediate shooting decision. Use the light
+		# body colour for a legal shot and the amber warning colour when the
+		# selected target is outside the authoritative range.
+		_boss_state_label.add_theme_color_override("font_color", COLOR_BONE if attack_target_in_range else COLOR_AMBER)
 	else:
 		_boss_state_label.text = "剩余目标  %d" % int(snapshot.get("living_targets", 0))
+		_boss_state_label.add_theme_color_override("font_color", COLOR_NEUTRAL)
 	var hazards := String(snapshot.get("hazard_status", "无"))
 	var elites := String(snapshot.get("elite_status", "无"))
 	_summary_encounter_label.text = "场域：%s · %s\n%s\n危害：%s\n精英：%s" % [room_display_name, room_landmark, room_concept, _encounter_status_text(hazards), _encounter_status_text(elites)]
@@ -315,17 +327,36 @@ func _apply_resource_visibility() -> void:
 	_resource_label.tooltip_text = _resource_state_text if _resource_label.visible else ""
 
 
-func is_pointer_over_interface() -> bool:
+func is_pointer_over_interface(point: Vector2 = Vector2(-INF, -INF)) -> bool:
 	var viewport := get_viewport()
 	if viewport == null:
 		return false
+	var has_event_point := not is_inf(point.x) and not is_inf(point.y)
+	var pointer := point if has_event_point else viewport.get_mouse_position()
 	# Input's mouse-button state is global, even when a SubViewportContainer
 	# correctly rejects a click in the letterbox. Exclude those pixels from the
 	# held-fire path as well, using the same viewport-space pointer as the HUD.
-	if not viewport.get_visible_rect().has_point(viewport.get_mouse_position()):
+	if not viewport.get_visible_rect().has_point(pointer):
 		return true
+	if has_event_point:
+		# Main receives the physical event before Control hover state is guaranteed
+		# to be updated. Classify the event's own viewport coordinate so a click
+		# injected by a window backend, replay, or accessibility device cannot
+		# inherit the previous frame's HUD hover and suppress a world shot.
+		return _point_hits_interactive_control(self, pointer)
 	var hovered := viewport.gui_get_hovered_control()
 	return hovered != null and (hovered == self or is_ancestor_of(hovered))
+
+
+func _point_hits_interactive_control(node: Node, point: Vector2) -> bool:
+	if node is Control:
+		var control := node as Control
+		if control != self and control.visible and control.mouse_filter != Control.MOUSE_FILTER_IGNORE and control.get_global_rect().has_point(point):
+			return true
+	for child: Node in node.get_children():
+		if _point_hits_interactive_control(child, point):
+			return true
+	return false
 
 
 ## Full authoritative copy for one cell, including what the compact layout cannot
@@ -559,6 +590,9 @@ func _build_interface() -> void:
 	_return_button = Button.new()
 	_return_button.name = "ReturnButton"
 	_return_button.text = "退出合同"
+	# Combat shortcuts own keyboard input. A clicked utility button must not keep
+	# focus and consume the next Space press as a GUI accept event.
+	_return_button.focus_mode = Control.FOCUS_NONE
 	_return_button.add_theme_font_size_override("font_size", 18)
 	_return_button.pressed.connect(func() -> void: return_requested.emit())
 	# Theme padding keeps these buttons readable at the 18px floor. Keep them high
@@ -567,6 +601,7 @@ func _build_interface() -> void:
 	_summary_toggle_button = Button.new()
 	_summary_toggle_button.name = "SummaryToggleButton"
 	_summary_toggle_button.flat = true
+	_summary_toggle_button.focus_mode = Control.FOCUS_NONE
 	_summary_toggle_button.add_theme_font_size_override("font_size", 18)
 	_summary_toggle_button.pressed.connect(toggle_summary)
 	_place(utility_layout, _summary_toggle_button, Rect2(108.0, 29.0, 116.0, 36.0), true)
@@ -647,6 +682,7 @@ func _build_skill_cell(slot: Dictionary) -> Button:
 	var button := Button.new()
 	button.name = node_name
 	button.text = ""
+	button.focus_mode = Control.FOCUS_NONE
 	button.custom_minimum_size = SKILL_CELL_MINIMUM
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.pressed.connect(func() -> void: _request_for(node_name))
