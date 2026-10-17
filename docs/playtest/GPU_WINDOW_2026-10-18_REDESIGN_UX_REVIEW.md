@@ -70,14 +70,18 @@
 
 - `source scripts/project_env.sh && ./scripts/check.sh`：通过；同时输出 `PASS tools/play_session.py syntax`。
 - `git diff --check`：通过。
-- 定向表现层测试入口：
+- 表现层定向测试：`test_arena_hud.gd`、`test_combat_presentation_boundary.gd`、`test_arena_combat_presenter.gd`、`test_input_feedback_transients.gd`、`test_presentation_occlusion_boundary.gd`、`test_tutorial_pointer_cast.gd` 和 `test_manual_combat_input.gd` 全部 PASS。
+- 全量测试入口：
 
   ```bash
-  MIB_TEST_RUNNER=/tmp/mib-presentation-tests.sh \
-    MIB_TEST_TIMEOUT_SEC=600 ./scripts/container_test.sh
+  MIB_TEST_TIMEOUT_SEC=1800 \
+    MIB_TEST_LOG=build/current/container-test-final.log \
+    ./scripts/container_test.sh
   ```
 
-  结果：`test_presentation_occlusion_boundary.gd`、`test_combat_presentation_boundary.gd`、`test_main_presentation_closeout.gd`、`test_arena_hud.gd`、`test_input_feedback_transients.gd`、`test_ranger_combat_skills.gd` 全部 PASS；测试门禁报告 `exit 0, no GDScript runtime errors`。Godot 仍打印已有的 ObjectDB/resource 清理告警，但没有脚本错误。
+- 全量结果：`test gate passed: exit 0, no GDScript runtime errors`；600 rooms / 100 seeds 重复战斗矩阵、自动回放和结果页回归均通过。Godot 仍打印已有的 ObjectDB/resource 清理告警；测试输出中的 `CAPTURE_FAIL` / `AUTO_SMOKE_FAIL` 是预期的 headless capture 负例，不是脚本错误。
+- `./scripts/container_export.sh`：通过，完成导出包生成。
+- `./scripts/container_smoke.sh`：通过，输出 `SCENE_SMOKE_PASS framework=routes,builds,contract,persistence route=title`。
 - 三轮试玩进程已用 `MIB_PLAY_SESSION_DIR=... python3 tools/play_session.py '{"quit":true}'` 正常退出；当前没有遗留 Godot 窗口进程。
 
 ## 未解决限制
