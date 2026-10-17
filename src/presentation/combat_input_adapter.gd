@@ -33,6 +33,7 @@ var manual_pointer_target_radius := 0.0
 var manual_pointer_status := POINTER_STATUS_NONE
 var _loot_pickup_requested_id := ""
 var _snapshot: Dictionary = {}
+var _last_pointer_screen := Vector2(-INF, -INF)
 
 
 func configure(source: RefCounted, source_port: RefCounted, feedback_owner: Node,
@@ -75,7 +76,23 @@ func collect_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
 
 
 func pointer_over_interface() -> bool:
-	return bool(pointer_interface_query.call()) if pointer_interface_query.is_valid() else false
+	if not pointer_interface_query.is_valid():
+		return false
+	if not is_inf(_last_pointer_screen.x) and not is_inf(_last_pointer_screen.y):
+		return bool(pointer_interface_query.call(_last_pointer_screen))
+	return bool(pointer_interface_query.call())
+
+
+func _event_pointer_over_interface(event: InputEvent, fallback: bool) -> bool:
+	if event is InputEventMouseMotion:
+		_last_pointer_screen = event.position
+		return fallback or (bool(pointer_interface_query.call(event.position)) if pointer_interface_query.is_valid() else false)
+	if event is InputEventMouseButton:
+		# The caller's ownership is authoritative for a press that began on a
+		# control. Event geometry may only promote a false fallback, preventing a
+		# stale hover read from letting a world attack click through the HUD.
+		return fallback or (bool(pointer_interface_query.call(event.position)) if pointer_interface_query.is_valid() else false)
+	return fallback
 
 
 func active() -> bool:
@@ -91,7 +108,8 @@ func capture_actions(event: InputEvent, snapshot: Dictionary) -> void:
 		return
 	if not active():
 		return
-	if event.is_action_pressed("dodge") and (not event is InputEventMouseButton or not pointer_over_interface()):
+	var event_pointer_over_interface := _event_pointer_over_interface(event, pointer_over_interface())
+	if event.is_action_pressed("dodge") and (not event is InputEventMouseButton or not event_pointer_over_interface):
 		command_source.dodge_requested = true
 	elif event.is_action_pressed("skill_2"):
 		request_skill("hunter_mark", snapshot)
@@ -307,14 +325,15 @@ func capture_attack_event(event: InputEvent, pointer_over_interface: bool, snaps
 		if _snapshot["selected_mode"] != "Manual":
 			manual_combat_input.reset()
 		return
-	var newly_pressed: bool = manual_combat_input.observe_attack_event(event, pointer_over_interface)
+	var event_pointer_over_interface := _event_pointer_over_interface(event, pointer_over_interface)
+	var newly_pressed: bool = manual_combat_input.observe_attack_event(event, event_pointer_over_interface)
 	var pointer_event := event is InputEventMouseButton
 	if pointer_event and event.is_action_released(&"attack"):
 		clear_pointer_lock()
 		return
 	if not newly_pressed:
 		return
-	var source: String = manual_combat_input.attack_source(pointer_over_interface)
+	var source: String = manual_combat_input.attack_source(event_pointer_over_interface)
 	if source == ATTACK_SOURCE_POINTER:
 		if pointer_event:
 			_capture_pointer_attack((event as InputEventMouseButton).position)
