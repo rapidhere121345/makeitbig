@@ -82,7 +82,7 @@
 - 全量结果：`test gate passed: exit 0, no GDScript runtime errors`；600 rooms / 100 seeds 重复战斗矩阵、自动回放和结果页回归均通过。Godot 仍打印已有的 ObjectDB/resource 清理告警；测试输出中的 `CAPTURE_FAIL` / `AUTO_SMOKE_FAIL` 是预期的 headless capture 负例，不是脚本错误。
 - `./scripts/container_export.sh`：通过，完成导出包生成。
 - `./scripts/container_smoke.sh`：通过，输出 `SCENE_SMOKE_PASS framework=routes,builds,contract,persistence route=title`。
-- `./scripts/release.sh all --note "GPU UX acceptance 2026-10-18"`：通过，生成 build `20261017-220100-80454210b5e9` 并刷新 `build/releases/` 静态发布页。
+- `./scripts/release.sh all --note "GPU UX acceptance 2026-10-18 final"`：通过，生成与最终 HEAD 对应的 build 并刷新 `build/releases/` 静态发布页；具体 ID 以 `build/releases/index.json` 为准。
 - `./scripts/release.sh verify --deep`：通过，20 个 build 的 SHA256 均通过。
 - `./deploy/tailscale/validate.sh`：通过；本轮只做静态校验，没有启用或修改宿主机网络暴露。
 - 三轮试玩进程已用 `MIB_PLAY_SESSION_DIR=... python3 tools/play_session.py '{"quit":true}'` 正常退出；当前没有遗留 Godot 窗口进程。
