@@ -4,6 +4,7 @@ var directory := OS.get_environment("MIB_PLAY_SESSION_DIR")
 var game: Node
 var last_id := -1
 var pointer := Vector2.ZERO
+var engine_pid_path := ""
 
 func _initialize() -> void:
 	if directory.is_empty(): directory = "/tmp/makeitbig-play"
@@ -11,6 +12,12 @@ func _initialize() -> void:
 
 func _start() -> void:
 	DirAccess.make_dir_recursive_absolute(directory)
+	engine_pid_path = directory + "/engine.pid"
+	var pid_file := FileAccess.open(engine_pid_path, FileAccess.WRITE)
+	if pid_file != null:
+		pid_file.store_string(str(OS.get_process_id()))
+		pid_file.close()
+	print("PLAY_PID ", OS.get_process_id())
 	# Reusing the evidence directory must not replay the previous session's
 	# quit/button command. Commands arriving after startup still run normally.
 	if FileAccess.file_exists(directory + "/command.json"):
@@ -30,7 +37,10 @@ func _start() -> void:
 	while true:
 		await process_frame
 		if not FileAccess.file_exists(directory + "/command.json"): continue
-		var command: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(directory + "/command.json"))
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(directory + "/command.json"))
+		if not parsed is Dictionary:
+			continue
+		var command: Dictionary = parsed
 		var id := int(command.get("id", 0))
 		if id <= last_id: continue
 		last_id = id
@@ -72,6 +82,15 @@ func _start() -> void:
 				event = event.duplicate()
 				event.pressed = false
 				root.push_input(event, true)
+				await process_frame
+		## A frame count is ideal for deterministic keyboard replays, but a real
+		## X11 device needs a wall-clock window in which the paused game remains
+		## active. The window is deliberately opt-in so ordinary replays keep their
+		## fixed step semantics.
+		var input_window_ms := maxi(0, int(command.get("input_window_ms", 0)))
+		if input_window_ms > 0:
+			var input_deadline := Time.get_ticks_msec() + input_window_ms
+			while Time.get_ticks_msec() < input_deadline:
 				await process_frame
 		var keys: Array = command.get("keys", [])
 		for key in keys: _key(String(key), true)

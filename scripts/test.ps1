@@ -281,6 +281,8 @@ if ($LASTEXITCODE -ne 0) { throw "Result evidence tests failed with exit code $L
 if ($LASTEXITCODE -ne 0) { throw "Settlement route tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_ending_screen.gd
 if ($LASTEXITCODE -ne 0) { throw "Ending screen tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_auto_contract_flow.gd
+if ($LASTEXITCODE -ne 0) { throw "Auto contract flow tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_contract_run_controller.gd
 if ($LASTEXITCODE -ne 0) { throw "Contract run controller tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_combat_room_runtime.gd

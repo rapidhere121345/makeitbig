@@ -84,6 +84,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_enemy_combat_profile.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_status_effect_ledger.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_mainline_room_loot.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_auto_contract_flow.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_room_loot_build_handoff.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_early_items.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_early_skills.gd
