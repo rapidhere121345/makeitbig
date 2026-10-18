@@ -10,6 +10,7 @@ const HERO_ID := "town/ranger"
 const HERO_VISUAL_ID := "ranger.town.idle"
 const DESTINATION_EDGE_MARGIN := Vector2(22, 96)
 const HERO_SPEED := 96.0
+const INTERACTION_ANCHOR_COLOR := Color("e5b67c")
 
 var world_viewport: SubViewport
 var world_display: TextureRect
@@ -21,6 +22,9 @@ var _hero_sprite: Sprite2D
 var _resident_views: Dictionary = {}
 var _destination_marker: Polygon2D
 var _destination_indicator: Polygon2D
+var _interaction_anchor: Node2D
+var _interaction_focus_active := false
+var _interaction_focus_id := ""
 var _destination_occluded := false
 var _load_errors: Array[String] = []
 var _attached := false
@@ -90,6 +94,7 @@ func attach(presenter: Variant, initial_state: Dictionary, presentation_runtime:
 	_destination_marker.polygon = PackedVector2Array([Vector2(-6, -55), Vector2(6, -55), Vector2(0, -45)])
 	_destination_marker.color = Color("e5b67c")
 	world_presenter.foreground_layer.add_child(_destination_marker)
+	_build_interaction_anchor()
 	_destination_indicator = Polygon2D.new()
 	_destination_indicator.name = "TownDestinationIndicator"
 	_destination_indicator.polygon = PackedVector2Array([Vector2(8, 0), Vector2(-5, 6), Vector2(-5, -6)])
@@ -168,6 +173,7 @@ func consume(state: Dictionary) -> void:
 	world_viewport.size = Vector2i(_state.get("view_size", Vector2(640, 360)))
 	world_presenter.position = -camera_world_offset()
 	world_presenter.sync_actor(HERO_ID, hero_world_position())
+	_update_interaction_anchor()
 	_hero_frame = ranger_animation.resolve({"facing": _state.get("hero_facing", "south"), "moving": _state.get("hero_moving", false),
 		"tick": int(_state.get("tick", 0)), "phase_ticks": int(_state.get("tick", 0))})
 	_apply_frame(_hero_sprite, _hero_frame)
@@ -182,6 +188,7 @@ func _process(delta: float) -> void:
 	if _attached:
 		life_animation.tick(delta)
 		_update_life()
+		_update_interaction_anchor()
 		_sync_occlusion(delta)
 
 
@@ -285,6 +292,64 @@ func _actor_sprite(node_name: String) -> Sprite2D:
 	sprite.region_enabled = true
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	return sprite
+
+
+## A nearby interaction needs a readable player anchor even when a native roof or
+## fence correctly draws in front of the actor. This is a player feedback mark in
+## the presentation foreground, not a copy of the actor and not a re-sort of any
+## authored world object. It is only enabled by the hub while an interaction is
+## actually available.
+func _build_interaction_anchor() -> void:
+	_interaction_anchor = Node2D.new()
+	_interaction_anchor.name = "TownInteractionAnchor"
+	_interaction_anchor.z_index = 2
+	_interaction_anchor.visible = false
+	world_presenter.foreground_layer.add_child(_interaction_anchor)
+	var left := Line2D.new()
+	left.name = "LeftWing"
+	left.points = PackedVector2Array([Vector2(-11, 2), Vector2(-7, 6), Vector2(-2, 3)])
+	left.width = 1.0
+	left.default_color = INTERACTION_ANCHOR_COLOR
+	left.antialiased = false
+	_interaction_anchor.add_child(left)
+	var right := Line2D.new()
+	right.name = "RightWing"
+	right.points = PackedVector2Array([Vector2(2, 3), Vector2(7, 6), Vector2(11, 2)])
+	right.width = 1.0
+	right.default_color = INTERACTION_ANCHOR_COLOR
+	right.antialiased = false
+	_interaction_anchor.add_child(right)
+	var core := Polygon2D.new()
+	core.name = "Core"
+	core.polygon = PackedVector2Array([Vector2(-2, 1), Vector2(0, -1), Vector2(2, 1), Vector2(0, 3)])
+	core.color = INTERACTION_ANCHOR_COLOR
+	_interaction_anchor.add_child(core)
+
+
+## Called by the hub presentation when the player is inside a readable
+## interaction radius. The focus id is diagnostic only; it never enters the
+## simulation or changes which facility the runtime accepts.
+func set_interaction_focus(active: bool, focus_id: String = "") -> void:
+	_interaction_focus_active = active
+	_interaction_focus_id = focus_id if active else ""
+	_update_interaction_anchor()
+
+
+func _update_interaction_anchor() -> void:
+	if _interaction_anchor == null or not is_instance_valid(_interaction_anchor):
+		return
+	_interaction_anchor.position = hero_world_position()
+	_interaction_anchor.visible = _attached and _interaction_focus_active
+
+
+func interaction_anchor_report() -> Dictionary:
+	return {
+		"active": _interaction_focus_active,
+		"visible": _interaction_anchor != null and is_instance_valid(_interaction_anchor) and _interaction_anchor.visible,
+		"focus_id": _interaction_focus_id,
+		"world_position": hero_world_position(),
+		"layer": "foreground_interaction",
+	}
 
 
 func is_ready() -> bool:
