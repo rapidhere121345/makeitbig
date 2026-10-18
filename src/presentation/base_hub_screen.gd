@@ -993,6 +993,7 @@ func _update_nearby_feature() -> void:
 		return
 	_update_navigation_state()
 	if _details_expanded or is_dialogue_open():
+		_view.set_interaction_focus(false)
 		_nearby_panel.hide()
 		_prompt_rect = Rect2()
 		return
@@ -1000,6 +1001,7 @@ func _update_nearby_feature() -> void:
 	_update_resident_markers()
 	var resident_id := nearby_resident_id()
 	if feature_id.is_empty() and resident_id.is_empty():
+		_view.set_interaction_focus(false)
 		_nearby_panel.visible = false
 		_prompt_rect = Rect2()
 		return
@@ -1009,6 +1011,7 @@ func _update_nearby_feature() -> void:
 	_nearby_label.text = _facility_prompt_text(feature_id)
 	if not resident_id.is_empty():
 		_nearby_label.text = "[E] 与%s交谈" % String(_resident_conversations[resident_id].get("npc_name", ""))
+	_view.set_interaction_focus(true, resident_id if not resident_id.is_empty() else feature_id)
 	_nearby_label.tooltip_text = _nearby_label.text
 	_prompt_rect = _resolve_prompt_rect()
 	_place_control(_nearby_panel, _prompt_rect)

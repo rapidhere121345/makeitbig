@@ -68,6 +68,7 @@ func run() -> Array[String]:
 	_test_nav_boss_crossing(hub, failures)
 	_test_nav_long_status_and_bounds(hub, failures)
 	_test_hub_prompt_stays_minimal(hub, failures)
+	_test_interaction_anchor_tracks_focus(hub, failures)
 	_test_hub_information_copy_and_details(hub, failures)
 	_test_compact_ui_sizes(failures)
 	_test_growth_story_and_settings(hub, failures)
@@ -488,6 +489,38 @@ func _test_hub_prompt_stays_minimal(hub, failures: Array[String]) -> void:
 	## Away from every stand the badge is gone again.
 	hub.set_hero_position(_town_of(hub).route_points("contract")[0] * 2.0)
 	_expect(hub.get_prompt_rect() == Rect2() and not hub._nearby_panel.visible, "base hub: the proximity prompt stayed on screen away from every stand", failures)
+
+
+func _test_interaction_anchor_tracks_focus(hub, failures: Array[String]) -> void:
+	var view = _view_of(hub)
+	var town = _town_of(hub)
+	hub.set_hero_position(town.route_points("contract")[0] * 2.0)
+	var clear_report: Dictionary = view.interaction_anchor_report()
+	_expect(not bool(clear_report.get("active", true)) and not bool(clear_report.get("visible", true)),
+		"base hub: interaction anchor remained visible away from an interaction", failures)
+
+	var contract_feet: Vector2 = town.entry_for("contract").feet
+	hub.set_hero_position(contract_feet * 2.0)
+	var focused: Dictionary = view.interaction_anchor_report()
+	_expect(bool(focused.get("active", false)) and bool(focused.get("visible", false))
+		and String(focused.get("focus_id", "")) == "contract",
+		"base hub: nearby contract did not expose a focused interaction anchor", failures)
+	_expect(Vector2(focused.get("world_position", Vector2.INF)).distance_to(town.hero_world_position()) < 0.01,
+		"base hub: interaction anchor drifted away from the authoritative hero feet", failures)
+	_expect(String(focused.get("layer", "")) == "foreground_interaction",
+		"base hub: interaction anchor did not identify its presentation-only layer", failures)
+
+	var contract_sprite := view.world_presenter.native_binding_node("town/native/contract") as CanvasItem
+	var wood_sprite := view.world_presenter.native_binding_node("town/native/wood_contract") as CanvasItem
+	_expect(contract_sprite != null and wood_sprite != null
+		and is_equal_approx(contract_sprite.modulate.a, 1.0)
+		and is_equal_approx(wood_sprite.modulate.a, 1.0),
+		"base hub: interaction focus altered authored building opacity", failures)
+
+	hub.set_hero_position(town.route_points("contract")[0] * 2.0)
+	var reset_report: Dictionary = view.interaction_anchor_report()
+	_expect(not bool(reset_report.get("active", true)) and not bool(reset_report.get("visible", true)),
+		"base hub: interaction anchor did not clear after leaving the facility", failures)
 
 
 ## Long status and state copy stay reachable: one clipped row plus a tooltip and an
