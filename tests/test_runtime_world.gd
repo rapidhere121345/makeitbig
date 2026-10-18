@@ -121,7 +121,7 @@ func _test_actor_state_is_versioned_instance_state() -> void:
 	_expect(state.room_instance_id == "room/0" and state.world_revision == 4 and state.footprint_radius == 6.0, "actor state: room identity or footprint missing")
 	var unassigned: SimOutcome = state.commit_movement(Vector2(11.0, 12.0), 1)
 	_expect(not unassigned.ok and unassigned.error == &"unidentified_record" and state.feet_position == Vector2(10.0, 12.0), "actor state: unidentified record accepted a movement commit")
-	state.set_entity_identity(SimEntityHandleScript.make(0, 1), 1)
+	state.set_entity_identity(SimEntityHandleScript.make(0, 1, &"actors", "room/0", 4), 1)
 	var non_finite: SimOutcome = state.commit_movement(Vector2(INF, 12.0), 1)
 	_expect(not non_finite.ok and non_finite.error == &"invalid_movement_position" and state.feet_position == Vector2(10.0, 12.0), "actor state: non-finite position was accepted")
 	var applied: SimOutcome = state.commit_movement(Vector2(11.0, 12.0), 1, Vector2.RIGHT)

@@ -32,6 +32,7 @@ func _test_death_settlement(failures: Array[String]) -> void:
 	var request := {
 		"tick": 8,
 		"room_id": "room.test",
+		"world_revision": 4,
 		"entity_key": "enemy/1",
 		"source_key": "ranger",
 		"spawn_key": "wave.01/melee/0",
@@ -50,6 +51,10 @@ func _test_death_settlement(failures: Array[String]) -> void:
 	var duplicate: Dictionary = settlement.settle(request)
 	_expect(bool(duplicate.get("ok", false)) and bool(duplicate.get("duplicate", false)) and not bool(duplicate.get("changed", true)), "duplicate death emitted a second settlement", failures)
 	_expect((settlement.snapshot().get("settled_keys", []) as Array).size() == 1, "death settlement key accounting is not idempotent", failures)
+	var stale_request := request.duplicate(true)
+	stale_request["world_revision"] = 5
+	var stale: Dictionary = settlement.settle(stale_request)
+	_expect(not bool(stale.get("ok", false)) and String(stale.get("error", "")) == "death_request_revision_mismatch", "stale death revision was accepted", failures)
 	var invalid: Dictionary = DeathRequestScript.from_data({"tick": 8, "room_id": "room.test", "entity_key": "bad key", "position": Vector2.ZERO})
 	_expect(not bool(invalid.get("ok", false)), "invalid death request was accepted", failures)
 
