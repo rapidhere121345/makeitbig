@@ -215,6 +215,15 @@ func _test_generation_invalidation_and_no_id_reuse() -> void:
 	_expect(spawned.ok and spawned.handle.index == 0 and spawned.handle.generation == 1 and spawned.stable_key == 1,
 		"setup spawn must allocate slot 0 gen 1 key 1", failures)
 	var first_handle = spawned.handle
+	_expect(first_handle.store_id == registry.store_id() and first_handle.room_instance_id == WorldFactory.DEFAULT_ROOM and first_handle.world_revision == WorldFactory.DEFAULT_REVISION,
+		"spawned handle must carry store, room and revision scope", failures)
+	var round_trip := SimEntityHandleScript.parse(first_handle.encode())
+	_expect(round_trip.equals_handle(first_handle), "scoped handle encode/parse lost identity", failures)
+	var foreign_room := SimEntityHandleScript.make(first_handle.index, first_handle.generation, registry.store_id(), "other-room", WorldFactory.DEFAULT_REVISION)
+	var foreign_revision := SimEntityHandleScript.make(first_handle.index, first_handle.generation, registry.store_id(), WorldFactory.DEFAULT_ROOM, WorldFactory.DEFAULT_REVISION + 1)
+	var foreign_store := SimEntityHandleScript.make(first_handle.index, first_handle.generation, &"other-store", WorldFactory.DEFAULT_ROOM, WorldFactory.DEFAULT_REVISION)
+	_expect(not registry.resolve(foreign_room).ok and not registry.resolve(foreign_revision).ok and not registry.resolve(foreign_store).ok,
+		"handles from another room, revision or store must fail closed", failures)
 
 	world.queue_command(SimCommandScript.despawn_entity(first_handle))
 	_expect(world.step_tick().ok, "despawn tick must run", failures)
@@ -231,7 +240,7 @@ func _test_generation_invalidation_and_no_id_reuse() -> void:
 	var fresh_resolve: SimOutcome = registry.resolve(respawned.handle)
 	_expect(fresh_resolve.ok and fresh_resolve.stable_key == 2, "current handles must resolve", failures)
 
-	var stale_handle := SimEntityHandleScript.make(0, 1)
+	var stale_handle := SimEntityHandleScript.make(0, 1, registry.store_id(), WorldFactory.DEFAULT_ROOM, WorldFactory.DEFAULT_REVISION)
 	var stale_after_reuse: SimOutcome = registry.resolve(stale_handle)
 	_expect(not stale_after_reuse.ok and stale_after_reuse.error == &"stale_entity_handle", "explicitly stale handles must fail closed", failures)
 	var invalid_handle := SimEntityHandleScript.make(41, 1)
@@ -301,7 +310,7 @@ func _test_snapshot_byte_stability_and_key_ordering() -> void:
 	for spawn_index in 3:
 		var spawned: SimOutcome = world.actor_registry.spawn_actor(Vector2(spawn_index, 0), 0.5, WorldFactory.DEFAULT_ROOM, WorldFactory.DEFAULT_REVISION)
 		issued.append(spawned.stable_key)
-	var middle_handle: SimEntityHandle = world.actor_registry.resolve(SimEntityHandleScript.make(1, 1)).value.get_entity_handle()
+	var middle_handle: SimEntityHandle = world.actor_registry.actors_sorted_by_key()[1].get_entity_handle()
 	var dead_key: int = world.actor_registry.resolve(middle_handle).stable_key
 	world.queue_command(SimCommandScript.despawn_entity(middle_handle))
 	_expect(world.step_tick().ok, "scramble despawn tick must run", failures)

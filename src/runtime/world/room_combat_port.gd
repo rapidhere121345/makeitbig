@@ -298,6 +298,7 @@ func on_death(entity_view: SimEntityView, ctx: SimTickContext) -> Variant:
 		var request := {
 			"tick": ctx.tick,
 			"room_id": room_id,
+			"world_revision": world_revision,
 			"entity_key": entity_key,
 			"source_key": String(_last_source_by_target.get(entity_key, "system")),
 			"spawn_key": String(actor_view.spawn_key) if actor_view is ActorState.ActorEntityView else "",

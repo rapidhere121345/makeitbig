@@ -77,6 +77,19 @@ func actor_handle(actor_id: String) -> SimEntityHandle:
 	return _handles.get(actor_id, null)
 
 
+## Validates a handle at the room boundary before a spatial producer can use
+## it as an attack source.  A handle with the same slot and generation from a
+## previous room instance is still a valid value, but it is not valid for this
+## access object and must fail closed.
+func accepts_handle(handle: SimEntityHandle) -> bool:
+	return (
+		handle != null
+		and registry != null
+		and handle.matches_scope(registry.store_id(), room_instance_id, world_revision)
+		and registry.is_live(handle)
+	)
+
+
 func has_actor(actor_id: String) -> bool:
 	var handle: SimEntityHandle = _handles.get(actor_id, null)
 	return handle != null and registry != null and registry.is_live(handle)

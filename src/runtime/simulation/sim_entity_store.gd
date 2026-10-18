@@ -85,7 +85,13 @@ func spawn(record: Variant, assigned_key: int) -> SimOutcome:
 	slot.tombstone = false
 	slot.record = record
 
-	var handle := SimEntityHandleScript.make(slot_index, slot.generation)
+	var handle := SimEntityHandleScript.make(
+		slot_index,
+		slot.generation,
+		store_id,
+		room_instance_id,
+		world_revision
+	)
 	record.set_entity_identity(handle, slot.stable_key)
 	return SimOutcome.success().with_handle(handle).with_key(slot.stable_key)
 
@@ -198,6 +204,8 @@ func _index_of_slot(target: SimEntitySlot) -> int:
 func _resolve(handle: SimEntityHandle) -> SimOutcome:
 	if handle == null or not handle.is_valid():
 		return SimOutcome.failure(&"invalid_entity_handle")
+	if not handle.matches_scope(store_id, room_instance_id, world_revision):
+		return SimOutcome.failure(&"stale_entity_handle")
 	if handle.index >= _slots.size():
 		return SimOutcome.failure(&"stale_entity_handle")
 	var slot: SimEntitySlot = _slots[handle.index]

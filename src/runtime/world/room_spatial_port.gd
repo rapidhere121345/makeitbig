@@ -350,6 +350,9 @@ func _execute_path_query(query: PathQuery, ctx: SimTickContext) -> void:
 	result.channel = query.channel
 	result.piercing = query.piercing
 	_path_results.append(result)
+	if not actors.has_method("accepts_handle") or not actors.accepts_handle(query.source):
+		result.errors.append("path_query:source_stale")
+		return
 	var resolved: Dictionary = _hit_resolver.resolve_path({
 		"channel": query.channel,
 		"start": query.start,
@@ -400,6 +403,9 @@ func _execute_path_query(query: PathQuery, ctx: SimTickContext) -> void:
 func _execute_boss_query(query: BossAttackQuery, ctx: SimTickContext) -> void:
 	if boss_domain == null:
 		_boss_path_results.append(BossPathResultScript.failure(ctx.tick, query.attack_instance_id, "boss_domain_unbound"))
+		return
+	if not actors.has_method("accepts_handle") or not actors.accepts_handle(query.source):
+		_boss_path_results.append(BossPathResultScript.failure(ctx.tick, query.attack_instance_id, "boss_query:source_stale"))
 		return
 	var source_key := String(actors.entity_key_for_handle(query.source)) if actors.has_method("entity_key_for_handle") else ""
 	var result: BossPathResult = boss_domain.query_path(query, _hit_resolver, source_key)

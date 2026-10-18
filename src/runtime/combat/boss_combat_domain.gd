@@ -321,6 +321,7 @@ func _death_request(target: BossTargetView, tick: int) -> Dictionary:
 	return {
 		"tick": tick,
 		"room_id": room_id,
+		"world_revision": world_revision,
 		"entity_key": target.target_key,
 		"source_key": String(_last_source_by_target.get(target.target_key, "system")),
 		"spawn_key": target.spawn_key,

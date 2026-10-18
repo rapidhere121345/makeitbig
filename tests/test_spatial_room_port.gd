@@ -33,6 +33,7 @@ func _initialize() -> void:
 	_test_equal_toi_wall_wins_over_target()
 	_test_no_queries_is_safe_noop()
 	_test_queue_validation_fails_closed()
+	_test_stale_source_handle_fails_closed()
 	_test_unbound_port_reports_errors_without_hits()
 	_test_own_body_never_takes_self_damage()
 	_test_separating_body_never_takes_false_damage()
@@ -245,7 +246,7 @@ func _test_unbound_port_reports_errors_without_hits() -> void:
 	# The queue only checks shape; execution reports the missing room access
 	# instead of silently dropping the query or crashing the tick.
 	var query := RoomSpatialPortScript.PathQuery.make(
-		SimEntityHandle.make(0, 1), SpatialChannels.PROJECTILE, Vector2.ZERO, Vector2(10.0, 0.0), 0.0, 1, &"projectile"
+		SimEntityHandle.make(0, 1, &"actors", "unbound-port-room", 2), SpatialChannels.PROJECTILE, Vector2.ZERO, Vector2(10.0, 0.0), 0.0, 1, &"projectile"
 	)
 	_expect(bool(port.queue_path_query(query)["ok"]), "unbound: valid query was rejected at queue time")
 	var ticked: SimOutcome = world.step_tick()
@@ -255,6 +256,28 @@ func _test_unbound_port_reports_errors_without_hits() -> void:
 	if results.size() == 1:
 		_expect(not results[0].ok and results[0].errors.has("path_query:spatial_access_unbound"), "unbound: missing access was not reported fail-closed")
 	_expect(world.kernel.hit_buffer.hits().is_empty(), "unbound: unbound port invented hits")
+
+
+func _test_stale_source_handle_fails_closed() -> void:
+	var room := _make_room(Fixtures.open_world())
+	if room.is_empty():
+		_expect(false, "stale: room fixture failed to mount")
+		return
+	var world: SimulationWorld = room["world"]
+	var port: RoomSpatialPort = room["port"]
+	var access: RoomActorAccess = room["access"]
+	_expect(bool(access.register_actor("ranger", Vector2(20.0, 60.0), 6.0, 20, &"soft", [SpatialChannels.MOVEMENT])["ok"]), "stale: ranger failed to spawn")
+	_expect(bool(access.register_actor("slime", Vector2(60.0, 60.0), 6.0, 5)["ok"]), "stale: slime failed to spawn")
+	var current: SimEntityHandle = access.actor_handle("ranger")
+	var stale := SimEntityHandle.make(current.index, current.generation, current.store_id, "retired-room/1", current.world_revision)
+	var query := RoomSpatialPortScript.PathQuery.make(
+		stale, SpatialChannels.PROJECTILE, Vector2(30.0, 60.0), Vector2(40.0, 0.0), 0.0, 3, &"projectile"
+	)
+	_expect(bool(port.queue_path_query(query).get("ok", false)), "stale: structurally valid old-room query was rejected before execution")
+	_expect(world.step_tick().ok, "stale: tick failed")
+	var results := port.take_path_results()
+	_expect(results.size() == 1 and not results[0].ok and results[0].errors.has("path_query:source_stale"), "stale: old-room source was allowed into the query: %s" % str(results))
+	_expect(world.kernel.hit_buffer.hits().is_empty(), "stale: old-room source created a hit")
 
 
 func _test_own_body_never_takes_self_damage() -> void:

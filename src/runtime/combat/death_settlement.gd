@@ -40,6 +40,8 @@ func settle(raw_request: Variant) -> Dictionary:
 	var request: Variant = parsed["value"]
 	if request.room_id != room_id:
 		return _failure("death_request_room_mismatch")
+	if request.world_revision != world_revision:
+		return _failure("death_request_revision_mismatch")
 	if _settled.has(request.entity_key):
 		var duplicate_snapshot: Dictionary = _settled[request.entity_key].duplicate(true)
 		duplicate_snapshot["duplicate"] = true

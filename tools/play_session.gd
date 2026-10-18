@@ -54,6 +54,14 @@ func _start() -> void:
 			var requested := Vector2i(int(command.size[0]), int(command.size[1]))
 			DisplayServer.window_set_size(requested)
 			root.size = requested
+			# X11 applies the window resize asynchronously, and Container layout is
+			# scheduled after the resize notification. Resolve node clicks only after
+			# both have settled; otherwise a combined size+button command can use the
+			# previous rect and hit a neighboring control at the new resolution.
+			var resize_deadline := Time.get_ticks_msec() + 2000
+			while DisplayServer.window_get_size() != requested and Time.get_ticks_msec() < resize_deadline:
+				await process_frame
+			for _layout_frame in 8: await process_frame
 		if command.has("click"):
 			var xy: Array = command.click
 			await _click(Vector2(float(xy[0]), float(xy[1])))

@@ -7,6 +7,7 @@ const LOOT_SOURCES := ["enemy_death", "wave_clear"]
 
 var tick := -1
 var room_id := ""
+var world_revision := -1
 var entity_key := ""
 var source_key := ""
 var spawn_key := ""
@@ -24,7 +25,7 @@ static func from_data(value: Variant) -> Dictionary:
 		return _failure("death_request_not_dictionary")
 	var source: Dictionary = raw
 	for key: Variant in source.keys():
-		if String(key) not in ["tick", "room_id", "entity_key", "source_key", "spawn_key", "archetype_id", "position", "death_reason", "loot_source", "loot_tags", "can_drop"]:
+		if String(key) not in ["tick", "room_id", "world_revision", "entity_key", "source_key", "spawn_key", "archetype_id", "position", "death_reason", "loot_source", "loot_tags", "can_drop"]:
 			return _failure("unknown_death_request_field:%s" % String(key))
 	var result: Variant = SelfScript.new()
 	var raw_tick: Variant = source.get("tick", -1)
@@ -32,6 +33,10 @@ static func from_data(value: Variant) -> Dictionary:
 		return _failure("invalid_death_request_tick")
 	result.tick = int(raw_tick)
 	result.room_id = String(source.get("room_id", ""))
+	var raw_revision: Variant = source.get("world_revision", -1)
+	if not raw_revision is int:
+		return _failure("invalid_death_request_revision")
+	result.world_revision = int(raw_revision)
 	result.entity_key = String(source.get("entity_key", ""))
 	result.source_key = String(source.get("source_key", ""))
 	result.spawn_key = String(source.get("spawn_key", ""))
@@ -59,7 +64,7 @@ static func from_data(value: Variant) -> Dictionary:
 
 
 func validate() -> String:
-	if tick < 0 or not _valid_id(room_id) or not _valid_id(entity_key):
+	if tick < 0 or world_revision < 0 or not _valid_id(room_id) or not _valid_id(entity_key):
 		return "invalid_death_request_identity"
 	if not source_key.is_empty() and not _valid_id(source_key):
 		return "invalid_death_request_source"
@@ -78,6 +83,7 @@ func snapshot() -> Dictionary:
 	return {
 		"tick": tick,
 		"room_id": room_id,
+		"world_revision": world_revision,
 		"entity_key": entity_key,
 		"source_key": source_key,
 		"spawn_key": spawn_key,
