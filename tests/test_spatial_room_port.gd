@@ -15,6 +15,8 @@ const Fixtures := preload("res://tests/spatial/spatial_fixtures.gd")
 const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spatial_index.gd")
 const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
+const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay.gd")
+const SpatialChannels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const RoomSpatialPortScript := preload("res://src/runtime/world/room_spatial_port.gd")
 const RoomActorAccessScript := preload("res://src/runtime/world/room_actor_access.gd")
 const SimulationWorldScript := preload("res://src/runtime/world/simulation_world.gd")
@@ -29,6 +31,7 @@ var _worlds: Array[SimulationWorld] = []
 
 func _initialize() -> void:
 	_test_static_wall_blocks_query_and_movement()
+	_test_overlay_commits_at_movement_boundary()
 	_test_dynamic_target_hit_at_toi()
 	_test_equal_toi_wall_wins_over_target()
 	_test_no_queries_is_safe_noop()
@@ -135,6 +138,33 @@ func _test_dynamic_target_hit_at_toi() -> void:
 	_expect(world.step_tick().ok, "toi: follow-up tick failed")
 	_expect(port.take_path_results().is_empty(), "toi: results leaked across ticks")
 	_expect(world.kernel.hit_buffer.hits().is_empty(), "toi: hits leaked across ticks")
+
+
+func _test_overlay_commits_at_movement_boundary() -> void:
+	var room := _make_room(Fixtures.open_world())
+	if room.is_empty():
+		_expect(false, "overlay boundary: room fixture failed to mount")
+		return
+	var world: SimulationWorld = room["world"]
+	var access: RoomActorAccess = room["access"]
+	var overlay: SpatialOverlay = room["overlay"]
+	_expect(bool(access.register_actor("ranger", Vector2(20.0, 60.0), 6.0, 20)["ok"]), "overlay boundary: ranger failed to spawn")
+	_expect(bool(overlay.add_surface({
+		"id": "gate",
+		"shape": {"kind": "rect", "rect": Rect2(48.0, 50.0, 4.0, 20.0)},
+		"channels": [SpatialChannels.MOVEMENT],
+	})["ok"]), "overlay boundary: gate request was rejected")
+	_expect(overlay.revision() == 0 and overlay.pending_operation_count() == 1, "overlay boundary: gate changed before the fixed tick")
+	_expect(world.queue_command(SimCommandScript.control(access.actor_handle("ranger"), Vector2(40.0, 0.0), false)).ok, "overlay boundary: movement command was rejected")
+	_expect(world.step_tick().ok, "overlay boundary: first tick failed")
+	var ranger := access.actor("ranger")
+	_expect(overlay.revision() == 1 and overlay.last_committed_tick() == 1 and overlay.pending_operation_count() == 0, "overlay boundary: pending gate did not commit in movement phase")
+	_expect(ranger != null and _near(ranger.feet_position.x, 42.0), "overlay boundary: movement read a half-committed gate")
+	_expect(overlay.remove_surface("gate")["ok"], "overlay boundary: gate removal request was rejected")
+	_expect(world.queue_command(SimCommandScript.control(access.actor_handle("ranger"), Vector2(40.0, 0.0), false)).ok, "overlay boundary: second movement command was rejected")
+	_expect(world.step_tick().ok, "overlay boundary: second tick failed")
+	_expect(overlay.revision() == 2 and overlay.last_committed_tick() == 2, "overlay boundary: gate removal did not commit on the next tick")
+	_expect(ranger != null and _near(ranger.feet_position.x, 82.0), "overlay boundary: removed gate still affected the next committed tick")
 
 
 func _test_equal_toi_wall_wins_over_target() -> void:
@@ -336,7 +366,8 @@ func _make_room(asset: Dictionary) -> Dictionary:
 		return {}
 	var static_index: StaticSpatialIndex = static_build["value"]
 	var dynamic_index := DynamicSpatialIndexScript.new()
-	var movement_build: Dictionary = MovementResolverScript.make(static_index, null, dynamic_index)
+	var overlay := SpatialOverlayScript.new()
+	var movement_build: Dictionary = MovementResolverScript.make(static_index, overlay, dynamic_index)
 	if not bool(movement_build["ok"]):
 		return {}
 	var port := RoomSpatialPortScript.new()
@@ -346,11 +377,11 @@ func _make_room(asset: Dictionary) -> Dictionary:
 		return {}
 	_worlds.append(world)
 	var access := RoomActorAccessScript.new()
-	var access_result: Dictionary = access.configure(world, world.actor_registry, static_index, dynamic_index, movement_build["value"], null)
+	var access_result: Dictionary = access.configure(world, world.actor_registry, static_index, dynamic_index, movement_build["value"], overlay)
 	if not bool(access_result.get("ok", false)):
 		return {}
 	port.bind(access)
-	return {"world": world, "port": port, "access": access}
+	return {"world": world, "port": port, "access": access, "overlay": overlay}
 
 
 func _teardown_worlds() -> void:

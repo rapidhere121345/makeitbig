@@ -435,7 +435,11 @@ func _test_overlay_revision() -> void:
 		"shape": {"kind": "rect", "rect": Rect2(98.0, 50.0, 4.0, 20.0)},
 		"channels": [Channels.MOVEMENT, Channels.PROJECTILE],
 	})
-	_expect(bool(gate["ok"]) and overlay.revision() == 1, "overlay: gate add did not produce revision 1")
+	_expect(bool(gate["ok"]) and overlay.revision() == 0 and overlay.pending_operation_count() == 1, "overlay: gate add mutated before its tick boundary")
+	var before_commit: Dictionary = resolver.move({"start": Vector2(80.0, 60.0), "displacement": Vector2(40.0, 0.0), "radius": 6.0})
+	_expect(not bool(before_commit["blocked"]), "overlay: pending gate changed a query before commit")
+	var gate_commit := overlay.commit_pending(1)
+	_expect(bool(gate_commit["ok"]) and overlay.revision() == 1 and overlay.last_committed_tick() == 1, "overlay: gate add did not commit at tick 1")
 	var closed: Dictionary = resolver.move({"start": Vector2(80.0, 60.0), "displacement": Vector2(40.0, 0.0), "radius": 6.0})
 	_expect(bool(closed["blocked"]), "overlay: closed gate did not block")
 	_expect(_near(closed["position"].x, 92.0), "overlay: gate stop plane changed")
@@ -452,10 +456,13 @@ func _test_overlay_revision() -> void:
 		"shape": {"kind": "rect", "rect": Rect2(0.0, 0.0, 4.0, 4.0)},
 		"channels": [Channels.MOVEMENT],
 	})
-	_expect(not bool(duplicate["ok"]) and overlay.revision() == 1, "overlay: duplicate gate add changed the revision")
+	_expect(bool(duplicate["ok"]) and overlay.revision() == 1 and overlay.pending_operation_count() == 1, "overlay: duplicate gate request was applied before its boundary")
+	var duplicate_commit := overlay.commit_pending(2)
+	_expect(not bool(duplicate_commit["ok"]) and (duplicate_commit["errors"] as Array).has("surface.id:duplicate:gate") and overlay.revision() == 1, "overlay: duplicate gate commit changed the revision")
 
 	overlay.remove_surface("gate")
-	_expect(overlay.revision() == 2, "overlay: gate remove did not produce revision 2")
+	_expect(overlay.revision() == 1 and overlay.pending_operation_count() == 1, "overlay: gate remove mutated before its tick boundary")
+	_expect(bool(overlay.commit_pending(3)["ok"]) and overlay.revision() == 2, "overlay: gate remove did not produce revision 2")
 	var reopened: Dictionary = resolver.move({"start": Vector2(80.0, 60.0), "displacement": Vector2(40.0, 0.0), "radius": 6.0})
 	_expect(not bool(reopened["blocked"]) and _near(reopened["position"].x, 120.0), "overlay: removed gate still blocked")
 
@@ -465,15 +472,22 @@ func _test_overlay_revision() -> void:
 	var pillar_blocked: Dictionary = pillar_resolver.move({"start": Vector2(80.0, 60.0), "displacement": Vector2(40.0, 0.0), "radius": 6.0})
 	_expect(bool(pillar_blocked["blocked"]), "overlay: destructible pillar did not block")
 	pillar_overlay.suppress_static("pillar")
-	_expect(pillar_overlay.revision() == 1, "overlay: suppress did not produce a new revision")
+	_expect(pillar_overlay.revision() == 0 and pillar_overlay.pending_operation_count() == 1, "overlay: suppress mutated before its tick boundary")
+	var pillar_suppress_commit := pillar_overlay.commit_pending(1)
+	_expect(bool(pillar_suppress_commit["ok"]) and pillar_overlay.revision() == 1, "overlay: suppress did not produce a new revision")
 	_expect(pillar_overlay.validate_against(pillar_index).is_empty(), "overlay: valid suppression failed validation")
 	var pillar_open: Dictionary = pillar_resolver.move({"start": Vector2(80.0, 60.0), "displacement": Vector2(40.0, 0.0), "radius": 6.0})
 	_expect(not bool(pillar_open["blocked"]) and _near(pillar_open["position"].x, 120.0), "overlay: suppressed pillar still blocked")
 	pillar_overlay.restore_static("pillar")
+	_expect(bool(pillar_overlay.commit_pending(2)["ok"]) and pillar_overlay.revision() == 2, "overlay: restore did not commit at the next tick boundary")
 	var pillar_again: Dictionary = pillar_resolver.move({"start": Vector2(80.0, 60.0), "displacement": Vector2(40.0, 0.0), "radius": 6.0})
 	_expect(bool(pillar_again["blocked"]), "overlay: restored pillar did not block again")
 	pillar_overlay.suppress_static("missing")
+	var missing_commit := pillar_overlay.commit_pending(3)
+	_expect(bool(missing_commit["ok"]) and pillar_overlay.revision() == 3, "overlay: unknown static suppression was not staged deterministically")
 	_expect(not pillar_overlay.validate_against(pillar_index).is_empty(), "overlay: unknown static suppression passed validation")
+	var stale_commit := pillar_overlay.commit_pending(3)
+	_expect(not bool(stale_commit["ok"]) and (stale_commit["errors"] as Array).has("overlay:stale_tick"), "overlay: same tick accepted a second overlay commit")
 	_expect(JSON.stringify(pillar_index.snapshot()) == JSON.stringify(StaticSpatialIndexScript.build(Fixtures.pillar_world())["value"].snapshot()), "overlay: static asset bytes changed after overlay use")
 
 

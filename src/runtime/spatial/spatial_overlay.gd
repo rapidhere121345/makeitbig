@@ -25,47 +25,131 @@ const SURFACE_FIELDS: Array[String] = [
 	"occlusion_rank",
 ]
 
+const OP_ADD_SURFACE: StringName = &"add_surface"
+const OP_REMOVE_SURFACE: StringName = &"remove_surface"
+const OP_SUPPRESS_STATIC: StringName = &"suppress_static"
+const OP_RESTORE_STATIC: StringName = &"restore_static"
+
 var _surfaces: Dictionary = {}
 var _suppressed: Dictionary = {}
 var _revision := 0
+## Geometry changes are requests until the room's fixed movement boundary
+## commits them.  A query can therefore only observe one complete overlay
+## revision for the whole tick.
+var _pending_operations: Array[Dictionary] = []
+var _last_committed_tick := -1
 
 
 func add_surface(surface: Variant) -> Dictionary:
+	return queue_add_surface(surface)
+
+
+## Queues a runtime surface for the next committed tick boundary.
+func queue_add_surface(surface: Variant) -> Dictionary:
 	var normalized := _normalize_surface(surface)
 	if not bool(normalized["ok"]):
 		return {"ok": false, "errors": normalized["errors"], "revision": _revision}
 	var stored: Dictionary = normalized["value"]
-	var surface_id := String(stored["id"])
-	if _surfaces.has(surface_id):
-		return {"ok": false, "errors": ["surface.id:duplicate:%s" % surface_id], "revision": _revision}
-	_surfaces[surface_id] = stored
-	_revision += 1
-	return {"ok": true, "errors": [], "revision": _revision}
+	_pending_operations.append({
+		"kind": OP_ADD_SURFACE,
+		"surface": stored.duplicate(true),
+	})
+	return _queued_result()
 
 
 func remove_surface(surface_id: String) -> Dictionary:
-	if not _surfaces.has(surface_id):
-		return {"ok": false, "errors": ["surface.id:unknown:%s" % surface_id], "revision": _revision}
-	_surfaces.erase(surface_id)
-	_revision += 1
-	return {"ok": true, "errors": [], "revision": _revision}
+	return queue_remove_surface(surface_id)
+
+
+## Queues removal for the next committed tick boundary.
+func queue_remove_surface(surface_id: String) -> Dictionary:
+	_pending_operations.append({
+		"kind": OP_REMOVE_SURFACE,
+		"surface_id": surface_id,
+	})
+	return _queued_result()
 
 
 ## Suppresses one baked static surface, for example a destroyed destructible.
 func suppress_static(surface_id: String) -> Dictionary:
-	if _suppressed.has(surface_id):
-		return {"ok": false, "errors": ["suppressed:duplicate:%s" % surface_id], "revision": _revision}
-	_suppressed[surface_id] = _revision + 1
-	_revision += 1
-	return {"ok": true, "errors": [], "revision": _revision}
+	return queue_suppress_static(surface_id)
+
+
+## Queues suppression of a baked surface for the next committed tick boundary.
+func queue_suppress_static(surface_id: String) -> Dictionary:
+	_pending_operations.append({
+		"kind": OP_SUPPRESS_STATIC,
+		"surface_id": surface_id,
+	})
+	return _queued_result()
 
 
 func restore_static(surface_id: String) -> Dictionary:
-	if not _suppressed.has(surface_id):
-		return {"ok": false, "errors": ["suppressed:unknown:%s" % surface_id], "revision": _revision}
-	_suppressed.erase(surface_id)
-	_revision += 1
-	return {"ok": true, "errors": [], "revision": _revision}
+	return queue_restore_static(surface_id)
+
+
+## Queues restoration of a suppressed baked surface for the next committed
+## tick boundary.
+func queue_restore_static(surface_id: String) -> Dictionary:
+	_pending_operations.append({
+		"kind": OP_RESTORE_STATIC,
+		"surface_id": surface_id,
+	})
+	return _queued_result()
+
+
+## Applies all queued geometry changes in submission order at one fixed tick
+## boundary.  The tick stamp prevents a caller from mutating query state twice
+## during one tick or from applying a late request in an already-read tick.
+func commit_pending(at_tick: int) -> Dictionary:
+	if at_tick < 0:
+		return {
+			"ok": false,
+			"error": "overlay:invalid_tick",
+			"errors": ["overlay:invalid_tick"],
+			"revision": _revision,
+			"tick": at_tick,
+			"had_pending": not _pending_operations.is_empty(),
+			"operations": [],
+		}
+	if at_tick <= _last_committed_tick:
+		return {
+			"ok": false,
+			"error": "overlay:stale_tick",
+			"errors": ["overlay:stale_tick"],
+			"revision": _revision,
+			"tick": at_tick,
+			"had_pending": not _pending_operations.is_empty(),
+			"operations": [],
+		}
+	var pending := _pending_operations
+	_pending_operations = []
+	_last_committed_tick = at_tick
+	var operations: Array[Dictionary] = []
+	var all_ok := true
+	for operation: Dictionary in pending:
+		var result := _apply_operation(operation)
+		result["kind"] = operation.get("kind", &"")
+		operations.append(result)
+		if not bool(result.get("ok", false)):
+			all_ok = false
+	return {
+		"ok": all_ok,
+		"error": "" if all_ok else "overlay:operation_failed",
+		"errors": _operation_errors(operations),
+		"revision": _revision,
+		"tick": at_tick,
+		"had_pending": not pending.is_empty(),
+		"operations": operations,
+	}
+
+
+func pending_operation_count() -> int:
+	return _pending_operations.size()
+
+
+func last_committed_tick() -> int:
+	return _last_committed_tick
 
 
 func revision() -> int:
@@ -174,10 +258,64 @@ func snapshot() -> Dictionary:
 		})
 	return {
 		"revision": _revision,
+		"last_committed_tick": _last_committed_tick,
+		"pending_operation_count": _pending_operations.size(),
 		"surface_count": surfaces.size(),
 		"surfaces": surfaces,
 		"suppressed_static_ids": suppressed_ids(),
 	}
+
+
+func _queued_result() -> Dictionary:
+	return {
+		"ok": true,
+		"errors": [],
+		"revision": _revision,
+		"pending": _pending_operations.size(),
+	}
+
+
+func _apply_operation(operation: Dictionary) -> Dictionary:
+	var kind: StringName = operation.get("kind", &"")
+	match kind:
+		OP_ADD_SURFACE:
+			var stored: Dictionary = operation.get("surface", {})
+			var surface_id := String(stored.get("id", ""))
+			if _surfaces.has(surface_id):
+				return {"ok": false, "errors": ["surface.id:duplicate:%s" % surface_id], "revision": _revision}
+			_surfaces[surface_id] = stored.duplicate(true)
+			_revision += 1
+			return {"ok": true, "errors": [], "revision": _revision}
+		OP_REMOVE_SURFACE:
+			var remove_id := String(operation.get("surface_id", ""))
+			if not _surfaces.has(remove_id):
+				return {"ok": false, "errors": ["surface.id:unknown:%s" % remove_id], "revision": _revision}
+			_surfaces.erase(remove_id)
+			_revision += 1
+			return {"ok": true, "errors": [], "revision": _revision}
+		OP_SUPPRESS_STATIC:
+			var suppress_id := String(operation.get("surface_id", ""))
+			if _suppressed.has(suppress_id):
+				return {"ok": false, "errors": ["suppressed:duplicate:%s" % suppress_id], "revision": _revision}
+			_suppressed[suppress_id] = _revision + 1
+			_revision += 1
+			return {"ok": true, "errors": [], "revision": _revision}
+		OP_RESTORE_STATIC:
+			var restore_id := String(operation.get("surface_id", ""))
+			if not _suppressed.has(restore_id):
+				return {"ok": false, "errors": ["suppressed:unknown:%s" % restore_id], "revision": _revision}
+			_suppressed.erase(restore_id)
+			_revision += 1
+			return {"ok": true, "errors": [], "revision": _revision}
+	return {"ok": false, "errors": ["overlay:unknown_operation"], "revision": _revision}
+
+
+func _operation_errors(operations: Array[Dictionary]) -> Array[String]:
+	var errors: Array[String] = []
+	for operation: Dictionary in operations:
+		for error: Variant in operation.get("errors", []):
+			errors.append(String(error))
+	return errors
 
 
 static func _shape_snapshot(shape: Dictionary) -> Dictionary:
