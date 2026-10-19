@@ -904,8 +904,12 @@ func _test_loot_prompt(hud: Control, failures: Array[String]) -> void:
 	_expect(String(far_prompt.get("state", "")) == "far" and not bool(far_prompt.get("in_range", true))
 		and String(far_prompt.get("text", "")) == "战利品在场 · 靠近后按 F 拾取",
 		"loot prompt: an out-of-range drop did not explain the next step", failures)
+	(room_loot["entities"] as Array).append({"loot_entity_id": "loot/second", "state": "available", "position": Vector2(12.0, 0.0), "pickup_radius": 24.0})
+	var multi_prompt: Dictionary = builder.loot_prompt(snapshot)
+	_expect(int(multi_prompt.get("available_count", 0)) == 2 and String(multi_prompt.get("text", "")) == "附近有战利品 ×2 · 按 F 拾取",
+		"loot prompt: multiple available drops did not disclose the pickup count", failures)
 
-	room_loot["pending_pickup_requests"] = [{"loot_entity_id": "loot/near"}]
+	room_loot["pending_pickup_requests"] = [{"loot_entity_id": "loot/near"}, {"loot_entity_id": "loot/second"}]
 	var pending_prompt: Dictionary = builder.loot_prompt(snapshot)
 	_expect(String(pending_prompt.get("state", "")) == "pending" and String(pending_prompt.get("text", "")) == "正在拾取战利品…",
 		"loot prompt: a queued pickup did not expose its pending state", failures)

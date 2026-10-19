@@ -543,11 +543,14 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 				await _frames(3)
 		if reward_detail_button != null:
 			reward_detail_button.pressed.emit()
-			await _frames(2)
+			await _frames(4)
 		_expect(reward_detail_text != null and reward_detail_text.visible
 			and reward_detail_text.text.contains("首通奖励")
 			and reward_detail_text.get_theme_font_size("font_size") >= FONT_FLOOR,
 			"result: reward detail entry did not reveal authoritative copy at %s" % logical_size, failures)
+		if reward_detail_button != null and reward_detail_text != null:
+			_expect(loot.get_global_rect().encloses(reward_detail_text.get_global_rect()),
+				"result: opening reward details did not reveal the expanded copy at %s" % logical_size, failures)
 		screen.present(receipt, {}, profile)
 		screen.focus_equipment(String(drops[1].instance_id))
 		await _frames(3)

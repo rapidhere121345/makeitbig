@@ -261,7 +261,8 @@ func loot_prompt(snapshot: Dictionary) -> Dictionary:
 	var in_range := nearest_distance <= nearest_radius * nearest_radius + 0.000001
 	var state := "near" if in_range else "far"
 	var victory_prefix := "战斗已胜利 · " if bool(snapshot.get("battle_over", false)) and bool(snapshot.get("battle_victory", false)) else ""
-	var action_text := "附近有战利品 · 按 F 拾取" if in_range else "战利品在场 · 靠近后按 F 拾取"
+	var count_suffix := " ×%d" % available_count if available_count > 1 else ""
+	var action_text := ("附近有战利品%s · 按 F 拾取" % count_suffix) if in_range else ("战利品在场%s · 靠近后按 F 拾取" % count_suffix)
 	return {
 		"state": state,
 		"text": victory_prefix + action_text,

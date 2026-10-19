@@ -545,6 +545,37 @@ func _on_reward_detail_pressed() -> void:
 		return
 	_reward_detail_label.visible = not _reward_detail_label.visible
 	_reward_detail_button.text = REWARD_DETAIL_HIDE_TEXT if _reward_detail_label.visible else REWARD_DETAIL_SHOW_TEXT
+	if _loot_scroll != null:
+		# The disclosure button keeps focus after activation. ScrollContainer's
+		# follow_focus would otherwise pull the viewport back to that button on the
+		# next layout frame, undoing the reveal below.
+		_loot_scroll.follow_focus = not _reward_detail_label.visible
+	if _reward_detail_label.visible and _loot_scroll != null:
+		# The disclosure button sits above the loot cards. On a compact result page
+		# the newly revealed copy can therefore begin below the current viewport;
+		# reveal it as part of the same action so the click has an immediate, visible
+		# result and keyboard users do not have to guess where the text went.
+		call_deferred("_ensure_reward_detail_visible")
+
+
+func _ensure_reward_detail_visible() -> void:
+	if _loot_scroll == null or _reward_detail_label == null or not _reward_detail_label.visible:
+		return
+	# The VBox must receive the visibility change before ScrollContainer can measure
+	# the new child height. Two layout frames cover both the child minimum-size
+	# notification and the outer result layout without polling in _process().
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if is_instance_valid(_loot_scroll) and is_instance_valid(_reward_detail_label) and _reward_detail_label.visible:
+		_loot_scroll.ensure_control_visible(_reward_detail_label)
+		await get_tree().process_frame
+		var viewport_rect := _loot_scroll.get_global_rect()
+		var detail_rect := _reward_detail_label.get_global_rect()
+		const REVEAL_MARGIN := 8.0
+		if detail_rect.position.y < viewport_rect.position.y + REVEAL_MARGIN:
+			_loot_scroll.scroll_vertical = maxi(0, _loot_scroll.scroll_vertical - ceili(viewport_rect.position.y + REVEAL_MARGIN - detail_rect.position.y))
+		elif detail_rect.end.y > viewport_rect.end.y - REVEAL_MARGIN:
+			_loot_scroll.scroll_vertical += ceili(detail_rect.end.y - (viewport_rect.end.y - REVEAL_MARGIN))
 
 
 func _sync_equipment_page_size() -> void:

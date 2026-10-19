@@ -24,6 +24,7 @@ var boss_domain: BossCombatDomain = null
 var _boss_queries: Array[BossAttackQuery] = []
 var _boss_path_results: Array[BossPathResult] = []
 var _player_hits: Array[PlayerHit] = []
+var _overlay_commit_results: Array[Dictionary] = []
 
 ## Typed player contact staged for the next kernel DAMAGE_STATUS phase.
 ## The hazard helper below uses this same SimHit path; hostile enemy impacts
@@ -140,6 +141,7 @@ func bind(actor_access: Variant) -> void:
 	_boss_queries.clear()
 	_boss_path_results.clear()
 	_player_hits.clear()
+	_overlay_commit_results.clear()
 	_hit_resolver = null
 	boss_domain = null
 
@@ -261,6 +263,12 @@ func take_path_results() -> Array[PathResult]:
 
 
 func apply_movement(ctx: SimTickContext) -> void:
+	# Runtime geometry is a structural change.  Commit it before movement reads
+	# the overlay and before any later query phase can observe the new revision.
+	if actors != null and actors.overlay != null:
+		var overlay_result: Dictionary = actors.overlay.commit_pending(ctx.tick)
+		if bool(overlay_result.get("had_pending", false)) and not bool(overlay_result.get("ok", false)):
+			_overlay_commit_results.append(overlay_result.duplicate(true))
 	if actors == null:
 		return
 	for intent: SimIntent in ctx.intents.intents():
@@ -278,6 +286,15 @@ func apply_movement(ctx: SimTickContext) -> void:
 		# the generic room port only commits the supplied vector through the
 		# room's MovementResolver boundary.
 		actors.move_actor(actor_id, intent.move_direction, ctx.tick)
+
+
+## Returns failed overlay commits for diagnostics without making them a second
+## gameplay authority.  Successful commits are observable through the overlay
+## revision itself and are intentionally not accumulated.
+func take_overlay_commit_results() -> Array[Dictionary]:
+	var results := _overlay_commit_results.duplicate(true)
+	_overlay_commit_results.clear()
+	return results
 
 
 func refresh_dynamic_index(_ctx: SimTickContext) -> void:
