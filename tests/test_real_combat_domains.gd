@@ -2,9 +2,17 @@ extends SceneTree
 
 const StatsScript := preload("res://src/game/combat_stats_snapshot.gd")
 const WaveScript := preload("res://src/game/combat_wave_definition.gd")
-const LootScript := preload("res://src/game/combat_loot_ledger.gd")
+const LootScript := preload("res://src/runtime/combat/combat_room_loot_rebuild.gd")
 const ItemRegistryScript := preload("res://src/content/early_item_registry.gd")
 const GeneratorScript := preload("res://src/systems/equipment_drop_generator.gd")
+const PlacementPortScript := preload("res://src/runtime/world/room_loot_placement_port.gd")
+
+
+class AlwaysClearPlacement:
+	extends PlacementPortScript
+
+	func is_position_clear(_position: Vector2, _radius: float) -> bool:
+		return true
 
 
 func _initialize() -> void:
@@ -71,18 +79,36 @@ func _test_loot(failures: Array[String]) -> void:
 		return
 	var generator := GeneratorScript.new(registry)
 	var ledger := LootScript.new()
-	_expect(bool(ledger.configure("real_room_01", 77123, generator).ok), "loot: ledger configuration failed", failures)
-	var spawned := ledger.spawn(30, "wave_01_drop", 101, Vector2(100.0, 120.0), 0, ["equipment_general"])
+	var configured := ledger.configure("real_room_01", 77123, [
+		{"slot_id": "wave_01_drop", "source": "wave_clear", "tags": ["equipment_general"], "pickup_radius": 18.0},
+		{"slot_id": "defeat_drop", "source": "enemy_death", "tags": ["equipment_general"], "pickup_radius": 18.0},
+	], generator, AlwaysClearPlacement.new())
+	_expect(bool(configured.get("ok", false)), "loot: target room authority configuration failed", failures)
+	var spawned := ledger.spawn(30, {
+		"tick": 30, "room_id": "real_room_01", "source": "wave_clear",
+		"source_entity_key": "wave/101", "position": Vector2(100.0, 120.0),
+		"tags": ["equipment_general"],
+	})
 	_expect(bool(spawned.ok), "loot: deterministic room drop failed to spawn", failures)
 	if not bool(spawned.ok):
 		return
 	var entity_id := String(spawned.entity.loot_entity_id)
-	var repeated := ledger.spawn(31, "wave_01_drop", 101, Vector2(100.0, 120.0), 0, ["equipment_general"])
-	_expect(String(repeated.error) == "loot_slot_already_spawned", "loot: duplicate slot was accepted", failures)
-	var out_of_range := ledger.pickup(32, 1, entity_id, Vector2(140.0, 120.0))
-	_expect(String(out_of_range.error) == "loot_out_of_range", "loot: out-of-range pickup was accepted", failures)
-	var picked := ledger.pickup(33, 1, entity_id, Vector2(110.0, 120.0))
-	_expect(bool(picked.ok), "loot: in-range pickup was rejected", failures)
+	var repeated := ledger.spawn(31, {
+		"tick": 31, "room_id": "real_room_01", "source": "wave_clear",
+		"source_entity_key": "wave/101", "position": Vector2(100.0, 120.0),
+		"tags": ["equipment_general"],
+	})
+	_expect(String(repeated.error) == "no_matching_loot_slot", "loot: duplicate slot was accepted", failures)
+	var pickup_request := ledger.request_pickup(32, "ranger", entity_id)
+	_expect(bool(pickup_request.get("ok", false)), "loot: pickup request was rejected", failures)
+	var out_of_range: Array[Dictionary] = ledger.commit_pickups(33, 100.0, Vector2(140.0, 120.0), false, false)
+	var out_of_range_receipt: Dictionary = out_of_range[0] if not out_of_range.is_empty() else {}
+	_expect(String(out_of_range_receipt.get("error", "")) == "loot_out_of_range", "loot: out-of-range pickup was accepted", failures)
+	var retry := ledger.request_pickup(33, "ranger", entity_id)
+	_expect(bool(retry.get("ok", false)), "loot: in-range pickup could not be retried", failures)
+	var picked_receipts: Array[Dictionary] = ledger.commit_pickups(34, 100.0, Vector2(110.0, 120.0), false, false)
+	var picked: Dictionary = picked_receipts[0] if not picked_receipts.is_empty() else {}
+	_expect(bool(picked.get("ok", false)), "loot: in-range pickup was rejected", failures)
 	var settled := ledger.settle("victory")
 	_expect(bool(settled.ok) and (settled.items as Array).size() == 1, "loot: victory did not settle picked item", failures)
 	var second_settle := ledger.settle("defeat")
@@ -91,8 +117,14 @@ func _test_loot(failures: Array[String]) -> void:
 	(detached.entities as Array)[0]["state"] = "tampered"
 	_expect(String(ledger.snapshot().entities[0].state) == LootScript.PICKED_STATE, "loot: snapshot leaked entity state", failures)
 	var defeat_ledger := LootScript.new()
-	defeat_ledger.configure("real_room_01", 77123, generator)
-	var defeat_spawn := defeat_ledger.spawn(1, "defeat_drop", 102, Vector2.ZERO, 1, ["equipment_general"])
+	defeat_ledger.configure("real_room_01", 77123, [
+		{"slot_id": "defeat_drop", "source": "enemy_death", "tags": ["equipment_general"], "pickup_radius": 18.0},
+	], generator, AlwaysClearPlacement.new())
+	var defeat_spawn := defeat_ledger.spawn(1, {
+		"tick": 1, "room_id": "real_room_01", "source": "enemy_death",
+		"source_entity_key": "enemy/102", "position": Vector2.ZERO,
+		"tags": ["equipment_general"],
+	})
 	var defeat := defeat_ledger.settle("defeat")
 	_expect(bool(defeat_spawn.ok) and (defeat.items as Array).is_empty() and String(defeat.entities[0].state) == LootScript.FORFEITED_STATE, "loot: defeat granted or retained a room item", failures)
 

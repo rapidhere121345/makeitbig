@@ -8,8 +8,9 @@ extends Control
 ##  * default strip = three separated cards for hero life, the one important target,
 ##    and low-frequency controls. TopBar stays as a transparent compatibility carrier.
 ##  * short input notices (blank-click hints, unavailable-skill reasons, assisted
-##    out-of-range cues) are the one transient strip, docked left of the action bar
-##    so they can never cover the four action icons or the opening-room banner.
+##    out-of-range cues) and the actionable room-loot cue share one strip, docked
+##    left of the action bar so they can never cover the four action icons or the
+##    opening-room banner. Specific authoritative receipts always take priority.
 ##    Routine attack/count feedback stays collapsed into the TAB summary.
 ##  * the strip numbers the concept makes prominent are the cells that already
 ##    existed: HeroHealthLabel above the hero bar and BossHpLabel above the target
@@ -282,12 +283,16 @@ func present(snapshot: Dictionary) -> void:
 	_feedback_label.text = "战斗反馈  %s" % _compact_feedback(_feedback_text)
 	_feedback_label.tooltip_text = _feedback_text
 	var input_feedback := String(snapshot.get("input_feedback", ""))
+	var loot_prompt_text := String(snapshot.get("loot_prompt_text", ""))
+	var loot_prompt_state := String(snapshot.get("loot_prompt_state", "none"))
+	var visible_input_feedback := input_feedback if not input_feedback.is_empty() else loot_prompt_text
 	## The whole card shows and hides with the notice: no permanent blank
 	## rectangle lingers over the battlefield.
-	_input_feedback_card.visible = not input_feedback.is_empty()
-	_input_feedback_label.text = input_feedback
-	_input_feedback_label.tooltip_text = input_feedback
-	_input_feedback_label.visible = not input_feedback.is_empty()
+	_input_feedback_card.visible = not visible_input_feedback.is_empty()
+	_input_feedback_label.text = visible_input_feedback
+	_input_feedback_label.tooltip_text = visible_input_feedback
+	_input_feedback_label.visible = not visible_input_feedback.is_empty()
+	_input_feedback_label.add_theme_color_override("font_color", COLOR_PROXY if input_feedback.is_empty() and loot_prompt_state == "near" else COLOR_AMBER)
 	_update_action_cells(snapshot, is_auto, battle_over)
 	_apply_hero_health_state(hero_ratio)
 	_update_summary(snapshot)

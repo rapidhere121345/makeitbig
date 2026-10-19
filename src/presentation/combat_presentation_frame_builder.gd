@@ -115,6 +115,7 @@ func hud_frame(snapshot: Dictionary, input_view: Dictionary, action_edge_occlude
 	var mark_range: float = snapshot["locked_targeting_distance"] * HUNTER_MARK_RANGE_MULTIPLIER
 	var room_presentation := room_info(snapshot)
 	var attack_target_enemy := enemy_by_id(snapshot, int(attack_target_ui.get("target_entity_id", 0)))
+	var loot_prompt_state := loot_prompt(snapshot)
 	return {
 		"room_id": snapshot["room_id"],
 		"room_index": int(snapshot["framework_room"].get("room_index", 0)),
@@ -191,6 +192,83 @@ func hud_frame(snapshot: Dictionary, input_view: Dictionary, action_edge_occlude
 		"last_proxy_failure": snapshot.get("proxy_failure", {}),
 		"action_edge_occluded": action_edge_occluded,
 		"loot_entities": (snapshot.get("room_loot", {}).get("entities", []) as Array).duplicate(true),
+		"loot_prompt_state": String(loot_prompt_state.get("state", "none")),
+		"loot_prompt_text": String(loot_prompt_state.get("text", "")),
+		"loot_prompt_entity_id": String(loot_prompt_state.get("entity_id", "")),
+		"loot_prompt_count": int(loot_prompt_state.get("available_count", 0)),
+	}
+
+
+## Project the room-owned loot window into one actionable player cue. The prompt
+## is presentation-only: range, lifecycle and pickup acceptance remain owned by
+## the room ledger. A queued request stays visible as a short pending state until
+## the next authoritative receipt replaces it.
+func loot_prompt(snapshot: Dictionary) -> Dictionary:
+	var empty := {
+		"state": "none", "text": "", "entity_id": "", "available_count": 0,
+		"in_range": false, "pending_count": 0,
+	}
+	if not bool(snapshot.get("in_arena", true)):
+		return empty
+	var room_value: Variant = snapshot.get("room_loot", {})
+	if not room_value is Dictionary:
+		return empty
+	var room: Dictionary = room_value
+	var entities_value: Variant = room.get("entities", [])
+	if not entities_value is Array:
+		return empty
+	var pending_ids: Dictionary = {}
+	var pending_value: Variant = room.get("pending_pickup_requests", [])
+	if pending_value is Array:
+		for pending_value_item: Variant in pending_value:
+			if pending_value_item is Dictionary:
+				var pending_id := String((pending_value_item as Dictionary).get("loot_entity_id", "")).strip_edges()
+				if not pending_id.is_empty():
+					pending_ids[pending_id] = true
+	var player_value: Variant = snapshot.get("player_position", Vector2.ZERO)
+	var player_position := player_value as Vector2 if player_value is Vector2 else Vector2.ZERO
+	var nearest_id := ""
+	var nearest_distance := INF
+	var nearest_radius := 0.0
+	var available_count := 0
+	var pending_count := 0
+	for entity_value: Variant in entities_value:
+		if not entity_value is Dictionary:
+			continue
+		var entity: Dictionary = entity_value
+		var loot_id := String(entity.get("loot_entity_id", "")).strip_edges()
+		if loot_id.is_empty() or String(entity.get("state", "")) != "available":
+			continue
+		if pending_ids.has(loot_id):
+			pending_count += 1
+			continue
+		available_count += 1
+		var position_value: Variant = entity.get("position", Vector2.ZERO)
+		var position := position_value as Vector2 if position_value is Vector2 else Vector2.ZERO
+		var radius := maxf(0.0, float(entity.get("pickup_radius", 0.0)))
+		var distance := player_position.distance_squared_to(position)
+		if distance < nearest_distance or (is_equal_approx(distance, nearest_distance) and (nearest_id.is_empty() or loot_id < nearest_id)):
+			nearest_id = loot_id
+			nearest_distance = distance
+			nearest_radius = radius
+	if available_count == 0:
+		if pending_count > 0:
+			return {
+				"state": "pending", "text": "正在拾取战利品…", "entity_id": "",
+				"available_count": 0, "in_range": false, "pending_count": pending_count,
+			}
+		return empty
+	var in_range := nearest_distance <= nearest_radius * nearest_radius + 0.000001
+	var state := "near" if in_range else "far"
+	var victory_prefix := "战斗已胜利 · " if bool(snapshot.get("battle_over", false)) and bool(snapshot.get("battle_victory", false)) else ""
+	var action_text := "附近有战利品 · 按 F 拾取" if in_range else "战利品在场 · 靠近后按 F 拾取"
+	return {
+		"state": state,
+		"text": victory_prefix + action_text,
+		"entity_id": nearest_id,
+		"available_count": available_count,
+		"in_range": in_range,
+		"pending_count": pending_count,
 	}
 
 

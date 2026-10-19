@@ -61,6 +61,7 @@ const DeathSettlementNotificationScript := preload("res://src/runtime/combat/dea
 const RoomEncounterScript := preload("res://src/runtime/encounter/room_encounter.gd")
 const SimTickContextScript := preload("res://src/runtime/simulation/sim_tick_context.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
+const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
 const CombatLootPickupProtocolScript := preload("res://src/systems/combat_loot_pickup_protocol.gd")
 const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
 
@@ -809,6 +810,15 @@ func start_room() -> void:
 		in_arena = false
 		_refresh_lab()
 		return
+	var loot_room: Dictionary = framework_room.duplicate(true)
+	if loot_room.is_empty() and test_session:
+		loot_room = _load_test_room_fixture()
+	var loot_configured: Dictionary = _configure_room_loot(loot_room)
+	if not bool(loot_configured.get("ok", false)):
+		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
+		in_arena = false
+		_refresh_lab()
+		return
 	if not _start_mounted_encounter():
 		in_arena = false
 		_refresh_lab()
@@ -901,11 +911,6 @@ func _spawn_wave() -> bool:
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "room_rules_unavailable"))
 		in_arena = false
 		return false
-	var loot_configured := _configure_room_loot(spawn_room)
-	if not bool(loot_configured.get("ok", false)):
-		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
-		in_arena = false
-		return false
 	return true
 
 
@@ -917,7 +922,13 @@ func _configure_room_loot(room: Dictionary) -> Dictionary:
 	if content_registry == null or content_registry.early_item_registry == null:
 		_room_loot.reset()
 		return {"ok": false, "error": "loot_item_registry_unavailable"} if room.has("loot_slots") else {"ok": true, "error": "", "enabled": false}
-	return _room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry)
+	var placement_room: Variant = scene_runtime if scene_runtime != null and scene_runtime.is_ready() else actor_registry
+	var placement_port := MainLootPlacementPortScript.new()
+	var placement_bound: Dictionary = placement_port.configure(placement_room)
+	if not bool(placement_bound.get("ok", false)):
+		_room_loot.reset()
+		return placement_bound
+	return _room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry, placement_port)
 
 
 func _configure_hazard_domain(hazard_ids: Variant, center: Vector2) -> Dictionary:

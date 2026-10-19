@@ -1,6 +1,8 @@
 class_name TargetCombatRoomLoot
 extends RefCounted
 
+const RoomLootPlacementPortScript := preload("res://src/runtime/world/room_loot_placement_port.gd")
+
 const LOOT_SOURCES := ["enemy_death", "wave_clear"]
 const ACTIVE_STATE := "available"
 const PICKED_STATE := "picked"
@@ -10,7 +12,7 @@ const FORFEITED_STATE := "forfeited_by_defeat"
 var room_id := ""
 var root_seed := 0
 var _materializer: Object
-var _placement_validator := Callable()
+var _placement_port: Variant = null
 var _slots: Array[Dictionary] = []
 var _entities: Dictionary = {}
 var _spawned_slots: Dictionary = {}
@@ -22,12 +24,12 @@ var _drop_index := 0
 var _request_sequence := 0
 
 
-func configure(identifier: String, seed: int, slot_definitions: Array, materializer: Object, placement_validator: Callable) -> Dictionary:
+func configure(identifier: String, seed: int, slot_definitions: Array, materializer: Object, placement_port: Variant) -> Dictionary:
 	reset()
 	if not _valid_id(identifier) or materializer == null or not materializer.has_method("generate_drop"):
 		return _failure("invalid_loot_dependencies")
-	if not placement_validator.is_valid():
-		return _failure("loot_placement_validator_required")
+	if not placement_port is RoomLootPlacementPortScript:
+		return _failure("loot_placement_port_required")
 	var normalized: Array[Dictionary] = []
 	var seen: Dictionary = {}
 	for raw_value: Variant in slot_definitions:
@@ -38,7 +40,11 @@ func configure(identifier: String, seed: int, slot_definitions: Array, materiali
 		var source := String(raw.get("source", ""))
 		if not _valid_id(slot_id) or seen.has(slot_id) or source not in LOOT_SOURCES:
 			return _failure("invalid_loot_slot_identity")
-		var raw_tags: Variant = raw.get("tags", [])
+		# Older test rooms authored one tag under `tag`; normalize that input at
+		# the target authority so Main never needs a second slot validator.
+		var raw_tags: Variant = raw.get("tags", null)
+		if raw_tags == null and raw.get("tag", null) is String:
+			raw_tags = [String(raw.get("tag"))]
 		if not raw_tags is Array:
 			return _failure("invalid_loot_slot_tags")
 		var tags: Array[String] = []
@@ -75,7 +81,7 @@ func configure(identifier: String, seed: int, slot_definitions: Array, materiali
 	room_id = identifier
 	root_seed = seed
 	_materializer = materializer
-	_placement_validator = placement_validator
+	_placement_port = placement_port
 	_slots = normalized
 	return {"ok": true, "error": "", "snapshot": snapshot()}
 
@@ -84,7 +90,7 @@ func reset() -> void:
 	room_id = ""
 	root_seed = 0
 	_materializer = null
-	_placement_validator = Callable()
+	_placement_port = null
 	_slots.clear()
 	_entities.clear()
 	_spawned_slots.clear()
@@ -123,7 +129,7 @@ func spawn(tick: int, raw_request: Variant) -> Dictionary:
 	if slot.is_empty():
 		return _failure("no_matching_loot_slot")
 	var slot_id := String(slot["slot_id"])
-	if not bool(_placement_validator.call(position, float(slot["pickup_radius"]))):
+	if _placement_port == null or not _placement_port.is_position_clear(position, float(slot["pickup_radius"])):
 		return _failure("loot_spawn_position_blocked")
 	var item: Variant = _materializer.call("generate_drop", root_seed, "%s/%s" % [room_id, slot_id], _drop_index, tags if not tags.is_empty() else slot["tags"], String(slot["guarantee_family"]))
 	if not item is Dictionary or (item as Dictionary).is_empty():
@@ -136,6 +142,7 @@ func spawn(tick: int, raw_request: Variant) -> Dictionary:
 		"slot_id": slot_id,
 		"source": source,
 		"source_entity_key": source_entity_key,
+		"source_entity_id": _source_entity_id(source_entity_key),
 		"spawned_tick": tick,
 		"position": position,
 		"pickup_radius": float(slot["pickup_radius"]),
@@ -294,6 +301,15 @@ func _entity_snapshot(entity: Dictionary) -> Dictionary:
 
 func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
+
+
+static func _source_entity_id(source_entity_key: String) -> int:
+	if not source_entity_key.begins_with("enemy/"):
+		return 0
+	var value := source_entity_key.trim_prefix("enemy/")
+	if not value.is_valid_int():
+		return 0
+	return maxi(0, int(value))
 
 
 static func _failure(error: String) -> Dictionary:
