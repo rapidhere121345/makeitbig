@@ -11,6 +11,7 @@ extends SceneTree
 ##    mode/proxy explanation, all still present under their original cell names.
 
 const ArenaHudScript := preload("res://src/presentation/arena_hud.gd")
+const FrameBuilderScript := preload("res://src/presentation/combat_presentation_frame_builder.gd")
 const DomainFixture := preload("res://tests/helpers/player_domain_fixture.gd")
 const PresentationSnapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
 const Encounter := preload("res://src/game/encounter_director.gd")
@@ -92,6 +93,7 @@ func _run() -> void:
 	await process_frame
 	_test_room_progress(hud, failures)
 	_test_input_feedback_strip(hud, failures)
+	_test_loot_prompt(hud, failures)
 
 	var required_nodes: Array[String] = [
 		"HeroFrame",
@@ -883,6 +885,61 @@ func _test_input_feedback_strip(hud: Control, failures: Array[String]) -> void:
 		"input notice card overlaps the room banner", failures)
 	hud.present(_snapshot())
 	_expect(not notice.visible and not card.visible, "input notice stayed visible after the authority cleared it", failures)
+
+
+func _test_loot_prompt(hud: Control, failures: Array[String]) -> void:
+	var builder := FrameBuilderScript.new()
+	var room_loot := {
+		"entities": [{"loot_entity_id": "loot/near", "state": "available", "position": Vector2(12.0, 0.0), "pickup_radius": 24.0}],
+		"pending_pickup_requests": [],
+	}
+	var snapshot := {"in_arena": true, "player_position": Vector2.ZERO, "room_loot": room_loot, "battle_over": false, "battle_victory": false}
+	var near_prompt: Dictionary = builder.loot_prompt(snapshot)
+	_expect(String(near_prompt.get("state", "")) == "near" and bool(near_prompt.get("in_range", false))
+		and String(near_prompt.get("text", "")) == "附近有战利品 · 按 F 拾取",
+		"loot prompt: an in-range drop did not expose the pickup action", failures)
+
+	(room_loot["entities"] as Array)[0]["position"] = Vector2(60.0, 0.0)
+	var far_prompt: Dictionary = builder.loot_prompt(snapshot)
+	_expect(String(far_prompt.get("state", "")) == "far" and not bool(far_prompt.get("in_range", true))
+		and String(far_prompt.get("text", "")) == "战利品在场 · 靠近后按 F 拾取",
+		"loot prompt: an out-of-range drop did not explain the next step", failures)
+
+	room_loot["pending_pickup_requests"] = [{"loot_entity_id": "loot/near"}]
+	var pending_prompt: Dictionary = builder.loot_prompt(snapshot)
+	_expect(String(pending_prompt.get("state", "")) == "pending" and String(pending_prompt.get("text", "")) == "正在拾取战利品…",
+		"loot prompt: a queued pickup did not expose its pending state", failures)
+
+	room_loot["pending_pickup_requests"] = []
+	snapshot["battle_over"] = true
+	snapshot["battle_victory"] = true
+	var victory_prompt: Dictionary = builder.loot_prompt(snapshot)
+	_expect(String(victory_prompt.get("text", "")).begins_with("战斗已胜利 · "),
+		"loot prompt: the victory loot window did not explain that the room remains open", failures)
+
+	var no_loot_snapshot := _snapshot()
+	hud.present(no_loot_snapshot)
+	var card := hud.find_child("InputFeedbackCard", true, false) as PanelContainer
+	var notice := hud.find_child("InputFeedbackLabel", true, false) as Label
+	_expect(card != null and notice != null and not card.visible and not notice.visible,
+		"loot prompt: an empty room invented a pickup cue", failures)
+	var prompt_snapshot := _snapshot()
+	prompt_snapshot["loot_prompt_state"] = "near"
+	prompt_snapshot["loot_prompt_text"] = "附近有战利品 · 按 F 拾取"
+	hud.present(prompt_snapshot)
+	_expect(card.visible and notice.visible and notice.text == "附近有战利品 · 按 F 拾取",
+		"loot prompt: HUD did not surface the projected nearby action", failures)
+	var action_bar := hud.find_child("ActionBar", true, false) as PanelContainer
+	_expect(action_bar == null or not card.get_global_rect().intersects(action_bar.get_global_rect()),
+		"loot prompt: pickup cue overlaps the action dock", failures)
+	prompt_snapshot["input_feedback"] = "掉落未进入拾取范围 · 靠近后再按 F"
+	hud.present(prompt_snapshot)
+	_expect(notice.text == "掉落未进入拾取范围 · 靠近后再按 F",
+		"loot prompt: an authoritative pickup receipt did not take priority over the generic cue", failures)
+	prompt_snapshot["input_feedback"] = ""
+	prompt_snapshot["loot_prompt_text"] = ""
+	hud.present(prompt_snapshot)
+	_expect(not card.visible and not notice.visible, "loot prompt: cleared loot state left a stale cue on screen", failures)
 
 
 func _test_room_progress(hud: Control, failures: Array[String]) -> void:

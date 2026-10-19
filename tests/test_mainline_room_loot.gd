@@ -152,6 +152,8 @@ func _run() -> void:
 		auto_arena.set_process(false)
 		auto_arena.selected_mode = "Auto"
 		var auto_position: Vector2 = auto_arena.player_combat_state.snapshot(auto_arena.sim_tick).player_position
+		var blocked_spawn: Dictionary = auto_arena._spawn_room_loot_for_source("enemy_death", 1000, auto_arena._arena_rect().position)
+		_expect(not bool(blocked_spawn.get("ok", false)) and String(blocked_spawn.get("error", "")) == "loot_spawn_position_blocked", "mainline loot: production placement port accepted a blocked drop")
 		var spawned: Dictionary = auto_arena._spawn_room_loot_for_source("enemy_death", 1001, auto_position)
 		_expect(bool(spawned.get("ok", false)), "mainline loot: Auto pickup fixture did not spawn its room entity")
 		auto_arena.call("_simulate_tick")

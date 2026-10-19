@@ -4,6 +4,7 @@ const DeathRequestScript := preload("res://src/runtime/combat/death_settlement_r
 const DeathScript := preload("res://src/runtime/combat/death_settlement.gd")
 const DeathNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
 const LootScript := preload("res://src/runtime/combat/combat_room_loot_rebuild.gd")
+const PlacementPortScript := preload("res://src/runtime/world/room_loot_placement_port.gd")
 
 
 class FakeMaterializer:
@@ -14,6 +15,13 @@ class FakeMaterializer:
 			"tags": tags.duplicate(),
 			"guarantee_family": guarantee_family,
 		}
+
+
+class AlwaysClearPlacement:
+	extends PlacementPortScript
+
+	func is_position_clear(_position: Vector2, _radius: float) -> bool:
+		return true
 
 
 func _initialize() -> void:
@@ -64,7 +72,7 @@ func _test_room_loot(failures: Array[String]) -> void:
 	var materializer := FakeMaterializer.new()
 	var configured: Dictionary = loot.configure("room.test", 99, [
 		{"slot_id": "enemy_drop", "source": "enemy_death", "tags": ["equipment.common"], "pickup_radius": 8.0},
-	], materializer, Callable(self, "_valid_loot_position"))
+	], materializer, AlwaysClearPlacement.new())
 	_expect(bool(configured.get("ok", false)), "room loot configuration failed", failures)
 	var spawned: Dictionary = loot.spawn(8, {
 		"tick": 8,
@@ -91,12 +99,6 @@ func _test_room_loot(failures: Array[String]) -> void:
 	_expect(JSON.stringify(settled) == JSON.stringify(repeated), "room loot settlement was not idempotent", failures)
 	var snapshot: Dictionary = loot.snapshot()
 	_expect(String(((snapshot.get("entities", []) as Array)[0] as Dictionary).get("state", "")) == LootScript.PICKED_STATE, "settlement changed picked loot state", failures)
-
-
-func _valid_loot_position(position: Vector2, _radius: float) -> bool:
-	return position.x >= 0.0 and position.y >= 0.0
-
-
 func _expect(condition: bool, message: String, failures: Array[String]) -> void:
 	if not condition:
 		failures.append(message)
