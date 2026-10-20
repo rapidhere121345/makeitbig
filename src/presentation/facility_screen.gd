@@ -29,15 +29,15 @@ const LawForgeScript = preload("res://src/systems/law_forge.gd")
 ## page the production batch does not mark (immortality, research, unknown ids);
 ## every page the hamlet package covers draws its published cell instead.
 const LEGACY_FACILITY_TEXTURES: Dictionary = {
-	"loadout": "res://art/early/base/stations/equipment_rune_desk.png",
-	"forge": "res://art/early/base/stations/destiny_forge.png",
-	"training": "res://art/early/base/stations/training_report.png",
+	"loadout": "res://art/production/p1/legacy_facility_stations/equipment_rune_desk.png",
+	"forge": "res://art/production/p1/legacy_facility_stations/destiny_forge.png",
+	"training": "res://art/production/p1/legacy_facility_stations/training_report.png",
 }
 
 const FACILITY_TEXTURES: Dictionary = {
-	"loadout": "res://art/early/base/stations/equipment_rune_desk.png",
-	"forge": "res://art/early/base/stations/destiny_forge.png",
-	"training": "res://art/early/base/stations/training_report.png",
+	"loadout": "res://art/production/p1/legacy_facility_stations/equipment_rune_desk.png",
+	"forge": "res://art/production/p1/legacy_facility_stations/destiny_forge.png",
+	"training": "res://art/production/p1/legacy_facility_stations/training_report.png",
 }
 const FACILITY_TITLES: Dictionary = {
 	"loadout": "备行架 · 装备与符文",

@@ -3,7 +3,7 @@ extends SceneTree
 const EndingScreenScript = preload("res://src/presentation/ending_screen.gd")
 
 ## The dedicated early-return illustration, and the floor
-## no Chinese copy may fall under (VISUAL_BASELINE.md: 正文 18-22 显示像素).
+## no Chinese copy may fall under (design/DESIGN.md: 正文 18-22 显示像素).
 const ILLUSTRATION_PATH := "res://art/production/p1/hearth_return_v01/background.png"
 const ILLUSTRATION_SIZE := Vector2(640.0, 360.0)
 const FONT_FLOOR := 18

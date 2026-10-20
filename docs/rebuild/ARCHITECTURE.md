@@ -1,16 +1,44 @@
-# Runtime geometry rebuild
+# Make It Big runtime architecture
 
-This rebuild removes the split town/arena geometry implementations. The
-authoritative movement path is a fixed tick `ActorMotor` over authored static
-geometry. Rendering, navigation, combat queries, and visual reveal are separate
-queries over the same scene-owned source data.
+Current architecture of the clean rebuild. Compatibility adapters are not
+carried: domain boundaries use typed records and fixed ports, and simulation
+code does not look up the SceneTree, a global gameplay singleton, or a
+string-keyed callback ABI. A general ECS is unnecessary; typed stores plus
+stable spatial indexes provide the required data locality without erasing
+ownership.
+
+## Runtime graph
+
+```text
+Native world and content definitions
+    -> WorldAssetBaker
+    -> immutable WorldAsset
+        -> static spatial indexes, navigation graph, vision/projectile data,
+           occlusion data, sockets, gameplay/presentation digests
+    -> GameApplication
+        -> RoomRuntime
+            -> SimulationKernel
+            -> EntityStore
+            -> DynamicSpatialIndex
+            -> MovementResolver
+            -> ContinuousHitResolver
+            -> VisionResolver
+            -> RoomEncounter
+            -> DamageResolution
+            -> StatusEffectLedger
+            -> DeathSettlement
+            -> CombatRoomLoot
+        -> detached AuthoritativeSnapshot
+            -> PresentationFrame
+                -> OcclusionPresentationController
+```
 
 `RoomDefinition` identifies a room and its rules. `WorldAsset` points to the
-native `PackedScene` and generated `SpatialManifest`. The manifest is a build
-product, never a second hand-edited map. Runtime state lives in `SimulationWorld`
-and room state, never in shared Resources.
+native `PackedScene` and the generated `SpatialManifest` — a build product,
+never a second hand-edited map. Runtime state lives in `SimulationWorld` and
+room state, never in shared Resources.
 
-`SceneRuntime` assembles one world clock, registry and presenter for each room:
+`SceneRuntime` assembles one world clock, registry and presenter per room:
 
 ```text
 SceneRuntime
@@ -24,187 +52,241 @@ SceneRuntime
 └── room-owned interaction and navigation nodes
 ```
 
-The presenter never draws collision rectangles as an actor fallback. Missing
-required art is a load error. Geometry diagnostics are an opt-in layer outside
-the production presentation path.
-
 `SimulationWorld` owns the room's fixed-tick accumulator and versioned command
 boundary. A room supplies its gameplay phases after `step()` commits a tick;
 rendering may continue to resolve presentation frames after the authority has
 reached a terminal state. `Main` is initialized with that same configured
 `SimulationWorld` for explicit test fixtures and mounted rooms; there is no
-detached tick counter or implicit combat wave for tests or production.
-`CombatQuery` owns pure
-attack-shape, line-sweep and segment-distance queries. It does not decide
-damage or movement.
+detached tick counter or implicit combat wave.
 
-`CombatSimulation` owns the single combat phase order after the world commits a
-tick: player preparation, room rules and hazards, command collection and
-routing, player rules and motion, encounters, projectiles, hazard damage,
-terminal checks and automation timeout. It calls `PlayerCombatRules` directly
-for player phases. Its callbacks connect room, input, target, encounter and
-projectile services; they do not hand player timers or damage authority back to
-`Main`.
+## Spatial truth
 
-`PlayerCombatState` stores health, cooldowns, mobility, marks, talents and the
-action timeline for a frozen room build. `PlayerCombatRules` advances these
-values and owns damage, cast requests and talent consumption. State snapshots
-are detached, including mutable `BigValue` objects. Position is read from the
-room's `ActorRegistry`; there is no writable player position copy in `Main`.
+`WorldAsset` owns immutable authored data. `SpatialOverlay` owns runtime state
+for doors, gates and destructible geometry and produces a new effective query
+revision at a tick boundary. The baked asset is never mutated.
 
-`PlayerMotionSystem` computes displacement from this state and submits it to
-the shared registry/motor once per committed world tick, including stationary
-ticks. A repeated motor submission fails before state mutation. Neither the
-caller nor the motor invents a later tick. `release_input(tick)` clears only
-pending mobility input; it preserves an active dodge/dash, timeline, counters,
-command sequence and event stream.
+Static and dynamic indexes are separate:
 
-For outer-circle contact, ActorMotor constrains the projected continuation to
-the footprint circle and sweeps that chord against the inner hole and static
-blockers. It validates final clearance with the same query contract.
-`move()` reports `ok/error`; ActorRegistry rejects invalid results before
-changing actor state or the committed motor tick. It validates rather than
-clamping the motor's answer, and invalid authored starts are not relocated.
+- `StaticSpatialIndex` contains authored convex geometry indexed per semantic
+  channel.
+- `DynamicSpatialIndex` contains committed actor bodies, hurtboxes, projectiles
+  and other runtime shapes; its buckets are rebuilt or updated at the movement
+  commit boundary in stable entity order.
 
-`CombatInputAdapter` owns physical input and pointer capture.
-`CombatCommandSource` turns manual input edges into device-free command
-dictionaries. It receives target snapshots and command factories through
-callbacks, so it has no authority over room state.
-`CombatCommandRouter` is the only adapter between an
-arbitrated command batch and player intent: it reports rejected receipts,
-preserves accepted command dictionaries, and routes movement, mobility and cast
-commands without reading `Input` or owning player state. A buffered dodge keeps
-the original tick and sequence so replay input is unchanged. The visual layer
-reads the committed position and displacement; it cannot snap or correct
-gameplay coordinates.
+The public query surface is semantic, never a generic `is_blocked` call:
 
-`ProxyIntentSystem` is the Auto-only decision boundary. It consumes the
-published observation and proxy build, records diagnostic state, and returns
-intent candidates; it does not read device input, move an actor, validate room
-authority, or append to the command stream. `Main` remains the owner of the
-single command sequence. `SmokeInputDriver` is a separate diagnostic input
-policy over detached observations; it also produces commands rather than
-changing health, position or encounter state.
+- movement: footprint sweep and contact resolution;
+- navigation: region, portal and traversal-cost queries;
+- vision: line of sight and attenuation;
+- projectile: continuous environment contacts;
+- attack: attack-path and area contacts;
+- hurtbox: dynamic target shapes;
+- occlusion: presentation-only foreground relationships.
 
-Combat authority is split by rule ownership. `EncounterDirector` owns enemy
-intent execution, enemy action phases, Boss transitions, hazard timing and
-elite rules. `CombatSystem` owns the Ranger's projectile lifecycle, swept
-contact, damage application, impact traces and room totals. Its
-`reset_room()` is the explicit totals initialization boundary;
-`outcome_snapshot()` and `remaining_boss_health()` are read-only observations.
-Main and Encounter do not keep writable copies of Boss damage, maximum health
-or kill counts.
+Chapter-1 delivery status (2026-10-19 audit): `movement`, `projectile`,
+`attack` and `hurtbox` are live production channels (authored combat static
+blockers publish `movement` plus `projectile`). The `navigation` graph API,
+`VisionResolver` integration and runtime `SpatialOverlay` producers are
+intentionally deferred for chapter 1: no encounter consumes them yet, and they
+must not be wired without a gameplay slice that does. The presentation-side
+occlusion channel stays art-box driven and never enters this spatial index as
+a gameplay surface.
 
-Encounter applies player damage through the same configured Rules instance,
-with an explicit source position. CombatSystem delegates target blocking to
-Encounter and first-critical/retained-arrow talent consumption to Rules.
-Missing or invalid ports fail explicitly. Neither service reads input or
-draws. The room entry point assembles these narrow ports.
+`ContinuousHitResolver` queries static and dynamic indexes together and
+returns ordered contacts with `toi`, normal, surface/entity identity, channel
+and response material. It never applies damage. An opaque world blocker wins a
+tie with a target at the same `toi`; penetration and multi-hit behavior belong
+to the attack definition.
 
-Room-local combat records are kept outside the scene entry point:
-`CombatEnemyState` owns mutable enemy and Boss fields, while
+`MovementResolver` is the only authority that commits an actor position. It
+supports `solid`, `soft` and `ghost` dynamic body policies. Soft separation is
+the default for the player/enemy crowd model; every separation displacement is
+still validated by the static movement query. For outer-circle contact, the
+motor constrains the projected continuation to the footprint circle and sweeps
+that chord against the inner hole and static blockers, then validates final
+clearance with the same query contract. `move()` reports `ok/error`;
+`ActorRegistry` rejects invalid results before changing actor state or the
+committed motor tick — it validates rather than clamping, and invalid authored
+starts are not relocated.
+
+`CombatQuery` owns pure attack-shape, line-sweep and segment-distance queries.
+It does not decide damage or movement.
+
+## Fixed-tick pipeline
+
+Every room uses the same code-defined order:
+
+1. begin tick and apply the previous structural commit;
+2. build a read-only tick view;
+3. collect player, AI and encounter intents;
+4. commit actions, casts, projectiles and hazards;
+5. resolve movement and dynamic contact;
+6. refresh the dynamic spatial index from committed poses;
+7. advance projectiles, attacks and hazards and fill `HitBuffer`;
+8. sort and resolve damage, status applications and periodic effects;
+9. mark deaths and produce settlement, loot and encounter commands;
+10. commit spawns, removals, overlays and terminal state;
+11. publish an authoritative snapshot.
+
+The scheduler is fixed and explicit rather than configurable. Structural
+changes never remove an entity in the middle of a query phase. Every entity
+reference contains a generation and room revision; stale references fail
+closed. A per-room `StableEntityKey` is monotonic and never reused.
+
+## Combat ownership
+
+Kernel domains:
+
+- `RoomEncounter` owns waves, spawn requests, active member accounting, clear
+  conditions and room terminal state. It does not instantiate nodes or
+  directly delete combatants.
+- `CombatHazard` owns shape, lifetime, faction, periodic cadence and
+  per-target hit suppression. It emits `CombatHitRecord` values only.
+- `DamageResolution` is the only damage authority: it consumes ordered hit
+  records, resolved stats and resistances, then emits damage, status and death
+  results. It does not query the scene or decide room victory.
+- `StatusEffectLedger` owns effect instances, stacking, refresh, expiry and
+  periodic damage requests.
+- `DeathSettlement` converts a death exactly once into loot, encounter and
+  removal requests, keyed by `StableEntityKey`. A death request carries room
+  revision, committed tick, source and spawn identity, feet position,
+  archetype and drop tags; repeating the same key returns the original
+  receipt. It never rolls an item and never calls `RoomEncounter`.
+- `CombatRoomLoot` receives spawn requests through a fixed port: authored
+  slots are normalized and sorted, placement is checked through the movement/
+  spatial query port, and item generation receives the room loot seed plus a
+  stable slot stream key. Pickup is a command committed on a later tick after
+  an alive/range/room-phase check. Victory turns unpicked items into
+  `left_in_room` and picked ones into settlement items; defeat turns both into
+  `forfeited_by_defeat`. Settlement is cached verbatim on repeat; the room
+  domain never writes session inventory.
+
+Room services and player domain:
+
+- `CombatSimulation` owns the combat phase order after the world commits a
+  tick: player preparation, room rules and hazards, command collection and
+  routing, player rules and motion, encounters, projectiles, hazard damage,
+  terminal checks and automation timeout. It calls `PlayerCombatRules`
+  directly for player phases; its ports connect room, input, target, encounter
+  and projectile services without handing player timers or damage authority
+  back to `Main`.
+- `PlayerCombatState` stores health, cooldowns, mobility, marks, talents and
+  the action timeline for a frozen room build; `PlayerCombatRules` advances
+  them and owns damage, cast requests and talent consumption. Position is read
+  from `ActorRegistry`; there is no writable player position copy in `Main`.
+- `PlayerMotionSystem` computes displacement and submits it to the shared
+  registry/motor once per committed world tick, including stationary ticks. A
+  repeated motor submission fails before state mutation.
+  `release_input(tick)` clears only pending mobility input; it preserves an
+  active dodge/dash, timeline, counters, command sequence and event stream.
+- `CombatInputAdapter` owns physical input and pointer capture.
+  `CombatCommandSource` turns manual input edges into device-free command
+  dictionaries. `CombatCommandRouter` is the only adapter between an
+  arbitrated command batch and player intent: rejected receipts are reported,
+  accepted commands preserved, and a buffered dodge keeps its original tick so
+  replay input is unchanged.
+- `ProxyIntentSystem` is the Auto-only decision boundary: it consumes the
+  published observation and proxy build and returns intent candidates; it does
+  not read device input or move actors. `Main` remains the owner of the single
+  command sequence. `SmokeInputDriver` is a separate diagnostic input policy
+  over detached observations.
+- `EncounterDirector` owns enemy intent execution, enemy action phases, boss
+  transitions, hazard timing and elite rules. `CombatSystem` owns the ranger's
+  projectile lifecycle, swept contact, damage application, impact traces and
+  room totals; `reset_room()` is the explicit totals boundary and
+  `outcome_snapshot()`/`remaining_boss_health()` are read-only. Encounter
+  applies player damage through the same configured rules instance with an
+  explicit source position.
+- `CombatRoomRules` owns terminal decisions and reward calculation, including
+  same-tick victory-before-defeat priority and loot RNG order. `Main` does not
+  roll rewards or decide victory.
+- `CombatRoomRuntime` owns room mounting, input relay, terminal observation
+  and one-shot signal delivery through `Main.start_room()` and
+  `return_requested`. `CombatRoomResult` is a pure result projection from the
+  immutable room configuration and an authoritative snapshot; it filters
+  internal reward fields and emits the public Law Tally shape.
+- `CombatStateSnapshotBuilder` is the sole owner of the authoritative combat
+  snapshot used for replay/state hashes. It orders actors and projectiles and
+  excludes presentation state. Boss part pose, resolved pose and radius carry
+  fixed big-endian IEEE-754 binary64 hex so sub-0.001 changes cannot disappear
+  from the hash; this encoding does not quantize gameplay geometry.
+
+Room-local combat records stay outside the scene entry point:
+`CombatEnemyState` owns mutable enemy and boss fields while
 `CombatArrowProjectile` and `CombatArrowTrace` are data records consumed by
-`CombatSystem`. The records do not draw, read input, or access the scene tree.
+`CombatSystem`. They do not draw, read input, or access the scene tree.
 
-The first four vertical samples are a town building, a corridor, a concave
-room with a hole, and a multi-part boss. The old town collision and legacy
-arena entry points have been removed; their behavior is covered by the current
-motor, arena geometry, runtime lifecycle and replay tests. Native combat room
-assets are selected by the strict `RoomCatalog`; presentation copy and spawn
-profiles are content data, while `Main` only requests the resolved values.
-Every shipped combat scene also contains a `RoomAssetRoot` with named Ground,
-GroundEffects, SortRoot, Foreground, GeometrySources and Sockets groups.
-`SceneRuntime` validates room identity and all six canonical manifest fields
-against the native authoring contract before mounting. It publishes the
-authored bounds, movement boundary and positioned spawn sockets. Mounted rooms
-must use them; missing data cannot fall back to layout formulas or a rectangle.
-The manifest separates movement, navigation, vision, projectile and occlusion
+## Manifest and mounting
+
+Native combat room assets are selected by the strict `RoomCatalog`;
+presentation copy and spawn profiles are content data. Every shipped combat
+scene contains a `RoomAssetRoot` with named Ground, GroundEffects, SortRoot,
+Foreground, GeometrySources and Sockets groups. `SceneRuntime` validates room
+identity and all six canonical manifest fields before mounting, then publishes
+authored bounds, movement boundary and positioned spawn sockets — mounted
+rooms must use them; missing data cannot fall back to layout formulas. The
+manifest separates movement, navigation, vision, projectile and occlusion
 channels; visual bounds do not define movement or attack shapes.
 
-The concave/hole/passage sample uses `NativeStaticRoomRoot` and the same generic
-`static_blocker` bindings as the runtime. Its convex pieces are registered
-before READY. `tools/world_manifest/derive.gd` derives the manifest from the
-native scene; no sample identity branch or alternate motor is involved.
+`tools/world_manifest/derive.gd` derives the manifest from the native scene;
+the concave/hole/passage sample uses `NativeStaticRoomRoot` with the same
+generic `static_blocker` bindings, whose convex pieces register before READY.
 
-`CombatRoomRules` owns terminal decisions and reward calculation, including
-same-tick victory-before-defeat priority and the existing loot RNG order.
-Its standalone save port receives a prepared reward commit and executes once;
-Main does not roll rewards or decide victory. Embedded room settlement remains
-with the contract lifecycle.
+## Presentation and occlusion
 
-`CombatRoomRuntime` owns room mounting, input relay, terminal observation and
-one-shot signal delivery. It invokes public `Main.start_room()` and consumes
-`return_requested`, without reaching into the HUD. `CombatRoomResult` is a pure
-result projection from the
-immutable room configuration and an authoritative room snapshot. It filters
-internal reward fields and emits the public Law Tally shape without reading a
-scene node directly. This keeps settlement schema changes out of the room
-scene lifecycle. Defeat source and tick come from PlayerCombatState;
-missing/null required fields are rejected explicitly.
+The presentation frame contains detached actor poses, feet anchors, baseline,
+rank, stable key and actual art boxes. `OcclusionPresentationController`
+calculates local cutaway and alpha transitions from that frame. Interpolation,
+alpha and Y-sort never enter the authoritative hash and never feed back into
+movement, vision or combat.
 
-`CombatStateSnapshotBuilder` is the sole owner of the authoritative combat
-snapshot used for replay/state hashes. It reads player and combat totals from
-their domains, orders actors and projectiles, and excludes presentation state.
-Existing readable milli fields remain. Boss part pose, resolved pose and radius
-also carry fixed big-endian IEEE-754 binary64 hex, so changes smaller than
-0.001 cannot disappear from the hash. Parts are sorted by stable ID; pending
-changes retain request order within each part. This encoding does not quantize
-gameplay geometry. `SimulationWorld` is also the sole tick
-accumulator: explicit test fixtures use the same object and no compatibility
-clock alias or fallback accumulator remains.
+`PresentationFrame` is the only adapter from an authoritative snapshot to
+occlusion data: it rejects entries without a real art box and rejects
+collision/debug geometry as an implicit visual source. `OcclusionPlan` orders
+the frame by baseline, rank and stable key, reports front art-box coverage,
+and the controller interpolates only detached display feet and alpha. The
+plan and controller expose no movement, vision or projectile query surface.
 
-`ArenaPresenter` owns the static arena presentation pass. It pulls a validated
-read-only frame and presentation dependencies from `Main`, then draws the
-backdrop, authored ground, room concept, decals and structure shadows under
-the native world transform. Missing or invalid presentation assets produce an
-explicit presentation error; the presenter never draws a collision rectangle
-or proxy actor.
-
-`ArenaCombatPresenter` owns the read-only combat overlay pass: movement-boundary
-guides, enemy and Boss telegraphs, hazards, projectiles, transient combat
-feedback, target markers and player status marks. `ArenaActorPresenter` owns
-actor shadows, actor and corpse sprite placement, Boss parts and the shared
-actor occlusion prepass. `CombatPresentationController` owns animation,
-feedback, HUD, frame building and commit. It applies one gameplay transform and
-submits independent actor/part views to the mounted WorldPresenter.SortRoot,
-alongside native art with the same z index. It does not also draw a duplicate
-actor batch. Leaving or unloading releases these views and rejects stale frame
+`ArenaPresenter` owns the static arena pass: it pulls a validated read-only
+frame and presentation dependencies and draws backdrop, authored ground, room
+concept, decals and structure shadows. `ArenaCombatPresenter` owns read-only
+combat overlays: boundary guides, telegraphs, hazards, projectiles, transient
+feedback, target markers and status marks. `ArenaActorPresenter` owns actor
+shadows, sprite placement, boss parts and the shared actor occlusion prepass.
+`CombatPresentationController` owns animation, feedback, HUD, frame building
+and commit; it applies one gameplay transform and submits independent
+actor/part views to `WorldPresenter.SortRoot` at the same z index as native
+art. Leaving or unloading releases these views and rejects stale frame
 commits. Neither presenter writes gameplay state.
 
-Main publishes detached gameplay snapshots through `refresh_presentation()`;
-the controller prepares animation and resolved texture regions. Presentation
-off keeps HUD layout and pointer ownership while hiding its drawing, so render
-mode cannot change input commands. `ArenaWorldView` remains a pure drawing and
-coordinate helper used by the presenters.
+Missing required art is a load error. Collision rectangles and debug geometry
+are diagnostic layers only and never production actor fallbacks.
 
-The HUD consumes accepted mark feedback only while the matching marked target
-is alive and the mark remains valid. Pointer warnings, arrow phases and terminal
-feedback retain priority. A return request may skip the remaining local defeat
-animation before forwarding one signal; it never repeats room settlement.
+Boss projectile contacts query actual circle hurtboxes, stably sort
+candidates and deduplicate by attack instance, logical target and damage
+group. Body and hands share health/phase; visual sort feet are independent
+from hurtboxes.
 
-Boss projectile contacts query actual circle hurtboxes, stably sort candidates
-and deduplicate by attack instance, logical target and damage group. Body and
-hands share health/phase; active/broken changes apply at the contact commit
-boundary. Visual sort feet are independent from hurtboxes. Aim selection still
-uses the existing target circle. Automatic part destruction thresholds and new
-hurtbox shape types are not introduced by this rebuild.
+## Town chain and bake pipeline
 
-Town uses `BaseHubScreen → TownController → TownRuntime/TownPresenter`.
-The controller mounts SceneRuntime and injects its clock and registry; the
-runtime owns fixed-tick movement, routes, travel and interaction state.
-TownPresenter consumes snapshots and shares SortRoot with native buildings and
-residents. The three former Hamlet view/patch/layer classes are deleted.
+Town uses `BaseHubScreen → TownController → TownRuntime/TownPresenter`. The
+controller mounts SceneRuntime and injects its clock and registry; the runtime
+owns fixed-tick movement, routes, travel and interaction state. TownPresenter
+consumes snapshots and shares SortRoot with native buildings and residents.
 
 `tools/town_layers/bake.py` normalizes the approved source image once offline,
-then assigns each pixel to ground or one of 35 native foreground pieces.
-Recomposition must exactly equal that normalized source. Unknown underplate
-stays transparent; pieces remain rendered, with fade/cutaway disabled. This is
-static layering, not a claim of a clean painted ground or completed reveal
-behavior. Town's static author coordinates use the declared 1/64-pixel
-canonical grid; per-tick actor positions do not. Unsupported native transforms
-are rejected rather than silently dropped.
+then assigns each pixel to ground or one of the native foreground pieces.
+Recomposition must exactly equal that normalized source; unknown underplate
+stays transparent and pieces remain rendered with fade/cutaway disabled —
+static layering, not a claim of a clean painted ground. Town static author
+coordinates use the declared 1/64-pixel canonical grid; per-tick actor
+positions do not. Unsupported native transforms are rejected rather than
+silently dropped.
 
-Implementation and acceptance are separate. Current evidence and remaining
-full-build, historical replay and graphical gates are tracked in `HANDOFF.md`.
-Focused domain tests or an isolated SceneRuntime stress harness do not prove
-the complete game flow or platform performance.
+## Evidence discipline
+
+Each integration slice has a headless deterministic test before the next is
+integrated. The delivery gate is `container_build.sh` (tests, 600/600 victory
+matrix, export, Linux empty-directory smoke) plus real-machine GPU acceptance
+recorded under `docs/playtest/`. Focused domain tests or an isolated
+SceneRuntime stress harness do not prove the complete game flow.

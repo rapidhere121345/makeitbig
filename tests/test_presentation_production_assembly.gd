@@ -1,7 +1,7 @@
 extends SceneTree
 
 ## Mounted production assembly gate (windowed: run under the host GPU entry).
-## Covers the composition-root seam from docs/rebuild/TARGET_ARCHITECTURE.md on REAL
+## Covers the composition-root seam from docs/rebuild/ARCHITECTURE.md on REAL
 ## mounted rooms, not test doubles:
 ##   1. SceneRuntime binds the detached presentation projector itself at mount,
 ##      and manifest occlusion-channel pieces enter it as static bindings with

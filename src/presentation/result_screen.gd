@@ -75,7 +75,7 @@ const PROXY_DETAIL_SHOW_TEXT := "协议详情"
 const PROXY_DETAIL_HIDE_TEXT := "收起协议"
 
 ## Header and value steps of the approved UI band: 28px Chinese title, 18px
-## neutral subtitle and small copy, 28px metric values (VISUAL_BASELINE.md).
+## neutral subtitle and small copy, 28px metric values (design/DESIGN.md).
 const TITLE_FONT_SIZE := 28
 const SUBTITLE_FONT_SIZE := 18
 const METRIC_LABEL_FONT_SIZE := 18

@@ -17,7 +17,7 @@ extends SceneTree
 
 const RouteView = preload("res://src/presentation/settlement_route_view.gd")
 
-## The approved Chinese UI floor (VISUAL_BASELINE.md: 正文 18-22 显示像素).
+## The approved Chinese UI floor (design/DESIGN.md: 正文 18-22 显示像素).
 const FONT_FLOOR := 18
 const EDGE_EPSILON := 0.5
 ## The settlement summary row the route has to live in, the inner report width
