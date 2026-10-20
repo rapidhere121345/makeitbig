@@ -27,6 +27,11 @@ const COVER_FULL_THRESHOLD: float = 0.45
 
 var _plan: Variant = null
 var _state: Dictionary = {}
+## Occluder window registry: stable ids of front pieces that currently cover
+## an actor, each easing toward its own cover-tier alpha. Kept separate from
+## the subject registry so a piece can window open while its subject stays
+## fully opaque.
+var _occluder_state: Dictionary = {}
 
 
 ## Adopts a detached plan as the current presentation truth.  Display
@@ -36,6 +41,7 @@ func adopt_plan(plan: Variant) -> Dictionary:
 		return {"ok": false, "errors": ["invalid_occlusion_plan"]}
 	_plan = plan
 	_state.clear()
+	_occluder_state.clear()
 	for entry: Dictionary in plan.call("entries"):
 		var stable_id := String(entry["stable_id"])
 		_state[stable_id] = {
@@ -111,6 +117,42 @@ static func _target_alpha_for_cover(cover_fraction: float) -> float:
 	return lerpf(CLEAR_TARGET_ALPHA, OCCLUDED_TARGET_ALPHA, ramp)
 
 
+## Occluder window feed: one front piece's cover fraction over any tracked
+## actor, mapped through the same tiers. A grazing overlap keeps the piece
+## opaque; a full cover opens the window to the occluded target so the actor
+## behind it stays readable. The presenter drives these ids; nothing here
+## touches the simulation or the scene.
+func set_occluder_cover(occluder_id: String, cover_fraction: float) -> Dictionary:
+	if occluder_id.strip_edges().is_empty():
+		return {"ok": false, "error": "invalid_occluder_id"}
+	if not is_finite(cover_fraction) or cover_fraction < 0.0:
+		return {"ok": false, "error": "invalid_cover_fraction"}
+	if not _occluder_state.has(occluder_id):
+		_occluder_state[occluder_id] = {"alpha": CLEAR_TARGET_ALPHA, "target_alpha": CLEAR_TARGET_ALPHA}
+	(_occluder_state[occluder_id] as Dictionary)["target_alpha"] = _target_alpha_for_cover(cover_fraction)
+	return {"ok": true, "error": ""}
+
+
+## The eased window alpha of one front piece. Unknown ids report INF so a
+## presenter can distinguish "fully clear" from "not tracked".
+func occluder_alpha(occluder_id: String) -> float:
+	if not _occluder_state.has(occluder_id):
+		return INF
+	return _occluder_state[occluder_id]["alpha"]
+
+
+func occluder_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for occluder_id: String in _occluder_state.keys():
+		ids.append(occluder_id)
+	ids.sort()
+	return ids
+
+
+func clear_occluders() -> void:
+	_occluder_state.clear()
+
+
 ## Advances display interpolation and alpha transitions.  Clamp prevents
 ## overshoot; equal inputs always produce equal outputs (no clock or
 ## engine state is read inside).
@@ -130,6 +172,15 @@ func update(delta_seconds: float, alpha_rate: float = DEFAULT_ALPHA_RATE, follow
 			entry["alpha"] = minf(alpha + step, target_alpha)
 		elif alpha > target_alpha:
 			entry["alpha"] = maxf(alpha - step, target_alpha)
+	for occluder_id: String in _occluder_state.keys():
+		var window: Dictionary = _occluder_state[occluder_id]
+		var window_target: float = window["target_alpha"]
+		var window_alpha: float = window["alpha"]
+		var window_step: float = maxf(alpha_rate, 0.0) * delta_seconds
+		if window_alpha < window_target:
+			window["alpha"] = minf(window_alpha + window_step, window_target)
+		elif window_alpha > window_target:
+			window["alpha"] = maxf(window_alpha - window_step, window_target)
 
 
 func display_feet(stable_id: String) -> Vector2:

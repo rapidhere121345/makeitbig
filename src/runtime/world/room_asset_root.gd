@@ -273,6 +273,10 @@ func _validated_static_blockers(errors: Array[String]) -> Array[Dictionary]:
 			errors.append("invalid_static_source:%s" % String(child.name))
 			continue
 		var node_name := String(polygon.name)
+		if polygon.visible:
+			## Blockers are authoring data, never art: a visible polygon would
+			## render as an untextured debug shape over the approved scene.
+			errors.append("static_blocker_visible:%s" % node_name)
 		if polygon.is_set_as_top_level() or polygon.transform.x != Vector2.RIGHT or polygon.transform.y != Vector2.DOWN or not polygon.position.is_finite():
 			errors.append("unsupported_static_transform:%s" % node_name)
 		if polygon.offset != Vector2.ZERO or polygon.get_child_count() != 0:
