@@ -16,4 +16,4 @@ GameRoot 路由，ApplicationState 从真实训练报告和已结算战斗保存
 
 本轮只润色六条对话/日志中的14页：开场、首次发现及巨像返镇，以寒冷、找回的旧物和居民处境加强氛围；没有改动故事ID、解锁、奖励、页数或灾变设定。
 
-现有定向检查入口：`tests/test_story_progression.gd`、`tests/test_story_evidence.gd`、`tests/test_story_screen.gd`、`tests/test_story_reading_flow.gd`、`tests/unit/test_town_story_r14.gd`、`tests/test_character_story_integration.gd`。阅读流程测试已加入两平台测试脚本，覆盖启动焦点、真实输入、提前关闭、完成、重读、筛选、28段对白及1280×720/1600×900边界；整合验证进度见 HANDOFF。
+现有定向检查入口：`tests/test_story_progression.gd`、`tests/test_story_evidence.gd`、`tests/test_story_screen.gd`、`tests/test_story_reading_flow.gd`、`tests/unit/test_town_story_r14.gd`、`tests/test_character_story_integration.gd`。阅读流程测试已加入两平台测试脚本，覆盖启动焦点、真实输入、提前关闭、完成、重读、筛选、28段对白及1280×720/1600×900边界。

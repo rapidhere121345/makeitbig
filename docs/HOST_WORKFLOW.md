@@ -70,7 +70,7 @@ source scripts/project_env.sh
 
 - `Godot command not found`：重新执行 `source scripts/project_env.sh`，或确认 `/data/paseo-makeitbig/bin/godot` 存在。
 - `No export template found`：确认 `$XDG_DATA_HOME/godot/export_templates/4.7.2.stable/version.txt` 或 `$MIB_GODOT_TEMPLATE_FALLBACK/version.txt` 存在且版本匹配。
-- 先看 `git status --short` 和 `HANDOFF.md`，保留已有未提交工作，不执行 `git reset --hard`、`git clean` 或覆盖原会话工作区。
+- 先看 `git status --short`，保留已有未提交工作，不执行 `git reset --hard`、`git clean` 或覆盖原会话工作区。
 - 不从项目脚本重启 OCX、Paseo 或 Jingwei。
 
 每次交付至少记录 Godot 版本、`git rev-parse HEAD`、完整测试结果、回放哈希、导出结果和 Linux 空目录 smoke 结果。Paseo 健康与 OCX 状态记录在部署运维记录中，不伪装成项目测试结果。

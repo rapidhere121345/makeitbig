@@ -1,6 +1,6 @@
 # 详细文档
 
-这里放需要长期查阅的系统、叙事、宿主机工作流和美术生产说明。当前状态与快速操作见根目录的 [README.md](../README.md)，整体协作约定见 [AGENTS.md](../AGENTS.md)，最近工作见 [HANDOFF.md](../HANDOFF.md)。
+这里放需要长期查阅的系统、叙事、宿主机工作流和美术生产说明。当前状态与快速操作见根目录的 [README.md](../README.md)，整体协作约定见 [AGENTS.md](../AGENTS.md)。
 
 - [HOST_WORKFLOW.md](HOST_WORKFLOW.md)：宿主机工作区的固定环境和构建顺序。
 - [GRAPHICAL_VALIDATION.md](GRAPHICAL_VALIDATION.md)：宿主机窗口检查和 headless 验收记录。

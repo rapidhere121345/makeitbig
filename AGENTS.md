@@ -9,7 +9,6 @@ Make It Big 是 Godot 4.7.2 的像素暗黑搜宝 Demo。当前交付范围是�
 ## 入口和目录
 
 - `README.md`：人类读者的快速开始、操作和验证入口。
-- `HANDOFF.md`：短的当前工作记录，只保留最新状态、阻塞项和下一步。
 - `design/`：玩法设计、UI 方法、视觉参考和当前美术方向。
 - `docs/`：系统、叙事、宿主机工作流和可复现美术生产的详细说明。
 - `release/`：发布页模板、发布配置和发布规范。
@@ -45,12 +44,12 @@ Tailscale 发布页由 `./scripts/release.sh all` 生成在 `build/releases/`；
 
 ## 修改和验证规则
 
-1. 先看 `git status --short` 和 `HANDOFF.md`，保留已有工作区改动。
+1. 先看 `git status --short`，保留已有工作区改动。
 2. 修改运行逻辑后运行相关定向测试；交付前运行 `./scripts/container_build.sh`。
 3. 修改素材或路径前先搜索 `src/`、`tests/`、`tools/`、manifest 和 recipe 的引用。
 4. 只保留当前使用的运行素材和能复现当前产物的来源记录；删除旧候选、重复截图、生成缓存和失效链接。
 5. 文档只放在约定目录，避免在源码、素材目录和交接记录中复制同一份长说明。
-6. `HANDOFF.md` 滚动维护，不追加历史长篇；完成的旧记录直接删除。
+6. 会话不维护滚动交接文件；当前验证记录归档在 `docs/playtest/`，待办以提交信息和验收报告为准。
 7. Subagent 结束后不自动归档，由用户自行处理。
 
 提交前至少确认脚本语法、`git diff --check`、完整测试、导出和 Linux 空目录 smoke 都通过。

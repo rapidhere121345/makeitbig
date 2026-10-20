@@ -6,4 +6,4 @@
 - [visual/](visual/UI_GUIDE.md)：UI 方法、参考资料、视觉基准和当前界面美术记录。
 - [visual/concepts/](visual/concepts/)：仍被生产配方或运行时设计说明引用的视觉参考图。
 
-旧试玩报告、阶段清理报告、候选图和生成缓存不放在这里；当前验证只记录在 [HANDOFF.md](../HANDOFF.md)。
+旧试玩报告、阶段清理报告、候选图和生成缓存不放在这里；真机验收记录归档在 [docs/playtest/](../docs/playtest/)。

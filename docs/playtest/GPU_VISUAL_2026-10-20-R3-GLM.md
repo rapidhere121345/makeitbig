@@ -10,7 +10,7 @@
 | 入口 | `MIB_PLAY_SESSION_DIR=build/current/gpu-visual-r3-glm ./scripts/play_session_window.sh --nvidia --display :97` |
 | 渲染器 | engine.log 首两行：`Godot Engine v4.7.2.stable.official` / `OpenGL API 3.3.0 NVIDIA 595.91.07 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 4080 SUPER` |
 | 窗口 | 1280×720（runner 默认，本轮未加压更高分辨率） |
-| 退出码 | `runner.exit.json` status=0；退出时出现既有 ObjectDB/resource leak 警告（HANDOFF 已记录的已知限制，非本轮引入） |
+| 退出码 | `runner.exit.json` status=0；退出时出现既有 ObjectDB/resource leak 警告（既往验收已记录的已知限制，非本轮引入） |
 
 ## 六项修复判定
 
@@ -54,4 +54,4 @@
 - 构筑详情弹窗打开时，"返回基地"点击被弹窗吞掉属常规模态行为；弹窗内按钮不在 play_session 控件扫描里（协议盲区，非游戏缺陷），用原始坐标点击可关。
 - 击杀"击破"浮字错位（R2 修复 4）本轮战斗中有击杀发生但未抓到击杀瞬帧，未复验；该修复上轮已有像素证据。
 - 已知 backlog 项（雪地英雄对比度、敌我贴身叠压）本轮依旧可见，属未修项非回归。
-- 交付门禁：本轮为纯验收，无代码改动；完整 `container_test.sh` 与导出仍以 HANDOFF 所载最近全绿结果为准。
+- 交付门禁：本轮为纯验收，无代码改动；完整 `container_test.sh` 与导出以最近一次全绿构建记录为准。

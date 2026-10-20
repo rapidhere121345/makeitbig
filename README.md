@@ -74,7 +74,6 @@ Linux 正式包位于 `build/current/linux/make-it-big.x86_64`，Windows 包位�
 ## 文档入口
 
 - [AGENTS.md](AGENTS.md)：项目整体说明、权威来源和协作规则。
-- [HANDOFF.md](HANDOFF.md)：当前工作状态与最近一次验证，滚动维护。
 - [design/](design/README.md)：设计、UI 方法和视觉参考。
 - [docs/](docs/README.md)：系统、叙事、宿主机工作流和美术生产的详细说明。
 - [docs/GRAPHICAL_VALIDATION.md](docs/GRAPHICAL_VALIDATION.md)：宿主机窗口和 headless 界面验收。
