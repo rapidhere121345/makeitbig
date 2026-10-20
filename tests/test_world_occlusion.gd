@@ -224,9 +224,18 @@ func _test_town_scene() -> void:
 		town.place_hero(target)
 		await process_frame
 		_expect(shared.get_child_count() == before, "town: movement created cutaway fragments")
+		## Occluder-window contract (GPU acceptance R2): a front piece covering
+		## the hero eases open inside the tier bounds; every other native piece
+		## must stay fully opaque, and nothing may ever hide or duplicate.
+		var windowed: Dictionary = view.occlusion_report().get("occluder_alphas", {})
 		for node: Node in shared.get_children():
 			if node.has_meta("texture_path"):
-				_expect((node as CanvasItem).visible and (node as CanvasItem).modulate.a == 1.0, "town: movement hid native art")
+				var alpha := float((node as CanvasItem).modulate.a)
+				_expect((node as CanvasItem).visible, "town: movement hid native art")
+				_expect(alpha >= 0.39 and alpha <= 1.0, "town: window tier escaped its bounds: %.3f" % alpha)
+				var piece_id := String(node.get_meta("binding_id", ""))
+				if piece_id.is_empty() or not windowed.has(piece_id) or absf(float(windowed[piece_id]) - 1.0) < 0.001:
+					_expect(is_equal_approx(alpha, 1.0), "town: unwcovered native art faded: %.3f" % alpha)
 	_expect(native_count == 35, "town: offline native ownership is incomplete")
 	hub.free()
 

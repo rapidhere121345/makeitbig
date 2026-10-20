@@ -62,6 +62,6 @@
 ## 附记:修复状态(2026-10-20)
 
 - **R1 已修复**:三个战斗房以 `GeometrySources/Static` 下的凸八边形 `static_blocker`(整数坐标)收录全部 13 个废墟/塔(与 layout.json 逐一对齐,由 `tests/test_combat_structure_blockers.gd` 钉死);墙体/门/塔同时进入 projectile 通道,低桩只挡移动。出生点增加确定性环形净空投影(`main.gd _project_static_clear`);敌人战术候选方向打分纳入 `static_blockers` 避让(`enemy_tactics.gd`),直线撞墙死磨从 193 tick 降到 ≤4。
-- **R2 已修复并升级为遮挡者开窗**:真机验收(见 [GPU_VISUAL_2026-10-20](../playtest/GPU_VISUAL_2026-10-20.md))证明"被挡者变暗"在被完全遮挡时是视觉空操作,已重构为前景件/设施铭牌开窗(cover_fraction 分档:<0.15 不开窗、线性、≥0.45 压到 0.4/0.25),主体保持不透明。碰撞 blocker 渲染为白色多边形的阻断级问题已修(`visible=false` + 契约 fail-closed)。逐像素 descriptor 未接入(需改 plan 构建输入,另行立项)。
+- **R2 已修复并升级为遮挡者开窗**:真机验收(见 [GPU_VISUAL_2026-10-20](../playtest/GPU_VISUAL_2026-10-20.md) 与 [R2 加压轮](../playtest/GPU_VISUAL_2026-10-20-R2.md))证明"被挡者变暗"在被完全遮挡时是视觉空操作,已重构为前景件/设施铭牌开窗(cover_fraction 分档:<0.15 不开窗、线性、≥0.45 压到 0.4/0.35),主体保持不透明;第二轮验收发现并修复了开窗节点查找根错误(前景件挂载后被重挂进 presenter 层,查找根须为 SceneRuntime 子树)。碰撞 blocker 渲染为白色多边形的阻断级问题已修(`visible=false` + 契约 fail-closed)。逐像素 descriptor 未接入(需改 plan 构建输入,另行立项)。
 - **R4 部分完成**:敌人半径 16→18 曾落地,但因软分离地板(14+18=32)超过 `MELEE_ATTACK_RANGE`(30.25)导致近战永远无法攻击,已回退到 16;后续上调需同步调校 `MELEE_ATTACK_RANGE`/`MELEE_RING_RADIUS` 并重审战术常量。玩家半径被 ring 房出生插座恰好 14.0 的净空封顶;城镇英雄半径与 hearthside 烘焙摘要强耦合(需重烘焙)。三项约束已记录,待统一调校。滑墙段足迹-美术对齐(脚部与墙顶石重叠观感)为真机验收新记 backlog。
 - **通道延后已标注**:`TARGET_ARCHITECTURE.md` 已注明 navigation/vision/overlay 为首章明确延后。

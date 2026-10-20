@@ -544,6 +544,10 @@ func _build_interface() -> void:
 	_room_start_label = _named_label("RoomStartLabel")
 	_room_start_label.add_theme_font_size_override("font_size", 18)
 	_room_start_label.add_theme_color_override("font_color", COLOR_AMBER)
+	## The authored entry hints can exceed the strip: clip with an ellipsis
+	## instead of running under the right-side mode/report panels.
+	_room_start_label.clip_text = true
+	_room_start_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_room_start_label.visible = false
 	_place(boss_layout, _room_start_label, Rect2(0.0, 42.0, 456.0, 21.0))
 	_boss_hp_label = _named_label("BossHpLabel")
