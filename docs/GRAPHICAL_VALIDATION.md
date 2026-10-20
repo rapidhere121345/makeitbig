@@ -92,4 +92,4 @@ __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia \
 
 ## 交付记录
 
-每次图形化验收至少记录日期、入口（宿主机虚拟显示或宿主机 GPU）、Godot 版本、渲染器、检查场景、输入流程和退出码。截图或临时录屏只作为本轮验收证据，放在被 git 忽略的 `build/` 下；需要长期保留的视觉方向资料放在 `design/visual/`，并写明来源。
+每次图形化验收至少记录日期、入口（宿主机虚拟显示或宿主机 GPU）、Godot 版本、渲染器、检查场景、输入流程和退出码。截图或临时录屏只作为本轮验收证据，放在被 git 忽略的 `build/` 下；需要长期保留的视觉方向资料放在 `docs/art-production/concepts/`，并写明来源。

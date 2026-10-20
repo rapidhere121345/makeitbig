@@ -1,6 +1,6 @@
 # 剧情与世界观
 
-当前 Demo 的首章对白位于 [chapter_one_story.json](../../content/chapter_one_story.json)：28段、每段2–4页，串起寒原旧路搜宝、五位镇民的变化与巨像开路后的返镇。阅读状态及真实发现的接口见 [首章实施约定](../../design/../design/DESIGN.md)。
+当前 Demo 的首章对白位于 [chapter_one_story.json](../../content/chapter_one_story.json)：28段、每段2–4页，串起寒原旧路搜宝、五位镇民的变化与巨像开路后的返镇。阅读状态及真实发现的接口由 StoryProgression 与测试钉死，维护约定见 story 相关测试。
 
 完整游戏的两份当前规划：
 

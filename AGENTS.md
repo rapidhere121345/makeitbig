@@ -9,7 +9,6 @@ Make It Big 是 Godot 4.7.2 的像素暗黑搜宝 Demo。当前交付范围是�
 ## 入口和目录
 
 - `README.md`：人类读者的快速开始、操作和验证入口。
-- `design/`：玩法设计、UI 方法、视觉参考和当前美术方向。
 - `docs/`：系统、叙事、宿主机工作流和可复现美术生产的详细说明。
 - `release/`：发布页模板、发布配置和发布规范。
 - `deploy/tailscale/`：Tailscale 发布页校验与宿主机暴露示例；项目脚本不运行 tailscaled。

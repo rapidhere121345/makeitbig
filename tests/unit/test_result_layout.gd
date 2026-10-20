@@ -20,7 +20,7 @@ const ResultScreenScript = preload("res://src/presentation/result_screen.gd")
 
 const RESOLUTIONS: Array[Vector2] = [Vector2(1280.0, 720.0), Vector2(1600.0, 900.0), Vector2(1920.0, 1080.0), Vector2(1024.0, 576.0)]
 const BODY_FOOTER_EPSILON := 1.0
-## The approved Chinese UI floor (design/DESIGN.md: 正文 18-22 显示像素).
+## The approved Chinese UI floor (approved baseline: 正文 18-22 显示像素).
 const FONT_FLOOR := 18
 const LONG_DROP_COUNT := 12
 const LONG_INSTANCE_ID := "drop_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"

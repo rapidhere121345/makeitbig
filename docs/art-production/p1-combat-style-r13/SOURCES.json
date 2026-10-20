@@ -18,7 +18,7 @@
           "sha256_at_handoff": "8dbb1de505a7c650b48d136b0e183455bb3f254de110d57fa7347231cf92669e"
         },
         {
-          "path": "/data/paseo-makeitbig/project/design/visual/concepts/r13/hearthside-town-composition-v01.png",
+          "path": "/data/paseo-makeitbig/project/docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
           "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
         }
       ]
@@ -38,7 +38,7 @@
           "sha256_at_handoff": "380247cc2001037d716567ccd0d10b03fabf958c2f22aba5628f33f16456fd7f"
         },
         {
-          "path": "/data/paseo-makeitbig/project/design/visual/concepts/r13/hearthside-town-composition-v01.png",
+          "path": "/data/paseo-makeitbig/project/docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
           "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
         }
       ]
@@ -58,7 +58,7 @@
           "sha256_at_handoff": "f7f3b8b91d54a14ead697ff9f322f22ce4795992fd40609bfbc1d8737ad57c31"
         },
         {
-          "path": "/data/paseo-makeitbig/project/design/visual/concepts/r13/hearthside-town-composition-v01.png",
+          "path": "/data/paseo-makeitbig/project/docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
           "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
         }
       ]
@@ -82,7 +82,7 @@
           "sha256_at_handoff": "f432816323740b26897ca84d30d734919ebcf559be263e9918e92ad30f4da011"
         },
         {
-          "path": "/data/paseo-makeitbig/project/design/visual/concepts/r13/hearthside-town-composition-v01.png",
+          "path": "/data/paseo-makeitbig/project/docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
           "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
         }
       ]
@@ -102,13 +102,13 @@
           "sha256_at_handoff": "bab637220cda1d2f90dd6ec56005d2dbfebeab514e5220dd4734e70499d03de9"
         },
         {
-          "path": "/data/paseo-makeitbig/project/design/visual/concepts/r13/hearthside-town-composition-v01.png",
+          "path": "/data/paseo-makeitbig/project/docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
           "sha256_at_handoff": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
         }
       ]
     }
   ],
-  "style_reference": "design/visual/concepts/r13/hearthside-town-composition-v01.png",
+  "style_reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
   "read_only_hamlet_material_reference": "docs/art-production/p1-hamlet-style-r13/sources/facilities.png",
   "accepted_player_adjustment": "retain exact original e9ddc3 + d3cbb5 light-mass pixels and 111820 ink outline; generated winter colour samples only on secondary material colours",
   "contract_source_atlases": {

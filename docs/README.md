@@ -9,4 +9,4 @@
 - [narrative/](narrative/README.md)：世界观、剧情和体验单元。
 - [art-production/](art-production/README.md)：可复现的美术生产配方、来源和导入检查。
 
-设计与视觉资料统一放在根目录 [design/](../design/README.md)，技术文档继续留在本目录。
+设计约定已并入实现与验收记录；视觉参考原图在 [art-production/concepts/](art-production/concepts/)，技术文档继续留在本目录。

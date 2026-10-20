@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Contract for the concept-faithful combat HUD (design/visual/concepts/v0.9-p1-complete/
+## Contract for the concept-faithful combat HUD (docs/art-production/concepts/v0.9-p1-complete/
 ## ART_BIBLE.md section 12, panel 05 COMBAT of 10_ui_screens.png).
 ##
 ## Two states are asserted, not one:

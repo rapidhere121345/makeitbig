@@ -55,7 +55,7 @@
 - `src/presentation/combat_presentation_controller.gd`：允许指针归属查询携带可选事件坐标，仍只返回表现层读数。
 - `docs/playtest/GPU_WINDOW_2026-10-18_REDESIGN_UX_REVIEW.md`：本轮独立验收记录。
 
-没有新增或修改运行素材，所以 `art/production/p1/`、`design/` 不需要变更；也没有修改 `src/game/**`、`src/runtime/**`、`src/systems/**`、`content/**`、`tests/**`、`release/**` 或 `deploy/**`。
+没有新增或修改运行素材，所以 `art/production/p1/`、`docs/art-production/` 不需要变更；也没有修改 `src/game/**`、`src/runtime/**`、`src/systems/**`、`content/**`、`tests/**`、`release/**` 或 `deploy/**`。
 
 ## 截图与日志证据
 

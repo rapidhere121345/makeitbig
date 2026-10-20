@@ -2,7 +2,7 @@ extends SceneTree
 
 const ResultScreenScript = preload("res://src/presentation/result_screen.gd")
 
-## The approved Chinese UI floor (design/DESIGN.md: 正文 18-22 显示像素).
+## The approved Chinese UI floor (approved baseline: 正文 18-22 显示像素).
 const FONT_FLOOR := 18
 const EDGE_EPSILON := 0.5
 const FULL_INSTANCE_ID := "drop_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"

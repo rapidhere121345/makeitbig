@@ -1,6 +1,6 @@
 {
   "generator": "built-in image_gen image editing",
-  "art_direction": "design/visual/concepts/r13/hearthside-town-composition-v01.png",
+  "art_direction": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
   "prompts": "PROMPTS.json",
   "sources": [
     {

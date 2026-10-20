@@ -1,5 +1,5 @@
 extends RefCounted
-## Approved 2026-09-14 production skin (design/DESIGN.md):
+## Approved 2026-09-14 production skin:
 ## cold slate greys, bone information, old-copper accents, danger red for hostile
 ## telegraphs and cold teal for proxy/ally state. Presentation only: nothing here
 ## is read by simulation, damage, drops or AI.
