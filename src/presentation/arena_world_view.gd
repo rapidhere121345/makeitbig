@@ -453,10 +453,15 @@ func _concept_ring_trace_radius_world(inner_radius: float, outer_radius: float) 
 func _draw_outpost_concept(canvas: CanvasItem, phase: float, geometry: Dictionary = {}) -> void:
 	var field := _concept_bounds_world(geometry)
 	canvas.draw_rect(field, Color(PaletteScript.SLATE_0, 0.25), true)
-	canvas.draw_rect(field.grow(-5.0), Color(PaletteScript.COPPER_DULL, 0.52), false, 3.0)
-	canvas.draw_rect(field.grow(-15.0), Color(PaletteScript.BONE_DIM, 0.12), false, 1.0)
+	## Corner posts and short edge ticks mark the arena bounds. A full
+	## double wireframe rect read as debug strokes on the snow ground
+	## (GPU visual backlog), so the border stays a ground-marking instead.
 	for corner in [field.position, Vector2(field.end.x, field.position.y), field.end, Vector2(field.position.x, field.end.y)]:
-		canvas.draw_circle(corner, 5.0, Color(PaletteScript.COPPER, 0.42))
+		var sign_x := 1.0 if corner.x == field.position.x else -1.0
+		var sign_y := 1.0 if corner.y == field.position.y else -1.0
+		canvas.draw_line(corner, corner + Vector2(sign_x * 34.0, 0.0), Color(PaletteScript.COPPER_DULL, 0.55), 3.0, false)
+		canvas.draw_line(corner, corner + Vector2(0.0, sign_y * 34.0), Color(PaletteScript.COPPER_DULL, 0.55), 3.0, false)
+		canvas.draw_circle(corner, 4.0, Color(PaletteScript.COPPER, 0.45))
 	var lamp_alpha := 0.28 + 0.18 * (0.5 + 0.5 * sin(phase * TAU))
 	_draw_room_gate(canvas, Vector2(field.position.x + 8.0, field.get_center().y), Vector2.RIGHT, Color(PaletteScript.COLD, lamp_alpha), false)
 	_draw_room_gate(canvas, Vector2(field.end.x - 8.0, field.get_center().y), Vector2.LEFT, Color(PaletteScript.COPPER, lamp_alpha), true)
@@ -521,17 +526,18 @@ func _draw_corridor_concept(canvas: CanvasItem, phase: float, geometry: Dictiona
 func _draw_room_gate(canvas: CanvasItem, point: Vector2, direction: Vector2, color: Color, exit_gate: bool) -> void:
 	var side := direction.rotated(PI * 0.5).normalized()
 	var span := 28.0 if exit_gate else 24.0
-	var depth := 18.0
-	var left_post := point + side * span - direction * depth
-	var right_post := point - side * span - direction * depth
-	canvas.draw_line(left_post, left_post + direction * (depth * 2.0), Color(PaletteScript.SLATE_0, 0.82), 7.0, false)
-	canvas.draw_line(right_post, right_post + direction * (depth * 2.0), Color(PaletteScript.SLATE_0, 0.82), 7.0, false)
-	canvas.draw_line(left_post, left_post + direction * (depth * 2.0), color, 2.0, false)
-	canvas.draw_line(right_post, right_post + direction * (depth * 2.0), color, 2.0, false)
-	canvas.draw_line(left_post + direction * depth, right_post + direction * depth, color, 2.0, false)
-	var arrow_tip := point + direction * (depth + 6.0)
-	canvas.draw_line(arrow_tip - direction * 8.0 + side * 5.0, arrow_tip, color, 2.0, false)
-	canvas.draw_line(arrow_tip - direction * 8.0 - side * 5.0, arrow_tip, color, 2.0, false)
+	## Two grounded posts plus a threshold line read as a doorway across the
+	## walkway; the old parallel rails with a floating U-bar looked like debug
+	## strokes (GPU visual backlog). The chevron still points the way through.
+	var left_post := point + side * span
+	var right_post := point - side * span
+	for post in [left_post, right_post]:
+		canvas.draw_line(post - side * 5.0, post + side * 5.0, Color(PaletteScript.SLATE_0, 0.9), 10.0, false)
+		canvas.draw_line(post - side * 4.0, post + side * 4.0, color, 3.0, false)
+	canvas.draw_line(left_post, right_post, Color(color, color.a * 0.6), 2.0, false)
+	var arrow_tip := point + direction * 10.0
+	canvas.draw_line(arrow_tip - direction * 7.0 + side * 5.0, arrow_tip, color, 2.0, false)
+	canvas.draw_line(arrow_tip - direction * 7.0 - side * 5.0, arrow_tip, color, 2.0, false)
 
 
 func draw_decals(canvas: CanvasItem) -> void:

@@ -49,6 +49,11 @@ var next_action_index: int = 0
 var tactic_state: String = "idle"
 var tactic_reason: String = "spawned"
 var next_action_ready_tick: int = 0
+## Consecutive move-intent ticks without ~24u of net progress. The tactic
+## planner re-slots a stuck enemy to its own side of the room instead of
+## grinding a fixed ring slot that sits behind the hole or a blocker.
+var stuck_ticks: int = 0
+var stuck_anchor: Vector2 = Vector2.INF
 var _status_effects: RefCounted = StatusEffectLedgerScript.new()
 
 

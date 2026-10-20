@@ -283,6 +283,11 @@ func present(snapshot: Dictionary) -> void:
 	_feedback_label.text = "战斗反馈  %s" % _compact_feedback(_feedback_text)
 	_feedback_label.tooltip_text = _feedback_text
 	var input_feedback := String(snapshot.get("input_feedback", ""))
+	## A range-rejection notice is a receipt for a past input, not the live
+	## state: once the same target reads in range, showing "射程外" beside it
+	## contradicts the strip (visual backlog). Live state wins immediately.
+	if attack_target_in_range and input_feedback.contains("射程外"):
+		input_feedback = ""
 	var loot_prompt_text := String(snapshot.get("loot_prompt_text", ""))
 	var loot_prompt_state := String(snapshot.get("loot_prompt_state", "none"))
 	var visible_input_feedback := input_feedback if not input_feedback.is_empty() else loot_prompt_text
@@ -641,6 +646,13 @@ func _build_interface() -> void:
 	_summary_block_label = _named_label("SummaryBlockLabel")
 	_summary_block_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_summary_stack.add_child(_summary_row(_summary_block_label))
+	## Trailing gutter: the last report row must never render flush against the
+	## scroll clip edge (visual backlog: bottom line read as cut off).
+	var bottom_gutter := Control.new()
+	bottom_gutter.name = "SummaryBottomGutter"
+	bottom_gutter.custom_minimum_size = Vector2(0.0, 8.0)
+	bottom_gutter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_summary_stack.add_child(bottom_gutter)
 	_summary_panel.clip_contents = true
 	_summary_panel.visible = false
 

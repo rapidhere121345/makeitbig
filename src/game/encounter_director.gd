@@ -548,6 +548,7 @@ func enemy_tactics_snapshot() -> Dictionary:
 			"health": enemy.health,
 			"facing": enemy.facing if enemy.facing != Vector2.ZERO else Vector2.RIGHT,
 			"next_action_ready_tick": enemy.next_action_ready_tick,
+		"stuck_ticks": enemy.stuck_ticks,
 		}
 		if enemy.is_boss:
 			actor["phase"] = enemy.phase_id
@@ -787,6 +788,8 @@ func _finish_enemy_recovery_if_due(enemy: CombatEnemyState) -> bool:
 	enemy.impact_tick = -1
 	enemy.impact_resolved = false
 	enemy.target_shape = {}
+	enemy.stuck_ticks = 0
+	enemy.stuck_anchor = enemy.position
 	enemy.next_action_ready_tick = tick + _enemy_breath_ticks(enemy.kind_id)
 	if was_charge:
 		_set_enemy_collision_class(enemy, &"soft")
@@ -799,6 +802,8 @@ func _begin_action(enemy: CombatEnemyState, action_id: String, windup_ticks: int
 	next_enemy_action_instance_id += 1
 	enemy.action_state = "windup"
 	enemy.motion_state = "idle"
+	enemy.stuck_ticks = 0
+	enemy.stuck_anchor = enemy.position
 	enemy.state_started_tick = tick
 	enemy.impact_tick = tick + windup_ticks
 	enemy.state_ends_tick = enemy.impact_tick
@@ -981,13 +986,33 @@ func _commit_normal_enemy_intent(enemy: CombatEnemyState, intent: Dictionary) ->
 	var movement_result := _move_enemy_actor(enemy, direction * base_speed * speed_scale * SIM_STEP_SECONDS)
 	if not bool(movement_result.get("ok", false)):
 		enemy.motion_state = "idle"
+		## A committed move that lands nothing still ages the stuck clock: the
+		## planner re-slots an enemy trapped behind room geometry.
+		_update_stuck_clock(enemy)
 		return
 	enemy.motion_state = "moving" if enemy.position != before else "idle"
+	_update_stuck_clock(enemy)
 	if enemy.kind_id == "fan_ranged":
 		enemy.tactic_state = "range_hold" if enemy.tactic_reason in ["fan_strafe_hold", "fan_legal_band"] else "locomotion"
 		enemy.facing = enemy.position.direction_to(player_position) if enemy.position != player_position else enemy.facing
 	else:
 		enemy.facing = direction
+
+
+## The stuck clock counts move-intent ticks that produce ~no net progress
+## toward the player. Advancing enemies keep resetting; an enemy pinned or
+## orbiting the room hole at a fixed range crosses the planner's escape
+## threshold instead of grinding one unreachable slot forever.
+const STUCK_PROGRESS_DISTANCE := 24.0
+
+
+func _update_stuck_clock(enemy: CombatEnemyState) -> void:
+	var distance := enemy.position.distance_to(player_position)
+	if enemy.stuck_anchor == Vector2.INF or enemy.stuck_anchor.distance_to(player_position) - distance >= STUCK_PROGRESS_DISTANCE:
+		enemy.stuck_anchor = enemy.position
+		enemy.stuck_ticks = 0
+		return
+	enemy.stuck_ticks += 1
 
 
 func _resolve_hostile_attack(enemy: CombatEnemyState, amount: float, shape_hit: bool) -> void:

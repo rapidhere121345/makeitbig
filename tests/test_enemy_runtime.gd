@@ -48,6 +48,7 @@ func _run() -> void:
 	_test_charger_padding_edge_runtime(session.arena, failures)
 	_test_invalid_charge_distance_runtime(session.arena, failures)
 	_test_rectangle_runtime_does_not_detour(session.arena, failures)
+	_test_melee_stuck_escape_intent(session.arena, failures)
 	_test_room_completion_and_validation(session.arena, failures)
 	_test_embedded_room_rewards(session.arena, failures)
 	_test_hazards(session.arena, failures)
@@ -936,6 +937,35 @@ func _configure_room(_arena: Node, layout: String, objective: String, enemy_ids:
 		"elite_rule_ids": elite_rules.duplicate(), "boss_id": boss_id, "drop_tags": drop_tags.duplicate(),
 	}
 	return _mount_room(room)
+
+
+func _test_melee_stuck_escape_intent(arena: Node, failures: Array[String]) -> void:
+	## A melee pinned against unreachable geometry re-slots: in a ring it walks
+	## the annulus tangent toward the player; in a rectangle it picks the wedge
+	## nearest its own bearing instead of grinding the fixed far slot forever.
+	arena = _configure_room(arena, "ring", "clear", ["melee_pursuer"])
+	var enemy = arena.enemies[0]
+	arena.teleport_actor("ranger", arena._arena_rect().get_center() + Vector2(-180.0, 80.0))
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(280.0, -20.0))
+	enemy.stuck_ticks = 40
+	enemy.stuck_anchor = enemy.position
+	var ring_intent: Dictionary = arena.encounter_director._intent_for_enemy(enemy)
+	_expect(String(ring_intent.get("reason", "")) == "melee_annulus_escape" and not (ring_intent.get("move_direction", Vector2.ZERO) as Vector2).is_zero_approx(),
+		"escape: a stuck melee in a ring room did not get the annulus escape intent", failures)
+	enemy.stuck_ticks = 0
+	enemy.stuck_anchor = Vector2.INF
+	var free_intent: Dictionary = arena.encounter_director._intent_for_enemy(enemy)
+	_expect(String(free_intent.get("reason", "")) == "melee_ring_slot", "escape: an unstuck melee lost its authored ring slot reason", failures)
+	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
+	enemy = arena.enemies[0]
+	arena.teleport_actor("ranger", arena._arena_rect().get_center())
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(280.0, -20.0))
+	enemy.stuck_ticks = 40
+	enemy.stuck_anchor = enemy.position
+	var escape_intent: Dictionary = arena.encounter_director._intent_for_enemy(enemy)
+	_expect(String(escape_intent.get("reason", "")) == "melee_escape_slot",
+		"escape: a stuck melee outside a ring did not get the same-side escape slot", failures)
+	_default_room()
 
 
 func _enemy_of_kind(arena: Node, kind_id: String) -> Variant:

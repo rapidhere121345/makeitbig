@@ -51,6 +51,9 @@ const VALID_ACTION_STATES := [&"idle", &"locomotion", &"range_hold", &"windup", 
 const MELEE_RING_RADIUS := 20.0
 const MELEE_ATTACK_RANGE := 30.25
 const MELEE_SLOT_COUNT := 12
+## Move-intent ticks without real progress before a melee re-slots to its own
+## side of the room (see encounter_director's stuck clock).
+const MELEE_STUCK_ESCAPE_TICKS := 40
 const MELEE_SEPARATION_RADIUS := 28.0
 const MELEE_SEPARATION_WEIGHT := 0.85
 const MELEE_SPEED_SCALE := 1.0
@@ -248,9 +251,37 @@ func _plan_melee(snapshot: Dictionary, enemy: Dictionary) -> Dictionary:
 			return _melee_between_actions_intent(snapshot, enemy, "melee_reposition_between_attacks")
 		return _action_intent(int(enemy["entity_id"]), "melee_attack", to_player, "melee_in_range")
 
-	var slot_angle := TAU * float(posmod(int(enemy["entity_id"]), MELEE_SLOT_COUNT)) / float(MELEE_SLOT_COUNT)
-	var slot := player + Vector2.RIGHT.rotated(slot_angle) * MELEE_RING_RADIUS
-	var desired := slot - position
+	var slot_index := posmod(int(enemy["entity_id"]), MELEE_SLOT_COUNT)
+	var slot_reason := "melee_ring_slot"
+	var stuck := int(enemy.get("stuck_ticks", 0))
+	var desired := Vector2.ZERO
+	if stuck >= MELEE_STUCK_ESCAPE_TICKS:
+		var ring_geometry := (snapshot.get("walkable_geometry", {}) as Dictionary)
+		var ring_center: Variant = ring_geometry.get("center", null)
+		if String(ring_geometry.get("kind", "")) == "ring" and ring_center is Vector2:
+			## In an annulus room the hole cuts every straight line across: the
+			## only real path is the corridor itself. A trapped melee walks the
+			## ring tangent toward the player's bearing instead of re-picking
+			## slots that all ask for a hole crossing.
+			var center: Vector2 = ring_center
+			var to_enemy := position - center
+			var angle_diff := wrapf((player - center).angle() - to_enemy.angle(), -PI, PI)
+			var tangent := to_enemy.normalized().rotated((1.0 if angle_diff >= 0.0 else -1.0) * PI * 0.5)
+			desired = tangent * MELEE_RING_RADIUS
+			slot_reason = "melee_annulus_escape"
+		else:
+			## The fixed ring slot can sit on the far side of an authored blocker
+			## pile, which the 34u local steering cannot round. A trapped enemy
+			## re-slots to the wedge nearest its own bearing — always on its side
+			## of the obstacle — and walks one slot further each escape period so
+			## a still-blocked side slot keeps rotating.
+			var bearing := (position - player).angle()
+			var nearest := posmod(int(round(bearing / (TAU / float(MELEE_SLOT_COUNT)))), MELEE_SLOT_COUNT)
+			slot_index = posmod(nearest + stuck / MELEE_STUCK_ESCAPE_TICKS - 1, MELEE_SLOT_COUNT)
+			slot_reason = "melee_escape_slot"
+	if desired.is_zero_approx():
+		var slot := player + Vector2.RIGHT.rotated(TAU * float(slot_index) / float(MELEE_SLOT_COUNT)) * MELEE_RING_RADIUS
+		desired = slot - position
 	var separation := Vector2.ZERO
 	for other_value: Variant in snapshot["enemies"]:
 		var other: Dictionary = other_value
@@ -261,7 +292,7 @@ func _plan_melee(snapshot: Dictionary, enemy: Dictionary) -> Dictionary:
 		if gap > 0.0001 and gap < MELEE_SEPARATION_RADIUS:
 			separation += away.normalized() * (1.0 - gap / MELEE_SEPARATION_RADIUS)
 	desired += separation * MELEE_RING_RADIUS * MELEE_SEPARATION_WEIGHT
-	return _move_intent(snapshot, enemy, desired, MELEE_SPEED_SCALE, "melee_ring_slot")
+	return _move_intent(snapshot, enemy, desired, MELEE_SPEED_SCALE, slot_reason)
 
 
 func _plan_charger(snapshot: Dictionary, enemy: Dictionary) -> Dictionary:

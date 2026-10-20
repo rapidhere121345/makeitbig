@@ -690,6 +690,13 @@ func _build_feedback() -> void:
 	_detail_result_label = _detail_copy(content, "Settlement", 22)
 	_progress_label = _detail_copy(content, "HubProgressSummary", 18)
 	_detail_help_label = _detail_copy(content, "Help", 18)
+	## Trailing gutter: the last copy line must never render flush against the
+	## scroll clip edge (visual backlog: bottom row read as cut off).
+	var bottom_gutter := Label.new()
+	bottom_gutter.name = "HubInformationBottomGutter"
+	bottom_gutter.custom_minimum_size = Vector2(0.0, 8.0)
+	bottom_gutter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(bottom_gutter)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
 	column.add_child(actions)
@@ -1271,7 +1278,7 @@ func _nav_detail(feature_id: String, progression: Dictionary, earned_rewards: Ar
 		"forge":
 			return "已解锁" if "law_forge_unlock" in earned_rewards else "封印中"
 		"training":
-			return "已验证" if _profile_training_complete() else "未验证"
+			return "已验证" if _training_verified(progression) else "未验证"
 		"proxy":
 			if bool(progression.get("proxy_unlocked", false)):
 				return "已解锁"
@@ -1317,15 +1324,28 @@ func _early_progress_text(progression: Dictionary) -> String:
 	var colossus_done := bool(progression.get("threshold_colossus_defeated", false))
 	var auto_wins := maxi(0, int(progression.get("auto_contract_wins", 0)))
 	var complete := bool(progression.get("early_game_complete", false))
-	var training_done := bool(progression.get(
-		"build_training_complete",
-		progression.get("training_complete", progression.get("all_builds_verified", _profile_training_complete() or colossus_done or auto_wins > 0 or complete))
-	))
+	var training_done := _training_verified(progression)
 	return "Build %s · 巨像 %s · Auto %s" % [
 		"✓" if training_done else "…",
 		"✓" if colossus_done or auto_wins > 0 or complete else "…",
 		"✓" if auto_wins > 0 or complete else "…",
 	]
+
+
+## One derivation for every "training verified" read: the world nameplate used
+## to check only the exponential-report heuristic while the progress line read
+## the authored completion keys, so a finished training still read 未验证.
+func _training_verified(progression: Dictionary) -> bool:
+	return bool(progression.get(
+		"build_training_complete",
+		progression.get("training_complete",
+		progression.get("all_builds_verified",
+			_profile_training_complete()
+			or bool(progression.get("threshold_colossus_defeated", false))
+			or maxi(0, int(progression.get("auto_contract_wins", 0))) > 0
+			or bool(progression.get("early_game_complete", false))
+		))
+	))
 
 
 func _next_objective_text() -> String:
@@ -1361,10 +1381,16 @@ func _first_hunt_pending() -> bool:
 
 
 func _displayed_objective_text() -> String:
-	var story_text := String(_as_dictionary(_story_snapshot.get("current_objective", {})).get("text", ""))
+	var story_objective := _as_dictionary(_story_snapshot.get("current_objective", {}))
+	var story_text := String(story_objective.get("text", ""))
 	if _first_hunt_pending():
 		return FIRST_HUNT_OBJECTIVE_TEXT
-	if not story_text.is_empty():
+	## A story objective whose own campaign node is already complete is stale:
+	## the requirements only look backward, so fall through to the live
+	## campaign step instead of pinning an already-done goal on the header.
+	var story_node := String(story_objective.get("campaign_node", ""))
+	var completed_nodes := _as_array(_as_dictionary(_profile.get("progression", {})).get("completed_node_ids", []))
+	if not story_text.is_empty() and (story_node.is_empty() or not completed_nodes.has(story_node)):
 		return story_text
 	return _next_objective_text()
 

@@ -181,7 +181,14 @@ func _render_line() -> void:
 	_speaker.text = name_value
 	_speech.text = line.substr(split + 1) if split >= 0 else line
 	var portrait_id := portrait_id_for_line(_entry, line)
-	_role.text = String(NPC_ROLES.get(portrait_id, "流浪者")) + " · " + String(_entry.get("title", ""))
+	## The role rail always names the conversation partner: when the wanderer
+	## holds the line, "流浪者 · 流浪者" reads like the dialogue switched target
+	## (GPU acceptance R1 backlog). The speaker label still tracks the line.
+	var partner_id := String(_entry.get("npc", ""))
+	if portrait_id == partner_id:
+		_role.text = String(NPC_ROLES.get(partner_id, "")) + " · " + String(_entry.get("title", ""))
+	else:
+		_role.text = "与%s交谈 · %s" % [String(_entry.get("npc_name", "")), String(_entry.get("title", ""))]
 	_portrait.texture = portrait_for_line(_entry, line)
 	# An empty player portrait keeps the same reading origin between speakers.
 	_portrait.visible = true
