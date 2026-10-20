@@ -341,11 +341,11 @@
 					],
 					[
 						176.0,
-						262.5
+						223.125
 					],
 					[
 						349.0,
-						234.375
+						223.125
 					]
 				]
 			},
@@ -355,7 +355,7 @@
 				"points": [
 					[
 						349.0,
-						234.375
+						223.125
 					],
 					[
 						362.0,
@@ -1426,11 +1426,11 @@
 				"points": [
 					[
 						554.0,
-						653.4375
+						632.0
 					],
 					[
 						640.0,
-						636.5625
+						618.0
 					],
 					[
 						661.0,
@@ -1452,7 +1452,7 @@
 					],
 					[
 						554.0,
-						653.4375
+						632.0
 					]
 				]
 			},
@@ -3048,6 +3048,60 @@
 						756.5625
 					]
 				]
+			},
+			{
+				"id": "town/static/wedge_fill_fence_wood/000",
+				"kind": "polygon",
+				"points": [
+					[
+						519.0,
+						645.0
+					],
+					[
+						554.0,
+						621.0
+					],
+					[
+						566.0,
+						690.9375
+					]
+				]
+			},
+			{
+				"id": "town/static/cliff_east/000",
+				"kind": "polygon",
+				"points": [
+					[
+						1425.0,
+						690.0
+					],
+					[
+						1425.0,
+						440.0
+					],
+					[
+						1536.0,
+						440.0
+					]
+				]
+			},
+			{
+				"id": "town/static/cliff_east/001",
+				"kind": "polygon",
+				"points": [
+					[
+						1536.0,
+						440.0
+					],
+					[
+						1536.0,
+						690.0
+					],
+					[
+						1425.0,
+						690.0
+					]
+				]
 			}
 		],
 		"view_size": [
@@ -3409,6 +3463,11 @@
 			"kind": "static_collision"
 		},
 		{
+			"binding_id": "town/static/cliff_east",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
 			"binding_id": "town/static/commons_fire",
 			"channels": {},
 			"kind": "static_collision"
@@ -3625,6 +3684,11 @@
 		},
 		{
 			"binding_id": "town/static/water_south_bridge",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/wedge_fill_fence_wood",
 			"channels": {},
 			"kind": "static_collision"
 		},

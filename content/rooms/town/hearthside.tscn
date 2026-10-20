@@ -536,7 +536,7 @@ visible = false
 
 metadata/binding_id = "town/static/contract_base"
 
-polygon = PackedVector2Array(175.999488, 262.50048, 349.000704, 234.37536, 361.999872, 278.43744, 183.000576, 306.56256)
+polygon = PackedVector2Array(176, 223.12512, 349.000704, 223.12512, 361.999872, 278.43744, 183.000576, 306.56256)
 
 [node name="loadout_west_wall" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -722,7 +722,7 @@ visible = false
 
 metadata/binding_id = "town/static/wood_south_base"
 
-polygon = PackedVector2Array(640.000512, 636.56256, 661.000704, 660, 637.000704, 684.37536, 553.999872, 653.43744)
+polygon = PackedVector2Array(640, 618, 661.000704, 660, 637.000704, 684.37536, 554, 632)
 
 [node name="wood_east_base" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -997,6 +997,22 @@ visible = false
 metadata/binding_id = "town/static/arrival_east_gate_base"
 
 polygon = PackedVector2Array(612.000768, 804.37536, 619.00032, 813.74976, 708.000768, 774.37536, 717.000192, 791.25024, 725.999616, 787.49952, 715.00032, 756.56256)
+
+[node name="wedge_fill_fence_wood" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/wedge_fill_fence_wood"
+
+polygon = PackedVector2Array(519, 645, 566, 690.93792, 554, 621)
+
+[node name="cliff_east" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/cliff_east"
+
+polygon = PackedVector2Array(1425, 440, 1536, 440, 1536, 690, 1425, 690)
 
 [node name="Routes" type="Node2D" parent="GeometrySources"]
 
