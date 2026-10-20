@@ -160,6 +160,31 @@ func _process(delta: float) -> void:
 		return
 	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	move_hero(direction, delta)
+	_update_landmark_windows(delta)
+
+
+## Facility landmarks hover above the world plane, so an avatar walking under
+## one would otherwise read as a dark silhouette behind a mostly opaque plate
+## (GPU visual acceptance 2026-10-20). The same occluder-window semantics as
+## the town pieces apply: a landmark covering the hero's cell eases open and
+## closes again once the hero leaves it. Pure presentation; never gameplay.
+const LANDMARK_WINDOW_ALPHA := 0.35
+const LANDMARK_WINDOW_RATE := 8.0
+
+func _update_landmark_windows(delta: float) -> void:
+	if _view == null or _design_canvas == null:
+		return
+	var hero_cell := _hero_cell_design_rect()
+	for feature_id: String in _landmarks.keys():
+		var landmark: Control = _landmarks[feature_id]
+		if not landmark.visible:
+			landmark.modulate.a = 1.0
+			continue
+		var plate := Rect2(landmark.position, LANDMARK_SIZE)
+		var target := LANDMARK_WINDOW_ALPHA if plate.intersects(hero_cell) else 1.0
+		var current := float(landmark.modulate.a)
+		var step: float = LANDMARK_WINDOW_RATE * maxf(delta, 0.0)
+		landmark.modulate.a = clampf(current + (step if target > current else -step), LANDMARK_WINDOW_ALPHA, 1.0)
 
 
 func _navigation_has_focus() -> bool:

@@ -81,6 +81,7 @@ func _test_authoring_matches_layout() -> void:
 			_expect(binding_id == "combat/structure/tower" if sprite_id == "tower" else binding_id.begins_with("combat/structure/%s#" % sprite_id), "%s: blocker %d id %s does not match layout sprite %s" % [room, index, binding_id, sprite_id])
 			if node != null:
 				_expect(node.position.is_equal_approx(feet), "%s: blocker %d (%s) feet %s moved from layout %s" % [room, index, sprite_id, str(node.position), str(feet)])
+				_expect(not node.visible, "%s: blocker %d (%s) renders as a visible debug shape" % [room, index, sprite_id])
 		scene.free()
 
 

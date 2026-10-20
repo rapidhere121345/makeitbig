@@ -71,6 +71,7 @@ func load_character_assets() -> Dictionary:
 
 
 func attach(presenter: Variant, initial_state: Dictionary, presentation_runtime: Variant = null) -> Dictionary:
+	_occluder_piece_cache.clear()
 	if not _load_errors.is_empty() or ranger_animation == null or life_animation == null or not ranger_animation.has_real_art() or not life_animation.has_real_art():
 		return {"ok": false, "error": "town_character_assets_missing", "errors": _load_errors.duplicate()}
 	world_presenter = presenter
@@ -218,22 +219,58 @@ func _sync_occlusion(display_delta: float) -> void:
 		var report: Dictionary = plan.occlusion_report(stable_id)
 		if bool(report.get("ok", false)):
 			_occlusion_controller.set_cover(stable_id, float(report.get("cover_fraction", 0.0)))
+	## Occluder windows replace subject dimming: a dimmed actor under an
+	## opaque front piece was invisible anyway (GPU visual acceptance
+	## 2026-10-20), so the piece itself opens a tiered window instead and the
+	## actor sprite stays fully opaque.
+	var occluder_covers: Dictionary = {}
+	var actor_ids: Dictionary = {}
+	for actor_id: String in actor_presentation_ids():
+		actor_ids[actor_id] = true
+		for occluder: Dictionary in plan.occluders_of(actor_id):
+			var occluder_id := String(occluder.get("stable_id", ""))
+			if occluder_id.is_empty():
+				continue
+			var cover := float(occluder.get("cover_fraction", 0.0))
+			occluder_covers[occluder_id] = minf(float(occluder_covers.get(occluder_id, INF)), cover)
+	## Every plan entry that is not an actor is a native front piece: covered
+	## pieces get their tiered window, uncovered pieces ease back to opaque.
+	## Resolving the piece node here also seeds the node cache.
+	for entry: Dictionary in entries:
+		var stable_id := String(entry.get("stable_id", ""))
+		if stable_id.is_empty() or actor_ids.has(stable_id):
+			continue
+		_occlusion_controller.set_occluder_cover(stable_id, float(occluder_covers.get(stable_id, 0.0)))
+		_occluder_piece(stable_id)
 	_occlusion_controller.update(maxf(display_delta, 0.0))
 	var alphas: Dictionary = {}
+	var window_alphas: Dictionary = {}
 	var occluded_ids: Array[String] = []
 	for actor_id: String in actor_presentation_ids():
 		var alpha := float(_occlusion_controller.alpha(actor_id))
 		alphas[actor_id] = alpha
 		if alpha < 0.999:
 			occluded_ids.append(actor_id)
-		_apply_actor_alpha(actor_id, alpha)
+		_apply_actor_alpha(actor_id, 1.0)
+	for occluder_id: String in _occlusion_controller.occluder_ids():
+		var piece: CanvasItem = _occluder_piece(occluder_id)
+		var window := _occlusion_controller.occluder_alpha(occluder_id)
+		var piece_alpha := clampf(window, 0.0, 1.0) if is_finite(window) else 1.0
+		window_alphas[occluder_id] = piece_alpha
+		if piece != null:
+			piece.modulate.a = piece_alpha
 	_occlusion_report = {"available": true, "reason": "", "plan_size": entries.size(),
-		"occluded_ids": occluded_ids, "alphas": alphas}
+		"occluded_ids": occluded_ids, "alphas": alphas, "occluder_alphas": window_alphas}
 
 
 func _reset_occlusion(reason: String, errors: Array = []) -> void:
 	for actor_id: String in actor_presentation_ids():
 		_apply_actor_alpha(actor_id, 1.0)
+	_occlusion_controller.clear_occluders()
+	for occluder_id: String in _occluder_piece_cache.keys():
+		var piece: CanvasItem = _occluder_piece(occluder_id)
+		if piece != null:
+			piece.modulate.a = 1.0
 	_occlusion_report = {"available": false, "reason": reason, "errors": errors.duplicate(), "alphas": {}}
 
 
@@ -253,6 +290,38 @@ func actor_presentation_ids() -> Array[String]:
 		ids.append("town/npc/" + id)
 	ids.sort()
 	return ids
+
+
+## Mounted native front pieces by occlusion binding id. The cache is keyed by
+## the ids seen in occlusion plans; it is cleared on attach so a room restart
+## can never reuse a freed node.
+var _occluder_piece_cache: Dictionary = {}
+
+
+func _occluder_piece(occluder_id: String) -> CanvasItem:
+	if _occluder_piece_cache.has(occluder_id):
+		var cached: Variant = _occluder_piece_cache[occluder_id]
+		if cached is CanvasItem and is_instance_valid(cached as CanvasItem):
+			return cached
+		_occluder_piece_cache.erase(occluder_id)
+		return null
+	var scene: Variant = _presentation_runtime.get("mounted_scene") if _presentation_runtime is Object else null
+	if scene == null or not scene is Node:
+		return null
+	var piece: CanvasItem = _find_binding_piece(scene as Node, occluder_id)
+	if piece != null:
+		_occluder_piece_cache[occluder_id] = piece
+	return piece
+
+
+static func _find_binding_piece(root: Node, binding_id: String) -> CanvasItem:
+	if root.get_meta("binding_id", "") == binding_id and root is CanvasItem:
+		return root as CanvasItem
+	for child: Node in root.get_children():
+		var found: CanvasItem = _find_binding_piece(child, binding_id)
+		if found != null:
+			return found
+	return null
 
 
 func occlusion_report() -> Dictionary:

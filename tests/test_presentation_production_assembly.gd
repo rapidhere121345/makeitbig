@@ -209,7 +209,11 @@ func _run_town_occlusion_chain(port: Variant, view: Variant, runtime: Variant, t
 	_expect(bool(display.get("available", false)), "town: presenter did not adopt the detached occlusion plan: %s" % str(display), failures)
 	var hero_alpha := float(display.get("alphas", {}).get("town/ranger", 1.0))
 	_expect(hero_alpha < 0.999 and hero_alpha >= OCCLUSION_FLOOR, "town: actor alpha was not driven by the authored occluder: %.3f" % hero_alpha, failures)
-	_expect(is_equal_approx(float(view.actor_alpha("town/ranger")), hero_alpha), "town: drawn hero alpha diverged from controller alpha", failures)
+	# Occluder-window semantics (GPU visual acceptance 2026-10-20): the drawn
+	# actor stays fully opaque and the covering front piece opens the window.
+	_expect(is_equal_approx(float(view.actor_alpha("town/ranger")), 1.0), "town: hero sprite must stay opaque under an occluder window", failures)
+	var window_alpha := float(display.get("occluder_alphas", {}).get("town/test/probe", 1.0))
+	_expect(window_alpha < 0.999 and window_alpha >= OCCLUSION_FLOOR, "town: probe occluder window was not driven: %.3f" % window_alpha, failures)
 	# Audit R2: the same real chain must land in the full-dim tier, and every
 	# occluder row must carry its own deterministic presentation cover
 	# fraction without changing any established plan field.
