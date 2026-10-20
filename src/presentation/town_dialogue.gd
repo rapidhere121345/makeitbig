@@ -73,6 +73,15 @@ func _ready() -> void:
 	_close.name = "CloseDialogue"
 	_close.text = "稍后再聊 Esc"
 	_close.add_theme_font_size_override("font_size", 18)
+	## The advertised Esc must work while a dialogue button holds focus: GUI
+	## focus consumes the key before the hub's unhandled handler sees it, so
+	## the close action rides a real shortcut.
+	var close_shortcut := Shortcut.new()
+	var close_key := InputEventKey.new()
+	close_key.keycode = KEY_ESCAPE
+	close_key.physical_keycode = KEY_ESCAPE
+	close_shortcut.events = [close_key]
+	_close.shortcut = close_shortcut
 	_close.pressed.connect(close_dialogue)
 	heading.add_child(_close)
 	_speech = _label("", 22, ShellTheme.BONE)

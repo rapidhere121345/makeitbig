@@ -112,6 +112,14 @@ func _build_heading(page: VBoxContainer) -> void:
 		future_tab.tooltip_text = "该职业天赋尚未实现，不能投入点数。"
 		class_tabs.add_child(future_tab)
 	var close_button := _button("返回 Esc", "CloseCharacterButton")
+	## Same rationale as the dialogue close: the advertised Esc must fire even
+	## while a control inside this screen owns focus.
+	var close_shortcut := Shortcut.new()
+	var close_key := InputEventKey.new()
+	close_key.keycode = KEY_ESCAPE
+	close_key.physical_keycode = KEY_ESCAPE
+	close_shortcut.events = [close_key]
+	close_button.shortcut = close_shortcut
 	close_button.custom_minimum_size = Vector2(138, 48)
 	close_button.pressed.connect(func() -> void: closed.emit())
 	heading_row.add_child(close_button)

@@ -968,7 +968,7 @@ func _process_room_loot_pickups_tick() -> void:
 		if receipt_value is Dictionary and bool((receipt_value as Dictionary).get("ok", false)):
 			presentation.feedback.show_input_feedback("掉落已拾取 · 离场后计入结算", sim_tick)
 		elif receipt_value is Dictionary:
-			presentation.feedback.show_input_feedback("掉落未拾取 · %s" % String((receipt_value as Dictionary).get("error", "请求失效")), sim_tick)
+			presentation.feedback.show_input_feedback("掉落未拾取 · %s" % String({"loot_out_of_range": "距离过远，靠近后按 F", "loot_pickup_already_queued": "已请求拾取", "loot_pickup_window_closed": "拾取窗口已关闭"}.get(String((receipt_value as Dictionary).get("error", "")), "请求失效")), sim_tick)
 
 
 func _settle_room_loot(outcome: String) -> void:
@@ -3512,6 +3512,9 @@ class RoomPhaseDomain extends "res://src/runtime/combat/combat_phase_port.gd":
 
 	func check_battle_end() -> void:
 		_owner._check_battle_end()
+
+	func room_terminal_locked() -> bool:
+		return _owner != null and is_instance_valid(_owner) and bool(_owner.battle_over)
 
 	func check_timeout() -> void:
 		_owner._simulation_check_timeout()

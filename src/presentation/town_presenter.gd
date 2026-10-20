@@ -305,10 +305,13 @@ func _occluder_piece(occluder_id: String) -> CanvasItem:
 			return cached
 		_occluder_piece_cache.erase(occluder_id)
 		return null
-	var scene: Variant = _presentation_runtime.get("mounted_scene") if _presentation_runtime is Object else null
-	if scene == null or not scene is Node:
+	## The mounted native pieces are reparented out of the room scene into the
+	## world presenter's shared layers at mount, so the search root is the
+	## SceneRuntime node itself: its subtree owns both the mounted scene and
+	## the presenter layers.
+	if _presentation_runtime == null or not _presentation_runtime is Node:
 		return null
-	var piece: CanvasItem = _find_binding_piece(scene as Node, occluder_id)
+	var piece: CanvasItem = _find_binding_piece(_presentation_runtime as Node, occluder_id)
 	if piece != null:
 		_occluder_piece_cache[occluder_id] = piece
 	return piece

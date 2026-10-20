@@ -51,6 +51,14 @@ func configure(source: RefCounted, source_port: RefCounted, feedback_owner: Node
 func collect_commands(snapshot: Dictionary) -> Array[Dictionary]:
 	_snapshot = snapshot
 	if not active():
+		## A victorious room keeps its loot window open: the ranger must still
+		## walk to the drop to press F. Combat actions stay locked; only the
+		## movement vector is collected while that window is open.
+		if bool(snapshot.get("battle_victory", false)) and loot_input_active(snapshot):
+			return command_source.collect_manual_commands({
+				"movement": Input.get_vector("move_left", "move_right", "move_up", "move_down"),
+				"held_source": "",
+			})
 		return []
 	var over_interface := pointer_over_interface()
 	return command_source.collect_manual_commands({

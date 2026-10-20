@@ -413,7 +413,10 @@ func _draw_combat_feedback_marks(canvas: CanvasItem, frame: Dictionary) -> void:
 			var text := _compact_feedback_number(String(mark.get("text", "")))
 			var lane := int(mark.get("text_lane", 0))
 			var height := 64.0 if kind == "player_damage" else 38.0
-			var baseline := position + Vector2(-49.0, -height - float(lane) * 15.0 - progress * 14.0)
+			## The death label gets a wider berth: at 15px lanes the "击破" tag
+			## stacked into the final damage digits at the kill point.
+			var lane_offset := 34.0 if lane >= 2 else float(lane) * 15.0
+			var baseline := position + Vector2(-49.0, -height - lane_offset - progress * 14.0)
 			var outline_color := Color(COLOR_INK, 0.92 * alpha)
 			for offset: Vector2 in [Vector2(-1.0, 0.0), Vector2(1.0, 0.0), Vector2(0.0, -1.0), Vector2(0.0, 1.0)]:
 				canvas.draw_string(font, baseline + offset, text, HORIZONTAL_ALIGNMENT_CENTER, 98.0, COMBAT_FEEDBACK_TEXT_FONT_SIZE, outline_color)

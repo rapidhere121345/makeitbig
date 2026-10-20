@@ -43,6 +43,14 @@ func resolve_hazard_hits() -> void:
 func check_battle_end() -> void:
 	pass
 
+
+## True once the room reached a terminal decision: the loot window may keep
+## the simulation stepping, but enemy planning must stop so survivors of a
+## victorious hunt cannot keep attacking a ranger whose combat actions are
+## locked. Base fails open (not terminal) for isolated domain fixtures.
+func room_terminal_locked() -> bool:
+	return false
+
 func check_timeout() -> void:
 	pass
 

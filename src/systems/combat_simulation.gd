@@ -164,7 +164,10 @@ func step() -> Dictionary:
 	_trace("room.player.post")
 	phase_owner.consume_player_events(advanced)
 	_trace("room.encounter")
-	phase_owner.update_enemies()
+	## A finished room only keeps ticking for its loot window; survivors of a
+	## victorious hunt must not keep fighting a locked-out ranger.
+	if not phase_owner.room_terminal_locked():
+		phase_owner.update_enemies()
 	_trace("room.projectiles")
 	phase_owner.advance_projectiles()
 	_trace("room.hazard.resolve")
