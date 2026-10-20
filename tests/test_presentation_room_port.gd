@@ -194,8 +194,9 @@ func _test_projected_frame_drives_multi_actor_occlusion() -> void:
 	_expect(bool(grunt_report.get("occluded", false)) and (grunt_report.get("occluder_ids", []) as Array) == ["pillar"], "grunt occluders wrong: %s" % [grunt_report.get("occluder_ids", [])], failures)
 	_expect(not bool(scout_report.get("occluded", true)) and float(scout_report.get("cover_fraction", 1.0)) == 0.0, "scout reported occluded", failures)
 	_expect(float(hero_report.get("cover_fraction", 0.0)) > 0.0 and float(grunt_report.get("cover_fraction", 0.0)) > 0.0, "occlusion coverage lost", failures)
-	# Alpha targets: covered actors dim toward the occluded target, the clear
-	# actor stays at full alpha.
+	# Alpha targets: covered actors dim toward their tiered cover target (full
+	# coverage sinks to the occluded target, partial coverage interpolates),
+	# the clear actor stays at full alpha.
 	var controller = ControllerScript.new()
 	_expect(bool(controller.adopt_plan(occlusion_plan).get("ok", false)), "controller rejected the projected plan", failures)
 	for cover: Array in [["hero", hero_report], ["grunt", grunt_report], ["scout", scout_report]]:
@@ -203,7 +204,10 @@ func _test_projected_frame_drives_multi_actor_occlusion() -> void:
 		_expect(bool(set_result.get("ok", false)), "cover update rejected an id from the report", failures)
 	controller.update(0.5)
 	_expect(is_equal_approx(controller.alpha("hero"), ControllerScript.OCCLUDED_TARGET_ALPHA), "hero alpha target is not the occluded target", failures)
-	_expect(is_equal_approx(controller.alpha("grunt"), ControllerScript.OCCLUDED_TARGET_ALPHA), "grunt alpha target is not the occluded target", failures)
+	var grunt_cover := float(grunt_report.get("cover_fraction", 0.0))
+	var grunt_tier_ratio := clampf((grunt_cover - ControllerScript.COVER_GRAZE_THRESHOLD) / (ControllerScript.COVER_FULL_THRESHOLD - ControllerScript.COVER_GRAZE_THRESHOLD), 0.0, 1.0)
+	var grunt_tier_target := lerpf(1.0, ControllerScript.OCCLUDED_TARGET_ALPHA, grunt_tier_ratio)
+	_expect(is_equal_approx(controller.alpha("grunt"), grunt_tier_target), "grunt alpha target is not its tiered cover target", failures)
 	_expect(is_equal_approx(controller.alpha("scout"), ControllerScript.CLEAR_TARGET_ALPHA), "scout alpha target is not clear", failures)
 
 

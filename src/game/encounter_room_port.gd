@@ -36,6 +36,13 @@ func collision_geometry(_padding: float) -> Dictionary:
 	return {}
 
 
+## Bounding circles of authored movement-channel static blockers for AI
+## steering. Rooms without authored blockers report an empty list; the exact
+## shapes stay inside the room's spatial index.
+func static_blocker_bounds() -> Array[Dictionary]:
+	return []
+
+
 func layout_spawn_offsets(_layout_id: String, _count: int) -> Array[Vector2]:
 	return []
 

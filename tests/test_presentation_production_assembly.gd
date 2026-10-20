@@ -210,6 +210,24 @@ func _run_town_occlusion_chain(port: Variant, view: Variant, runtime: Variant, t
 	var hero_alpha := float(display.get("alphas", {}).get("town/ranger", 1.0))
 	_expect(hero_alpha < 0.999 and hero_alpha >= OCCLUSION_FLOOR, "town: actor alpha was not driven by the authored occluder: %.3f" % hero_alpha, failures)
 	_expect(is_equal_approx(float(view.actor_alpha("town/ranger")), hero_alpha), "town: drawn hero alpha diverged from controller alpha", failures)
+	# Audit R2: the same real chain must land in the full-dim tier, and every
+	# occluder row must carry its own deterministic presentation cover
+	# fraction without changing any established plan field.
+	var probed_plan: Dictionary = port.call("latest_occlusion_plan")
+	_expect(bool(probed_plan.get("ok", false)), "town: probed detached plan unavailable", failures)
+	if bool(probed_plan.get("ok", false)):
+		var probed: Variant = probed_plan.get("value")
+		var probed_report: Dictionary = (probed as Variant).call("occlusion_report", "town/ranger")
+		_expect(float(probed_report.get("cover_fraction", 0.0)) > OcclusionControllerScript.COVER_FULL_THRESHOLD,
+			"town: probed hero cover %.3f did not reach the full-dim tier" % float(probed_report.get("cover_fraction", 0.0)), failures)
+		var probe_row: Dictionary = {}
+		for occluder: Variant in (probed as Variant).call("occluders_of", "town/ranger"):
+			if String((occluder as Dictionary)["stable_id"]) == "town/test/probe":
+				probe_row = occluder
+				break
+		_expect(not probe_row.is_empty(), "town: probed plan lost the hero's front probe occluder", failures)
+		_expect(probe_row.has("cover_fraction") and float(probe_row["cover_fraction"]) > OcclusionControllerScript.COVER_FULL_THRESHOLD,
+			"town: probe occluder row lost its cover fraction: %s" % str(probe_row), failures)
 
 
 ## Cross-checks the assembled static bindings against the mounted scene's

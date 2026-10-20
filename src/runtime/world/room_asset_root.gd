@@ -11,6 +11,14 @@ const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.
 const GEOMETRY_SOURCE := "arena.geometry.v1"
 const COORDINATE_CONVENTION := {"units": "design_pixel", "up": "negative_y", "scale": 1.0}
 const MOVEMENT_CHANNELS := {"movement": true, "navigation": true, "vision": true, "projectile": true, "occlusion": false}
+## Authored static blockers follow the same generic `static_blocker` contract
+## as the native sample rooms: convex polygons authored under
+## GeometrySources/Static. A wall-shaped blocker also stops projectiles; a low
+## pier only blocks movement. Occlusion stays presentation-side (art boxes).
+const STATIC_SOURCE := "arena.static.convex.v1"
+const BLOCKER_WALL_CHANNELS := {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
+const BLOCKER_LOW_CHANNELS := {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+const BLOCKER_CHANNEL_SETS: Array[Dictionary] = [BLOCKER_WALL_CHANNELS, BLOCKER_LOW_CHANNELS]
 
 const REQUIRED_GROUPS: Array[String] = [
 	"Ground",
@@ -103,8 +111,24 @@ func validate_contract(expected: Dictionary = {}) -> Dictionary:
 			if ArenaGeometryScript.from_native_boundary(boundary, arena_rect, 0.0).is_empty():
 				errors.append("geometry_arena_rect_mismatch")
 	var geometry_sources := get_node_or_null("GeometrySources")
-	if geometry_sources != null and geometry_sources.get_child_count() != 1:
-		errors.append("unexpected_geometry_sources")
+	if geometry_sources != null:
+		var source_names: Array[String] = []
+		for child: Node in geometry_sources.get_children():
+			source_names.append(String(child.name))
+		var allowed_sources: Array[String] = ["MovementBoundary"]
+		if get_node_or_null("GeometrySources/Static") != null:
+			allowed_sources.append("Static")
+		for source_name: String in source_names:
+			if not allowed_sources.has(source_name):
+				errors.append("unexpected_geometry_sources:%s" % source_name)
+	var blockers: Array[Dictionary] = _validated_static_blockers(errors)
+	for socket_path: String in ["Sockets/CombatSpawn", "Sockets/EncounterOrigin"]:
+		var socket := get_node_or_null(socket_path) as Marker2D
+		if socket == null:
+			continue
+		for blocker: Dictionary in blockers:
+			if not _point_clear_of_polygon(socket.position, blocker["points"], traversal_radius):
+				errors.append("socket_footprint_blocked:%s:%s" % [socket_path, String(blocker["binding_id"])])
 	var sockets := get_node_or_null("Sockets")
 	if sockets != null and sockets.get_child_count() != 2:
 		errors.append("unexpected_spawn_sockets")
@@ -140,6 +164,13 @@ func validate_contract(expected: Dictionary = {}) -> Dictionary:
 
 
 func snapshot() -> Dictionary:
+	var bindings := REQUIRED_BINDINGS.duplicate(true)
+	var static_container := get_node_or_null("GeometrySources/Static") as Node2D
+	if static_container != null:
+		for child: Node in static_container.get_children():
+			var blocker_id := String(child.get_meta("binding_id", ""))
+			if not blocker_id.is_empty():
+				bindings["GeometrySources/Static/%s" % String(child.name)] = blocker_id
 	return {
 		"scene_id": scene_id.strip_edges(),
 		"world_asset_id": "combat/%s" % layout_id.strip_edges(),
@@ -147,7 +178,7 @@ func snapshot() -> Dictionary:
 		"gameplay_source": gameplay_source.strip_edges(),
 		"presentation_source": presentation_source.strip_edges(),
 		"groups": REQUIRED_GROUPS.duplicate(),
-		"bindings": REQUIRED_BINDINGS.duplicate(true),
+		"bindings": bindings,
 		"movement_binding": "combat/movement-boundary",
 		"authored_bounds": arena_rect,
 		"spatial_manifest": derive_spatial_manifest(),
@@ -165,14 +196,23 @@ func derive_spatial_manifest() -> Dictionary:
 	var result := ArenaGeometryScript.normalize_native_boundary(geometry_node.get_meta("geometry", null))
 	if not bool(result.get("ok", false)):
 		return {}
+	var bindings: Array[Dictionary] = [{
+		"binding_id": String(geometry_node.get_meta("binding_id", "")),
+		"channels": geometry_node.get_meta("channels", {}).duplicate(true),
+		"source": String(geometry_node.get_meta("source", "")),
+		"geometry": _boundary_data(result["value"]),
+	}]
+	for blocker: Dictionary in _authored_static_blockers():
+		bindings.append({
+			"binding_id": String(blocker["binding_id"]),
+			"kind": "static_blocker",
+			"source": STATIC_SOURCE,
+			"channels": (blocker["channels"] as Dictionary).duplicate(true),
+			"geometry": {"type": "polygon", "points": (blocker["points"] as Array).duplicate(true)},
+		})
 	return {
 		"coordinate_convention": COORDINATE_CONVENTION.duplicate(true),
-		"stable_bindings": [{
-			"binding_id": String(geometry_node.get_meta("binding_id", "")),
-			"channels": geometry_node.get_meta("channels", {}).duplicate(true),
-			"source": String(geometry_node.get_meta("source", "")),
-			"geometry": _boundary_data(result["value"]),
-		}],
+		"stable_bindings": bindings,
 		"traversal_profiles": [{"profile_id": "standard", "radius": traversal_radius}],
 		"regions_and_portals": [{"region_id": "combat", "portals": []}],
 		"spawn_interaction_exit_sockets": [
@@ -190,6 +230,104 @@ func derive_spatial_manifest() -> Dictionary:
 
 func _socket_data(socket: Marker2D) -> Dictionary:
 	return {"socket_id": String(socket.get_meta("binding_id", "")), "kind": String(socket.get_meta("kind", "")), "position": [socket.position.x, socket.position.y]}
+
+
+## Reads the authored blocker children without validating them; pairing this
+## with _validated_static_blockers() keeps authoring and validation on the same
+## node contract.
+func _authored_static_blockers() -> Array[Dictionary]:
+	var blockers: Array[Dictionary] = []
+	var static_container := get_node_or_null("GeometrySources/Static") as Node2D
+	if static_container == null:
+		return blockers
+	for child: Node in static_container.get_children():
+		var polygon := child as Polygon2D
+		if polygon == null:
+			continue
+		var points: Array = []
+		for point: Vector2 in polygon.polygon:
+			var absolute := point + polygon.position
+			points.append([absolute.x, absolute.y])
+		blockers.append({
+			"binding_id": String(polygon.get_meta("binding_id", "")),
+			"channels": polygon.get_meta("channels", {}).duplicate(true),
+			"points": points,
+		})
+	return blockers
+
+
+## Validates every authored blocker and returns the normalized blockers. Each
+## bad node appends to errors instead of returning early, so one authoring
+## pass reports every mistake at once.
+func _validated_static_blockers(errors: Array[String]) -> Array[Dictionary]:
+	var blockers: Array[Dictionary] = []
+	var static_container := get_node_or_null("GeometrySources/Static") as Node2D
+	if static_container == null:
+		return blockers
+	if static_container.transform != Transform2D.IDENTITY:
+		errors.append("unsupported_static_container_transform")
+	var seen_ids: Dictionary = {}
+	for child: Node in static_container.get_children():
+		var polygon := child as Polygon2D
+		if polygon == null:
+			errors.append("invalid_static_source:%s" % String(child.name))
+			continue
+		var node_name := String(polygon.name)
+		if polygon.is_set_as_top_level() or polygon.transform.x != Vector2.RIGHT or polygon.transform.y != Vector2.DOWN or not polygon.position.is_finite():
+			errors.append("unsupported_static_transform:%s" % node_name)
+		if polygon.offset != Vector2.ZERO or polygon.get_child_count() != 0:
+			errors.append("unsupported_static_source:%s" % node_name)
+		var binding_id := String(polygon.get_meta("binding_id", ""))
+		if binding_id.is_empty() or seen_ids.has(binding_id):
+			errors.append("invalid_static_binding_id:%s" % node_name)
+		seen_ids[binding_id] = true
+		if polygon.get_meta("source", null) != STATIC_SOURCE:
+			errors.append("invalid_static_source_meta:%s" % node_name)
+		var channels: Variant = polygon.get_meta("channels", null)
+		if not BLOCKER_CHANNEL_SETS.has(channels):
+			errors.append("invalid_static_channels:%s" % node_name)
+		var points: Array = []
+		for point: Vector2 in polygon.polygon:
+			var absolute := point + polygon.position
+			points.append([absolute.x, absolute.y])
+		var normalized := ArenaGeometryScript.normalize_native_static_geometry({"type": "polygon", "points": points})
+		if not bool(normalized.get("ok", false)):
+			errors.append("invalid_static_polygon:%s" % node_name)
+			continue
+		blockers.append({
+			"binding_id": binding_id,
+			"channels": channels if channels is Dictionary else {},
+			"points": points,
+		})
+	return blockers
+
+
+## Footprint-aware clearance for a point against one convex polygon: inside the
+## polygon or within radius of any edge counts as blocked.
+func _point_clear_of_polygon(point: Vector2, points: Array, radius: float) -> bool:
+	if points.size() < 3:
+		return false
+	var absolute := PackedVector2Array()
+	for pair: Variant in points:
+		absolute.append(Vector2(float((pair as Array)[0]), float((pair as Array)[1])))
+	if Geometry2D.is_point_in_polygon(point, absolute):
+		return false
+	var count := absolute.size()
+	for index: int in count:
+		var edge_start := absolute[index]
+		var edge_end := absolute[(index + 1) % count]
+		if _distance_to_segment(point, edge_start, edge_end) < radius:
+			return false
+	return true
+
+
+func _distance_to_segment(point: Vector2, start: Vector2, end: Vector2) -> float:
+	var segment := end - start
+	var length_squared := segment.length_squared()
+	if length_squared <= 0.0:
+		return point.distance_to(start)
+	var t := clampf((point - start).dot(segment) / length_squared, 0.0, 1.0)
+	return point.distance_to(start + segment * t)
 
 
 func _boundary_data(boundary: Dictionary) -> Dictionary:

@@ -71,7 +71,7 @@ func _run() -> void:
 	var second = enemies[1]
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "real room: ranger fixture placement failed")
 	_expect(bool(arena.teleport_actor("enemy/%d" % first.entity_id, center + Vector2.RIGHT * 120.0).get("ok", false)), "real room: first target placement failed")
-	_expect(bool(arena.teleport_actor("enemy/%d" % second.entity_id, center + Vector2.DOWN * 120.0).get("ok", false)), "real room: second target placement failed")
+	_expect(bool(arena.teleport_actor("enemy/%d" % second.entity_id, _clear_near(arena, center + Vector2.DOWN * 120.0)).get("ok", false)), "real room: second target placement failed")
 	first.health = 1.0
 	first.maximum_health = 1.0
 	second.health = 1.0
@@ -108,12 +108,23 @@ func _run() -> void:
 	# Move within range of the second target, wait for the real attack cooldown,
 	# and finish the room through the same projectile/terminal phases.
 	var second_position: Vector2 = second.position
-	var second_player_position := second_position - Vector2.RIGHT * 100.0
-	_expect(bool(arena.teleport_actor("ranger", second_player_position).get("ok", false)), "real room: second attack fixture placement failed")
+	var second_player_position := _valid_attack_position(arena, second_position)
+	_expect(bool(second_player_position.get("ok", false)), "real room: no clear attack position near the second target")
+	if not bool(second_player_position.get("ok", false)):
+		arena.free()
+		_finish()
+		return
+	_expect(bool(arena.teleport_actor("ranger", second_player_position.position).get("ok", false)), "real room: second attack fixture placement failed")
 	var ready := _advance_until(arena, func() -> bool:
 		return int(arena.player_combat_state.snapshot(arena.sim_tick).attack_cooldown_ticks) == 0
 	, 120)
 	_expect(ready, "real room: second real attack never became ready")
+	## The second enemy walks during the cooldown wait; re-place the player on a
+	## clear lane to its current position before casting.
+	var second_lane := _valid_attack_position(arena, second.position)
+	_expect(bool(second_lane.get("ok", false)), "real room: no clear attack lane to the second target")
+	if bool(second_lane.get("ok", false)):
+		_expect(bool(arena.teleport_actor("ranger", second_lane.position).get("ok", false)), "real room: second lane placement failed")
 	var second_cast: Dictionary = arena.request_player_cast("piercing_arrow", second.entity_id)
 	_expect(bool(second_cast.get("accepted", false)), "real room: second real arrow was rejected: %s" % str(second_cast))
 	var second_dead := _advance_until(arena, func() -> bool:
@@ -159,6 +170,41 @@ func _advance_until(arena: Node, predicate: Callable, limit: int) -> bool:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		_failures.append(message)
+
+
+## Authored static blockers own spawn clearance now, so fixed fixture offsets
+## can land on a ruin. Deterministic nearest-clear search keeps the fixture
+## semantics without pinning coordinates to the current blocker layout.
+func _clear_near(arena: Node, desired: Vector2, radius: float = 16.0) -> Vector2:
+	if arena.actor_registry.is_position_clear(desired, arena._arena_rect(), radius):
+		return desired
+	for ring: float in [16.0, 32.0, 48.0, 64.0, 96.0]:
+		for step: int in 16:
+			var candidate := desired + Vector2(ring, 0.0).rotated(TAU * float(step) / 16.0)
+			if arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), radius):
+				return candidate
+	return desired
+
+
+## The player fixture needs a clear footprint, an unobstructed projectile
+## lane, and an open movement lane. Arrows fly a straight fixed line, so the
+## candidate keeps the original cardinal-offset semantics: a melee target
+## walking straight at the player stays on the released line.
+func _valid_attack_position(arena: Node, target: Vector2) -> Dictionary:
+	var index: Variant = arena.actor_registry.static_index
+	var offsets: Array[Vector2] = [Vector2(-100.0, 0.0), Vector2(100.0, 0.0), Vector2(0.0, -100.0), Vector2(0.0, 100.0)]
+	for offset: Vector2 in offsets:
+		var candidate := _clear_near(arena, target + offset, 14.0)
+		if not arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), 14.0):
+			continue
+		if index == null:
+			return {"ok": true, "position": candidate}
+		if not (index.sweep(&"projectile", candidate, target - candidate, 12.0) as Array).is_empty():
+			continue
+		if not (index.sweep(&"movement", target, candidate - target, 16.0) as Array).is_empty():
+			continue
+		return {"ok": true, "position": candidate}
+	return {"ok": false, "position": Vector2.ZERO}
 
 
 func _finish() -> void:

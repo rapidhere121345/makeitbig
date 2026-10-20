@@ -379,6 +379,36 @@ func has_movement_boundary() -> bool:
 	return static_index != null and not static_index.movement_boundary().is_empty()
 
 
+## Conservative bounding circles for authored static blockers on the movement
+## channel (ruins, gates, the tower, town buildings). AI steering scores its
+## candidate directions against these circles; exact shapes stay in the index.
+func static_blocker_bounds() -> Array[Dictionary]:
+	if static_index == null:
+		return []
+	var bounds: Array[Dictionary] = []
+	for surface_id: String in static_index.surface_ids(SpatialChannelsScript.MOVEMENT):
+		var entry: Dictionary = static_index.surface(surface_id)
+		var shape: Dictionary = entry.get("shape", {}) if entry is Dictionary else {}
+		if shape.is_empty():
+			continue
+		match String(shape.get("kind", "")):
+			"circle":
+				bounds.append({"id": surface_id, "center": Vector2(shape["center"]), "radius": float(shape["radius"])})
+			"polygon":
+				var points: PackedVector2Array = shape["points"]
+				if points.size() < 3:
+					continue
+				var center := Vector2.ZERO
+				for point: Vector2 in points:
+					center += point
+				center /= float(points.size())
+				var radius := 0.0
+				for point: Vector2 in points:
+					radius = maxf(radius, center.distance_to(point))
+				bounds.append({"id": surface_id, "center": center, "radius": radius})
+	return bounds
+
+
 func movement_boundary_snapshot() -> Dictionary:
 	return static_index.movement_boundary() if static_index != null else {}
 

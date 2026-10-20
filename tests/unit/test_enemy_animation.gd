@@ -482,8 +482,10 @@ func _test_arena_integration() -> void:
 		var runner = arena.enemies[0]
 		## The typed movement boundary keeps bodies out of each other, so the
 		## rate lane must be clear: park the runner on the open west side before
-		## driving it east past the other spawn bodies.
-		_expect(bool(arena.teleport_actor("enemy/%d" % runner.entity_id, Vector2(arena._arena_rect().position.x + 96.0, runner.position.y)).get("ok", false)),
+		## driving it east past the other spawn bodies. The authored tower
+		## blocker owns the near-west lane at mid height, so the lane starts
+		## east of its padded footprint.
+		_expect(bool(arena.teleport_actor("enemy/%d" % runner.entity_id, Vector2(arena._arena_rect().position.x + 220.0, runner.position.y)).get("ok", false)),
 			"rate: the clear walk lane was rejected by teleport")
 		arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 0.0)
 		rate_states[rate] = _drive_render_rate(arena, runner, rate, 1.2)

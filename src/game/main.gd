@@ -3091,6 +3091,15 @@ func _collision_geometry(radius: float) -> Dictionary:
 	return ArenaGeometryScript.from_native_boundary_for_footprint(boundary, _arena_rect(), radius)
 
 
+## Bounding circles of the authored static blockers in the mounted room's
+## movement channel. Standalone fixtures without a mounted registry have no
+## authored blockers and steer on the boundary geometry alone.
+func _static_blocker_bounds() -> Array[Dictionary]:
+	if actor_registry == null:
+		return []
+	return actor_registry.static_blocker_bounds()
+
+
 func _room_socket(binding: String) -> Variant:
 	if scene_runtime == null:
 		return null
@@ -3124,7 +3133,29 @@ func _project_actor_spawn_position(value: Vector2, radius: float) -> Dictionary:
 	var projected: Dictionary = ArenaGeometryScript.project(value, geometry)
 	if not bool(projected.get("ok", false)):
 		return {"ok": false, "error": "spawn_projection_failed:%s" % String(projected.get("error", "invalid_geometry"))}
-	return {"ok": true, "position": Vector2(projected["position"])}
+	var position := Vector2(projected["position"])
+	if actor_registry != null:
+		var static_clear: Variant = _project_static_clear(position, radius)
+		if static_clear == null:
+			return {"ok": false, "error": "spawn_static_projection_failed"}
+		position = static_clear
+	return {"ok": true, "position": position}
+
+
+## Authored static blockers (ruins, gates, the tower) also own spawn clearance.
+## Deterministic expanding-ring search around the boundary-projected point: the
+## first clear candidate wins in a fixed ring/step order, so fixed-tick replays
+## stay byte-stable. Returns null when no candidate inside the arena clears
+## every static surface, keeping the fail-closed contract of the caller.
+func _project_static_clear(position: Vector2, radius: float) -> Variant:
+	if actor_registry.is_position_clear(position, radius):
+		return position
+	for ring: float in [16.0, 32.0, 48.0, 64.0, 96.0, 128.0, 160.0, 192.0, 224.0, 256.0]:
+		for step: int in 16:
+			var candidate := position + Vector2(ring, 0.0).rotated(TAU * float(step) / 16.0)
+			if candidate.is_finite() and actor_registry.is_position_clear(candidate, radius):
+				return candidate
+	return null
 
 
 func _handle_command_line() -> void:
@@ -3523,6 +3554,11 @@ class MainEncounterRoomPort extends "res://src/game/encounter_room_port.gd":
 		if not _ready():
 			return {}
 		return _owner._collision_geometry(padding)
+
+	func static_blocker_bounds() -> Array[Dictionary]:
+		if not _ready():
+			return []
+		return _owner._static_blocker_bounds()
 
 	func layout_spawn_offsets(layout_id: String, count: int) -> Array[Vector2]:
 		if not _ready():

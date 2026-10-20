@@ -92,8 +92,17 @@ func _test_actual_projectile_evidence(outcome: String) -> void:
 		# barrier window. Projectile travel starts on the following tick.
 		fixture.advance_to(arena, Encounter.ELITE_BARRIER_PERIOD_TICKS - SkillRules.PIERCING_ARROW_WINDUP_TICKS - 2)
 		_expect(not arena.encounter_director.is_target_blocked(target), "blocked fixture did not cast in the barrier's open interval")
-	_expect(fixture.release_arrow(arena, target), "actual evidence arrow release")
-	if outcome == "miss": target.position += Vector2(0, 100)
+	## "miss" aims into open space north of the player: the released line holds
+	## no target regardless of how the melee AI walks after the release.
+	var aim := Vector2.ZERO
+	if outcome == "miss":
+		aim = Vector2(0, -1)
+	_expect(fixture.release_arrow(arena, target, aim), "actual evidence arrow release")
+	if outcome == "miss":
+		## Park the target far south through the registry: the melee AI chases
+		## the player (the arrow origin), so the body must be moved off any
+		## approach line the released arrow could still cross.
+		_expect(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena._arena_rect().get_center() + Vector2(120.0, 200.0)).get("ok", false)), "miss fixture could not park the target clear of the line")
 	if outcome == "blocked":
 		_expect(arena.sim_tick == Encounter.ELITE_BARRIER_PERIOD_TICKS - 1 and not arena.encounter_director.is_target_blocked(target), "blocked fixture did not release before the barrier transition")
 	fixture.advance_projectiles(arena)
@@ -103,7 +112,7 @@ func _test_actual_projectile_evidence(outcome: String) -> void:
 		print("STORY_BARRIER_TRACE release_tick=", Encounter.ELITE_BARRIER_PERIOD_TICKS - 1, " contact_tick=", contact.get("tick", -1), " outcome=", contact.get("outcome", ""))
 	var room: Dictionary = runtime.build_result("defeat")
 	_expect(int(room.casts) == 1, "actual projectile was not cast")
-	_expect(int(room.arrow_hits) == (1 if outcome in ["damage", "wrong_fingerprint"] else 0), "miss/barrier fabricated a hit")
+	_expect(int(room.arrow_hits) == (1 if outcome in ["damage", "wrong_fingerprint"] else 0), "miss/barrier fabricated a hit: outcome=%s hits=%s" % [outcome, str(room.arrow_hits)])
 	if outcome == "wrong_fingerprint": room.build_fingerprint = "different-build"
 	state.complete_session({"outcome":"defeat","room_results":[room],"rewards":{}})
 	_expect(_has_stage(state, 6) == (outcome == "damage"), "story accepted invalid evidence or lost actual contact")

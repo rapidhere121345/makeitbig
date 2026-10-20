@@ -19,6 +19,8 @@ const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd
 const FrameBuilderScript = preload("res://src/presentation/combat_presentation_frame_builder.gd")
 const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 const EnemyScript = preload("res://src/runtime/world/combat_enemy_state.gd")
+const OcclusionPlanScript = preload("res://src/presentation/occlusion/occlusion_plan.gd")
+const OcclusionControllerScript = preload("res://src/presentation/occlusion/occlusion_controller.gd")
 
 ## Visual-overlap budget: at most this much total local opacity may sit on top of
 ## the hero's own cell, so a per-channel comparison against the source pixels can
@@ -52,6 +54,7 @@ func _run() -> void:
 	_test_budget()
 	_test_pieces()
 	await _test_town_scene()
+	_test_town_cover_tiers()
 	_test_arena()
 	_test_room_concept_geometry()
 	_test_world_frame_projection()
@@ -226,6 +229,104 @@ func _test_town_scene() -> void:
 				_expect((node as CanvasItem).visible and (node as CanvasItem).modulate.a == 1.0, "town: movement hid native art")
 	_expect(native_count == 35, "town: offline native ownership is incomplete")
 	hub.free()
+
+
+## Audit R2 town gate: the detached plan must measure how much of a subject's
+## art box one front piece covers, and the controller must tier that fraction
+## (graze stays clear, mid band ramps, full cover dims to the occluded target)
+## while plan order and reports stay deterministic.  Fixture style follows
+## test_world_asset_pipeline.gd: one detached plan of hero plus one authored
+## front piece per tier, no scene and no simulation state.
+func _test_town_cover_tiers() -> void:
+	# One hero cell (area 2400) with a taller front piece whose overlap height
+	# picks the exact tier fraction: 6px graze, 10/15/20px mid band, 36px full.
+	var tiers: Array = [
+		{"id": "tree/graze", "box": Rect2(0.0, 96.0, 48.0, 40.0), "cover": 0.12},
+		{"id": "tree/light", "box": Rect2(0.0, 92.0, 48.0, 60.0), "cover": 0.2},
+		{"id": "tree/mid", "box": Rect2(0.0, 87.0, 48.0, 60.0), "cover": 0.3},
+		{"id": "tree/high", "box": Rect2(0.0, 82.0, 48.0, 80.0), "cover": 0.4},
+		{"id": "house/full", "box": Rect2(0.0, 66.0, 48.0, 80.0), "cover": 0.72},
+	]
+	var alphas: Dictionary = {}
+	for tier: Dictionary in tiers:
+		var entries: Array = [
+			{"stable_id": "town/ranger", "baseline_y": 100.0, "rank": 0, "feet_anchor": Vector2(24.0, 102.0), "art_box": Rect2(0.0, 52.0, 48.0, 50.0)},
+			{"stable_id": String(tier["id"]), "baseline_y": 140.0, "rank": 0, "feet_anchor": Vector2(24.0, 140.0), "art_box": tier["box"]},
+		]
+		var built: Dictionary = OcclusionPlanScript.build(entries)
+		_expect(bool(built.get("ok", false)), "town cover: %s plan fixture was rejected: %s" % [String(tier["id"]), str(built.get("errors", []))])
+		if not bool(built.get("ok", false)):
+			continue
+		var plan = built["value"]
+		var report: Dictionary = plan.call("occlusion_report", "town/ranger")
+		_expect(bool(report.get("ok", false)) and bool(report.get("occluded", false)), "town cover: %s did not report its front piece" % String(tier["id"]))
+		_expect(is_equal_approx(float(report.get("cover_fraction", 0.0)), float(tier["cover"])), "town cover: %s measured %.4f instead of %.4f" % [String(tier["id"]), float(report.get("cover_fraction", 0.0)), float(tier["cover"])])
+		# The per-occluder row keeps every established field and adds its own
+		# deterministic cover fraction.
+		var occluders: Array = plan.call("occluders_of", "town/ranger")
+		_expect(occluders.size() == 1, "town cover: %s plan reported %d occluders" % [String(tier["id"]), occluders.size()])
+		if occluders.size() == 1:
+			var row: Dictionary = occluders[0]
+			for field: String in ["stable_id", "baseline_y", "rank", "feet_anchor", "art_box", "cover_fraction"]:
+				_expect(row.has(field), "town cover: occluder row lost %s" % field)
+			_expect(is_equal_approx(float(row.get("cover_fraction", 0.0)), float(tier["cover"])), "town cover: %s row fraction drifted from the report" % String(tier["id"]))
+		# The real chain input: the report fraction feeds the controller, which
+		# converges on the tier target through the untouched eased transition.
+		var controller = OcclusionControllerScript.new()
+		_expect(bool(controller.adopt_plan(plan).get("ok", false)), "town cover: %s controller rejected the plan" % String(tier["id"]))
+		_expect(bool(controller.set_cover("town/ranger", float(report.get("cover_fraction", 0.0))).get("ok", false)), "town cover: %s cover update was rejected" % String(tier["id"]))
+		for _tick in 90:
+			controller.update(1.0 / 30.0)
+		alphas[String(tier["id"])] = controller.call("alpha", "town/ranger")
+	if alphas.size() != tiers.size():
+		return
+	# (a) A graze below COVER_GRAZE_THRESHOLD must not dim at all.
+	_expect(is_equal_approx(float(alphas["tree/graze"]), OcclusionControllerScript.CLEAR_TARGET_ALPHA),
+		"town cover: a grazing piece dimmed the hero to %.3f" % float(alphas["tree/graze"]))
+	# (b) A cover above COVER_FULL_THRESHOLD must land exactly on the occluded target.
+	_expect(is_equal_approx(float(alphas["house/full"]), OcclusionControllerScript.OCCLUDED_TARGET_ALPHA),
+		"town cover: a full cover settled at %.3f instead of the occluded target" % float(alphas["house/full"]))
+	# (c) The mid band is monotonic and strictly between the two targets.
+	_expect(float(alphas["tree/light"]) > float(alphas["tree/mid"]) and float(alphas["tree/mid"]) > float(alphas["tree/high"]),
+		"town cover: mid-band alphas did not decrease with coverage (%.3f %.3f %.3f)" % [float(alphas["tree/light"]), float(alphas["tree/mid"]), float(alphas["tree/high"])])
+	for tier_id: String in ["tree/light", "tree/mid", "tree/high"]:
+		var alpha: float = float(alphas[tier_id])
+		_expect(alpha > OcclusionControllerScript.OCCLUDED_TARGET_ALPHA and alpha < OcclusionControllerScript.CLEAR_TARGET_ALPHA,
+			"town cover: %s settled on the band edge (%.3f)" % [tier_id, alpha])
+	_expect(float(alphas["tree/high"]) > float(alphas["house/full"]), "town cover: the mid band must stay above the full-dim tier")
+	# Band edges are pinned by name: the threshold values belong to the tier map.
+	_expect(is_equal_approx(OcclusionControllerScript._target_alpha_for_cover(0.0), OcclusionControllerScript.CLEAR_TARGET_ALPHA), "town cover: zero cover must target full alpha")
+	_expect(is_equal_approx(OcclusionControllerScript._target_alpha_for_cover(OcclusionControllerScript.COVER_GRAZE_THRESHOLD), OcclusionControllerScript.CLEAR_TARGET_ALPHA), "town cover: the graze threshold must still target full alpha")
+	_expect(is_equal_approx(OcclusionControllerScript._target_alpha_for_cover(OcclusionControllerScript.COVER_FULL_THRESHOLD), OcclusionControllerScript.OCCLUDED_TARGET_ALPHA), "town cover: the full threshold must target the occluded alpha")
+	_expect(is_equal_approx(OcclusionControllerScript._target_alpha_for_cover(1.0), OcclusionControllerScript.OCCLUDED_TARGET_ALPHA), "town cover: total cover must target the occluded alpha")
+	# (d) Determinism: equal entries in any input order build the same plan,
+	# and repeated queries on one plan never drift.
+	var ordered: Array = []
+	for tier: Dictionary in tiers:
+		ordered.append({
+			"stable_id": String(tier["id"]), "baseline_y": 140.0, "rank": 0,
+			"feet_anchor": Vector2(25.0, 140.0), "art_box": tier["box"],
+		})
+	ordered.append({"stable_id": "town/ranger", "baseline_y": 100.0, "rank": 0, "feet_anchor": Vector2(24.0, 102.0), "art_box": Rect2(0.0, 52.0, 48.0, 50.0)})
+	var forward: Dictionary = OcclusionPlanScript.build(ordered)
+	var reversed_entries: Array = ordered.duplicate()
+	(reversed_entries as Array).reverse()
+	var backward: Dictionary = OcclusionPlanScript.build(reversed_entries)
+	_expect(bool(forward.get("ok", false)) and bool(backward.get("ok", false)), "town cover: stability fixture was rejected")
+	if bool(forward.get("ok", false)) and bool(backward.get("ok", false)):
+		var plan_a = forward["value"]
+		var plan_b = backward["value"]
+		_expect(plan_a.call("entries") == plan_b.call("entries"), "town cover: input order changed the plan order")
+		_expect(plan_a.call("to_payload") == plan_b.call("to_payload"), "town cover: input order changed the plan payload")
+		_expect(plan_a.call("occluders_of", "town/ranger") == plan_b.call("occluders_of", "town/ranger"), "town cover: input order changed the occluder rows")
+		_expect(plan_a.call("occlusion_report", "town/ranger") == plan_b.call("occlusion_report", "town/ranger"), "town cover: input order changed the cover report")
+		_expect(plan_a.call("occluders_of", "town/ranger") == plan_a.call("occluders_of", "town/ranger"), "town cover: repeated occluder rows drifted")
+		_expect(plan_a.call("occlusion_report", "town/ranger") == plan_a.call("occlusion_report", "town/ranger"), "town cover: repeated cover reports drifted")
+		# The payload projection keeps exactly the established five fields, so
+		# the presentation digest inputs are unchanged by the cover metric.
+		for row: Dictionary in plan_a.call("to_payload"):
+			_expect(row.keys().size() == 5 and row.has("stable_id") and row.has("baseline_y") and row.has("rank") and row.has("feet_anchor") and row.has("art_box"),
+				"town cover: payload projection gained or lost fields: %s" % str(row.keys()))
 
 
 func _test_arena() -> void:

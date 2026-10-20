@@ -42,6 +42,7 @@ if ($LASTEXITCODE -ne 0) { throw "Enemy death actor deregistration tests failed 
 & $GodotBin --headless --path . --script res://tests/test_presentation_occlusion_boundary.gd
 if ($LASTEXITCODE -ne 0) { throw "Presentation occlusion tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_world_asset_pipeline.gd
+& $GodotBin --headless --path . --script res://tests/test_combat_structure_blockers.gd
 if ($LASTEXITCODE -ne 0) { throw "World asset pipeline tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_room_combat_port.gd
 if ($LASTEXITCODE -ne 0) { throw "Room combat port tests failed with exit code $LASTEXITCODE" }

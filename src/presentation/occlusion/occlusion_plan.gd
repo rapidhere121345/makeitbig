@@ -105,20 +105,37 @@ func size() -> int:
 
 ## Pieces drawn in front of the subject (higher baseline/rank) whose real
 ## art box overlaps the subject art box, in deterministic plan order.
+## Each row additionally carries its own "cover_fraction": how much of the
+## subject's art box this one occluder covers.  Presentation metric only,
+## so consumers can tell a grazing edge from a real cover without any
+## gameplay query; every other field keeps its established meaning.
 func occluders_of(stable_id: String) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if not _by_id.has(stable_id):
 		return result
 	var subject_entry: Dictionary = _by_id[stable_id]
+	var subject_box: Rect2 = subject_entry["art_box"]
 	for candidate: Dictionary in _entries:
 		if String(candidate["stable_id"]) == stable_id:
 			continue
 		if not SortRelation.is_front(candidate, subject_entry):
 			continue
-		if not (candidate["art_box"] as Rect2).intersects(subject_entry["art_box"] as Rect2):
+		if not (candidate["art_box"] as Rect2).intersects(subject_box):
 			continue
-		result.append(candidate.duplicate(true))
+		var detached := candidate.duplicate(true)
+		detached["cover_fraction"] = cover_fraction_of_box(subject_box, detached["art_box"] as Rect2)
+		result.append(detached)
 	return result
+
+
+## Deterministic coverage of one occluder box over one subject box:
+## intersection area divided by the subject area, clamped to 1.0.  A pure
+## function of two boxes, so equal inputs always produce equal fractions.
+static func cover_fraction_of_box(subject_box: Rect2, occluder_box: Rect2) -> float:
+	var subject_area: float = subject_box.get_area()
+	if subject_area <= 0.0 or not subject_box.intersects(occluder_box):
+		return 0.0
+	return clampf(subject_box.intersection(occluder_box).get_area() / subject_area, 0.0, 1.0)
 
 
 ## Headless report for one subject: whether front pieces cover its real
