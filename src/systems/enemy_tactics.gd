@@ -87,6 +87,11 @@ const DIRECTION_DEVIATION_WEIGHT := 12.0
 const GEOMETRY_STEP_LOSS_PENALTY := 20000.0
 const GEOMETRY_BLOCKED_PENALTY := 1000000.0
 const GEOMETRY_BLOCKED_DISPLACEMENT := 0.01
+## Authored static blockers (ruins, gates, the tower) steer candidates the
+## same way hazards do: overlapping the blocker's padded circle is expensive,
+## glancing contact stays affordable so crowded rooms keep moving.
+const STATIC_BLOCKER_PENALTY := 2600.0
+const STATIC_BLOCKER_MARGIN := 26.0
 const QUANTIZATION_STEP := 0.001
 
 
@@ -177,6 +182,15 @@ func score_candidate_direction(snapshot: Dictionary, enemy: Dictionary, desired_
 			score += ACTIVE_HAZARD_PENALTY
 		if hazard.has("warning_geometry") and _shape_contains(hazard["warning_geometry"], raw_candidate):
 			score += WARNING_HAZARD_PENALTY
+	for blocker_value: Variant in snapshot.get("static_blockers", []):
+		var blocker: Dictionary = blocker_value
+		var blocker_center: Variant = blocker.get("center", null)
+		if not blocker_center is Vector2:
+			continue
+		var clearance := float(blocker.get("radius", 0.0)) + STATIC_BLOCKER_MARGIN
+		var blocker_distance := raw_candidate.distance_to(blocker_center)
+		if blocker_distance < clearance:
+			score += STATIC_BLOCKER_PENALTY * (1.0 - blocker_distance / clearance)
 
 	var projection: Dictionary = ArenaGeometry.project(raw_candidate, snapshot["walkable_geometry"])
 	if not bool(projection["ok"]):

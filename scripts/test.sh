@@ -32,6 +32,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_enemy_death_actor_deregistration.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_presentation_occlusion_boundary.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_world_asset_pipeline.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_structure_blockers.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_room_combat_port.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_spatial_room_port.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_presentation_room_port.gd

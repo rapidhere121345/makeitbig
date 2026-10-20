@@ -149,14 +149,20 @@ func _advance_until(arena: Node, predicate: Callable, limit: int) -> bool:
 
 func _find_valid_attack_position(arena: Node, target_position: Vector2) -> Dictionary:
 	var targeting_distance := float(arena.player_combat_state.targeting_distance())
+	var index: Variant = arena.actor_registry.static_index
 	var distances: Array[float] = [80.0, 100.0, 120.0, 140.0, 160.0, 180.0, 200.0]
 	for distance: float in distances:
 		if distance >= targeting_distance:
 			continue
 		for angle_index in 32:
 			var candidate := target_position + Vector2.RIGHT.rotated(TAU * float(angle_index) / 32.0) * distance
-			if arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), 14.0):
-				return {"ok": true, "position": candidate}
+			if not arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), 14.0):
+				continue
+			## Authored ruins stop arrows now, so the fixture also needs a clear
+			## projectile lane to its target.
+			if index != null and not (index.sweep(&"projectile", candidate, target_position - candidate, 12.0) as Array).is_empty():
+				continue
+			return {"ok": true, "position": candidate}
 	return {"ok": false, "position": Vector2.ZERO}
 
 

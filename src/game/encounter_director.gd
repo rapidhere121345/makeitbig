@@ -559,9 +559,21 @@ func enemy_tactics_snapshot() -> Dictionary:
 		"player_position": player_position,
 		"arena_rect": bounds_value,
 		"walkable_geometry": geometry,
+		"static_blockers": _static_blocker_bounds(),
 		"enemies": actors,
 		"hazards": enemy_tactics_hazards(),
 	}
+
+
+## Authored static blocker bounds for AI steering. The typed port owns the
+## data; an unbound port is already a recorded dependency failure, and rooms
+## without authored blockers legitimately steer on an empty list.
+func _static_blocker_bounds() -> Array[Dictionary]:
+	if room_port == null:
+		_room_dependency_failure("static_blocker_bounds", "encounter_room_port_unavailable")
+		return []
+	var bounds: Variant = room_port.static_blocker_bounds()
+	return bounds if bounds is Array else []
 
 
 ## Production active-member gate.  RoomEncounter is the deployment authority;

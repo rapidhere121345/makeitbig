@@ -5,7 +5,7 @@
       "layout_id": "rectangle_arena",
       "world_scene_path": "res://content/rooms/combat/rectangle_arena.tscn",
       "manifest_path": "res://content/rooms/combat/rectangle_arena.spatial.json",
-      "gameplay_digest": "edd3dc4cfe1acdead74577e9a72035711ca8ee4a2f8d50a8fa96f60d456589ee",
+      "gameplay_digest": "3c189484e9eb7f13ff11fc8e2481e5e405978c145001a6ec9361300efdf844fe",
       "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
@@ -18,33 +18,71 @@
       "spawn_profiles": {
         "default": {
           "pattern": "grid",
-          "origin": [-145.0, -80.0],
+          "origin": [
+            -145.0,
+            -80.0
+          ],
           "columns": 3,
           "column_step": 145.0,
           "row_step": 110.0
         },
         "first_hunt_clear": {
           "pattern": "fan",
-          "origin": [-220.0, 100.0],
+          "origin": [
+            -220.0,
+            100.0
+          ],
           "radius": 350.0,
-          "angles_degrees": [-69.0, -35.0, 0.0]
+          "angles_degrees": [
+            -69.0,
+            -35.0,
+            0.0
+          ]
         },
         "first_hunt_followup": {
           "pattern": "fan",
-          "origin": [-220.0, 100.0],
+          "origin": [
+            -220.0,
+            100.0
+          ],
           "radius": 350.0,
-          "angles_degrees": [-60.0, -25.0, 10.0]
+          "angles_degrees": [
+            -60.0,
+            -25.0,
+            10.0
+          ]
         },
         "test.fixture": {
           "pattern": "explicit",
           "offsets": [
-            [-70.0, -150.0],
-            [115.0, -125.0],
-            [210.0, 25.0],
-            [125.0, 150.0],
-            [-65.0, 165.0],
-            [-210.0, -45.0],
-            [250.0, -40.0]
+            [
+              -70.0,
+              -150.0
+            ],
+            [
+              115.0,
+              -125.0
+            ],
+            [
+              210.0,
+              25.0
+            ],
+            [
+              125.0,
+              150.0
+            ],
+            [
+              -65.0,
+              165.0
+            ],
+            [
+              -210.0,
+              -45.0
+            ],
+            [
+              250.0,
+              -40.0
+            ]
           ]
         }
       }
@@ -53,7 +91,7 @@
       "layout_id": "corridor",
       "world_scene_path": "res://content/rooms/combat/corridor.tscn",
       "manifest_path": "res://content/rooms/combat/corridor.spatial.json",
-      "gameplay_digest": "355adbbd3bf7c61a752ea5a92cd757d86637b2fa81e42e147fefb08a83b8a4ce",
+      "gameplay_digest": "7f4941d3c944d64d9d2ec1e9d2c262d364a165dd62a469e9b1fde2d5ddc1d2cb",
       "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
@@ -66,16 +104,29 @@
       "spawn_profiles": {
         "default": {
           "pattern": "alternating_rows",
-          "origin": [-180.0, 0.0],
+          "origin": [
+            -180.0,
+            0.0
+          ],
           "columns": 4,
           "x_step": 120.0,
-          "row_values": [-42.0, 42.0]
+          "row_values": [
+            -42.0,
+            42.0
+          ]
         },
         "first_hunt_followup": {
           "pattern": "approach_band",
-          "origin": [-220.0, 58.0],
+          "origin": [
+            -220.0,
+            58.0
+          ],
           "distance": 350.0,
-          "offsets_y": [-4.0, -3.0, -2.0]
+          "offsets_y": [
+            -4.0,
+            -3.0,
+            -2.0
+          ]
         }
       }
     },
@@ -83,7 +134,7 @@
       "layout_id": "ring",
       "world_scene_path": "res://content/rooms/combat/ring.tscn",
       "manifest_path": "res://content/rooms/combat/ring.spatial.json",
-      "gameplay_digest": "9f3ed28278c2d2639844a2a3dd32c436e238b7ec3f1ffa5666e59ace2e7392f1",
+      "gameplay_digest": "d46f19768b888404df8ff29b443a61bf7507d3c587e8251251d3a5b1a591be23",
       "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
@@ -96,7 +147,10 @@
       "spawn_profiles": {
         "default": {
           "pattern": "radial",
-          "center": [0.0, 0.0],
+          "center": [
+            0.0,
+            0.0
+          ],
           "radius": 175.0,
           "start_angle_degrees": -90.0
         }

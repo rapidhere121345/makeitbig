@@ -14,6 +14,16 @@ const DEFAULT_ALPHA_RATE: float = 5.0
 const DEFAULT_FOLLOW_RATE: float = 20.0
 const OCCLUDED_TARGET_ALPHA: float = 0.4
 const CLEAR_TARGET_ALPHA: float = 1.0
+## Cover tiers (audit R2: an occluded subject must not turn into a ghost the
+## moment its feet graze a front piece's bounding box).  Below
+## COVER_GRAZE_THRESHOLD the overlap is a graze and must NOT dim at all;
+## between the thresholds the alpha target ramps linearly from the clear
+## target down to the occluded target; at or above COVER_FULL_THRESHOLD any
+## cover maps straight onto the occluded target.  Presentation comfort
+## tuning only: the fractions come from art-box geometry and carry no
+## gameplay meaning.
+const COVER_GRAZE_THRESHOLD: float = 0.15
+const COVER_FULL_THRESHOLD: float = 0.45
 
 var _plan: Variant = null
 var _state: Dictionary = {}
@@ -76,15 +86,29 @@ func set_subject_anchor(stable_id: String, feet_world: Vector2) -> Dictionary:
 
 
 ## Feeds a cover fraction (from OcclusionPlan.occlusion_report) and maps
-## it onto an alpha transition target.  Any cover dims toward the occluded
-## target; a clear subject returns to full alpha.
+## it onto an alpha transition target through the named cover tiers.  A
+## grazing cover stays clear, a partial cover ramps toward the occluded
+## target, a full cover dims straight to it, and a clear subject returns
+## to full alpha.
 func set_cover(stable_id: String, cover_fraction: float) -> Dictionary:
 	if not _state.has(stable_id):
 		return {"ok": false, "error": "unknown_stable_id"}
 	if not is_finite(cover_fraction) or cover_fraction < 0.0:
 		return {"ok": false, "error": "invalid_cover_fraction"}
-	(_state[stable_id] as Dictionary)["target_alpha"] = OCCLUDED_TARGET_ALPHA if cover_fraction > 0.0 else CLEAR_TARGET_ALPHA
+	(_state[stable_id] as Dictionary)["target_alpha"] = _target_alpha_for_cover(cover_fraction)
 	return {"ok": true, "error": ""}
+
+
+## The cover-tier map: continuous and monotonic by construction.  A pure
+## function of the fraction, so equal inputs always produce equal targets
+## and the existing eased alpha transition is untouched.
+static func _target_alpha_for_cover(cover_fraction: float) -> float:
+	if cover_fraction <= COVER_GRAZE_THRESHOLD:
+		return CLEAR_TARGET_ALPHA
+	if cover_fraction >= COVER_FULL_THRESHOLD:
+		return OCCLUDED_TARGET_ALPHA
+	var ramp: float = clampf(inverse_lerp(COVER_GRAZE_THRESHOLD, COVER_FULL_THRESHOLD, cover_fraction), 0.0, 1.0)
+	return lerpf(CLEAR_TARGET_ALPHA, OCCLUDED_TARGET_ALPHA, ramp)
 
 
 ## Advances display interpolation and alpha transitions.  Clamp prevents

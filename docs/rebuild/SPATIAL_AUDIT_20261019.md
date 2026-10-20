@@ -58,3 +58,10 @@
 7. 旧几何簇(`actor_motor` 等)随移动系统改造一并迁移/删除,先跑干净 import 防重复全局类。
 
 **总体结论**:空间内核、固定管线、双场景挂载和城镇遮挡链真实落地且测试充分;"碰撞与遮挡差"主要不是"实现没接上",而是 (1) 战斗房间的可见几何从未进入空间数据层,(2) 城镇遮挡表现语义(被挡者变透明、矩形判定)与局部开窗的美术预期不一致,(3) 实体碰撞按设计全软分离且足迹远小于美术。优先做第 1、3 项,最小改动覆盖最大观感收益。
+
+## 附记:修复状态(2026-10-20)
+
+- **R1 已修复**:三个战斗房以 `GeometrySources/Static` 下的凸八边形 `static_blocker`(整数坐标)收录全部 13 个废墟/塔(与 layout.json 逐一对齐,由 `tests/test_combat_structure_blockers.gd` 钉死);墙体/门/塔同时进入 projectile 通道,低桩只挡移动。出生点增加确定性环形净空投影(`main.gd _project_static_clear`);敌人战术候选方向打分纳入 `static_blockers` 避让(`enemy_tactics.gd`),直线撞墙死磨从 193 tick 降到 ≤4。
+- **R2 已修复**:OcclusionPlan 新增 `cover_fraction`,OcclusionController 按 <0.15 不变暗 / 0.15–0.45 线性 / ≥0.45 压到 0.4 分档(仍不回写模拟)。逐像素 descriptor 未接入(需改 plan 构建输入,另行立项)。
+- **R4 部分完成**:敌人半径 16→18 曾落地,但因软分离地板(14+18=32)超过 `MELEE_ATTACK_RANGE`(30.25)导致近战永远无法攻击,已回退到 16;后续上调需同步调校 `MELEE_ATTACK_RANGE`/`MELEE_RING_RADIUS` 并重审战术常量。玩家半径被 ring 房出生插座恰好 14.0 的净空封顶;城镇英雄半径与 hearthside 烘焙摘要强耦合(需重烘焙)。三项约束已记录,待统一调校。
+- **通道延后已标注**:`TARGET_ARCHITECTURE.md` 已注明 navigation/vision/overlay 为首章明确延后。

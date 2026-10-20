@@ -383,7 +383,10 @@ func _test_ring_real_combat_ticks() -> void:
 		else:
 			_expect(session_spawn == first_session_spawn, "ring real ticks: identical sessions produced different player spawns")
 		_expect(registry.is_position_clear(session_spawn, 14.0), "ring real ticks: production spawn footprint illegal")
-		_expect(scene.native_scene_contract.spatial_manifest == scene.manifest.snapshot(), "ring real ticks: native manifest differed")
+		## The native contract stores the raw derive payload; the mounted
+		## manifest stores its canonical snapshot (sorted, trimmed). Compare
+		## through the same canonical form the repeatable matrix uses.
+		_expect(SpatialManifestScript.new(scene.native_scene_contract.spatial_manifest).snapshot() == scene.manifest.snapshot(), "ring real ticks: native manifest differed")
 		var frames: Array[Dictionary] = []
 		for tick in range(1, 61):
 			var action := "move_left" if tick <= 20 or (tick >= 41 and tick <= 50) else "move_right"
