@@ -658,7 +658,7 @@ metadata/binding_id = "town/static/training_post_0"
 
 position = Vector2(152.999424, 487.49952)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="training_post_1" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -668,7 +668,7 @@ metadata/binding_id = "town/static/training_post_1"
 
 position = Vector2(208.000512, 445.31232)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="training_post_2" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -678,7 +678,7 @@ metadata/binding_id = "town/static/training_post_2"
 
 position = Vector2(245.999616, 465.93792)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="training_post_3" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -688,7 +688,7 @@ metadata/binding_id = "town/static/training_post_3"
 
 position = Vector2(314.999808, 507.1872)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="training_post_4" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -698,7 +698,7 @@ metadata/binding_id = "town/static/training_post_4"
 
 position = Vector2(379.00032, 507.1872)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="wood_contract_base" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -748,7 +748,7 @@ metadata/binding_id = "town/static/tree_board_trunk"
 
 position = Vector2(144, 224.06208)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="tree_wood_trunk" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -758,7 +758,7 @@ metadata/binding_id = "town/static/tree_wood_trunk"
 
 position = Vector2(541.000704, 355.31232)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="tree_east_trunk" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -768,7 +768,7 @@ metadata/binding_id = "town/static/tree_east_trunk"
 
 position = Vector2(1241.000448, 458.43744)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="tree_south_trunk" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -778,7 +778,7 @@ metadata/binding_id = "town/static/tree_south_trunk"
 
 position = Vector2(805.000704, 771.56256)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="tree_southwest_trunk" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -788,7 +788,7 @@ metadata/binding_id = "town/static/tree_southwest_trunk"
 
 position = Vector2(249.99936, 759.37536)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="tree_arrival_trunk" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -798,7 +798,7 @@ metadata/binding_id = "town/static/tree_arrival_trunk"
 
 position = Vector2(282.000384, 868.12512)
 
-metadata/radius = 5.62464
+metadata/radius = 8.5
 
 [node name="northwest_forest" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -872,7 +872,7 @@ metadata/binding_id = "town/static/lamp_0"
 
 position = Vector2(409.999872, 265.31232)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_1" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -882,7 +882,7 @@ metadata/binding_id = "town/static/lamp_1"
 
 position = Vector2(674.999808, 372.1872)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_2" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -892,7 +892,7 @@ metadata/binding_id = "town/static/lamp_2"
 
 position = Vector2(884.000256, 347.8128)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_3" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -902,7 +902,7 @@ metadata/binding_id = "town/static/lamp_3"
 
 position = Vector2(997.000704, 472.50048)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_4" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -912,7 +912,7 @@ metadata/binding_id = "town/static/lamp_4"
 
 position = Vector2(573.000192, 561.56256)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_5" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -922,7 +922,7 @@ metadata/binding_id = "town/static/lamp_5"
 
 position = Vector2(1010.999808, 420.93792)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_6" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -932,7 +932,7 @@ metadata/binding_id = "town/static/lamp_6"
 
 position = Vector2(1092.000768, 624.37536)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_7" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -942,7 +942,7 @@ metadata/binding_id = "town/static/lamp_7"
 
 position = Vector2(902.00064, 780)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_8" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -952,7 +952,7 @@ metadata/binding_id = "town/static/lamp_8"
 
 position = Vector2(1207.999488, 742.50048)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_9" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -962,7 +962,7 @@ metadata/binding_id = "town/static/lamp_9"
 
 position = Vector2(1323.999744, 828.74976)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="lamp_10" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -972,7 +972,7 @@ metadata/binding_id = "town/static/lamp_10"
 
 position = Vector2(432.999936, 509.06208)
 
-metadata/radius = 2.49984
+metadata/radius = 5.5
 
 [node name="arrival_storage_fence_base" type="Polygon2D" parent="GeometrySources/Static"]
 
@@ -1013,6 +1013,14 @@ visible = false
 metadata/binding_id = "town/static/cliff_east"
 
 polygon = PackedVector2Array(1425, 440, 1536, 440, 1536, 690, 1425, 690)
+
+[node name="south_bank_seal" type="Polygon2D" parent="GeometrySources/Static"]
+
+visible = false
+
+metadata/binding_id = "town/static/south_bank_seal"
+
+polygon = PackedVector2Array(796, 836.25, 824, 811.875, 786, 900, 758, 900)
 
 [node name="Routes" type="Node2D" parent="GeometrySources"]
 

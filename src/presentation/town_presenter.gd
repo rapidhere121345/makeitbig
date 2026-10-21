@@ -72,6 +72,8 @@ func load_character_assets() -> Dictionary:
 
 func attach(presenter: Variant, initial_state: Dictionary, presentation_runtime: Variant = null) -> Dictionary:
 	_occluder_piece_cache.clear()
+	_occluder_materials.clear()
+	_occluder_hole_anchors.clear()
 	if not _load_errors.is_empty() or ranger_animation == null or life_animation == null or not ranger_animation.has_real_art() or not life_animation.has_real_art():
 		return {"ok": false, "error": "town_character_assets_missing", "errors": _load_errors.duplicate()}
 	world_presenter = presenter
@@ -224,15 +226,19 @@ func _sync_occlusion(display_delta: float) -> void:
 	## 2026-10-20), so the piece itself opens a tiered window instead and the
 	## actor sprite stays fully opaque.
 	var occluder_covers: Dictionary = {}
+	var occluder_holes: Dictionary = {}
 	var actor_ids: Dictionary = {}
 	for actor_id: String in actor_presentation_ids():
 		actor_ids[actor_id] = true
+		var anchor := _actor_world_position(actor_id)
 		for occluder: Dictionary in plan.occluders_of(actor_id):
 			var occluder_id := String(occluder.get("stable_id", ""))
 			if occluder_id.is_empty():
 				continue
 			var cover := float(occluder.get("cover_fraction", 0.0))
 			occluder_covers[occluder_id] = minf(float(occluder_covers.get(occluder_id, INF)), cover)
+			if anchor.is_finite():
+				(occluder_holes.get_or_add(occluder_id, []) as Array).append(anchor)
 	## Every plan entry that is not an actor is a native front piece: covered
 	## pieces get their tiered window, uncovered pieces ease back to opaque.
 	## Resolving the piece node here also seeds the node cache.
@@ -258,7 +264,8 @@ func _sync_occlusion(display_delta: float) -> void:
 		var piece_alpha := clampf(window, 0.0, 1.0) if is_finite(window) else 1.0
 		window_alphas[occluder_id] = piece_alpha
 		if piece != null:
-			piece.modulate.a = piece_alpha
+			piece.modulate.a = 1.0
+			_apply_occluder_cutout(occluder_id, piece, occluder_holes.get(occluder_id, []), piece_alpha)
 	_occlusion_report = {"available": true, "reason": "", "plan_size": entries.size(),
 		"occluded_ids": occluded_ids, "alphas": alphas, "occluder_alphas": window_alphas}
 
@@ -271,6 +278,10 @@ func _reset_occlusion(reason: String, errors: Array = []) -> void:
 		var piece: CanvasItem = _occluder_piece(occluder_id)
 		if piece != null:
 			piece.modulate.a = 1.0
+		var material: ShaderMaterial = _occluder_materials.get(occluder_id, null)
+		if material != null:
+			material.set_shader_parameter("hole_count", 0)
+	_occluder_hole_anchors.clear()
 	_occlusion_report = {"available": false, "reason": reason, "errors": errors.duplicate(), "alphas": {}}
 
 
@@ -296,6 +307,61 @@ func actor_presentation_ids() -> Array[String]:
 ## the ids seen in occlusion plans; it is cleared on attach so a room restart
 ## can never reuse a freed node.
 var _occluder_piece_cache: Dictionary = {}
+
+const CUTOUT_SHADER := preload("res://src/presentation/occlusion/occluder_cutout.gdshader")
+const CUTOUT_HOLE_RADIUS := 30.0
+const CUTOUT_HOLE_FEATHER := 9.0
+const CUTOUT_INNER_ALPHA := 0.18
+const CUTOUT_ANCHOR_LIFT := -22.0
+var _occluder_materials: Dictionary = {}
+var _occluder_hole_anchors: Dictionary = {}
+
+
+## The covered actor's authoritative feet anchor. A missing resident position
+## yields a non-finite point and contributes no hole instead of opening one at
+## a guessed location.
+func _actor_world_position(actor_id: String) -> Vector2:
+	if actor_id == HERO_ID:
+		return hero_world_position()
+	if actor_id.begins_with("town/npc/"):
+		var residents: Variant = _state.get("residents", {})
+		if residents is Dictionary:
+			var pos: Variant = (residents as Dictionary).get(actor_id.trim_prefix("town/npc/"), null)
+			if pos is Vector2:
+				return pos
+	return Vector2.INF
+
+
+## Opens a soft per-actor cutout on the covering piece instead of fading the
+## whole sprite: the eased window alpha drives the hole's inner opacity, so
+## opening and closing keep the same temporal ramp the flat fade used.
+func _apply_occluder_cutout(occluder_id: String, piece: CanvasItem, anchors: Array, eased_alpha: float) -> void:
+	var material: ShaderMaterial = _occluder_materials.get(occluder_id, null)
+	if material == null:
+		material = ShaderMaterial.new()
+		material.shader = CUTOUT_SHADER
+		material.set_shader_parameter("feather", CUTOUT_HOLE_FEATHER)
+		piece.material = material
+		_occluder_materials[occluder_id] = material
+	## Coverage drop keeps the last anchors so the hole fades out via
+	## inner_alpha instead of vanishing in one frame; once the window is fully
+	## closed again the anchors are forgotten.
+	var live: Variant = _occluder_hole_anchors.get(occluder_id, null)
+	if not anchors.is_empty():
+		live = anchors
+		_occluder_hole_anchors[occluder_id] = live
+	elif eased_alpha >= 0.999:
+		live = []
+		_occluder_hole_anchors.erase(occluder_id)
+	var camera_off := camera_world_offset()
+	var holes := PackedVector4Array()
+	for anchor: Variant in live if live is Array else []:
+		if anchor is Vector2:
+			var center: Vector2 = anchor + Vector2(0.0, CUTOUT_ANCHOR_LIFT) - camera_off
+			holes.append(Vector4(center.x, center.y, CUTOUT_HOLE_RADIUS, 0.0))
+	material.set_shader_parameter("holes", holes)
+	material.set_shader_parameter("hole_count", mini(holes.size(), 8))
+	material.set_shader_parameter("inner_alpha", lerpf(1.0, CUTOUT_INNER_ALPHA, 1.0 - eased_alpha))
 
 
 func _occluder_piece(occluder_id: String) -> CanvasItem:

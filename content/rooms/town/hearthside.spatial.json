@@ -1310,7 +1310,7 @@
 				],
 				"id": "town/static/training_post_0",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1319,7 +1319,7 @@
 				],
 				"id": "town/static/training_post_1",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1328,7 +1328,7 @@
 				],
 				"id": "town/static/training_post_2",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1337,7 +1337,7 @@
 				],
 				"id": "town/static/training_post_3",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1346,7 +1346,7 @@
 				],
 				"id": "town/static/training_post_4",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"id": "town/static/wood_contract_base/000",
@@ -1535,7 +1535,7 @@
 				],
 				"id": "town/static/tree_board_trunk",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1544,7 +1544,7 @@
 				],
 				"id": "town/static/tree_wood_trunk",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1553,7 +1553,7 @@
 				],
 				"id": "town/static/tree_east_trunk",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1562,7 +1562,7 @@
 				],
 				"id": "town/static/tree_south_trunk",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1571,7 +1571,7 @@
 				],
 				"id": "town/static/tree_southwest_trunk",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"center": [
@@ -1580,7 +1580,7 @@
 				],
 				"id": "town/static/tree_arrival_trunk",
 				"kind": "circle",
-				"radius": 5.625
+				"radius": 8.5
 			},
 			{
 				"id": "town/static/northwest_forest/000",
@@ -2723,7 +2723,7 @@
 				],
 				"id": "town/static/lamp_0",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2732,7 +2732,7 @@
 				],
 				"id": "town/static/lamp_1",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2741,7 +2741,7 @@
 				],
 				"id": "town/static/lamp_2",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2750,7 +2750,7 @@
 				],
 				"id": "town/static/lamp_3",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2759,7 +2759,7 @@
 				],
 				"id": "town/static/lamp_4",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2768,7 +2768,7 @@
 				],
 				"id": "town/static/lamp_5",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2777,7 +2777,7 @@
 				],
 				"id": "town/static/lamp_6",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2786,7 +2786,7 @@
 				],
 				"id": "town/static/lamp_7",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2795,7 +2795,7 @@
 				],
 				"id": "town/static/lamp_8",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2804,7 +2804,7 @@
 				],
 				"id": "town/static/lamp_9",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"center": [
@@ -2813,7 +2813,7 @@
 				],
 				"id": "town/static/lamp_10",
 				"kind": "circle",
-				"radius": 2.5
+				"radius": 5.5
 			},
 			{
 				"id": "town/static/arrival_storage_fence_base/000",
@@ -3100,6 +3100,42 @@
 					[
 						1425.0,
 						690.0
+					]
+				]
+			},
+			{
+				"id": "town/static/south_bank_seal/000",
+				"kind": "polygon",
+				"points": [
+					[
+						758.0,
+						900.0
+					],
+					[
+						796.0,
+						836.25
+					],
+					[
+						824.0,
+						811.875
+					]
+				]
+			},
+			{
+				"id": "town/static/south_bank_seal/001",
+				"kind": "polygon",
+				"points": [
+					[
+						824.0,
+						811.875
+					],
+					[
+						786.0,
+						900.0
+					],
+					[
+						758.0,
+						900.0
 					]
 				]
 			}
@@ -3589,6 +3625,11 @@
 		},
 		{
 			"binding_id": "town/static/proxy_tower_body",
+			"channels": {},
+			"kind": "static_collision"
+		},
+		{
+			"binding_id": "town/static/south_bank_seal",
 			"channels": {},
 			"kind": "static_collision"
 		},
