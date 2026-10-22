@@ -146,6 +146,23 @@ The 10 preflight tests also pass with the POSIX-only `os.geteuid` attribute
 removed, exercising the corrected portable mock. This is not native Windows
 game execution.
 
+## Local Release Verification
+
+Runtime/content changes are committed as `fc338029b8d5`. After that clean
+commit, the fresh game exports were packaged into the new isolated, ignored
+root `build/current/english-release-check.eeQ5Ul`, build ID
+`20261022-192931-fc338029b8d5`.
+
+The required local sequence passes: `release.sh package`, `index`, `site`,
+`verify --deep`, `deploy/tailscale/validate.sh`, and
+`stage_release_page.sh --check`. The index step is required before site
+generation. Both download checksums match the game export hashes above.
+Evidence: `build/current/english-release-verification.log` and the isolated
+root's `index.json`, build metadata, and `SHA256SUMS`.
+
+No `prune`, live `build/releases/` update, server, Tailscale exposure, remote
+upload, or deployment occurred. The existing release history remains untouched.
+
 ## Devbox Facilities and Boundaries
 
 See `docs/DEVBOX_READINESS.md` for exact paths, versions, evidence, and limits.
