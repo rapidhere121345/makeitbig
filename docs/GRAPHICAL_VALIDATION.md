@@ -28,7 +28,8 @@ Run at most one graphical Godot instance at a time. Check for existing instances
 With a connected display:
 
 ```bash
-cd /data/paseo-makeitbig/project
+cd /data/claude/workspace/makeitbig
+source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
 source scripts/project_env.sh
 test -n "${DISPLAY:-}"
 "$GODOT_BIN" --display-driver x11 --rendering-method gl_compatibility --editor --path "$MIB_PROJECT_ROOT"
@@ -48,9 +49,11 @@ Use `tools/play_session.gd` and `tools/play_session.py` for input and captures. 
 
 ## CPU Rendering in the Devbox
 
-After the operator provisions Xvfb, X11 utilities, and Mesa/GL runtime libraries, connect an owned display and run:
+The approved prefix already supplies Xvfb, X11 utilities, and Mesa/GL libraries.
+Connect an owned, authenticated display with TCP disabled, then run:
 
 ```bash
+source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
 source scripts/project_env.sh
 test -n "${DISPLAY:-}"
 xdpyinfo -display "$DISPLAY" >/dev/null

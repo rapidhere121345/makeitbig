@@ -14,15 +14,21 @@ cd makeitbig
 godot --path .
 ```
 
-The current native host checkout uses:
+The authorized devbox checkout uses the existing isolated CPU toolchain:
 
 ```bash
-cd /data/paseo-makeitbig/project
+cd /data/claude/workspace/makeitbig
+source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
 source scripts/project_env.sh
 ./scripts/container_build.sh
 ```
 
-See the [environment workflow](docs/HOST_WORKFLOW.md) for the pinned version, writable directories, export templates, and staged commands. Preparing a different host or devbox? Check [devbox readiness](docs/DEVBOX_READINESS.md) first. Nothing automatically migrates the project or installs system packages.
+See the [environment workflow](docs/HOST_WORKFLOW.md) for the pinned version,
+writable directories, export templates, and staged commands. The original
+`/data/paseo-makeitbig/project` checkout is retained for rollback. Preparing
+another environment? Check [devbox readiness](docs/DEVBOX_READINESS.md) first.
+Project scripts do not migrate files, install system packages, or change the
+devbox's network and visibility restrictions.
 
 ## Controls
 

@@ -1,28 +1,38 @@
 # Make It Big Environment Workflow
 
-This guide describes the native checkout at `/data/paseo-makeitbig/project` and the portable environment contract. Paseo manages agents and workspaces; project scripts validate source and produce deliverables. They do not create containers, install packages, or change host networking.
+This guide describes the authorized devbox checkout at
+`/data/claude/workspace/makeitbig` and the portable environment contract.
+The original `/data/paseo-makeitbig/project` remains a rollback copy.
+Paseo manages agents and workspaces; project scripts validate source and produce
+deliverables. They do not create containers, install packages, or change networking.
 
 ## Pinned Baseline
 
 | Setting | Value |
 | --- | --- |
-| Current checkout | `/data/paseo-makeitbig/project` |
-| Current host binary | `/data/paseo-makeitbig/bin/godot` |
+| Current checkout | `/data/claude/workspace/makeitbig` |
+| Scoped launcher | `/data/claude/workspace/.tools/make-it-big/portable-cpu/bin/mib-godot` |
+| Official engine | `/data/claude/workspace/.tools/make-it-big/godot-4.7.2/godot` |
 | Godot | `4.7.2.stable.official.ed1daf0bf` |
 | Linux binary SHA256 | `8d106cbe6144c2dc7e881d61d2429c1a8a76e6b22ef48bd5e48dcf934953f71e` |
-| Renderer | Godot GL Compatibility |
+| Renderer | Godot GL Compatibility, CPU Mesa llvmpipe |
 | Physics step | 30 Hz |
 | Godot data | `$XDG_DATA_HOME`; defaults to `build/host-xdg/data` if not already set |
 | Export templates | `$XDG_DATA_HOME/godot/export_templates/4.7.2.stable` |
 | Test state | Ignored `build/test-state/` |
 | Play session | Ignored `build/current/play-session/` |
 
-Source `scripts/project_env.sh`, then use `mib_godot` or `"$GODOT_BIN"`. It resolves an explicit `GODOT_BIN`, the workspace's `../bin/godot`, PATH entries, and a legacy host fallback; it verifies the version and binary SHA256. The legacy paths are conveniences for this host, not requirements on a new machine.
+Source the isolated prefix's `env.sh`, then `scripts/project_env.sh`, and use
+`mib_godot` or `"$GODOT_BIN"`. The prefix chooses its matching loader and CPU
+libraries without changing global library paths. The project verifies the
+official engine's version and SHA256. Native-host fallbacks remain portable
+compatibility options, not the devbox's installation method.
 
 ## Standard Entry
 
 ```bash
-cd /data/paseo-makeitbig/project
+cd /data/claude/workspace/makeitbig
+source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
 source scripts/project_env.sh
 printf '%s\n' "$GODOT_BIN"
 mib_godot --version
@@ -65,10 +75,15 @@ Templates must exactly match the editor version. Both Linux and Windows release 
 For window input and captures, use the same Godot binary:
 
 ```bash
-cd /data/paseo-makeitbig/project
+cd /data/claude/workspace/makeitbig
+source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
 source scripts/project_env.sh
 "$GODOT_BIN" --editor --path .
 ```
+
+The editor command requires an already approved, authenticated private display.
+Do not use the host desktop or enable unauthenticated/TCP X11 access. Stop owned
+display processes and remove only their own IPC/authentication artifacts.
 
 Playtest tools share the checkout and `build/current/play-session/`. Record the actual display and renderer for X11/Xvfb runs. A virtual display is not a physical desktop session. See [graphical validation](GRAPHICAL_VALIDATION.md).
 
@@ -89,7 +104,7 @@ source scripts/project_env.sh
 ./scripts/container_build.sh
 ```
 
-Do not copy host-specific symlinks, `.godot/`, or test saves as installation substitutes. The new environment must regenerate imports and pass its own tests. See [devbox readiness](DEVBOX_READINESS.md) for the audited target and remaining provisioning work.
+Do not copy host-specific symlinks, `.godot/`, or test saves as installation substitutes. The new environment must regenerate imports and pass its own tests. See [devbox readiness](DEVBOX_READINESS.md) for current acceptance and separate follow-up work.
 
 ## Troubleshooting
 

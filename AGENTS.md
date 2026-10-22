@@ -18,10 +18,15 @@ Use these sources of truth in order: runtime code in `src/`, authored data in `c
 
 ## Environment Workflow
 
-Work in the existing native Paseo checkout. Do not create, rebuild, or upgrade Docker, or migrate the checkout without an explicit request. The current host uses:
+The authorized working checkout is `/data/claude/workspace/makeitbig` in the
+existing `example-devbox` devbox. The original native checkout is retained as a
+rollback copy, not the active work location. Do not rebuild or upgrade Docker,
+change its network/mount/security boundaries, or migrate again without an
+explicit request. Inside the devbox, as UID 1000:
 
 ```bash
-cd /data/paseo-makeitbig/project
+cd /data/claude/workspace/makeitbig
+source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
 source scripts/project_env.sh
 ./scripts/container_build.sh
 ```
@@ -32,6 +37,11 @@ and occupy the foreground turn. Run the complete suite through
 `./scripts/container_test.sh`, which provides a total timeout.
 
 Never restart OCX, Paseo, or Jingwei from project scripts. Do not run Godot tests as root. See [docs/HOST_WORKFLOW.md](docs/HOST_WORKFLOW.md) for the environment contract and [docs/DEVBOX_READINESS.md](docs/DEVBOX_READINESS.md) for migration prerequisites.
+
+Keep other workspace projects, their configuration, and credentials untouched.
+Use only sanctioned network paths. CPU software rendering is sufficient; any
+Xvfb run must use private authentication, disable TCP, and clean only its own
+processes and temporary IPC files. Never expose the host desktop.
 
 ## Release Workflow
 
@@ -54,3 +64,5 @@ See [docs/GRAPHICAL_VALIDATION.md](docs/GRAPHICAL_VALIDATION.md) for graphical a
 Before committing, verify script syntax, `git diff --check`, full tests, exports, and Linux smoke from an empty directory.
 
 Release changes also require `./scripts/release.sh verify` and `./deploy/tailscale/validate.sh`. Never commit generated builds or staging output from `build/`.
+
+<!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->

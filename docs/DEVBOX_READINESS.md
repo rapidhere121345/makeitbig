@@ -2,13 +2,13 @@
 
 ## Scope and Status
 
-The operator plans to move Make It Big into the existing local Docker sandbox,
-whose writable workspace is `/data/claude/workspace`. The final checkout
-destination is `/data/claude/workspace/makeitbig`. **Do not create, copy, migrate,
-or activate that checkout until the operator explicitly instructs it.**
-Game-source preparation and validation remain in the original checkout.
-The separate `.tools/make-it-big/` directory holds approved tools, not the
-future game checkout or a replacement for another project.
+The operator authorized migration into the existing local Docker sandbox.
+The working checkout is now `/data/claude/workspace/makeitbig`; the original
+`/data/paseo-makeitbig/project` is retained for rollback. An offline Git bundle
+preserved history without copying credentials, `.git/config`, old imports,
+builds, or production saves. No container was created or restarted.
+The separate `.tools/make-it-big/` directory holds approved tools, not another
+game checkout or a replacement for any existing workspace project.
 
 Initial read-only audit: 2026-10-22, container `example-devbox`, UID/GID `1000:1000`.
 That initial audit performed no installation or reconfiguration. Later explicitly
@@ -16,10 +16,10 @@ approved provisioning is recorded separately below. A checker executed from stdi
 without placing a file in the target. Its output is retained on the original
 host in ignored `build/current/devbox-release-prerequisites.json`.
 
-**Current verdict: headless/export tooling and standalone CPU graphics acceptance
-pass.** A discrete GPU is not required.
-The project has not been moved, so target-side project tests and exports have
-not run and cannot be claimed as passed.
+**Current verdict: the migrated game's target build/export/Linux-smoke gate
+and CPU-rendered UI acceptance pass.** A discrete GPU is not required.
+See [migration acceptance](playtest/DEVBOX_MIGRATION_20261022.md) for actual
+target logs, English scans, screenshots, artifact hashes, and scope limits.
 
 ## Initial Facilities Before Provisioning
 
@@ -48,9 +48,9 @@ not run and cannot be claimed as passed.
 | Native Windows runner | No wine/pwsh found | Neither substitutes for native Windows CI anyway |
 | Image-generation tool | Reported available by operator | Not invoked or acceptance-tested during this audit |
 
-The physical host's approximately 64 GiB RAM is **not** the container limit:
-the initial Docker limit was 8 GiB, now increased to 16 GiB. Do not present host
-resource figures as sandbox capacity.
+Physical host memory is **not** the container limit. The initial Docker limit
+was 8 GiB, the first approved increase was 16 GiB, and the latest approved limit
+is 32 GiB. Do not present host resource figures as sandbox capacity.
 
 ## Approved Provisioning
 
@@ -66,6 +66,22 @@ This retains an 8 GiB swap allowance. PID `2198395` and start time
 No disk resize was needed. The operator should sync these approved resource
 limits into the authoritative container configuration so a future recreation
 does not revert them; this task did not edit control-plane or Compose files.
+
+### Latest Approved Resource Increase
+
+After migration acceptance, the operator requested another increase. The host
+reports 16 logical CPUs, about 60 GiB usable RAM, and about 32 GiB available at
+the check. The applied command was:
+
+```text
+docker update --cpus 16 --memory 32g --memory-swap 40g example-devbox
+```
+
+Current limits are 16 CPU-equivalents, 32 GiB RAM, and an 8 GiB swap allowance.
+These are limits, not dedicated cores or reserved memory. PID 2198395 and the
+original start time remain unchanged; there was no restart. Selected network,
+mount-count, privilege, capability, and IPC boundary snapshots match before and
+after. No control-plane or Compose files were edited.
 
 Offline installation used a new, isolated prefix:
 `/data/claude/workspace/.tools/make-it-big/`.
@@ -97,7 +113,8 @@ source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
 The operator explicitly approved the narrow Xvfb-owned temporary IPC exception
 after reviewing its risks. The guarded standalone graphics fixture now passes;
 the launcher still refuses unless permission is explicitly enabled for that
-invocation. This is not migration or acceptance of the full game in the target.
+invocation. This standalone proof is separate from the subsequent full-game
+migration acceptance linked above.
 
 Ignored original-host evidence:
 
@@ -211,7 +228,7 @@ Existing GitHub HTTPS proxy access is the sanctioned route for upstream Godot
 downloads. Network access was not tested here. Python's `python3 -m zipfile -e`
 can extract official ZIP/TPZ archives without an unzip package.
 
-Example paths **after operator provisioning and migration**:
+Current paths after authorized provisioning and migration:
 
 ```bash
 # Run from the moved Make It Big checkout, not another project in the workspace.
@@ -226,7 +243,13 @@ source scripts/project_env.sh
 The preflight is read-only and reports prerequisite readiness only. It does not
 install, migrate, export, deploy, or assert that the game passed.
 
-## Required Acceptance After the Move
+## Migration Acceptance and Follow-up
+
+The migration report records source import, complete headless test/export and
+Linux smoke gates, software-rendered production UI and facility probes, and
+local release validation. Repeat those checks for later moves or toolchain
+changes. Native Windows, deeper gameplay/performance review, and actual
+publication remain separate follow-up work.
 
 - Regenerate imports from the moved source, preserving stable save IDs and
   keeping test/play-session data separate from production saves.
@@ -252,6 +275,8 @@ host Tailscale, expose new ports, or deploy another project's contract.
 Use the sandbox's sanctioned AF Infra API if a publication service is later
 requested. An operator-approved project/service/exposure/deployment contract,
 access control, artifact verification, and an unsigned-binary policy are needed.
-No registry entry, service, exposure, or deploy path was changed in this task.
+No registry entry, service, exposure, or deployment contract was changed.
+The authorized working path and resource changes must be reported to the
+operator for authoritative registry/configuration synchronization.
 
 <!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->

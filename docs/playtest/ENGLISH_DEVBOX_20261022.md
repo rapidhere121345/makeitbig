@@ -194,6 +194,9 @@ The operator must persist approved resource limits in the authoritative
 container configuration before a later recreation. This task does not edit
 the AF Infra control plane or silently weaken sandbox policy.
 
+Subsequent operator-authorized migration and the additional resource increase
+are recorded in [Devbox Migration Acceptance](DEVBOX_MIGRATION_20261022.md).
+
 ## Remaining Limits
 
 The legacy sliced-town image baker still emits false/false cutaway/fade flags
