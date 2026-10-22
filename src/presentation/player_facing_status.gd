@@ -5,108 +5,108 @@ extends RefCounted
 ## player. Domain code keeps emitting compact machine-readable errors for tests,
 ## logs and transactions; every screen passes its status through this formatter.
 
-const GENERIC_FAILURE := "操作未完成，请重新选择后再试。"
+const GENERIC_FAILURE := "The action could not be completed. Select again and retry."
 
 const ERROR_MESSAGES := {
-	"wrong_route": "当前页面已经变化，请返回后重新操作。",
-	"unknown_facility": "该设施当前不可用。",
-	"action_unavailable": "该操作尚未开放。",
-	"profile_required": "没有可用档案，请先开始新游戏。",
-	"invalid_profile": "档案数据无效，请开始新的测试档案。",
-	"unsupported_schema_version": "该测试档案来自旧版本，请开始新游戏。",
-	"invalid_class": "当前职业尚未开放。",
-	"unknown_preset": "没有找到该构筑方案。",
-	"invalid_active_build": "当前装备无法形成有效构筑，请调整装备。",
-	"active_build_invalid": "当前装备无法形成有效构筑，请调整装备。",
-	"build_resolution_failed": "当前装备解析失败，请重新选择装备。",
-	"content_unavailable": "玩法内容未能载入，请返回后重试。",
-	"invalid_instance_id": "装备编号无效，请重新选择。",
-	"invalid_item": "该装备的数据不完整，无法使用。",
-	"invalid_item_instance": "该装备的数据不完整，无法使用。",
-	"item_not_owned": "该装备已不在仓库中，请刷新列表。",
-	"equipped_item_not_owned": "当前穿戴记录失效，请重新选择装备。",
-	"item_already_equipped": "该装备已经穿戴。",
-	"item_equipped": "请先卸下这件装备，再进行拆解。",
-	"protected_item": "起步装备受保护，不能拆解。",
-	"slot_not_prototype_open": "该装备槽尚未开放。",
-	"forge_locked": "完成主线 04 后才能使用律筹锻造。",
-	"unknown_operation": "请选择添铸、改写或精炼。",
-	"inscribe_not_legal": "当前装备没有可合法添铸的新词条。",
-	"rewrite_not_legal": "当前词条没有可合法改写的家族。",
-	"refine_not_legal": "当前词条已是最高阶，无法再精炼。",
-	"invalid_page": "候选页已失效，请重新开始推演。",
-	"insufficient_law_tallies": "对应律筹不足，无法揭示或落锤。",
-	"forge_session_required": "请先开始一次律筹推演。",
-	"stale_forge_session": "这次推演已经过期，请重新推演。",
-	"stale_target": "目标装备已经变化，请重新选择。",
-	"candidate_not_revealed": "该未来结果尚未揭示。",
-	"candidate_not_selected": "请先选择一个已揭示的未来结果。",
-	"commit_pending": "上一笔落锤仍在处理，请稍候。",
-	"invalid_commit_token": "落锤确认已失效，请重新选择结果。",
-	"save_failed": "档案写入失败；装备和律筹均未改变，请重试。",
-	"invalid_contract_id": "请选择一个可进入的契约。",
-	"invalid_mode": "请选择 Manual 或 Auto 模式。",
-	"invalid_seed": "契约种子必须是有效整数。",
-	"invalid_room_count": "契约房间数量无效。",
-	"contract_locked": "该契约尚未满足解锁条件。",
-	"mode_not_allowed": "该契约不允许当前模式。",
-	"proxy_locked": "Auto 尚未解锁，请先以 Manual 击败阈门巨像。",
-	"pending_contract_required": "请先选择并准备一份契约。",
-	"active_session_required": "当前没有进行中的契约。",
-	"active_session_exists": "已有契约正在进行。",
-	"result_pending": "本次契约仍在结算。",
-	"ending_locked": "完成前期毕业契约后才能进入终章。",
-	"no_pending_route": "当前没有等待中的页面。",
-	"invalid_payload": "操作数据无效，请重新操作。",
-	"invalid_last_result": "最近一次契约结果无效。",
-	"invalid_safe_route": "存档返回位置无效。",
-	"room_runtime_factory_failed": "战斗场景未能建立，请返回契约台重试。",
-	"room_runtime_start_failed": "战斗未能开始，请返回契约台重试。",
-	"profile_creation_failed": "新档案建立失败，请重试。",
-	"campaign_progress_invalid": "主线进度无法读取，请开始新的测试档案。",
-	"contract_plan_failed": "契约内容未能生成，请重新选择契约。",
-	"contract_prepare_failed": "契约准备失败，请重新选择契约。",
-	"session_start_failed": "契约未能开始，请重新进入。",
-	"session_complete_failed": "契约结算失败，请重试。",
+	"wrong_route": "This page has changed. Go back and try again.",
+	"unknown_facility": "This facility is currently unavailable.",
+	"action_unavailable": "This action is not yet available.",
+	"profile_required": "No profile is available. Start a new game first.",
+	"invalid_profile": "Invalid profile data. Start a new test profile.",
+	"unsupported_schema_version": "This test profile is from an older version. Start a new game.",
+	"invalid_class": "This class is not yet available.",
+	"unknown_preset": "This build preset could not be found.",
+	"invalid_active_build": "Your equipment cannot form a valid build. Adjust your loadout.",
+	"active_build_invalid": "Your equipment cannot form a valid build. Adjust your loadout.",
+	"build_resolution_failed": "Your equipment could not be resolved. Select it again.",
+	"content_unavailable": "Game content could not be loaded. Go back and retry.",
+	"invalid_instance_id": "Invalid equipment ID. Select the item again.",
+	"invalid_item": "This item's data is incomplete and it cannot be used.",
+	"invalid_item_instance": "This item's data is incomplete and it cannot be used.",
+	"item_not_owned": "This item is no longer in storage. Refresh the list.",
+	"equipped_item_not_owned": "Your equipped-item record is outdated. Select your equipment again.",
+	"item_already_equipped": "This item is already equipped.",
+	"item_equipped": "Unequip this item before salvaging it.",
+	"protected_item": "Starter equipment is protected and cannot be salvaged.",
+	"slot_not_prototype_open": "This equipment slot is not yet available.",
+	"forge_locked": "Complete Main Quest 04 to unlock Law Token forging.",
+	"unknown_operation": "Choose Inscribe, Rewrite, or Refine.",
+	"inscribe_not_legal": "This item has no eligible new affix to inscribe.",
+	"rewrite_not_legal": "This affix has no eligible family to rewrite.",
+	"refine_not_legal": "This affix is already at its highest tier and cannot be refined.",
+	"invalid_page": "This candidate page has expired. Start a new forecast.",
+	"insufficient_law_tallies": "Not enough matching Law Tokens to reveal or commit.",
+	"forge_session_required": "Start a Law Token forecast first.",
+	"stale_forge_session": "This forecast has expired. Start a new one.",
+	"stale_target": "The target item has changed. Select it again.",
+	"candidate_not_revealed": "This future outcome has not been revealed.",
+	"candidate_not_selected": "Select a revealed future outcome first.",
+	"commit_pending": "The previous commit is still processing. Please wait.",
+	"invalid_commit_token": "This commit confirmation has expired. Select the outcome again.",
+	"save_failed": "The profile could not be saved. Equipment and Law Tokens are unchanged; please retry.",
+	"invalid_contract_id": "Select an available contract.",
+	"invalid_mode": "Choose Manual or Auto mode.",
+	"invalid_seed": "The contract seed must be a valid integer.",
+	"invalid_room_count": "Invalid contract room count.",
+	"contract_locked": "This contract's unlock requirements have not been met.",
+	"mode_not_allowed": "This contract does not allow the selected mode.",
+	"proxy_locked": "Auto is locked. Defeat the Threshold Colossus in Manual first.",
+	"pending_contract_required": "Select and prepare a contract first.",
+	"active_session_required": "No contract is currently in progress.",
+	"active_session_exists": "A contract is already in progress.",
+	"result_pending": "This contract is still being settled.",
+	"ending_locked": "Complete the early graduation contract to enter the epilogue.",
+	"no_pending_route": "No page is pending.",
+	"invalid_payload": "Invalid action data. Please try again.",
+	"invalid_last_result": "The latest contract result is invalid.",
+	"invalid_safe_route": "The saved return location is invalid.",
+	"room_runtime_factory_failed": "The combat scene could not be created. Return to the Contract Board and retry.",
+	"room_runtime_start_failed": "Combat could not start. Return to the Contract Board and retry.",
+	"profile_creation_failed": "The new profile could not be created. Please retry.",
+	"campaign_progress_invalid": "Campaign progress could not be read. Start a new test profile.",
+	"contract_plan_failed": "Contract content could not be generated. Select the contract again.",
+	"contract_prepare_failed": "Contract preparation failed. Select the contract again.",
+	"session_start_failed": "The contract could not start. Enter it again.",
+	"session_complete_failed": "Contract settlement failed. Please retry.",
 	"unknown_error": GENERIC_FAILURE,
 }
 
 const STATUS_MESSAGES := {
-	"Tutorial complete": "游侠基础教程已完成",
-	"New profile saved": "新档案已保存",
-	"Profile saved": "档案已保存",
-	"Contract result saved": "契约结果已保存",
-	"Epilogue checkpoint saved": "终章进度已保存",
-	"Contract preparation cancelled.": "契约准备已取消。",
-	"No valid profile is available.": "没有可继续的有效档案。",
+	"Tutorial complete": "Ranger basics tutorial complete",
+	"New profile saved": "New profile saved",
+	"Profile saved": "Profile saved",
+	"Contract result saved": "Contract result saved",
+	"Epilogue checkpoint saved": "Epilogue checkpoint saved",
+	"Contract preparation cancelled.": "Contract preparation cancelled.",
+	"No valid profile is available.": "No valid profile is available to continue.",
 }
 
 const FAILURE_PREFIXES := {
-	"锻造拒绝：": "锻造",
-	"目标选择失败：": "选择锻造目标",
-	"Build 选择失败：": "切换构筑",
-	"训练失败：": "训练",
-	"换装失败：": "换装",
-	"拆解失败：": "拆解",
+	"Forge rejected: ": "Forge",
+	"Target selection failed: ": "Select Forge Target",
+	"Build selection failed: ": "Switch Build",
+	"Training failed: ": "Training",
+	"Equipment change failed: ": "Change Equipment",
+	"Salvage failed: ": "Salvage",
 }
 
 ## Settlement keeps these source ids as authority/telemetry data. This table is
 ## the presentation boundary: no entity number or machine token reaches a player.
 const ENEMY_FAILURE_SOURCE_LABELS := {
-	"melee_pursuer": "近战追猎者",
-	"charging_raider": "冲锋掠袭者",
-	"fan_ranged": "扇射游猎者",
+	"melee_pursuer": "Melee Pursuer",
+	"charging_raider": "Charging Raider",
+	"fan_ranged": "Fan-Shot Hunter",
 }
 const BOSS_FAILURE_SOURCE_LABELS := {
-	"slam": "阈门巨像的重击",
-	"sweep": "阈门巨像的横扫",
-	"lane": "阈门巨像的火线",
+	"slam": "Threshold Colossus slam",
+	"sweep": "Threshold Colossus sweep",
+	"lane": "Threshold Colossus fireline",
 }
 const HAZARD_FAILURE_SOURCE_LABELS := {
-	"exposed_ground_zone": "裸露地面危险区",
-	"moving_fireline": "移动火线",
+	"exposed_ground_zone": "Exposed ground hazard",
+	"moving_fireline": "Moving Fireline",
 }
-const UNKNOWN_FAILURE_SOURCE := "未知终止来源"
+const UNKNOWN_FAILURE_SOURCE := "Unknown finishing source"
 
 
 static func error_message(error_code: String) -> String:
@@ -120,7 +120,7 @@ static func failure(action: String, error_code: String) -> String:
 	var label := action.strip_edges()
 	if label.is_empty():
 		return error_message(error_code)
-	return "%s未完成：%s" % [label, error_message(error_code)]
+	return "%s failed: %s" % [label, error_message(error_code)]
 
 
 ## Formats only the damage-source shapes emitted by combat settlement. The raw
@@ -154,7 +154,7 @@ static func message(value: String) -> String:
 	for raw_status: String in STATUS_MESSAGES:
 		if text.begins_with(raw_status + " (generation "):
 			var suffix := text.substr(raw_status.length())
-			return String(STATUS_MESSAGES[raw_status]) + suffix.replace("(generation ", "（存档代 ").replace(" / slot ", "／槽位 ").replace(").", "）")
+			return String(STATUS_MESSAGES[raw_status]) + suffix
 
 	for raw_prefix: String in FAILURE_PREFIXES:
 		if text.begins_with(raw_prefix):
@@ -163,9 +163,9 @@ static func message(value: String) -> String:
 	if text.begins_with("SAVE FAILED:"):
 		return error_message("save_failed")
 	if text.begins_with("Save unavailable: "):
-		return "存档不可用：%s" % _detail_message(text.trim_prefix("Save unavailable: "))
+		return "Save unavailable: %s" % _detail_message(text.trim_prefix("Save unavailable: "))
 	if text.begins_with("Save ignored: "):
-		return "已忽略无效存档：%s" % _detail_message(text.trim_prefix("Save ignored: "))
+		return "Invalid save ignored: %s" % _detail_message(text.trim_prefix("Save ignored: "))
 	return GENERIC_FAILURE if _looks_like_internal_code(text) else text
 
 

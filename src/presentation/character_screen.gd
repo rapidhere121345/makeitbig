@@ -92,26 +92,26 @@ func _build_heading(page: VBoxContainer) -> void:
 	title_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_column.add_theme_constant_override("separation", 0)
 	heading_row.add_child(title_column)
-	var title := _label("游侠成长册", TITLE_FONT_SIZE, ShellThemeScript.BONE)
+	var title := _label("Ranger Progression", TITLE_FONT_SIZE, ShellThemeScript.BONE)
 	title.name = "CharacterTitle"
 	title_column.add_child(title)
-	var subtitle := _label("猎场学 · 冷石板上的三条追猎路线", BODY_FONT_SIZE, ShellThemeScript.NEUTRAL)
+	var subtitle := _label("Hunting · Three Paths on Cold Stone", BODY_FONT_SIZE, ShellThemeScript.NEUTRAL)
 	subtitle.name = "CharacterSubtitle"
 	title_column.add_child(subtitle)
 	var class_tabs := HBoxContainer.new()
 	class_tabs.name = "ClassTabs"
 	class_tabs.add_theme_constant_override("separation", 6)
 	heading_row.add_child(class_tabs)
-	var ranger_tab := _button("游侠", "ClassTab_ranger")
+	var ranger_tab := _button("Ranger", "ClassTab_ranger")
 	ranger_tab.disabled = true
-	ranger_tab.tooltip_text = "本轮开放：游侠天赋。"
+	ranger_tab.tooltip_text = "Available in this demo: Ranger talents."
 	class_tabs.add_child(ranger_tab)
-	for class_copy: String in ["炼金 · 后续", "法师 · 后续"]:
+	for class_copy: String in ["Alchemist · Later", "Mage · Later"]:
 		var future_tab := _button(class_copy, "FutureClassTab_%s" % class_tabs.get_child_count())
 		future_tab.disabled = true
-		future_tab.tooltip_text = "该职业天赋尚未实现，不能投入点数。"
+		future_tab.tooltip_text = "This class's talents are not implemented; points cannot be allocated."
 		class_tabs.add_child(future_tab)
-	var close_button := _button("返回 Esc", "CloseCharacterButton")
+	var close_button := _button("Back Esc", "CloseCharacterButton")
 	## Same rationale as the dialogue close: the advertised Esc must fire even
 	## while a control inside this screen owns focus.
 	var close_shortcut := Shortcut.new()
@@ -130,14 +130,14 @@ func _build_overview(page: VBoxContainer) -> void:
 	overview.name = "GrowthOverview"
 	overview.add_theme_constant_override("separation", 10)
 	page.add_child(overview)
-	var level_card := _metric_card("角色等级", "LevelLabel")
+	var level_card := _metric_card("Character Level", "LevelLabel")
 	_level_label = level_card["value"] as Label
 	overview.add_child(level_card["panel"] as PanelContainer)
-	var experience_card := _metric_card("经验", "ExperienceLabel")
+	var experience_card := _metric_card("XP", "ExperienceLabel")
 	_experience_label = experience_card["value"] as Label
 	(experience_card["panel"] as PanelContainer).size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	overview.add_child(experience_card["panel"] as PanelContainer)
-	var points_card := _metric_card("未用天赋点", "PointsLabel")
+	var points_card := _metric_card("Unspent Talent Points", "PointsLabel")
 	_points_label = points_card["value"] as Label
 	overview.add_child(points_card["panel"] as PanelContainer)
 	_experience_progress = ProgressBar.new()
@@ -189,7 +189,7 @@ func _build_workspace(page: VBoxContainer) -> void:
 	var board_header := HBoxContainer.new()
 	board_header.add_theme_constant_override("separation", 10)
 	tree_column.add_child(board_header)
-	_tree_title = _label("猎场学 · 三层天赋", BODY_FONT_SIZE, ShellThemeScript.BONE)
+	_tree_title = _label("Hunting · Three Talent Tiers", BODY_FONT_SIZE, ShellThemeScript.BONE)
 	_tree_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board_header.add_child(_tree_title)
 	_tree_state_label = _label("", BODY_FONT_SIZE, ShellThemeScript.WARNING)
@@ -214,11 +214,11 @@ func _build_workspace(page: VBoxContainer) -> void:
 	detail.name = "DetailContent"
 	detail.add_theme_constant_override("separation", 8)
 	detail_panel.add_child(detail)
-	_detail_title = _label("选择一项天赋", BODY_FONT_SIZE, Color("d7a46b"))
+	_detail_title = _label("Select a Talent", BODY_FONT_SIZE, Color("d7a46b"))
 	_detail_title.name = "SelectedTalentName"
 	_detail_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.add_child(_detail_title)
-	_detail_description = _label("从左侧追猎路线选择节点，查看完整说明。", BODY_FONT_SIZE, ShellThemeScript.BONE)
+	_detail_description = _label("Select a node on the left to view its full description.", BODY_FONT_SIZE, ShellThemeScript.BONE)
 	_detail_description.name = "SelectedTalentDescription"
 	_detail_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail_description.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -227,22 +227,23 @@ func _build_workspace(page: VBoxContainer) -> void:
 	_detail_state.name = "SelectedTalentState"
 	_detail_state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.add_child(_detail_state)
-	_allocate_button = _button("投入1点", "AllocateTalentButton")
+	_allocate_button = _button("Add Point", "AllocateTalentButton")
 	_allocate_button.pressed.connect(_on_allocate_pressed)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
 	detail.add_child(actions)
 	_allocate_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(_allocate_button)
-	_refund_button = _button("退还1点", "RefundTalentButton")
+	_refund_button = _button("Refund", "RefundTalentButton")
 	_refund_button.pressed.connect(_on_refund_pressed)
 	_refund_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(_refund_button)
-	_reset_button = _button("免费重置", "ResetTalentsButton")
+	_reset_button = _button("Reset", "ResetTalentsButton")
+	_reset_button.tooltip_text = "Reset all talents for free"
 	_reset_button.pressed.connect(_on_reset_pressed)
 	_reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(_reset_button)
-	_stance_gate_label = _label("姿态：分配相关关键天赋后开放。", BODY_FONT_SIZE, Color("cfc4a8"))
+	_stance_gate_label = _label("Stances unlock after allocating the relevant keystone.", BODY_FONT_SIZE, Color("cfc4a8"))
 	_stance_gate_label.name = "StanceGateLabel"
 	_stance_gate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.add_child(_stance_gate_label)
@@ -295,20 +296,21 @@ func _apply_presentation() -> void:
 	var level_experience := int(_snapshot.get("level_experience", 0))
 	var next_level_experience := int(_snapshot.get("next_level_experience", 1))
 	_level_label.text = "Lv.%d / %d" % [level, max_level]
-	_experience_label.text = "本级 %d / %d · 累计 %d" % [level_experience, next_level_experience, experience]
-	_points_label.text = "%d 点" % int(_snapshot.get("points_available", 0))
+	_experience_label.text = "This level %d / %d · Total %d" % [level_experience, next_level_experience, experience]
+	var available_points := int(_snapshot.get("points_available", 0))
+	_points_label.text = "%d %s" % [available_points, "point" if available_points == 1 else "points"]
 	if _experience_progress != null:
 		_experience_progress.max_value = max(1, next_level_experience)
 		_experience_progress.value = clamp(level_experience, 0, next_level_experience)
-		_experience_progress.tooltip_text = "本级经验：%d / %d；累计经验：%d" % [level_experience, next_level_experience, experience]
+		_experience_progress.tooltip_text = "Level XP: %d / %d; Total XP: %d" % [level_experience, next_level_experience, experience]
 	_render_tree()
 	_render_detail()
 	_render_stance()
 	var status := _status_message
 	if status.is_empty() and _action_pending:
-		status = "请求已发送，等待角色档案更新。"
+		status = "Request sent; waiting for the character profile to update."
 	if status.is_empty() and bool(_snapshot.get("locked", false)):
-		status = "契约期间天赋锁定，可查看当前加点。"
+		status = "Talents are locked during contracts. You can review your allocation."
 	_status_label.text = status
 	_status_label.visible = false
 	if not status.is_empty():
@@ -318,10 +320,10 @@ func _apply_presentation() -> void:
 func _render_tree() -> void:
 	var tree := _ranger_tree()
 	var available := bool(tree.get("available", false))
-	_tree_title.text = "%s · 三层追猎路线" % String(tree.get("name", "猎场学"))
+	_tree_title.text = "%s · Three-Tier Hunting Paths" % String(tree.get("name", "Hunting"))
 	var icons_pending := not _talent_icons.is_ready()
 	_tree_state_label.visible = not available or icons_pending
-	var reason := "" if available and not icons_pending else "图标待补充" if available else "当前不可投入：%s" % ("契约期间已锁定" if bool(_snapshot.get("locked", false)) else "等待档案解锁")
+	var reason := "" if available and not icons_pending else "Icon pending" if available else "Cannot allocate: %s" % ("Locked during contracts" if bool(_snapshot.get("locked", false)) else "Waiting for profile unlock")
 	_tree_state_label.text = reason
 	var nodes_by_tier := {1: [], 2: [], 3: []}
 	for node_value in _nodes_of(tree):
@@ -346,8 +348,8 @@ func _render_detail() -> void:
 	var node := _find_node(_selected_talent_id)
 	var locked := bool(_snapshot.get("locked", false))
 	if node.is_empty():
-		_detail_title.text = "选择一项天赋"
-		_detail_description.text = "从左侧追猎路线选择节点，查看完整说明。"
+		_detail_title.text = "Select a Talent"
+		_detail_description.text = "Select a node on the left to view its full description."
 		_detail_state.text = ""
 		_allocate_button.disabled = true
 		_refund_button.disabled = true
@@ -355,12 +357,12 @@ func _render_detail() -> void:
 		return
 	_detail_title.text = String(node.get("name", _selected_talent_id))
 	var tier := int(node.get("tier", 1))
-	_detail_description.text = String(node.get("description", "尚无说明。"))
+	_detail_description.text = String(node.get("description", "No description yet."))
 	var allocated := bool(node.get("allocated", false))
 	var can_allocate := bool(node.get("can_allocate", false))
 	var lock_reason := String(node.get("lock_reason", ""))
-	var tier_copy := "关键 · 第 %d 层" % tier if bool(node.get("keystone", false)) else "第 %d 层" % tier
-	_detail_state.text = "%s · %s" % [tier_copy, "已投入" if allocated else ("可投入" if can_allocate and not locked else (lock_reason if not lock_reason.is_empty() else "当前不可投入"))]
+	var tier_copy := "Keystone · Tier %d" % tier if bool(node.get("keystone", false)) else "Tier %d" % tier
+	_detail_state.text = "%s · %s" % [tier_copy, "Allocated" if allocated else ("Available" if can_allocate and not locked else (lock_reason if not lock_reason.is_empty() else "Unavailable"))]
 	_allocate_button.disabled = locked or _action_pending or allocated or not can_allocate
 	_refund_button.disabled = locked or _action_pending or not allocated
 	_reset_button.disabled = locked or _action_pending
@@ -378,7 +380,7 @@ func _render_stance() -> void:
 		if button == null:
 			continue
 		var stance := button.name.trim_prefix("Stance_")
-		button.text = "%s%s" % [_stance_name(stance), " · 当前" if stance == selected_stance else ""]
+		button.text = "%s%s" % [_stance_name(stance), " *" if stance == selected_stance else ""]
 		button.disabled = _action_pending or bool(_snapshot.get("locked", false)) or stance == selected_stance
 
 
@@ -442,7 +444,7 @@ func _ranger_tree() -> Dictionary:
 		for value in trees_value:
 			if value is Dictionary and String((value as Dictionary).get("id", "")) == "ranger":
 				return (value as Dictionary).duplicate(true)
-	return {"id": "ranger", "name": "猎场学", "available": false, "nodes": []}
+	return {"id": "ranger", "name": "Hunting", "available": false, "nodes": []}
 
 
 func _nodes_of(tree: Dictionary) -> Array:
@@ -482,7 +484,7 @@ func _stance_controls_available() -> bool:
 
 func _stance_name(stance: String) -> String:
 	match stance:
-		"near": return "近"
-		"mid": return "中"
-		"far": return "远"
+		"near": return "Near"
+		"mid": return "Mid"
+		"far": return "Far"
 		_: return stance

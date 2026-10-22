@@ -2,7 +2,7 @@ extends SceneTree
 
 const ResultScreenScript = preload("res://src/presentation/result_screen.gd")
 
-## The approved Chinese UI floor (approved baseline: 正文 18-22 显示像素).
+## The approved English UI floor (approved baseline: Text 18-22 display pixels).
 const FONT_FLOOR := 18
 const EDGE_EPSILON := 0.5
 const FULL_INSTANCE_ID := "drop_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -27,17 +27,17 @@ func _run() -> void:
 		"unlock": {
 			"proxy_unlocked": true,
 			"components": [
-				{"id": "near_enemy_horizon", "name": "近敌视界"},
-				{"id": "direct_gait", "name": "直趋步足"},
-				{"id": "single_key_execution", "name": "单键执行"},
-				{"id": "short_trace_memory", "name": "短痕记忆"},
+				{"id": "near_enemy_horizon", "name": "Near-Enemy Sight"},
+				{"id": "direct_gait", "name": "Direct-Approach Legs"},
+				{"id": "single_key_execution", "name": "Single-Key Executor"},
+				{"id": "short_trace_memory", "name": "Short-Trace Memory"},
 			],
 		},
-		"rewards": {"drop_label": "白装核心箱"},
+		"rewards": {"drop_label": "Common Core Chest"},
 	})
 	var text: String = screen.get_reward_text()
-	_expect(text.contains("代理舱首次解锁") and text.contains("近敌视界、直趋步足、单键执行、短痕记忆"), "result: first proxy unlock did not list the four human-readable cores", failures)
-	_expect(text.contains("前往代理舱，Auto 清房"), "result: first proxy unlock omitted the next step", failures)
+	_expect(text.contains("Proxy Bay Unlocked") and text.contains("Near-Enemy Sight, Direct-Approach Legs, Single-Key Executor, Short-Trace Memory"), "result: first proxy unlock did not list the four human-readable cores", failures)
+	_expect(text.contains("visit the Proxy Bay for Auto contracts"), "result: first proxy unlock omitted the next step", failures)
 	var core_rewards: GridContainer = screen.find_child("FirstKillCoreRewards", true, false)
 	_expect(core_rewards != null and core_rewards.visible and core_rewards.get_child_count() == 4,
 		"result: real first-unlock reward must render the four published core cards", failures)
@@ -45,16 +45,16 @@ func _run() -> void:
 		_expect(screen.find_child("CoreReward_" + core_id, true, false) != null,
 			"result: first-unlock core icon missing: " + core_id, failures)
 	var compact_summary := screen.find_child("RewardSummary", true, false) as Label
-	_expect(compact_summary != null and compact_summary.text.contains("代理核心 4 枚")
+	_expect(compact_summary != null and compact_summary.text.contains("Proxy Cores: 4")
 		and not compact_summary.text.contains("\n"),
 		"result: first-unlock summary stayed a long text wall", failures)
 	screen.present({"outcome": "victory", "unlock": {"proxy_unlocked": true,
-		"components": [{"id": "near_enemy_horizon", "name": "近敌视界"}]}})
+		"components": [{"id": "near_enemy_horizon", "name": "Near-Enemy Sight"}]}})
 	_expect(core_rewards.get_child_count() == 1,
 		"result: explicit partial reward was incorrectly padded to four granted cores", failures)
-	screen.present({"outcome": "victory", "rewards": {"law_tallies_delta": {"inscribe": 1, "rewrite": 0, "refine": 0}, "drop_label": "普通长弓"}})
+	screen.present({"outcome": "victory", "rewards": {"law_tallies_delta": {"inscribe": 1, "rewrite": 0, "refine": 0}, "drop_label": "Common Longbow"}})
 	text = screen.get_reward_text()
-	_expect(text.contains("添铸律筹：1") and text.contains("普通长弓") and not text.contains("骰") and not text.contains("代理舱首次解锁"), "result: canonical ordinary reward was not rendered", failures)
+	_expect(text.contains("Inscribe Law Tokens: 1") and text.contains("Common Longbow") and not text.contains("dice") and not text.contains("Proxy Bay Unlocked"), "result: canonical ordinary reward was not rendered", failures)
 	_expect(not core_rewards.visible and core_rewards.get_child_count() == 0,
 		"result: ordinary reward retained first-kill core cards", failures)
 
@@ -62,18 +62,18 @@ func _run() -> void:
 	screen.present(_proxy_drop_payload())
 	text = screen.get_reward_text()
 	var proxy_cards: Array[String] = screen.get_proxy_component_card_texts()
-	_expect(text.contains("代理组件已入库 · 尚未安装") and text.contains("当前代理构筑不变"),
+	_expect(text.contains("Proxy component stored · Not Installed") and text.contains("Current proxy build unchanged"),
 		"result: proxy component settlement summary lost its uninstalled semantics", failures)
-	_expect(proxy_cards.size() == 2 and proxy_cards[0].contains("标记棱镜 · 感知槽")
-		and proxy_cards[0].contains("协议：区分标记、精英、Boss，并保留 2 个候选")
-		and proxy_cards[1].contains("维距步足 · 行动槽")
-		and proxy_cards[1].contains("距离带跟随穿刺箭的实际射程")
-		and proxy_cards[0].contains("尚未安装，当前代理构筑不变"),
-		"result: proxy component cards lost Chinese name, slot, full protocol, or unchanged-build copy", failures)
+	_expect(proxy_cards.size() == 2 and proxy_cards[0].contains("Mark Prism · Perception Slot")
+		and proxy_cards[0].contains("Protocol: Distinguish marked targets, elites, and bosses; retain 2 candidates")
+		and proxy_cards[1].contains("Range-Keeping Legs · Action Slot")
+		and proxy_cards[1].contains("bands follow Piercing Arrow's actual range")
+		and proxy_cards[0].contains("Not installed; current proxy build unchanged"),
+		"result: proxy component cards lost English name, slot, full protocol, or unchanged-build copy", failures)
 	var proxy_protocol := screen.find_child("ProxyComponentProtocol", true, false) as Label
 	var proxy_detail := screen.find_child("ProxyComponentDetailButton", true, false) as Button
 	_expect(proxy_protocol != null and not proxy_protocol.is_visible_in_tree()
-		and proxy_detail != null and proxy_detail.text == "协议详情",
+		and proxy_detail != null and proxy_detail.text == "Protocol Details",
 		"result: low-frequency proxy protocols were expanded into the main decision view", failures)
 	_expect(screen.get_equipment_card_count() == 1
 		and screen.find_child("ProxyComponentDrops", true, false) != screen.find_child("EquipmentCards", true, false)
@@ -81,7 +81,7 @@ func _run() -> void:
 		"result: proxy component drops were mixed into equipment drops or actions", failures)
 	screen.present({"outcome": "victory", "rewards": {}})
 	_expect(screen.get_proxy_component_card_texts().is_empty()
-		and not screen.get_reward_text().contains("代理组件已入库"),
+		and not screen.get_reward_text().contains("Proxy component stored"),
 		"result: repeated presentation retained stale proxy component drops", failures)
 
 	# --- equipment drops: multiple pieces ---
@@ -107,24 +107,24 @@ func _run() -> void:
 		"outcome": "victory",
 		"first_reward_tags": ["hunter_mark_skill", "equipment_compare_unlock", "breeding_split_item"],
 		"rewards": {
-			"drop_label": "旧掉落",
+			"drop_label": "Old Drop",
 			"equipment_drops": drops,
 			"equipment_drop_count": 2,
 		},
 	}, {}, {"inventory": {"equipment": drops}, "active_build": {"equipped_item_ids": {}}})
 	text = screen.get_reward_text()
 	var cards: Array[String] = _all_equipment_audits(screen)
-	_expect(text.contains("本次获得装备 2 件"), "result: equipment header missing or wrong count", failures)
-	_expect(text.contains("首通奖励") and text.contains("猎人印记") and text.contains("装备比较已开放")
-		and text.contains("孳生分裂装备已入库存"),
+	_expect(text.contains("Equipment Gained: 2 Items"), "result: equipment header missing or wrong count", failures)
+	_expect(text.contains("First-Clear Rewards") and text.contains("Hunter's Mark") and text.contains("Equipment comparison unlocked")
+		and text.contains("Breeding Split equipment added to storage"),
 		"result: first-clear acquisition facts disappeared when equipment also dropped", failures)
 	_expect(cards.size() == 2, "result: expected exactly 2 equipment cards (bad entries skipped), got %d" % cards.size(), failures)
 	if cards.size() == 2:
-		_expect(cards[0].contains("主手") and cards[0].contains("oak_short_bow") and cards[0].contains("piercing_probability T2") and cards[0].contains("drop_01234567"), "result: first equipment card missing slot/base/affix/short id: " + cards[0], failures)
-		_expect(cards[1].contains("手套") and cards[1].contains("damage T1") and cards[1].contains("critical T3"), "result: second equipment card missing multi-affix detail: " + cards[1], failures)
+		_expect(cards[0].contains("Main Hand") and cards[0].contains("oak_short_bow") and cards[0].contains("piercing_probability T2") and cards[0].contains("drop_01234567"), "result: first equipment card missing slot/base/affix/short id: " + cards[0], failures)
+		_expect(cards[1].contains("Gloves") and cards[1].contains("damage T1") and cards[1].contains("critical T3"), "result: second equipment card missing multi-affix detail: " + cards[1], failures)
 	var review_button := screen.find_child("ReviewDrop_drop_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", true, false) as Button
 	var page_two := screen.find_child("EquipmentNextPage", true, false) as Button
-	_expect(review_button != null and review_button.text == "比较（尚未装备）", "result: equipment drop has no direct loadout comparison action", failures)
+	_expect(review_button != null and review_button.text == "Comparison (Not Equipped)", "result: equipment drop has no direct loadout comparison action", failures)
 	if review_button != null:
 		var long_summary := review_button.get_parent().find_child("EquipmentCardText", false, false)
 		_expect(long_summary != null and review_button.get_index() < long_summary.get_index(),
@@ -134,7 +134,7 @@ func _run() -> void:
 		"result: loadout review action emitted the wrong drop identity or slot", failures)
 	var face: Array[String] = screen.get_equipment_card_summaries()
 	var first_detail := _open_equipment_detail_text(screen)
-	_expect(first_detail.contains("未识别词条 II 阶") and not first_detail.contains("piercing_probability"),
+	_expect(first_detail.contains("Unknown Affix Tier II") and not first_detail.contains("piercing_probability"),
 		"result: unknown affix should be readable without raw IDs", failures)
 	var next_face: Array[String] = []
 	if page_two != null and not page_two.disabled:
@@ -142,11 +142,11 @@ func _run() -> void:
 		next_face = screen.get_equipment_card_summaries()
 	_expect(face.size() == 1 and next_face.size() == 1, "result: expected one card per page", failures)
 	if face.size() == 1 and next_face.size() == 1:
-		_expect(face[0].contains("已入库，尚未装备") and face[0].contains("未识别词条 II 阶"),
+		_expect(face[0].contains("Stored, Not Equipped") and face[0].contains("Unknown Affix Tier II"),
 			"result: missing inventory state or readable affix: " + face[0], failures)
-		_expect(face[0].contains("未知装备") and not face[0].contains("oak_short_bow") and not face[0].contains("piercing_probability"),
+		_expect(face[0].contains("Unknown Equipment") and not face[0].contains("oak_short_bow") and not face[0].contains("piercing_probability"),
 			"result: raw item IDs leaked onto card face", failures)
-		_expect(not face[0].contains("drop_0123") and not next_face[0].contains("drop_fedc") and not face[0].contains("战力"),
+		_expect(not face[0].contains("drop_0123") and not next_face[0].contains("drop_fedc") and not face[0].contains("Power"),
 			"result: internal identity or power recommendation leaked onto card face", failures)
 
 	# --- repeated present must not accumulate cards ---
@@ -164,16 +164,16 @@ func _run() -> void:
 	text = screen.get_reward_text()
 	_expect(screen.get_equipment_card_count() == 0, "result: count=0 still rendered equipment cards", failures)
 	_expect(screen.find_children("ReviewDrop_*", "Button", true, false).is_empty(), "result: a legacy-only reward exposed a phantom equipment review action", failures)
-	_expect(not text.contains("本次获得装备"), "result: count=0 claimed equipment gains", failures)
+	_expect(not text.contains("Equipment Gained"), "result: count=0 claimed equipment gains", failures)
 	_expect(text.contains("old_drop"), "result: count=0 fallback lost legacy drop text: " + text, failures)
 
 	# --- missing count field still shows drops; missing drops keeps legacy ---
 	screen.present({"outcome": "victory", "rewards": {"equipment_drops": [drops[0]]}})
-	_expect(screen.get_equipment_card_count() == 1 and screen.get_reward_text().contains("本次获得装备 1 件"), "result: drops without explicit count not displayed", failures)
+	_expect(screen.get_equipment_card_count() == 1 and screen.get_reward_text().contains("Equipment Gained: 1 Items"), "result: drops without explicit count not displayed", failures)
 	screen.present({"outcome": "victory", "first_reward_tags": ["dash_skill"], "rewards": {"equipment_drops": [drops[0]], "equipment_drop_count": "1"}})
-	_expect(screen.get_equipment_card_count() == 1 and screen.get_reward_text().contains("突袭"), "result: numeric string count or first reward was not rendered", failures)
+	_expect(screen.get_equipment_card_count() == 1 and screen.get_reward_text().contains("Dash"), "result: numeric string count or first reward was not rendered", failures)
 	screen.present({"outcome": "victory", "first_reward_tags": ["early_campaign_complete"], "rewards": {}})
-	_expect(screen.get_reward_text().contains("前期旅程完成"), "result: Auto certification did not present the early-game graduation reward", failures)
+	_expect(screen.get_reward_text().contains("Early journey complete"), "result: Auto certification did not present the early-game graduation reward", failures)
 	_expect(not (screen.get("_ending_button") as Button).visible, "result: ordinary victory exposed the ending action", failures)
 	screen.present({"outcome": "final_victory", "first_reward_tags": ["early_campaign_complete"], "rewards": {}})
 	_expect((screen.get("_ending_button") as Button).visible, "result: final victory did not expose the ending action", failures)
@@ -186,23 +186,23 @@ func _run() -> void:
 		"report": "DEFEAT — the ranger fell after 12.0s. Refit at base.",
 		"primary_bottleneck": {
 			"id": "growth_convergent",
-			"title": "增长收敛，穿刺链未能成长",
-			"action": "去定向支线获取增长概率词条，让穿刺链持续成长后再挑战",
+			"title": "Growth converged; the piercing chain could not grow",
+			"action": "Find growth-chance affixes in targeted side contracts, then return with a growing piercing chain",
 			"destination": "mainline_05_growth_gate",
 		},
 		"first_reward_tags": ["hunter_mark_skill"],
 		"rewards": {"equipment_drops": defeat_drops, "equipment_drop_count": 1},
 	})
 	var diagnosis: String = screen.get_diagnosis_text()
-	_expect(diagnosis.contains("失败主因") and diagnosis.contains("增长收敛")
-		and diagnosis.contains("行动建议") and diagnosis.contains("获取增长概率词条"),
+	_expect(diagnosis.contains("Main Failure Cause") and diagnosis.contains("Growth converged")
+		and diagnosis.contains("Suggested Action") and diagnosis.contains("Find growth-chance affixes"),
 		"result: defeat first screen did not show the single primary cause and action", failures)
 	var report_text: String = screen.get_report_text()
-	_expect(report_text.contains("战报") and report_text.contains("DEFEAT"),
+	_expect(report_text.contains("Battle Report") and report_text.contains("DEFEAT"),
 		"result: defeat first screen did not show the short report", failures)
 	_expect(screen.get_equipment_card_count() == 1
-		and screen.get_reward_text().contains("本次获得装备 1 件")
-		and screen.get_reward_text().contains("猎人印记"),
+		and screen.get_reward_text().contains("Equipment Gained: 1 Items")
+		and screen.get_reward_text().contains("Hunter's Mark"),
 		"result: defeat diagnosis hid rewards or equipment cards", failures)
 
 	# --- defeat without a bottleneck renders no phantom diagnosis; report still shows ---
@@ -216,8 +216,8 @@ func _run() -> void:
 	_expect(screen.get_diagnosis_text().is_empty() and screen.get_report_text().is_empty(),
 		"result: victory surfaced the defeat diagnosis", failures)
 
-	screen.present({"outcome": "victory", "rewards": {"drop_label": "白装核心箱"}})
-	_expect(screen.get_equipment_card_count() == 0 and screen.get_reward_text().contains("白装核心箱"), "result: legacy-only result leaked equipment state", failures)
+	screen.present({"outcome": "victory", "rewards": {"drop_label": "Common Core Chest"}})
+	_expect(screen.get_equipment_card_count() == 0 and screen.get_reward_text().contains("Common Core Chest"), "result: legacy-only result leaked equipment state", failures)
 
 	# --- a settlement that never reported a reading must not draw a zero for it,
 	#     while a reading that really is 0 is drawn as the number it is ---
@@ -230,7 +230,7 @@ func _run() -> void:
 	_expect(screen.find_child("MetricTile_ticks", true, false) == null,
 		"result: internal tick count escaped the test console", failures)
 	var sparse_detail: String = screen.get_detail_text()
-	_expect(sparse_detail.contains("运行读数：未记录") and not sparse_detail.contains("0.00 秒") and not sparse_detail.contains("权威 Tick：0"),
+	_expect(sparse_detail.contains("Runtime Readings: Not Recorded") and not sparse_detail.contains("0.00 s") and not sparse_detail.contains("Authoritative Tick: 0"),
 		"result: the detail block fabricated readings the settlement never made: %s" % sparse_detail, failures)
 	screen.present({
 		"outcome": "victory",
@@ -254,13 +254,13 @@ func _run() -> void:
 		zero_elapsed.text if zero_elapsed != null else "<missing>",
 		zero_rooms.text if zero_rooms != null else "<missing>",
 	]
-	_expect(zero_kills != null and zero_kills.text == "0" and zero_elapsed != null and zero_elapsed.text == "0.00 秒"
+	_expect(zero_kills != null and zero_kills.text == "0" and zero_elapsed != null and zero_elapsed.text == "0.00 s"
 		and zero_rooms != null and zero_rooms.text == "0 / 1",
 		"result: reported zeros were not drawn as the readings they are: %s" % str(drawn), failures)
-	_expect(screen.get_detail_text().contains("权威 Tick：0") and screen.get_detail_text().contains("击杀：0"),
+	_expect(screen.get_detail_text().contains("Authoritative Tick: 0") and screen.get_detail_text().contains("Kills: 0"),
 		"result: the detail table dropped a reported zero: %s" % screen.get_detail_text(), failures)
 
-	# --- real card structure: one card per drop, the published Chinese name and
+	# --- real card structure: one card per drop, the published English name and
 	#     affixes on the face, the complete field line still readable for audit ---
 	screen.present({
 		"outcome": "victory",
@@ -280,10 +280,10 @@ func _run() -> void:
 	var card_texts: Array[String] = screen.get_equipment_card_texts()
 	_expect(card_texts.size() == 1 and card_texts[0].contains(FULL_INSTANCE_ID),
 		"result: get_equipment_card_texts shortened the authoritative instance id: %s" % str(card_texts), failures)
-	_expect(card_texts.size() == 1 and card_texts[0].contains("ashwood_longbow") and card_texts[0].contains("piercing_probability T2") and card_texts[0].contains("主手"),
+	_expect(card_texts.size() == 1 and card_texts[0].contains("ashwood_longbow") and card_texts[0].contains("piercing_probability T2") and card_texts[0].contains("Main Hand"),
 		"result: the card lost a slot, base or affix name", failures)
 	var published_face: Array[String] = screen.get_equipment_card_summaries()
-	_expect(published_face.size() == 1 and published_face[0].contains("白蜡长弓") and published_face[0].contains("主手")
+	_expect(published_face.size() == 1 and published_face[0].contains("Ash Longbow") and published_face[0].contains("Main Hand")
 		and not published_face[0].contains("ashwood_longbow") and not published_face[0].contains(FULL_INSTANCE_ID),
 		"result: the card face did not lead with the published item name and slot: %s" % str(published_face), failures)
 	# The affix family the content table publishes is named; one it does not cover
@@ -302,11 +302,11 @@ func _run() -> void:
 	})
 	await _frames(2)
 	var named_affix_face: Array[String] = [_open_equipment_detail_text(screen)]
-	_expect(named_affix_face.size() == 1 and named_affix_face[0].contains("穿刺箭续行概率 II 阶")
-		and named_affix_face[0].contains("+7 个百分点") and named_affix_face[0].contains("底材属性")
-		and named_affix_face[0].contains("已收入装备库存")
+	_expect(named_affix_face.size() == 1 and named_affix_face[0].contains("Piercing Arrow Continuation Chance Tier II")
+		and named_affix_face[0].contains("+7 percentage points") and named_affix_face[0].contains("Base Stats")
+		and named_affix_face[0].contains("added to equipment storage")
 		and not named_affix_face[0].contains("piercing_continuation"),
-		"result: a published affix family was not shown under its Chinese name: %s" % str(named_affix_face), failures)
+		"result: a published affix family was not shown under its English name: %s" % str(named_affix_face), failures)
 	# Full semantic payloads expose rune/law copy and optional current-to-equipped values.
 	screen.present({
 		"outcome": "victory",
@@ -326,8 +326,8 @@ func _run() -> void:
 	})
 	await _frames(2)
 	var semantic_face: Array[String] = [_open_equipment_detail_text(screen)]
-	_expect(semantic_face.size() == 1 and semantic_face[0].contains("孳生分裂") and semantic_face[0].contains("群猎印记")
-		and semantic_face[0].contains("当前值 → 装备后值") and semantic_face[0].contains("转向时间（数值越低越好）"),
+	_expect(semantic_face.size() == 1 and semantic_face[0].contains("Breeding Split") and semantic_face[0].contains("Pack Hunt Mark")
+		and semantic_face[0].contains("Current -> Equipped") and semantic_face[0].contains("Turn Time (Lower Is Better)"),
 		"result: rune/law semantics or comparison copy missing: %s" % str(semantic_face), failures)
 	screen.present({
 		"outcome": "victory",
@@ -392,14 +392,14 @@ func _run() -> void:
 	_expect(detail.contains(FULL_INSTANCE_ID), "result: the detail block dropped the untruncated instance id", failures)
 	_expect(detail.contains("future_authority_field") and detail.contains("future_reward_field"),
 		"result: metadata outside the known table was silently dropped: %s" % detail, failures)
-	_expect(detail.contains("扇射游猎者") and detail.contains("房间 2"),
-		"result: the per-room failure source was not presented as Chinese copy", failures)
+	_expect(detail.contains("Fan-Shot Hunter") and detail.contains("Room 2"),
+		"result: the per-room failure source was not presented as English copy", failures)
 	var bottleneck_tooltip := (screen.find_child("EvidenceBody_bottleneck", true, false) as Label).tooltip_text
 	var visible_failure_copy := screen.get_run_facts_text() + "\n" + detail + "\n" + bottleneck_tooltip
-	_expect(visible_failure_copy.contains("扇射游猎者") and not visible_failure_copy.contains("enemy/391/fan_ranged")
+	_expect(visible_failure_copy.contains("Fan-Shot Hunter") and not visible_failure_copy.contains("enemy/391/fan_ranged")
 		and not visible_failure_copy.contains("fan_ranged") and not visible_failure_copy.contains("/391/"),
 		"result: visible failure copy leaked a raw source id: %s" % visible_failure_copy, failures)
-	_expect(screen.get_run_facts_text().contains("threshold_colossus") and screen.get_run_facts_text().contains("终止原因：扇射游猎者"),
+	_expect(screen.get_run_facts_text().contains("threshold_colossus") and screen.get_run_facts_text().contains("End Reason: Fan-Shot Hunter"),
 		"result: the visible facts line lost the contract or the named loss: %s" % screen.get_run_facts_text(), failures)
 
 	# --- the settlement payload is readable back for evidence capture ---
@@ -409,7 +409,7 @@ func _run() -> void:
 		"result: the presented payload did not retain the raw failure reason", failures)
 
 	# --- screen-bounded workspace: pinned header/footer, one scrolling middle,
-	#     nothing past the sides, and no Chinese copy under 18px ---
+	#     nothing past the sides, and no English copy under 18px ---
 	for logical_size in [Vector2i(1024, 576), Vector2i(1280, 720), Vector2i(1600, 900)]:
 		var host := SubViewport.new()
 		host.size = logical_size
@@ -509,10 +509,10 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 		var pager_rect := pager.get_global_rect()
 		_expect((screen.find_child("ResultMetrics", true, false) as GridContainer).columns == 3,
 			"result: settlement metrics must retain three columns", failures)
-		_expect(summary.get_line_count() <= 2 and summary.text.contains("新装备 2 件"),
+		_expect(summary.get_line_count() <= 2 and summary.text.contains("New Equipment: 2 Items"),
 			"result: first-clear summary remained a reading wall at %s" % logical_size, failures)
 		_expect(reward_detail_button != null and reward_detail_text != null and not reward_detail_text.visible
-			and reward_detail_button.text == "奖励明细",
+			and reward_detail_button.text == "Reward Details",
 			"result: full reward copy lacked a clear collapsed entry at %s" % logical_size, failures)
 		_expect(pager.is_visible_in_tree() and not loot.is_ancestor_of(pager)
 			and panel.get_global_rect().encloses(pager_rect)
@@ -545,7 +545,7 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 			reward_detail_button.pressed.emit()
 			await _frames(4)
 		_expect(reward_detail_text != null and reward_detail_text.visible
-			and reward_detail_text.text.contains("首通奖励")
+			and reward_detail_text.text.contains("First-Clear Rewards")
 			and reward_detail_text.get_theme_font_size("font_size") >= FONT_FLOOR,
 			"result: reward detail entry did not reveal authoritative copy at %s" % logical_size, failures)
 		if reward_detail_button != null and reward_detail_text != null:
@@ -559,13 +559,13 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 			"result: returning from item review did not restore that item's page", failures)
 		# Missing profile data must not be guessed from the historical receipt.
 		screen.present(receipt)
-		_expect(screen.get_equipment_card_summaries()[0].contains("库存状态未读取")
-			and not screen.get_equipment_card_summaries()[0].contains("当前构筑不变"),
+		_expect(screen.get_equipment_card_summaries()[0].contains("Inventory state not read")
+			and not screen.get_equipment_card_summaries()[0].contains("current build unchanged"),
 			"result: unavailable current state was fabricated from reward facts", failures)
 		screen.present(receipt, {}, {"inventory": {"equipment": []}, "active_build": {"equipped_item_ids": {}}})
 		var missing := screen.find_children("ReviewDrop_*", "Button", true, false)[0] as Button
-		_expect(missing.disabled and missing.text == "已不在行囊中"
-			and screen.get_equipment_card_summaries()[0].contains("获得记录保留")
+		_expect(missing.disabled and missing.text == "No Longer in Backpack"
+			and screen.get_equipment_card_summaries()[0].contains("acquisition record retained")
 			and screen.get_presented_result() == receipt,
 			"result: no-longer-owned reward lost its receipt or exposed an invalid action", failures)
 		root.remove_child(host)
@@ -641,8 +641,8 @@ func _proxy_drop_payload() -> Dictionary:
 	return {
 		"outcome": "victory",
 		"proxy_component_drops": [
-			{"id": "marking_prism", "name": "标记棱镜", "slot": "perception", "rarity": "white", "type": "proxy_core", "protocol": "区分标记、精英、Boss，并保留 2 个候选", "source_contract": "branch_marking"},
-			{"id": "distance_keeping_gait", "name": "维距步足", "slot": "movement", "rarity": "white", "type": "proxy_core", "protocol": "按玩家预设的近、中、远距离带持续调整；距离带跟随穿刺箭的实际射程，并会避免在边界反复走动", "source_contract": "branch_distance"},
+			{"id": "marking_prism", "name": "Mark Prism", "slot": "perception", "rarity": "white", "type": "proxy_core", "protocol": "Distinguish marked targets, elites, and bosses; retain 2 candidates", "source_contract": "branch_marking"},
+			{"id": "distance_keeping_gait", "name": "Range-Keeping Legs", "slot": "movement", "rarity": "white", "type": "proxy_core", "protocol": "Continuously maintain the player's near, medium, or far range band; bands follow Piercing Arrow's actual range and avoid oscillation at their edges", "source_contract": "branch_distance"},
 		],
 		"rewards": {
 			"equipment_drops": [{"instance_id": "equipment_alone", "base_item_id": "ashwood_longbow", "slot": "main_hand", "affixes": []}],

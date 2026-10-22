@@ -1,7 +1,7 @@
-# 实机样场重制 v01｜生成提示词
+# Runtime Sample-Scene Rework v01 - Generation Prompts
 
-使用内置 imagegen；参考 v0.9 概念册的轮廓和材质，独立生成，不复制提取游戏素材。
-图层分别进入实际 Godot Sprite2D；生成源图不是实机截图。原生尺寸由已获授权的裁切、透明清理、最近邻收敛及限色流程确定。
+Built-in imagegen independently generates silhouettes/materials referencing the v0.9 concept book, not copied or extracted game assets.
+Layers enter actual Godot Sprite2D nodes separately; generated originals are not runtime screenshots. Authorized cropping, transparency cleanup, nearest-neighbor reduction, and palette limiting establish native sizes.
 
 ## 1. ground
 
@@ -27,4 +27,3 @@ Reference images: the wanderer RANGER identity only, especially small four-direc
 
 Use case: stylized-concept. Production pixel-art game assets for a 2D fixed high-oblique camera, post-technological winter wasteland where magic is real. Match the uploaded accepted concept in SHAPES and MATERIALS, not its rendered fine noise. Deliberate coarse square pixel clusters, flat 2-3 tone planes, confident stepped edges, top-left light. NO painterly shading, gradients, bloom, micro-dithering, antialiasing, random runes, labels, borders or watermark. This is actual independently layered runtime art, NOT a mockup screenshot.
 Reference image: threshold colossus ONLY. Produce six isolated animation-rig PARTS on genuine transparent alpha in exactly2columns3rows, equalcells/gutters. TOP ROW LEFT phase1 BODY ONLY; TOP ROW RIGHT phase2 BODY ONLY; MIDDLE LEFT massive detached LEFT FIST with short forearm; MIDDLE RIGHT RIGHT FIST with short forearm; BOTTOM LEFT sealed slender purple core; BOTTOM RIGHT awakened split slender purple core. Body intended128x128native, fists48x64native, cores32x64native. Body MUST be heavy and broad, a gate-like old ceramic machine shell with squared wide shoulders and broken crown, wide low base and thick loadbearing sidefaces, dark ironbands and weathered timber repair supports; chest center a tall EMPTY transparent cavity to receive separate purple core. Sameidentity bothphases; phase2 shoulderplates displaced outward with visible physicalbreaks, not recoloring identicalbody. Body includes NO fists and NO purple core, hands neverattached. Thick chunky square knuckles (4 large segments), darkvisible wrist joint. Core one continuous angular violet energy shard with 2 or3solidtones and no bloom. Keep anatomy mechanical gate not humanoidface; no eyesmouthornaments. Large ceramic planes with sparse meaningful fractures, not fine scattered scratches. Body silhouette must carry significantly more lateralweight than thin three standing columns. Palette8-12flatcolors/part, bonewhitecream+slate+woodrust; purple only separatecores. Shadowless isolatedassets, no groundplatforms, no UI/labels/gridlines. If transparentalpha impossible pure#00FF00key background, never checkerboard.
-

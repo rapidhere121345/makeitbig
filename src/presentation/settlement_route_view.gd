@@ -62,7 +62,7 @@ const ORIENTATION_HORIZONTAL := "horizontal"
 const ORIENTATION_VERTICAL := "vertical"
 
 ## The only copy the view owns. Every other string on screen is main's text.
-const EMPTY_TEXT := "本次结算未记录房间路线。"
+const EMPTY_TEXT := "No room route was recorded for this result."
 
 const TITLE_FONT_SIZE: int = ShellThemeScript.BODY_FONT_SIZE
 const SUBTITLE_FONT_SIZE: int = ShellThemeScript.MIN_FONT_SIZE

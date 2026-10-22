@@ -1,67 +1,67 @@
-# 空间架构实现审计 · 2026-10-19
+# Spatial Architecture Implementation Audit - 2026-10-19
 
-对照 [TARGET_ARCHITECTURE.md](TARGET_ARCHITECTURE.md) 的只读实现审计。审计范围:`src/runtime/spatial`、`src/runtime/geometry`、`src/runtime/world`、`src/presentation/occlusion`、`src/presentation`、`content/rooms`、`tools/world_manifest`、`tests/`。全部结论来自静态阅读与 grep 取证,未运行 Godot。背景:真实 GPU 窗口试玩中人物、背景、实体的碰撞与遮挡表现较差,需定位 redesign 的实现落差。
+Read-only audit against the former TARGET_ARCHITECTURE.md; current architecture reference: [ARCHITECTURE.md](ARCHITECTURE.md). Scope: `src/runtime/spatial`, `src/runtime/geometry`, `src/runtime/world`, `src/presentation/occlusion`, `src/presentation`, `content/rooms`, `tools/world_manifest`, `tests/`. All findings from static reading/search, no Godot execution. Background: poor character/background/entity collision and occlusion in hardware-GPU playtests; identify redesign gaps.
 
-## 1. 实现完整度矩阵
+## 1. Implementation Matrix
 
-| # | 设计承诺 | 状态 | 证据 |
+| # | Promise | Status | Evidence |
 |---|---|---|---|
-| 1 | 静态/动态索引分离,静态索引不可变、按通道索引 | 已实现 | `static_spatial_index.gd:4-10`(无 mutation API)、`:57-67`(按通道分桶);`dynamic_spatial_index.gd:4-12` |
-| 2 | 七个语义查询通道,无泛型 `is_blocked` | 部分实现(通道齐全,消费不齐) | 通道定义 `spatial_channels.gd:11-27`;`is_blocked` 全库无调用。被消费:movement(`movement_resolver.gd:247-275`)、projectile/attack+hurtbox(`room_spatial_port.gd:326-347` → `continuous_hit_resolver.gd:80-97`)。未消费:vision(`vision_resolver.gd` 生产零调用)、occlusion 空间通道(`occlusion_resolver.gd` 生产零调用)、navigation(只有通道常量,无查询 API;`spatial_manifest.gd:151-160` 的 `navigation_bindings()`/`vision_occluders()`/`projectile_blockers()` 全库无调用方) |
-| 3 | ContinuousHitResolver 统一 static+overlay+dynamic、toi 排序、不透明物同 toi 优先、不施加伤害 | 已实现 | `continuous_hit_resolver.gd:59-140`;固定相位接入 `room_spatial_port.gd:305-348`;测试 `test_spatial_room_port.gd:33-42` |
-| 4 | MovementResolver 唯一位移提交权威;solid/soft/ghost;软分离经静态复验 | 已实现 | `movement_resolver.gd:63-183`(8 次迭代 sweep-and-slide)、`:186-229`(软分离+复验)、`:278-324`(边界重投影);生产注册全部 soft:`main.gd:1063`(玩家)、`main.gd:1246-1250`(敌人)、`encounter_director.gd:780,864` |
-| 5 | SpatialOverlay 运行时门/可破坏物,tick 边界提交 | 仅基础设施,生产未接线 | 机制完整(`spatial_overlay.gd:28-39,104-144`;`room_spatial_port.gd:265-271`),但无任何生产代码调用 `add_surface`/`suppress_static`;所有房间 overlay 为空实例(`scene_runtime.gd:172`、`main.gd:1108`);content/ 无 overlay 数据。当前没有一扇门/可破坏物真正生效 |
-| 6 | WorldAsset 烘焙→双 digest→挂载校验 | 已实现(城镇);战斗房间数据为最小集 | 烘焙 `bake_core.gd:17-64`;挂载校验 `world_asset.gd:63-84`。城镇 `hearthside.spatial.json` 90 条 binding(35 条 occlusion:true、162 块静态几何);**三个战斗房间均只有 1 条 movement-boundary binding(occlusion:false),且无 static_geometry** |
-| 7 | PresentationFrame 唯一适配器;拒绝无 art_box、拒绝碰撞几何当视觉源 | 已实现 | `presentation_frame.gd:44-46,66-76`;`room_presentation_binding.gd:43-46`;`room_presentation_projector.gd:87-130` |
-| 8 | OcclusionPlan 排序稳定;controller 只插值;不回写模拟 | 已实现 | `occlusion_plan.gd:72-80,106-144`(注意:纯矩形相交,无逐像素 mask);`occlusion_controller.gd:13-16,81-87,93-108` |
-| 9 | 缺失必需美术 = load error,无占位兜底 | 已实现 | `world_presenter.gd:231-236`;`town_presenter.gd:278-282`;`main.gd:1362-1382`;`town_scene_root.gd:20-44` |
-| 10 | occlusion 通道仅表现层,不进 gameplay | 已实现且无滥用 | presentation 侧不消费空间 occlusion 通道,走 art-box 计划。副作用:静态索引 occlusion 通道与 `occlusion_rank` 运行时是死数据(`scene_runtime.gd:941-949,963-971` 硬编码默认值) |
-| 11 | 无泛型事件总线、无 SceneTree 查找、无字符串回调 ABI | 大体已实现 | `combat_simulation.gd:1-59` 已改为 `CombatPhasePort` 类型端口;simulation 层无 `get_node/SceneTree` |
+|1| Separate immutable static and dynamic indexes, channel-indexed | Implemented | `static_spatial_index.gd:4-10` no mutation API, `:57-67` channel buckets; `dynamic_spatial_index.gd:4-12` |
+|2| Seven semantic query channels, no generic is_blocked | Partial, all channels but incomplete consumers | `spatial_channels.gd:11-27`; no is_blocked callers. Movement: `movement_resolver.gd:247-275`; projectile/attack+hurtbox: `room_spatial_port.gd:326-347`→`continuous_hit_resolver.gd:80-97`. No production vision_resolver or occlusion_resolver calls. Navigation has constants but no query API. `spatial_manifest.gd:151-160` navigation_bindings()/vision_occluders()/projectile_blockers() have no callers |
+|3| ContinuousHitResolver unifies static/overlay/dynamic, toi order, opaque priority on ties, no damage application | Implemented | `continuous_hit_resolver.gd:59-140`; fixed phase `room_spatial_port.gd:305-348`; `test_spatial_room_port.gd:33-42` |
+|4| MovementResolver sole displacement authority, solid/soft/ghost, static recheck after soft separation | Implemented | `movement_resolver.gd:63-183` eight-iteration sweep-and-slide, `:186-229` soft separation/recheck, `:278-324` boundary reprojection. All production actors soft: `main.gd:1063`, `:1246-1250`, `encounter_director.gd:780,864` |
+|5| SpatialOverlay runtime doors/destructibles, tick-boundary commits | Infrastructure only, unwired | Complete mechanism `spatial_overlay.gd:28-39,104-144`, `room_spatial_port.gd:265-271`; no production add_surface/suppress_static. Empty overlays `scene_runtime.gd:172`, `main.gd:1108`, no content data; no functioning door/destructible |
+|6| WorldAsset bake, dual digest, mount validation | Implemented for town; combat minimal | `bake_core.gd:17-64`, `world_asset.gd:63-84`. Hearthside90 bindings,35 occlusion:true,162 static geometries. **Each of three combat rooms only one movement-boundary binding, occlusion:false, no static_geometry** |
+|7| PresentationFrame sole adapter, requires art_box, rejects collision as visual source | Implemented | `presentation_frame.gd:44-46,66-76`; `room_presentation_binding.gd:43-46`; `room_presentation_projector.gd:87-130` |
+|8| Stable OcclusionPlan sort, interpolation-only controller, no simulation writeback | Implemented | `occlusion_plan.gd:72-80,106-144` rectangle-only, not pixel masks; `occlusion_controller.gd:13-16,81-87,93-108` |
+|9| Missing required art is load error, no placeholder | Implemented | `world_presenter.gd:231-236`; `town_presenter.gd:278-282`; `main.gd:1362-1382`; `town_scene_root.gd:20-44` |
+|10| Occlusion presentation-only, no gameplay | Implemented without misuse | Presentation uses art-box plan, not spatial occlusion channel. Static-index occlusion channel/occlusion_rank are consequently dead runtime data; `scene_runtime.gd:941-949,963-971` hardcodes defaults |
+|11| No generic event bus, SceneTree search, string-callback ABI | Mostly implemented | `combat_simulation.gd:1-59` typed CombatPhasePort; simulation has no get_node/SceneTree |
 
-## 2. 场景路径迁移状态
+## 2. Scene Migration
 
-结论:两条路径都已迁移到新架构,无"整条旧路径"残留;但两条路径遮挡能力不对等,且战斗房间空间数据层是空壳。
+Both paths migrated, no whole legacy path remains. Occlusion capability differs, however, and combat spatial content is a shell.
 
-**城镇路径(完整)**:挂载(`town_controller.gd:19-58` → `scene_runtime.mount()`)、移动(162 块静态几何入索引,`scene_runtime.gd:953-971`)、遮挡全链路接通(35 个 binding → `scene_runtime.gd:357-393` → `room_presentation_projector.gd:87-130` → `town_presenter.gd:198-231` 施加 alpha),端到端测试 `test_presentation_production_assembly.gd:156-205`。y-sort 语义正确(`world_presenter.gd:42-46,93-100`)。
+**Town, complete:** `town_controller.gd:19-58`→scene_runtime.mount();162 geometries indexed `scene_runtime.gd:953-971`;35 bindings→`scene_runtime.gd:357-393`→`room_presentation_projector.gd:87-130`→`town_presenter.gd:198-231` alpha. End-to-end `test_presentation_production_assembly.gd:156-205`. Correct y-sort `world_presenter.gd:42-46,93-100`.
 
-**战斗房间路径(架构已迁移,数据与表现衔接有缺口)**:挂载与移动/命中同城镇管线;遮挡 presentation 管线接通(`combat_presentation_controller.gd:336-398` → `arena_actor_presenter.gd:313-331`),但:
+**Combat, migrated architecture but data/presentation gaps:** same mounting/movement/hit pipeline; presentation wired `combat_presentation_controller.gd:336-398`→`arena_actor_presenter.gd:313-331`, but:
 
-- 战斗 manifest 无 occlusion binding → `scene_runtime.gd:363-364` 提前 return,静态绑定永远为空;
-- 废墟/塔来自美术布局 JSON(`arena_world_view.gd:28` 的 `layout.json`,12 个 structures + tower_feet),**只被表现层读取,空间索引/manifest 完全不知道它们存在**;
-- 另有一套英雄专属局部开窗(cutaway)系统(`arena_world_view.gd:785-844,875-881`),只服务英雄可读性,与 OcclusionPlan 并行。
+- No manifest occlusion bindings, so `scene_runtime.gd:363-364` returns early; static bindings always empty.
+- Ruins/tower from layout.json (`arena_world_view.gd:28`),12 structures+tower_feet, **presentation-only; spatial index/manifest never see them**.
+- Hero-only cutaway `arena_world_view.gd:785-844,875-881` runs alongside OcclusionPlan.
 
-**旧路径残留(卫生问题)**:`actor_motor.gd`、`layout_blocker_loader.gd`、`native_static_room_root.gd`、`geometry_query.gd` 生产零调用,但仍被 5 个回归测试与 `content/rooms/samples/concave_hole_passage.tscn`(被 `test_room_encounter_production.gd` 预载)使用,**不可机械删除**,需随移动系统改造一并迁移测试。
+**Legacy hygiene:** actor_motor.gd, layout_blocker_loader.gd, native_static_room_root.gd, geometry_query.gd have no production calls but five regression tests and `content/rooms/samples/concave_hole_passage.tscn` still use them, preloaded by test_room_encounter_production.gd. **Do not mechanically delete**; migrate tests with movement redesign.
 
-## 3. 真实表现差的疑似根因(按视觉影响排序)
+## 3. Suspected Visual Root Causes, by Impact
 
-1. **R1(战斗,影响最大)废墟/塔/门在空间真值层不存在 → 穿模 + 遮挡失效**(数据缺失+功能缺失)。`layout.json` 的 12 个 structures 唯一消费者是表现层;三个战斗房 `*.spatial.json` 只有 movement-boundary 一条 binding;`room_asset_root.gd:13,94` 把 `occlusion:false` 写死在创作 schema。后果:玩家/敌人/箭矢直接穿过全部废墟;敌人站到废墟后完全不可见(cutaway 只开英雄窗,计划里没有静态件)。
-2. **R2(城镇)遮挡是"被挡者变幽灵"而非"遮挡者开窗",判定纯矩形**(表现语义错位)。`occlusion_controller.gd:81-87` cover>0 即把主体 alpha 压到 0.4,无梯度;判定 `Rect2.intersects`(`occlusion_plan.gd:118,137`),而战斗侧同类判定有逐像素 mask(`arena_world_view.gd:713-750`)。TARGET_ARCHITECTURE 写的 local cutaway 只在战斗路径实现。
-3. **R3(战斗)plan-alpha 与英雄窗 cutaway 双系统叠加**(未消解冲突)。同一对遮挡关系被两套机制各处理一次(`arena_actor_presenter.gd:431-438` + `combat_presentation_controller.gd:385-393`),可能整体发灰;近战挤靠时纯矩形判定会常态触发后排 0.4 alpha。
-4. **R4 实体碰撞全 soft 且足迹远小于美术盒**(调参缺口)。城镇英雄半径 6(`town_scene_root.gd:13`)、战斗 14/16,精灵盒 48×48+,上半身与墙/互相重叠,y-sort 解决不了"挤进墙里半身"的观感。
-5. **R5 SpatialOverlay 零生产接线**(功能未接线)。基础设施+测试齐全,无生产者、无内容数据。
-6. **R6 vision/navigation/occlusion 空间通道及 occlusion_rank 无消费者**(七通道只落地一半)。对表现无直接影响,但是"设计已写、实现未完成"感的来源。
+1. **R1 combat, largest: visible ruins/tower/gates absent from spatial truth**, yielding penetration and failed occlusion. Presentation alone reads 12 layout structures; three manifests have only movement boundary. `room_asset_root.gd:13,94` hardcodes occlusion:false. Players/enemies/arrows cross ruins; hidden enemies invisible because cutaway protects only hero and plan has no statics.
+2. **R2 town: ghost subject instead of revealing occluder, rectangle-only tests.** Controller 81-87 sets alpha 0.4 for any cover>0 without gradient; plan 118,137 Rect2.intersects. Combat has pixel masks `arena_world_view.gd:713-750`. Target architecture's local cutaway exists only in combat.
+3. **R3 combat: overlapping plan-alpha and hero cutaway**, unresolved. `arena_actor_presenter.gd:431-438` and `combat_presentation_controller.gd:385-393` process the same pair twice, possibly gray; melee rectangle overlap can constantly make rear actors alpha 0.4.
+4. **R4: all-soft actors, footprints much smaller than art.** Town hero radius 6 `town_scene_root.gd:13`, combat14/16 vs 48×48+ sprite boxes. Y-sort cannot fix half-bodies entering walls/each other.
+5. **R5: no production SpatialOverlay wiring**, despite infrastructure/tests.
+6. **R6: no vision/navigation/spatial-occlusion/occlusion_rank consumers.** Only half the seven-channel promise lands; no direct visual effect but implementation incomplete.
 
-## 4. 测试覆盖缺口
+## 4. Test Gaps
 
-已覆盖:空间内核契约(`test_spatial_kernel.gd:20-35`)、房间端口(`test_spatial_room_port.gd:33-42`)、资产管线(`test_world_asset_pipeline.gd:24-32`)、城镇遮挡端到端(`test_presentation_production_assembly.gd`)、战斗 cutaway(`test_world_occlusion.gd`)。
+Covered: spatial kernel `test_spatial_kernel.gd:20-35`, room port `test_spatial_room_port.gd:33-42`, pipeline `test_world_asset_pipeline.gd:24-32`, town end-to-end `test_presentation_production_assembly.gd`, combat cutaway `test_world_occlusion.gd`.
 
-完全没有测试的设计承诺:战斗房间静态件参与遮挡/碰撞(功能与数据都不存在);VisionResolver/OcclusionResolver 真实房间集成;navigation 通道任何查询;SpatialOverlay 生产写入路径;战斗 plan-alpha 端到端(敌人被遮挡时 sort view alpha 变化)。
+Uncovered promises: combat statics in collision/occlusion, absent both functionality/data; real-room VisionResolver/OcclusionResolver; any navigation queries; production overlay writes; combat plan-alpha end-to-end when enemies are covered.
 
-## 5. 建议下一步(最小改动优先)
+## 5. Recommended Minimal Steps
 
-1. 把战斗房间废墟/塔烘进空间真值:为 `room_asset_root.gd` 创作 schema 增加可编辑 static/occlusion binding(或把 `layout.json` structures 作为 `static_geometry`+occlusion binding 烘进 `*.spatial.json`),修改 `room_asset_root.gd:13,94` 校验并重烘焙三个房间 → 立刻获得"穿不过墙+箭被挡+计划里出现静态件"。
-2. 战斗路径复用城镇 plan-alpha 链处理"敌人被静态件遮挡";评估把 `cutaway_for` 的 subject 从仅英雄泛化(`arena_world_view.gd:834-844`)。
-3. 城镇遮挡细化(低成本高观感):接入 arena 已有的逐像素 descriptor(`arena_world_view.gd:690-707`),`cover>0 → 0.4` 改为按 cover_fraction 分档或开窗。
-4. 消除双系统叠加:同一对遮挡只走一条管线(英雄保留窗 cutaway,英雄与敌人间 plan-alpha 关闭或取 min,`combat_presentation_controller.gd:357-398`)。
-5. 足迹调参:战斗敌人半径、城镇英雄 6→8-10,在 `hearthside.spatial.json hero_radius` 与 `main.gd:1063,1246` 试值,配合 `test_town_geometry_rebuild.gd` 路由检查。
-6. 接线或明确搁置 overlay/vision/navigation:若首章不需要,在 TARGET_ARCHITECTURE 标注"延后";若需要,从"城镇闸门开关"切片开始。
-7. 旧几何簇(`actor_motor` 等)随移动系统改造一并迁移/删除,先跑干净 import 防重复全局类。
+1. Bake ruins/tower into spatial truth: editable static/occlusion bindings in room_asset_root schema, or layout structures→static_geometry+occlusion bindings in manifests; change checks 13,94, rebake three rooms. Immediately gains walls/projectile blocks/static-plan entries.
+2. Reuse town plan-alpha for combat enemies behind statics; consider generalizing cutaway_for beyond hero `arena_world_view.gd:834-844`.
+3. Town: reuse pixel descriptor `arena_world_view.gd:690-707`; replace cover>0→0.4 with cover_fraction tiers or reveal.
+4. Remove double handling: one pipeline per pair, retaining hero cutaway and disabling hero/enemy plan-alpha or taking min (`combat_presentation_controller.gd:357-398`).
+5. Tune combat enemy radius and town hero 6→8-10; try hearthside.spatial.json hero_radius/main 1063,1246 with test_town_geometry_rebuild.gd routes.
+6. Wire or explicitly defer overlay/vision/navigation in TARGET_ARCHITECTURE; if needed, begin with one town gate toggle.
+7. Migrate/remove old geometry cluster with movement changes; clean import first to avoid duplicate global classes.
 
-**总体结论**:空间内核、固定管线、双场景挂载和城镇遮挡链真实落地且测试充分;"碰撞与遮挡差"主要不是"实现没接上",而是 (1) 战斗房间的可见几何从未进入空间数据层,(2) 城镇遮挡表现语义(被挡者变透明、矩形判定)与局部开窗的美术预期不一致,(3) 实体碰撞按设计全软分离且足迹远小于美术。优先做第 1、3 项,最小改动覆盖最大观感收益。
+**Overall:** spatial kernel, fixed pipeline, dual mounting, town occlusion are real and tested. Poor collision/occlusion mainly comes from missing combat geometry data, town ghost-subject/rectangle semantics conflicting with cutaway expectations, and designed soft separation/small footprints. Prioritize steps 1/3 for maximum visual gain at minimum change.
 
-## 附记:修复状态(2026-10-20)
+## Addendum: Fix Status, 2026-10-20
 
-- **R1 已修复**:三个战斗房以 `GeometrySources/Static` 下的凸八边形 `static_blocker`(整数坐标)收录全部 13 个废墟/塔(与 layout.json 逐一对齐,由 `tests/test_combat_structure_blockers.gd` 钉死);墙体/门/塔同时进入 projectile 通道,低桩只挡移动。出生点增加确定性环形净空投影(`main.gd _project_static_clear`);敌人战术候选方向打分纳入 `static_blockers` 避让(`enemy_tactics.gd`),直线撞墙死磨从 193 tick 降到 ≤4。
-- **R2 已修复并升级为遮挡者开窗**:真机验收(见 [GPU_VISUAL_2026-10-20](../playtest/GPU_VISUAL_2026-10-20.md) 与 [R2 加压轮](../playtest/GPU_VISUAL_2026-10-20-R2.md))证明"被挡者变暗"在被完全遮挡时是视觉空操作,已重构为前景件/设施铭牌开窗(cover_fraction 分档:<0.15 不开窗、线性、≥0.45 压到 0.4/0.35),主体保持不透明;第二轮验收发现并修复了开窗节点查找根错误(前景件挂载后被重挂进 presenter 层,查找根须为 SceneRuntime 子树)。碰撞 blocker 渲染为白色多边形的阻断级问题已修(`visible=false` + 契约 fail-closed)。逐像素 descriptor 未接入(需改 plan 构建输入,另行立项)。
-- **R4 部分完成**:敌人半径 16→18 曾落地,但因软分离地板(14+18=32)超过 `MELEE_ATTACK_RANGE`(30.25)导致近战永远无法攻击,已回退到 16;后续上调需同步调校 `MELEE_ATTACK_RANGE`/`MELEE_RING_RADIUS` 并重审战术常量。玩家半径被 ring 房出生插座恰好 14.0 的净空封顶;城镇英雄半径与 hearthside 烘焙摘要强耦合(需重烘焙)。三项约束已记录,待统一调校。滑墙段足迹-美术对齐(脚部与墙顶石重叠观感)为真机验收新记 backlog。
-- **通道延后已标注**:`TARGET_ARCHITECTURE.md` 已注明 navigation/vision/overlay 为首章明确延后。
+- **R1 fixed:** all 13 layout-aligned ruins/tower represented as integer convex-octagon static_blockers under GeometrySources/Static in three rooms, pinned by `tests/test_combat_structure_blockers.gd`. Walls/gates/tower also block projectiles; low posts movement only. Deterministic ring clearance projection `main.gd _project_static_clear`; enemy candidate scoring considers static_blockers in enemy_tactics.gd, reducing straight-wall grinding 193 ticks→≤4.
+- **R2 fixed, upgraded to occluder reveal:** hardware [initial](../playtest/GPU_VISUAL_2026-10-20.md) and [R2 stress](../playtest/GPU_VISUAL_2026-10-20-R2.md) showed dimming fully hidden subjects is ineffective. Foreground/nameplate reveal now uses cover_fraction: below 0.15 none, linear, ≥0.45 alpha 0.4/0.35; subjects remain opaque. R2 fixed lookup root after foreground reparenting: search SceneRuntime subtree. White blocker polygon rendering fixed with visible=false and fail-closed contract. Pixel descriptor still unwired; needs separate plan-input work.
+- **R4 partial:** enemy 16→18 was reverted: soft separation 14+18=32 exceeded MELEE_ATTACK_RANGE 30.25, preventing all melee. Future changes must tune MELEE_ATTACK_RANGE/MELEE_RING_RADIUS and review tactics constants together. Player radius capped by ring spawn socket clearance 14.0. Town radius tightly coupled to baked digest, requiring rebake. Constraints documented for joint tuning; foot/wall-top visual alignment remains GPU backlog.
+- **Deferred channels labeled:** TARGET_ARCHITECTURE.md marked navigation/vision/overlay explicitly deferred for chapter one.

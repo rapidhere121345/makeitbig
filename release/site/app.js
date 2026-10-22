@@ -16,7 +16,7 @@
   }
 
   function dateLabel(value) {
-    if (typeof value !== "string") return "未知时间";
+    if (typeof value !== "string") return "Unknown time";
     return value.length >= 16 ? value.slice(0, 16).replace("T", " ") + " UTC" : value;
   }
 
@@ -38,7 +38,7 @@
     var entry = linkFor(build, platform);
     var node = document.createElement(entry ? "a" : "span");
     node.className = prominent ? "download-button" : "file-link";
-    node.textContent = entry ? labels[platform] + " · " + (sizeLabel(entry.file.size) || entry.file.name) : labels[platform] + " · 未提供";
+    node.textContent = entry ? labels[platform] + " · " + (sizeLabel(entry.file.size) || entry.file.name) : labels[platform] + " · Not available";
     if (entry) {
       node.href = entry.href;
       node.download = "";
@@ -57,7 +57,7 @@
       var empty = document.createElement("tr");
       var cell = document.createElement("td");
       cell.colSpan = 4;
-      cell.textContent = "暂无构建。完成导出后运行 scripts/release.sh all。";
+      cell.textContent = "No builds yet. After exporting, run scripts/release.sh all.";
       empty.appendChild(cell);
       historyBody.appendChild(empty);
       latestPanel.hidden = true;
@@ -96,7 +96,7 @@
     var row = document.createElement("tr");
     var cell = document.createElement("td");
     cell.colSpan = 4;
-    cell.textContent = "发布索引暂时不可用，请稍后再试。";
+    cell.textContent = "The release index is temporarily unavailable. Please try again later.";
     row.appendChild(cell);
     historyBody.appendChild(row);
   }

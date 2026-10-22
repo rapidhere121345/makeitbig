@@ -77,6 +77,11 @@ loot_pickup={
 ]
 }
 
+[internationalization]
+
+locale/test="en"
+locale/fallback="en"
+
 [physics]
 
 common/physics_ticks_per_second=30

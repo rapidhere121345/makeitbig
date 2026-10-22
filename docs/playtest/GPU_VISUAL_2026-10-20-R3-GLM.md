@@ -1,57 +1,57 @@
-# 真机 GPU 视觉验收 · 修复复核轮 · 2026-10-20(R3-GLM)
+# Hardware GPU Visual Acceptance - Fix Recheck - 2026-10-20 (R3-GLM)
 
-第三轮真机 GPU 交互验收，聚焦本轮六项修复的复核与全流程回归。前轮记录见 [GPU_VISUAL_2026-10-20-R2.md](GPU_VISUAL_2026-10-20-R2.md)。方法同前：Xvfb 虚拟显示 + NVIDIA PRIME offload 真机渲染，play_session 窗口命令协议逐帧注入输入并截图读图。证据目录（git 忽略）：`build/current/gpu-visual-r3-glm/`，62 帧 + 307 条输入记录。
+Third interactive hardware-GPU pass, focused on six fixes and full-flow regression. Previous record: [GPU_VISUAL_2026-10-20-R2.md](GPU_VISUAL_2026-10-20-R2.md). Same method: Xvfb display + NVIDIA PRIME offload hardware rendering, play_session window protocol injecting inputs and inspecting screenshots frame by frame. Ignored evidence directory: `build/current/gpu-visual-r3-glm/`, 62 frames and 307 input records.
 
-## 环境
+## Environment
 
-| 项 | 值 |
+| Item | Value |
 | --- | --- |
-| 显示 | Xvfb `:97`，1920×1080×24（`xdpyinfo` 连接确认） |
-| 入口 | `MIB_PLAY_SESSION_DIR=build/current/gpu-visual-r3-glm ./scripts/play_session_window.sh --nvidia --display :97` |
-| 渲染器 | engine.log 首两行：`Godot Engine v4.7.2.stable.official` / `OpenGL API 3.3.0 NVIDIA 595.91.07 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 4080 SUPER` |
-| 窗口 | 1280×720（runner 默认，本轮未加压更高分辨率） |
-| 退出码 | `runner.exit.json` status=0；退出时出现既有 ObjectDB/resource leak 警告（既往验收已记录的已知限制，非本轮引入） |
+| Display | Xvfb `:97`, 1920×1080×24 (`xdpyinfo` connection confirmed) |
+| Entry | `MIB_PLAY_SESSION_DIR=build/current/gpu-visual-r3-glm ./scripts/play_session_window.sh --nvidia --display :97` |
+| Renderer | First two engine.log lines: `Godot Engine v4.7.2.stable.official` / `OpenGL API 3.3.0 NVIDIA 595.91.07 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 4080 SUPER` |
+| Window | 1280×720 (runner default; no higher-resolution stress this round) |
+| Exit | `runner.exit.json` status=0; existing ObjectDB/resource-leak exit warnings, recorded previously and not introduced here |
 
-## 六项修复判定
+## Six Fix Verdicts
 
-| # | 修复 | 判定 | 帧证据 |
+| # | Fix | Verdict | Frame evidence |
 | --- | --- | --- | --- |
-| 1 | 对话角色栏锚定对话对象 | **通过** | `017`：米拉对话第 2/4 句为流浪者台词，标题行"流浪者"、角色栏"**与米拉交谈 · 先把门带上**"（修复前为"流浪者 · 流浪者"）。`021`：莱娅对话第 2/3 句由米拉说话（第三方），角色栏仍锚定"与莱娅交谈 · 凳子放哪"。Esc 关闭（`018`）回归正常 |
-| 2 | 验律场铭牌"已验证"口径 | **部分验证（受存档进度限制）** | 见下文说明 |
-| 3 | Tab 战报末行裁切 | **通过** | `053`/`054` 放大：末行"增长类型 未验证 · 迭代长度 g=80"完整，下方有明显留白，滚动条确认已在底 |
-| 4 | "近况"面板末行贴边 | **通过** | `030`/`031`：滚动到底后再滚 25 格面板像素差分为 None（确认到底），末行快捷键说明与按钮行之间留白清晰 |
-| 5 | 战斗场概念框/门标记 | **通过** | `039` 放大：角桩为铜色圆点 + 相互垂直的两条 34px 短刻度，无完整线框；`040` 放大：门为双立柱方块 + 门槛横线 + 指向场内的箭头，无 U 型调试线观感 |
-| 6 | 射程外提示残留 | **通过** | `037`：射程外开火后徽标"目标在射程外 · 靠近后再射"出现，顶栏同步"射程外"；静立等敌接近，`038`：顶栏翻为"射程内"的同一帧徽标消失，无同屏矛盾 |
+| 1 | Dialogue character column anchored to interaction target | **Pass** | `017`: Mira dialogue line 2/4 is spoken by Wanderer; title is Wanderer, column is **Talking to Mira - Close the Door First**, formerly Wanderer - Wanderer. `021`: Mira is a third-party speaker in Leia line 2/3, while column stays Talking to Leia - Where to Put the Stool. Esc closure (`018`) works |
+| 2 | Training nameplate "verified" semantics | **Partial, save-progress limited** | See below |
+| 3 | Last Tab-report line clipping | **Pass** | Enlarged `053`/`054`: complete "Growth type Unverified - iteration length g=80", clear bottom whitespace, scrollbar at bottom |
+| 4 | Last "Recent" panel line against edge | **Pass** | `030`/`031`: 25 extra scroll notches after the bottom produce pixel difference None, confirming the end; clear space between final shortcut line and buttons |
+| 5 | Arena concept border / gate markers | **Pass** | Enlarged `039`: copper corner dots and perpendicular 34px ticks, no complete wireframe. `040`: gate has two square pillars, threshold line, and inward arrow, not a U-shaped debug line |
+| 6 | Stale out-of-range hint | **Pass** | `037`: firing out of range shows "Target out of range - move closer" and matching top status. Stand still as enemy approaches; in `038`, badge disappears in the same frame the top changes to in range, without contradiction |
 
-### 修复 2 说明（铭牌"已验证"）
+### Fix 2: Verified Nameplate
 
-- 新档未训练：铭牌、战斗战报、近况进度行三处一致显示"未验证/…"（`010`/`019`/`064`/`030`），符合任务口径"存档未训练则仍未验证，属正常"。
-- 本轮在验律场实际完成一次训练（`022`/`023`）：默认构筑结果为"收敛"，非指数 → 铭牌保持"未验证"，与增长结论、战报"增长类型 未验证"口径一致（统一派生生效的表现）。
-- **指数路径本轮无法触发**：切换"指数"校准预设的入口只在无真实装备数据的 legacy 载入界面出现（`facility_screen.gd _build_loadout` 分支），当前存档 UI 不提供；其余满足"已验证"的条件（首杀巨像/Auto 胜利/早期完成）均在章节后段。建议设计侧用指数预设存档或 auto-smoke 管线补一次"铭牌=已验证"的正向截图验证。
+- Fresh, untrained save: nameplate, combat report, and Recent progression all agree on unverified/… (`010`/`019`/`064`/`030`), as expected for an untrained save.
+- Training was completed once (`022`/`023`); default build converged rather than grew exponentially. Nameplate stayed unverified, consistent with growth conclusion and report "Growth type Unverified," demonstrating unified derivation.
+- **Exponential path could not be triggered:** the exponential calibration preset selector exists only in the legacy loadout without real equipment data (`facility_screen.gd _build_loadout` branch), not the current save UI. Other verified conditions (first Colossus kill, Auto victory, early completion) are later in the chapter. Recommend a positive "nameplate=verified" screenshot using an exponential-preset save or auto-smoke pipeline.
 
-## 回归扫查（全通过）
+## Regression Sweep (All Passed)
 
-- **标题→教程**：三练习（走近/闪避/穿刺命中）可完成，`001`–`005` 无文字截断。
-- **炉边镇五设施**：契台/备行架/回火砧/验律场/代行舱全部走到并读牌；代行舱铭牌正确显示"首杀巨像后开放"（`058`）；回火砧面板显示"律筹锻造台未解锁 · 完成主线 04"（`061`）。
-- **对话**：米拉 4 句、莱娅 3 句全页翻看，立像、页码、按钮无叠压；对话/见闻/成长 Esc 关闭均生效（R2 修复回归）。
-- **遮挡开窗**：英雄与米拉同处岩堆后方，岩堆覆盖区变亮半透明、主体剪影与识别特征（白兜帽、弓）透出（`059`/`060` 放大）——R2 前景件开窗修复在真机复现良好。
-- **契台出征**：契约页（`032`）与出征确认卡（`033`）排版正常，Manual 锁定提示正确。
-- **战斗**：两场契约（主线 01/02）Manual 打完，共 4 房；伤害数字（`055` 中"232"）清晰不与血条叠压；敌人 AI 正常追击、无卡死打转；胜利后控制未冻结，直接进入结算（R2 修复 1 回归通过）。
-- **结算页 ×2**（`048`/`056`）：奖励、房间进度、用时/击杀/施放全部可读。
-- **见闻册/成长册**（`062`/`063`）：布局正常；见闻"本章目标"已从已完成节点（初次狩猎）滚到当前步骤"比较带回的装备…"——本轮 `_displayed_objective_text` 陈旧目标修复顺带验证。
-- 全程未发现伪影、残影、配色异常、非整数缩放发糊。
+- **Title to tutorial:** approach, dodge, and piercing-hit exercises complete; no clipped text in `001`-`005`.
+- **Five Hearthside facilities:** visited and read Contract Board, Loadout, Tempering Anvil, Training, Proxy Bay signs. Proxy Bay correctly says it opens after first Colossus kill (`058`); Anvil says Law Token Forge locked - complete main step 04 (`061`).
+- **Dialogue:** all four Mira and three Leia lines inspected; portraits, page numbers, and buttons do not overlap. Esc closes dialogue, discoveries, and progression (R2 regression).
+- **Occlusion reveal:** hero and Mira behind rocks; covering region becomes brighter/translucent, showing silhouette and white hood/bow (`059`/`060` enlarged). R2 reveal fix reproduces well on hardware.
+- **Departure:** Contract page (`032`) and confirmation card (`033`) lay out normally; Manual-lock notice correct.
+- **Combat:** completed main 01/02 in Manual, four rooms total. Damage numbers ("232" in `055`) readable without health-bar overlap. Enemy pursuit works without stuck turning. No post-victory control freeze; results open directly (R2 fix 1 passes).
+- **Two results pages** (`048`/`056`): rewards, room progress, duration/kills/casts readable.
+- **Discoveries/progression** (`062`/`063`): normal layout; chapter objective advances from completed First Hunt to compare returned equipment, incidentally validating `_displayed_objective_text` stale-objective fix.
+- No artifacts, ghosting, color anomalies, or fractional-scale blur observed throughout.
 
-## 新发现
+## New Findings
 
-| # | 级别 | 现象 | 复现 | 建议 |
+| # | Severity | Symptom | Reproduction | Recommendation |
 | --- | --- | --- | --- | --- |
-| 1 | 一般 | 结算页"战报详情"展开后，"下一步"卡片末行被底边裁成半字（`049` 全帧 / `050` 放大，可见"……场继续研究"后一行残字） | 任意契约胜利 → 结算 → 战报详情 | 该卡片与 Tab 战报/近况同样补底部 gutter 或裁切省略 |
-| 2 | 打磨 | 结算页"第 1 间→第 2 间"在两房均胜的结算里复选框仍为空方块，与下方"胜利"字样并列略矛盾（`048`） | 同上 | 确认是否有意；若非，胜利时打勾 |
-| 3 | 待确认 | 两场胜利均未出现"走近按 F 拾取"战利品窗口，直接进结算；与 R2 记录的拾取窗口流程不一致 | 主线 01/02 Manual 通关（风筝走位，路径可能已扫过掉落点） | 专项确认拾取窗口触发条件（掉落点距离/自动拾取口径） |
+| 1 | Normal | Expanded results report clips the final Next Step card line to half-height (`049` full / `050` enlarged, residual text below continue research at Training) | Any Contract victory, results, report details | Add bottom gutter or ellipsis like Tab report / Recent |
+| 2 | Polish | Room 1 to Room 2 checkboxes remain empty despite both rooms won, mildly contradicting Victory below (`048`) | Same | Confirm intent; otherwise check on victory |
+| 3 | Needs confirmation | Neither victory showed approach + F loot window; results opened directly, unlike R2 | Main 01/02 Manual, kiting may already have crossed drop points | Specifically check loot-window triggers, drop distance, and automatic pickup semantics |
 
-## 备注
+## Notes
 
-- 构筑详情弹窗打开时，"返回基地"点击被弹窗吞掉属常规模态行为；弹窗内按钮不在 play_session 控件扫描里（协议盲区，非游戏缺陷），用原始坐标点击可关。
-- 击杀"击破"浮字错位（R2 修复 4）本轮战斗中有击杀发生但未抓到击杀瞬帧，未复验；该修复上轮已有像素证据。
-- 已知 backlog 项（雪地英雄对比度、敌我贴身叠压）本轮依旧可见，属未修项非回归。
-- 交付门禁：本轮为纯验收，无代码改动；完整 `container_test.sh` 与导出以最近一次全绿构建记录为准。
+- Build-details modal consuming Return to Base clicks is normal modal behavior. Its buttons are absent from play_session scanning, a protocol blind spot rather than a game defect; raw-coordinate clicking closes it.
+- Kills occurred but no exact kill frame was captured, so R2 fix 4's kill-text offset was not rechecked; previous round already has pixel evidence.
+- Existing snow-contrast and close-contact overlap backlog items remain visible; these are unfixed items, not regressions.
+- Delivery gate: acceptance only, no code changes this round. Full `container_test.sh` and exports rely on the latest all-green build record.

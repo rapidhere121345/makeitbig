@@ -59,6 +59,10 @@ func _capture(file_id: String, route_id: String, size: Vector2i, fixture: Dictio
 	await process_frame
 	await process_frame
 	await process_frame
+	if route_id == "loadout":
+		_focus_loadout_candidate(screen)
+		await process_frame
+		await process_frame
 	var audit := _frame_audit(screen, size, "%s @%dx%d" % [file_id, size.x, size.y])
 	var report := {
 		"id": file_id,
@@ -98,6 +102,20 @@ func _capture(file_id: String, route_id: String, size: Vector2i, fixture: Dictio
 	print("  %s %dx%d -> %s" % [file_id, size.x, size.y, JSON.stringify(report)])
 	stage.queue_free()
 	await process_frame
+
+
+func _focus_loadout_candidate(screen: Control) -> void:
+	# Candidate actions are lazy: inspect the real backpack cell before measuring
+	# or capturing its shared detail pane, just as keyboard navigation does.
+	var backpack := screen.find_child("EquipmentBackpack", true, false)
+	_expect(backpack != null, "loadout: the equipment backpack is missing")
+	if backpack == null:
+		return
+	backpack.show_item("loot:bow/2")
+	var candidate := screen.find_child("BackpackItem_loot_bow_2", true, false) as Button
+	_expect(candidate != null, "loadout: the candidate backpack cell is missing")
+	if candidate != null:
+		candidate.grab_focus()
 
 
 ## Every visible control has to stay inside the logical frame, and no visible text
@@ -159,14 +177,14 @@ func _loadout_fixture() -> Dictionary:
 		"equipment_slots": ["head", "chest", "pants", "leg_armor", "gloves", "bracers", "belt", "main_hand", "off_hand", "ring_1", "ring_2", "necklace"],
 		"prototype_open_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
 		"base_items": {
-			"ashwood_longbow": {"id": "ashwood_longbow", "name": "白蜡长弓", "slot": "main_hand", "modifiers": [{"parameter": "damage", "operation": "multiply", "value": 1.12}]},
-			"swift_recurve_bow": {"id": "swift_recurve_bow", "name": "迅弦反曲弓", "slot": "main_hand", "modifiers": [{"parameter": "v", "operation": "multiply", "value": 1.1}]},
-			"farwatch_quiver": {"id": "farwatch_quiver", "name": "远望箭袋", "slot": "off_hand", "modifiers": [{"parameter": "T", "operation": "multiply", "value": 1.08}]},
-			"turnfeather_gloves": {"id": "turnfeather_gloves", "name": "导羽手套", "slot": "gloves", "modifiers": [{"parameter": "turn", "operation": "multiply", "value": 0.94}]},
-			"vitality_ring": {"id": "vitality_ring", "name": "生机戒指", "slot": "ring_1", "modifiers": [{"parameter": "max_health", "operation": "multiply", "value": 1.12}]},
+			"ashwood_longbow": {"id": "ashwood_longbow", "name": "Ash Longbow", "slot": "main_hand", "modifiers": [{"parameter": "damage", "operation": "multiply", "value": 1.12}]},
+			"swift_recurve_bow": {"id": "swift_recurve_bow", "name": "Swiftstring Recurve", "slot": "main_hand", "modifiers": [{"parameter": "v", "operation": "multiply", "value": 1.1}]},
+			"farwatch_quiver": {"id": "farwatch_quiver", "name": "Farwatch Quiver", "slot": "off_hand", "modifiers": [{"parameter": "T", "operation": "multiply", "value": 1.08}]},
+			"turnfeather_gloves": {"id": "turnfeather_gloves", "name": "Guiding Fletch Gloves", "slot": "gloves", "modifiers": [{"parameter": "turn", "operation": "multiply", "value": 0.94}]},
+			"vitality_ring": {"id": "vitality_ring", "name": "Vitality Ring", "slot": "ring_1", "modifiers": [{"parameter": "max_health", "operation": "multiply", "value": 1.12}]},
 		},
 		"affix_families": {
-			"piercing_continuation": {"id": "piercing_continuation", "name": "穿刺箭续行概率", "parameter": "p", "operation": "add", "tiers": [{"tier": 2, "value": 0.07}, {"tier": 3, "value": 0.09}]},
+			"piercing_continuation": {"id": "piercing_continuation", "name": "Piercing Arrow Continuation Chance", "parameter": "p", "operation": "add", "tiers": [{"tier": 2, "value": 0.07}, {"tier": 3, "value": 0.09}]},
 		},
 		"inventory_equipment": [
 			{"instance_id": "equipped_main", "base_item_id": "ashwood_longbow", "slot": "main_hand", "affixes": [{"family_id": "piercing_continuation", "tier": 2}], "rune_id": "breeding_split", "law_id": "pack_hunt_mark"},
@@ -238,7 +256,7 @@ func _training_fixture() -> Dictionary:
 					{"generation": 12, "events_display": "4096"},
 					{"generation": 18, "events_display": "1000000000000"},
 				],
-				"action": "保持该构筑继续推演",
+				"action": "Keep forecasting with this build",
 			},
 		},
 	}

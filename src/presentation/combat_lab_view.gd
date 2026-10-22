@@ -22,12 +22,12 @@ const COLOR_WARNING: Color = PaletteScript.DANGER_BRIGHT
 const COLOR_PROXY: Color = PaletteScript.COLD
 const COLOR_ANOMALY: Color = PaletteScript.PURPLE
 const FORGE_FAMILY_LABELS: Dictionary = {
-	"growth_probability": "Growth Probability / 生长概率",
-	"shared_lifetime": "Shared Lifetime / 共享寿命",
-	"branch_count": "Branch Count / 分支数",
-	"payload": "Payload / 载荷",
-	"flight_speed": "Flight Speed / 飞行速度",
-	"turn_time": "Turn Time / 转向时间",
+	"growth_probability": "Growth Probability",
+	"shared_lifetime": "Shared Lifetime",
+	"branch_count": "Branch Count",
+	"payload": "Payload",
+	"flight_speed": "Flight Speed",
+	"turn_time": "Turn Time",
 }
 const FORGE_FAMILY_SHORT: Dictionary = {
 	"growth_probability": "Growth P",

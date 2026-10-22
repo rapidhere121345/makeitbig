@@ -5,7 +5,7 @@
     "path": "res://content/rooms/town/layers/ground.png",
     "sha256": "61f3f17f2af2c9aa2998c2cf12ddb73f0a410bb3dbfafa0d9c866c119f705bb1"
   },
-  "layout_sha256": "8f740098d326fd312a0d6463332c5a7d587ed8ae77af0465ff40dbbbb39e1dd3",
+  "layout_sha256": "48995ebb2520227967b63bde71d8c620cb81361bae696417d8d49cee758c165f",
   "layout_source": "res://art/production/p1/hamlet_town/layout.json",
   "native": [
     {

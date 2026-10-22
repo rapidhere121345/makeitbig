@@ -103,6 +103,8 @@ func _build() -> void:
 			button.name = "TalentSlot_%d_%d" % [tier + 1, slot + 1]
 			button.focus_mode = Control.FOCUS_ALL
 			button.toggle_mode = true
+			button.clip_text = true
+			button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 			button.add_theme_font_size_override("font_size", 22)
 			button.pressed.connect(_on_button_pressed.bind(button))
 			add_child(button)
@@ -124,7 +126,7 @@ func _sync_buttons() -> void:
 			index += 1
 			if slot >= nodes.size():
 				button.name = "TalentSlot_%d_%d" % [tier, slot + 1]
-				button.text = "空"
+				button.text = "Empty"
 				button.icon = null
 				button.disabled = true
 				button.visible = false
@@ -148,21 +150,23 @@ func _sync_buttons() -> void:
 			button.tooltip_text = "%s / %s" % [String(node.get("name", node_id)), String(node.get("description", ""))]
 			_apply_node_style(button, node, node_id == _selected_id)
 			var mark := button.get_node("AllocationMark") as Label
-			mark.text = "✓" if bool(node.get("allocated", false)) else ("+" if bool(node.get("can_allocate", false)) else "锁")
+			mark.text = "✓" if bool(node.get("allocated", false)) else ("+" if bool(node.get("can_allocate", false)) else "-")
 			mark.add_theme_color_override("font_color", INK if bool(node.get("allocated", false)) else BONE)
 		# Row labels deliberately carry no gate copy: the shared gate below is the
 		# only place that describes the tier-total rule.
-		_tier_headings[tier - 1].text = "%s %s" % ["Ⅰ" if tier == 1 else ("Ⅱ" if tier == 2 else "Ⅲ"), "开端" if tier == 1 else ("深猎" if tier == 2 else "要诀")]
+		_tier_headings[tier - 1].text = "%s\n%s" % ["Ⅰ" if tier == 1 else ("Ⅱ" if tier == 2 else "Ⅲ"), "Start" if tier == 1 else ("Hunt" if tier == 2 else "Key")]
+		_tier_headings[tier - 1].tooltip_text = "Beginnings" if tier == 1 else ("Deep Hunt" if tier == 2 else "Mastery")
 		if tier > 1:
-			(_gate_labels[tier - 2] as Label).text = "前层合计%d点" % (3 if tier == 2 else 8)
+			(_gate_labels[tier - 2] as Label).text = "%d prior pts" % (3 if tier == 2 else 8)
+			(_gate_labels[tier - 2] as Label).tooltip_text = "Total points required in previous tiers"
 
 
 func _layout() -> void:
 	var index := 0
 	for tier in range(3):
 		var heading := _tier_headings[tier]
-		heading.position = Vector2(10, size.y * float(TIER_Y[tier]) - 17.0)
-		heading.size = Vector2(ROW_LABEL_WIDTH, 34)
+		heading.position = Vector2(10, size.y * float(TIER_Y[tier]) - 33.0)
+		heading.size = Vector2(ROW_LABEL_WIDTH, 66)
 		if tier > 0:
 			var gate_label := _gate_labels[tier - 1] as Label
 			# The text is a side marker, while the centered hex is the single shared

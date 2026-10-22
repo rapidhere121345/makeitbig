@@ -104,6 +104,22 @@ func _run() -> void:
 				if confirm != null: confirm.pressed.emit()
 				if events.size() != 1: failures.append("double confirm emitted twice")
 				screen.action_requested.disconnect(listener)
+	host.size = Vector2(1280, 720)
+	for flag in [null, true, false]:
+		var snapshot: Dictionary = fixture._forge_snapshot(true)
+		if flag != null:
+			snapshot["ok"] = flag
+		screen.present("forge", {}, {}, "", snapshot)
+		for frame in range(4): await process_frame
+		if screen.find_child("FacilityOverview", true, false) != null:
+			failures.append("nonempty forge duplicates its compact mark with a page lead: %s" % str(flag))
+		if screen.find_children("FacilityMark", "", true, false).size() != 1:
+			failures.append("nonempty forge must show exactly one mark: %s" % str(flag))
+		_check_forge_composition(screen, host.size)
+	screen.present("forge", {}, {}, "", {})
+	for frame in range(4): await process_frame
+	if screen.find_child("FacilityOverview", true, false) == null or screen.find_children("FacilityMark", "", true, false).size() != 1:
+		failures.append("unavailable forge lost its single page mark")
 	print("WORKBENCH_LAYOUT ","pass" if failures.is_empty() else "fail", " ",failures)
 	host.free()
 	fixture.free()

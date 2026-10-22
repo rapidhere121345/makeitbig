@@ -53,8 +53,8 @@ func _run() -> void:
 	var slot := String(item.slot)
 	var result: Control = game.current_screen
 	var review := result.find_children("ReviewDrop_*", "Button", true, false)[0] as Button
-	_expect(review.text == "比较（尚未装备）" and not review.disabled
-		and result.get_equipment_card_summaries()[0].contains("已入库，尚未装备"),
+	_expect(review.text == "Comparison (Not Equipped)" and not review.disabled
+		and result.get_equipment_card_summaries()[0].contains("Stored, Not Equipped"),
 		"fresh drop state/action is wrong: %s / %s" % [review.text, result.get_equipment_card_summaries()], failures)
 	review.pressed.emit()
 	await _frames(3)
@@ -72,16 +72,16 @@ func _run() -> void:
 	await _frames(3)
 	result = game.current_screen
 	review = result.find_children("ReviewDrop_*", "Button", true, false)[0] as Button
-	_expect(review.text == "查看（已装备）" and not review.disabled
-		and result.get_equipment_card_summaries()[0].contains(" · 已装备")
-		and not result.get_equipment_card_summaries()[0].contains("尚未装备"),
+	_expect(review.text == "Inspect (Equipped)" and not review.disabled
+		and result.get_equipment_card_summaries()[0].contains(" · Equipped")
+		and not result.get_equipment_card_summaries()[0].contains("Not Equipped"),
 		"return from equipment retained stale uninstalled state: %s / %s" % [review.text, result.get_equipment_card_summaries()], failures)
 	_expect(game.application_state.last_result == receipt and result.get_presented_result() == receipt,
 		"equipping rewrote the acquisition receipt", failures)
 	(result.find_child("EquipmentDetailButton", true, false) as Button).pressed.emit()
 	var detail := result.find_child("EquipmentDetailBody", true, false) as Label
-	_expect(detail.text.contains("获得时：已收入装备库存") and detail.text.contains("当前已装备，正在使用")
-		and not detail.text.contains("尚未装备，当前构筑不变"),
+	_expect(detail.text.contains("At acquisition: added to equipment storage") and detail.text.contains("Currently equipped and in use")
+		and not detail.text.contains("Not equipped; current build unchanged"),
 		"equipment detail mixed historical reward and current equipment state", failures)
 	(result.find_child("EquipmentDetailClose", true, false) as Button).pressed.emit()
 	review.pressed.emit()
@@ -94,8 +94,8 @@ func _run() -> void:
 		_return_to_result(game, failures)
 		await _frames(3)
 		result = game.current_screen
-		_expect(result.get_equipment_card_summaries()[0].contains("已入库，尚未装备")
-			and (result.find_children("ReviewDrop_*", "Button", true, false)[0] as Button).text == "比较（尚未装备）"
+		_expect(result.get_equipment_card_summaries()[0].contains("Stored, Not Equipped")
+			and (result.find_children("ReviewDrop_*", "Button", true, false)[0] as Button).text == "Comparison (Not Equipped)"
 			and game.application_state.last_result == receipt,
 			"unequip return failed to refresh status or changed reward facts: %s" % [result.get_equipment_card_summaries()], failures)
 	_finish(game, failures)
@@ -103,7 +103,7 @@ func _run() -> void:
 
 func _return_to_result(game: Node, failures: Array[String]) -> void:
 	var back := game.current_screen.find_child("ReturnToBaseButton", true, false) as Button
-	_expect(back != null and back.text == "返回结算", "loadout lost its settlement return action", failures)
+	_expect(back != null and back.text == "Results" and back.tooltip_text == "Return to Results", "loadout lost its settlement return action", failures)
 	if back != null:
 		back.pressed.emit()
 	_expect(game.current_route == "result", "loadout did not return to settlement", failures)

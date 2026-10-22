@@ -10,7 +10,7 @@ const StoryProgressionScript = preload("res://src/systems/story_progression.gd")
 const ShellTheme = preload("res://src/presentation/shell_theme.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
 
-const TABS: Array[String] = ["目标", "对话", "日志", "生活"]
+const TABS: Array[String] = ["Target", "Dialogue", "Journal", "Daily Life"]
 const LIST_PAGE_SIZE := 4
 const TOWN_PAGE_SIZE := 4
 const TITLE_FONT_SIZE := 28
@@ -104,14 +104,14 @@ func _build() -> void:
 	title_block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_block.add_theme_constant_override("separation", 0)
 	heading.add_child(title_block)
-	_title_label = _label("旅途见闻册 · 第一幕 余温", TITLE_FONT_SIZE, ShellTheme.BONE)
+	_title_label = _label("Journey Journal · Act I: Lingering Warmth", TITLE_FONT_SIZE, ShellTheme.BONE)
 	_title_label.name = "StoryTitle"
 	title_block.add_child(_title_label)
 	_objective_label = _label("", BODY_FONT_SIZE, ShellTheme.NEUTRAL)
 	_objective_label.name = "CurrentObjective"
 	_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_block.add_child(_objective_label)
-	var close := _button("合上 Esc", "CloseStory", BODY_FONT_SIZE)
+	var close := _button("Close Esc", "CloseStory", BODY_FONT_SIZE)
 	close.custom_minimum_size = Vector2(142, 48)
 	close.pressed.connect(_emit_closed)
 	heading.add_child(close)
@@ -127,7 +127,7 @@ func _build() -> void:
 	_tab_row.custom_minimum_size = Vector2(150, 0)
 	_tab_row.add_theme_constant_override("separation", 7)
 	workspace.add_child(_tab_row)
-	var tab_caption := _label("章节", BODY_FONT_SIZE, ShellTheme.NEUTRAL)
+	var tab_caption := _label("Chapter", BODY_FONT_SIZE, ShellTheme.NEUTRAL)
 	tab_caption.name = "ChapterCaption"
 	_tab_row.add_child(tab_caption)
 	for index in range(TABS.size()):
@@ -204,14 +204,14 @@ func _rebuild(focus_target: String = "") -> void:
 		_body.remove_child(child)
 		child.queue_free()
 	var objective: Dictionary = _state.get("current_objective", {})
-	_objective_label.text = "当前目标：%s" % String(objective.get("text", "完成起步练习"))
+	_objective_label.text = "Current Target: %s" % String(objective.get("text", "Complete the Starting Exercises"))
 	for index in range(TABS.size()):
 		var button := _tab_row.get_node("StoryTab_%s" % TABS[index]) as Button
 		button.set_pressed_no_signal(index == _tab)
 		_style_tab(button, index == _tab)
 		if index in [1, 2]:
 			var entries: Array = _state.get("available_conversations" if index == 1 else "journal_entries", [])
-			button.text = "%s\n未读 %d" % [TABS[index], _unread_count(entries)]
+			button.text = "%s\nUnread %d" % [TABS[index], _unread_count(entries)]
 	match _tab:
 		0: _render_objective()
 		1: _render_conversations()
@@ -248,14 +248,14 @@ func _render_objective() -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
 	_body.add_child(column)
-	column.add_child(_chapter_heading("本章目标"))
+	column.add_child(_chapter_heading("Chapter Objective"))
 	column.add_child(_reading_label(String(objective.get("text", ""))))
 	var unread_row := HBoxContainer.new()
 	unread_row.add_theme_constant_override("separation", 12)
 	column.add_child(unread_row)
 	for index in [1, 2]:
 		var entries: Array = _state.get("available_conversations" if index == 1 else "journal_entries", [])
-		var unread := _button("未读%s %d" % [TABS[index], _unread_count(entries)], "OpenUnread_%d" % index)
+		var unread := _button("Unread %s %d" % [TABS[index], _unread_count(entries)], "OpenUnread_%d" % index)
 		unread.pressed.connect(func():
 			if index == 1: _conversation_unread_only = true
 			else: _journal_unread_only = true
@@ -263,10 +263,10 @@ func _render_objective() -> void:
 			_select_tab(index)
 		)
 		unread_row.add_child(unread)
-	column.add_child(_note_label("见闻随时可读，合上即可继续搜宝。"))
+	column.add_child(_note_label("Read observations at any time; close this to return to looting."))
 	var campaign_node := String(objective.get("campaign_node", ""))
 	if campaign_node != "":
-		column.add_child(_reading_label("到镇中的行路契台，选择当前主线契约。"))
+		column.add_child(_reading_label("Visit the Contract Board in town and select the current main quest contract."))
 	var journals: Array = _state.get("journal_entries", [])
 	if not journals.is_empty():
 		var latest: Dictionary = journals[journals.size() - 1]
@@ -274,7 +274,7 @@ func _render_objective() -> void:
 		if not pages.is_empty():
 			column.add_child(_ink_rule())
 			column.add_child(_reading_label(String(pages[0])))
-			column.add_child(_note_label("完整日志可稍后在“日志”中回看，不阅读也不影响奖励。"))
+			column.add_child(_note_label("Review the full entry later in the Journal. Reading is not required for rewards."))
 
 
 func _render_conversations() -> void:
@@ -289,13 +289,13 @@ func _render_conversations() -> void:
 	list.custom_minimum_size.x = 350
 	list.add_theme_constant_override("separation", 7)
 	split.add_child(list)
-	list.add_child(_chapter_heading("同行者"))
+	list.add_child(_chapter_heading("Companions"))
 	_add_person_filter(list)
 	_add_unread_filter(list, true)
 	if conversations.is_empty():
-		var message := "当前还没有可交谈的人。" if (_state.get("available_conversations", []) as Array).is_empty() else "这位镇民暂无未读对话。可切换人物，或取消“只看未读”回看。"
+		var message := "No one is available to talk right now." if (_state.get("available_conversations", []) as Array).is_empty() else "This resident has no unread dialogue. Switch characters or disable Unread Only to review."
 		if _conversation_filter.is_empty() and not (_state.get("available_conversations", []) as Array).is_empty():
-			message = "可读对话已全部听过。取消“只看未读”即可回看。"
+			message = "All available dialogue has been heard. Disable Unread Only to review."
 		list.add_child(_reading_label(message))
 		return
 	var page_count := _page_count(conversations.size(), LIST_PAGE_SIZE)
@@ -304,7 +304,8 @@ func _render_conversations() -> void:
 	for index in range(start, mini(start + LIST_PAGE_SIZE, conversations.size())):
 		var conversation: Dictionary = conversations[index]
 		var button := _entry_button("Conversation_%s" % String(conversation.id))
-		button.text = "%s · %s / %s" % ["已读" if bool(conversation.get("is_read", false)) else "未读", String(conversation.get("npc_name", "")), String(conversation.get("title", ""))]
+		button.text = "%s · %s / %s" % ["Read" if bool(conversation.get("is_read", false)) else "Unread", String(conversation.get("npc_name", "")), String(conversation.get("title", ""))]
+		button.tooltip_text = button.text
 		button.set_pressed_no_signal(String(conversation.id) == _conversation_id)
 		button.pressed.connect(func():
 			_select_entry(conversation, true)
@@ -314,13 +315,13 @@ func _render_conversations() -> void:
 	_add_page_controls(list, _conversation_list_page, page_count, func(page: int):
 		_select_entry(conversations[page * LIST_PAGE_SIZE], true)
 		_rebuild()
-	, "对话目录")
+	, "Dialogue Index")
 	var detail := VBoxContainer.new()
 	detail.name = "ConversationDetail"
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail.add_theme_constant_override("separation", 10)
 	split.add_child(detail)
-	detail.add_child(_reading_label("%s：%s" % [String(selected.get("npc_name", "")), String(selected.get("title", ""))], ShellTheme.BONE))
+	detail.add_child(_reading_label("%s: %s" % [String(selected.get("npc_name", "")), String(selected.get("title", ""))], ShellTheme.BONE))
 	detail.add_child(_ink_rule())
 	var pages: Array = selected.get("pages", [])
 	_conversation_page = clampi(_conversation_page, 0, maxi(0, pages.size() - 1))
@@ -369,7 +370,7 @@ func _add_person_filter(parent: Node) -> void:
 	filter.name = "ConversationPersonFilter"
 	filter.custom_minimum_size.y = 42
 	filter.add_theme_font_size_override("font_size", NOTE_FONT_SIZE)
-	filter.add_item("全部人物")
+	filter.add_item("All Characters")
 	var ids: Array[String] = [""]
 	var available := {}
 	for conversation: Dictionary in _state.get("available_conversations", []):
@@ -400,10 +401,10 @@ func _render_journal() -> void:
 	list.custom_minimum_size.x = 350
 	list.add_theme_constant_override("separation", 7)
 	split.add_child(list)
-	list.add_child(_chapter_heading("记录目录"))
+	list.add_child(_chapter_heading("Record Index"))
 	_add_unread_filter(list, false)
 	if entries.is_empty():
-		var message := "还没有日志。完成战斗后自动记录，不需要先阅读。" if (_state.get("journal_entries", []) as Array).is_empty() else "可读日志已全部读完。取消“只看未读”即可回看。"
+		var message := "No journal entries yet. Entries are recorded automatically after combat; reading is optional." if (_state.get("journal_entries", []) as Array).is_empty() else "All available journal entries have been read. Disable Unread Only to review."
 		list.add_child(_reading_label(message))
 		return
 	var page_count := _page_count(entries.size(), LIST_PAGE_SIZE)
@@ -413,9 +414,9 @@ func _render_journal() -> void:
 		var entry: Dictionary = entries[index]
 		var button := _entry_button("JournalEntry_%s" % String(entry.id))
 		var read := bool(entry.get("is_read", false))
-		button.text = "%s · %s / %s" % ["已读" if read else "未读", String(entry.get("entry_type", "记录")), String(entry.get("title", ""))]
+		button.text = "%s · %s / %s" % ["Read" if read else "Unread", String(entry.get("entry_type", "Records")), String(entry.get("title", ""))]
 		button.set_pressed_no_signal(String(entry.id) == _journal_id)
-		button.tooltip_text = "已读" if read else "未读；读完末页后确认记下。"
+		button.tooltip_text = "Read" if read else "Unread; confirm after reading the last page to record it."
 		button.pressed.connect(func():
 			_select_entry(entry, false)
 			_rebuild("reading")
@@ -424,7 +425,7 @@ func _render_journal() -> void:
 	_add_page_controls(list, _journal_list_page, page_count, func(page: int):
 		_select_entry(entries[page * LIST_PAGE_SIZE], false)
 		_rebuild()
-	, "记录目录")
+	, "Record Index")
 	var detail := VBoxContainer.new()
 	detail.name = "JournalDetail"
 	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -437,7 +438,7 @@ func _render_journal() -> void:
 	var entry_text := _reading_label(String(pages[_journal_page]), ShellTheme.BONE)
 	entry_text.custom_minimum_size.y = 150
 	detail.add_child(entry_text)
-	detail.add_child(_note_label("已读" if bool(selected.get("is_read", false)) else "未读"))
+	detail.add_child(_note_label("Read" if bool(selected.get("is_read", false)) else "Unread"))
 	_add_page_controls(detail, _journal_page, pages.size(), func(page: int):
 		_journal_page = page
 		_rebuild()
@@ -448,13 +449,13 @@ func _render_journal() -> void:
 func _render_town() -> void:
 	var changes: Array = _state.get("town_changes", [])
 	if changes.is_empty():
-		_body.add_child(_reading_label("哈姆雷特暂时没有变化。"))
+		_body.add_child(_reading_label("No changes in the hamlet for now."))
 		return
 	var column := VBoxContainer.new()
 	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 10)
 	_body.add_child(column)
-	column.add_child(_chapter_heading("哈姆雷特见闻"))
+	column.add_child(_chapter_heading("Hamlet Observations"))
 	var page_count := _page_count(changes.size(), TOWN_PAGE_SIZE)
 	_town_page = clampi(_town_page, 0, page_count - 1)
 	var grid := GridContainer.new()
@@ -497,7 +498,7 @@ func _add_unread_filter(parent: Node, conversation: bool) -> void:
 		entries = entries.filter(func(entry: Dictionary): return String(entry.npc) == _conversation_filter)
 	var filter := CheckButton.new()
 	filter.name = "ConversationUnreadFilter" if conversation else "JournalUnreadFilter"
-	filter.text = "只看未读 %d / %d" % [_unread_count(entries), entries.size()]
+	filter.text = "Unread Only %d / %d" % [_unread_count(entries), entries.size()]
 	filter.add_theme_font_size_override("font_size", NOTE_FONT_SIZE)
 	filter.set_pressed_no_signal(_conversation_unread_only if conversation else _journal_unread_only)
 	filter.toggled.connect(func(enabled: bool):
@@ -523,9 +524,9 @@ func _select_entry(entry: Dictionary, conversation: bool) -> void:
 
 
 func _add_read_completion(parent: Node, entry: Dictionary, page: int, conversation: bool) -> void:
-	var read := _button("已读 · 可回看" if bool(entry.get("is_read", false)) else "记下这次交谈 E" if conversation else "记下这篇日志 E", "ReadConversation" if conversation else "ReadJournal", NOTE_FONT_SIZE)
+	var read := _button("Read · Available to Review" if bool(entry.get("is_read", false)) else "Record This Conversation E" if conversation else "Record This Entry E", "ReadConversation" if conversation else "ReadJournal", NOTE_FONT_SIZE)
 	read.disabled = bool(entry.get("is_read", false)) or page < (entry.get("pages", []) as Array).size() - 1
-	read.tooltip_text = "读完末页后记下；提前合上不会标记已读。"
+	read.tooltip_text = "Record after the last page; closing early will not mark it read."
 	read.pressed.connect(_complete_reading.bind(String(entry.id), conversation))
 	parent.add_child(read)
 
@@ -547,22 +548,22 @@ func _complete_reading(entry_id: String, conversation: bool) -> void:
 	entry_read.emit(entry_id)
 
 
-func _add_page_controls(parent: Node, page: int, count: int, change: Callable, context: String = "正文") -> void:
+func _add_page_controls(parent: Node, page: int, count: int, change: Callable, context: String = "Text") -> void:
 	var row := HBoxContainer.new()
 	row.name = "PageControls"
 	row.add_theme_constant_override("separation", 10)
 	parent.add_child(row)
-	var previous := _button("上一组" if context != "正文" else "上一页", "PreviousPage", NOTE_FONT_SIZE)
-	previous.custom_minimum_size = Vector2(108, 40)
+	var previous := _button("Previous", "PreviousPage", NOTE_FONT_SIZE)
+	previous.custom_minimum_size = Vector2(90, 40)
 	previous.disabled = page <= 0
 	previous.pressed.connect(func(): change.call(page - 1))
 	row.add_child(previous)
 	var status := _note_label("%s %d / %d" % [context, page + 1, count])
-	status.custom_minimum_size.x = 130
+	status.custom_minimum_size.x = 100
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(status)
-	var next := _button("下一组" if context != "正文" else "下一页", "NextPage", NOTE_FONT_SIZE)
-	next.custom_minimum_size = Vector2(108, 40)
+	var next := _button("Next", "NextPage", NOTE_FONT_SIZE)
+	next.custom_minimum_size = Vector2(90, 40)
 	next.disabled = page >= count - 1
 	next.pressed.connect(func(): change.call(page + 1))
 	row.add_child(next)
@@ -658,7 +659,9 @@ func _entry_button(node_name: String) -> Button:
 	button.toggle_mode = true
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.custom_minimum_size = Vector2(330, 54)
-	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	button.autowrap_mode = TextServer.AUTOWRAP_OFF
+	button.clip_text = true
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.add_theme_color_override("font_color", Color("e9ddc3"))
 	return button
 

@@ -63,11 +63,11 @@ func refresh() -> void:
 	if not _is_open:
 		return
 	if not _snapshot_provider.is_valid():
-		_body.text = "尚未配置诊断快照提供者。"
+		_body.text = "No diagnostic snapshot provider is configured."
 		return
 	var snapshot_value: Variant = _snapshot_provider.call()
 	if not snapshot_value is Dictionary:
-		_body.text = "诊断快照不可用。"
+		_body.text = "Diagnostic snapshot unavailable."
 		return
 	_body.text = _render_snapshot(snapshot_value as Dictionary)
 	_body.scroll_vertical = 0
@@ -119,7 +119,7 @@ func _build_interface() -> void:
 
 	var title := Label.new()
 	title.name = "ConsoleTitle"
-	title.text = "测试控制台"
+	title.text = "Test Console"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", ShellThemeScript.BODY_FONT_SIZE + 2)
 	title.add_theme_color_override("font_color", ShellThemeScript.BONE)
@@ -127,14 +127,14 @@ func _build_interface() -> void:
 
 	var refresh_button := Button.new()
 	refresh_button.name = "RefreshButton"
-	refresh_button.text = "刷新"
+	refresh_button.text = "Refresh"
 	refresh_button.custom_minimum_size = Vector2(88.0, 42.0)
 	refresh_button.pressed.connect(refresh)
 	header.add_child(refresh_button)
 
 	var close_button := Button.new()
 	close_button.name = "CloseButton"
-	close_button.text = "关闭"
+	close_button.text = "Close"
 	close_button.custom_minimum_size = Vector2(88.0, 42.0)
 	close_button.pressed.connect(close_console)
 	header.add_child(close_button)
@@ -173,21 +173,21 @@ func _fit_panel() -> void:
 
 func _render_snapshot(snapshot: Dictionary) -> String:
 	var lines: Array[String] = []
-	_append_first_field(lines, snapshot, "路线", ["route", "route_id", "scene_route"])
-	_append_first_field(lines, snapshot, "窗口分辨率", ["window_resolution", "window", "resolution"])
-	_append_first_field(lines, snapshot, "逻辑分辨率", ["logical_resolution", "logical_size", "design_resolution"])
-	_append_first_field(lines, snapshot, "构建标识", ["build_id", "build_identifier", "build"])
-	_append_first_field(lines, snapshot, "档案标识", ["profile_id", "profile_identifier", "profile"])
-	_append_first_field(lines, snapshot, "训练报告", ["training", "training_report"])
-	_append_first_field(lines, snapshot, "原始报告", ["raw_report", "report_raw"])
-	_append_first_field(lines, snapshot, "代理协议", ["proxy_protocol", "protocol"])
-	_append_first_field(lines, snapshot, "代理指纹", ["proxy_fingerprint", "fingerprint"])
-	_append_first_field(lines, snapshot, "最近结算原始字段", ["last_settlement_raw", "last_settlement", "last_settlement_fields"])
-	_append_first_field(lines, snapshot, "测试标记", ["test_flags", "flags"])
-	_append_first_field(lines, snapshot, "日志路径", ["log_path", "playtest_log_path"])
+	_append_first_field(lines, snapshot, "Route", ["route", "route_id", "scene_route"])
+	_append_first_field(lines, snapshot, "Window Resolution", ["window_resolution", "window", "resolution"])
+	_append_first_field(lines, snapshot, "Logical Resolution", ["logical_resolution", "logical_size", "design_resolution"])
+	_append_first_field(lines, snapshot, "Build ID", ["build_id", "build_identifier", "build"])
+	_append_first_field(lines, snapshot, "Profile ID", ["profile_id", "profile_identifier", "profile"])
+	_append_first_field(lines, snapshot, "Training Report", ["training", "training_report"])
+	_append_first_field(lines, snapshot, "Raw Report", ["raw_report", "report_raw"])
+	_append_first_field(lines, snapshot, "Proxy Protocol", ["proxy_protocol", "protocol"])
+	_append_first_field(lines, snapshot, "Proxy Fingerprint", ["proxy_fingerprint", "fingerprint"])
+	_append_first_field(lines, snapshot, "Latest Settlement Raw Fields", ["last_settlement_raw", "last_settlement", "last_settlement_fields"])
+	_append_first_field(lines, snapshot, "Test Flags", ["test_flags", "flags"])
+	_append_first_field(lines, snapshot, "Log Path", ["log_path", "playtest_log_path"])
 	_append_sections(lines, snapshot)
 	if lines.is_empty():
-		return "暂无可显示的诊断字段。"
+		return "No diagnostic fields to display."
 	return "\n".join(lines).strip_edges()
 
 
@@ -206,12 +206,12 @@ func _append_sections(lines: Array[String], snapshot: Dictionary) -> void:
 	for section_value: Variant in snapshot["sections"]:
 		if section_value is Dictionary:
 			var section := section_value as Dictionary
-			var title := String(section.get("title", section.get("name", "附加信息")))
+			var title := String(section.get("title", section.get("name", "Additional Information")))
 			var content: Variant = section.get("content", section.get("data", section))
 			lines.append("[%s]" % title)
 			lines.append(_format_value(content))
 		elif section_value != null:
-			lines.append("[附加信息]")
+			lines.append("[Additional Information]")
 			lines.append(_format_value(section_value))
 		else:
 			continue
@@ -220,7 +220,7 @@ func _append_sections(lines: Array[String], snapshot: Dictionary) -> void:
 
 func _format_value(value: Variant) -> String:
 	if value == null:
-		return "（空）"
+		return "(Empty)"
 	if value is String:
 		return value as String
 	return JSON.stringify(value, "  ", false)

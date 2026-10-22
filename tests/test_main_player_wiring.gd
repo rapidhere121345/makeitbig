@@ -178,7 +178,7 @@ func _test_mounted_reset(resolved: Dictionary) -> void:
 
 
 func _test_mark_report(arena) -> void:
-	const EXPECTED := "猎人印记锁定：近战追猎者。"
+	const EXPECTED := "Hunter's Mark locked: Melee Pursuer."
 	var center: Vector2 = arena._arena_rect().get_center()
 	var target = arena.enemies[0]
 	_expect(arena.teleport_actor("ranger", center).get("ok", false) and arena.teleport_actor("enemy/%d" % target.entity_id, center + Vector2.RIGHT * 100.0).get("ok", false), "mounted mark report fixture placement failed")
@@ -244,7 +244,7 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 	runtime.set_process(false)
 	var arena = runtime.room_instance
 	arena.set_process(false)
-	const EXPECTED := "猎人印记锁定：冲锋掠袭者。"
+	const EXPECTED := "Hunter's Mark locked: Charging Raider."
 	for routed in [false, true]:
 		arena.start_room()
 		var target = _place_hud_targets(arena)
@@ -257,26 +257,26 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 			arena._simulate_tick()
 		else:
 			_expect(arena.request_player_cast("hunter_mark", target.entity_id).get("accepted", false), "direct HUD mark was rejected")
-		_expect("完整战斗反馈  " + EXPECTED in _hud_summary(arena), "accepted mark missing from real HUD summary (routed=%s)" % routed)
+		_expect("Full Combat Feedback  " + EXPECTED in _hud_summary(arena), "accepted mark missing from real HUD summary (routed=%s)" % routed)
 		arena.combat_system.battle_report = "stale combat report"
 		arena.encounter_director.battle_report = "stale encounter report"
 		for _tick in 3:
 			arena._simulate_tick()
 		_expect(EXPECTED in _hud_summary(arena), "idle ticks replaced the HUD mark (routed=%s)" % routed)
 		var rejected: Dictionary = arena.request_player_cast("hunter_mark", arena.enemies[1].entity_id)
-		_expect(not rejected.get("accepted", false) and EXPECTED in _hud_summary(arena) and "锁定：近战追猎者" not in _hud_summary(arena), "cooldown rejection fabricated a different successful HUD target")
+		_expect(not rejected.get("accepted", false) and EXPECTED in _hud_summary(arena) and "Locked: Melee Pursuer" not in _hud_summary(arena), "cooldown rejection fabricated a different successful HUD target")
 		# The existing pointer warning outranks a live mark, in the real HUD.
 		arena.presentation.commit(arena.gameplay_snapshot(), {"device": {"pointer_world_held": true}, "pointer_status": "no_pointer_target"})
-		_expect("鼠标未锁定目标" in _summary_label(arena).text and EXPECTED not in _summary_label(arena).text, "live mark hid the pointer warning")
+		_expect("No Pointer Target" in _summary_label(arena).text and EXPECTED not in _summary_label(arena).text, "live mark hid the pointer warning")
 		_expect(arena.request_player_cast("piercing_arrow", target.entity_id).get("accepted", false), "HUD arrow replacement was rejected")
-		_expect("穿刺箭拉弓" in _hud_summary(arena) and EXPECTED not in _hud_summary(arena), "new arrow windup did not replace HUD mark")
+		_expect("Drawing Piercing Arrow" in _hud_summary(arena) and EXPECTED not in _hud_summary(arena), "new arrow windup did not replace HUD mark")
 		for _tick in Rules.PIERCING_ARROW_WINDUP_TICKS + 30:
 			arena._simulate_tick()
-		_expect(not arena.last_attack_outcome.is_empty() and "穿刺箭" in _hud_summary(arena) and EXPECTED not in _hud_summary(arena), "fresh arrow result did not replace HUD mark")
+		_expect(not arena.last_attack_outcome.is_empty() and "Piercing Arrow" in _hud_summary(arena) and EXPECTED not in _hud_summary(arena), "fresh arrow result did not replace HUD mark")
 
 	arena.start_room()
 	var target = _place_hud_targets(arena)
-	_expect(not arena.request_player_cast("hunter_mark", 99999).get("accepted", false) and "猎人印记锁定" not in _hud_summary(arena), "missing target produced a successful HUD mark")
+	_expect(not arena.request_player_cast("hunter_mark", 99999).get("accepted", false) and "Hunter's Mark locked" not in _hud_summary(arena), "missing target produced a successful HUD mark")
 	# A report alone is not evidence of an active mark, nor raw internal copy.
 	arena.battle_report = EXPECTED
 	_expect(EXPECTED not in _hud_summary(arena), "a stale success string fabricated a HUD mark without State")
@@ -307,7 +307,7 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 		enemy.health = 0.0
 	_expect(not arena.request_player_cast("hunter_mark").get("accepted", false) and EXPECTED not in _hud_summary(arena), "no-target refusal fabricated a successful HUD mark")
 	arena.start_room()
-	_expect("猎人印记锁定" not in _hud_summary(arena), "room reset retained a successful HUD mark")
+	_expect("Hunter's Mark locked" not in _hud_summary(arena), "room reset retained a successful HUD mark")
 	runtime.free()
 
 

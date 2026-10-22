@@ -21,17 +21,17 @@ func _run() -> void:
 		"skill descriptions are no longer validated against the combat rules source", failures)
 	_expect(registry.skills.keys() == RegistryScript.SKILL_IDS, "skill order or ids changed", failures)
 	var arrow: Dictionary = registry.get_skill("piercing_arrow")
-	_expect(int(arrow.cooldown_ticks) == 13 and int(arrow.duration_ticks) == 10 and "有效的猎人印记" in String(arrow.target_rule) and "最近" in String(arrow.target_rule), "piercing arrow target/cooldown/action facts changed", failures)
-	_expect("真实箭矢" in String(arrow.full_effect) and "持弓手位" in String(arrow.full_effect) and "投射速度 v" in String(arrow.full_effect)
-		and "首次相交" in String(arrow.full_effect) and "载体伤害 × 本次箭事件数" in String(arrow.full_effect)
-		and "1.25" in String(arrow.full_effect) and "当前寻敌距离" in String(arrow.range_rule),
+	_expect(int(arrow.cooldown_ticks) == 13 and int(arrow.duration_ticks) == 10 and "valid Hunter's Mark" in String(arrow.target_rule) and "nearest" in String(arrow.target_rule), "piercing arrow target/cooldown/action facts changed", failures)
+	_expect("real arrow" in String(arrow.full_effect) and "bow hand" in String(arrow.full_effect) and "projectile speed v" in String(arrow.full_effect)
+		and "first intersection" in String(arrow.full_effect) and "carrier damage x this shot's arrow event count" in String(arrow.full_effect)
+		and "1.25" in String(arrow.full_effect) and "current targeting distance" in String(arrow.range_rule),
 		"piercing arrow projectile/damage/range facts changed", failures)
 	var arrow_limitations := "\n".join(arrow.limitations)
-	_expect("锁定箭矢方向" in arrow_limitations and "投射速度和伤害" in arrow_limitations
-		and "不会追踪或转向" in arrow_limitations and "受击范围" in arrow_limitations and "移出箭路或射程" in arrow_limitations,
+	_expect("Direction" in arrow_limitations and "projectile speed, and damage" in arrow_limitations
+		and "never home or turn" in arrow_limitations and "hit area" in arrow_limitations and "Moving out of that path or range" in arrow_limitations,
 		"piercing arrow frozen-path miss rule is no longer explained to the player", failures)
 	var mark: Dictionary = registry.get_skill("hunter_mark")
-	_expect(int(mark.cooldown_ticks) == 240 and int(mark.duration_ticks) == 180 and "1.5 倍" in String(mark.range_rule), "hunter mark facts changed", failures)
+	_expect(int(mark.cooldown_ticks) == 240 and int(mark.duration_ticks) == 180 and "1.5x" in String(mark.range_rule), "hunter mark facts changed", failures)
 	var dash: Dictionary = registry.get_skill("dash")
 	_expect(int(dash.cooldown_ticks) == 90 and int(dash.duration_ticks) == 6 and float(dash.displacement_units) == 180.0 and not bool(dash.invulnerable), "dash facts changed", failures)
 	var dodge: Dictionary = registry.get_skill("basic_dodge")

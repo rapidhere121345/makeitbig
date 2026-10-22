@@ -299,7 +299,7 @@ func _test_marker_copy(hub, failures: Array[String]) -> void:
 		_expect(not marker.is_empty(), "base hub: %s marker is empty" % feature_id, failures)
 		if not label.is_empty():
 			_expect(marker.contains(label), "base hub: %s marker lost the station name %s" % [feature_id, label], failures)
-		_expect(not marker.contains("接取，") and not marker.contains("匿名委托") and not marker.contains("只读样例"), "base hub: %s marker leaked route prose into the hub" % feature_id, failures)
+		_expect(not marker.contains("Accept, ") and not marker.contains("Anonymous Commission") and not marker.contains("Read-Only Sample"), "base hub: %s marker leaked route prose into the hub" % feature_id, failures)
 
 
 func _test_dynamic_progression(hub, failures: Array[String]) -> void:
@@ -309,8 +309,8 @@ func _test_dynamic_progression(hub, failures: Array[String]) -> void:
 		"auto_contract_wins": 0,
 		"early_game_complete": false,
 	}})
-	_expect(hub.get_feature_marker_text("proxy").contains("封印中"), "base hub: locked proxy marker was not shown", failures)
-	_expect(hub.get_progress_text().contains("Build …") and hub.get_progress_text().contains("巨像 …") and hub.get_progress_text().contains("Auto …"), "base hub: incomplete early-game progress was not shown", failures)
+	_expect(hub.get_feature_marker_text("proxy").contains("Sealed"), "base hub: locked proxy marker was not shown", failures)
+	_expect(hub.get_progress_text().contains("Build …") and hub.get_progress_text().contains("Colossus …") and hub.get_progress_text().contains("Auto …"), "base hub: incomplete early-game progress was not shown", failures)
 	hub.present({
 		"training": {"reports_by_fingerprint": {
 			"exponential-fingerprint": {"build_fingerprint": "exponential-fingerprint", "state": "exponential"},
@@ -322,7 +322,7 @@ func _test_dynamic_progression(hub, failures: Array[String]) -> void:
 			"early_game_complete": false,
 		},
 	})
-	_expect(hub.get_progress_text().contains("Build ✓") and hub.get_progress_text().contains("巨像 …"), "base hub: verified exponential Build did not complete the training objective", failures)
+	_expect(hub.get_progress_text().contains("Build ✓") and hub.get_progress_text().contains("Colossus …"), "base hub: verified exponential Build did not complete the training objective", failures)
 	hub.present({
 		"training": {"reports_by_fingerprint": {
 			"exponential-fingerprint": {"build_fingerprint": "other-fingerprint", "state": "exponential"},
@@ -342,15 +342,15 @@ func _test_dynamic_progression(hub, failures: Array[String]) -> void:
 		"auto_contract_wins": 1,
 		"early_game_complete": true,
 	}})
-	_expect(hub.get_feature_marker_text("proxy").contains("已解锁"), "base hub: unlocked proxy marker was not shown", failures)
-	_expect(hub.get_progress_text().contains("Build ✓") and hub.get_progress_text().contains("巨像 ✓") and hub.get_progress_text().contains("Auto ✓"), "base hub: completed early-game progress was not shown", failures)
+	_expect(hub.get_feature_marker_text("proxy").contains("Unlocked"), "base hub: unlocked proxy marker was not shown", failures)
+	_expect(hub.get_progress_text().contains("Build ✓") and hub.get_progress_text().contains("Colossus ✓") and hub.get_progress_text().contains("Auto ✓"), "base hub: completed early-game progress was not shown", failures)
 
 
 func _test_next_objective(hub, failures: Array[String]) -> void:
 	hub.present({"initial_class": "ranger", "resources": {"law_tallies": {"inscribe": 2, "rewrite": 1, "refine": 3}}}, {}, "Tutorial complete", {})
-	_expect(hub._profile_label.text.contains("游侠") and not hub._profile_label.text.contains("ranger"), "base hub: player-facing class name leaked internal id", failures)
-	_expect(hub._profile_label.tooltip_text.contains("律筹：添铸 2 · 改写 1 · 精炼 3") and not hub._profile_label.tooltip_text.contains("骰"), "base hub: law tally inventory was not available with the canonical terminology", failures)
-	_expect(hub._detail_status_label.text.contains("游侠基础教程已完成") and not hub._detail_status_label.text.contains("Tutorial complete"), "base hub: tutorial feedback was not localized", failures)
+	_expect(hub._profile_label.text.contains("Ranger") and not hub._profile_label.text.contains("ranger"), "base hub: player-facing class name leaked internal id", failures)
+	_expect(hub._profile_label.tooltip_text.contains("Law Tokens: Inscribe 2 · Rewrite 1 · Refine 3") and not hub._profile_label.tooltip_text.contains("dice"), "base hub: law tally inventory was not available with the canonical terminology", failures)
+	_expect(hub._detail_status_label.text.contains("Ranger basics tutorial complete") and not hub._detail_status_label.text.contains("Tutorial complete"), "base hub: tutorial feedback was not localized", failures)
 	_expect(not hub._detail_status_label.text.contains("Build"), "base hub: objective repeats debug-like progress abbreviations", failures)
 	hub.present(
 		{"progression": {"threshold_colossus_defeated": false, "proxy_unlocked": false, "auto_contract_wins": 0, "early_game_complete": false}},
@@ -358,17 +358,17 @@ func _test_next_objective(hub, failures: Array[String]) -> void:
 		"",
 		{"ok": true, "next_mainline_node_id": "mainline_03_first_elite", "earned_reward_tags": ["starter_loadout", "hunter_mark_skill", "equipment_compare_unlock", "dash_skill"], "early_game_complete": false}
 	)
-	_expect(hub.get_next_objective_text().contains("首个精英"), "base hub: campaign snapshot did not produce an actionable next objective", failures)
-	_expect(hub.get_feature_marker_text("contract").contains("主线 03"), "base hub: contract marker did not reflect the next authored node", failures)
-	_expect(hub.get_feature_marker_text("loadout").contains("比较已开放") and hub.get_feature_marker_text("forge").contains("封印中"), "base hub: post-first-hunt equipment availability disagreed with its authored reward", failures)
+	_expect(hub.get_next_objective_text().contains("first elite"), "base hub: campaign snapshot did not produce an actionable next objective", failures)
+	_expect(hub.get_feature_marker_text("contract").contains("Main Quest 03"), "base hub: contract marker did not reflect the next authored node", failures)
+	_expect(hub.get_feature_marker_text("loadout").contains("Compare Gear") and hub.get_feature_marker_text("forge").contains("Sealed"), "base hub: post-first-hunt equipment availability disagreed with its authored reward", failures)
 	hub.present(
 		{"progression": {"threshold_colossus_defeated": true, "proxy_unlocked": true, "auto_contract_wins": 1, "early_game_complete": true}},
 		{},
 		"",
 		{"ok": true, "next_mainline_node_id": "", "earned_reward_tags": ["equipment_compare_unlock", "law_forge_unlock", "early_campaign_complete"], "early_game_complete": true}
 	)
-	_expect(hub.get_next_objective_text().contains("前期毕业完成"), "base hub: completed campaign did not expose a stable follow-up objective", failures)
-	_expect(hub.get_feature_marker_text("loadout").contains("比较已开放") and hub.get_feature_marker_text("forge").contains("已解锁"), "base hub: authored facility rewards did not update their world markers", failures)
+	_expect(hub.get_next_objective_text().contains("Chapter complete"), "base hub: completed campaign did not expose a stable follow-up objective", failures)
+	_expect(hub.get_feature_marker_text("loadout").contains("Compare Gear") and hub.get_feature_marker_text("forge").contains("Unlocked"), "base hub: authored facility rewards did not update their world markers", failures)
 
 
 func _test_world_display_scale(hub, failures: Array[String]) -> void:
@@ -472,7 +472,7 @@ func _test_hub_prompt_stays_minimal(hub, failures: Array[String]) -> void:
 		_expect(prompt.size.x > 0.0 and prompt.size.y > 0.0, "base hub: %s has no proximity prompt" % feature_id, failures)
 		if prompt.size.x <= 0.0 or prompt.size.y <= 0.0:
 			continue
-		_expect(hub._nearby_label.text == "[E / Space] 进入 %s" % hub._nav_title(feature_id), "base hub: the %s prompt no longer names the stand E opens" % feature_id, failures)
+		_expect(hub._nearby_label.text == "[E / Space] Enter %s" % hub._nav_title(feature_id), "base hub: the %s prompt no longer names the stand E opens" % feature_id, failures)
 		_expect(prompt.position.x >= 0.0 and prompt.end.x <= 1280.0, "base hub: the %s prompt left the canvas horizontally" % feature_id, failures)
 		_expect(prompt.end.y <= BaseHubScreenScript.DESIGN_SIZE.y, "base hub: the %s prompt left the canvas vertically" % feature_id, failures)
 		_expect(prompt.size.x <= BaseHubScreenScript.PROMPT_MAX_WIDTH and prompt.size.y <= BaseHubScreenScript.PROMPT_HEIGHT, "base hub: the %s prompt grew past its published badge" % feature_id, failures)
@@ -527,7 +527,7 @@ func _test_interaction_anchor_tracks_focus(hub, failures: Array[String]) -> void
 ## explicit toggle, with the critical objective untouched in the strip. Known short
 ## English tokens become Chinese, unknown values are passed through verbatim.
 func _test_hub_information_copy_and_details(hub, failures: Array[String]) -> void:
-	var long_status := "装备已更新：裂风长弓（稀有）· 已写入构筑三号槽位 · 本次掉落计入图鉴与收藏进度，下一目标不受影响"
+	var long_status := "Equipment updated: Windcleaver Longbow (Rare) · Saved to build slot three · This drop counts toward the collection; the next objective is unchanged"
 	hub.present(_pre_boss_profile(), {"outcome": "victory", "rewards": {"equipment_drop_count": 2}}, long_status, {})
 	_expect(hub._detail_status_label.text == long_status and hub._detail_status_label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART,
 		"base hub: optional narrative lost or cropped the full status", failures)
@@ -537,20 +537,22 @@ func _test_hub_information_copy_and_details(hub, failures: Array[String]) -> voi
 	var objective_rect: Rect2 = hub._objective_label.get_global_rect()
 	(hub.find_child("HubInformationToggle", true, false) as Button).pressed.emit()
 	_expect(hub._detail_panel.visible and hub.information_details_expanded(), "base hub: narrative entry did not open", failures)
-	_expect(hub._detail_result_label.text.contains("胜利") and hub._detail_result_label.text.contains("装备 2 件"),
+	_expect(hub._detail_result_label.text.contains("Victory") and hub._detail_result_label.text.contains("Equipment: 2 Items"),
 		"base hub: optional narrative lost the actual settlement reading", failures)
 	_expect(hub._detail_help_label.text == BaseHubScreenScript.HELP_COPY_TEXT
 		and hub._detail_help_label.text.contains("Tab") and hub._detail_help_label.text.contains("F1"),
 		"base hub: complete keyboard guidance is unavailable", failures)
 	_expect(hub._objective_label.get_global_rect() == objective_rect and hub._objective_label.is_visible_in_tree()
 		and not hub._detail_panel.get_global_rect().intersects(objective_rect),
-		"base hub: opening narrative moved/covered the current objective", failures)
+		"base hub: opening narrative moved/covered the current objective (%s -> %s; panel %s)" % [
+			objective_rect, hub._objective_label.get_global_rect(), hub._detail_panel.get_global_rect(),
+		], failures)
 	_expect(hub._detail_panel.mouse_filter == Control.MOUSE_FILTER_STOP
 		and hub.find_child("HubInformationScroll", true, false) is ScrollContainer,
 		"base hub: narrative is not bounded or lets clicks open the town underneath", failures)
 	(hub.find_child("HubInformationClose", true, false) as Button).pressed.emit()
-	_expect(not hub._detail_panel.visible and hub._info_toggle.text == "近况", "base hub: narrative close did not restore town view", failures)
-	for pair: Array in [["Proxy pod calibration pending", "Proxy pod calibration pending"], ["Tutorial complete", "游侠基础教程已完成"], ["Tutorial complete (generation 7 / slot A).", "游侠基础教程已完成 （存档代 7／槽位 A）"]]:
+	_expect(not hub._detail_panel.visible and hub._info_toggle.text == "News", "base hub: narrative close did not restore town view", failures)
+	for pair: Array in [["Proxy pod calibration pending", "Proxy pod calibration pending"], ["Tutorial complete", "Ranger basics tutorial complete"], ["Tutorial complete (generation 7 / slot A).", "Ranger basics tutorial complete (generation 7 / slot A)."]]:
 		hub.present(_pre_boss_profile(), {"outcome": "mysterious_fate"}, pair[0], {})
 		_expect(hub._detail_status_label.text == pair[1], "base hub: optional status changed canonical/unknown copy", failures)
 		_expect(hub._detail_result_label.text.contains("mysterious_fate"), "base hub: optional receipt renamed an unknown outcome", failures)
@@ -592,7 +594,7 @@ func _test_landmarks_follow_world(hub, failures: Array[String]) -> void:
 			"base hub: %s landmark changed its reading sizes" % feature_id, failures)
 		_expect(title.text == String(state.get("title", "")) and status.text == String(state.get("status", "")),
 			"base hub: %s landmark identity/status disagrees with the snapshot" % feature_id, failures)
-		_expect(not status.text.contains("\n") and status.text.length() <= 18,
+		_expect(not status.text.contains("\n") and status.text.length() <= 32,
 			"base hub: %s landmark grew a long status block" % feature_id, failures)
 	_expect(visible_count < FEATURE_IDS.size(), "base hub: all five landmarks leaked outside the live lens", failures)
 	for feature_id: String in FEATURE_IDS:
@@ -611,19 +613,19 @@ func _test_compact_ui_sizes(failures: Array[String]) -> void:
 		scene_tree.root.add_child(host)
 		var hub = BaseHubScreenScript.new()
 		host.add_child(hub)
-		hub.present({"initial_class": "ranger", "progression": {}}, {}, "一次更新。".repeat(50),
+		hub.present({"initial_class": "ranger", "progression": {}}, {}, "One update.".repeat(50),
 			{"next_mainline_node_id": "mainline_02_priority_under_pressure"})
 		hub.present_adventure({"level": 12, "points_available": 24}, {
-			"current_objective": {"text": "与Leia交谈，确认寒原失联的旧路。"},
+			"current_objective": {"text": "Speak with Leia about the old road that fell silent in the Coldlands."},
 			"journal_entries": [{"is_read": false}, {"is_read": false}],
-			"town_changes": [{"text": "炉边镇近况。".repeat(30)}],
+			"town_changes": [{"text": "HearthsideNews.".repeat(30)}],
 		})
 		_sort_hub_ui(hub)
 		var bounds := Rect2(Vector2.ZERO, Vector2(dimensions))
 		_expect(hub.size == Vector2(dimensions), "base hub: host did not adopt " + str(dimensions), failures)
 		_expect(bounds.encloses(hub._header.get_global_rect()), "base hub: compact header is offscreen at " + str(dimensions), failures)
-		_expect(hub._profile_label.text == "Lv.12 · 游侠" and hub._character_button.text == "成长 C · 24点"
-			and hub._story_button.text == "见闻 J · 2", "base hub: live level/growth/unread state is wrong", failures)
+		_expect(hub._profile_label.text == "Lv.12 · Ranger" and hub._character_button.text == "Talents C · 24"
+			and hub._story_button.text == "Journal J · 2", "base hub: live level/growth/unread state is wrong", failures)
 		var previous: Rect2 = hub._objective_label.get_global_rect()
 		for control: Control in [hub._objective_label, hub._character_button, hub._story_button, hub._info_toggle,
 			hub.find_child("HubSettingsSpace", true, false)]:
@@ -634,11 +636,11 @@ func _test_compact_ui_sizes(failures: Array[String]) -> void:
 					"base hub: top actions overlap at " + str(dimensions), failures)
 			previous = control.get_global_rect()
 		_expect(hub._objective_label.get_visible_line_count() == hub._objective_label.get_line_count()
-			and hub._objective_label.get_theme_font("font").get_string_size(hub._objective_label.text,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x <= hub._objective_label.size.x,
+			and hub._objective_label.get_line_count() <= 2
+			and hub._objective_label.get_minimum_size().y <= hub._objective_label.size.y,
 			"base hub: actual current objective is cropped at " + str(dimensions), failures)
 		_test_nav_long_status_and_bounds(hub, failures)
-		hub.present(hub._profile, {}, "一次更新。".repeat(50), hub._campaign_snapshot)
+		hub.present(hub._profile, {}, "One update.".repeat(50), hub._campaign_snapshot)
 		hub.set_information_details_expanded(true)
 		_sort_hub_ui(hub)
 		var scroll := hub.find_child("HubInformationScroll", true, false) as ScrollContainer
@@ -709,10 +711,10 @@ func _test_resident_prompt(hub, failures: Array[String]) -> void:
 			feet = candidate
 			break
 	_expect(feet.is_finite(), "base hub: resident approach blocked", failures)
-	hub.present_adventure({}, {"available_conversations": [{"npc": "mira", "npc_name": "米拉", "stage": 0, "id": "hub_prompt_test", "pages": ["留一盏灯。"]}]})
+	hub.present_adventure({}, {"available_conversations": [{"npc": "mira", "npc_name": "Mira", "stage": 0, "id": "hub_prompt_test", "pages": ["Leave a lamp lit."]}]})
 	hub.set_hero_position(feet * 2.0)
 	_expect(hub.nearby_resident_id() == "mira", "base hub: closest resident lost E priority", failures)
-	_expect(hub._nearby_label.text.contains("米拉"), "base hub: NPC prompt did not name the resident", failures)
+	_expect(hub._nearby_label.text.contains("Mira"), "base hub: NPC prompt did not name the resident", failures)
 	var before: Dictionary = hub.travel_snapshot()
 	_expect(hub.talk_to_resident("mira"), "base hub: conversation did not open", failures)
 	hub.move_hero(Vector2.RIGHT, 1.0)
@@ -748,9 +750,9 @@ func _test_nav_state_matches_cards(hub, failures: Array[String]) -> void:
 		var detail := String(state.get("detail", ""))
 		if bool(state.get("locked", false)):
 			_expect(not String(state.get("reason", "")).is_empty(), "base hub: %s is locked without a reason" % String(state.get("id", "")), failures)
-			_expect(detail.contains("封印中") or detail.contains("固定起步装"), "base hub: locked %s does not explain its lock in the world note" % String(state.get("id", "")), failures)
+			_expect(detail.contains("Sealed") or detail.contains("Fixed Starter Gear"), "base hub: locked %s does not explain its lock in the world note" % String(state.get("id", "")), failures)
 		else:
-			_expect(not detail.contains("封印中") and not detail.contains("固定起步装"), "base hub: open %s still reads as locked" % String(state.get("id", "")), failures)
+			_expect(not detail.contains("Sealed") and not detail.contains("Fixed Starter Gear"), "base hub: open %s still reads as locked" % String(state.get("id", "")), failures)
 
 
 ## A click on a landmark must leave through exactly the same signal as walking up
@@ -786,13 +788,13 @@ func _test_goal_and_road_guide(hub, failures: Array[String]) -> void:
 	state.start_new_profile("ranger")
 	state.complete_tutorial()
 	hub.present(state.profile, {}, "", state.campaign_progress_snapshot())
-	hub.present_adventure({}, {"current_objective": {"text": "沿寒原旧路清通外段，带回能用的材料与装备"}})
+	hub.present_adventure({}, {"current_objective": {"text": "Clear the outer stretch of the old road across the cold plains and bring back usable materials and equipment"}})
 	## The hub instance carries selections from earlier suites: start from the
 	## recommended departure, exactly like a fresh town arrival.
 	_town_of(hub).select_destination("contract")
-	_expect(hub._objective_label.text.contains("行路契台") and hub._objective_label.text.contains("初次狩猎"),
+	_expect(hub._objective_label.text.contains("Contract Board") and hub._objective_label.text.contains("First Hunt"),
 		"base hub: the first-hunt goal does not name the contract stand and the first hunt", failures)
-	_expect(hub._objective_label.tooltip_text.contains("沿寒原旧路"),
+	_expect(hub._objective_label.tooltip_text.contains("old road"),
 		"base hub: the story objective lost its tooltip context", failures)
 	_expect(hub.wayfinding_report().get("id", "") == "contract", "base hub: the recommended departure is not the contract desk", failures)
 	## Entering a stand within reach opens it and is not a destination choice.
@@ -825,13 +827,13 @@ func _test_nav_locked_copy(hub, failures: Array[String]) -> void:
 	## The proxy gate is the colossus first kill that grants the four white cores
 	## (application_state._record_contract_result), never the later AUTO run.
 	var proxy_reason := String(proxy_state.get("reason", ""))
-	_expect(proxy_reason == String(BaseHubScreenScript._UNLOCK_REASONS["proxy"]) and proxy_reason.contains("首杀") and proxy_reason.contains("巨像"), "base hub: the proxy lock reason stopped naming the colossus first kill", failures)
-	_expect(not proxy_reason.contains("AUTO") and not proxy_reason.contains("考核"), "base hub: the proxy lock reason drifted onto the later AUTO certification", failures)
+	_expect(proxy_reason == String(BaseHubScreenScript._UNLOCK_REASONS["proxy"]) and proxy_reason.contains("First") and proxy_reason.contains("Kill") and proxy_reason.contains("Colossus"), "base hub: the proxy lock reason stopped naming the colossus first kill", failures)
+	_expect(not proxy_reason.contains("AUTO") and not proxy_reason.contains("Trial"), "base hub: the proxy lock reason drifted onto the later AUTO certification", failures)
 	var forged: Dictionary = hub.get_navigation_state("forge")
-	_expect(bool(forged.get("locked", false)) and String(forged.get("reason", "")) == String(BaseHubScreenScript._UNLOCK_REASONS["forge"]) and String(forged.get("reason", "")).contains("锻造"), "base hub: the forge lock reason stopped naming its authored reward", failures)
+	_expect(bool(forged.get("locked", false)) and String(forged.get("reason", "")) == String(BaseHubScreenScript._UNLOCK_REASONS["forge"]) and String(forged.get("reason", "")).to_lower().contains("forge"), "base hub: the forge lock reason stopped naming its authored reward", failures)
 	var rack: Dictionary = hub.get_navigation_state("loadout")
 	_expect(not bool(rack.get("locked", false)) and String(rack.get("reason", "")).is_empty()
-		and String(rack.get("status", "")) == "起步装备可查看",
+		and String(rack.get("status", "")) == "Inspect Starter Gear",
 		"base hub: accessible starter rack did not show the first-victory comparison gate", failures)
 	_expect(not bool(hub.get_navigation_state("contract").get("locked", false)) and not bool(hub.get_navigation_state("training").get("locked", false)), "base hub: an always-open page was reported as locked", failures)
 	## A locked card carries the published non-colour mark and the real gate, never
@@ -841,7 +843,7 @@ func _test_nav_locked_copy(hub, failures: Array[String]) -> void:
 		var locked_status := String(locked_state.get("status", ""))
 		_expect(locked_status.begins_with(BaseHubScreenScript.LOCK_MARK), "base hub: the locked %s card lost its non-colour lock mark" % locked_id, failures)
 		_expect(locked_status.contains(String(locked_state.get("reason", ""))), "base hub: the locked %s card does not show why it is locked" % locked_id, failures)
-		_expect(String(locked_state.get("detail", "")).contains("封印中") or locked_id == "loadout", "base hub: the locked %s world note stopped saying it is sealed" % locked_id, failures)
+		_expect(String(locked_state.get("detail", "")).contains("Sealed") or locked_id == "loadout", "base hub: the locked %s world note stopped saying it is sealed" % locked_id, failures)
 	var contract_state: Dictionary = hub.get_navigation_state("contract")
 	_expect(not String(contract_state.get("status", "")).is_empty() and String(contract_state.get("status", "")) == String(contract_state.get("detail", "")), "base hub: the open contract card lost its approach wording", failures)
 
@@ -856,15 +858,15 @@ func _test_first_hunt_rack_availability(hub, failures: Array[String]) -> void:
 			state.complete_tutorial()
 		hub.present(state.profile, {}, "", state.campaign_progress_snapshot())
 		var rack: Dictionary = hub.get_navigation_state("loadout")
-		_expect(not bool(rack.locked) and rack.reason == "" and rack.status == "起步装备可查看",
+		_expect(not bool(rack.locked) and rack.reason == "" and rack.status == "Inspect Starter Gear",
 			"base hub: real starter profile's accessible rack was shown as sealed", failures)
 	state.prepare_contract({"contract_id": "mainline_01_first_hunt", "mode": "Manual", "seed": 301, "room_count": 2})
 	state.begin_session()
 	state.complete_session({"outcome": "victory", "rooms_completed": 2})
 	hub.present(state.profile, state.last_result, "", state.campaign_progress_snapshot())
 	var rack: Dictionary = hub.get_navigation_state("loadout")
-	_expect(not bool(rack.locked) and rack.reason == "" and rack.status == "比较已开放"
-		and hub.get_feature_marker_text("loadout").contains("比较已开放")
+	_expect(not bool(rack.locked) and rack.reason == "" and rack.status == "Compare Gear"
+		and hub.get_feature_marker_text("loadout").contains("Compare Gear")
 		and hub.get_landmark("loadout").get_node("Copy/Status").text == rack.status,
 		"base hub: real first-victory rack landmark and marker disagree with comparison availability", failures)
 
@@ -883,8 +885,8 @@ func _test_nav_boss_crossing(hub, failures: Array[String]) -> void:
 	var after: Dictionary = hub.get_navigation_state("proxy")
 	_expect(not bool(after.get("locked", false)), "base hub: the boss defeat did not open the proxy card", failures)
 	_expect(String(after.get("status", "")) != String(before_icon_state.get("status", "")), "base hub: the proxy card kept its pre-boss copy after the boss", failures)
-	_expect(not String(after.get("status", "")).contains("封印中"), "base hub: the opened proxy card still reads as locked", failures)
-	_expect(String(after.get("status", "")).contains("已解锁"), "base hub: the opened proxy card does not read as unlocked", failures)
+	_expect(not String(after.get("status", "")).contains("Sealed"), "base hub: the opened proxy card still reads as locked", failures)
+	_expect(String(after.get("status", "")).contains("Unlocked"), "base hub: the opened proxy card does not read as unlocked", failures)
 	_expect(not bool(hub.get_navigation_state("forge").get("locked", false)) and not bool(hub.get_navigation_state("loadout").get("locked", false)), "base hub: the authored facility rewards did not open their cards", failures)
 	_expect(String(hub.get_navigation_state("contract").get("status", "")).is_empty() == false, "base hub: the contract card lost its copy after graduation", failures)
 	for feature_id: String in FEATURE_IDS:

@@ -7,8 +7,8 @@ signal dismissed
 
 const ShellTheme = preload("res://src/presentation/shell_theme.gd")
 const PORTRAIT_ROOT := "res://art/production/p1/story_portraits_r14/"
-const NPC_ROLES := {"mira":"守冬塔值守", "iven":"当代记录者", "taren":"行路商人", "leia":"值守学徒", "oren":"修补者"}
-const NPC_NAMES := {"mira":"米拉", "iven":"伊文", "taren":"塔伦", "leia":"莱娅", "oren":"奥伦"}
+const NPC_ROLES := {"mira":"Winter Tower Keeper", "iven":"Chronicler", "taren":"Traveling Merchant", "leia":"Keeper's Apprentice", "oren":"Mender"}
+const NPC_NAMES := {"mira":"Mira", "iven":"Iven", "taren":"Taren", "leia":"Leia", "oren":"Oren"}
 
 var _entry: Dictionary = {}
 var _page := 0
@@ -41,7 +41,7 @@ func _ready() -> void:
 	_panel.anchor_right = 0.88
 	_panel.anchor_top = 1.0
 	_panel.anchor_bottom = 1.0
-	_panel.offset_top = -334
+	_panel.offset_top = -414
 	_panel.offset_bottom = -102
 	_panel.add_theme_stylebox_override("panel", ShellTheme.panel_style("paper"))
 	add_child(_panel)
@@ -68,10 +68,11 @@ func _ready() -> void:
 	heading.add_child(_speaker)
 	_role = _label("", 18, ShellTheme.NEUTRAL)
 	_role.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_role.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.add_child(_role)
 	_close = Button.new()
 	_close.name = "CloseDialogue"
-	_close.text = "稍后再聊 Esc"
+	_close.text = "Close Esc"
 	_close.add_theme_font_size_override("font_size", 18)
 	## The advertised Esc must work while a dialogue button holds focus: GUI
 	## focus consumes the key before the hub's unhandled handler sees it, so
@@ -99,7 +100,7 @@ func _ready() -> void:
 	controls.add_child(_count)
 	_previous = Button.new()
 	_previous.name = "DialoguePrevious"
-	_previous.text = "上一句"
+	_previous.text = "Previous Line"
 	_previous.disabled = true
 	_previous.add_theme_font_size_override("font_size", 22)
 	_previous.custom_minimum_size = Vector2(108, 42)
@@ -176,25 +177,25 @@ func dialogue_report() -> Dictionary:
 func _render_line() -> void:
 	var previous_had_focus := get_viewport().gui_get_focus_owner() == _previous
 	var line := String(_entry.pages[_page])
-	var split := line.find("：")
-	var name_value := line.substr(0, split) if split >= 0 else String(_entry.get("npc_name", ""))
+	var parts := speaker_line(_entry, line)
+	var name_value := String(parts.speaker)
 	_speaker.text = name_value
-	_speech.text = line.substr(split + 1) if split >= 0 else line
+	_speech.text = String(parts.speech)
 	var portrait_id := portrait_id_for_line(_entry, line)
 	## The role rail always names the conversation partner: when the wanderer
-	## holds the line, "流浪者 · 流浪者" reads like the dialogue switched target
+	## holds the line, "Wanderer · Wanderer" reads like the dialogue switched target
 	## (GPU acceptance R1 backlog). The speaker label still tracks the line.
 	var partner_id := String(_entry.get("npc", ""))
 	if portrait_id == partner_id:
 		_role.text = String(NPC_ROLES.get(partner_id, "")) + " · " + String(_entry.get("title", ""))
 	else:
-		_role.text = "与%s交谈 · %s" % [String(_entry.get("npc_name", "")), String(_entry.get("title", ""))]
+		_role.text = "Talk to %s · %s" % [String(_entry.get("npc_name", "")), String(_entry.get("title", ""))]
 	_portrait.texture = portrait_for_line(_entry, line)
 	# An empty player portrait keeps the same reading origin between speakers.
 	_portrait.visible = true
-	_count.text = "第 %d / %d 句" % [_page + 1, _entry.pages.size()]
+	_count.text = "Line %d / %d" % [_page + 1, _entry.pages.size()]
 	_previous.disabled = _page == 0
-	_next.text = "聊完了 E / Enter" if _page == _entry.pages.size() - 1 else "继续 E / Enter"
+	_next.text = "Finish E / Enter" if _page == _entry.pages.size() - 1 else "Continue E / Enter"
 	_update_focus_order()
 	if previous_had_focus and _previous.disabled:
 		_next.grab_focus()
@@ -233,12 +234,23 @@ func _input(event: InputEvent) -> void:
 
 
 static func portrait_id_for_line(entry: Dictionary, line: String) -> String:
-	var split := line.find("：")
-	var speaker := line.substr(0, split) if split >= 0 else String(entry.get("npc_name", ""))
-	if speaker == "流浪者": return ""
+	var speaker := String(speaker_line(entry, line).speaker)
+	if speaker == "Wanderer": return ""
 	for id: String in NPC_NAMES:
 		if speaker == NPC_NAMES[id]: return id
 	return String(entry.get("npc", ""))
+
+
+static func speaker_line(entry: Dictionary, line: String) -> Dictionary:
+	# Split only recognized speakers, not ordinary prose that happens to use a colon.
+	for delimiter: String in [":", "\uff1a"]:
+		var split := line.find(delimiter)
+		if split < 0:
+			continue
+		var speaker := line.substr(0, split).strip_edges()
+		if speaker == "Wanderer" or speaker in NPC_NAMES.values():
+			return {"speaker": speaker, "speech": line.substr(split + 1).strip_edges()}
+	return {"speaker": String(entry.get("npc_name", "")), "speech": line}
 
 
 static func portrait_for_line(entry: Dictionary, line: String) -> Texture2D:

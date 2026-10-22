@@ -39,7 +39,7 @@ func _test_damage_text_formatting(arena: Node, failures: Array[String]) -> void:
 	var before: String = arena._semantic_state_hash("float-text")
 	var presenter := ArenaCombatPresenterScript.new()
 	for pair in [["253.968254", "254"], ["−253.968254", "−254"], ["-253.968254", "-254"],
-		["+253.968254", "+254"], ["闪避", "闪避"], ["1.25e6", "1.25e6"], ["1.2K", "1.2K"], ["−1.25e6", "−1.25e6"]]:
+		["+253.968254", "+254"], ["Dodge", "Dodge"], ["1.25e6", "1.25e6"], ["1.2K", "1.2K"], ["−1.25e6", "−1.25e6"]]:
 		_expect(String(presenter.call("_compact_feedback_number", pair[0])) == pair[1], "damage text: wrong draw-only format for %s" % pair[0], failures)
 	_expect(arena._semantic_state_hash("float-text") == before, "damage text formatting changed combat authority", failures)
 

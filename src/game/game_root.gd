@@ -77,11 +77,11 @@ const PROTOTYPE_DEBUG_REJECTED_SAVE_DIRECTORY: String = "user://makeitbig-protot
 const PROTOTYPE_DEBUG_FORCED_DROP_TAG: String = "equipment_general"
 const LOADOUT_PARAMETER_KEYS: Array[String] = ["p", "T", "v", "d", "turn", "damage", "max_health"]
 const SLOT_LABELS := {
-	"main_hand": "主手", "off_hand": "副手", "gloves": "手套", "ring": "戒指",
-	"head": "头部", "chest": "胸甲", "legs": "裤甲", "feet": "腿甲",
-	"wrists": "护腕", "belt": "腰带", "ring_2": "戒指二", "neck": "项链",
+	"main_hand": "Main Hand", "off_hand": "Off Hand", "gloves": "Gloves", "ring": "Ring",
+	"head": "Head", "chest": "Chest", "legs": "Legs", "feet": "Feet",
+	"wrists": "Wrists", "belt": "Belt", "ring_2": "Ring 2", "neck": "Necklace",
 }
-const PRESET_LABELS := {"convergent": "收敛", "critical": "临界", "exponential": "指数"}
+const PRESET_LABELS := {"convergent": "Convergent", "critical": "Critical", "exponential": "Exponential"}
 const DEFAULT_CONTRACT: Dictionary = {
 	"contract_id": "first_contract",
 	"mode": "Manual",
@@ -357,12 +357,12 @@ func _test_console_snapshot() -> Dictionary:
 		},
 		"log_path": playtest_log.call("log_path") if playtest_log != null and playtest_log.has_method("log_path") else "",
 		"sections": [
-			{"title": "当前契约完整字段", "content": _last_contract.duplicate(true)},
-			{"title": "表现层布局", "content": layout.duplicate(true)},
+			{"title": "Full current contract data", "content": _last_contract.duplicate(true)},
+			{"title": "Presentation layout", "content": layout.duplicate(true)},
 		],
 	}
 	if application_state == null or not application_state.has_profile():
-		snapshot["profile_id"] = "尚未建立档案"
+		snapshot["profile_id"] = "No profile created"
 		snapshot["last_settlement_raw"] = {}
 		return snapshot
 	var profile_snapshot: Dictionary = application_state.profile
@@ -388,9 +388,9 @@ func _test_console_snapshot() -> Dictionary:
 	snapshot["proxy_protocol"] = resolved_proxy.duplicate(true)
 	snapshot["proxy_fingerprint"] = String(resolved_proxy.get("semantic_fingerprint", ""))
 	snapshot["last_settlement_raw"] = application_state.last_result.duplicate(true)
-	(snapshot["sections"] as Array).append({"title": "当前构筑完整字段", "content": resolved.duplicate(true)})
+	(snapshot["sections"] as Array).append({"title": "Full current build data", "content": resolved.duplicate(true)})
 	(snapshot["sections"] as Array).append({
-		"title": "档案中的装备与代理原始字段",
+		"title": "Raw profile equipment and proxy data",
 		"content": {
 			"active_build": (profile_snapshot.get("active_build", {}) as Dictionary).duplicate(true) if profile_snapshot.get("active_build", null) is Dictionary else {},
 			"inventory": (profile_snapshot.get("inventory", {}) as Dictionary).duplicate(true) if profile_snapshot.get("inventory", null) is Dictionary else {},
@@ -533,7 +533,7 @@ func start_new_game(initial_class: String = "ranger") -> Dictionary:
 	_last_contract.clear()
 	_playtest_profile_started_msec = Time.get_ticks_msec()
 	_record_playtest("profile_started", {"initial_class": String(application_state.profile.get("initial_class", initial_class))})
-	_status_message = _persist("新档案已保存", SceneRouterScript.ROUTE_TUTORIAL)
+	_status_message = _persist("New profile saved", SceneRouterScript.ROUTE_TUTORIAL)
 	return _transition(SceneRouterScript.ROUTE_TUTORIAL)
 
 
@@ -554,7 +554,7 @@ func complete_tutorial() -> Dictionary:
 	if not bool(completed.get("ok", false)):
 		return completed
 	_record_playtest("tutorial_completed", {"initial_class": String(application_state.profile.get("initial_class", ""))})
-	_status_message = _persist("游侠基础教程已完成", SceneRouterScript.ROUTE_BASE)
+	_status_message = _persist("Ranger basics tutorial complete", SceneRouterScript.ROUTE_BASE)
 	return _transition(SceneRouterScript.ROUTE_BASE)
 
 
@@ -573,7 +573,7 @@ func open_story() -> Dictionary:
 func read_story_entry(entry_id: String) -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_STORY: return _failure("wrong_route")
 	var result: Dictionary = application_state.mark_story_read(entry_id)
-	if bool(result.get("ok",false)): _persist("见闻已记下。", SceneRouterScript.ROUTE_BASE)
+	if bool(result.get("ok",false)): _persist("Observation recorded.", SceneRouterScript.ROUTE_BASE)
 	return result
 
 
@@ -606,7 +606,7 @@ func change_character_talent(action: String, value: String = "") -> Dictionary:
 	var result: Dictionary = application_state.change_talent(action, value)
 	var message := ""
 	if not bool(result.get("ok",false)):
-		message = "当前加点不满足条件：检查可用点数、层级投入与关键天赋数量。"
+		message = "Invalid allocation: check available points, tier investment, and keystone count."
 	else:
 		message = _persist("", SceneRouterScript.ROUTE_BASE)
 	_current_screen.present(application_state.growth_snapshot(), message)
@@ -647,7 +647,7 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 			var slot := String(payload.get("slot", ""))
 			subject_item = _equipped_item_for_slot(slot)
 		var subject_label := _equipment_label(subject_item, _slot_label(String(payload.get("slot", ""))))
-		var action_label := "拆解" if action_id == "salvage_item" else ("卸下装备" if action_id == "unequip_item" else "穿戴装备")
+		var action_label := "Salvage" if action_id == "salvage_item" else ("Unequip item" if action_id == "unequip_item" else "Equip item")
 		var changed: Dictionary
 		if action_id == "equip_item":
 			changed = application_state.equip_item(String(payload.get("instance_id", "")))
@@ -665,19 +665,19 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 				"operation": String(changed.get("operation", "")),
 				"amount": int(changed.get("amount", 0)),
 			})
-			_status_message = _persist("拆解完成：%s → %s律筹 ×%d" % [subject_label, _law_tally_label(String(changed.get("operation", ""))), int(changed.get("amount", 0))], SceneRouterScript.ROUTE_BASE)
+			_status_message = _persist("Salvaged: %s -> %s Law Tokens x%d" % [subject_label, _law_tally_label(String(changed.get("operation", ""))), int(changed.get("amount", 0))], SceneRouterScript.ROUTE_BASE)
 		else:
 			_record_playtest("loadout_changed", _build_loadout_telemetry(action_id, subject, before))
-			_status_message = _persist("%s：%s" % ["已卸下" if action_id == "unequip_item" else "已装备", subject_label], SceneRouterScript.ROUTE_BASE)
+			_status_message = _persist("%s: %s" % ["Unequipped" if action_id == "unequip_item" else "Equipped", subject_label], SceneRouterScript.ROUTE_BASE)
 		_present_facility(normalized_facility, _status_message)
 		return changed
 	if normalized_facility == SceneRouterScript.ROUTE_LOADOUT and action_id == "select_ranger_build":
 		var selected: Dictionary = application_state.select_ranger_build(String(payload.get("preset_id", "")))
 		if not bool(selected.get("ok", false)):
-			_status_message = PlayerFacingStatusScript.failure("切换构筑", String(selected.get("error", "unknown_error")))
+			_status_message = PlayerFacingStatusScript.failure("Switch Build", String(selected.get("error", "unknown_error")))
 			_present_facility(normalized_facility, _status_message)
 			return selected
-		_status_message = _persist("构筑已切换：%s" % _preset_label(String(payload.get("preset_id", ""))), SceneRouterScript.ROUTE_BASE)
+		_status_message = _persist("Build switched: %s" % _preset_label(String(payload.get("preset_id", ""))), SceneRouterScript.ROUTE_BASE)
 		var selected_resolved: Dictionary = application_state.resolved_build_snapshot()
 		_record_playtest("loadout_changed", {
 			"action": "select_ranger_build",
@@ -689,10 +689,10 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 	if normalized_facility == SceneRouterScript.ROUTE_TRAINING and action_id == "run_training_trial":
 		var trial: Dictionary = application_state.run_training_trial()
 		if not bool(trial.get("ok", false)):
-			_status_message = PlayerFacingStatusScript.failure("训练", String(trial.get("error", "unknown_error")))
+			_status_message = PlayerFacingStatusScript.failure("Training", String(trial.get("error", "unknown_error")))
 			_present_facility(normalized_facility, _status_message)
 			return trial
-		_status_message = _persist("训练木桩验证完成", SceneRouterScript.ROUTE_BASE)
+		_status_message = _persist("Training dummy trial complete", SceneRouterScript.ROUTE_BASE)
 		var trial_report: Dictionary = trial.get("report", {}) if trial.get("report", {}) is Dictionary else {}
 		var trial_resolved: Dictionary = application_state.resolved_build_snapshot()
 		_record_playtest("training_completed", {
@@ -716,17 +716,17 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 			var settings_value: Variant = payload.get("settings", {})
 			changed = application_state.configure_proxy_core(core_id, (settings_value as Dictionary).duplicate(true) if settings_value is Dictionary else {})
 		if not bool(changed.get("ok", false)):
-			var proxy_action := "安装代理核心" if action_id == "equip_proxy_core" else "调整代理核心"
+			var proxy_action := "Install proxy core" if action_id == "equip_proxy_core" else "Adjust proxy core"
 			_status_message = PlayerFacingStatusScript.failure(proxy_action, String(changed.get("error", "unknown_error")))
 			_present_facility(normalized_facility, _status_message)
 			return changed
 		var core_label := _proxy_core_label(core_id)
 		if action_id == "equip_proxy_core":
-			_status_message = _persist("已安装代理核心：%s" % core_label, SceneRouterScript.ROUTE_BASE)
+			_status_message = _persist("Proxy core installed: %s" % core_label, SceneRouterScript.ROUTE_BASE)
 		else:
 			var band := String((payload.get("settings", {}) as Dictionary).get("distance_band", "")) if payload.get("settings", {}) is Dictionary else ""
-			var band_label: String = String({"near": "近", "mid": "中", "far": "远"}.get(band, band))
-			_status_message = _persist("%s距离档位已设为：%s" % [core_label, band_label], SceneRouterScript.ROUTE_BASE)
+			var band_label: String = String({"near": "Near", "mid": "Mid", "far": "Far"}.get(band, band))
+			_status_message = _persist("%s distance band set to: %s" % [core_label, band_label], SceneRouterScript.ROUTE_BASE)
 		_record_playtest("proxy_build_changed", {
 			"action": action_id,
 			"core_id": core_id,
@@ -739,11 +739,11 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 		var selected_id := String(payload.get("instance_id", "")).strip_edges()
 		var selected: Dictionary = application_state.forge_select_target(selected_id, int(payload.get("revision", -1)))
 		if not bool(selected.get("ok", false)):
-			_status_message = PlayerFacingStatusScript.failure("选择锻造目标", String(selected.get("error", "unknown_error")))
+			_status_message = PlayerFacingStatusScript.failure("Select Forge Target", String(selected.get("error", "unknown_error")))
 			_present_facility(normalized_facility, _status_message)
 			return selected
 		var selected_snapshot: Dictionary = application_state.forge_snapshot()
-		_status_message = "锻造目标已选择：%s" % String((selected_snapshot.target_item as Dictionary).get("base_name", selected_id))
+		_status_message = "Forge target selected: %s" % String((selected_snapshot.target_item as Dictionary).get("base_name", selected_id))
 		_present_facility(normalized_facility, _status_message)
 		return {"ok": true, "instance_id": selected_id, "snapshot": selected_snapshot.duplicate(true)}
 	if normalized_facility == SceneRouterScript.ROUTE_FORGE and action_id == "select_forge_operation":
@@ -751,18 +751,18 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 		return _finish_forge_action(normalized_facility, selected_operation, "")
 	if normalized_facility == SceneRouterScript.ROUTE_FORGE and action_id == "forge_reveal":
 		var revealed: Dictionary = application_state.forge_reveal(int(payload.get("limit", 8)), int(payload.get("revision", -1)))
-		return _finish_forge_action(normalized_facility, revealed, "律筹推演完成")
+		return _finish_forge_action(normalized_facility, revealed, "Law Token forecast complete")
 	if normalized_facility == SceneRouterScript.ROUTE_FORGE and action_id == "forge_reveal_more":
 		var revealed_more: Dictionary = application_state.forge_reveal_more(String(payload.get("session_id", "")), int(payload.get("limit", 8)))
-		return _finish_forge_action(normalized_facility, revealed_more, "律筹推演已扩展")
+		return _finish_forge_action(normalized_facility, revealed_more, "Law Token forecast expanded")
 	if normalized_facility == SceneRouterScript.ROUTE_FORGE and action_id == "forge_select_candidate":
 		var selected_candidate: Dictionary = application_state.forge_select_candidate(String(payload.get("session_id", "")), String(payload.get("candidate_id", "")))
-		return _finish_forge_action(normalized_facility, selected_candidate, "未来候选已选择")
+		return _finish_forge_action(normalized_facility, selected_candidate, "Future candidate selected")
 	if normalized_facility == SceneRouterScript.ROUTE_FORGE and action_id == "forge_cancel":
 		var cancelled: Dictionary = application_state.forge_cancel(String(payload.get("session_id", "")))
-		return _finish_forge_action(normalized_facility, cancelled, "锻造推演已取消")
+		return _finish_forge_action(normalized_facility, cancelled, "Forge forecast cancelled")
 	if normalized_facility != SceneRouterScript.ROUTE_FORGE or action_id != "forge_commit":
-		_status_message = PlayerFacingStatusScript.failure("该设施操作", "action_unavailable")
+		_status_message = PlayerFacingStatusScript.failure("This facility action", "action_unavailable")
 		_present_facility(normalized_facility, _status_message)
 		return _failure("action_unavailable")
 	var prepared: Dictionary = application_state.forge_prepare_commit(String(payload.get("session_id", "")))
@@ -784,11 +784,11 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 	var committed_view: Dictionary = application_state.forge_snapshot()
 	var committed_target: Dictionary = (committed_view.get("target_item", {}) as Dictionary) if bool(committed_view.get("ok", false)) else {}
 	var raw_result_item: Dictionary = result.get("result_item", {}) as Dictionary
-	var item_label := _equipment_label(committed_target, _equipment_label(raw_result_item, "所选装备"))
+	var item_label := _equipment_label(committed_target, _equipment_label(raw_result_item, "Selected item"))
 	var family_label := String(result.get("family_name", "")).strip_edges()
 	if family_label.is_empty():
-		family_label = "所选词条"
-	_status_message = "锻造完成：%s 获得%s %d 阶，消耗 %d 枚%s律筹" % [
+		family_label = "Selected affix"
+	_status_message = "Forged: %s gained %s tier %d, costing %d %s Law Tokens" % [
 		item_label, family_label,
 		int(result.get("tier", 0)), int(committed.get("cost", 0)), _law_tally_label(String(committed.get("operation", ""))),
 	]
@@ -804,7 +804,7 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 
 
 func _finish_forge_action(facility_id: String, result: Dictionary, success_message: String) -> Dictionary:
-	_status_message = success_message if bool(result.get("ok", false)) else PlayerFacingStatusScript.failure("锻造", String(result.get("error", "unknown_error")))
+	_status_message = success_message if bool(result.get("ok", false)) else PlayerFacingStatusScript.failure("Forge", String(result.get("error", "unknown_error")))
 	_present_facility(facility_id, _status_message)
 	return result
 
@@ -819,25 +819,25 @@ func _forge_action_failure(facility_id: String, error: String, detail: String = 
 func _law_tally_label(operation: String) -> String:
 	match operation:
 		"inscribe":
-			return "添铸"
+			return "Inscribe"
 		"rewrite":
-			return "改写"
+			return "Rewrite"
 		"refine":
-			return "精炼"
+			return "Refine"
 	return operation
 
 
-func _equipment_label(item: Dictionary, fallback: String = "所选装备") -> String:
+func _equipment_label(item: Dictionary, fallback: String = "Selected item") -> String:
 	var label := String(item.get("base_name", item.get("name", ""))).strip_edges()
 	return label if not label.is_empty() else fallback
 
 
 func _slot_label(slot: String) -> String:
-	return String(SLOT_LABELS.get(slot, "所选槽位"))
+	return String(SLOT_LABELS.get(slot, "Selected slot"))
 
 
 func _preset_label(preset_id: String) -> String:
-	return String(PRESET_LABELS.get(preset_id, "当前方案"))
+	return String(PRESET_LABELS.get(preset_id, "Current preset"))
 
 
 func _proxy_core_label(core_id: String) -> String:
@@ -959,7 +959,7 @@ func _string_array_difference(values: Variant, excluded: Variant) -> Array[Strin
 func return_to_title() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_BASE:
 		return _failure("wrong_route")
-	_status_message = _persist("档案已保存", SceneRouterScript.ROUTE_TITLE)
+	_status_message = _persist("Profile saved", SceneRouterScript.ROUTE_TITLE)
 	return _transition(SceneRouterScript.ROUTE_TITLE)
 
 
@@ -967,7 +967,7 @@ func cancel_contract() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_CONTRACT:
 		return _failure("wrong_route")
 	application_state.abandon_session()
-	_status_message = "契约准备已取消。"
+	_status_message = "Contract preparation cancelled."
 	return _transition(SceneRouterScript.ROUTE_BASE)
 
 
@@ -1141,7 +1141,7 @@ func finish_contract(result: Dictionary) -> Dictionary:
 			"contract_id": "auto_certification",
 			"profile_elapsed_msec": _profile_elapsed_msec(),
 		})
-	_status_message = _persist("契约结果已保存", SceneRouterScript.ROUTE_BASE)
+	_status_message = _persist("Contract result saved", SceneRouterScript.ROUTE_BASE)
 	return _route_to_result(completed_result)
 
 
@@ -1245,7 +1245,7 @@ func review_result_drop(instance_id: String, slot: String) -> Dictionary:
 		return _failure("slot_locked")
 	var active := application_state.active_build_snapshot().get("active_build", {}) as Dictionary
 	var equipped := active.get("equipped_item_ids", {}) as Dictionary
-	_status_message = "已定位本次掉落；当前已装备，可查看或卸下。" if String(equipped.get(normalized_slot, "")) == normalized_id else "已定位本次掉落；比较后由你决定是否装备。"
+	_status_message = "Drop located; it is equipped. Inspect or unequip it." if String(equipped.get(normalized_slot, "")) == normalized_id else "Drop located; compare it and decide whether to equip it."
 	_record_playtest("drop_review_started", {
 		"instance_id": normalized_id,
 		"slot": normalized_slot,
@@ -1289,7 +1289,7 @@ func leave_ending_to_base() -> Dictionary:
 func leave_ending_to_title() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_ENDING:
 		return _failure("wrong_route")
-	_status_message = _persist("终章进度已保存", SceneRouterScript.ROUTE_TITLE)
+	_status_message = _persist("Epilogue checkpoint saved", SceneRouterScript.ROUTE_TITLE)
 	return _transition(SceneRouterScript.ROUTE_TITLE)
 
 
@@ -1307,11 +1307,11 @@ func _bootstrap(arguments: PackedStringArray) -> void:
 		var restored: Dictionary = application_state.restore_persistent_payload(loaded.get("payload", {}))
 		if bool(restored.get("ok", false)):
 			initial_route = String(restored.get("route", SceneRouterScript.ROUTE_TITLE))
-			_status_message = "已恢复存档代 %d。" % int(loaded.get("generation", 0))
+			_status_message = "Restored save generation %d." % int(loaded.get("generation", 0))
 		else:
-			_status_message = PlayerFacingStatusScript.failure("载入档案", String(restored.get("error", "invalid_payload")))
+			_status_message = PlayerFacingStatusScript.failure("Load profile", String(restored.get("error", "invalid_payload")))
 	elif String(loaded.get("error", "")) != "no valid save slot":
-		_status_message = PlayerFacingStatusScript.failure("载入档案", String(loaded.get("error", "unknown_error")))
+		_status_message = PlayerFacingStatusScript.failure("Load profile", String(loaded.get("error", "unknown_error")))
 	_transition(initial_route)
 
 

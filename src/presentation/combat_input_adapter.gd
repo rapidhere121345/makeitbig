@@ -142,7 +142,7 @@ func request_skill(ability: String, snapshot: Dictionary) -> void:
 					command_source.dash_requested = true
 				clear_feedback()
 			else:
-				show_feedback("猎人印记未装配在本场构筑 · 暂无法施放" if ability == "hunter_mark" else "突袭未装配在本场构筑 · 暂无法施放")
+				show_feedback("Hunter's Mark is not equipped in this build · Cannot Cast Yet" if ability == "hunter_mark" else "Dash is not equipped in this build · Cannot Cast Yet")
 
 
 func reset_intent() -> void:
@@ -210,7 +210,7 @@ func request_loot_pickup(snapshot: Dictionary) -> void:
 		return
 	var target := _nearest_available_loot(snapshot)
 	if target.is_empty():
-		show_feedback("附近没有可拾取掉落")
+		show_feedback("No loot nearby to pick up")
 		return
 	_loot_pickup_requested_id = String(target.get("loot_entity_id", ""))
 	clear_feedback()
@@ -322,7 +322,7 @@ func clear_feedback() -> void:
 
 
 func show_assisted_rejection() -> void:
-	show_feedback("暂无目标 · 靠近敌人后按空格")
+	show_feedback("No target · Move closer to an enemy, then press Space")
 
 
 func capture_attack_event(event: InputEvent, pointer_over_interface: bool, snapshot: Dictionary) -> void:
@@ -364,8 +364,8 @@ func _capture_pointer_attack(screen_point: Vector2) -> void:
 		clear_pointer_lock(false)
 		manual_pointer_gameplay = _screen_to_gameplay(screen_point)
 		manual_pointer_status = POINTER_STATUS_NO_TARGET
-		report_requested.emit("鼠标未锁定目标；空白点击不会改为自动寻敌。")
-		show_feedback("点击敌人射击 · 或按住空格辅助瞄准")
+		report_requested.emit("No pointer target; clicking empty ground does not enable automatic targeting.")
+		show_feedback("Click an enemy to shoot · Or hold Space for aim assist")
 		return
 	clear_feedback()
 	manual_pointer_target_entity_id = int(resolved.get("target_entity_id", 0))
@@ -374,10 +374,10 @@ func _capture_pointer_attack(screen_point: Vector2) -> void:
 	manual_pointer_status = POINTER_STATUS_LOCKED if bool(resolved.get("in_range", false)) else POINTER_STATUS_OUT_OF_RANGE
 	if manual_pointer_status == POINTER_STATUS_LOCKED:
 		_request_pointer_attack()
-		report_requested.emit("指针已锁定目标。")
+		report_requested.emit("Pointer target locked.")
 	else:
-		report_requested.emit("指针已锁定目标，但目前在射程外。")
-		show_feedback("目标在射程外 · 靠近后再射")
+		report_requested.emit("Pointer target locked, but currently out of range.")
+		show_feedback("Target out of range · Move closer to shoot")
 
 
 func _manual_aim_candidates() -> Array[Dictionary]:

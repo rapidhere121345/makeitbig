@@ -47,16 +47,16 @@ func _test_tutorial_opening(progression: StoryProgression) -> void:
 	_expect(String(after_tutorial.current_objective.id) == "clear_outer_road",
 		"post-tutorial objective did not point to the outer road")
 	var journal: Dictionary = after_tutorial.journal_entries[0]
-	_expect(String(journal.title) == "门边的位置" and bool(journal.is_read) == false,
+	_expect(String(journal.title) == "A Place by the Door" and bool(journal.is_read) == false,
 		"journal title/read initial state is wrong")
 
 
 func _test_progressive_npcs_and_town(progression: StoryProgression) -> void:
 	var cases := [
-		{"nodes": ["tutorial_ranger_basics"], "names": ["米拉", "莱娅"]},
-		{"nodes": ["tutorial_ranger_basics", "mainline_01_first_hunt"], "names": ["米拉", "莱娅", "塔伦"]},
-		{"nodes": ["tutorial_ranger_basics", "mainline_01_first_hunt", "mainline_02_priority_under_pressure"], "names": ["米拉", "莱娅", "塔伦", "奥伦"]},
-		{"nodes": ["tutorial_ranger_basics", "mainline_01_first_hunt", "mainline_02_priority_under_pressure", "mainline_03_first_elite"], "names": ["米拉", "莱娅", "塔伦", "奥伦", "伊文"]},
+		{"nodes": ["tutorial_ranger_basics"], "names": ["Mira", "Leia"]},
+		{"nodes": ["tutorial_ranger_basics", "mainline_01_first_hunt"], "names": ["Mira", "Leia", "Taren"]},
+		{"nodes": ["tutorial_ranger_basics", "mainline_01_first_hunt", "mainline_02_priority_under_pressure"], "names": ["Mira", "Leia", "Taren", "Oren"]},
+		{"nodes": ["tutorial_ranger_basics", "mainline_01_first_hunt", "mainline_02_priority_under_pressure", "mainline_03_first_elite"], "names": ["Mira", "Leia", "Taren", "Oren", "Iven"]},
 	]
 	for expected in cases:
 		var completed_nodes: Array[String] = []
@@ -169,4 +169,4 @@ func _test_real_evidence_gates(progression: StoryProgression) -> void:
 			titles.append(entry.title)
 			if int(entry.stage) == 6: has_growth = true
 		_expect(has_growth == (kind == "exponential"), "true growth story ignored actual classification")
-		_expect(("多了，然后停了" in titles) == (kind == "convergent"), "story forced a false failure on a successful player")
+		_expect(("More, Then No More" in titles) == (kind == "convergent"), "story forced a false failure on a successful player")

@@ -39,32 +39,32 @@ const PITY_TARGET_LIFETIME := "projectile_lifetime"
 const PITY_TARGET_POWER := "carrier_power"
 const BOSS_BOTTLENECK_GROWTH_CONVERGENT := {
 	"id": "growth_convergent",
-	"title": "增长收敛，穿刺链未能成长",
-	"action": "去定向支线获取增长概率词条，让穿刺链持续成长后再挑战",
+	"title": "Growth converged; the piercing chain could not grow",
+	"action": "Find growth-chance affixes in targeted side contracts, then return with a growing piercing chain",
 	"destination": "mainline_05_growth_gate",
 }
 const BOSS_BOTTLENECK_GROWTH_CRITICAL := {
 	"id": "growth_critical",
-	"title": "增长停在临界，穿刺链无法扩张",
-	"action": "去定向支线获取增长概率词条，突破临界增长后再挑战",
+	"title": "Growth stalled at critical; the piercing chain cannot expand",
+	"action": "Find growth-chance affixes in targeted side contracts, then return after surpassing critical growth",
 	"destination": "mainline_05_growth_gate",
 }
 const BOSS_BOTTLENECK_TARGETING_RANGE_SHORT := {
 	"id": "targeting_range_short",
-	"title": "索敌距离不足，难以安全输出",
-	"action": "去定向支线获取索敌距离词条，提升安全输出距离后再挑战",
+	"title": "Targeting range is too short to attack safely",
+	"action": "Find targeting-range affixes in targeted side contracts, then return with a safer attack range",
 	"destination": "mainline_05_growth_gate",
 }
 const BOSS_BOTTLENECK_PROJECTILE_LIFETIME_SHORT := {
 	"id": "projectile_lifetime_short",
-	"title": "箭矢寿命不足，链条过早中断",
-	"action": "去锻造台强化共享寿命词条，延长箭矢存活后再挑战",
+	"title": "Arrow lifetime is too short; the chain ends early",
+	"action": "Strengthen shared-lifetime affixes at the Forge, then return with longer-lived arrows",
 	"destination": "forge",
 }
 const BOSS_BOTTLENECK_BOSS_PATTERN_SURVIVAL := {
 	"id": "boss_pattern_survival",
-	"title": "Boss 招式应对不足",
-	"action": "回训练场验证循环，练习躲避 Boss 二阶段招式后再挑战",
+	"title": "Boss attacks need more practice",
+	"action": "Check your loop in Training and practice avoiding the boss's second-phase attacks before retrying",
 	"destination": "training",
 }
 const PRESET_FIXTURES := {
@@ -225,12 +225,12 @@ func growth_snapshot() -> Dictionary:
 			if not selected: candidate.allocated_ids.append(id)
 			var valid: Dictionary = compiler.validate(candidate, int(context.talent_points), context.unlocked_classes)
 			var reason := ""
-			if not bool(tree.implemented): reason = "该职业将在后续开放"
-			elif bool(reading.locked): reason = "契约中天赋已锁定"
-			elif not bool(node.get("implemented",true)): reason = "该节点将在相关机制接入后开放"
-			elif not selected and int(reading.points_available) <= 0: reason = "需要更多天赋点"
-			elif not valid.ok: reason = "需满足层级投入与最多两个关键天赋限制"
-			nodes.append({"id":id,"name":String(node.name),"tier":int(node.layer),"keystone":bool(node.is_key),"description":String(node.get("description",node.get("pending_reason","说明待补充"))),"allocated":selected,"can_allocate":not selected and reason.is_empty(),"lock_reason":reason})
+			if not bool(tree.implemented): reason = "This class will be available in a later update"
+			elif bool(reading.locked): reason = "Talents are locked during contracts"
+			elif not bool(node.get("implemented",true)): reason = "This node will unlock when its mechanic is implemented"
+			elif not selected and int(reading.points_available) <= 0: reason = "More talent points required"
+			elif not valid.ok: reason = "Meet tier investment requirements and the two-keystone limit"
+			nodes.append({"id":id,"name":String(node.name),"tier":int(node.layer),"keystone":bool(node.is_key),"description":String(node.get("description",node.get("pending_reason","Description pending"))),"allocated":selected,"can_allocate":not selected and reason.is_empty(),"lock_reason":reason})
 		trees.append({"id":String(tree.class_id),"name":String(tree.name),"available":bool(tree.implemented) and String(tree.class_id) in context.unlocked_classes,"nodes":nodes})
 	reading["trees"] = trees
 	reading["stance_available"] = "ranger_near_far_hunting" in raw.allocated_ids
@@ -648,7 +648,7 @@ func early_game_snapshot() -> Dictionary:
 				if item_registry.laws.has(String(law_id)):
 					law_view.append((item_registry.laws[String(law_id)] as Dictionary).duplicate(true))
 		var is_verified := not fingerprint.is_empty() and reports_by_fingerprint.has(fingerprint)
-		var neutral_name := "方案 %s" % String.chr(65 + preset_index)
+		var neutral_name := "Preset %s" % String.chr(65 + preset_index)
 		available.append({
 			"id": preset_id,
 			"name": neutral_name,
@@ -820,7 +820,7 @@ func forge_snapshot() -> Dictionary:
 	return {
 		"ok": true,
 		"unlocked": _is_law_forge_unlocked(),
-		"locked_reason": "完成主线 04，取得律筹锻造权" if not _is_law_forge_unlocked() else "",
+		"locked_reason": "Complete Main Quest 04 to unlock Law Token forging" if not _is_law_forge_unlocked() else "",
 		"law_tallies": ((_profile.resources as Dictionary).law_tallies as Dictionary).duplicate(true),
 		"affix_families": registry.affix_families.duplicate(true),
 		"target_item": _forge_item_view(target, registry),
@@ -2183,7 +2183,7 @@ func _apply_result_progression(result: Dictionary) -> void:
 		var granted := _grant_initial_proxy()
 		result["unlock"] = {
 			"proxy_unlocked": true,
-			"title": "首杀代理已解锁",
+			"title": "First-kill proxy unlocked",
 			"components": granted.duplicate(true),
 		}
 	if completed_mode == "Auto" and bool(progression.get("proxy_unlocked", false)):

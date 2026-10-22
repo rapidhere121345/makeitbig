@@ -966,9 +966,9 @@ func _process_room_loot_pickups_tick() -> void:
 	if receipts_after.size() > receipts_before.size() and presentation != null and presentation.feedback != null:
 		var receipt_value: Variant = receipts_after[receipts_after.size() - 1]
 		if receipt_value is Dictionary and bool((receipt_value as Dictionary).get("ok", false)):
-			presentation.feedback.show_input_feedback("掉落已拾取 · 离场后计入结算", sim_tick)
+			presentation.feedback.show_input_feedback("Loot picked up · Added to rewards on exit", sim_tick)
 		elif receipt_value is Dictionary:
-			presentation.feedback.show_input_feedback("掉落未拾取 · %s" % String({"loot_out_of_range": "距离过远，靠近后按 F", "loot_pickup_already_queued": "已请求拾取", "loot_pickup_window_closed": "拾取窗口已关闭"}.get(String((receipt_value as Dictionary).get("error", "")), "请求失效")), sim_tick)
+			presentation.feedback.show_input_feedback("Loot not picked up · %s" % String({"loot_out_of_range": "Too far away; move closer and press F", "loot_pickup_already_queued": "Pickup requested", "loot_pickup_window_closed": "Pickup window closed"}.get(String((receipt_value as Dictionary).get("error", "")), "Request expired")), sim_tick)
 
 
 func _settle_room_loot(outcome: String) -> void:
@@ -1533,7 +1533,7 @@ func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
 		var room_receipt := request_loot_pickup(String(normalized.get("loot_entity_id", "")))
 		receipt["room_receipt"] = room_receipt.duplicate(true)
 		if not bool(room_receipt.get("accepted", false)) and selected_mode == "Manual" and presentation != null and presentation.feedback != null:
-			presentation.feedback.show_input_feedback("掉落未进入拾取范围 · 靠近后再按 F", sim_tick)
+			presentation.feedback.show_input_feedback("Loot out of reach · Move closer, then press F", sim_tick)
 	last_loot_pickup_command_receipt = receipt.duplicate(true)
 	return last_loot_pickup_command_receipt.duplicate(true)
 
@@ -2132,9 +2132,9 @@ func _present_cast_receipt(receipt: Dictionary, source: String) -> void:
 		presentation.feedback.remember_request_source(request_id, source, int(receipt.get("replaced_request_id", 0)))
 		if String(receipt.get("status", "")) == "started":
 			presentation.feedback.bind_action_request(int(receipt.get("action_instance_id", 0)), request_id)
-		battle_report = "穿刺箭已缓冲，等待动作窗口。" if String(receipt.get("status", "")) in ["buffered", "replaced"] else "穿刺箭拉弓中。"
+		battle_report = "Piercing Arrow buffered; waiting for an action window." if String(receipt.get("status", "")) in ["buffered", "replaced"] else "Drawing Piercing Arrow."
 	elif String(receipt.get("reason", "")) == "target_out_of_range" and selected_mode == "Manual" and source != ATTACK_SOURCE_PROXY:
-		presentation.feedback.show_input_feedback("目标在射程外 · 靠近后再射", sim_tick)
+		presentation.feedback.show_input_feedback("Target out of range · Move closer to shoot", sim_tick)
 
 
 func request_player_cast(ability_id: String, target_entity_id: int = 0, direction: Vector2 = Vector2.ZERO, source: String = ATTACK_SOURCE_ASSISTED) -> Dictionary:
@@ -2153,7 +2153,7 @@ func _present_mark_receipt(receipt: Dictionary, player: Dictionary) -> void:
 		return
 	var target := _enemy_by_entity_id(int(player["marked_entity_id"]))
 	if target != null and target.health > 0.0:
-		battle_report = "猎人印记锁定：%s。" % presentation.frame_builder.enemy_public_label(target)
+		battle_report = "Hunter's Mark locked: %s." % presentation.frame_builder.enemy_public_label(target)
 
 
 func interrupt_player_action(reason: String) -> Dictionary:

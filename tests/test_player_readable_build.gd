@@ -10,16 +10,21 @@ func _initialize() -> void:
 func run() -> Array[String]:
 	var failures: Array[String] = []
 	var formatter = FormatterScript.new()
+	for tier in range(1, 5):
+		_expect(formatter.tier_label(tier) == ["Tier I", "Tier II", "Tier III", "Tier IV"][tier - 1],
+			"tier label lost its English order or Roman numeral", failures)
 	for method_name in ["parameter_name", "format_parameter", "format_modifier", "format_affix", "format_item", "format_comparison", "format_candidate_decision_summary"]:
 		_expect(formatter.has_method(method_name), "missing reusable public method %s" % method_name, failures)
-	_expect(formatter.parameter_name("p") == "穿刺箭续行概率", "parameter_name did not map p", failures)
-	_expect("数值越低越好" in formatter.parameter_name("turn"), "turn name lost lower-is-better guidance", failures)
+	_expect(formatter.parameter_name("p") == "Piercing Arrow Continuation Chance", "parameter_name did not map p", failures)
+	_expect("Lower Is Better" in formatter.parameter_name("turn"), "turn name lost lower-is-better guidance", failures)
+	_expect(formatter.format_parameter("turn", 0.18) == "Turn Time (Lower Is Better): 0.18 s",
+		"turn-time formatting repeated or lost its lower-is-better guidance", failures)
 	_expect(formatter.format_parameter("critical_chance", 0.125).contains("12.5%"), "critical chance formatting is wrong", failures)
-	_expect(formatter.format_modifier({"parameter": "damage", "operation": "multiply", "value": 1.12}).contains("提高 12%"), "multiply modifier formatting is wrong", failures)
-	_expect(formatter.format_affix({"family_id": "piercing_continuation", "tier": 2}).contains("穿刺箭续行概率 II 阶")
-		and formatter.format_affix({"family_id": "piercing_continuation", "tier": 2}).contains("+7 个百分点"), "affix did not read its real tier value from registry", failures)
+	_expect(formatter.format_modifier({"parameter": "damage", "operation": "multiply", "value": 1.12}).contains("Increase 12%"), "multiply modifier formatting is wrong", failures)
+	_expect(formatter.format_affix({"family_id": "piercing_continuation", "tier": 2}).contains("Piercing Arrow Continuation Chance Tier II")
+		and formatter.format_affix({"family_id": "piercing_continuation", "tier": 2}).contains("+7 percentage points"), "affix did not read its real tier value from registry", failures)
 	var comparison := formatter.format_comparison({"turn": 0.4, "damage": 100.0}, {"turn": 0.36, "damage": 112.0})
-	_expect("转向时间（数值越低越好）" in comparison and "0.4 秒" in comparison and "0.36 秒" in comparison and "100 → 112" in comparison, "comparison copy is incomplete", failures)
+	_expect("Turn Time (Lower Is Better)" in comparison and "0.4 s" in comparison and "0.36 s" in comparison and "100 → 112" in comparison, "comparison copy is incomplete", failures)
 	var default_decision := formatter.format_candidate_decision_summary(
 		{"p": 0.61},
 		{
@@ -29,8 +34,8 @@ func run() -> Array[String]:
 			"interfaces_lost": ["branch_target_history"],
 		}
 	)
-	_expect(default_decision.contains("获得接口：可繁殖子箭，未收录接口（quick_draw）")
-		and default_decision.contains("失去接口：分支目标记录"),
+	_expect(default_decision.contains("Interfaces Gained: Breedable Child Arrows, Unknown Interface (quick_draw)")
+		and default_decision.contains("Interfaces Lost: Branch Target History"),
 		"candidate decision summary did not translate default known interfaces or retain unknown ids", failures)
 	var decision := formatter.format_candidate_decision_summary(
 		{"p": 0.61, "v": 682.0, "damage": 160.0},
@@ -40,27 +45,27 @@ func run() -> Array[String]:
 			"interfaces_gained": ["quick_draw"],
 			"interfaces_lost": ["breedable_event", "branch_target_history"],
 		},
-		{"breedable_event": "自定义孳生接口"}
+		{"breedable_event": "Custom Breeding Interface"}
 	)
-	_expect(decision.contains("续行概率 -7 个百分点") and decision.contains("投射速度 +68.2 单位/秒")
-		and decision.contains("获得接口：未收录接口（quick_draw）")
-		and decision.contains("失去接口：自定义孳生接口，分支目标记录"),
+	_expect(decision.contains("Continuation Chance -7 percentage points") and decision.contains("Projectile Speed +68.2 units/s")
+		and decision.contains("Interfaces Gained: Unknown Interface (quick_draw)")
+		and decision.contains("Interfaces Lost: Custom Breeding Interface, Branch Target History"),
 		"candidate decision summary lost concrete parameter deltas, defaults, or explicit overrides", failures)
-	_expect(not decision.contains("载体伤害"), "candidate decision summary included an unchanged parameter", failures)
+	_expect(not decision.contains("Carrier Damage"), "candidate decision summary included an unchanged parameter", failures)
 	var item := {
 		"instance_id": "diagnostic-only", "base_item_id": "ashwood_longbow", "slot": "main_hand",
 		"affixes": [{"family_id": "piercing_continuation", "tier": 2}],
 		"rune_id": "breeding_split", "law_id": "pack_hunt_mark",
 	}
 	var item_text := formatter.format_item(item)
-	_expect("槽位：主手" in item_text and "底材属性" in item_text and "孳生分裂" in item_text and "群猎印记" in item_text, "format_item lost player-facing equipment details", failures)
-	_expect("已收入装备库存" not in item_text, "neutral item formatter leaked settlement-only copy", failures)
+	_expect("Slot: Main Hand" in item_text and "Base Stats" in item_text and "Breeding Split" in item_text and "Pack Hunt Mark" in item_text, "format_item lost player-facing equipment details", failures)
+	_expect("Added to equipment storage" not in item_text, "neutral item formatter leaked settlement-only copy", failures)
 	_expect("diagnostic-only" not in item_text and "ashwood_longbow" not in item_text and "piercing_continuation" not in item_text, "format_item leaked raw ids", failures)
 	_expect(formatter.diagnostic_ids(item).contains("diagnostic-only") and formatter.diagnostic_ids(item).contains("piercing_continuation"), "diagnostic ids are not separately available", failures)
 	var skill_registry = load("res://src/content/early_skill_registry.gd").new()
 	_expect(skill_registry.load_all().is_empty(), "skill copy: registry did not load", failures)
 	var skill_text := formatter.format_skill(skill_registry.get_skill("piercing_arrow"))
-	_expect(skill_text.contains("按住施放会在每个合法窗口自动接续一发"), "skill copy: held-fire behavior is not disclosed", failures)
+	_expect(skill_text.contains("Holding the input chains one shot at each valid opening"), "skill copy: held-fire behavior is not disclosed", failures)
 	return failures
 
 

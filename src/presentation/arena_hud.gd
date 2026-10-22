@@ -16,8 +16,8 @@ extends Control
 ##    existed: HeroHealthLabel above the hero bar and BossHpLabel above the target
 ##    bar. Raw scientific totals, cumulative damage, layout metadata and the
 ##    mode/proxy explanation are not deleted, they sit in the summary panel that
-##    the TAB key or the 摘要 button opens (ART_BIBLE 12: "大公式、长词条、代理
-##    流水线进入可打开详情").
+##    the TAB key or the Summary button opens (ART_BIBLE 12: "large formulas, long affixes, and proxy
+##    pipelines go in expandable details").
 ##  * a cell hidden with the summary is moved into that panel instead of staying at
 ##    a stale offset, so no invisible control can pass a containment check.
 
@@ -75,16 +75,16 @@ const SUMMARY_PANEL_BOTTOM: float = 520.0
 ## also disables the manual skill keys. The concept writes the mode plainly and adds a
 ## lock mark, so neither state leans on colour alone (ART_BIBLE 12.2).
 const MODE_MANUAL: String = "MANUAL"
-const MODE_MANUAL_LOCKED: String = "MANUAL · 模式锁定"
-const MODE_AUTO_LOCKED: String = "AUTO [锁] · 模式锁定"
+const MODE_MANUAL_LOCKED: String = "MANUAL [Locked]"
+const MODE_AUTO_LOCKED: String = "AUTO [Locked]"
 const SKILL_SLOTS: Array[Dictionary] = [
-	{"node_name": "Skill1Button", "slot_id": "piercing_arrow", "title": "穿刺"},
-	{"node_name": "Skill2Button", "slot_id": "hunter_mark", "title": "印记"},
-	{"node_name": "Skill3Button", "slot_id": "dash", "title": "突袭"},
-	{"node_name": "DodgeButton", "slot_id": "basic_dodge", "title": "闪避"},
+	{"node_name": "Skill1Button", "slot_id": "piercing_arrow", "title": "Piercing"},
+	{"node_name": "Skill2Button", "slot_id": "hunter_mark", "title": "Mark"},
+	{"node_name": "Skill3Button", "slot_id": "dash", "title": "Dash"},
+	{"node_name": "DodgeButton", "slot_id": "basic_dodge", "title": "Dodge"},
 ]
 const SLOT_PRIMARY_KEYS := {
-	"Skill1Button": "空格",
+	"Skill1Button": "Space",
 	"Skill2Button": "Q",
 	"Skill3Button": "E",
 	"DodgeButton": "Shift",
@@ -172,22 +172,22 @@ func present(snapshot: Dictionary) -> void:
 	# skill keys. No new snapshot field is invented for this: battle_over already says it.
 	var mode_locked := not battle_over
 	var mode_chip := (MODE_AUTO_LOCKED if is_auto else MODE_MANUAL_LOCKED) if mode_locked else mode
-	var mode_detail := "%s · 战斗结束" % mode_chip if battle_over else ("%s · 键位已锁" % mode_chip if is_auto else "%s · 键位可用" % mode_chip)
+	var mode_detail := "%s · Combat Ended" % mode_chip if battle_over else ("%s · Input Locked" % mode_chip if is_auto else "%s · Input Available" % mode_chip)
 	_hero_health_bar.max_value = player_health_max
 	_hero_health_bar.value = player_health
-	var key_status := String(snapshot.get("key_status", "稳定"))
+	var key_status := String(snapshot.get("key_status", "Stable"))
 	var hero_ratio := player_health / player_health_max
-	_hero_status_label.text = ("⚠ 危急 · %s" % key_status) if hero_ratio <= 0.30 else ("◆ 关键状态  %s" % key_status)
+	_hero_status_label.text = "⚠ Critical" if hero_ratio <= 0.30 else key_status
 	# No resource is fabricated: this line only appears when an authority sends it.
 	# It remains with the hero status even when the optional details are folded.
 	_resource_state_text = String(snapshot.get("resource_state", ""))
 	_resource_label.text = _resource_state_text
-	_hero_status_label.tooltip_text = _hero_status_label.text
+	_hero_status_label.tooltip_text = ("⚠ Critical · Key Status  %s" % key_status) if hero_ratio <= 0.30 else ("Key Status  %s" % key_status)
 	_apply_resource_visibility()
 
 	var has_boss := bool(snapshot.get("has_boss", true))
 	var objective_label := String(snapshot.get("objective_label", snapshot.get("objective_id", "clear")))
-	_encounter_heading.text = "首领  阈门巨像" if has_boss else "目标  %s" % objective_label
+	_encounter_heading.text = "Boss  Threshold Colossus" if has_boss else "Target  %s" % objective_label
 	var has_room_progress := snapshot.has("room_count")
 	var room_count := maxi(1, int(snapshot.get("room_count", 1)))
 	var room_number := clampi(int(snapshot.get("room_index", 0)) + 1, 1, room_count)
@@ -197,8 +197,8 @@ func present(snapshot: Dictionary) -> void:
 		## Older diagnostic snapshots do not carry the authored room presentation
 		## fields. Keep their objective wording intact while live sessions use the
 		## content-authored scene name above.
-		room_display_name = String(snapshot.get("layout_id", snapshot.get("objective_label", "战斗场")))
-	var room_entry_hint := String(snapshot.get("room_entry_hint", "留意攻击预警"))
+		room_display_name = String(snapshot.get("layout_id", snapshot.get("objective_label", "Arena")))
+	var room_entry_hint := String(snapshot.get("room_entry_hint", "Watch for attack telegraphs"))
 	var room_concept := String(snapshot.get("room_concept", ""))
 	var room_landmark := String(snapshot.get("room_landmark", ""))
 	var room_exit_hint := String(snapshot.get("room_exit_hint", ""))
@@ -208,43 +208,54 @@ func present(snapshot: Dictionary) -> void:
 	var has_live_attack_target := not attack_target_label.is_empty() and attack_target_maximum_health > 0.0 and attack_target_health > 0.0
 	var attack_target_in_range := bool(snapshot.get("attack_target_in_range", false))
 	if has_room_progress:
-		var room_title := "阈门巨像" if has_boss else room_display_name
-		var room_objective := "首领" if has_boss else objective_label
+		var room_title := "Threshold Colossus" if has_boss else room_display_name
+		var room_objective := "Boss" if has_boss else objective_label
 		if not has_boss and not has_room_display_name:
 			# Keep diagnostic snapshots and older callers on the compact contract;
 			# live embedded rooms publish the authored scene name explicitly.
-			_encounter_heading.text = "第 %d / %d 房 · %s" % [room_number, room_count, room_objective]
+			_encounter_heading.text = "Room %d / %d · %s" % [room_number, room_count, room_objective]
 		else:
-			_encounter_heading.text = "第 %d / %d 房 · %s · %s" % [room_number, room_count, room_title, room_objective]
+			_encounter_heading.text = "Room %d / %d · %s · %s" % [room_number, room_count, room_title, room_objective]
 	_encounter_heading.tooltip_text = _encounter_heading.text
+	_encounter_heading.size.x = 342.0 if has_boss else 456.0
+	if has_room_progress and has_room_display_name and not has_boss:
+		var compact_objective := String({
+			"Clear All Targets": "Clear foes",
+			"Clear Enemies": "Clear foes",
+		}.get(objective_label, objective_label))
+		_encounter_heading.text = "Room %d/%d · %s · %s" % [room_number, room_count, room_display_name, compact_objective]
+		var heading_font := _encounter_heading.get_theme_font("font")
+		if heading_font.get_string_size(_encounter_heading.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			_encounter_heading.get_theme_font_size("font_size")).x > _encounter_heading.size.x:
+			_encounter_heading.text = "Room %d/%d · %s" % [room_number, room_count, compact_objective]
 	# A read-only entry cue uses the room's existing elapsed time and never delays input.
 	_room_start_label.visible = has_room_progress and not has_boss and not battle_over and float(snapshot.get("room_elapsed_seconds", 99.0)) < 1.8
-	_room_start_label.text = "进入第 %d 房 · %s" % [room_number, room_entry_hint]
+	_room_start_label.text = "Entering Room %d · %s" % [room_number, room_entry_hint]
 	_room_start_label.tooltip_text = room_entry_hint
 	_boss_state_label.visible = not _room_start_label.visible
-	_boss_name_label.text = "阈门巨像" if has_boss else "当前目标"
-	_boss_value_label.text = "%s / %s" % [String(snapshot.get("boss_remaining", "—")), String(snapshot.get("boss_maximum", "—"))] if has_boss else "目标 %s · 存活 %d" % [String(snapshot.get("objective_label", snapshot.get("objective_id", "clear"))), int(snapshot.get("living_targets", 0))]
+	_boss_name_label.text = "Threshold Colossus" if has_boss else "Current Target"
+	_boss_value_label.text = "%s / %s" % [String(snapshot.get("boss_remaining", "—")), String(snapshot.get("boss_maximum", "—"))] if has_boss else "Target %s · Alive %d" % [String(snapshot.get("objective_label", snapshot.get("objective_id", "clear"))), int(snapshot.get("living_targets", 0))]
 	var ratio_known := bool(snapshot.get("boss_ratio_known", false))
 	_boss_health_bar.value = clampf(float(snapshot.get("boss_ratio", 0.0)), 0.0, 1.0) * 100.0 if ratio_known else 0.0
 	_boss_health_bar.visible = has_boss
 	# The default strip shows the true ratio when the shared layer makes it comparable
 	# and says so explicitly when it is not; the two totals behind it stay one Tab away.
-	_boss_hp_label.text = "%.1f%%" % _boss_health_bar.value if ratio_known else "比例不可比"
+	_boss_hp_label.text = "%.1f%%" % _boss_health_bar.value if ratio_known else "Ratios Not Comparable"
 	_boss_hp_label.visible = has_boss
-	_boss_ratio_label.text = ("同层真实比例  %.1f%%" % _boss_health_bar.value if ratio_known else "结构层级不同 · 比例不可比") if has_boss else "留意敌人的攻击预警"
+	_boss_ratio_label.text = ("Actual Same-Layer Ratio  %.1f%%" % _boss_health_bar.value if ratio_known else "Different Structural Layers · Ratios Not Comparable") if has_boss else "Watch for enemy attack telegraphs"
 	# Ordinary rooms already expose their objective and living count in
 	# BossValueLabel.  The old fallback repeated that same line in the damage
 	# slot, making the open battle report look like two separate facts. Keep the
 	# damage row for the Boss contract where it has a distinct meaning, and fold
 	# it out of the ordinary-room summary entirely.
 	_boss_damage_label.visible = has_boss
-	_boss_damage_label.text = "对 Boss 伤害  %s" % String(snapshot.get("damage", "0")) if has_boss else ""
+	_boss_damage_label.text = "Boss Damage  %s" % String(snapshot.get("damage", "0")) if has_boss else ""
 	if has_boss:
-		_boss_state_label.text = "真实比例已知" if ratio_known else "比例不可比"
+		_boss_state_label.text = "Actual Ratio Known" if ratio_known else "Ratios Not Comparable"
 		_boss_state_label.add_theme_color_override("font_color", COLOR_NEUTRAL)
 	elif has_live_attack_target:
-		var target_range := "射程内" if attack_target_in_range else "射程外"
-		_boss_state_label.text = "当前目标  %s  ·  %s / %s  ·  %s" % [
+		var target_range := "In Range" if attack_target_in_range else "Out of Range"
+		_boss_state_label.text = "%s · %s/%s · %s" % [
 			attack_target_label,
 			_plain_number(attack_target_health),
 			_plain_number(attack_target_maximum_health),
@@ -255,13 +266,14 @@ func present(snapshot: Dictionary) -> void:
 		# selected target is outside the authoritative range.
 		_boss_state_label.add_theme_color_override("font_color", COLOR_BONE if attack_target_in_range else COLOR_AMBER)
 	else:
-		_boss_state_label.text = "剩余目标  %d" % int(snapshot.get("living_targets", 0))
+		_boss_state_label.text = "Targets Remaining  %d" % int(snapshot.get("living_targets", 0))
 		_boss_state_label.add_theme_color_override("font_color", COLOR_NEUTRAL)
-	var hazards := String(snapshot.get("hazard_status", "无"))
-	var elites := String(snapshot.get("elite_status", "无"))
-	_summary_encounter_label.text = "场域：%s · %s\n%s\n危害：%s\n精英：%s" % [room_display_name, room_landmark, room_concept, _encounter_status_text(hazards), _encounter_status_text(elites)]
+	_boss_state_label.tooltip_text = ("Current Target  " if not has_boss and has_live_attack_target else "") + _boss_state_label.text
+	var hazards := String(snapshot.get("hazard_status", "None"))
+	var elites := String(snapshot.get("elite_status", "None"))
+	_summary_encounter_label.text = "Arena: %s · %s\n%s\nHazards: %s\nElites: %s" % [room_display_name, room_landmark, room_concept, _encounter_status_text(hazards), _encounter_status_text(elites)]
 	if not room_exit_hint.is_empty():
-		_summary_encounter_label.text += "\n出口：%s" % room_exit_hint
+		_summary_encounter_label.text += "\nExit: %s" % room_exit_hint
 	# Mechanic windows come from authority, including their clearing on elite defeat.
 	# Keep them on screen even during the entry cue, without replacing room or life.
 	_elite_mechanic_label.text = "" if battle_over else _elite_mechanic_text(elites)
@@ -275,18 +287,18 @@ func present(snapshot: Dictionary) -> void:
 	if is_auto:
 		var prediction := String(snapshot.get("proxy_prediction", "unknown")).to_upper()
 		var refusal := _proxy_failure_text(snapshot.get("last_proxy_failure", {}))
-		_proxy_label.text = "代理 %s · 手动指令流已停止" % prediction if refusal == "无" else "最近拒绝  %s" % refusal
+		_proxy_label.text = "Proxy %s · Manual Input Stopped" % prediction if refusal == "None" else "Last Rejection  %s" % refusal
 	else:
-		_proxy_label.text = "手动指令流 · 代理未运行"
+		_proxy_label.text = "Manual Input · Proxy Inactive"
 
-	_feedback_text = String(snapshot.get("feedback", "等待首次命中"))
-	_feedback_label.text = "战斗反馈  %s" % _compact_feedback(_feedback_text)
+	_feedback_text = String(snapshot.get("feedback", "Waiting for First Hit"))
+	_feedback_label.text = "Combat Feedback  %s" % _compact_feedback(_feedback_text)
 	_feedback_label.tooltip_text = _feedback_text
 	var input_feedback := String(snapshot.get("input_feedback", ""))
 	## A range-rejection notice is a receipt for a past input, not the live
-	## state: once the same target reads in range, showing "射程外" beside it
+	## state: once the same target reads in range, showing "Out of Range" beside it
 	## contradicts the strip (visual backlog). Live state wins immediately.
-	if attack_target_in_range and input_feedback.contains("射程外"):
+	if attack_target_in_range and input_feedback.to_lower().contains("out of range"):
 		input_feedback = ""
 	var loot_prompt_text := String(snapshot.get("loot_prompt_text", ""))
 	var loot_prompt_state := String(snapshot.get("loot_prompt_state", "none"))
@@ -310,8 +322,8 @@ func update_state(snapshot: Dictionary) -> void:
 
 func set_summary_visible(value: bool) -> void:
 	_summary_panel.visible = value
-	_summary_toggle_button.text = "战报 TAB ▲" if value else "战报 TAB ▼"
-	_summary_stack_note.text = "战斗详情"
+	_summary_toggle_button.text = "Report TAB ▲" if value else "Report TAB ▼"
+	_summary_stack_note.text = "Combat Details"
 
 
 func toggle_summary() -> void:
@@ -426,7 +438,7 @@ func combat_layout_report() -> Dictionary:
 		"action_edge_occluded": _action_edge_occluded,
 		"critical_visible": _hero_health_label != null and _hero_health_label.visible and _hero_health_bar != null and _hero_health_bar.visible and _hero_status_label != null and _hero_status_label.visible,
 		"critical_health": _critical_health_visible(),
-		"hero_health_warning": _hero_status_label != null and _hero_status_label.visible and _hero_status_label.text.begins_with("⚠ 危急"),
+		"hero_health_warning": _hero_status_label != null and _hero_status_label.visible and _hero_status_label.text.begins_with("⚠ Critical"),
 		"skill_controls_visible": _skill_controls_visible(),
 	}
 
@@ -511,6 +523,7 @@ func _build_interface() -> void:
 	_hero_status_label.add_theme_font_size_override("font_size", 18)
 	_hero_status_label.clip_text = true
 	_place(hero_layout, _hero_status_label, Rect2(0.0, 42.0, 140.0, 21.0))
+	_hero_status_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	# A non-empty authoritative resource line is a real combat state, so it belongs to the
 	# default screen beside the key status, not behind the summary toggle.
 	_resource_label = _named_label("ResourceLabel")
@@ -542,10 +555,11 @@ func _build_interface() -> void:
 	_summary_stack.add_theme_constant_override("separation", 6)
 	_summary_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_summary_body.add_child(_summary_stack)
-	_encounter_heading = _heading("首领  阈门巨像")
+	_encounter_heading = _heading("Boss  Threshold Colossus")
 	_encounter_heading.name = "EncounterHeading"
 	_encounter_heading.clip_text = true
 	_place(boss_layout, _encounter_heading, Rect2(0.0, 0.0, 342.0, 21.0))
+	_encounter_heading.mouse_filter = Control.MOUSE_FILTER_PASS
 	_room_start_label = _named_label("RoomStartLabel")
 	_room_start_label.add_theme_font_size_override("font_size", 18)
 	_room_start_label.add_theme_color_override("font_color", COLOR_AMBER)
@@ -572,7 +586,8 @@ func _build_interface() -> void:
 	_boss_state_label.add_theme_font_size_override("font_size", 18)
 	_boss_state_label.clip_text = true
 	_place(boss_layout, _boss_state_label, Rect2(0.0, 42.0, 456.0, 21.0))
-	_boss_name_label = _muted_label("阈门巨像")
+	_boss_state_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	_boss_name_label = _muted_label("Threshold Colossus")
 	_boss_name_label.name = "BossNameLabel"
 	_boss_name_label.clip_text = true
 	_boss_value_label = _named_label("BossValueLabel")
@@ -603,7 +618,8 @@ func _build_interface() -> void:
 	_proxy_label.clip_text = true
 	_return_button = Button.new()
 	_return_button.name = "ReturnButton"
-	_return_button.text = "退出合同"
+	_return_button.text = "Leave"
+	_return_button.tooltip_text = "Leave Contract"
 	# Combat shortcuts own keyboard input. A clicked utility button must not keep
 	# focus and consume the next Space press as a GUI accept event.
 	_return_button.focus_mode = Control.FOCUS_NONE
@@ -622,7 +638,7 @@ func _build_interface() -> void:
 
 	# One row per authoritative fact inside the fixed readout; long data scrolls
 	# without covering the action bar or widening the panel.
-	_summary_stack_note = _muted_label("战斗详情")
+	_summary_stack_note = _muted_label("Combat Details")
 	_summary_stack_note.name = "SummaryNoteLabel"
 	_summary_stack_note.add_theme_font_size_override("font_size", 18)
 	_summary_stack.add_child(_summary_row(_summary_stack_note))
@@ -681,7 +697,7 @@ func _build_interface() -> void:
 	## action dock, so an invalid-action hint is readable without ever covering
 	## the icons, the pause button, or the opening-room banner. The label sizes
 	## itself to the card's real inner box (512 outer minus 2x12 content margins).
-	var input_feedback_card := _card("InputFeedbackCard", Vector2(300.0, -122.0), Vector2(812.0, -90.0), 0.0, 1.0, 0.0, 1.0, 4.0, 0.78)
+	var input_feedback_card := _card("InputFeedbackCard", Vector2(180.0, -122.0), Vector2(812.0, -90.0), 0.0, 1.0, 0.0, 1.0, 4.0, 0.78)
 	_input_feedback_card = input_feedback_card
 	_input_feedback_card.visible = false
 	var input_feedback_layout := _layout("InputFeedbackLayout", input_feedback_card)
@@ -692,7 +708,7 @@ func _build_interface() -> void:
 	_input_feedback_label.add_theme_font_size_override("font_size", 18)
 	_input_feedback_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_input_feedback_label.visible = false
-	_place(input_feedback_layout, _input_feedback_label, Rect2(0.0, 0.0, 488.0, 24.0))
+	_place(input_feedback_layout, _input_feedback_label, Rect2(0.0, 0.0, 608.0, 24.0))
 	set_summary_visible(false)
 
 
@@ -727,7 +743,7 @@ func _build_skill_cell(slot: Dictionary) -> Button:
 	key_label.position = Vector2(52.0, 8.0)
 	key_label.size = Vector2(46.0, 34.0)
 	key_label.add_theme_font_size_override("font_size", SKILL_KEY_FONT_SIZE)
-	key_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	key_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	key_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	key_label.add_theme_color_override("font_color", COLOR_AMBER)
 	key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -765,6 +781,7 @@ func _build_skill_cell(slot: Dictionary) -> Button:
 	name_label.size = Vector2(92.0, 24.0)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.add_theme_font_size_override("font_size", SKILL_NAME_FONT_SIZE)
+	name_label.clip_text = true
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(name_label)
 	return button
@@ -792,7 +809,7 @@ func _update_action_cells(snapshot: Dictionary, is_auto: bool, battle_over: bool
 	var marked_id := int(snapshot.get("marked_entity_id", 0))
 	var marked_target_label := String(snapshot.get("marked_target_label", "")).strip_edges()
 	if marked_target_label.is_empty():
-		marked_target_label = "目标"
+		marked_target_label = "Target"
 	var mark_active := marked_id > 0 and mark_remaining > 0.0
 	var dash_active := bool(snapshot.get("dash_active", false))
 	var attack_phase_label := String(snapshot.get("attack_phase_label", ""))
@@ -803,33 +820,33 @@ func _update_action_cells(snapshot: Dictionary, is_auto: bool, battle_over: bool
 	var attack_state := _action_state(is_auto, battle_over, attack_cooldown, attack_has_target, attack_target_in_range)
 	if is_auto:
 		if not attack_phase_label.is_empty():
-			attack_state = "%s\n代理施放" % attack_phase_label
+			attack_state = "%s\nProxy Cast" % attack_phase_label
 	elif attack_target_source == "pointer":
 		var pointer_state := _pointer_target_state(attack_target_status, attack_has_target, attack_target_in_range)
 		if not attack_phase_label.is_empty():
 			attack_state = attack_phase_label
-			if attack_buffered and pointer_state == "指针锁定":
-				attack_state += "\n锁定已缓冲"
+			if attack_buffered and pointer_state == "Pointer Lock":
+				attack_state += "\nTarget Lock Buffered"
 			elif not pointer_state.is_empty():
 				attack_state += "\n%s" % pointer_state
-		elif attack_buffered and pointer_state == "指针锁定":
-			attack_state = "锁定已缓冲"
+		elif attack_buffered and pointer_state == "Pointer Lock":
+			attack_state = "Target Lock Buffered"
 		elif attack_buffered:
-			attack_state = "锁定已缓冲"
+			attack_state = "Target Lock Buffered"
 		elif attack_held:
-			attack_state = pointer_state if not pointer_state.is_empty() else "指针锁定"
+			attack_state = pointer_state if not pointer_state.is_empty() else "Pointer Lock"
 		elif not battle_over and attack_cooldown <= 0.0 and not pointer_state.is_empty():
 			attack_state = pointer_state
 	elif not attack_phase_label.is_empty():
 		attack_state = attack_phase_label
 		if attack_buffered:
-			attack_state += "\n续发已缓冲"
+			attack_state += "\nNext Shot Buffered"
 		elif attack_held:
-			attack_state += "\n按住续发"
+			attack_state += "\nHold to Repeat"
 	elif attack_buffered:
-		attack_state = "续发已缓冲"
+		attack_state = "Next Shot Buffered"
 	elif attack_held:
-		attack_state = "按住续发"
+		attack_state = "Hold to Repeat"
 	var attack_active := not attack_phase_label.is_empty() or attack_buffered or (attack_held and not is_auto)
 	if attack_target_source == "pointer" and (not attack_has_target or not attack_target_in_range) and attack_phase_label.is_empty():
 		attack_active = false
@@ -838,40 +855,40 @@ func _update_action_cells(snapshot: Dictionary, is_auto: bool, battle_over: bool
 	var attack_live_detail := _cooldown_text(attack_cooldown) if attack_cooldown > 0.0 else ""
 	_apply_cell("Skill1Button", attack_state, attack_state, attack_tone, attack_disabled, attack_cooldown)
 
-	var mark_state := "未装配"
+	var mark_state := "Unequipped"
 	if mark_equipped:
 		if is_auto:
-			mark_state = "AUTO 已锁定"
+			mark_state = "AUTO Locked"
 		elif battle_over:
-			mark_state = "战斗结束"
+			mark_state = "Combat Ended"
 		elif mark_active:
-			mark_state = "%s\n剩余 %.1fs" % [marked_target_label, mark_remaining]
+			mark_state = "%s\nRemaining %.1fs" % [marked_target_label, mark_remaining]
 		elif mark_cooldown > 0.0:
 			mark_state = _cooldown_text(mark_cooldown)
 		elif not has_target:
-			mark_state = "无目标"
+			mark_state = "No Target"
 		elif not mark_in_range:
-			mark_state = "射程外"
+			mark_state = "Out of Range"
 		else:
-			mark_state = "就绪"
-	var mark_detail := "%s · 剩余 %.1fs · 冷却 %.1fs" % [marked_target_label, mark_remaining, mark_cooldown] if mark_active else mark_state
+			mark_state = "Ready"
+	var mark_detail := "%s · Remaining %.1fs · Cooldown %.1fs" % [marked_target_label, mark_remaining, mark_cooldown] if mark_active else mark_state
 	_apply_cell("Skill2Button", mark_state, mark_detail, _tone_for(is_auto, battle_over, mark_cooldown > 0.0, has_target and mark_in_range, mark_equipped), not mark_equipped or is_auto or battle_over or mark_cooldown > 0.0 or not has_target or not mark_in_range, mark_cooldown)
 
-	var dash_state := "未装配"
+	var dash_state := "Unequipped"
 	if dash_equipped:
 		if is_auto:
-			dash_state = "AUTO 已锁定"
+			dash_state = "AUTO Locked"
 		elif battle_over:
-			dash_state = "战斗结束"
+			dash_state = "Combat Ended"
 		elif dash_active:
-			dash_state = "突袭中\n%s" % _cooldown_text(dash_cooldown)
+			dash_state = "Dashing\n%s" % _cooldown_text(dash_cooldown)
 		elif dash_cooldown > 0.0:
 			dash_state = _cooldown_text(dash_cooldown)
 		else:
-			dash_state = "就绪"
+			dash_state = "Ready"
 	_apply_cell("Skill3Button", dash_state, dash_state, _tone_for(is_auto, battle_over, dash_cooldown > 0.0, true, dash_equipped), not dash_equipped or is_auto or battle_over or dash_cooldown > 0.0 or dash_active, dash_cooldown)
 
-	var dodge_state := "代理控制" if is_auto else ("战斗结束" if battle_over else (_cooldown_text(dodge_cooldown) if dodge_cooldown > 0.0 else "就绪"))
+	var dodge_state := "Proxy Control" if is_auto else ("Combat Ended" if battle_over else (_cooldown_text(dodge_cooldown) if dodge_cooldown > 0.0 else "Ready"))
 	_apply_cell("DodgeButton", dodge_state, dodge_state, _tone_for(is_auto, battle_over, dodge_cooldown > 0.0, true, true), is_auto or battle_over or dodge_cooldown > 0.0, dodge_cooldown)
 
 	_update_detail("Skill1Button", _skill_tooltip("piercing_arrow", attack_state, attack_live_detail))
@@ -883,12 +900,12 @@ func _update_action_cells(snapshot: Dictionary, is_auto: bool, battle_over: bool
 func _skill_tooltip(skill_id: String, current_state: String, live_detail: String = "") -> String:
 	var detail := _player_readable.format_skill(_current_skill(skill_id))
 	if skill_id == "piercing_arrow":
-		detail += "\n场上铜色箭头：角色当前发射方向"
+		detail += "\nCopper arrow on the field: current firing direction"
 	if skill_id == "basic_dodge":
-		detail += "\n操作键：SHIFT · CTRL · RMB"
+		detail += "\nControls: SHIFT · CTRL · RMB"
 	if not live_detail.is_empty():
-		detail += "\n实时%s" % live_detail
-	return "%s\n当前状态：%s" % [detail, current_state]
+		detail += "\nLive %s" % live_detail
+	return "%s\nCurrent State: %s" % [detail, current_state]
 
 
 func _current_skill(skill_id: String) -> Dictionary:
@@ -975,18 +992,18 @@ func _compact_cell_state(node_name: String, text: String) -> String:
 	var first := String(lines[0]).strip_edges()
 	var second := String(lines[1]).strip_edges() if lines.size() > 1 else ""
 	match second:
-		"按住续发":
-			return "%s·续发" % first
-		"续发已缓冲", "锁定已缓冲":
-			return "缓冲" if first.is_empty() else "%s·缓冲" % first
-		"指针锁定":
-			return "%s·锁定" % first
-		"代理施放":
-			return "%s·代理" % first
-	if second.begins_with("剩余 "):
-		return "标记 %s" % second.trim_prefix("剩余 ")
-	if node_name == "Skill3Button" and second.begins_with("冷却 "):
-		return "突袭 %s" % second.trim_prefix("冷却 ")
+		"Hold to Repeat":
+			return "Repeating"
+		"Next Shot Buffered", "Target Lock Buffered":
+			return "Buffered"
+		"Pointer Lock":
+			return "Locked"
+		"Proxy Cast":
+			return "Proxy"
+	if second.begins_with("Remaining "):
+		return "Mark %s" % second.trim_prefix("Remaining ")
+	if node_name == "Skill3Button" and second.begins_with("Cooldown "):
+		return "Dash %s" % second.trim_prefix("Cooldown ")
 	return first
 
 
@@ -994,25 +1011,25 @@ func _compact_cell_state(node_name: String, text: String) -> String:
 ## This is copy compression only; the complete authoritative state remains in the
 ## public skill_cell_detail value and the cell tooltip.
 func _short_cell_phrase(value: String) -> String:
-	if value.begins_with("冷却 "):
-		var suffix := value.trim_prefix("冷却 ")
+	if value.begins_with("Cooldown "):
+		var suffix := value.trim_prefix("Cooldown ")
 		if suffix.begins_with("<"):
-			return "冷 <0.1s"
-		return "冷 %s" % suffix
+			return "CD <0.1s"
+		return "CD %s" % suffix
 	return String({
-		"就绪": "就绪",
-		"无目标": "无目标",
-		"射程外": "射程外",
-		"未装配": "未装",
-		"战斗结束": "结束",
-		"代理控制": "代理",
-		"AUTO 已锁定": "AUTO",
-		"未锁定目标": "未锁",
-		"锁定射程外": "锁距外",
-		"锁定已失效": "锁失效",
-		"指针锁定": "锁定",
-		"续发已缓冲": "缓冲",
-		"锁定已缓冲": "缓冲",
+		"Ready": "Ready",
+		"No Target": "No Target",
+		"Out of Range": "Too Far",
+		"Unequipped": "Empty",
+		"Combat Ended": "Ended",
+		"Proxy Control": "Proxy",
+		"AUTO Locked": "AUTO",
+		"No Locked Target": "No Lock",
+		"Locked Target Out of Range": "Too Far",
+		"Target Lock Expired": "Lost Lock",
+		"Pointer Lock": "Locked",
+		"Next Shot Buffered": "Buffered",
+		"Target Lock Buffered": "Buffered",
 	}.get(value, value))
 
 
@@ -1057,35 +1074,35 @@ func _elite_mechanic_text(raw: String) -> String:
 	var parts: Array[String] = []
 	for entry in raw.split(","):
 		match entry.strip_edges():
-			"periodic_barrier:active": parts.append("屏障开启·绕行等空隙")
-			"periodic_barrier:open": parts.append("屏障消退·集中攻击")
-			"summon_reinforcements:ready": parts.append("召援待触发·精英半血召援")
-			"summon_reinforcements:used": parts.append("援军已出现·留意新增敌人")
+			"periodic_barrier:active": parts.append("Barrier Active · Circle Around and Wait for an Opening")
+			"periodic_barrier:open": parts.append("Barrier Down · Focus Your Attacks")
+			"summon_reinforcements:ready": parts.append("Reinforcements Pending · Elite Calls at Half Health")
+			"summon_reinforcements:used": parts.append("Reinforcements Arrived · Watch for New Enemies")
 	return "\n".join(parts)
 
 
 func _encounter_status_text(raw: String) -> String:
-	var names := {"moving_fireline":"移动火线", "exposed_ground_zone":"危险地带", "ground-zone":"危险地带", "periodic_barrier":"周期屏障", "summon_reinforcements":"召集援军"}
-	var phases := {"warning":"预警中", "windup":"预警中", "active":"生效中", "inactive":"未激活", "cooldown":"间歇", "idle":"间歇", "open":"可攻击", "used":"已召集", "ready":"待触发"}
-	if raw in ["", "无"]: return "无"
+	var names := {"moving_fireline":"Moving Fireline", "exposed_ground_zone":"Hazard Zone", "ground-zone":"Hazard Zone", "periodic_barrier":"Periodic Barrier", "summon_reinforcements":"Call Reinforcements"}
+	var phases := {"warning":"Telegraphing", "windup":"Telegraphing", "active":"Active", "inactive":"Inactive", "cooldown":"Intermittent", "idle":"Intermittent", "open":"Vulnerable", "used":"Called", "ready":"Pending"}
+	if raw in ["", "None"]: return "None"
 	var parts: Array[String] = []
 	for entry in raw.split(","):
 		var pair := entry.strip_edges().split(":")
-		var title := String(names.get(pair[0], "特殊效果"))
+		var title := String(names.get(pair[0], "Special Effects"))
 		parts.append(title + (" · " + String(phases.get(pair[1], "")) if pair.size() > 1 and phases.has(pair[1]) else ""))
-	return "、".join(parts)
+	return ", ".join(parts)
 
 
 func _update_summary(snapshot: Dictionary) -> void:
-	_summary_parameters_label.text = "公开参数  p=%.2f  ·  寿命 %.2fs  ·  距离 %.0f" % [float(snapshot.get("p", 0.0)), float(snapshot.get("lifetime", 0.0)), float(snapshot.get("distance", 0.0))]
-	var growth := _growth_label(String(snapshot.get("growth_type", ""))) if bool(snapshot.get("growth_verified", false)) else "未验证"
-	_summary_growth_label.text = "增长类型  %s  ·  迭代长度 g=%d" % [growth, int(snapshot.get("g", 0))]
+	_summary_parameters_label.text = "Public Stats  p=%.2f  ·  Lifetime %.2fs  ·  Range %.0f" % [float(snapshot.get("p", 0.0)), float(snapshot.get("lifetime", 0.0)), float(snapshot.get("distance", 0.0))]
+	var growth := _growth_label(String(snapshot.get("growth_type", ""))) if bool(snapshot.get("growth_verified", false)) else "Unverified"
+	_summary_growth_label.text = "Growth Type  %s  ·  Iteration Length g=%d" % [growth, int(snapshot.get("g", 0))]
 	if bool(snapshot.get("growth_snapshot_details", false)):
 		var generation_time := float(snapshot.get("growth_generation_time", 0.0))
 		var remainder := maxf(0.0, float(snapshot.get("lifetime", 0.0)) - float(snapshot.get("g", 0)) * generation_time)
-		_summary_growth_label.text += "\n每代 %.3fs · 剩余寿命 %.3fs" % [generation_time, remainder]
-	var block := "最近代理阻断  %s" % _proxy_failure_text(snapshot.get("last_proxy_failure", {})) if String(snapshot.get("selected_mode", "Manual")).to_upper() == "AUTO" else "代理状态  手动模式 · 未运行"
-	_summary_block_label.text = "%s\n完整战斗反馈  %s" % [block, _feedback_text]
+		_summary_growth_label.text += "\nGeneration %.3fs · Remaining Lifetime %.3fs" % [generation_time, remainder]
+	var block := "Last Proxy Block  %s" % _proxy_failure_text(snapshot.get("last_proxy_failure", {})) if String(snapshot.get("selected_mode", "Manual")).to_upper() == "AUTO" else "Proxy State  Manual Mode · Inactive"
+	_summary_block_label.text = "%s\nFull Combat Feedback  %s" % [block, _feedback_text]
 
 
 ## The active playfield wins when an actor reaches the lower-right input pad.
@@ -1107,7 +1124,7 @@ func _compact_feedback(value: String) -> String:
 	var kept: Array[String] = []
 	for part in value.split(" · "):
 		var segment := part.strip_edges()
-		if segment.is_empty() or segment.begins_with("对 Boss 伤害") or segment.begins_with("已击败"):
+		if segment.is_empty() or segment.begins_with("Boss Damage") or segment.begins_with("Defeated"):
 			continue
 		kept.append(segment)
 	return value.strip_edges() if kept.is_empty() else " · ".join(kept)
@@ -1115,63 +1132,63 @@ func _compact_feedback(value: String) -> String:
 
 func _action_state(is_auto: bool, battle_over: bool, cooldown: float, has_target: bool, in_range: bool) -> String:
 	if is_auto:
-		return "代理控制"
+		return "Proxy Control"
 	if battle_over:
-		return "战斗结束"
+		return "Combat Ended"
 	if cooldown > 0.0:
 		return _cooldown_text(cooldown)
 	if not has_target:
-		return "无目标"
+		return "No Target"
 	if not in_range:
-		return "射程外"
-	return "就绪"
+		return "Out of Range"
+	return "Ready"
 
 
 func _pointer_target_state(status: String, has_target: bool, in_range: bool) -> String:
 	match status:
 		"locked":
-			return "指针锁定"
+			return "Pointer Lock"
 		"out_of_range":
-			return "锁定射程外"
+			return "Locked Target Out of Range"
 		"lost":
-			return "锁定已失效"
+			return "Target Lock Expired"
 		"no_pointer_target":
-			return "未锁定目标"
+			return "No Locked Target"
 	if not has_target:
-		return "未锁定目标"
+		return "No Locked Target"
 	if not in_range:
-		return "锁定射程外"
-	return "指针锁定"
+		return "Locked Target Out of Range"
+	return "Pointer Lock"
 
 
 ## One simulated tick is 33ms, so a single remaining tick must not be printed as
 ## the ambiguous "0.0s"; the cell either shows the real seconds or is explicit
 ## that less than a tenth of a second remains.
 func _cooldown_text(seconds: float) -> String:
-	return "冷却 <0.1s" if seconds < 0.05 else "冷却 %.1fs" % seconds
+	return "Cooldown <0.1s" if seconds < 0.05 else "Cooldown %.1fs" % seconds
 
 
 func _proxy_failure_text(value: Variant) -> String:
 	if not value is Dictionary or (value as Dictionary).is_empty():
-		return "无"
+		return "None"
 	var failure := value as Dictionary
 	var category := String(failure.get("category", "unknown"))
 	var reason := String(failure.get("reason", "unknown"))
 	var localized_category: String = String({
-		"cooldown": "冷却",
-		"timing": "时机",
-		"range": "射程",
-		"target": "目标",
+		"cooldown": "Cooldown",
+		"timing": "Timing",
+		"range": "Range",
+		"target": "Target",
 	}.get(category, category))
-	var localized_reason := "技能尚未就绪" if reason in ["skill is not ready", "skill not ready"] else reason
+	var localized_reason := "Skill Not Ready" if reason in ["skill is not ready", "skill not ready"] else reason
 	return "[%s] %s" % [localized_category, localized_reason]
 
 
 func _growth_label(value: String) -> String:
 	return {
-		"convergent": "收敛 / CONVERGENT",
-		"critical": "临界 / CRITICAL",
-		"exponential": "指数 / EXPONENTIAL",
+		"convergent": "CONVERGENT",
+		"critical": "CRITICAL",
+		"exponential": "EXPONENTIAL",
 	}.get(value.to_lower(), value.to_upper())
 
 

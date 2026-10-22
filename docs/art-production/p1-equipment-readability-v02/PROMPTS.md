@@ -1,44 +1,43 @@
-# 箭袋／手套辨识修正 · 提示词
+# Quiver / Glove Readability Corrections - Prompts
 
-使用内置 imagegen，以 v0.9 图07 为造型依据。第一版4张生成物错误绘制了棋盘底（RGB，不是真透明），不进入生产。第二轮保持主体，改为明确洋红色键；两空槽是单独生成的灰色图元。生产仅做已有管线的裁切、色键提取、固定限色及最近邻缩小，不程序重绘轮廓。
+Built-in imagegen, based on v0.9 figure 07. The first four outputs incorrectly painted checkerboards (RGB, not transparency) and did not enter production. Round two retained subjects with explicit magenta chroma key; two empty slots were separately generated gray primitives. Production uses existing cropping, chroma extraction, fixed palette limiting, and nearest-neighbor reduction, not programmatic silhouette redrawing.
 
-## lineage_quiver 原稿
+## lineage_quiver Original
 
 Use case: stylized-concept. Asset type: production-ready pixel-game inventory icon. The attached image is only the approved shape and palette reference, do not reproduce its contact sheet. Deliver one icon alone, centered, generous transparent margin, genuinely transparent alpha background; no checkerboard, text, border, ground shadow or label. This is intended to be normalized into a 32x32 native pixel cell (visible 28x28) and shown nearest-neighbor 2x, so build bold connected pixel clusters and clearly stepped contours. Match the BASES row in the reference: restrained cold-grey, brown leather and bone white, broad flat material planes, 7-10 colors, minimal highlights, no grain/dithering/miniature scratches/gradient/glow/photorealism. One icon, not multiple examples. Subject: BASES 03, the lineage quiver. A NARROW, TALL brown leather open quiver leaning slightly right, THREE bone-white arrow fletchings on separated shafts protruding well above a thick open lip, wide plain strap around lower bag, one curved carrying strap to its left. Shaft bundle at top, solid long bag below. Its width should be under half its height, entirely unlike a hand or glove. No wrist, fingers, ornaments, emblems or extra tools.
 
-## farwatch_quiver 原稿
+## farwatch_quiver Original
 
 Use case: stylized-concept. Asset type: production-ready pixel-game inventory icon. The attached image is only the approved shape and palette reference, do not reproduce its contact sheet. Deliver one icon alone, centered, generous transparent margin, genuinely transparent alpha background; no checkerboard, text, border, ground shadow or label. This is intended to be normalized into a 32x32 native pixel cell (visible 28x28) and shown nearest-neighbor 2x, so build bold connected pixel clusters and clearly stepped contours. Match the BASES row in the reference: restrained cold-grey, brown leather and bone white, broad flat material planes, 7-10 colors, minimal highlights, no grain/dithering/miniature scratches/gradient/glow/photorealism. One icon, not multiple examples. Subject: BASES 04, farwatch quiver. A NARROW, TALL reinforced brown open arrow quiver leaning slightly left with TWO or THREE dark-red arrow fletchings at very top, clearly separated shafts, two broad pale-grey retention bands across the long pouch, and ONE short squat optical sight clipped halfway down its right flank. Longer vertical arrow-bag silhouette, much narrower than a hand; no fingers, no forearm, no random rivets. Recognizable as a second quiver, distinct from plain quiver by its side sight, two bands and red fletching, not mere recolor.
 
-## turnfeather_gloves 原稿
+## turnfeather_gloves Original
 
 Use case: stylized-concept. Asset type: production-ready pixel-game inventory icon. The attached image is only the approved shape and palette reference, do not reproduce its contact sheet. Deliver one icon alone, centered, generous transparent margin, genuinely transparent alpha background; no checkerboard, text, border, ground shadow or label. This is intended to be normalized into a 32x32 native pixel cell (visible 28x28) and shown nearest-neighbor 2x, so build bold connected pixel clusters and clearly stepped contours. Match the BASES row in the reference: restrained cold-grey, brown leather and bone white, broad flat material planes, 7-10 colors, minimal highlights, no grain/dithering/miniature scratches/gradient/glow/photorealism. One icon, not multiple examples. Subject: BASES 05, turnfeather glove. ONE clearly recognizable EMPTY brown leather GLOVE lying diagonally, wrist cuff at upper right and FOUR short separated blunt fingertips pointing lower-left, a large THUMB visibly projecting to lower-right with a deep concave notch separating it from the palm. Broad squat palm, width about 75% of height. One big bone-white guiding FEATHER plate attached to the back of the palm, angled outward left, leaving brown fingertips and thumb visible. A pale clasp across short cuff. Must read HAND at 32 pixels, NOT an arrow quiver, not a fan of long shafts, not a skeletal gauntlet, no human flesh, no forearm.
 
-## piercer_gloves 原稿
+## piercer_gloves Original
 
 Use case: stylized-concept. Asset type: production-ready pixel-game inventory icon. The attached image is only the approved shape and palette reference, do not reproduce its contact sheet. Deliver one icon alone, centered, generous transparent margin, genuinely transparent alpha background; no checkerboard, text, border, ground shadow or label. This is intended to be normalized into a 32x32 native pixel cell (visible 28x28) and shown nearest-neighbor 2x, so build bold connected pixel clusters and clearly stepped contours. Match the BASES row in the reference: restrained cold-grey, brown leather and bone white, broad flat material planes, 7-10 colors, minimal highlights, no grain/dithering/miniature scratches/gradient/glow/photorealism. One icon, not multiple examples. Subject: BASES 06, piercing glove. ONE clearly recognizable EMPTY brown leather archer GLOVE, broad squat hand silhouette, wrist cuff at upper left and FOUR short blunt fingertips downward, THUMB sticks out far to the right separated by an obvious notch. Width about 75% of height, no elongated stalk silhouette. Single BONE-WHITE rectangular protective plate over the back of hand and one pale strap over short wrist cuff, palm and brown separated fingertips visible; no feathers or arrow shafts. Must read a practical glove at 32 pixels and differ structurally from feather glove. No human flesh, no arm, no random rivets.
 
-## lineage_quiver 色键／空槽源
+## lineage_quiver Chroma-Key / Empty-Slot Source
 
 Use case: background-extraction. Image 1 is the edit target, preserve precisely the existing object silhouette, pose, brown leather and ivory material planes. Replace ONLY the entire checkerboard background including the spaces between arrows, fingers and strap loop with a perfectly uniform flat bright magenta #ff00ff color key, no variation, no shadows. The previous output incorrectly painted a checkerboard instead of transparency; never draw checkerboards. Keep all opaque object pixels intact, do not draw a new object, no outlines added, no text, no frame. The new file is for mechanical color-key extraction to a 32-pixel game icon. Do not use magenta anywhere on the object.
 
-## farwatch_quiver 色键／空槽源
+## farwatch_quiver Chroma-Key / Empty-Slot Source
 
 Use case: background-extraction. Image 1 is the edit target, preserve precisely the existing object silhouette, pose, brown leather and ivory material planes. Replace ONLY the entire checkerboard background including the spaces between arrows, fingers and strap loop with a perfectly uniform flat bright magenta #ff00ff color key, no variation, no shadows. The previous output incorrectly painted a checkerboard instead of transparency; never draw checkerboards. Keep all opaque object pixels intact, do not draw a new object, no outlines added, no text, no frame. The new file is for mechanical color-key extraction to a 32-pixel game icon. Do not use magenta anywhere on the object.
 
-## turnfeather_gloves 色键／空槽源
+## turnfeather_gloves Chroma-Key / Empty-Slot Source
 
 Use case: background-extraction. Image 1 is the edit target, preserve precisely the existing object silhouette, pose, brown leather and ivory material planes. Replace ONLY the entire checkerboard background including the spaces between arrows, fingers and strap loop with a perfectly uniform flat bright magenta #ff00ff color key, no variation, no shadows. The previous output incorrectly painted a checkerboard instead of transparency; never draw checkerboards. Keep all opaque object pixels intact, do not draw a new object, no outlines added, no text, no frame. The new file is for mechanical color-key extraction to a 32-pixel game icon. Do not use magenta anywhere on the object.
 
-## piercer_gloves 色键／空槽源
+## piercer_gloves Chroma-Key / Empty-Slot Source
 
 Use case: background-extraction. Image 1 is the edit target, preserve precisely the existing object silhouette, pose, brown leather and ivory material planes. Replace ONLY the entire checkerboard background including the spaces between arrows, fingers and strap loop with a perfectly uniform flat bright magenta #ff00ff color key, no variation, no shadows. The previous output incorrectly painted a checkerboard instead of transparency; never draw checkerboards. Keep all opaque object pixels intact, do not draw a new object, no outlines added, no text, no frame. The new file is for mechanical color-key extraction to a 32-pixel game icon. Do not use magenta anywhere on the object.
 
-## slot_off_hand 色键／空槽源
+## slot_off_hand Chroma-Key / Empty-Slot Source
 
 Use case: stylized-concept. Image 1 is the silhouette reference. Generate ONE empty equipment slot symbol for a cold-wasteland pixel game, centered generous margin. Match the referenced tall narrow arrow quiver with three short arrow fletchings, long plain pouch and strap. Readable at 32 native pixels; crisp stepped cluster-based pixel silhouette. Only dark slate #344650, muted mid-grey #697d83, and bone grey #b6c3bf for object; use simple big planes and no internal texture or wear. Different from colored item art: an empty-slot grey symbol, no bone plate or feather ornament. Background must be perfectly UNIFORM flat bright magenta #ff00ff for color-key extraction, not checkerboard or simulated transparency, no gradients/shadow/text/frame. No individual pixel noise.
 
-## slot_gloves 色键／空槽源
+## slot_gloves Chroma-Key / Empty-Slot Source
 
 Use case: stylized-concept. Image 1 is the silhouette reference. Generate ONE empty equipment slot symbol for a cold-wasteland pixel game, centered generous margin. Match the referenced broad squat leather glove with short wrist cuff, four blunt fingertips and a distinct side thumb notch. Readable at 32 native pixels; crisp stepped cluster-based pixel silhouette. Only dark slate #344650, muted mid-grey #697d83, and bone grey #b6c3bf for object; use simple big planes and no internal texture or wear. Different from colored item art: an empty-slot grey symbol, no bone plate or feather ornament. Background must be perfectly UNIFORM flat bright magenta #ff00ff for color-key extraction, not checkerboard or simulated transparency, no gradients/shadow/text/frame. No individual pixel noise.
-

@@ -30,6 +30,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await _check_new_forge_session_flow()
+	await _check_forge_pagination_and_count_copy()
 	await _check_backpack_hover_and_activation_persistence()
 	await _check_equipment_comparison_state()
 	await _check_readable_filters_and_skill_entry()
@@ -117,17 +118,17 @@ func _check_equipment_comparison_state() -> void:
 		var equip: Button = screen.get_action_button("Equip_loot_bow_2")
 		var full: Button = screen.get_action_button("FullItemDetails_loot_bow_2")
 		var detail := screen.backpack_detail() as Control
-		_expect(grid != null and grid.columns == 4 and fixtures._comparison_text(grid).begins_with("构筑属性\n当前\n换装后\n"),
+		_expect(grid != null and grid.columns == 4 and fixtures._comparison_text(grid).begins_with("Build Stats\nCurrent\nWhen Equipped\n"),
 			"detail state: comparison columns lost their current/replacement meaning")
 		for row in [
-			["续行概率", "61%", "↓ 54%", FacilityScreenScript.ShellThemeScript.WARNING],
-			["伤害", "160", "↓ 140", FacilityScreenScript.ShellThemeScript.WARNING],
-			["生命", "112", "↑ 120", FacilityScreenScript.ShellThemeScript.PROXY],
-			["箭链寿命", "34秒", "↑ 40秒", FacilityScreenScript.ShellThemeScript.PROXY],
-			["箭速", "682", "↑ 750.2", FacilityScreenScript.ShellThemeScript.PROXY],
-			["射程", "165", "↑ 180", FacilityScreenScript.ShellThemeScript.PROXY],
-			["转向耗时", "0.16秒", "↓ 0.12秒", FacilityScreenScript.ShellThemeScript.PROXY],
-			["暴击率", "5%", "↑ 8%", FacilityScreenScript.ShellThemeScript.PROXY],
+			["Continuation Chance", "61%", "↓ 54%", FacilityScreenScript.ShellThemeScript.WARNING],
+			["Damage", "160", "↓ 140", FacilityScreenScript.ShellThemeScript.WARNING],
+			["Health", "112", "↑ 120", FacilityScreenScript.ShellThemeScript.PROXY],
+			["Arrow Chain Lifetime", "34s", "↑ 40s", FacilityScreenScript.ShellThemeScript.PROXY],
+			["Arrow Speed", "682", "↑ 750.2", FacilityScreenScript.ShellThemeScript.PROXY],
+			["Range", "165", "↑ 180", FacilityScreenScript.ShellThemeScript.PROXY],
+			["Turn Time", "0.16s", "↓ 0.12s", FacilityScreenScript.ShellThemeScript.PROXY],
+			["Critical Chance", "5%", "↑ 8%", FacilityScreenScript.ShellThemeScript.PROXY],
 		]:
 			fixtures._expect_comparison_row(grid, row[0], row[1], row[2], row[3], failures)
 		_expect(grid != null and grid.get_child_count() == 36,
@@ -150,7 +151,7 @@ func _check_equipment_comparison_state() -> void:
 			local_scroll.scroll_vertical = int(bar.max_value - bar.page)
 			await _settle_frames()
 			var tail := screen.find_child("InterfaceLost", true, false) as Label
-			_expect(tail != null and tail.text.contains("失去：可繁殖子箭、分支目标记录")
+			_expect(tail != null and tail.text.contains("Lost: Breedable Child Arrows, Branch Target History")
 				and detail.get_global_rect().encloses(tail.get_global_rect())
 				and tail.get_global_rect().end.y <= local_scroll.get_global_rect().position.y,
 				"detail state: interface losses must remain visible above the scrolling numbers")
@@ -163,10 +164,10 @@ func _check_equipment_comparison_state() -> void:
 			full.pressed.emit()
 			await _settle_frames()
 			var text := screen.find_child("ItemDetailText", true, false) as Label
-			_expect(text != null and text.text.contains("穿刺箭续行概率：61% → 54%")
-				and text.text.contains("转向时间（数值越低越好）：0.16 秒（越低越好） → 0.12 秒（越低越好）")
-				and text.text.contains("获得接口：未收录接口（quick_draw）")
-				and text.text.contains("失去接口：可繁殖子箭，分支目标记录"),
+			_expect(text != null and text.text.contains("Piercing Arrow Continuation Chance: 61% → 54%")
+				and text.text.contains("Turn Time (Lower Is Better): 0.16 s → 0.12 s")
+				and text.text.contains("Interfaces Gained: Unknown Interface (quick_draw)")
+				and text.text.contains("Interfaces Lost: Breedable Child Arrows, Branch Target History"),
 				"detail state: complete equipment details lost numeric or interface gains/losses")
 			await _close_build_reference(screen)
 			_expect(backpack.page_index() == page_before and _focus_owner_name(screen) == "FullItemDetails_loot_bow_2",
@@ -179,18 +180,57 @@ func _check_equipment_comparison_state() -> void:
 			actions.clear()
 			var equipped_data := data.duplicate(true)
 			equipped_data.active_build.equipped_item_ids.main_hand = "loot:bow/2"
-			screen.present("loadout", {}, {}, "已装备", equipped_data)
+			screen.present("loadout", {}, {}, "Equipped", equipped_data)
 			await _settle_frames()
 			screen.call("_finish_loadout_backpack_exit")
 			await _settle_frames()
 			var equipped_name := screen.find_child("BackpackDetailName", true, false) as Label
-			_expect(screen.backpack_detail().visible and equipped_name != null and equipped_name.text.begins_with("已装备 · "),
+			_expect(screen.backpack_detail().visible and equipped_name != null and equipped_name.text.begins_with("Equipped · "),
 				"detail state: equipped item vanished when the authoritative snapshot refreshed")
 			_expect(screen.get_action_button("Equip_loot_bow_2") == null and actions.is_empty(),
 				"detail state: equipped result retained equip action or emitted another domain intent")
 	fixtures.free()
 	host.queue_free()
 	await process_frame
+
+
+func _check_forge_pagination_and_count_copy() -> void:
+	var fixtures := FacilityFixture.new()
+	var host := Control.new()
+	root.add_child(host)
+	var screen := FacilityScreenScript.new()
+	host.add_child(screen)
+	for operation in ["inscribe", "rewrite", "refine"]:
+		var title := String(FacilityScreenScript.FORGE_TRACK_TITLES[operation])
+		_expect(screen._law_token_name(operation, 1) == title + " Law Token"
+			and screen._law_token_name(operation, 2) == title + " Law Tokens",
+			"counted Law Token copy lost its singular/plural form")
+	for dimensions in [Vector2(1280, 720), Vector2(1600, 900)]:
+		host.size = dimensions
+		for cost in [1, 2]:
+			screen.present("forge", {}, {}, "", fixtures._forge_snapshot(true, true, "candidate-%d" % cost))
+			await _settle_frames()
+			var token_name := "Rewrite Law Token" if cost == 1 else "Rewrite Law Tokens"
+			var browse := screen.find_child("ForgeBrowseSelectionState", true, false) as Label
+			var confirm: Button = screen.get_action_button("ForgeConfirmSelection")
+			_expect(browse != null and browse.text.contains("Selecting costs %d %s\n" % [cost, token_name])
+				and confirm != null and confirm.text == "Confirm Commit · Spend %d %s" % [cost, token_name],
+				"forge browse and commit did not display the exact cost with natural counted-token grammar")
+			for spec in [["ForgePreviousCandidate", "Prev", "Previous Candidate"], ["ForgeNextCandidate", "Next", "Next Candidate"]]:
+				var button: Button = screen.get_action_button(spec[0])
+				_expect(button != null and button.text == spec[1] and button.tooltip_text == spec[2]
+					and button.autowrap_mode == TextServer.AUTOWRAP_OFF,
+					"forge pager lost its concise single-line wording or full tooltip")
+				if button != null:
+					var width := button.get_theme_font("font").get_string_size(button.text,
+						HORIZONTAL_ALIGNMENT_LEFT, -1, button.get_theme_font_size("font_size")).x
+					var skin := button.get_theme_stylebox("disabled" if button.disabled else "normal")
+					_expect(width <= button.size.x - skin.get_minimum_size().x
+						and button.get_combined_minimum_size().y <= button.size.y
+						and host.get_global_rect().encloses(button.get_global_rect()),
+						"forge pager text or border does not fit at %s" % dimensions)
+	host.free()
+	fixtures.free()
 
 
 func _check_new_forge_session_flow() -> void:
@@ -203,7 +243,7 @@ func _check_new_forge_session_flow() -> void:
 	)
 	screen.present("forge", {}, {}, "", fixtures._forge_snapshot(true))
 	await _settle_frames()
-	_expect(screen.get_visible_text().contains("尚未预见未来") and not screen.get_visible_text().contains("候选第"),
+	_expect(screen.get_visible_text().contains("No future has been forecast") and not screen.get_visible_text().contains("Candidate "),
 		"forge session: unrevealed snapshot exposed candidates")
 	_expect(actions.is_empty(), "forge session: first present emitted a domain action")
 	screen.present("forge", {}, {}, "", fixtures._forge_snapshot(true))
@@ -235,7 +275,7 @@ func _check_new_forge_session_flow() -> void:
 	var no_rewrite: Button = screen.get_action_button("ForgeOperation_rewrite")
 	await _settle_frames()
 	var blocked_reveal: Button = screen.get_action_button("ForgeReveal")
-	_expect(blocked_reveal != null and blocked_reveal.disabled and screen.get_visible_text().contains("没有改写律筹"),
+	_expect(blocked_reveal != null and blocked_reveal.disabled and screen.get_visible_text().contains("No Rewrite Law Tokens"),
 		"forge session: zero law tallies did not expose the insufficient-tallies boundary")
 	actions.clear()
 	var revealed: Dictionary = fixtures._forge_snapshot(true, true)
@@ -255,7 +295,7 @@ func _check_new_forge_session_flow() -> void:
 	screen.present("forge", {}, {}, "", fixtures._forge_snapshot(true, true, "candidate-2"))
 	await _settle_frames()
 	var text := screen.get_visible_text()
-	_expect(text.contains("候选第 2 / 2 项 · 若选定将消耗 2 枚改写律筹")
+	_expect(text.contains("Candidate 2 / 2 · Selecting costs 2 Rewrite Law Tokens")
 		and screen.find_child("ForgeBuildComparison", true, false) != null,
 		"forge session: restored result lost its cost or compact build comparison")
 	var full := screen.get_action_button("ForgeFullResultDetail")
@@ -263,8 +303,8 @@ func _check_new_forge_session_flow() -> void:
 	if full != null:
 		full.pressed.emit()
 		var full_text := (screen.find_child("ItemDetailText", true, false) as Label).text
-		_expect(full_text.contains("暴击率") and full_text.contains("转向时间（数值越低越好）")
-			and full_text.contains("底材属性") and not full_text.contains("命运骰") and not full_text.contains("REROLL"),
+		_expect(full_text.contains("Critical Chance") and full_text.contains("Turn Time (Lower Is Better)")
+			and full_text.contains("Base Stats") and not full_text.contains("Destiny Dice") and not full_text.contains("REROLL"),
 			"forge session: restored result details lost the complete readable comparison")
 		(screen.find_child("ItemDetailDialog", true, false) as AcceptDialog).hide()
 	var confirm: Button = screen.get_action_button("ForgeConfirmSelection")
@@ -279,7 +319,7 @@ func _check_new_forge_session_flow() -> void:
 	var cancel: Button = screen.get_action_button("ForgeCancelSelection")
 	if cancel != null: cancel.pressed.emit()
 	_expect(actions == [{"facility": "forge", "action": "forge_cancel", "payload": {"session_id": "forge-session-1"}}]
-		and screen.get_visible_text().contains("已选定当前未来 · 可确认落锤"),
+		and screen.get_visible_text().contains("Current Future Selected · Ready to Commit"),
 		"forge session: cancel did not emit once or mutated the view before an authoritative response")
 	fixtures.free()
 	await _end(screen)
@@ -289,9 +329,9 @@ func _check_readable_filters_and_skill_entry() -> void:
 	var fixtures := FacilityFixture.new()
 	var data: Dictionary = fixtures._real_loadout_snapshot()
 	data["early_skill_registry"] = {"piercing_arrow": {
-		"name": "穿刺箭", "key_bindings": ["鼠标左键"], "type": "主动攻击", "target_rule": "朝指针方向",
-		"range_rule": "受寻敌与穿刺箭射程影响", "full_effect": "贯穿目标并继续飞行；命中后保留穿刺次数并记录本次命中的目标。贯穿目标并继续飞行；命中后保留穿刺次数并记录本次命中的目标。贯穿目标并继续飞行；命中后保留穿刺次数并记录本次命中的目标。贯穿目标并继续飞行；命中后保留穿刺次数并记录本次命中的目标。贯穿目标并继续飞行；命中后保留穿刺次数并记录本次命中的目标。贯穿目标并继续飞行；命中后保留穿刺次数并记录本次命中的目标。贯穿目标并继续飞行；命中后保留穿刺次数并记录本次命中的目标。贯穿目标并继续飞行；命中后保留穿刺次数并记录本次命中的目标。", "cooldown_ticks": 12,
-		"duration_ticks": 30, "equipment_parameters": ["p", "critical_chance"], "synergies": ["孳生分裂"], "limitations": ["需要目标"],
+		"name": "Piercing Arrow", "key_bindings": ["Left Mouse Button"], "type": "Active Attack", "target_rule": "Toward the Pointer",
+		"range_rule": "Affected by Targeting and Piercing Arrow Range", "full_effect": "Pierce the target and keep flying; retain the remaining pierces and record the target hit.Pierce the target and keep flying; retain the remaining pierces and record the target hit.Pierce the target and keep flying; retain the remaining pierces and record the target hit.Pierce the target and keep flying; retain the remaining pierces and record the target hit.Pierce the target and keep flying; retain the remaining pierces and record the target hit.Pierce the target and keep flying; retain the remaining pierces and record the target hit.Pierce the target and keep flying; retain the remaining pierces and record the target hit.Pierce the target and keep flying; retain the remaining pierces and record the target hit.", "cooldown_ticks": 12,
+		"duration_ticks": 30, "equipment_parameters": ["p", "critical_chance"], "synergies": ["Breeding Split"], "limitations": ["Target Required"],
 	}}
 	(data["resolved_build"] as Dictionary)["final_parameters"]["critical_chance"] = 0.05
 	(data["equip_previews"] as Dictionary)["loot:bow/2"]["final_parameters"]["critical_chance"] = 0.08
@@ -308,13 +348,13 @@ func _check_readable_filters_and_skill_entry() -> void:
 	_expect(filters != null and piercing != null and mark != null and dash != null and dodge != null,
 		"readable loadout: filters or the four first-screen action entries are missing")
 	if piercing != null and mark != null and dash != null and dodge != null:
-		_expect(piercing.text == "穿刺箭\n左键 0.4秒"
-			and mark.text == "猎人印记\nQ 8秒"
-			and dash.text == "突袭\nE 3秒"
-			and dodge.text == "闪避\nShift 1.17秒",
+		_expect(piercing.text == "Piercing Arrow\nLeft-click 0.4s"
+			and mark.text == "Hunter's Mark\nQ 8s"
+			and dash.text == "Dash\nE 3s"
+			and dodge.text == "Dodge\nShift 1.17s",
 			"readable loadout: compact actions did not keep the name and key/cooldown on stable separate lines")
 		_expect(not dodge.text.contains("Sh\nift")
-			and screen._compact_skill_text({"name":"翻滚", "key_bindings":["空格"], "cooldown_ticks":13}, 1) == "翻滚\n空格 0.43秒",
+			and screen._compact_skill_text({"name":"Roll", "key_bindings":["Space"], "cooldown_ticks":13}, 1) == "Roll\nSpace 0.43s",
 			"readable loadout: a named binding can still split across lines")
 		for action: Button in [piercing, mark, dash, dodge]:
 			var minimum := action.get_combined_minimum_size()
@@ -355,11 +395,11 @@ func _check_readable_filters_and_skill_entry() -> void:
 	var skill_dialog: AcceptDialog = screen.find_child("SkillDetailDialog", true, false) as AcceptDialog
 	var skill_scroll: ScrollContainer = screen.find_child("SkillDetailScroll", true, false) as ScrollContainer
 	var skill_text: Label = screen.find_child("SkillDetailText", true, false) as Label
-	_expect(skill_dialog != null and skill_dialog.visible and skill_dialog.title.contains("穿刺箭")
-		and skill_text != null and skill_text.text.contains("穿刺箭｜鼠标左键") and skill_text.text.contains("暴击率")
-		and skill_text.text.contains("目标规则：") and skill_text.text.contains("完整效果：")
-		and skill_text.text.contains("联动：") and skill_text.text.contains("限制：")
-		and not skill_text.text.contains("猎人印记｜"),
+	_expect(skill_dialog != null and skill_dialog.visible and skill_dialog.title.contains("Piercing Arrow")
+		and skill_text != null and skill_text.text.contains("Piercing Arrow|Left Mouse Button") and skill_text.text.contains("Critical Chance")
+		and skill_text.text.contains("Target Rule: ") and skill_text.text.contains("Full Effect: ")
+		and skill_text.text.contains("Synergy: ") and skill_text.text.contains("Limits: ")
+		and not skill_text.text.contains("Hunter's Mark|"),
 		"readable loadout: one compact action did not open its complete single-skill description")
 	var close_button: Button = null if skill_dialog == null else skill_dialog.get_ok_button()
 	var dialog_rect := Rect2()
@@ -371,7 +411,7 @@ func _check_readable_filters_and_skill_entry() -> void:
 		and close_button != null and close_button.is_visible_in_tree() and dialog_rect.encloses(close_button.get_global_rect())
 		and skill_scroll.get_global_rect().encloses(skill_text.get_global_rect().intersection(skill_scroll.get_global_rect()))
 		and skill_text.size.x <= skill_scroll.size.x
-		and skill_text.text.contains("限制："),
+		and skill_text.text.contains("Limits: "),
 		"readable loadout: skill dialog is not bounded with a visible close button and its complete copy in the named scroll region")
 	if skill_scroll != null:
 		var skill_bar := skill_scroll.get_v_scroll_bar()
@@ -393,15 +433,16 @@ func _check_readable_filters_and_skill_entry() -> void:
 	if mark != null: mark.pressed.emit()
 	await _settle_frames()
 	var mark_text: Label = null if skill_dialog == null else skill_dialog.find_child("SkillDetailText", true, false) as Label
-	_expect(skill_dialog != null and skill_dialog.visible and skill_dialog.title.contains("猎人印记")
-		and mark_text != null and mark_text.text.contains("猎人印记｜Q") and not mark_text.text.contains("穿刺箭｜"),
+	_expect(skill_dialog != null and skill_dialog.visible and skill_dialog.title.contains("Hunter's Mark")
+		and mark_text != null and mark_text.text.contains("Hunter's Mark|Q") and not mark_text.text.contains("Piercing Arrow|"),
 		"readable loadout: switching actions did not replace the dialog with only the selected skill")
 	if skill_dialog != null: skill_dialog.hide()
 	(data["active_build"] as Dictionary)["skills"] = ["piercing_arrow", "", ""]
 	screen.present("loadout", {}, {}, "", data)
 	await _settle_frames()
 	var locked_skill: Button = screen.get_action_button("SkillSummary_empty_2")
-	_expect(locked_skill != null and locked_skill.disabled and locked_skill.text.contains("完成主线后开放"),
+	_expect(locked_skill != null and locked_skill.disabled and locked_skill.text == "Slot 2\nLocked"
+		and locked_skill.tooltip_text.contains("unlocks through the main quest"),
 		"readable loadout: a locked skill slot required hover to reveal its main-story unlock condition")
 	fixtures.free()
 	await _end(screen)
@@ -565,7 +606,7 @@ func _check_candidate_region_survives_folding() -> void:
 	await _settle_frames()
 	var before := int(candidates.call("page_index"))
 	_expect(before == 2, "detail state: the candidate region could not change pages")
-	_expect(_total_label_count(screen, "instance_id：%s" % LONG_ID) == 0,
+	_expect(_total_label_count(screen, "instance_id: %s" % LONG_ID) == 0,
 		"detail state: the long raw instance id escaped the test console")
 	var candidate_toggle: Button = screen.get_action_button("CandidateFieldsToggle_%s" % LONG_ID)
 	_expect(candidate_toggle == null, "detail state: the retired candidate raw-field toggle returned")
@@ -588,7 +629,7 @@ func _check_candidate_region_survives_folding() -> void:
 		_expect(int(candidates.call("page_index")) == before,
 			"detail state: closing build details moved the candidate list from page %d to %d"
 			% [before, int(candidates.call("page_index"))])
-	_expect(_total_label_count(screen, "instance_id：%s" % LONG_ID) == 0,
+	_expect(_total_label_count(screen, "instance_id: %s" % LONG_ID) == 0,
 		"detail state: rebuilding restored a raw instance id outside F10")
 	await _end(screen)
 
@@ -634,8 +675,8 @@ func _check_page_offsets_survive_the_switches() -> void:
 			"detail state: opening the resolved detail block moved the workspace from %d to %s"
 			% [before, "missing" if workspace == null else str(workspace.scroll_vertical)])
 	var reference := screen.find_child("ItemDetailText", true, false) as Label
-	_expect(reference != null and reference.is_visible_in_tree() and reference.text.contains("最终参数")
-		and reference.text.contains("穿刺箭续行概率：61%") and reference.text.contains("载体伤害：160"),
+	_expect(reference != null and reference.is_visible_in_tree() and reference.text.contains("Final Stats")
+		and reference.text.contains("Piercing Arrow Continuation Chance: 61%") and reference.text.contains("Carrier Damage: 160"),
 		"detail state: the opened resolved detail block shows no final parameters")
 	await _close_build_reference(screen)
 	var main_hand_focus: Button = screen.get_action_button("SlotFocus_main_hand")
@@ -670,8 +711,8 @@ func _check_focus_survives_the_switches() -> void:
 	await _settle_frames()
 	var dialog: AcceptDialog = screen.find_child("ItemDetailDialog", true, false) as AcceptDialog
 	var reference_text: Label = screen.find_child("ItemDetailText", true, false) as Label
-	_expect(dialog != null and dialog.visible and dialog.title == "构筑详情"
-		and reference_text != null and reference_text.text.contains("最终参数"),
+	_expect(dialog != null and dialog.visible and dialog.title == "Build Details"
+		and reference_text != null and reference_text.text.contains("Final Stats"),
 		"detail state: complete build reference did not open with real parameters")
 	await _close_build_reference(screen)
 	_expect(_focus_owner_name(screen) == "LoadoutDetailsToggle",

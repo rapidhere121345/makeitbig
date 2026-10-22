@@ -115,25 +115,25 @@ static func action(resolved: Dictionary) -> String:
 		if _is_text(entry):
 			missing_ids[String(entry)] = true
 	if missing_ids.has("breedable_event"):
-		return "补齐%s接口，让后代能继续分叉。" % EarlyInterfaceVocabularyScript.player_name("breedable_event")
+		return "Add the %s interface so descendants can keep branching." % EarlyInterfaceVocabularyScript.player_name("breedable_event")
 	if missing_ids.has("branch_target_history"):
-		return "补齐%s接口，让分叉后代被持续追踪。" % EarlyInterfaceVocabularyScript.player_name("branch_target_history")
+		return "Add the %s interface to keep tracking branched descendants." % EarlyInterfaceVocabularyScript.player_name("branch_target_history")
 	if not missing_ids.is_empty():
 		var ids := missing_ids.keys()
 		ids.sort()
 		var names: Array[String] = []
 		for id in ids:
 			names.append(EarlyInterfaceVocabularyScript.player_name(String(id)))
-		return "补齐缺失的接口%s。" % "、".join(names)
+		return "Add the missing interfaces: %s." % ", ".join(names)
 	match String(resolved.get("growth_classification", "")):
 		"convergent":
-			return "寻找能提高续生概率的词条，再回来重新训练验证。"
+			return "Find affixes that increase continuation chance, then return to Training to verify."
 		"critical":
-			return "尝试小幅提高续生概率，再回来验证是否突破临界增长。"
+			return "Try a small increase in continuation chance, then test whether growth exceeds critical."
 		"exponential":
-			return "进入实战，确认生存与命中稳定性。"
+			return "Enter combat to check survival and hit consistency."
 		_:
-			return "重新训练，确认当前方案的续生增长。"
+			return "Train again to verify this preset's continuation growth."
 
 
 static func _is_text(value: Variant) -> bool:

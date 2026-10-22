@@ -137,12 +137,12 @@ func _test_sample_ids_and_names(failures: Array[String]) -> void:
 	var registry = ContentRegistry.new()
 	registry.load_all()
 	var expected_names := {
-		"near_enemy_horizon": "近敌视界",
-		"lineage_cache": "谱系缓存",
-		"wish_picker": "愿望拾取器",
-		"cycle_resetter": "循环复位器",
-		"marker_priority": "标记者优先",
-		"consecutive_contract": "连续契约",
+		"near_enemy_horizon": "Near-Enemy Sight",
+		"lineage_cache": "Lineage Cache",
+		"wish_picker": "Wish Collector",
+		"cycle_resetter": "Loop Resetter",
+		"marker_priority": "Marked Target Priority",
+		"consecutive_contract": "Continuous Contracts",
 	}
 	for id in expected_names:
 		var table: Dictionary = registry.cores if registry.cores.has(id) else (
@@ -177,11 +177,11 @@ func _test_ranger_presets(failures: Array[String]) -> void:
 			_expect(_near(registry.presets[id].get("p"), float(expected_p[id])),
 				"presets: %s must use p=%s" % [id, expected_p[id]], failures)
 			var preset: Dictionary = registry.presets[id]
-			_expect(preset.skills == [{"id": "piercing_arrow", "name": "穿刺箭"}],
+			_expect(preset.skills == [{"id": "piercing_arrow", "name": "Piercing Arrow"}],
 				"presets: %s must expose the formal Piercing Arrow skill" % id, failures)
-			_expect(String(preset.runes[0].id) == "breeding_split" and String(preset.runes[0].name) == "孳生分裂",
+			_expect(String(preset.runes[0].id) == "breeding_split" and String(preset.runes[0].name) == "Breeding Split",
 				"presets: %s must expose the semantic split rune" % id, failures)
-			_expect(String(preset.laws[0].id) == "pack_hunt_mark" and String(preset.laws[0].name) == "群猎印记",
+			_expect(String(preset.laws[0].id) == "pack_hunt_mark" and String(preset.laws[0].name) == "Pack Hunt Mark",
 				"presets: %s must expose the pack-hunt law" % id, failures)
 			_expect(String(preset.equipment.parameter_source) == "prototype_equipped_parameters"
 				and not String(preset.equipment.description).is_empty()
@@ -211,8 +211,8 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 	var dup := {
 		"schema_version": 1,
 		"cores": [
-			{"id": "x", "name": "甲", "slot": "perception", "protocol": "p", "numeric_slots": 3},
-			{"id": "x", "name": "乙", "slot": "perception", "protocol": "p", "numeric_slots": 3},
+			{"id": "x", "name": "Alpha", "slot": "perception", "protocol": "p", "numeric_slots": 3},
+			{"id": "x", "name": "Beta", "slot": "perception", "protocol": "p", "numeric_slots": 3},
 		],
 		"attachments": [],
 		"firmwares": [],
@@ -224,8 +224,8 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 	_expect(_has_substring(dup_errors, "firmwares"), "validator: firmware count must be checked", failures)
 	var bad_slots := {
 		"schema_version": 1,
-		"cores": [{"id": "y", "name": "甲", "slot": "vibes", "protocol": "p", "numeric_slots": 2}],
-		"attachments": [{"id": "a", "name": "附件", "category": "tactics", "protocol": "p", "numeric_slots": 3}],
+		"cores": [{"id": "y", "name": "Alpha", "slot": "vibes", "protocol": "p", "numeric_slots": 2}],
+		"attachments": [{"id": "a", "name": "Attachment", "category": "tactics", "protocol": "p", "numeric_slots": 3}],
 		"firmwares": [],
 	}
 	var slot_errors: Array[String] = registry.validate_proxy_components(bad_slots)
@@ -236,8 +236,8 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 		"validator: wrong attachment category count must be rejected", failures)
 	var bad_protocols := {
 		"schema_version": 1,
-		"cores": [{"id": "no_core_protocol", "name": "核心", "slot": "perception", "numeric_slots": 3}],
-		"attachments": [{"id": "blank_attachment_protocol", "name": "附件", "category": "tactics", "protocol": "  ", "numeric_slots": 3}],
+		"cores": [{"id": "no_core_protocol", "name": "Core", "slot": "perception", "numeric_slots": 3}],
+		"attachments": [{"id": "blank_attachment_protocol", "name": "Attachment", "category": "tactics", "protocol": "  ", "numeric_slots": 3}],
 		"firmwares": [],
 	}
 	var protocol_errors: Array[String] = registry.validate_proxy_components(bad_protocols)
@@ -254,9 +254,9 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 	for index in range(16):
 		wrong_firmware_distribution["firmwares"].append({
 			"id": "firmware_%d" % index,
-			"name": "固件%d" % index,
+			"name": "Firmware%d" % index,
 			"compatible_slot": "execution",
-			"semantics": "有效语义",
+			"semantics": "Valid Semantics",
 		})
 	var firmware_errors: Array[String] = registry.validate_proxy_components(wrong_firmware_distribution)
 	_expect(_has_substring(firmware_errors, "firmware slot execution has 16 entries, expected 4"),
@@ -269,10 +269,10 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 		"schema_version": 2,
 		"shared_parameters": {"shared_lifetime": 16.0, "distance": 180.0, "speed": 600.0, "minimum_turn_time": 0.12},
 		"presets": [
-			{"id": "over", "name": "越界", "p": 1.5},
-			{"id": "zero", "name": "零", "p": 0.0},
-			{"id": "over", "name": "重复", "p": 0.5},
-			{"id": "text", "name": "文字", "p": "0.5"},
+			{"id": "over", "name": "Out of Bounds", "p": 1.5},
+			{"id": "zero", "name": "Zero", "p": 0.0},
+			{"id": "over", "name": "Duplicate", "p": 0.5},
+			{"id": "text", "name": "Text", "p": "0.5"},
 		],
 	}
 	var preset_errors: Array[String] = registry.validate_ranger_presets(bad_presets)
@@ -291,7 +291,7 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 	var missing_equipped := {
 		"schema_version": 1,
 		"shared_parameters": {"shared_lifetime": 16.0, "distance": 180.0, "speed": 600.0, "minimum_turn_time": 0.12},
-		"presets": [{"id": "valid", "name": "有效", "p": 0.5}],
+		"presets": [{"id": "valid", "name": "Active", "p": 0.5}],
 	}
 	_expect(_has_substring(registry.validate_ranger_presets(missing_equipped), "missing prototype_equipped_parameters"),
 		"validator: missing equipped parameters must be rejected", failures)
@@ -300,11 +300,11 @@ func _test_validation_rejects_bad_data(failures: Array[String]) -> void:
 		"shared_parameters": {"shared_lifetime": 16.0, "distance": 180.0, "speed": 600.0, "minimum_turn_time": 0.12},
 		"prototype_equipped_parameters": {"shared_lifetime": 34.0, "distance": 150.0, "speed": 620.0, "minimum_turn_time": 0.18},
 		"presets": [{
-			"id": "broken", "name": "损坏", "p": 0.5,
-			"skills": [{"id": "wrong", "name": "错误"}],
-			"runes": [{"id": "breeding_split", "name": "孳生分裂"}],
+			"id": "broken", "name": "Corrupt", "p": 0.5,
+			"skills": [{"id": "wrong", "name": "Error"}],
+			"runes": [{"id": "breeding_split", "name": "Breeding Split"}],
 			"laws": [],
-			"equipment": {"name": "装备", "description": "说明", "calibration": "校准", "parameter_source": "wrong"},
+			"equipment": {"name": "Equipment", "description": "Description", "calibration": "Calibration", "parameter_source": "wrong"},
 		}],
 	}
 	var build_errors: Array[String] = registry.validate_ranger_presets(malformed_build)

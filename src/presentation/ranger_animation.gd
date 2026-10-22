@@ -28,7 +28,7 @@ extends RefCounted
 ##   death_ticks   ticks since death was first observed
 ##   hit_ticks     ticks since the last damage event, -1 when none is live
 ##   dodge_ticks   ticks since the dodge started, -1 when not dodging
-##   dash_ticks    ticks since the dash (突袭) started, -1 when not dashing
+##   dash_ticks    ticks since the dash (Dash) started, -1 when not dashing
 ##   shoot_ticks   ticks since the shot started, -1 when not shooting
 ##   moving        bool, drives walk vs idle
 ##   phase_ticks   loop clock for idle/walk (sim tick or presentation clock)

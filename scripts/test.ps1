@@ -1,6 +1,17 @@
 $ErrorActionPreference = "Stop"
 $GodotBin = if ($env:GODOT_BIN) { $env:GODOT_BIN } else { "godot" }
 
+$PythonBin = $env:PYTHON_BIN
+if (-not $PythonBin) {
+    $PythonCommand = Get-Command python3, python -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $PythonCommand) { throw "Python 3 is required for the English-only and environment checks." }
+    $PythonBin = $PythonCommand.Source
+}
+foreach ($Check in @("scripts/check_english.py", "tools/test_check_english.py", "tools/test_devbox_preflight.py")) {
+    & $PythonBin -B $Check
+    if ($LASTEXITCODE -ne 0) { throw "$Check failed with exit code $LASTEXITCODE" }
+}
+
 $RuntimeFiles = Get-ChildItem -Path src -Recurse -File -Include *.gd,*.tscn
 if ($RuntimeFiles | Select-String -Pattern 'preload\(\s*"res://(tools|build)/|load\(\s*"res://build/' -Quiet) {
     throw "Runtime code must not compile-link excluded tools/ or build/ resources."

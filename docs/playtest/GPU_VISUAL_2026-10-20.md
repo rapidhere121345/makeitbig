@@ -1,42 +1,42 @@
-# 真机 GPU 视觉验收 · R1/R2 修复轮 · 2026-10-20
+# Hardware GPU Visual Acceptance - R1/R2 Fix Round - 2026-10-20
 
-覆盖本轮空间真值(blockers)、城镇遮挡与视觉修复的首轮验收与复验。审查由两个独立视觉模型完成(glm-5.3-flash#max 主审 + deepseek-flash#low 复审,逐张读图 + 放大取证),操作与截图由 `tools/play_session` 窗口协议驱动。
+Covers initial acceptance and rechecks of spatial truth (blockers), town occlusion, and visual fixes. Two independent vision models reviewed images and enlarged evidence: glm-5.3-flash#max primary and deepseek-flash#low secondary. The `tools/play_session` window protocol drove input and capture.
 
-## 环境
+## Environment
 
-- Godot 4.7.2.stable.official.ed1daf0bf,X11 窗口 1280×720,音频 Dummy。
-- 渲染器:`OpenGL API 3.3.0 NVIDIA 595.91.07 - Using Device: NVIDIA - NVIDIA GeForce RTX 4080 SUPER`(engine.log 首行,RTX 证据符合规范)。
-- 显示:Xvfb `:97` + NVIDIA vendor library(宿主桌面 X 服务器当日不可用,规范允许的替代入口;PRIME offload 生效)。
-- 会话目录(被 git 忽略):`build/current/gpu-visual-r1r2/`(首轮 28 帧)、`gpu-visual-r1r2-fixverify/`、`gpu-visual-final/`(复验)。
+- Godot 4.7.2.stable.official.ed1daf0bf, X11 window 1280×720, Dummy audio.
+- Renderer: `OpenGL API 3.3.0 NVIDIA 595.91.07 - Using Device: NVIDIA - NVIDIA GeForce RTX 4080 SUPER` (first engine.log line; RTX evidence meets the standard).
+- Display: Xvfb `:97` + NVIDIA vendor library (host desktop X server unavailable that day; permitted alternate entry, PRIME offload active).
+- Ignored session directories: `build/current/gpu-visual-r1r2/` (28 initial frames), `gpu-visual-r1r2-fixverify/`, `gpu-visual-final/` (rechecks).
 
-## 首轮发现与处置
+## Initial Findings and Treatment
 
-| # | 严重度 | 发现(双审查员交叉一致) | 处置 |
+| # | Severity | Finding (reviewers agreed) | Treatment |
 |---|---|---|---|
-| 1 | 阻断级 | 战斗场景 8-10 块纯白/浅灰硬边多边形(位置与新增碰撞体一一对应)——blocker Polygon2D 未设 `visible=false`,以默认白色渲染 | 已修复:39 个节点补 `visible=false`;`RoomAssetRoot` 契约新增 `static_blocker_visible` fail-closed 校验;`test_combat_structure_blockers.gd` 断言不可见 |
-| 2 | 严重 | 城镇行走中英雄被完全"吞没"(09-2 横幅/石堆、09-8/9 原木堆/松树,无残影)——分级透明从未可见 | 根因两处并已修复:(a) 被挡者变暗在被完全遮挡时是视觉空操作,重构为遮挡者开窗(OcclusionController 新增 occluder 注册表,复用同一分档;TownPresenter 改为对前景件开窗、主体保持不透明);(b) 真正吞没英雄的是悬空的设施铭牌(280×72 深色板,验律场/未验证),新增铭牌开窗(英雄细胞与铭牌矩形相交时铭牌缓动至 0.25) |
-| 3 | 一般 | 贴墙滑动段英雄脚部与墙顶石像素重叠,"站在墙里"观感 | 记录为 R4 调参 backlog(足迹-美术对齐),未处理 |
-| 4 | 打磨 | 射程外过期 toast 与射程内状态同屏矛盾 | 记录 backlog |
-| 5 | 打磨 | 移动标记/受击指示配色不统一;训练靶血条仅变色不变宽 | 记录 backlog |
+| 1 | Blocking | 8-10 solid white/light-gray hard-edged polygons exactly match new combat colliders: blocker Polygon2D nodes rendered default white without `visible=false` | Fixed 39 nodes; `RoomAssetRoot` contract adds fail-closed `static_blocker_visible` check; `test_combat_structure_blockers.gd` asserts invisibility |
+| 2 | Serious | Hero completely swallowed while walking in town (09-2 banner/rocks, 09-8/9 logs/pines, no silhouette); graded transparency never visible | Two roots fixed: (a) dimming an entirely hidden subject is visually ineffective; refactored to occluder reveal (OcclusionController occluder registry reuses levels; TownPresenter reveals foreground while subject stays opaque); (b) floating facility nameplates actually hid the hero (280×72 dark Training/unverified plate); added nameplate reveal, tweening to 0.25 when hero cells intersect plate rectangle |
+| 3 | Normal | Hero feet overlap wall-top stone pixels during wall sliding, appearing inside the wall | R4 tuning backlog, footprint/art alignment, untreated |
+| 4 | Polish | Stale out-of-range toast contradicts in-range status | Backlogged |
+| 5 | Polish | Inconsistent movement/hit indicator colors; training-target bar changes color but not width | Backlogged |
 
-## 复验结果(gpu-visual-final)
+## Recheck Results (gpu-visual-final)
 
-- **白块:7/7 帧干净**。塔基、残墙、门楼均为带纹理/雪顶/投影的正常材绘;英雄沿塔西与残墙移动无穿模。
-- 教程→城镇→契约→战斗全流程可走通;战斗链完整(点击/空格施放、伤害 720→488.116、英雄受击 -5)。
-- 铭牌开窗与前景件开窗的机制已由 `test_presentation_production_assembly`(probe 遮挡者 alpha 驱动 + 主体保持不透明)与代码审查覆盖。
+- **White blocks: 7/7 frames clean.** Tower base, ruined walls, and gatehouse have normal textured/snow-capped/shadowed art; no clipping along tower west and ruined wall.
+- Tutorial → town → Contract → combat works end to end, including click/Space casting, damage 720→488.116, hero hit -5.
+- `test_presentation_production_assembly` covers nameplate and foreground reveal (probe drives occluder alpha while subject stays opaque), alongside code review.
 
-## 交互式终验(deepseek-flash#low,亲自驱动)
+## Interactive Final Acceptance (deepseek-flash#low, Self-Driven)
 
-验收员自行启动 RTX 会话、发送输入、逐帧截图并读图判定,证据帧 `ds-*` 共约 30 张于同目录:
+Reviewer launched the RTX session, sent input, captured and inspected frames directly. About 30 `ds-*` evidence frames are in the same directory:
 
-- **白块修复:通过**。五张战斗全景纯白像素仅 0-26 且全在文字抗锯齿;塔/残墙/断梁均为正常美术。
-- **铭牌开窗:通过**。北侧接近淡出、离开恢复、可反复触发;按观感反馈将窗口透明度 0.25 上调至 0.35(底色不再完全消隐)。
-- **滑墙:通过**。贴墙横移顺畅无卡死;脚部与矮墙顶 3-5px 交叠维持既有 R4 backlog。
-- **流程/自由探索:通过**。城镇→契台→出征→结算→返回链路顺畅;伤害数字、对话、图鉴、结算页版式正常。
-- 「出征确认弹窗不可读」经查为**验收协议伪影**:弹窗为 0.10s 淡入 tween,play_session 在命令间暂停游戏将动画冻结在半程;连续游玩无此现象(源码 `contract_screen.gd:855`)。
+- **White-block fix passed:** five combat panoramas have only 0-26 white pixels, all text antialiasing; towers, walls, and broken beams show normal art.
+- **Nameplate reveal passed:** fades on northern approach, restores on departure, repeatedly triggers. Feedback raised reveal alpha from 0.25 to 0.35 so background no longer disappears entirely.
+- **Wall sliding passed:** smooth lateral movement without sticking; 3-5px foot/low-wall-top overlap remains R4 backlog.
+- **Flow/free exploration passed:** town → Board → departure → results → return works; damage numbers, dialogue, bestiary, and results layout normal.
+- "Unreadable departure confirmation" proved a **protocol artifact**: its 0.10s fade tween freezes halfway when play_session pauses between commands. Continuous play does not exhibit it (`contract_screen.gd:855`).
 
-新记 backlog:近况面板滚动边缘裁切观感;交互提示与对话对象不一致([E] 伊文→流浪者);NPC 被布告板遮挡仅余气泡;场地概念框/门标记观感近调试线;战报面板末行裁切;战斗中被围 200+ tick 未观察到掉血(玩法层,待复现)。
+New backlog: Recent panel scroll-edge clipping; interaction/dialogue mismatch ([E] Iven → Wanderer); noticeboard hides NPC except bubble; concept borders/gates look like debug lines; report final-line clipping; no observed health loss while surrounded for 200+ ticks (gameplay, reproduction pending).
 
-## 结论
+## Conclusion
 
-阻断级与严重问题已修复并经双模型独立复验;打磨项进入 backlog。本轮所有证据帧在上述被忽略目录,长期记录以本文档为准。
+Blocking and serious issues were fixed and independently rechecked by both models; polish remains backlogged. Evidence frames are in the ignored directories above; this document is the durable record.

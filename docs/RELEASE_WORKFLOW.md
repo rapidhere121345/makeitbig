@@ -1,51 +1,53 @@
-# 发布工作流
+# Release Workflow
 
-发布源文件与页面模板放在 `release/`，发布脚本是 `scripts/release.sh`。构建产物放在被 git 忽略的 `build/releases/`，不会进入源码提交。
+Release sources and page templates live in `release/`; `scripts/release.sh` generates ignored output in `build/releases/`. Do not commit generated deliverables.
 
-## 目录和命名
+## Layout and Naming
 
-`release.sh package` 从 `build/current/linux/make-it-big.x86_64` 与 `build/current/windows/make-it-big.exe` 读取导出文件，创建一个按时间排序的 build 目录。默认 build ID 是 `YYYYMMDD-HHMMSS-<git短SHA>`，也可以用 `--id` 明确指定。每个 build 至少包含：
+`release.sh package` reads `build/current/linux/make-it-big.x86_64` and `build/current/windows/make-it-big.exe` and creates a timestamped build directory. IDs default to `YYYYMMDD-HHMMSS-<short-git-SHA>` and can be set with `--id`. A complete dual-platform build contains:
 
-- `build.json`：构建 ID、提交、时间、平台文件、大小和 SHA256。
-- `linux/make-it-big.x86_64`：Linux x86_64 下载文件。
-- `windows/make-it-big.exe`：Windows x86_64 下载文件。
-- `SHA256SUMS`：下载文件的校验清单。
+- `build.json`: ID, revision, timestamp, platform files, sizes, and SHA256.
+- `linux/make-it-big.x86_64`: Linux x86_64 download.
+- `windows/make-it-big.exe`: Windows x86_64 download.
+- `SHA256SUMS`: download checksums.
 
-`index` 会在 `build/releases/index.json` 生成新到旧的索引；`site` 将页面模板、样式、脚本和索引写入同一发布根，因此 `build/releases/` 可以直接作为静态站点根。缺少某个平台文件时，元数据会明确标记，页面不应把不存在的文件伪装成可下载。
+`index` writes newest-first metadata to `build/releases/index.json`; `site` writes the page, stylesheet, script, and embedded index to the same root. Serve this directory directly as a static site. Metadata and UI explicitly distinguish missing platform files instead of offering broken downloads.
 
-## 固定命令
+## Standard Commands
 
 ```bash
 ./scripts/container_build.sh
-# 构建通过后审查差异并提交源码，让发布元数据对应实际交付提交。
+# Review and commit after the passing build so release metadata names its source.
 git diff --check
 git status --short
-# git add <本轮已审查文件> && git commit -m '<改动说明>'
-./scripts/release.sh all --note '本轮改动说明'
+# git add <reviewed-files> && git commit -m '<change-description>'
+# Review retention candidates and approve any deletion before invoking all.
+./scripts/release.sh all --note 'Change description'
 ./scripts/release.sh verify --deep
 ./deploy/tailscale/validate.sh
 ./deploy/tailscale/stage_release_page.sh --check
 ```
 
-`all` 按 package → prune → index → site → verify 执行。`prune` 默认保留最近 20 个带有效 `build.json` 且名称符合 build ID 规则的目录，只删除 `build/releases/builds/` 下符合条件的直接子目录；它不会清理其他路径。需要测试其他位置时显式设置 `MIB_RELEASE_ROOT`，并先确认该目录内容。
+`all` runs package → prune → index → site → verify. `prune` defaults to retaining the latest 20 direct child directories with valid IDs and `build.json`, and never cleans other paths. Set `MIB_RELEASE_ROOT` explicitly for an isolated validation root and inspect its contents first. To validate new packaging without pruning existing history, run `package`, `index`, `site`, and `verify --deep` separately in that fresh root.
 
-发布前确认导出后没有再修改运行代码或素材；如有修改，重新构建。上线后读取发布地址的 `/index.json`，核对最新 build ID 与本地一致，并检查两个下载地址的 HTTP 状态、文件大小和 SHA256。导出成功不代表已经完成 Windows 实机验收。
+Do not publish exports after changing runtime code or assets without rebuilding. After publication, compare the served `/index.json` build ID with local metadata and verify HTTP status, size, and SHA256 for both downloads. A successful Windows export is not native Windows acceptance.
 
-## Tailscale 上线
+## Tailscale Exposure
 
-宿主机项目脚本负责生成和校验文件：
+The project validates generated files locally:
 
 ```bash
 ./deploy/tailscale/stage_release_page.sh
 ```
 
-该脚本校验 `build/releases/` 这一唯一静态发布根，并要求最新 build 同时包含 Linux 和 Windows 下载。历史 build、索引和页面资源都由 `release.sh all` 写入同一目录，Tailscale 不再使用另一套单 build 页面。Tailscale 客户端和 TUN 由宿主机运维控制，实际暴露由宿主机执行 `deploy/tailscale/serve_host.sh.example serve` 完成；宿主机必须先确认发布根可见。默认入口是 tailnet-only `tailscale serve`，监听节点 HTTPS；`funnel` 属于公开互联网暴露，必须单独检查 tailnet policy、ACL 和未签名二进制风险。
+Staging validates the single `build/releases/` root and requires both downloads in the latest build. History, index, and page assets share that root; there is no separate single-build page. The operator owns Tailscale/TUN and must confirm that the host can see the release root before running `deploy/tailscale/serve_host.sh.example serve`. The default is tailnet-only HTTPS; public `funnel` exposure requires a separate policy/ACL/unsigned-binary review.
 
-上线前至少确认：`./deploy/tailscale/validate.sh` 和 `./deploy/tailscale/stage_release_page.sh --check` 通过、发布根不包含源码、宿主机 `tailscale serve status` 指向 `build/releases/`、tailnet 内能打开 `/` 并下载两个平台文件。发布页只提供下载，不承担账号鉴权；访问控制由 Tailscale tailnet/ACL 负责。
-# 当前发布入口
+Before exposure, pass both validation commands, ensure the release root contains no source checkout, confirm `tailscale serve status` targets it, and test the home page and both downloads from the tailnet. The page does not implement account authentication; Tailscale ACLs control access.
 
-Tailnet-only 发布页：<https://example-runtime.tail99c4e8.ts.net:8448>。
+## Existing Host Endpoint
 
-静态发布根固定为 `build/releases/`，由宿主机 Tailscale Serve 暴露；项目脚本不运行 `tailscaled`。
+The existing host endpoint is <https://example-runtime.tail99c4e8.ts.net:8448>. It is not a new devbox deployment or a current availability guarantee. Project scripts never run `tailscaled`.
+
+For a sandbox managed by AF Infra, use the sanctioned control plane and an operator-approved deployment contract rather than configuring host networking from the sandbox. Moving the checkout alone does not provision a publication endpoint.
 
 <!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->

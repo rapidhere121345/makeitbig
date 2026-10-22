@@ -1,6 +1,6 @@
 extends SceneTree
 ## Regression for the real title entry: the two actions and their stable node
-## names, the class list, the save-state behaviour of present(), the Chinese copy
+## names, the class list, the save-state behaviour of present(), the English copy
 ## band, and the backdrop contract.
 ##
 ## The backdrop is checked in whichever mode the repository is actually in: the
@@ -18,7 +18,7 @@ const BACKDROP_SOURCE_PATH := "res://src/presentation/title_art_helper.gd"
 const EARLY_PLACEHOLDER_MARKER := "art/early/"
 const EXPECTED_PLATE_SUFFIX := "art/production/p1/title_concept_v02/background.png"
 const EXPECTED_TOWER_RECT := Rect2(320.0, 88.0, 320.0, 224.0)
-## The approved Chinese UI band, plus the one approved wordmark exception.
+## The approved English UI band, plus the one approved wordmark exception.
 const CHINESE_BODY_MIN := 18
 const CHINESE_BODY_MAX := 22
 
@@ -35,7 +35,7 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	var identity := screen.find_child("RangerIdentity", true, false) as Label
-	_expect(identity != null and "游侠" in identity.text and screen.get_selected_class() == "ranger", "title: static ranger identity missing", failures)
+	_expect(identity != null and "Ranger" in identity.text and screen.get_selected_class() == "ranger", "title: static ranger identity missing", failures)
 	_expect(screen.find_child("ClassPicker", true, false) == null, "title: one-class dropdown still shown", failures)
 	var requested: Array[String] = []
 	screen.new_game_requested.connect(func(class_id: String) -> void: requested.append(class_id))
@@ -105,11 +105,11 @@ func _click(button: Button) -> void:
 
 
 func _test_copy_band(failures: Array[String]) -> void:
-	## The approved Chinese band for the real entry, and its one exception.
+	## The approved text band for the real entry, and its one exception.
 	for size: int in [TitleScreenScript.KICKER_FONT_SIZE, TitleScreenScript.CONTROL_FONT_SIZE, TitleScreenScript.ACTION_FONT_SIZE, TitleScreenScript.BODY_FONT_SIZE]:
 		_expect(size >= CHINESE_BODY_MIN and size <= CHINESE_BODY_MAX, "title: copy size %d left the approved 18-22px band" % size, failures)
 	_expect(TitleScreenScript.TITLE_FONT_SIZE == 52, "title: the wordmark stopped being the approved 52px exception", failures)
-	_expect(TitleScreenScript.PREMISE_TEXT.contains("旧路") and TitleScreenScript.PREMISE_TEXT.contains("炉边镇"), "title: opening lacks the road and town situation", failures)
+	_expect(TitleScreenScript.PREMISE_TEXT.to_lower().contains("old road") and TitleScreenScript.PREMISE_TEXT.contains("Hearthside"), "title: opening lacks the road and town situation", failures)
 	_expect(TitleScreenScript.CLASS_ID == "ranger", "title: the class entry stopped being ranger", failures)
 
 

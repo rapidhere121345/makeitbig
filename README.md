@@ -1,12 +1,12 @@
 # Make It Big
 
-Make It Big 是一个使用 Godot 4.7.2 制作的像素暗黑搜宝 Demo。玩家扮演持弓的流浪者，从炉边镇出发，整理装备与构筑，探索寒原旧路并挑战阈门巨像。
+Make It Big is a pixel-art dark-fantasy loot demo built with Godot 4.7.2. Play a bow-wielding Wanderer, prepare equipment and builds in Hearthside, explore the old roads of the frozen wastes, and challenge the Threshold Colossus.
 
-当前可玩的范围是游侠首章：教程、炉边镇探索、五位镇民、首章契约、装备比较、天赋、验律训练、律筹锻造、手动与 Auto 战斗，以及巨像战后的返镇流程。完整游戏的中后期、另外两个职业和更高阶终局仍属于规划内容。
+The playable scope is the Ranger's first chapter: tutorial, Hearthside exploration, five residents, chapter contracts, equipment comparison, talents, Training, Law Token forging, Manual/Auto combat, and the return to town after the Colossus. Later chapters, two additional classes, and higher-tier endgame systems remain plans.
 
-## 启动
+## Run
 
-在已经配置 Godot 的环境中：
+With Godot installed:
 
 ```bash
 git clone https://github.com/rapidhere121345/makeitbig.git
@@ -14,7 +14,7 @@ cd makeitbig
 godot --path .
 ```
 
-当前宿主机工作区使用固定入口：
+The current native host checkout uses:
 
 ```bash
 cd /data/paseo-makeitbig/project
@@ -22,24 +22,24 @@ source scripts/project_env.sh
 ./scripts/container_build.sh
 ```
 
-宿主机上的版本、可写目录、导出模板和分阶段命令见[宿主机工作流](docs/HOST_WORKFLOW.md)。
+See the [environment workflow](docs/HOST_WORKFLOW.md) for the pinned version, writable directories, export templates, and staged commands. Preparing a different host or devbox? Check [devbox readiness](docs/DEVBOX_READINESS.md) first. Nothing automatically migrates the project or installs system packages.
 
-## 操作
+## Controls
 
-| 场景 | 操作 |
+| Action | Input |
 | --- | --- |
-| 移动 | WASD / 方向键 |
-| 射击 | 空格辅助瞄准；鼠标左键锁定所点敌人 |
-| 闪避 | Shift / Ctrl / 鼠标右键 |
-| 技能 | Q 猎人印记、E 突袭（需解锁） |
-| 炉边镇 | 靠近建筑后 E / Space 进入；附近 E 交谈；C 成长；J 见闻 |
-| 阅读与菜单 | E / Enter 翻句；Esc 离开；F1 设置；战斗 Tab 战报 |
+| Move | WASD / arrow keys |
+| Shoot | Space for assisted aim; left-click to target an enemy |
+| Dodge | Shift / Ctrl / right mouse button |
+| Skills | Q: Hunter's Mark; E: Dash (requires unlock) |
+| Hearthside | E / Space near a facility to enter; E near a resident to talk; C: character; J: journal |
+| Reading and menus | E / Enter: advance; Esc: back; F1: settings; Tab in combat: report |
 
-手动与 Auto 在出征时选择，并在一次契约内保持不变。装备先进入背包，比较后再决定是否穿戴；锻造推演免费，确认落锤后才消耗律筹。
+Choose Manual or Auto when departing; the mode stays fixed for that contract. Loot enters the backpack before you compare and equip it. Forge previews are free; only confirming the forge spends Law Tokens.
 
-## 检查与导出
+## Test and Export
 
-宿主机上的完整验收顺序是：全量测试、Linux/Windows 导出、Linux 正式包空目录 smoke。
+The full gate runs tests, Linux/Windows exports, and smoke-tests the Linux release executable from an empty directory:
 
 ```bash
 ./scripts/container_test.sh
@@ -47,38 +47,40 @@ source scripts/project_env.sh
 ./scripts/container_smoke.sh
 ```
 
-已经配置好 Godot 的环境也可以直接运行：
+With the Godot environment already configured, the underlying commands are:
 
 ```bash
 ./scripts/test.sh
 ./scripts/export_all.sh
 ```
 
-Linux 正式包位于 `build/current/linux/make-it-big.x86_64`，Windows 包位于 `build/current/windows/make-it-big.exe`。Windows 导出不等于 Windows 实机验证，公开 CI 负责交叉平台检查。
+The Linux executable is `build/current/linux/make-it-big.x86_64`; the Windows executable is `build/current/windows/make-it-big.exe`. Exporting Windows is not native Windows acceptance. Public CI provides Windows smoke and cross-platform replay checks.
 
-## 发布页
+## Release Page
 
-构建通过后，在宿主机生成最近 20 个 build 的静态发布页：
+After a passing build, generate and validate the static release page:
 
 ```bash
 ./scripts/release.sh all
 ./scripts/release.sh verify
 ```
 
-发布根目录是被 git 忽略的 `build/releases/`，可直接由静态文件服务托管；每个 build 都有 Windows/Linux 下载路径、`build.json` 和 `SHA256SUMS`。发布页模板与构建命名见 [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md)。
+The ignored `build/releases/` directory can be served as a static site. Each build includes Windows/Linux downloads, `build.json`, and `SHA256SUMS`. `all` retains the latest 20 valid builds and can delete older ones; review and approve retention before running it against existing release history. See [the release workflow](docs/RELEASE_WORKFLOW.md) for templates and naming.
 
-当前 Tailnet-only 发布页：<https://example-runtime.tail99c4e8.ts.net:8448>。
+The existing host's tailnet-only page is <https://example-runtime.tail99c4e8.ts.net:8448>. This is not a devbox publication endpoint or a guarantee of current availability.
 
-需要通过 Tailscale 访问时，运行 `./deploy/tailscale/stage_release_page.sh` 校验 `build/releases/`，再按 [Tailscale 发布说明](deploy/tailscale/README.md) 执行宿主机的 `tailscale serve`。
+For Tailscale access, validate `build/releases/` with `./deploy/tailscale/stage_release_page.sh`, then have the host operator configure exposure as described in the [Tailscale guide](deploy/tailscale/README.md).
 
-## 文档入口
+## Documentation
 
-- [AGENTS.md](AGENTS.md)：项目整体说明、权威来源和协作规则。
-- [docs/](docs/README.md)：系统、叙事、宿主机工作流和美术生产的详细说明。
-- [docs/GRAPHICAL_VALIDATION.md](docs/GRAPHICAL_VALIDATION.md)：宿主机窗口和 headless 界面验收。
-- [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md)：发布页、build 保留和 Tailscale 上线规范。
-- [content/](content/) 与 `src/`：当前实现和内容的事实来源。
+- [AGENTS.md](AGENTS.md): scope, sources of truth, and collaboration rules.
+- [docs/](docs/README.md): systems, narrative, environment workflow, and art production.
+- [Graphical validation](docs/GRAPHICAL_VALIDATION.md): windowed and headless acceptance.
+- [Release workflow](docs/RELEASE_WORKFLOW.md): release pages, retention, and exposure.
+- [Devbox readiness](docs/DEVBOX_READINESS.md): target prerequisites and actual audit status.
+- [English-only policy](docs/ENGLISH_ONLY.md): vocabulary, compatibility, and pinned authentic originals.
+- [content/](content/) and `src/`: implemented content and runtime behavior.
 
-当前存档 schema 为 10。正式存档使用 Godot `user://saves`；试玩工具使用独立目录。规划文档描述目标，不代表已经实现的功能，运行结果以代码、content 和测试为准。
+Save schema is 10. Production saves use Godot's `user://saves`; playtest tools use separate directories. Design documents describe targets, not promises of implemented features. Code, content, and tests determine actual behavior.
 
 <!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->

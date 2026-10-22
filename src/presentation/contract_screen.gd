@@ -13,59 +13,59 @@ const PlayerReadableBuildScript = preload("res://src/presentation/player_readabl
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const MODES := ["Manual", "Auto"]
 const NODE_TITLES := {
-	"tutorial_ranger_basics": "序章 · 游侠基础",
-	"mainline_01_first_hunt": "主线 01 · 初次狩猎",
-	"mainline_02_priority_under_pressure": "主线 02 · 压力下的优先级",
-	"mainline_03_first_elite": "主线 03 · 首个精英",
-	"mainline_04_hazard_and_forge": "主线 04 · 危地与锻炉",
-	"mainline_05_growth_gate": "主线 05 · 增长门槛",
-	"threshold_colossus": "首领 · 阈门巨像",
-	"auto_certification": "毕业考核 · AUTO",
-	"side_targeted_equipment": "支线 · 定向装备",
-	"side_affix_and_law_tallies": "支线 · 词条与律筹",
-	"first_contract": "初次契约",
+	"tutorial_ranger_basics": "Prologue · Ranger Basics",
+	"mainline_01_first_hunt": "Main 01 · First Hunt",
+	"mainline_02_priority_under_pressure": "Main 02 · Priorities Under Pressure",
+	"mainline_03_first_elite": "Main 03 · First Elite",
+	"mainline_04_hazard_and_forge": "Main 04 · Hazards and the Forge",
+	"mainline_05_growth_gate": "Main 05 · Growth Threshold",
+	"threshold_colossus": "Boss · Threshold Colossus",
+	"auto_certification": "Graduation Trial · AUTO",
+	"side_targeted_equipment": "Side · Targeted Equipment",
+	"side_affix_and_law_tallies": "Side · Affixes and Law Tokens",
+	"first_contract": "First Contract",
 }
 const TAG_LABELS := {
-	"starter_fixed": "固定起步装",
-	"equipment_general": "通用装备",
-	"main_hand": "主手",
-	"off_hand": "副手",
-	"gloves": "手套",
-	"ring": "戒指",
-	"piercing_probability": "续行概率",
-	"shared_lifetime": "共享寿命",
-	"projectile_speed": "箭速",
-	"targeting_distance": "寻敌距离",
-	"turn_time": "转向时间",
-	"damage": "伤害",
-	"critical": "暴击",
-	"survival": "生存",
-	"inscribe_tally": "添铸律筹",
-	"rewrite_tally": "改写律筹",
-	"refine_tally": "精炼律筹",
-	"proxy_core_fixed": "固定白色代理核心",
-	"starter_loadout": "起步装备",
-	"hunter_mark_skill": "猎人印记",
-	"dash_skill": "突袭",
-	"equipment_compare_unlock": "装备比较",
-	"breeding_split_item": "孳生分裂装备（获得后需在备行架装备）",
-	"pack_hunt_mark_item": "群猎印记装备（获得后需在备行架装备）",
-	"law_forge_unlock": "律筹锻炉",
-	"fixed_four_white_proxy_cores": "四枚白色代理核心",
-	"early_campaign_complete": "前期毕业",
+	"starter_fixed": "Fixed Starter Gear",
+	"equipment_general": "General Equipment",
+	"main_hand": "Main Hand",
+	"off_hand": "Off Hand",
+	"gloves": "Gloves",
+	"ring": "Ring",
+	"piercing_probability": "Continuation Chance",
+	"shared_lifetime": "Shared Lifetime",
+	"projectile_speed": "Arrow Speed",
+	"targeting_distance": "Targeting Distance",
+	"turn_time": "Turn Time",
+	"damage": "Damage",
+	"critical": "Critical Hit",
+	"survival": "Survival",
+	"inscribe_tally": "Inscribe Law Tokens",
+	"rewrite_tally": "Rewrite Law Tokens",
+	"refine_tally": "Refine Law Tokens",
+	"proxy_core_fixed": "Fixed Common Proxy Core",
+	"starter_loadout": "Starter Equipment",
+	"hunter_mark_skill": "Hunter's Mark",
+	"dash_skill": "Dash",
+	"equipment_compare_unlock": "Equipment Comparison",
+	"breeding_split_item": "Breeding Split equipment (equip it at the Loadout after obtaining it)",
+	"pack_hunt_mark_item": "Pack Hunt Mark equipment (equip it at the Loadout after obtaining it)",
+	"law_forge_unlock": "Law Token Forge",
+	"fixed_four_white_proxy_cores": "Four Common Proxy Cores",
+	"early_campaign_complete": "Early Graduation",
 }
 ## Five values for deciding whether to leave town; the complete rules live in details.
 const BUILD_PARAMETER_ORDER: Array[String] = ["damage", "max_health", "d", "p", "T"]
 const ROAD_CONTEXT := {
-	"mainline_01_first_hunt": "旧路外段 · 炉边镇门边已冷，外段仍需照看。清通旧路，带回能用的东西。",
-	"mainline_02_priority_under_pressure": "旧路装卸区 · 沿旧货道深入，留意逼近与远处的威胁。",
-	"mainline_03_first_elite": "回收区 · 寻找能改变手中装备的战利品，先应对精英的屏障。",
-	"mainline_04_hazard_and_forge": "危地 · 在暴露地带与火线间找路，为镇里的锻炉带回律筹。",
-	"mainline_05_growth_gate": "旧路深处 · 带上整理好的装备，检验它能否应对援军与危地。",
-	"threshold_colossus": "阈门 · 巨像守在路前。准备好了，就去应战。",
-	"auto_certification": "代行考核 · 让代理按你的整备行动，完成一次基础 Auto 契约。",
-	"side_targeted_equipment": "旧路回收 · 按装备缺口寻找主副手、手套与戒指。",
-	"side_affix_and_law_tallies": "旧路回收 · 寻找机制装备与律筹，带回镇里继续整备。",
+	"mainline_01_first_hunt": "Outer Old Road · Hearthside's gates grow cold. Clear the road and bring back useful supplies.",
+	"mainline_02_priority_under_pressure": "Old Road Loading Grounds · Follow the old freight route, watching for threats near and far.",
+	"mainline_03_first_elite": "Salvage Grounds · Seek loot that can transform your gear, but deal with the elite's barrier first.",
+	"mainline_04_hazard_and_forge": "Hazard Grounds · Navigate exposed ground and firelines to bring Law Tokens back to the town's forge.",
+	"mainline_05_growth_gate": "Deep Old Road · Bring your prepared equipment and test it against reinforcements and hazards.",
+	"threshold_colossus": "Threshold · The colossus guards the road. Face it when you are ready.",
+	"auto_certification": "Proxy Trial · Let your proxy follow your preparations and complete a basic Auto contract.",
+	"side_targeted_equipment": "Old Road Salvage · Fill gaps in your main hand, off hand, gloves, and ring slots.",
+	"side_affix_and_law_tallies": "Old Road Salvage · Find mechanic-changing gear and Law Tokens, then return to town to prepare.",
 }
 const MAX_SAFE_SEED_TEXT := "9007199254740991"
 
@@ -156,7 +156,7 @@ func _build_ui() -> void:
 	var title_header := HBoxContainer.new()
 	page.add_child(title_header)
 	var title := Label.new()
-	title.text = "行路契台 · 从炉边镇出发"
+	title.text = "Contract Board · Depart from Hearthside"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", ShellThemeScript.BONE)
@@ -165,7 +165,7 @@ func _build_ui() -> void:
 	_profile_label.add_theme_font_size_override("font_size", 18)
 	_profile_label.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 	title_header.add_child(_profile_label)
-	var subtitle := _field_label("选一条路，带回新的可能。")
+	var subtitle := _field_label("Choose a road. Bring back new possibilities.")
 	subtitle.add_theme_font_size_override("font_size", 18)
 	subtitle.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 	page.add_child(subtitle)
@@ -186,7 +186,7 @@ func _build_ui() -> void:
 			icon.name = "ContractMark"
 			icon.custom_minimum_size = Vector2(40, 40)
 			board_heading.add_child(icon)
-	var source_title := _field_label("这趟去哪里")
+	var source_title := _field_label("Choose Your Destination")
 	source_title.name = "ContractSourceHeading"
 	source_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	source_title.add_theme_font_size_override("font_size", 22)
@@ -196,14 +196,14 @@ func _build_ui() -> void:
 	var build_content := VBoxContainer.new()
 	build_content.name = "ContractBuildContent"
 	build_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	build_content.add_theme_constant_override("separation", 8)
+	build_content.add_theme_constant_override("separation", 4)
 	_build_scroll.add_child(build_content)
 	_contract_illustration = ShellThemeScript.illustration_panel("contract_road", 92)
 	_contract_illustration.name = "ContractRoadIllustration"
 	build_content.add_child(_contract_illustration)
 	resized.connect(_fit_contract_illustration)
 	_fit_contract_illustration.call_deferred()
-	var build_title := _field_label("随身整备")
+	var build_title := _field_label("Current Loadout")
 	build_title.add_theme_font_size_override("font_size", 22)
 	build_content.add_child(build_title)
 	_build_label = Label.new()
@@ -221,12 +221,12 @@ func _build_ui() -> void:
 	_parameter_grid.add_theme_constant_override("h_separation", 8)
 	_parameter_grid.add_theme_constant_override("v_separation", 8)
 	build_content.add_child(_parameter_grid)
-	for spec in [["damage", "伤害"], ["max_health", "生命"], ["d", "射程"], ["p", "续行"], ["T", "谱系寿命"], ["training", "验律"]]:
+	for spec in [["damage", "Damage"], ["max_health", "Health"], ["d", "Range"], ["p", "Continuation"], ["T", "Lineage Lifetime"], ["training", "Training"]]:
 		_parameter_values[spec[0]] = _reading_tile(_parameter_grid, String(spec[1]), "Departure_" + String(spec[0]), 24)
 	_details_button = Button.new()
 	_details_button.name = "BuildDetailsButton"
-	_details_button.text = "技能与构筑详情"
-	_details_button.tooltip_text = "在备行架调整装备；这里核对当前技能与构筑。"
+	_details_button.text = "Skill and Build Details"
+	_details_button.tooltip_text = "Change equipment at the Loadout; review your current skills and build here."
 	_details_button.pressed.connect(_open_build_details)
 	build_content.add_child(_details_button)
 
@@ -262,7 +262,7 @@ func _build_ui() -> void:
 	_risk_label.add_theme_font_size_override("font_size", 18)
 	_risk_label.add_theme_color_override("font_color", ShellThemeScript.WARNING)
 	brief.add_child(_risk_label)
-	var reward_heading := _field_label("带回镇里")
+	var reward_heading := _field_label("Bring Back to Town")
 	reward_heading.name = "ContractRewardHeading"
 	reward_heading.add_theme_font_size_override("font_size", 22)
 	reward_heading.add_theme_color_override("font_color", ShellThemeScript.AMBER)
@@ -272,12 +272,12 @@ func _build_ui() -> void:
 	reward_grid.name = "ContractRewardChoices"
 	reward_grid.add_theme_constant_override("h_separation", 10)
 	content.add_child(reward_grid)
-	_reward_label = _reading_tile(reward_grid, "掉落方向", "ContractRewardLabel", 22)
-	_first_reward_label = _reading_tile(reward_grid, "首通所得", "ContractFirstRewardLabel", 22)
+	_reward_label = _reading_tile(reward_grid, "Loot Focus", "ContractRewardLabel", 22)
+	_first_reward_label = _reading_tile(reward_grid, "First-Clear Rewards", "ContractFirstRewardLabel", 22)
 	_first_reward_card = _first_reward_label.get_parent().get_parent()
 	var contract_details := Button.new()
 	contract_details.name = "ContractDetailsButton"
-	contract_details.text = "路况与奖励详情"
+	contract_details.text = "Route and Reward Details"
 	contract_details.pressed.connect(_open_contract_details)
 	content.add_child(contract_details)
 
@@ -292,7 +292,7 @@ func _build_ui() -> void:
 	mode_content.name = "ContractModeContent"
 	mode_content.add_theme_constant_override("separation", 2)
 	mode_panel.add_child(mode_content)
-	var mode_heading := _field_label("出征模式 · 出发后锁定")
+	var mode_heading := _field_label("Expedition Mode · Locked on Departure")
 	mode_heading.name = "ModeHeading"
 	mode_heading.add_theme_font_size_override("font_size", 18)
 	mode_heading.add_theme_color_override("font_color", ShellThemeScript.BONE)
@@ -300,21 +300,21 @@ func _build_ui() -> void:
 	_mode_picker = OptionButton.new()
 	_mode_picker.name = "ModePicker"
 	for mode: String in MODES:
-		_mode_picker.add_item("手动 / Manual" if mode == "Manual" else "代行 / Auto")
+		_mode_picker.add_item("Manual" if mode == "Manual" else "Auto")
 	mode_content.add_child(_mode_picker)
 	_auto_lock_label = Label.new()
 	_auto_lock_label.name = "AutoLockLabel"
-	_auto_lock_label.text = "代行尚未解锁：先手动击败阈门巨像。"
+	_auto_lock_label.text = "Auto is locked: defeat the Threshold Colossus manually first."
 	_auto_lock_label.add_theme_font_size_override("font_size", 18)
 	_auto_lock_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_auto_lock_label.add_theme_color_override("font_color", ShellThemeScript.WARNING)
 	content.add_child(_auto_lock_label)
-	var seed_label := _field_label("契约种子")
+	var seed_label := _field_label("Contract Seed")
 	seed_label.visible = false
 	content.add_child(seed_label)
 	_seed_edit = LineEdit.new()
 	_seed_edit.name = "ContractSeed"
-	_seed_edit.placeholder_text = "例如：52969"
+	_seed_edit.placeholder_text = "Example: 52969"
 	_seed_edit.max_length = 20
 	_seed_edit.visible = false
 	content.add_child(_seed_edit)
@@ -330,7 +330,7 @@ func _build_ui() -> void:
 	actions.add_child(mode_panel)
 	_cancel_button = Button.new()
 	_cancel_button.name = "CancelContractButton"
-	_cancel_button.text = "返回炉边镇"
+	_cancel_button.text = "Return to Hearthside"
 	_cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cancel_button.size_flags_stretch_ratio = 0.8
 	_cancel_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -338,7 +338,7 @@ func _build_ui() -> void:
 	actions.add_child(_cancel_button)
 	_start_button = Button.new()
 	_start_button.name = "StartButton"
-	_start_button.text = "接下契约 · 出发"
+	_start_button.text = "Accept Contract · Depart"
 	_start_button.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
 	_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_start_button.size_flags_stretch_ratio = 1.2
@@ -428,7 +428,7 @@ func _present_departure_build(build: Dictionary) -> void:
 		label.add_theme_font_size_override("font_size", 18)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cell.add_child(label)
-	_build_label.text = "当前构筑数据不可用" if resolved.is_empty() else ""
+	_build_label.text = "Current build data unavailable" if resolved.is_empty() else ""
 	_build_label.visible = resolved.is_empty()
 	_parameter_grid.visible = not resolved.is_empty()
 	var parameters: Dictionary = resolved.get("final_parameters", {}) if resolved.get("final_parameters", {}) is Dictionary else {}
@@ -436,10 +436,10 @@ func _present_departure_build(build: Dictionary) -> void:
 		var label: Label = _parameter_values[key]
 		label.theme_type_variation = "DataLabel"
 		label.get_parent().get_parent().visible = parameters.has(key)
-		label.text = _player_readable.format_parameter_value(key, parameters.get(key)).trim_suffix(" 距离单位")
+		label.text = _player_readable.format_parameter_value(key, parameters.get(key)).trim_suffix(" distance units")
 		label.tooltip_text = _player_readable.format_parameter(key, parameters.get(key))
 	(_parameter_values.training as Label).text = _growth_conclusion(resolved)
-	(_parameter_values.training as Label).tooltip_text = "当前构筑的训练结论；换装后需要重新验证。"
+	(_parameter_values.training as Label).tooltip_text = "Training conclusion for this build; verify again after changing equipment."
 
 
 func _create_station_icon(texture: Texture2D) -> TextureRect:
@@ -454,8 +454,8 @@ func _create_station_icon(texture: Texture2D) -> TextureRect:
 
 
 func _apply_presentation() -> void:
-	var class_id := str(_profile.get("initial_class", "未建立"))
-	_profile_label.text = "当前档案：%s" % ("游侠" if class_id == "ranger" else class_id)
+	var class_id := str(_profile.get("initial_class", "Not Created"))
+	_profile_label.text = "Current profile: %s" % ("Ranger" if class_id == "ranger" else class_id)
 	var active_build := _active_build()
 	_present_departure_build(active_build)
 	if _details_dialog != null:
@@ -501,7 +501,7 @@ func _populate_contract_picker() -> void:
 		var completed := bool(node.get("completed", false))
 		var repeatable := bool(node.get("repeatable", false))
 		var available := bool(node.get("available", false))
-		var prefix := "[完成] " if completed and not repeatable else ("[锁定] " if not available else "")
+		var prefix := "[Complete] " if completed and not repeatable else ("[Locked] " if not available else "")
 		_contract_picker.add_item(prefix + String(NODE_TITLES.get(node_id, node_id)))
 		var index := _contract_picker.item_count - 1
 		_contract_picker.set_item_metadata(index, node.duplicate(true))
@@ -546,10 +546,10 @@ func _apply_selected_contract() -> void:
 	var node := _selected_contract()
 	if node.is_empty():
 		_objective_meta.text = ""
-		_objective_label.text = "暂时没有可执行的契约"
-		_contract_info_label.text = "先回镇里整备。"
+		_objective_label.text = "No contracts are currently available"
+		_contract_info_label.text = "Return to town to prepare first."
 		_risk_label.text = ""
-		_reward_label.text = "当前没有可确认的回报记录。"
+		_reward_label.text = "No confirmed reward record is available."
 		_first_reward_card.hide()
 		_start_button.disabled = true
 		return
@@ -560,7 +560,7 @@ func _apply_selected_contract() -> void:
 		var mode := String(MODES[index])
 		var disabled := mode not in allowed_modes or (mode == "Auto" and not auto_unlocked)
 		_mode_picker.set_item_disabled(index, disabled)
-		_mode_picker.set_item_tooltip(index, "请先击败阈门巨像。" if mode == "Auto" and not auto_unlocked else "")
+		_mode_picker.set_item_tooltip(index, "Defeat the Threshold Colossus first." if mode == "Auto" and not auto_unlocked else "")
 	var requested_mode := String(_previous_config.get("mode", "Manual"))
 	var requested_index := MODES.find(requested_mode)
 	if requested_index < 0 or _mode_picker.is_item_disabled(requested_index):
@@ -572,18 +572,18 @@ func _apply_selected_contract() -> void:
 	if requested_index >= 0:
 		_mode_picker.select(requested_index)
 	_auto_lock_label.visible = "Auto" in allowed_modes and not auto_unlocked
-	_objective_meta.text = "%d 个房间" % maxi(1, int(node.get("room_count", 1)))
+	_objective_meta.text = "%d rooms" % maxi(1, int(node.get("room_count", 1)))
 	if node.has("experience_reward"):
-		_objective_meta.text += "  ·  完成经验 %d%s" % [int(node.get("experience_reward", 0)), "（含首通）" if not bool(node.get("completed", false)) else ""]
+		_objective_meta.text += "  ·  Completion XP %d%s" % [int(node.get("experience_reward", 0)), " (including first clear)" if not bool(node.get("completed", false)) else ""]
 	_objective_label.text = _combat_objective(node).get_slice("\n", 1)
 	if bool(node.get("repeatable", false)):
-		_objective_label.text = "可能目标 · " + _objective_label.text
+		_objective_label.text = "Possible objectives · " + _objective_label.text
 	_contract_info_label.text = _contract_brief(node)
 	_risk_label.text = _route_risks(node)
 	_risk_label.visible = not _risk_label.text.is_empty()
 	_reward_label.text = _compact_tags(node.get("drop_tags", []))
 	_reward_label.tooltip_text = _tag_summary(node.get("drop_tags", []))
-	_first_reward_card.visible = not bool(node.get("completed", false)) and _tag_summary(node.get("first_reward_tags", [])) != "无"
+	_first_reward_card.visible = not bool(node.get("completed", false)) and _tag_summary(node.get("first_reward_tags", [])) != "None"
 	_first_reward_label.text = _compact_tags(node.get("first_reward_tags", []))
 	_first_reward_label.tooltip_text = _tag_summary(node.get("first_reward_tags", []))
 	_apply_suggested_seed(node)
@@ -591,28 +591,28 @@ func _apply_selected_contract() -> void:
 
 
 func _contract_brief(node: Dictionary) -> String:
-	var context := String(ROAD_CONTEXT.get(String(node.get("id", "")), "核对整备，再决定是否出发。"))
-	var lines: Array[String] = [context.get_slice("。", 0) + "。"]
+	var context := String(ROAD_CONTEXT.get(String(node.get("id", "")), "Check your loadout before deciding to depart."))
+	var lines: Array[String] = [context.get_slice(".", 0) + "."]
 	var progress := _repeatable_progress_text(node).strip_edges()
 	if not progress.is_empty():
 		lines.append(progress.get_slice("\n", 0))
-		if "本次触发保底" in progress:
-			lines.append("本次触发定向装备保底")
-		elif "距保底还有" in progress:
-			lines.append(progress.get_slice("（", 1).trim_suffix("）"))
+		if "guaranteed drop this run" in progress:
+			lines.append("Guaranteed targeted equipment this run")
+		elif "guarantee in" in progress:
+			lines.append(progress.get_slice("(", 1).trim_suffix(")"))
 	return "\n".join(lines)
 
 
 func _compact_tags(value: Variant) -> String:
 	if not value is Array or value.is_empty():
-		return "无"
+		return "None"
 	var names: Array[String] = []
 	for tag: Variant in value:
 		var full := String(TAG_LABELS.get(String(tag), String(tag)))
-		names.append(full.get_slice("（", 0))
+		names.append(full.get_slice("(", 0))
 	var brief := " · ".join(names.slice(0, 3))
 	if names.size() > 3:
-		brief += " · 另 %d 项" % (names.size() - 3)
+		brief += " · %d more" % (names.size() - 3)
 	return brief
 
 
@@ -621,7 +621,7 @@ func _route_risks(node: Dictionary) -> String:
 	var rooms: Array = definition.get("room_sequence", []).duplicate()
 	if definition.get("room_template", {}) is Dictionary and not (definition.get("room_template", {}) as Dictionary).is_empty():
 		rooms.append(definition.room_template)
-	var names := {"exposed_ground_zone": "暴露地带", "moving_fireline": "移动火线", "periodic_barrier": "周期屏障", "summon_reinforcements": "召来援军"}
+	var names := {"exposed_ground_zone": "Exposed Ground", "moving_fireline": "Moving Fireline", "periodic_barrier": "Periodic Barrier", "summon_reinforcements": "Reinforcements"}
 	var risks: Array[String] = []
 	for room: Dictionary in rooms:
 		for field: String in ["hazard_ids", "elite_rule_ids"]:
@@ -629,7 +629,7 @@ func _route_risks(node: Dictionary) -> String:
 				var label := String(names.get(id, id))
 				if not label in risks: risks.append(label)
 	if risks.is_empty(): return ""
-	return ("可能遇到 · " if bool(node.get("repeatable", false)) else "留意 · ") + " / ".join(risks)
+	return ("Possible encounters · " if bool(node.get("repeatable", false)) else "Watch for · ") + " / ".join(risks)
 
 
 func _open_contract_details() -> void:
@@ -638,8 +638,8 @@ func _open_contract_details() -> void:
 	if _contract_details_dialog == null:
 		_contract_details_dialog = AcceptDialog.new()
 		_contract_details_dialog.name = "ContractDetailsDialog"
-		_contract_details_dialog.title = "路况与奖励"
-		_contract_details_dialog.ok_button_text = "返回契约"
+		_contract_details_dialog.title = "Route and Rewards"
+		_contract_details_dialog.ok_button_text = "Return to Contract"
 		_contract_details_dialog.theme = theme
 		_contract_details_dialog.confirmed.connect(button.grab_focus)
 		_contract_details_dialog.canceled.connect(button.grab_focus)
@@ -670,42 +670,42 @@ func _open_contract_details() -> void:
 func _combat_objective(node: Dictionary) -> String:
 	var definition: Dictionary = _campaign_registry.get_node(String(node.get("id", "")))
 	var objectives: Array[String] = []
-	var names := {"clear": "清除敌人", "hunt_elite": "击败精英", "timed_break": "限时突破（超时只失去加奖）"}
+	var names := {"clear": "Clear Enemies", "hunt_elite": "Defeat Elite", "timed_break": "Timed Breakthrough (timeout forfeits the bonus only)"}
 	var rooms: Array = definition.get("room_sequence", [])
 	for value: Variant in rooms:
 		if not value is Dictionary:
 			continue
 		var room: Dictionary = value
-		var task := "击败阈门巨像" if String(room.get("boss_id", "")) == "threshold_colossus" else String(names.get(String(room.get("objective_id", "")), "完成房间目标"))
+		var task := "Defeat the Threshold Colossus" if String(room.get("boss_id", "")) == "threshold_colossus" else String(names.get(String(room.get("objective_id", "")), "Complete Room Objectives"))
 		if not task in objectives:
 			objectives.append(task)
 	if objectives.is_empty():
 		var template: Dictionary = definition.get("room_template", {})
 		for value: Variant in template.get("objective_ids", []):
-			objectives.append(String(names.get(String(value), "完成房间目标")))
-	var prefix := "可能目标" if bool(node.get("repeatable", false)) else "战斗目标"
-	return "%s · %d 个房间\n%s" % [prefix, maxi(1, int(node.get("room_count", 1))), " / ".join(objectives) if not objectives.is_empty() else "完成房间内标示的目标"]
+			objectives.append(String(names.get(String(value), "Complete Room Objectives")))
+	var prefix := "Possible Objectives" if bool(node.get("repeatable", false)) else "Combat Objectives"
+	return "%s · %d rooms\n%s" % [prefix, maxi(1, int(node.get("room_count", 1))), " / ".join(objectives) if not objectives.is_empty() else "Complete the objectives marked in each room"]
 
 
 func _contract_route_summary(node: Dictionary) -> String:
 	var lines: Array[String] = []
-	var context := String(ROAD_CONTEXT.get(String(node.get("id", "")), "核对目标与整备，再决定是否出发。"))
+	var context := String(ROAD_CONTEXT.get(String(node.get("id", "")), "Review objectives and your loadout before departing."))
 	lines.append(context)
 	var progress := _repeatable_progress_text(node)
 	if not progress.is_empty():
 		lines.append(progress.trim_prefix("\n"))
 	if not bool(node.get("available", false)):
-		lines.append("解锁条件：%s" % _node_title_summary(node.get("unlock_prerequisites", [])))
+		lines.append("Unlock requirement: %s" % _node_title_summary(node.get("unlock_prerequisites", [])))
 	return "\n".join(lines)
 
 
 func _contract_reward_summary(node: Dictionary) -> String:
 	var lines: Array[String] = []
-	lines.append("战利品方向：%s" % _tag_summary(node.get("drop_tags", [])))
+	lines.append("Loot focus: %s" % _tag_summary(node.get("drop_tags", [])))
 	if not bool(node.get("completed", false)):
-		lines.append("首通所得：%s" % _tag_summary(node.get("first_reward_tags", [])))
+		lines.append("First-clear rewards: %s" % _tag_summary(node.get("first_reward_tags", [])))
 	if node.has("experience_reward"):
-		lines.append("完成经验：%d%s" % [int(node.get("experience_reward", 0)), "（含首通）" if not bool(node.get("completed", false)) else ""])
+		lines.append("Completion XP: %d%s" % [int(node.get("experience_reward", 0)), " (including first clear)" if not bool(node.get("completed", false)) else ""])
 	return "\n".join(lines)
 
 
@@ -741,34 +741,34 @@ func _repeatable_progress_text(node: Dictionary) -> String:
 		completion = attempt - 1
 	if attempt < 1 or completion < 0:
 		return ""
-	var lines := "\n已完成 %d 次 / 本次第 %d 次" % [completion, attempt]
+	var lines := "\nCompleted %d times / Run %d" % [completion, attempt]
 	if String(node.get("id", "")) == "side_affix_and_law_tallies":
-		lines += "\n每 3 次完成触发一次定向装备保底"
+		lines += "\nGuaranteed targeted equipment every 3 completions"
 		if attempt % 3 == 0:
-			lines += "：本次触发保底"
+			lines += ": guaranteed drop this run"
 		else:
-			lines += "（距保底还有 %d 次）" % (3 - attempt % 3)
+			lines += " (guarantee in %d runs)" % (3 - attempt % 3)
 	return lines
 
 
 func _tag_summary(value: Variant) -> String:
 	if not (value is Array) or (value as Array).is_empty():
-		return "无"
+		return "None"
 	var labels: Array[String] = []
 	for tag_value in (value as Array):
 		var tag := String(tag_value)
 		labels.append(String(TAG_LABELS.get(tag, tag)))
-	return "、".join(labels)
+	return ", ".join(labels)
 
 
 func _node_title_summary(value: Variant) -> String:
 	if not (value is Array) or (value as Array).is_empty():
-		return "无"
+		return "None"
 	var labels: Array[String] = []
 	for node_id_value in (value as Array):
 		var node_id := String(node_id_value)
 		labels.append(String(NODE_TITLES.get(node_id, node_id)))
-	return "、".join(labels)
+	return ", ".join(labels)
 
 
 func _set_status(message: String) -> void:
@@ -785,24 +785,24 @@ func _on_start_pressed() -> void:
 	var seed_text := _seed_edit.text.strip_edges()
 	var parsed_seed := _parse_seed_text(seed_text)
 	if not bool(parsed_seed.get("ok", false)):
-		_set_status("契约准备数据无效，请返回后重试。")
+		_set_status("Invalid contract preparation data. Go back and retry.")
 		return
 	var active_build := _active_build()
 	var preset_id := str(active_build.get("preset_id", "")).strip_edges()
 	if preset_id.is_empty():
 		preset_id = str(_resolved_build().get("growth_classification", "")).strip_edges()
 	if preset_id.is_empty():
-		_set_status("当前构筑缺少必要信息，无法开始契约。")
+		_set_status("Required build information is missing; the contract cannot start.")
 		return
 	if _mode_picker.selected < 0 or _mode_picker.is_item_disabled(_mode_picker.selected):
-		_set_status("该模式不可用，请选择已解锁的出征模式。")
+		_set_status("This mode is unavailable. Choose an unlocked expedition mode.")
 		return
 	var selected_contract := _selected_contract()
 	if selected_contract.is_empty() or not bool(selected_contract.get("available", false)):
-		_set_status("该节点尚未满足解锁条件。")
+		_set_status("This node's unlock requirements have not been met.")
 		return
 	if bool(selected_contract.get("completed", false)) and not bool(selected_contract.get("repeatable", false)):
-		_set_status("该主线节点已经完成。")
+		_set_status("This campaign node is already complete.")
 		return
 	var config := {
 		"contract_id": String(selected_contract.get("id", "")),
@@ -898,12 +898,12 @@ func _create_start_transition_overlay() -> Control:
 	content.add_theme_constant_override("separation", 8)
 	card.add_child(content)
 	var eyebrow := Label.new()
-	eyebrow.text = "契约已锁定"
+	eyebrow.text = "Contract Locked"
 	eyebrow.add_theme_font_size_override("font_size", 18)
 	eyebrow.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 	content.add_child(eyebrow)
 	var title := Label.new()
-	title.text = "出征确认"
+	title.text = "Confirm Expedition"
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", ShellThemeScript.BONE)
 	content.add_child(title)
@@ -915,14 +915,14 @@ func _create_start_transition_overlay() -> Control:
 	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.add_child(rule)
 	var note := Label.new()
-	note.text = "整备行路 · 请确认出征"
+	note.text = "Ready for the Road · Confirm Departure"
 	note.add_theme_font_size_override("font_size", 20)
 	note.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 	content.add_child(note)
 	_confirmation_button = Button.new()
 	_confirmation_button.name = "ConfirmDepartureButton"
-	_confirmation_button.text = "确认出征 · Enter"
-	_confirmation_button.tooltip_text = "确认当前契约、模式、构筑与种子并进入战斗。"
+	_confirmation_button.text = "Confirm Departure · Enter"
+	_confirmation_button.tooltip_text = "Confirm the contract, mode, build, and seed to enter combat."
 	_confirmation_button.focus_mode = Control.FOCUS_ALL
 	_confirmation_button.pressed.connect(complete_start_transition)
 	content.add_child(_confirmation_button)
@@ -1017,8 +1017,8 @@ func _open_build_details() -> void:
 	if _details_dialog == null:
 		_details_dialog = AcceptDialog.new()
 		_details_dialog.name = "BuildDetailsDialog"
-		_details_dialog.title = "技能与构筑详情"
-		_details_dialog.ok_button_text = "返回契约"
+		_details_dialog.title = "Skill and Build Details"
+		_details_dialog.ok_button_text = "Return to Contract"
 		_details_dialog.theme = theme
 		_details_dialog.confirmed.connect(_restore_details_focus)
 		_details_dialog.canceled.connect(_restore_details_focus)
@@ -1038,7 +1038,7 @@ func _open_build_details() -> void:
 		scroll.add_child(_details_label)
 	var resolved := _resolved_build()
 	var build := _active_build()
-	_details_label.text = "%s\n\n%s\n\n增长结论：%s\n\n%s" % [_components_summary(build, resolved), _parameter_line(resolved), _growth_conclusion(resolved), _core_skill_summary(build, resolved)]
+	_details_label.text = "%s\n\n%s\n\nGrowth Conclusion: %s\n\n%s" % [_components_summary(build, resolved), _parameter_line(resolved), _growth_conclusion(resolved), _core_skill_summary(build, resolved)]
 	var available := get_viewport_rect().size
 	_details_dialog.popup_centered(Vector2i(minf(900, available.x - 80), minf(580, available.y - 80)))
 	_details_dialog.get_ok_button().grab_focus()
@@ -1070,9 +1070,9 @@ func _growth_conclusion(resolved: Dictionary) -> String:
 	var fingerprint := str(resolved.get("build_fingerprint", "")).strip_edges()
 	var report := _matched_training_report(training, fingerprint)
 	if report.is_empty():
-		return "未验证"
+		return "Unverified"
 	var state := str(report.get("state", "")).strip_edges()
-	return String({"convergent": "收敛", "critical": "临界", "exponential": "指数"}.get(state.to_lower(), "未验证"))
+	return String({"convergent": "Convergent", "critical": "Critical", "exponential": "Exponential"}.get(state.to_lower(), "Unverified"))
 
 
 func _core_skill_summary(build: Dictionary, resolved: Dictionary) -> String:
@@ -1084,7 +1084,7 @@ func _core_skill_summary(build: Dictionary, resolved: Dictionary) -> String:
 		var skill := _skill_registry.get_skill(String(raw_id))
 		if not skill.is_empty():
 			details.append(_player_readable.format_skill(skill))
-	return "核心技能说明：\n%s" % "\n\n".join(details) if not details.is_empty() else "核心技能说明暂不可用"
+	return "Core skill details:\n%s" % "\n\n".join(details) if not details.is_empty() else "Core skill details unavailable"
 
 
 func _matched_training_report(training: Dictionary, fingerprint: String) -> Dictionary:
@@ -1114,17 +1114,17 @@ func _components_summary(build: Dictionary, resolved: Dictionary) -> String:
 	for raw_skill in skills:
 		var skill := _skill_registry.get_skill(String(raw_skill))
 		if not skill.is_empty():
-			skill_names.append(String(skill.get("name", "技能")))
+			skill_names.append(String(skill.get("name", "Skill")))
 	var rune_lines: Array[String] = []
 	for raw_rune in runes:
-		rune_lines.append(_player_readable.format_rune(String(raw_rune)).trim_prefix("符文："))
+		rune_lines.append(_player_readable.format_rune(String(raw_rune)).trim_prefix("Rune: "))
 	var law_lines: Array[String] = []
 	for raw_law in laws:
-		law_lines.append(_player_readable.format_law(String(raw_law)).trim_prefix("法则："))
-	return "技能：%s\n符文：%s\n法则：%s" % [
-		"、".join(skill_names) if not skill_names.is_empty() else "无",
-		"；".join(rune_lines) if not rune_lines.is_empty() else "无",
-		"；".join(law_lines) if not law_lines.is_empty() else "无",
+		law_lines.append(_player_readable.format_law(String(raw_law)).trim_prefix("Law: "))
+	return "Skill: %s\nRune: %s\nLaw: %s" % [
+		", ".join(skill_names) if not skill_names.is_empty() else "None",
+		"; ".join(rune_lines) if not rune_lines.is_empty() else "None",
+		"; ".join(law_lines) if not law_lines.is_empty() else "None",
 	]
 
 

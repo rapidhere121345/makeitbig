@@ -30,7 +30,7 @@ func _run() -> void:
 		"test console must start hidden without cached diagnostic data")
 	if console != null:
 		console.call("open_console")
-		_expect(console_root.visible and console_body.text.contains("[路线]") and console_body.text.contains("[表现层布局]"),
+		_expect(console_root.visible and console_body.text.contains("[Route]") and console_body.text.contains("[Presentation layout]"),
 			"F10 console provider did not expose route and layout diagnostics")
 		console.call("close_console")
 		_expect(not console_root.visible and console_body.text.is_empty(), "closing the test console retained raw diagnostic text")

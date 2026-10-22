@@ -5,54 +5,54 @@
       "id": "equipment_slots",
       "texture": "equipment_slots.png",
       "entries": [
-        {"id": "equipment_slot.main_hand", "canonical_id": "main_hand", "canonical_source": "content/early_items.json#prototype_open_slots", "label": "主手", "role": "equipment_slot", "type": "equipment_slot"},
-        {"id": "equipment_slot.off_hand", "canonical_id": "off_hand", "canonical_source": "content/early_items.json#prototype_open_slots", "label": "副手", "role": "equipment_slot", "type": "equipment_slot"},
-        {"id": "equipment_slot.gloves", "canonical_id": "gloves", "canonical_source": "content/early_items.json#prototype_open_slots", "label": "手套", "role": "equipment_slot", "type": "equipment_slot"},
-        {"id": "equipment_slot.ring_1", "canonical_id": "ring_1", "canonical_source": "content/early_items.json#prototype_open_slots", "label": "戒指一", "role": "equipment_slot", "type": "equipment_slot"}
+        {"id": "equipment_slot.main_hand", "canonical_id": "main_hand", "canonical_source": "content/early_items.json#prototype_open_slots", "label": "Main Hand", "role": "equipment_slot", "type": "equipment_slot"},
+        {"id": "equipment_slot.off_hand", "canonical_id": "off_hand", "canonical_source": "content/early_items.json#prototype_open_slots", "label": "Off Hand", "role": "equipment_slot", "type": "equipment_slot"},
+        {"id": "equipment_slot.gloves", "canonical_id": "gloves", "canonical_source": "content/early_items.json#prototype_open_slots", "label": "Gloves", "role": "equipment_slot", "type": "equipment_slot"},
+        {"id": "equipment_slot.ring_1", "canonical_id": "ring_1", "canonical_source": "content/early_items.json#prototype_open_slots", "label": "Ring 1", "role": "equipment_slot", "type": "equipment_slot"}
       ]
     },
     {
       "id": "equipment_bases",
       "texture": "equipment_bases.png",
       "entries": [
-        {"id": "equipment.ashwood_longbow", "canonical_id": "ashwood_longbow", "canonical_source": "content/early_items.json#base_items", "label": "白蜡长弓", "role": "equipment_base", "type": "item"},
-        {"id": "equipment.swift_recurve_bow", "canonical_id": "swift_recurve_bow", "canonical_source": "content/early_items.json#base_items", "label": "迅弦反曲弓", "role": "equipment_base", "type": "item"},
-        {"id": "equipment.lineage_quiver", "canonical_id": "lineage_quiver", "canonical_source": "content/early_items.json#base_items", "label": "谱系箭袋", "role": "equipment_base", "type": "item"},
-        {"id": "equipment.farwatch_quiver", "canonical_id": "farwatch_quiver", "canonical_source": "content/early_items.json#base_items", "label": "远望箭袋", "role": "equipment_base", "type": "item"},
-        {"id": "equipment.turnfeather_gloves", "canonical_id": "turnfeather_gloves", "canonical_source": "content/early_items.json#base_items", "label": "导羽手套", "role": "equipment_base", "type": "item"},
-        {"id": "equipment.piercer_gloves", "canonical_id": "piercer_gloves", "canonical_source": "content/early_items.json#base_items", "label": "穿弦手套", "role": "equipment_base", "type": "item"},
-        {"id": "equipment.hawk_eye_ring", "canonical_id": "hawk_eye_ring", "canonical_source": "content/early_items.json#base_items", "label": "鹰眼戒指", "role": "equipment_base", "type": "item"},
-        {"id": "equipment.vitality_ring", "canonical_id": "vitality_ring", "canonical_source": "content/early_items.json#base_items", "label": "生机戒指", "role": "equipment_base", "type": "item"}
+        {"id": "equipment.ashwood_longbow", "canonical_id": "ashwood_longbow", "canonical_source": "content/early_items.json#base_items", "label": "Ash Longbow", "role": "equipment_base", "type": "item"},
+        {"id": "equipment.swift_recurve_bow", "canonical_id": "swift_recurve_bow", "canonical_source": "content/early_items.json#base_items", "label": "Swiftstring Recurve", "role": "equipment_base", "type": "item"},
+        {"id": "equipment.lineage_quiver", "canonical_id": "lineage_quiver", "canonical_source": "content/early_items.json#base_items", "label": "Lineage Quiver", "role": "equipment_base", "type": "item"},
+        {"id": "equipment.farwatch_quiver", "canonical_id": "farwatch_quiver", "canonical_source": "content/early_items.json#base_items", "label": "Farwatch Quiver", "role": "equipment_base", "type": "item"},
+        {"id": "equipment.turnfeather_gloves", "canonical_id": "turnfeather_gloves", "canonical_source": "content/early_items.json#base_items", "label": "Guiding Fletch Gloves", "role": "equipment_base", "type": "item"},
+        {"id": "equipment.piercer_gloves", "canonical_id": "piercer_gloves", "canonical_source": "content/early_items.json#base_items", "label": "Piercestring Gloves", "role": "equipment_base", "type": "item"},
+        {"id": "equipment.hawk_eye_ring", "canonical_id": "hawk_eye_ring", "canonical_source": "content/early_items.json#base_items", "label": "Hawkeye Ring", "role": "equipment_base", "type": "item"},
+        {"id": "equipment.vitality_ring", "canonical_id": "vitality_ring", "canonical_source": "content/early_items.json#base_items", "label": "Vitality Ring", "role": "equipment_base", "type": "item"}
       ]
     },
     {
       "id": "skills_actions",
       "texture": "skills_actions.png",
       "entries": [
-        {"id": "action.piercing_arrow", "canonical_id": "piercing_arrow", "canonical_source": "src/game/main.gd#framework_active_build.skills[0]", "label": "穿刺箭", "role": "combat_action", "type": "skill"},
-        {"id": "action.hunter_mark", "canonical_id": "hunter_mark", "canonical_source": "src/game/main.gd#framework_active_build.skills[1]", "label": "猎人印记", "role": "combat_action", "type": "skill"},
-        {"id": "action.dash", "canonical_id": "dash", "canonical_source": "src/game/main.gd#framework_active_build.skills[2]", "label": "突袭", "role": "combat_action", "type": "skill"},
-        {"id": "action.basic_dodge", "canonical_id": null, "canonical_source": "docs/art-production/p1-calibration-v01/NEXT_BATCH.md#skills_actions", "label": "闪避", "role": "combat_action", "type": "action"}
+        {"id": "action.piercing_arrow", "canonical_id": "piercing_arrow", "canonical_source": "src/game/main.gd#framework_active_build.skills[0]", "label": "Piercing Arrow", "role": "combat_action", "type": "skill"},
+        {"id": "action.hunter_mark", "canonical_id": "hunter_mark", "canonical_source": "src/game/main.gd#framework_active_build.skills[1]", "label": "Hunter's Mark", "role": "combat_action", "type": "skill"},
+        {"id": "action.dash", "canonical_id": "dash", "canonical_source": "src/game/main.gd#framework_active_build.skills[2]", "label": "Dash", "role": "combat_action", "type": "skill"},
+        {"id": "action.basic_dodge", "canonical_id": null, "canonical_source": "docs/art-production/p1-calibration-v01/NEXT_BATCH.md#skills_actions", "label": "Dodge", "role": "combat_action", "type": "action"}
       ]
     },
     {
       "id": "runes_law",
       "texture": "runes_law.png",
       "entries": [
-        {"id": "rune.breeding_split", "canonical_id": "breeding_split", "canonical_source": "content/early_items.json#runes", "label": "孳生分裂", "role": "semantic_modifier", "type": "rune"},
-        {"id": "rune.branch_scale", "canonical_id": "branch_scale", "canonical_source": "content/early_items.json#runes", "label": "分枝刻度", "role": "semantic_modifier", "type": "rune"},
-        {"id": "rune.afterimage_extension", "canonical_id": "afterimage_extension", "canonical_source": "content/early_items.json#runes", "label": "掠影续时", "role": "semantic_modifier", "type": "rune"},
-        {"id": "law.pack_hunt_mark", "canonical_id": "pack_hunt_mark", "canonical_source": "content/early_items.json#laws", "label": "群猎印记", "role": "semantic_modifier", "type": "law"}
+        {"id": "rune.breeding_split", "canonical_id": "breeding_split", "canonical_source": "content/early_items.json#runes", "label": "Breeding Split", "role": "semantic_modifier", "type": "rune"},
+        {"id": "rune.branch_scale", "canonical_id": "branch_scale", "canonical_source": "content/early_items.json#runes", "label": "Branch Tally", "role": "semantic_modifier", "type": "rune"},
+        {"id": "rune.afterimage_extension", "canonical_id": "afterimage_extension", "canonical_source": "content/early_items.json#runes", "label": "Fleeting Shadow", "role": "semantic_modifier", "type": "rune"},
+        {"id": "law.pack_hunt_mark", "canonical_id": "pack_hunt_mark", "canonical_source": "content/early_items.json#laws", "label": "Pack Hunt Mark", "role": "semantic_modifier", "type": "law"}
       ]
     },
     {
       "id": "white_cores",
       "texture": "white_cores.png",
       "entries": [
-        {"id": "core.near_enemy_horizon", "canonical_id": "near_enemy_horizon", "canonical_source": "content/proxy_components.json#cores", "label": "近敌视界", "role": "white_core", "type": "proxy_core"},
-        {"id": "core.direct_gait", "canonical_id": "direct_gait", "canonical_source": "content/proxy_components.json#cores", "label": "直趋步足", "role": "white_core", "type": "proxy_core"},
-        {"id": "core.single_key_execution", "canonical_id": "single_key_execution", "canonical_source": "content/proxy_components.json#cores", "label": "单键执行", "role": "white_core", "type": "proxy_core"},
-        {"id": "core.short_trace_memory", "canonical_id": "short_trace_memory", "canonical_source": "content/proxy_components.json#cores", "label": "短痕记忆", "role": "white_core", "type": "proxy_core"}
+        {"id": "core.near_enemy_horizon", "canonical_id": "near_enemy_horizon", "canonical_source": "content/proxy_components.json#cores", "label": "Near-Enemy Sight", "role": "white_core", "type": "proxy_core"},
+        {"id": "core.direct_gait", "canonical_id": "direct_gait", "canonical_source": "content/proxy_components.json#cores", "label": "Direct-Approach Legs", "role": "white_core", "type": "proxy_core"},
+        {"id": "core.single_key_execution", "canonical_id": "single_key_execution", "canonical_source": "content/proxy_components.json#cores", "label": "Single-Key Executor", "role": "white_core", "type": "proxy_core"},
+        {"id": "core.short_trace_memory", "canonical_id": "short_trace_memory", "canonical_source": "content/proxy_components.json#cores", "label": "Short-Trace Memory", "role": "white_core", "type": "proxy_core"}
       ]
     }
   ]

@@ -233,7 +233,7 @@ func resolve_piercing_arrow(action_event: Dictionary) -> void:
 			"target_entity_id": target_entity_id, "outcome": "miss",
 			"contact_point": origin, "reason": "projectile_limit",
 		})
-		battle_report = "穿刺箭未能离弦：场上箭矢已达上限。"
+		battle_report = "Piercing Arrow could not fire: the arrow limit has been reached."
 		return
 	var model: Dictionary = _current_model()
 	if String(model.state) == PiercingArrowModelScript.STATE_CRITICAL:
@@ -273,7 +273,7 @@ func resolve_piercing_arrow(action_event: Dictionary) -> void:
 		"maximum_range_milli": roundi(projectile.maximum_range * 1000.0),
 		"speed_milli": roundi(projectile.speed * 1000.0),
 	})
-	battle_report = "穿刺箭已离弦。"
+	battle_report = "Piercing Arrow fired."
 
 
 func current_projectile_speed() -> float:
@@ -366,7 +366,7 @@ func apply_kernel_contact(
 		"boss_remaining_after": "",
 		"contact_point": contact_point, "incoming_direction": projectile.direction,
 	})
-	battle_report = "穿刺箭命中：%s 次箭事件 × %.0f 载荷 → %s 总伤害。" % [projectile.event_count.to_short_string(4), projectile.payload, aggregate.to_short_string(4)]
+	battle_report = "Piercing Arrow hit: %s arrow events x %.0f payload -> %s total damage." % [projectile.event_count.to_short_string(4), projectile.payload, aggregate.to_short_string(4)]
 
 
 ## Kernel-path blocked contact: the room's hit admission gate suppressed the
@@ -394,7 +394,7 @@ func apply_kernel_blocked(
 		"part_id": "body", "damage_group_id": "body", "outcome": "blocked",
 		"contact_point": contact_point, "barrier_id": "periodic_barrier",
 	})
-	battle_report = "穿刺箭被周期屏障阻断。"
+	battle_report = "Piercing Arrow blocked by a periodic barrier."
 
 
 ## Mirrors the Boss domain's committed BigValue result for the legacy phase
@@ -466,7 +466,7 @@ func apply_boss_kernel_contact(
 		"contact_point": contact_point,
 		"incoming_direction": projectile.direction,
 	})
-	battle_report = "穿刺箭命中：%s 次箭事件 × %.0f 载荷 → %s 总伤害。" % [
+	battle_report = "Piercing Arrow hit: %s arrow events x %.0f payload -> %s total damage." % [
 		projectile.event_count.to_short_string(4),
 		projectile.payload,
 		aggregate.to_short_string(4),
@@ -570,7 +570,7 @@ func _apply_projectile_contact(projectile: CombatArrowProjectile, target: Combat
 			"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"), "outcome": "blocked",
 			"contact_point": contact_point, "barrier_id": "periodic_barrier",
 		})
-		battle_report = "穿刺箭被周期屏障阻断。"
+		battle_report = "Piercing Arrow blocked by a periodic barrier."
 		return true
 	if consume_retained:
 		var retained := _take_retained_arrow()
@@ -603,7 +603,7 @@ func _apply_projectile_contact(projectile: CombatArrowProjectile, target: Combat
 			"boss_remaining_after": "",
 		"contact_point": contact_point, "incoming_direction": projectile.direction,
 	})
-	battle_report = "穿刺箭命中：%s 次箭事件 × %.0f 载荷 → %s 总伤害。" % [projectile.event_count.to_short_string(4), projectile.payload, projectile.aggregate_damage.to_short_string(4)]
+	battle_report = "Piercing Arrow hit: %s arrow events x %.0f payload -> %s total damage." % [projectile.event_count.to_short_string(4), projectile.payload, projectile.aggregate_damage.to_short_string(4)]
 	if target.health <= 0.0:
 		_defeated += 1
 		combat_event_stream.emit(tick, "death_applied", {
@@ -649,9 +649,9 @@ func resolve_projectile_miss(projectile: CombatArrowProjectile) -> void:
 		"retained_payload_ratio": clampf(float(talent_capabilities.get("expiry_payload_retention", 0.0)), 0.0, 1.0),
 	})
 	if retention > 0.0:
-		battle_report = "穿刺箭落空：保留 %.0f%% 载荷，待下一支命中箭兑现。" % (retention * 100.0)
+		battle_report = "Piercing Arrow missed: %.0f%% payload retained for the next arrow that hits." % (retention * 100.0)
 	else:
-		battle_report = "穿刺箭落空：锁定目标已失效。" if reason == "target_invalid" else "穿刺箭落空：锁定目标已离开冻结弹道。"
+		battle_report = "Piercing Arrow missed: the locked target is no longer valid." if reason == "target_invalid" else "Piercing Arrow missed: the locked target left the frozen trajectory."
 
 
 ## Read-only encounter port. A malformed answer is a rejection, never damage.
@@ -768,7 +768,7 @@ func _reject_player_rule_action(action_instance_id: int = 0, target_entity_id: i
 		"outcome": "rejected",
 		"reason": reason,
 	}
-	battle_report = "穿刺箭拒绝：战斗依赖无效（%s）。" % reason
+	battle_report = "Piercing Arrow rejected: invalid combat dependencies (%s)." % reason
 
 
 static func _failure(error: String) -> Dictionary:

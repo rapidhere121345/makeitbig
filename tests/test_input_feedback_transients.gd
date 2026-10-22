@@ -49,11 +49,11 @@ func _test_blank_click_feedback_after_release(arena: Node) -> void:
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(blank_screen, true), false, arena.gameplay_snapshot())
 	_expect(_piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot())).is_empty(),
 		"blank click: the press already queued a piercing cast")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "点击敌人射击 · 或按住空格辅助瞄准",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Click an enemy to shoot · Or hold Space for aim assist",
 		"blank click: the press did not show the actionable hint immediately")
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(blank_screen, false), false, arena.gameplay_snapshot())
 	var transient: String = arena.presentation.feedback.active_input_feedback(arena.sim_tick)
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "点击敌人射击 · 或按住空格辅助瞄准",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Click an enemy to shoot · Or hold Space for aim assist",
 		"blank click: a normal release erased the hint before its duration")
 	arena.refresh_presentation()
 	var notice := arena.presentation.hud.find_child("InputFeedbackLabel", true, false) as Label
@@ -65,7 +65,7 @@ func _test_blank_click_feedback_after_release(arena: Node) -> void:
 
 func _test_successful_intent_clears_feedback(arena: Node) -> void:
 	_configure_enemies(arena)
-	arena.presentation.feedback.show_input_feedback("点击敌人射击 · 或按住空格辅助瞄准", arena.sim_tick)
+	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.sim_tick)
 	var target = arena.enemies[0]
 	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(70.0, 0.0))
 	var target_screen := _gameplay_to_screen(arena, target.position + Vector2(0.0, -22.0))
@@ -74,7 +74,7 @@ func _test_successful_intent_clears_feedback(arena: Node) -> void:
 		"successful pointer lock kept the stale blank-click hint")
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(target_screen, false), false, arena.gameplay_snapshot())
 
-	arena.presentation.feedback.show_input_feedback("点击敌人射击 · 或按住空格辅助瞄准", arena.sim_tick)
+	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.sim_tick)
 	arena.input_adapter.request_assisted_attack()
 	_expect(not _piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot())).is_empty(),
 		"assisted attempt in range did not queue its cast")
@@ -87,7 +87,7 @@ func _test_successful_intent_clears_feedback(arena: Node) -> void:
 
 
 func _test_feedback_expiry_and_reset(arena: Node) -> void:
-	var hint: String = "点击敌人射击 · 或按住空格辅助瞄准"
+	var hint: String = "Click an enemy to shoot · Or hold Space for aim assist"
 	_configure_enemies(arena)
 	arena.presentation.feedback.show_input_feedback(hint, arena.sim_tick)
 	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == hint, "the hint was not on screen before its expiry window")
@@ -114,12 +114,12 @@ func _test_unavailable_skill_feedback_without_commands(arena: Node) -> void:
 	var commands_before: int = arena.input_adapter.collect_commands(arena.gameplay_snapshot()).size()
 	arena._unhandled_input(_key_event(KEY_Q, true))
 	_expect(not bool(arena.command_source.hunter_mark_requested), "unequipped Q still requested the mark")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "猎人印记未装配在本场构筑 · 暂无法施放",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Hunter's Mark is not equipped in this build · Cannot Cast Yet",
 		"unequipped Q produced no truthful feedback")
 	arena._unhandled_input(_key_event(KEY_E, true))
 	_expect(not bool(arena.command_source.dash_requested) and int(fixture.player(arena).dash_remaining_ticks) == 0,
 		"unequipped E still dashed")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "突袭未装配在本场构筑 · 暂无法施放",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Dash is not equipped in this build · Cannot Cast Yet",
 		"unequipped E produced no truthful feedback")
 	_expect(arena.input_adapter.collect_commands(arena.gameplay_snapshot()).size() == commands_before,
 		"unavailable skill presses enqueued combat commands")
@@ -148,7 +148,7 @@ func _test_assisted_rejection_cue(arena: Node) -> void:
 		Vector2(float(queued.get("direction_x_milli", 0)), float(queued.get("direction_y_milli", 0))).normalized(), arena.ATTACK_SOURCE_ASSISTED)
 	_expect(not bool(receipt.get("accepted", false)) and String(receipt.get("reason", "")) == "target_out_of_range",
 		"out-of-range assisted attempt was not rejected by the player domain")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "目标在射程外 · 靠近后再射",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Target out of range · Move closer to shoot",
 		"out-of-range assisted attempt produced no actionable cue")
 	_expect(int(arena.shots) == 0 and arena.projectiles.is_empty(),
 		"the out-of-range cue accompanied a real shot")
@@ -157,7 +157,7 @@ func _test_assisted_rejection_cue(arena: Node) -> void:
 		enemy.health = 0.0
 	arena.input_adapter.request_assisted_attack()
 	_piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot()))
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "暂无目标 · 靠近敌人后按空格",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "No target · Move closer to an enemy, then press Space",
 		"assisted attempt without any living target produced no cue")
 
 
@@ -168,10 +168,10 @@ func _test_pointer_out_of_range_notice(arena: Node) -> void:
 	arena.teleport_actor("enemy/%d" % arena.enemies[1].entity_id, arena.player_position + Vector2(300.0, 40.0))
 	var far_screen := _gameplay_to_screen(arena, far.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(far_screen, true), false, arena.gameplay_snapshot())
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "目标在射程外 · 靠近后再射",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Target out of range · Move closer to shoot",
 		"pointer out-of-range press produced no actionable notice")
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(far_screen, false), false, arena.gameplay_snapshot())
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "目标在射程外 · 靠近后再射",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Target out of range · Move closer to shoot",
 		"pointer out-of-range notice did not stay legible after release")
 	_expect(int(arena.shots) == 0 and arena.projectiles.is_empty(),
 		"the pointer out-of-range notice accompanied a real shot")
@@ -204,7 +204,7 @@ func _test_assisted_indicator_snapshot_target(arena: Node) -> void:
 func _test_feedback_never_reaches_semantic_hash(arena: Node) -> void:
 	_configure_enemies(arena)
 	var baseline: String = arena._semantic_state_hash("skills")
-	arena.presentation.feedback.show_input_feedback("点击敌人射击 · 或按住空格辅助瞄准", arena.sim_tick)
+	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.sim_tick)
 	_expect(arena._semantic_state_hash("skills") == baseline,
 		"semantic hash consumed transient input feedback")
 	arena.release_manual_controls()

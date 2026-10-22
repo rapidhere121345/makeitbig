@@ -1,0 +1,5 @@
+# Preserve authentic legal/provenance bytes, including on Windows checkouts.
+art/fonts/LICENSE-noto-cjk.txt -text
+art/fonts/PROVENANCE.md -text
+art/production/p1/hamlet_town/SOURCE.json -text
+docs/art-production/p1-icon-expansion-v01/EXECUTED_PROMPTS.json -text

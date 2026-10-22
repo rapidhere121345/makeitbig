@@ -6,7 +6,7 @@ extends SceneTree
 ##
 ## It measures the built screen after real process frames instead of trusting the
 ## code's own constants: the header and the two actions have to stay on the screen
-## while the loot uses fixed pages, nothing may reach past the right edge, no Chinese copy
+## while the loot uses fixed pages, nothing may reach past the right edge, no English copy
 ## may fall under the approved 18px floor, and a long drop list has to page rather
 ## than push the footer away. The 1024x576 and 1600x900 hosts stand in for the two
 ## window sizes the shell has to stay usable at.
@@ -20,7 +20,7 @@ const ResultScreenScript = preload("res://src/presentation/result_screen.gd")
 
 const RESOLUTIONS: Array[Vector2] = [Vector2(1280.0, 720.0), Vector2(1600.0, 900.0), Vector2(1920.0, 1080.0), Vector2(1024.0, 576.0)]
 const BODY_FOOTER_EPSILON := 1.0
-## The approved Chinese UI floor (approved baseline: 正文 18-22 显示像素).
+## The approved English UI floor (approved baseline: Text 18-22 display pixels).
 const FONT_FLOOR := 18
 const LONG_DROP_COUNT := 12
 const LONG_INSTANCE_ID := "drop_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -59,28 +59,29 @@ func _test_mixed_rewards() -> void:
 	var payload := _victory_payload(1)
 	payload["outcome"] = "final_victory"
 	payload["first_reward_tags"] = ["early_campaign_complete"]
-	payload["proxy_component_drops"] = [{"id":"marking_prism", "name":"标记棱镜", "slot":"perception", "protocol":"区分标记、精英、Boss，并保留 2 个候选"}]
+	payload["proxy_component_drops"] = [{"id":"marking_prism", "name":"Mark Prism", "slot":"perception", "protocol":"Distinguish marked targets, elites, and bosses; retain 2 candidates"}]
 	payload.rewards.erase("add_dice_delta")
 	var screen = _settle(host, payload)
 	await _frames(5)
 	var body: Control = screen.find_child("ResultContent",true,false)
 	var footer: Control = screen.find_child("ResultFooter",true,false)
-	_expect(body.get_global_rect().end.y <= footer.get_global_rect().position.y, "mixed rewards cover footer")
+	_expect(body.get_global_rect().end.y <= footer.get_global_rect().position.y,
+		"mixed rewards cover footer (body %s; footer %s)" % [body.get_global_rect(), footer.get_global_rect()])
 	var review: Button = screen.find_child("ReviewDrop_*",true,false)
 	_expect(review != null and body.get_global_rect().encloses(review.get_global_rect()), "mixed equipment comparison is clipped")
 	var title: Label = screen.find_child("ProxyComponentName",true,false)
-	_expect(title.tooltip_text.contains("2 个候选") and title.tooltip_text.contains("当前代理构筑不变"), "compact component lost protocol/state")
+	_expect(title.tooltip_text.contains("2 candidates") and title.tooltip_text.contains("current proxy build unchanged"), "compact component lost protocol/state")
 	var compact_summary: Label = screen.find_child("RewardSummary",true,false) as Label
-	_expect(compact_summary != null and compact_summary.text.contains("新装备 1 件")
-		and compact_summary.text.contains("代理组件 1 件")
+	_expect(compact_summary != null and compact_summary.text.contains("New Equipment: 1 Items")
+		and compact_summary.text.contains("Proxy Components: 1")
 		and compact_summary.get_line_count() <= 2,
 		"mixed rewards did not collapse into a count-first summary")
 	var protocol: Label = screen.find_child("ProxyComponentProtocol",true,false) as Label
 	_expect(protocol != null and not protocol.is_visible_in_tree(), "mixed proxy protocol expanded by default")
 	var next_step: Label = screen.find_child("NextStepLabel",true,false) as Label
-	_expect(next_step != null and next_step.visible and next_step.text.contains("先比较新装备"),
+	_expect(next_step != null and next_step.visible and next_step.text.contains("Compare new equipment"),
 		"mixed settlement lost its pinned next-step decision")
-	_expect((screen.find_child("ResultSubtitle",true,false) as Label).text.contains("前期旅程完成"), "first-clear guidance not visible")
+	_expect((screen.find_child("ResultSubtitle",true,false) as Label).text.contains("Early journey complete"), "first-clear guidance not visible")
 	_close(host, screen)
 
 
@@ -162,7 +163,7 @@ func _test_outcome_actions() -> void:
 	await _frames(2)
 	_expect(ending.visible, "actions: the final victory did not expose the ending action")
 	var base_button: Button = screen.find_child("ReturnToBaseButton", true, false)
-	_expect(base_button.visible and base_button.text == "返回基地", "actions: the return-to-base action is missing")
+	_expect(base_button.visible and base_button.text == "Return to Hub", "actions: the return-to-base action is missing")
 	screen.present({"outcome": "defeat", "rewards": {}})
 	await _frames(2)
 	_expect(not ending.visible, "actions: a defeat exposed the ending action")
@@ -184,7 +185,7 @@ func _test_defeat_first_kill() -> void:
 		"defeated": 3,
 		"failure_reason": "enemy/391/fan_ranged",
 		"report": "DEFEAT — the ranger fell after 12.0s. Refit at base.",
-		"primary_bottleneck": {"title": "增长收敛", "action": "去定向支线获取增长概率词条"},
+		"primary_bottleneck": {"title": "Growth converged", "action": "Find growth-chance affixes in targeted side contracts"},
 		"first_reward_tags": ["hunter_mark_skill"],
 		"rewards": {
 			"contract_wins_delta": 0,
@@ -198,12 +199,12 @@ func _test_defeat_first_kill() -> void:
 	})
 	await _frames(4)
 	var outcome_value: Label = screen.find_child("MetricValue_outcome", true, false)
-	_expect(outcome_value != null and outcome_value.text == "失败", "defeat: the outcome metric did not report 失败: %s" % (outcome_value.text if outcome_value != null else "<missing>"))
+	_expect(outcome_value != null and outcome_value.text == "Failure", "defeat: the outcome metric did not report Failure: %s" % (outcome_value.text if outcome_value != null else "<missing>"))
 	var run_facts: Label = screen.find_child("RunFacts", true, false)
-	_expect(run_facts != null and run_facts.text.contains("threshold_colossus") and run_facts.text.contains("终止原因：扇射游猎者") and not run_facts.text.contains("enemy/391/fan_ranged"), "defeat: the readable loss and the contract are not on the facts line: %s" % (run_facts.text if run_facts != null else "<missing>"))
-	_expect(screen.get_reward_text().contains("限时加成：未获得"), "defeat: a lost timed bonus was not reported: %s" % screen.get_reward_text())
-	_expect(screen.get_reward_text().contains("本次获得装备 1 件"), "defeat: the equipment count disappeared: %s" % screen.get_reward_text())
-	_expect(screen.get_diagnosis_text().contains("失败主因"), "defeat: the diagnosis left the report column")
+	_expect(run_facts != null and run_facts.text.contains("threshold_colossus") and run_facts.text.contains("End Reason: Fan-Shot Hunter") and not run_facts.text.contains("enemy/391/fan_ranged"), "defeat: the readable loss and the contract are not on the facts line: %s" % (run_facts.text if run_facts != null else "<missing>"))
+	_expect(screen.get_reward_text().contains("Timed Bonus: Not Obtained"), "defeat: a lost timed bonus was not reported: %s" % screen.get_reward_text())
+	_expect(screen.get_reward_text().contains("Equipment Gained: 1 Items"), "defeat: the equipment count disappeared: %s" % screen.get_reward_text())
+	_expect(screen.get_diagnosis_text().contains("Main Failure Cause"), "defeat: the diagnosis left the report column")
 	_close(host, screen)
 
 
@@ -238,7 +239,7 @@ func _test_detail_reveal() -> void:
 	var detail_text: String = screen.get_detail_text()
 	_expect(detail_text.contains(LONG_INSTANCE_ID), "detail: the full instance id is not listed")
 	_expect(detail_text.contains("future_authority_field") and detail_text.contains("future_reward_field"), "detail: metadata outside the known table was dropped: %s" % detail_text)
-	_expect(detail_text.contains("房间 2") and detail_text.contains("扇射游猎者") and not detail_text.contains("enemy/391/fan_ranged"), "detail: the per-room result or its readable failure source is missing")
+	_expect(detail_text.contains("Room 2") and detail_text.contains("Fan-Shot Hunter") and not detail_text.contains("enemy/391/fan_ranged"), "detail: the per-room result or its readable failure source is missing")
 	_expect(screen.get_run_facts_text().contains("2 / 3"), "detail: the room progress line is not on the visible facts: %s" % screen.get_run_facts_text())
 	var bounds := Rect2(host.global_position, host.size)
 	var scroll: ScrollContainer = screen.find_child("ResultScroll", true, false)
@@ -292,7 +293,7 @@ func _test_sparse_metrics() -> void:
 		_expect(hidden_tile != null and not hidden_tile.visible,
 			"sparse: %s was drawn for a field the settlement never reported" % key)
 	_expect(screen.find_child("MetricTile_ticks", true, false) == null, "sparse: internal tick tile escaped the test console")
-	_expect(not screen.get_detail_text().contains("0.00 秒"), "sparse: the detail table invented an elapsed time")
+	_expect(not screen.get_detail_text().contains("0.00 s"), "sparse: the detail table invented an elapsed time")
 	screen.present({
 		"outcome": "victory",
 		"elapsed_seconds": 0.0,
@@ -304,7 +305,7 @@ func _test_sparse_metrics() -> void:
 	await _frames(2)
 	var elapsed_value: Label = screen.find_child("MetricValue_elapsed", true, false)
 	var kills_value: Label = screen.find_child("MetricValue_kills", true, false)
-	_expect(elapsed_value != null and elapsed_value.text == "0.00 秒", "sparse: a reported zero run time was not drawn")
+	_expect(elapsed_value != null and elapsed_value.text == "0.00 s", "sparse: a reported zero run time was not drawn")
 	_expect(kills_value != null and kills_value.text == "0", "sparse: a reported zero kill count was not drawn")
 	_check_inside(screen, Rect2(host.global_position, host.size), "sparse", screen.find_child("CurrentRunScroll", true, false))
 	_check_font_floor(screen, "sparse")
@@ -398,7 +399,7 @@ func _is_descendant(node: Node, ancestor: Node) -> bool:
 	return false
 
 
-## No Chinese copy under the approved floor, at any resolution.
+## No English copy under the approved floor, at any resolution.
 func _check_font_floor(node: Node, tag: String) -> void:
 	for control in _visible_controls(node):
 		if not (control is Label) or (control as Label).text.strip_edges().is_empty():

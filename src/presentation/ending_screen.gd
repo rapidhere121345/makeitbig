@@ -30,19 +30,19 @@ const DESIGN_SIZE := Vector2(1280.0, 720.0)
 const SCREEN_MARGIN := 24
 const BLOCK_SEPARATION := 14
 
-const TITLE_TEXT := "炉边回望"
-const KICKER_TEXT := "旅程暂告一段"
-const COMPLETION_TEXT := "你已击破阈门巨像，也让装配完成的代理平安归来。炉火仍亮，下一段路已经敞开。"
-const SUMMARY_HEADING := "旅程记录"
-const MIDGAME_TEXT := "远方仍有未解的圣律与更危险的荒野。\n你可以先回基地整理装备，也可以继续接受支线契约。"
-const BASE_BUTTON_TEXT := "返回基地继续整理"
-const TITLE_BUTTON_TEXT := "返回标题"
+const TITLE_TEXT := "Looking Back at the Hearth"
+const KICKER_TEXT := "A Pause in the Journey"
+const COMPLETION_TEXT := "You have defeated the Threshold Colossus and brought your assembled proxy home safely. The hearth still burns, and the next road lies open."
+const SUMMARY_HEADING := "Journey Record"
+const MIDGAME_TEXT := "Unsolved Sacred Laws and harsher wilds await.\nReturn to the hub to sort your equipment, or take on more side contracts."
+const BASE_BUTTON_TEXT := "Return to Hub"
+const TITLE_BUTTON_TEXT := "Return to Title"
 
 ## The approved illustration and the place it shows, named exactly as the base hub
 ## names it. Drawn at native size: any other scale would resample the pixel grid.
 const ILLUSTRATION_PATH := "res://art/production/p1/hearth_return_v01/background.png"
 const ILLUSTRATION_SIZE := Vector2(640.0, 360.0)
-const ILLUSTRATION_CAPTION := "哈姆雷特 · 炉边镇"
+const ILLUSTRATION_CAPTION := "Hamlet · Hearthside"
 
 const TITLE_FONT_SIZE := 28
 const SMALL_FONT_SIZE := 18
@@ -53,9 +53,9 @@ const WIDE_MIN_WIDTH := 1080.0
 
 ## Known display names. A value outside these tables keeps its authoritative id: the
 ## screen translates what it can name and never invents a friendlier one.
-const CLASS_LABELS := {"ranger": "游侠", "alchemist": "炼金", "mage": "法师"}
-const CONTRACT_LABELS := {"auto_certification": "前期毕业契约", "threshold_colossus": "阈门巨像"}
-const OUTCOME_LABELS := {"final_victory": "最终胜利", "victory": "胜利", "defeat": "失败", "abandoned": "中止"}
+const CLASS_LABELS := {"ranger": "Ranger", "alchemist": "Alchemist", "mage": "Mage"}
+const CONTRACT_LABELS := {"auto_certification": "Early Graduation Contract", "threshold_colossus": "Threshold Colossus"}
+const OUTCOME_LABELS := {"final_victory": "Final Victory", "victory": "Victory", "defeat": "Failure", "abandoned": "Aborted"}
 
 var _built := false
 var _profile: Dictionary = {}
@@ -220,7 +220,7 @@ func _build_illustration(parent: Control) -> void:
 	column.add_child(caption)
 	var story_boundary := Label.new()
 	story_boundary.name = "ReturnStoryBoundary"
-	story_boundary.text = "风仍冷，接头仍需照看。先回炉边歇一会儿。"
+	story_boundary.text = "The wind is still cold, and the connections need tending. Rest by the hearth for a while."
 	story_boundary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	story_boundary.add_theme_font_size_override("font_size", SMALL_FONT_SIZE)
 	story_boundary.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
@@ -284,8 +284,8 @@ func _build_footer(root: Control) -> void:
 
 func _apply_presentation() -> void:
 	var progression := _as_dictionary(_profile.get("progression", {}))
-	var initial_class := String(_profile.get("initial_class", "未建立"))
-	_profile_label.text = "职业：%s    契约胜场：%d    代理胜场：%d" % [
+	var initial_class := String(_profile.get("initial_class", "Not Created"))
+	_profile_label.text = "Class: %s    Contract wins: %d    Proxy wins: %d" % [
 		String(CLASS_LABELS.get(initial_class.to_lower(), initial_class)),
 		int(progression.get("contract_wins", 0)),
 		int(progression.get("auto_contract_wins", 0)),
@@ -296,9 +296,9 @@ func _apply_presentation() -> void:
 	var elapsed := float(_last_result.get("elapsed_seconds", _last_result.get("time", 0.0)))
 	var rewards := _as_dictionary(_last_result.get("rewards", {}))
 	var equipment_count := int(rewards.get("equipment_drop_count", 0))
-	_result_label.text = "契约：%s（%s）    结果：%s\n用时：%.2f 秒    本次装备：%d 件" % [
+	_result_label.text = "Contract: %s (%s)    Result: %s\nTime: %.2f s    Equipment gained: %d" % [
 		String(CONTRACT_LABELS.get(contract_id, contract_id)),
-		"代理出征" if mode == "Auto" else "亲自出征",
+		"Proxy Expedition" if mode == "Auto" else "Manual Expedition",
 		String(OUTCOME_LABELS.get(outcome.to_lower(), outcome.to_upper())),
 		elapsed,
 		equipment_count,

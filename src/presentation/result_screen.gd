@@ -10,7 +10,7 @@ extends Control
 ## rooms_completed / room_count. No score or event tree is inferred. Missing data is
 ## left out instead of being drawn as a zero -- a reported zero is a reading and
 ## stays -- and a field outside the known table is listed raw in the collapsible
-## 计算详情 block, together with the untruncated drop ids.
+## Calculation Details block, together with the untruncated drop ids.
 ##
 ## Drop cards: the face of a card is what the run produced -- the published Chinese
 ## name of the base item, its slot and its affixes -- beside one full-size subject
@@ -48,31 +48,31 @@ const DESIGN_SIZE := Vector2(1280.0, 720.0)
 const SCREEN_MARGIN := 24
 const BLOCK_SEPARATION := 14
 
-const TITLE_TEXT := "契约结算"
+const TITLE_TEXT := "Contract Results"
 const KICKER_TEXT := "CONTRACT REPORT"
-const SUBTITLE_TEXT := "先看收获，再比较构筑。"
-const REPORT_HEADING := "战斗记录"
-const DROP_HEADING := "新物品与获得"
-const DETAIL_HEADING := "计算详情"
-const DETAIL_SHOW_TEXT := "展开计算详情"
-const DETAIL_HIDE_TEXT := "收起计算详情"
-const BASE_BUTTON_TEXT := "返回基地"
-const ENDING_BUTTON_TEXT := "进入结尾"
-const CONTRACT_BUTTON_TEXT := "再次出征"
-const REVIEW_DROP_TEXT := "比较（尚未装备）"
-const EQUIPMENT_DETAIL_TEXT := "详情"
-const EQUIPMENT_DETAIL_CLOSE_TEXT := "关闭详情"
-const PREVIOUS_PAGE_TEXT := "上一页"
-const NEXT_PAGE_TEXT := "下一页"
+const SUBTITLE_TEXT := "Review your rewards, then compare your build."
+const REPORT_HEADING := "Combat Record"
+const DROP_HEADING := "New Items and Rewards"
+const DETAIL_HEADING := "Calculation Details"
+const DETAIL_SHOW_TEXT := "Show Calculation Details"
+const DETAIL_HIDE_TEXT := "Hide Calculation Details"
+const BASE_BUTTON_TEXT := "Return to Hub"
+const ENDING_BUTTON_TEXT := "View Epilogue"
+const CONTRACT_BUTTON_TEXT := "Depart Again"
+const REVIEW_DROP_TEXT := "Comparison (Not Equipped)"
+const EQUIPMENT_DETAIL_TEXT := "Details"
+const EQUIPMENT_DETAIL_CLOSE_TEXT := "Close Details"
+const PREVIOUS_PAGE_TEXT := "Previous Page"
+const NEXT_PAGE_TEXT := "Next Page"
 const NO_PAGE_TEXT := "1 / 1"
-const REPORT_DETAIL_TEXT := "战报详情"
-const REPORT_HIDE_TEXT := "收起战报"
-const NO_REWARD_TEXT := "没有掉落记录。"
-const EMPTY_FACTS_TEXT := "本次结算没有报告字段；结果、用时与房间进度以上方指标为准。"
-const REWARD_DETAIL_SHOW_TEXT := "奖励明细"
-const REWARD_DETAIL_HIDE_TEXT := "收起明细"
-const PROXY_DETAIL_SHOW_TEXT := "协议详情"
-const PROXY_DETAIL_HIDE_TEXT := "收起协议"
+const REPORT_DETAIL_TEXT := "Battle Report Details"
+const REPORT_HIDE_TEXT := "Hide Battle Report"
+const NO_REWARD_TEXT := "No loot records."
+const EMPTY_FACTS_TEXT := "This result has no report fields; use the result, time, and room progress shown above."
+const REWARD_DETAIL_SHOW_TEXT := "Reward Details"
+const REWARD_DETAIL_HIDE_TEXT := "Hide Details"
+const PROXY_DETAIL_SHOW_TEXT := "Protocol Details"
+const PROXY_DETAIL_HIDE_TEXT := "Hide Protocol"
 
 ## Header and value steps of the approved UI band: 28px Chinese title, 18px
 ## neutral subtitle and small copy, 28px metric values.
@@ -96,11 +96,11 @@ const CARD_AUDIT_META := "audit_text"
 ## settlement payload; a metric the payload does not carry is hidden, never shown
 ## as a zero, while a metric that really is 0 is drawn as the reading it is.
 const METRICS: Array = [
-	{"key": "outcome", "label": "结果"},
-	{"key": "elapsed", "label": "实际用时"},
-	{"key": "kills", "label": "击杀"},
-	{"key": "casts", "label": "施放"},
-	{"key": "rooms", "label": "房间进度"},
+	{"key": "outcome", "label": "Result"},
+	{"key": "elapsed", "label": "Actual Time"},
+	{"key": "kills", "label": "Kills"},
+	{"key": "casts", "label": "Casts"},
+	{"key": "rooms", "label": "Room Progress"},
 ]
 
 ## The settlement's own run totals and one room's readings, in reading order: the
@@ -108,91 +108,91 @@ const METRICS: Array = [
 ## built from fields the payload reports, so an entry that was never carried names
 ## itself unrecorded instead of appearing as a zero.
 const TOTAL_FIELDS: Array = [
-	{"key": "ticks", "label": "权威 Tick"},
-	{"key": "elapsed", "label": "实际用时"},
-	{"key": "casts", "label": "施放"},
-	{"key": "kills", "label": "击杀"},
+	{"key": "ticks", "label": "Authoritative Tick"},
+	{"key": "elapsed", "label": "Actual Time"},
+	{"key": "casts", "label": "Casts"},
+	{"key": "kills", "label": "Kills"},
 ]
 const ROOM_FIELDS: Array = [
-	{"key": "kills", "label": "击杀"},
-	{"key": "casts", "label": "施放"},
+	{"key": "kills", "label": "Kills"},
+	{"key": "casts", "label": "Casts"},
 	{"key": "ticks", "label": "Tick"},
-	{"key": "elapsed", "label": "用时"},
+	{"key": "elapsed", "label": "Time"},
 ]
 
 const OUTCOME_LABELS := {
-	"victory": "胜利",
-	"final_victory": "最终胜利",
-	"defeat": "失败",
-	"abandoned": "中止",
-	"error": "错误",
+	"victory": "Victory",
+	"final_victory": "Final Victory",
+	"defeat": "Failure",
+	"abandoned": "Aborted",
+	"error": "Error",
 }
 
 const SLOT_LABELS := {
-	"main_hand": "主手",
-	"off_hand": "副手",
-	"gloves": "手套",
-	"ring_1": "戒指",
-	"ring_2": "戒指",
-	"necklace": "项链",
-	"head": "头部",
-	"chest": "胸甲",
-	"pants": "裤甲",
-	"leg_armor": "腿甲",
-	"bracers": "护腕",
-	"belt": "腰带",
+	"main_hand": "Main Hand",
+	"off_hand": "Off Hand",
+	"gloves": "Gloves",
+	"ring_1": "Ring",
+	"ring_2": "Ring",
+	"necklace": "Necklace",
+	"head": "Head",
+	"chest": "Chest",
+	"pants": "Legs",
+	"leg_armor": "Feet",
+	"bracers": "Wrists",
+	"belt": "Belt",
 }
 
 ## Reward fields this screen formats as player copy. Anything else in `rewards`
 ## is listed verbatim in the detail block instead of being dropped.
 const REWARD_FIELD_LABELS := {
-	"contract_wins_delta": "契约胜场",
-	"repeatable_attempt_number": "重复支线次数",
+	"contract_wins_delta": "Contract Wins",
+	"repeatable_attempt_number": "Repeat Side Runs",
 }
 const LAW_TALLY_LABELS := {
-	"inscribe": "添铸律筹",
-	"rewrite": "改写律筹",
-	"refine": "精炼律筹",
+	"inscribe": "Inscribe Law Tokens",
+	"rewrite": "Rewrite Law Tokens",
+	"refine": "Refine Law Tokens",
 }
 ## The timed-bonus pair is one line, and only when the run really had a bonus in
 ## play: the payload sets exactly one flag for a timed objective and leaves both
 ## false when there was nothing to lose, so a settled room never claims a loss it
 ## did not take.
-const TIMED_BONUS_LABEL := "限时加成"
+const TIMED_BONUS_LABEL := "Timed Bonus"
 
 const FIRST_REWARD_LABELS := {
-	"starter_loadout": "固定起步装备已装配",
-	"hunter_mark_skill": "新技能：猎人印记（技能槽 2）",
-	"dash_skill": "新技能：突袭（技能槽 3）",
-	"equipment_compare_unlock": "装备比较已开放",
-	"breeding_split_item": "孳生分裂装备已入库存",
-	"law_forge_unlock": "律筹锻造台已解锁",
-	"pack_hunt_mark_item": "群猎印记装备已入库存",
-	"early_campaign_complete": "前期旅程完成：已掌握手动战斗与代理出征",
+	"starter_loadout": "Fixed starter equipment equipped",
+	"hunter_mark_skill": "New skill: Hunter's Mark (Skill Slot 2)",
+	"dash_skill": "New skill: Dash (Skill Slot 3)",
+	"equipment_compare_unlock": "Equipment comparison unlocked",
+	"breeding_split_item": "Breeding Split equipment added to storage",
+	"law_forge_unlock": "Law Token Forge unlocked",
+	"pack_hunt_mark_item": "Pack Hunt Mark equipment added to storage",
+	"early_campaign_complete": "Early journey complete: manual combat and proxy expeditions mastered",
 }
 ## Skill grants get their own compact cue (name, authored battle key, slot and a
-## next-use hint), because the bare "首通获得 N 项" counter let the new skill go
+## next-use hint), because the bare "N First-Clear Rewards" counter let the new skill go
 ## unnoticed. It renders only from the settlement's own first_reward_tags, so a
 ## repeat run never shows it; keys mirror the arena HUD slot keys.
 const FIRST_SKILL_CUES := {
-	"hunter_mark_skill": {"name": "猎人印记", "key": "Q", "slot": "技能槽 2", "skill_id": "hunter_mark", "slot_index": 1, "hint": "战斗中按 Q 标记目标"},
-	"dash_skill": {"name": "突袭", "key": "E", "slot": "技能槽 3", "skill_id": "dash", "slot_index": 2, "hint": "战斗中按 E 突进"},
+	"hunter_mark_skill": {"name": "Hunter's Mark", "key": "Q", "slot": "Skill Slot 2", "skill_id": "hunter_mark", "slot_index": 1, "hint": "Press Q in combat to mark a target"},
+	"dash_skill": {"name": "Dash", "key": "E", "slot": "Skill Slot 3", "skill_id": "dash", "slot_index": 2, "hint": "Press E in combat to dash"},
 }
 
 ## The fixed four white cores, in the order the proxy bay grants them.
 const PROXY_CORE_LABELS := {
-	"near_enemy_horizon": "近敌视界",
-	"nearest_enemy": "感知核心",
-	"perception": "感知核心",
-	"direct_gait": "直趋步足",
-	"movement": "行动核心",
-	"action": "行动核心",
-	"single_key_execution": "单键执行",
-	"execution": "执行核心",
-	"short_trace_memory": "短痕记忆",
-	"memory": "记忆核心",
+	"near_enemy_horizon": "Near-Enemy Sight",
+	"nearest_enemy": "Perception Core",
+	"perception": "Perception Core",
+	"direct_gait": "Direct-Approach Legs",
+	"movement": "Action Core",
+	"action": "Action Core",
+	"single_key_execution": "Single-Key Executor",
+	"execution": "Execution Core",
+	"short_trace_memory": "Short-Trace Memory",
+	"memory": "Memory Core",
 }
-const PROXY_CORE_FALLBACK: Array[String] = ["感知核心", "行动核心", "执行核心", "记忆核心"]
+const PROXY_CORE_FALLBACK: Array[String] = ["Perception Core", "Action Core", "Execution Core", "Memory Core"]
 const FIXED_CORE_IDS: Array[String] = ["near_enemy_horizon", "direct_gait", "single_key_execution", "short_trace_memory"]
 
 var _built := false
@@ -269,7 +269,7 @@ func present(result: Dictionary, contract: Dictionary = {}, current_profile: Dic
 	_result = result.duplicate(true)
 	_contract = contract.duplicate(true)
 	_current_profile = current_profile.duplicate(true)
-	_equipment_model = EquipmentPresentationModelScript.new(_player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "未知装备")
+	_equipment_model = EquipmentPresentationModelScript.new(_player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "Unknown Equipment")
 	if _built:
 		_apply_presentation()
 		_focus_default_action()
@@ -532,7 +532,7 @@ func _set_report_detail_visible(value: bool) -> void:
 		(body as Label).visible = value
 	var scroll := find_child("CurrentRunScroll", true, false) as ScrollContainer
 	if scroll != null:
-		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if value else ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_report_detail_button.text = REPORT_HIDE_TEXT if value else REPORT_DETAIL_TEXT
 
 
@@ -598,7 +598,7 @@ func _build_report_panel(parent: Control) -> void:
 	scroll.name = "CurrentRunScroll"
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	ShellThemeScript.hide_passive_scrollbar_chrome(scroll)
 	panel.add_child(scroll)
 	var column := VBoxContainer.new()
@@ -607,7 +607,7 @@ func _build_report_panel(parent: Control) -> void:
 	column.clip_contents = true
 	column.add_theme_constant_override("separation", 6)
 	scroll.add_child(column)
-	column.add_child(_heading("结果与下一步"))
+	column.add_child(_heading("Result and Next Steps"))
 	_next_step_label = _report_note("")
 	_next_step_label.name = "NextStepLabel"
 	_next_step_label.add_theme_font_size_override("font_size", ShellThemeScript.BODY_FONT_SIZE)
@@ -687,7 +687,7 @@ func _build_evidence_cards(parent: Control) -> void:
 	_evidence_grid.add_theme_constant_override("h_separation", 12)
 	_evidence_grid.add_theme_constant_override("v_separation", 12)
 	parent.add_child(_evidence_grid)
-	for row in [["observed","本轮表现"],["unverified","构筑进展"],["bottleneck","危险提示"],["next","下一步"]]:
+	for row in [["observed","This Run's Performance"],["unverified","Build Progress"],["bottleneck","Hazard Notes"],["next","Next Step"]]:
 		var panel := PanelContainer.new()
 		panel.name = "EvidenceCard_" + row[0]
 		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -889,9 +889,9 @@ func _apply_presentation() -> void:
 		var level := "Lv.%d" % int(growth.get("level_after",1))
 		if int(growth.get("level_before",1)) < int(growth.get("level_after",1)):
 			level = "Lv.%d → %d" % [int(growth.level_before),int(growth.level_after)]
-		_growth_label.text = "经验 +%d   %s" % [int(growth.experience_delta),level]
+		_growth_label.text = "XP +%d   %s" % [int(growth.experience_delta),level]
 		if int(growth.get("talent_points_delta",0)) > 0:
-			_growth_label.text += "   天赋点 +%d" % int(growth.talent_points_delta)
+			_growth_label.text += "   Talent Points +%d" % int(growth.talent_points_delta)
 
 	## One pass over the reading order: a metric the settlement reports -- 0
 	## included -- is drawn as it stands, and one it never carried keeps its tile
@@ -931,7 +931,7 @@ func _apply_presentation() -> void:
 	_reward_label.text = _compact_reward_text(rewards, _equipment_drop_entries, proxy_component_entries)
 	_reward_detail_button.visible = _reward_label.text != full_reward_text
 	_subtitle_label.text = _settlement_headline(outcome, _equipment_drop_entries.size(), proxy_component_entries.size())
-	_next_step_label.text = "下一步 · " + _next_step_text(outcome, _equipment_drop_entries.size(), proxy_component_entries.size())
+	_next_step_label.text = "Next Step · " + _next_step_text(outcome, _equipment_drop_entries.size(), proxy_component_entries.size())
 	_render_core_rewards(rewards)
 
 
@@ -955,11 +955,11 @@ func _apply_first_skill_cue() -> void:
 	var lines: Array[String] = []
 	for cue in _first_skill_cues():
 		if _skill_ready_in_build(String(cue.skill_id), int(cue.slot_index)):
-			lines.append("首通解锁技能：%s（%s · %s）· %s" % [cue.name, cue.key, cue.slot, cue.hint])
+			lines.append("First-clear skill unlock: %s (%s · %s) · %s" % [cue.name, cue.key, cue.slot, cue.hint])
 		else:
 			## The tag alone is not equip state: if the granted slot is occupied
 			## or absent in the resolved build, promise only the unlock.
-			lines.append("首通解锁技能：%s · 已解锁，可在备行架%s 装配" % [cue.name, cue.slot])
+			lines.append("First-clear skill unlock: %s · Unlocked; equip at Loadout %s" % [cue.name, cue.slot])
 	_skill_cue_label.text = "\n".join(lines)
 	_skill_cue_label.tooltip_text = _skill_cue_label.text
 	_skill_cue_label.visible = not lines.is_empty()
@@ -982,46 +982,46 @@ func _apply_report_evidence() -> void:
 	var mode := _first_text([_result.get("mode", ""),_contract.get("mode", "")])
 	var contract_name := _first_text([_contract.get("name", ""),_contract.get("title", ""),_result.get("contract_id", ""),_contract.get("contract_id", "")])
 	contract_name = String(ContractTitles.get(contract_name,contract_name))
-	mode = {"Manual":"手动", "Auto":"自动"}.get(mode,mode)
+	mode = {"Manual":"Manual", "Auto":"Auto"}.get(mode,mode)
 	_route_context.text = " · ".join([contract_name,mode]) if not contract_name.is_empty() else mode
-	_route_context.tooltip_text = "本次契约与出征方式"
+	_route_context.tooltip_text = "This Contract and Expedition Mode"
 	_route_view.present(_reported_route_steps())
 	var total: Variant = _reported_number(_result,["room_count"])
 	var completed: Variant = _reported_number(_result,["rooms_completed"])
 	var valid := total != null and completed != null and is_finite(float(total)) and is_finite(float(completed))
 	valid = valid and float(total) > 0 and float(completed) >= 0 and float(completed) <= float(total) and floorf(float(total)) == float(total) and floorf(float(completed)) == float(completed)
 	_room_progress.visible = valid
-	_room_progress_label.text = "房间完成 %s" % _rooms_text(_result) if valid else "房间完成进度未完整记录"
+	_room_progress_label.text = "Rooms Completed %s" % _rooms_text(_result) if valid else "Room completion progress was not fully recorded"
 	if valid:
 		_room_progress.max_value = float(total)
 		_room_progress.value = float(completed)
-		_room_progress.tooltip_text = "仅表示已完成房间 / 契约房间总数，不是构筑评分"
+		_room_progress.tooltip_text = "Completed rooms / total contract rooms only; not a build score"
 	var observed: Array[String] = []
-	for pair in [["elapsed","用时"],["kills","击杀"],["casts","施放"]]:
+	for pair in [["elapsed","Time"],["kills","Kills"],["casts","Casts"]]:
 		var reading := _reading_text(pair[0],_result)
 		if not reading.is_empty(): observed.append("%s %s" % [pair[1],reading])
-	_evidence_bodies.observed.text = "\n".join(observed) if not observed.is_empty() else "没有可用的战斗读数。缺失不记作零。"
-	_evidence_bodies.observed.tooltip_text = "本轮实际记录的用时、击杀与施放。"
-	_evidence_bodies.unverified.text = "本轮只结算战斗与掉落。\n构筑成长结论请回验律场查看。"
+	_evidence_bodies.observed.text = "\n".join(observed) if not observed.is_empty() else "No combat readings available. Missing values are not counted as zero."
+	_evidence_bodies.observed.tooltip_text = "Actual recorded time, kills, and casts for this run."
+	_evidence_bodies.unverified.text = "This run settles combat and loot only.\nVisit Training for build growth conclusions."
 	var diagnosis := _defeat_diagnosis_text()
 	var bottleneck := _as_dictionary(_result.get("primary_bottleneck", {})) if not diagnosis.is_empty() else {}
 	var title := String(bottleneck.get("title", "")).strip_edges()
 	var action := String(bottleneck.get("action", "")).strip_edges()
 	var failure_reason := _first_text([_result.get("failure_reason", "")])
 	var source := _failure_source_text(failure_reason) if not failure_reason.is_empty() else _first_text([_result.get("error", "")])
-	_evidence_bodies.bottleneck.text = title if not title.is_empty() else "本轮未发现明确的战斗瓶颈。"
+	_evidence_bodies.bottleneck.text = title if not title.is_empty() else "No clear combat bottleneck was found this run."
 	if not source.is_empty() and title.is_empty():
-		_evidence_bodies.bottleneck.text += "\n本轮在完成前终止。"
+		_evidence_bodies.bottleneck.text += "\nThis run ended before completion."
 	_evidence_bodies.bottleneck.tooltip_text = diagnosis + "\n" + source + "\n" + _defeat_report_text()
 	_evidence_marks.bottleneck.set_warning(not title.is_empty())
 	if not action.is_empty():
 		_evidence_bodies.next.text = action
 	elif String(_result.get("outcome", "")) == "final_victory":
-		_evidence_bodies.next.text = "这段旅程已经完成。\n可进入结尾回顾。"
+		_evidence_bodies.next.text = "This journey is complete.\nView the epilogue to look back."
 	elif _is_first_proxy_unlock(_as_dictionary(_result.get("rewards", {}))):
-		_evidence_bodies.next.text = "四枚白色核心已经获得。\n回镇装配后可让代理出征。"
+		_evidence_bodies.next.text = "Four Common cores obtained.\nInstall them in town to send your proxy out."
 	else:
-		_evidence_bodies.next.text = "回炉边镇整理装备，\n或前往验律场继续研究构筑。"
+		_evidence_bodies.next.text = "Return to Hearthside to sort equipment,\nor visit Training to keep studying your build."
 	_sync_metric_columns()
 
 
@@ -1037,8 +1037,8 @@ func _reported_route_steps() -> Array:
 		var state := "unknown"
 		if outcome in ["victory","final_victory"]: state = "completed"
 		elif outcome in ["defeat","error"]: state = "failed"
-		var title := "第 %d 间" % (index+1)
-		var subtitle := _outcome_text(outcome) if not outcome.is_empty() else "未记录"
+		var title := "Room %d" % (index+1)
+		var subtitle := _outcome_text(outcome) if not outcome.is_empty() else "Not Recorded"
 		steps.append({"title":title,"state":state,"subtitle":subtitle})
 	return steps
 
@@ -1096,7 +1096,7 @@ func _set_metric(key: String, text_value: String, color: Color, visible: bool = 
 func _outcome_text(outcome: String) -> String:
 	var normalized := outcome.to_lower()
 	if normalized.is_empty():
-		return "未记录"
+		return "Not Recorded"
 	if OUTCOME_LABELS.has(normalized):
 		return String(OUTCOME_LABELS[normalized])
 	return normalized.to_upper()
@@ -1136,7 +1136,7 @@ func _metric_color(key: String, outcome: String) -> Color:
 ## The run time in seconds, or empty when the settlement reports none.
 func _elapsed_text(source: Dictionary) -> String:
 	var value: Variant = _reported_number(source, ["elapsed_seconds", "elapsed", "time"])
-	return "%.2f 秒" % float(value) if value != null else ""
+	return "%.2f s" % float(value) if value != null else ""
 
 
 ## One reported count as copy, or empty when the source reports none.
@@ -1161,7 +1161,7 @@ func _reported_number(source: Dictionary, keys: Array) -> Variant:
 	return null
 
 
-## "完成 / 总数" from the two authoritative fields, or empty when the payload does
+## "Completed / Total" from the two authoritative fields, or empty when the payload does
 ## not carry them: no room count is claimed that was not reported.
 func _rooms_text(source: Dictionary) -> String:
 	var has_completed := source.has("rooms_completed")
@@ -1182,25 +1182,25 @@ func _run_facts_text() -> String:
 	var lines: Array[String] = []
 	var contract_id := _first_text([_result.get("contract_id", ""), _contract.get("contract_id", "")])
 	if not contract_id.is_empty():
-		lines.append("契约：%s" % contract_id)
+		lines.append("Contract: %s" % contract_id)
 	var mode := _first_text([_result.get("mode", ""), _contract.get("mode", "")])
 	if not mode.is_empty():
-		lines.append("模式：%s" % mode)
+		lines.append("Mode: %s" % mode)
 	var rooms := _rooms_text(_result)
 	if not rooms.is_empty():
-		lines.append("房间：%s 完成" % rooms)
+		lines.append("Rooms: %s Complete" % rooms)
 	var outcomes: Array[String] = []
 	for entry in _room_results():
 		if entry is Dictionary:
 			outcomes.append(_outcome_text(String((entry as Dictionary).get("outcome", "")).to_lower()))
 	if not outcomes.is_empty():
-		lines.append("逐间结果：%s" % "、".join(outcomes))
+		lines.append("Room Results: %s" % ", ".join(outcomes))
 	var failure_reason := _first_text([_result.get("failure_reason", "")])
 	if not failure_reason.is_empty():
-		lines.append("终止原因：%s" % _failure_source_text(failure_reason))
+		lines.append("End Reason: %s" % _failure_source_text(failure_reason))
 	var error_code := _first_text([_result.get("error", "")])
 	if not error_code.is_empty():
-		lines.append("错误码：%s" % error_code)
+		lines.append("Error Code: %s" % error_code)
 	if lines.is_empty():
 		return EMPTY_FACTS_TEXT
 	return "\n".join(lines)
@@ -1209,17 +1209,17 @@ func _run_facts_text() -> String:
 func _reward_lines(rewards: Dictionary, equipment_entries: Array, proxy_component_entries: Array = []) -> Array[String]:
 	var lines: Array[String] = []
 	if _is_first_proxy_unlock(rewards):
-		lines.append("代理舱首次解锁！")
-		lines.append("获得固定四白核心：%s" % "、".join(_proxy_core_names(rewards)))
-		lines.append("下一步：前往代理舱，Auto 清房")
+		lines.append("Proxy Bay Unlocked!")
+		lines.append("Four fixed Common cores obtained: %s" % ", ".join(_proxy_core_names(rewards)))
+		lines.append("Next Step: visit the Proxy Bay for Auto contracts")
 	var first_reward_text := _first_reward_text()
 	if not first_reward_text.is_empty():
 		lines.append(first_reward_text)
 	if not equipment_entries.is_empty():
-		lines.append("本次获得装备 %d 件" % equipment_entries.size())
+		lines.append("Equipment Gained: %d Items" % equipment_entries.size())
 	if not proxy_component_entries.is_empty():
-		lines.append("代理组件已入库 · 尚未安装")
-		lines.append("当前代理构筑不变")
+		lines.append("Proxy component stored · Not Installed")
+		lines.append("Current proxy build unchanged")
 	lines.append_array(_reward_field_lines(rewards))
 	var drop_line := _drop_line(rewards)
 	if not drop_line.is_empty():
@@ -1232,23 +1232,23 @@ func _reward_lines(rewards: Dictionary, equipment_entries: Array, proxy_componen
 func _compact_reward_text(rewards: Dictionary, equipment_entries: Array, proxy_component_entries: Array) -> String:
 	var parts: Array[String] = []
 	if not equipment_entries.is_empty():
-		parts.append("新装备 %d 件" % equipment_entries.size())
+		parts.append("New Equipment: %d Items" % equipment_entries.size())
 	if _is_first_proxy_unlock(rewards):
-		parts.append("代理核心 %d 枚" % _proxy_core_names(rewards).size())
+		parts.append("Proxy Cores: %d" % _proxy_core_names(rewards).size())
 	if not proxy_component_entries.is_empty():
-		parts.append("代理组件 %d 件" % proxy_component_entries.size())
+		parts.append("Proxy Components: %d" % proxy_component_entries.size())
 	var first_rewards := _first_reward_text().split("\n")
 	if first_rewards.size() > 1:
-		parts.append("首通获得 %d 项" % (first_rewards.size() - 1))
+		parts.append("First Clears: %d" % (first_rewards.size() - 1))
 	var tally_delta := _as_dictionary(rewards.get("law_tallies_delta", {}))
 	var tally_total := 0
 	for operation in ["inscribe", "rewrite", "refine"]:
 		tally_total += _coerce_int(tally_delta.get(operation, 0))
 	if tally_total != 0:
-		parts.append("律筹 %+d" % tally_total)
+		parts.append("Law Tokens %+d" % tally_total)
 	var drop_line := _drop_line(rewards)
 	if not drop_line.is_empty():
-		parts.append(drop_line.split("：")[-1].strip_edges() if drop_line.contains("：") else drop_line)
+		parts.append(drop_line.split(": ")[-1].strip_edges() if drop_line.contains(": ") else drop_line)
 	return " · ".join(parts) if not parts.is_empty() else NO_REWARD_TEXT
 
 
@@ -1257,11 +1257,11 @@ func _settlement_headline(outcome: String, equipment_count: int, proxy_component
 	var first_reward := _first_reward_headline()
 	var acquisition := ""
 	if equipment_count > 0:
-		acquisition = "新装备 %d 件" % equipment_count
+		acquisition = "New Equipment: %d Items" % equipment_count
 	elif proxy_component_count > 0:
-		acquisition = "代理组件 %d 件" % proxy_component_count
+		acquisition = "Proxy Components: %d" % proxy_component_count
 	elif _is_first_proxy_unlock(_as_dictionary(_result.get("rewards", {}))):
-		acquisition = "代理舱已解锁"
+		acquisition = "Proxy Bay Unlocked"
 	if not first_reward.is_empty():
 		acquisition = first_reward if acquisition.is_empty() else "%s · %s" % [acquisition, first_reward]
 	if acquisition.is_empty():
@@ -1271,16 +1271,16 @@ func _settlement_headline(outcome: String, equipment_count: int, proxy_component
 
 func _next_step_text(outcome: String, equipment_count: int, proxy_component_count: int) -> String:
 	if equipment_count > 0:
-		return "先比较新装备，再返镇整备"
+		return "Compare new equipment, then return to town to prepare"
 	if proxy_component_count > 0:
-		return "代理组件已入库，返镇后再安装"
+		return "Proxy component stored; install it after returning to town"
 	if _is_first_proxy_unlock(_as_dictionary(_result.get("rewards", {}))):
-		return "代理舱已解锁，返镇安装核心"
+		return "Proxy Bay unlocked; return to town to install cores"
 	if outcome in ["defeat", "error"]:
-		return "查看战报后返镇调整"
+		return "Review the battle report, then return to town to adjust"
 	if outcome == "final_victory":
-		return "可进入结尾回顾"
-	return "可返镇整理或再次出征"
+		return "View the epilogue"
+	return "Return to town or depart again"
 
 
 func _first_reward_headline() -> String:
@@ -1289,23 +1289,23 @@ func _first_reward_headline() -> String:
 		return ""
 	if lines.size() == 2:
 		var line := String(lines[1])
-		return line.get_slice("（", 0)
-	return "首通获得 %d 项" % (lines.size() - 1)
+		return line.get_slice("(", 0)
+	return "%d First-Clear Rewards" % (lines.size() - 1)
 
 
 ## Known reward fields written as Chinese player copy. A zero delta stays out (it is
-## not a reward), and the boolean bonus pair reports a real loss as 未获得.
+## not a reward), and the boolean bonus pair reports a real loss as Not Obtained.
 func _reward_field_lines(rewards: Dictionary) -> Array[String]:
 	var lines: Array[String] = []
 	var bonus_earned := bool(rewards.get("bonus_earned", false))
 	var bonus_lost := bool(rewards.get("bonus_lost", false))
 	if bonus_earned != bonus_lost:
-		lines.append("%s：%s" % [TIMED_BONUS_LABEL, "已获得" if bonus_earned else "未获得"])
+		lines.append("%s: %s" % [TIMED_BONUS_LABEL, "Obtained" if bonus_earned else "Not Obtained"])
 	var tally_delta := _as_dictionary(rewards.get("law_tallies_delta", {}))
 	for operation in ["inscribe", "rewrite", "refine"]:
 		var tally_amount := _coerce_int(tally_delta.get(operation, 0))
 		if tally_amount != 0:
-			lines.append("%s：%d" % [String(LAW_TALLY_LABELS[operation]), tally_amount])
+			lines.append("%s: %d" % [String(LAW_TALLY_LABELS[operation]), tally_amount])
 	for key in REWARD_FIELD_LABELS:
 		var field := String(key)
 		if not rewards.has(field):
@@ -1313,7 +1313,7 @@ func _reward_field_lines(rewards: Dictionary) -> Array[String]:
 		var amount := _coerce_int(rewards.get(field, 0))
 		if amount == 0:
 			continue
-		lines.append("%s：%d" % [String(REWARD_FIELD_LABELS[field]), amount])
+		lines.append("%s: %d" % [String(REWARD_FIELD_LABELS[field]), amount])
 	return lines
 
 
@@ -1321,12 +1321,12 @@ func _drop_line(rewards: Dictionary) -> String:
 	var text_value := _scalar_text(_drop_value(rewards)).strip_edges()
 	if text_value.is_empty():
 		return ""
-	return "普通掉落：%s" % text_value
+	return "Normal Drops: %s" % text_value
 
 
 ## The ordinary drop of this settlement: an explicit `drop` / `last_drop` field
 ## first, then the reward block's label or id. A compound value is not printable as
-## player copy and is listed raw in 计算详情 instead of being dumped into a line.
+## player copy and is listed raw in Calculation Details instead of being dumped into a line.
 func _drop_value(rewards: Dictionary) -> Variant:
 	for key in ["drop", "last_drop"]:
 		if _result.has(key):
@@ -1346,7 +1346,7 @@ func _first_reward_text() -> String:
 		var tag := String(tag_value)
 		if FIRST_REWARD_LABELS.has(tag):
 			lines.append(String(FIRST_REWARD_LABELS[tag]))
-	return "首通奖励\n%s" % "\n".join(lines) if not lines.is_empty() else ""
+	return "First-Clear Rewards\n%s" % "\n".join(lines) if not lines.is_empty() else ""
 
 
 func _is_first_proxy_unlock(rewards: Dictionary) -> bool:
@@ -1439,7 +1439,7 @@ func _render_proxy_component_cards(entries: Array) -> void:
 	_proxy_component_box.add_child(heading_row)
 	var heading := Label.new()
 	heading.name = "ProxyComponentDropHeading"
-	heading.text = "代理组件 ×%d · 已入库未安装" % entries.size()
+	heading.text = "Proxy Components x%d · Stored, Not Installed" % entries.size()
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.add_theme_font_size_override("font_size", ShellThemeScript.BODY_FONT_SIZE)
@@ -1462,13 +1462,13 @@ func _render_proxy_component_cards(entries: Array) -> void:
 		card.add_child(body)
 		var title := Label.new()
 		title.name = "ProxyComponentName"
-		title.text = "%s · %s" % [String(entry.get("name", entry.get("id", "未知核心"))), _proxy_slot_label(String(entry.get("slot", "")))]
+		title.text = "%s · %s" % [String(entry.get("name", entry.get("id", "Unknown Core"))), _proxy_slot_label(String(entry.get("slot", "")))]
 		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		title.add_theme_font_size_override("font_size", ShellThemeScript.BODY_FONT_SIZE)
 		body.add_child(title)
 		var protocol := Label.new()
 		protocol.name = "ProxyComponentProtocol"
-		protocol.text = "协议：%s\n尚未安装，当前代理构筑不变" % String(entry.get("protocol", "未记录"))
+		protocol.text = "Protocol: %s\nNot installed; current proxy build unchanged" % String(entry.get("protocol", "Not Recorded"))
 		protocol.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		protocol.add_theme_font_size_override("font_size", SUBTITLE_FONT_SIZE)
 		protocol.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
@@ -1507,11 +1507,11 @@ func _proxy_component_entries() -> Array:
 
 func _proxy_slot_label(slot: String) -> String:
 	return String({
-		"perception": "感知槽",
-		"movement": "行动槽",
-		"execution": "执行槽",
-		"memory": "记忆槽",
-	}.get(slot, slot if not slot.is_empty() else "未知槽位"))
+		"perception": "Perception Slot",
+		"movement": "Action Slot",
+		"execution": "Execution Slot",
+		"memory": "Memory Slot",
+	}.get(slot, slot if not slot.is_empty() else "Unknown Slot"))
 
 
 ## One drop: the published subject icon, the Chinese name of the base item, its
@@ -1567,7 +1567,7 @@ func _equipment_card(entry: Dictionary, entry_index: int = 0) -> PanelContainer:
 	var detail_button := Button.new()
 	detail_button.name = "EquipmentDetailButton"
 	detail_button.text = EQUIPMENT_DETAIL_TEXT
-	detail_button.tooltip_text = "展开这件装备的完整属性说明"
+	detail_button.tooltip_text = "Show this item's full stats"
 	detail_button.pressed.connect(_on_equipment_detail_pressed.bind(entry_index))
 	title_row.add_child(detail_button)
 	var instance_id := String(entry.get("instance_id", "")).strip_edges()
@@ -1579,15 +1579,15 @@ func _equipment_card(entry: Dictionary, entry_index: int = 0) -> PanelContainer:
 		review_button.name = "ReviewDrop_%s" % _stable_node_token(instance_id)
 		var equipment_state := _equipment_state(entry)
 		review_button.text = String({
-			"equipped": "查看（已装备）", "owned": REVIEW_DROP_TEXT,
-			"missing": "已不在行囊中", "unknown": "到备行架比较",
-		}.get(equipment_state, "到备行架比较"))
+			"equipped": "Inspect (Equipped)", "owned": REVIEW_DROP_TEXT,
+			"missing": "No Longer in Backpack", "unknown": "Compare at Loadout",
+		}.get(equipment_state, "Compare at Loadout"))
 		review_button.disabled = equipment_state == "missing"
 		review_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		review_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		review_button.custom_minimum_size = Vector2(188.0, 0.0)
 		_set_button_primary(review_button, true)
-		review_button.tooltip_text = "%s；打开备行架查看这件%s装备" % [_equipment_status_text(entry), _player_readable.slot_label(slot)]
+		review_button.tooltip_text = "%s; open Loadout to inspect this %s item" % [_equipment_status_text(entry), _player_readable.slot_label(slot)]
 		review_button.pressed.connect(_on_review_drop_pressed.bind(instance_id, slot))
 		body.add_child(review_button)
 	var summary := Label.new()
@@ -1622,33 +1622,33 @@ func _equipment_state(entry: Dictionary) -> String:
 
 func _equipment_status_text(entry: Dictionary) -> String:
 	match _equipment_state(entry):
-		"equipped": return "当前已装备，正在使用"
-		"owned": return "当前在行囊中，尚未装备"
-		"missing": return "当前已不在行囊中，获得记录保留"
-	return "当前装备状态未读取，可到备行架查看"
+		"equipped": return "Currently equipped and in use"
+		"owned": return "In backpack, not equipped"
+		"missing": return "No longer in backpack; acquisition record retained"
+	return "Equipment state not read; inspect it at the Loadout"
 
 
 func _equipment_summary_text(entry: Dictionary) -> String:
 	var affixes: Array[String] = _equipment_model.affix_labels(entry.get("affixes", []), true)
-	return "%s\n词条：%s" % [
+	return "%s\nAffixes: %s" % [
 		_equipment_status_summary(entry),
-		"、".join(affixes) if not affixes.is_empty() else "无记录",
+		", ".join(affixes) if not affixes.is_empty() else "No Record",
 	]
 
 
 func _equipment_status_summary(entry: Dictionary) -> String:
 	match _equipment_state(entry):
-		"equipped": return "%s · 已装备" % _player_readable.slot_label(String(entry.get("slot", "")))
-		"owned": return "%s · 已入库，尚未装备" % _player_readable.slot_label(String(entry.get("slot", "")))
-		"missing": return "%s · 已不在行囊，获得记录保留" % _player_readable.slot_label(String(entry.get("slot", "")))
-	return "%s · 库存状态未读取" % _player_readable.slot_label(String(entry.get("slot", "")))
+		"equipped": return "%s · Equipped" % _player_readable.slot_label(String(entry.get("slot", "")))
+		"owned": return "%s · Stored, Not Equipped" % _player_readable.slot_label(String(entry.get("slot", "")))
+		"missing": return "%s · No longer in backpack; acquisition record retained" % _player_readable.slot_label(String(entry.get("slot", "")))
+	return "%s · Inventory state not read" % _player_readable.slot_label(String(entry.get("slot", "")))
 
 
 func _equipment_full_text(entry: Dictionary) -> String:
 	var current := _as_dictionary(entry.get("current_parameters", {}))
 	var replacement := _as_dictionary(entry.get("equipped_parameters", {}))
-	var historical_preview := "\n获得时的换装预览：" if not current.is_empty() or not replacement.is_empty() else ""
-	return "获得时：已收入装备库存\n%s%s\n%s" % [
+	var historical_preview := "\nEquipment preview at acquisition:" if not current.is_empty() or not replacement.is_empty() else ""
+	return "At acquisition: added to equipment storage\n%s%s\n%s" % [
 		_equipment_status_text(entry), historical_preview, _player_readable.format_item(entry, current, replacement),
 	]
 
@@ -1762,7 +1762,7 @@ func _published_rows(table: String) -> Dictionary:
 
 ## The authoritative instance id, whole. A display that shortens an id hides the one
 ## field that identifies which drop this actually is, so nothing is cut here; the
-## audit line and 计算详情 print it in full, and the detail block may break inside it.
+## audit line and Calculation Details print it in full, and the detail block may break inside it.
 func _registry_rows(table: String) -> Dictionary:
 	if _item_registry == null:
 		return {}
@@ -1802,48 +1802,48 @@ func _equipment_entries(rewards: Dictionary) -> Array:
 ## the run totals and one line per room. Values are printed as they stand.
 func _detail_lines() -> Array[String]:
 	var lines: Array[String] = []
-	lines.append("契约 ID：%s" % _or_unrecorded(_first_text([_result.get("contract_id", "")])))
-	lines.append("模式：%s" % _or_unrecorded(_first_text([_result.get("mode", ""), _contract.get("mode", "")])))
-	lines.append("预设：%s" % _or_unrecorded(_first_text([_result.get("preset_id", "")])))
-	lines.append("种子：%s" % _or_unrecorded(_first_text([_result.get("seed", "")])))
-	lines.append("运行读数：%s" % _run_totals_text())
+	lines.append("Contract ID: %s" % _or_unrecorded(_first_text([_result.get("contract_id", "")])))
+	lines.append("Mode: %s" % _or_unrecorded(_first_text([_result.get("mode", ""), _contract.get("mode", "")])))
+	lines.append("Preset: %s" % _or_unrecorded(_first_text([_result.get("preset_id", "")])))
+	lines.append("Seed: %s" % _or_unrecorded(_first_text([_result.get("seed", "")])))
+	lines.append("Runtime Readings: %s" % _run_totals_text())
 	var rooms := _rooms_text(_result)
 	if not rooms.is_empty():
-		lines.append("房间：%s 完成" % rooms)
+		lines.append("Rooms: %s Complete" % rooms)
 	var results := _room_results()
 	for index in results.size():
 		var entry: Variant = results[index]
 		if not (entry is Dictionary):
 			continue
 		var room: Dictionary = entry
-		lines.append("房间 %d：%s" % [index + 1, _room_reading_text(room)])
+		lines.append("Room %d: %s" % [index + 1, _room_reading_text(room)])
 		var room_report := _first_text([room.get("report", "")])
 		if not room_report.is_empty():
-			lines.append("房间 %d 报告：%s" % [index + 1, room_report])
+			lines.append("Room %d Report: %s" % [index + 1, room_report])
 		var room_failure := _first_text([room.get("failure_reason", "")])
 		if not room_failure.is_empty():
-			lines.append("房间 %d 终止原因：%s" % [index + 1, _failure_source_text(room_failure)])
+			lines.append("Room %d End Reason: %s" % [index + 1, _failure_source_text(room_failure)])
 	if not _art_error.is_empty():
-		lines.append("图标资源：%s" % _art_error)
+		lines.append("Icon Resource: %s" % _art_error)
 	return lines
 
 
 ## The settlement's own run totals, assembled only from the fields it reports. A
-## field that was never carried makes the line say 未记录 instead of appearing as
+## field that was never carried makes the line say Not Recorded instead of appearing as
 ## a zero; a field that really is 0 is printed as the reading it is.
 func _run_totals_text() -> String:
 	var totals := _fields_text(_result, TOTAL_FIELDS)
-	return totals if not totals.is_empty() else "未记录"
+	return totals if not totals.is_empty() else "Not Recorded"
 
 
 ## One room's own readings, printed as far as that room really reported them.
 func _room_reading_text(room: Dictionary) -> String:
-	var outcome := "结果 %s" % _outcome_text(String(room.get("outcome", "")).to_lower())
+	var outcome := "Result %s" % _outcome_text(String(room.get("outcome", "")).to_lower())
 	var readings := _fields_text(room, ROOM_FIELDS)
 	return outcome if readings.is_empty() else "%s    %s" % [outcome, readings]
 
 
-## The listed readings a source really reports, as "label：value" pairs. Nothing
+## The listed readings a source really reports, as "label: value" pairs. Nothing
 ## is filled in for a field the source does not carry.
 func _fields_text(source: Dictionary, fields: Array) -> String:
 	var parts: Array[String] = []
@@ -1851,7 +1851,7 @@ func _fields_text(source: Dictionary, fields: Array) -> String:
 		var field: Dictionary = field_value
 		var reading := _reading_text(String(field["key"]), source)
 		if not reading.is_empty():
-			parts.append("%s：%s" % [String(field["label"]), reading])
+			parts.append("%s: %s" % [String(field["label"]), reading])
 	return "    ".join(parts)
 
 
@@ -1861,13 +1861,13 @@ func _fields_text(source: Dictionary, fields: Array) -> String:
 func _detail_raw_lines(rewards: Dictionary, entries: Array) -> Array[String]:
 	var lines: Array[String] = []
 	if not entries.is_empty():
-		lines.append("掉落完整字段（未截断）：")
+		lines.append("Full Drop Fields (Untruncated):")
 		for entry in entries:
 			var item: Dictionary = entry
 			lines.append("· %s" % _equipment_field_text(item))
 	# Only in the explicit detail drawer: future fields remain inspectable
 	# without inferring their units or maintaining another authority schema.
-	lines.append("完整结算记录（包含附加字段，未做换算）：")
+	lines.append("Full Settlement Record (Additional Fields Included, No Conversion):")
 	lines.append(JSON.stringify(_presentation_payload(_result)))
 	return lines
 
@@ -1928,7 +1928,7 @@ func _first_text(values: Array) -> String:
 
 
 func _or_unrecorded(text_value: String) -> String:
-	return text_value if not text_value.is_empty() else "未记录"
+	return text_value if not text_value.is_empty() else "Not Recorded"
 
 
 func _failure_source_text(value: String) -> String:
@@ -1948,9 +1948,9 @@ func _defeat_diagnosis_text() -> String:
 		return ""
 	var lines: Array[String] = []
 	if not title.is_empty():
-		lines.append("失败主因：%s" % title)
+		lines.append("Main Failure Cause: %s" % title)
 	if not action.is_empty():
-		lines.append("行动建议：%s" % action)
+		lines.append("Suggested Action: %s" % action)
 	return "\n".join(lines)
 
 
@@ -1963,7 +1963,7 @@ func _defeat_report_text() -> String:
 	var report := String(report_value).strip_edges()
 	if report.is_empty():
 		return ""
-	return "战报：%s" % report
+	return "Battle Report: %s" % report
 
 
 func _coerce_int(value: Variant) -> int:
@@ -2045,7 +2045,7 @@ func _load_item_names() -> void:
 		return
 	_item_registry = registry
 	_player_readable = PlayerReadableBuildScript.new(registry)
-	_equipment_model = EquipmentPresentationModelScript.new(_player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "未知装备")
+	_equipment_model = EquipmentPresentationModelScript.new(_player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "Unknown Equipment")
 
 
 ## ---- public surface used by the router, the harness and the tests ----

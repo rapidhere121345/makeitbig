@@ -95,7 +95,7 @@ func _test_hunter_mark(arena: Node, failures: Array[String]) -> void:
 	arena.teleport_actor("enemy/%d" % near.entity_id, arena.player_position + Vector2(70.0, 0.0))
 	arena.teleport_actor("enemy/%d" % far.entity_id, arena.player_position + Vector2(120.0, 0.0))
 	_expect(_cast(arena, "hunter_mark") and _player(arena).marked_entity_id == near.entity_id, "hunter mark did not select nearest in-range living enemy", failures)
-	_expect(arena.battle_report == "猎人印记锁定：近战追猎者。" and "entity" not in arena.battle_report and "#" not in arena.battle_report, "hunter mark report exposed an internal entity id: %s" % arena.battle_report, failures)
+	_expect(arena.battle_report == "Hunter's Mark locked: Melee Pursuer." and "entity" not in arena.battle_report and "#" not in arena.battle_report, "hunter mark report exposed an internal entity id: %s" % arena.battle_report, failures)
 	var expiry: int = _player(arena).hunter_mark_expires_tick
 	_expect(expiry == arena.sim_tick + Skill.HUNTER_MARK_DURATION_TICKS, "hunter mark expiry tick is not fixed", failures)
 	_expect(not _cast(arena, "hunter_mark") and _player(arena).hunter_mark_expires_tick == expiry, "hunter mark ignored independent cooldown", failures)
@@ -141,7 +141,7 @@ func _test_action_timeline_and_buffer(arena: Node, failures: Array[String]) -> v
 	_expect(bool(started.get("accepted", false)), "timeline: valid arrow request was rejected", failures)
 	_expect(is_equal_approx(target.health, health_before), "timeline: arrow dealt damage on the request tick", failures)
 	var windup_ui: Dictionary = arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
-	_expect(String(windup_ui.label) == "拉弓" and int(windup_ui.phase_remaining_ticks) == Timeline.WINDUP_TICKS, "timeline: HUD did not expose the full windup window", failures)
+	_expect(String(windup_ui.label) == "Draw" and int(windup_ui.phase_remaining_ticks) == Timeline.WINDUP_TICKS, "timeline: HUD did not expose the full windup window", failures)
 	_expect(int(arena.presentation.animations.ranger_state(arena.gameplay_snapshot()).shoot_ticks) == 0, "timeline: shoot animation did not start on the accepted action", failures)
 	var start_tick: int = arena.sim_tick
 	var frozen_aim: Vector2 = (_player(arena).attack_origins.values()[0] as Dictionary).get("direction", Vector2.RIGHT)
@@ -161,11 +161,11 @@ func _test_action_timeline_and_buffer(arena: Node, failures: Array[String]) -> v
 	var release_frame := fixture.release_frame(arena, released_projectile.action_instance_id)
 	_expect(release_frame.position == release_frame.origin and release_frame.previous_position == release_frame.origin, "timeline: release frame jumped the arrow away from the authored bow-hand socket", failures)
 	_expect(released_projectile.origin.is_equal_approx(expected_release_origin), "timeline: windup movement left the released arrow behind the current bow-hand socket", failures)
-	_expect(String(arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot())).label) == "放箭", "timeline: impact tick was not exposed as 放箭", failures)
+	_expect(String(arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot())).label) == "Release", "timeline: impact tick was not exposed as Release", failures)
 	var release_tick: int = arena.sim_tick
 	_advance_arrow_until_resolved(arena)
 	_expect(target.health < health_before and String(arena.last_attack_outcome.get("outcome", "")) == "damage" and arena.sim_tick > release_tick, "timeline: damage did not wait for projectile contact (release=%d resolved=%d outcome=%s health=%.3f/%.3f)" % [release_tick, arena.sim_tick, String(arena.last_attack_outcome.get("outcome", "")), target.health, health_before], failures)
-	_expect(String(arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot())).label) == "收势", "timeline: recovery was not exposed as 收势", failures)
+	_expect(String(arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot())).label) == "Recovery", "timeline: recovery was not exposed as Recovery", failures)
 	var ready_tick := start_tick + Skill.PIERCING_ARROW_COOLDOWN_TICKS
 	fixture.advance_to(arena, ready_tick - Timeline.INPUT_BUFFER_TICKS)
 	_expect(_player(arena).attack_cooldown_ticks == 4, "timeline: real cooldown did not expose the four-tick buffer window", failures)

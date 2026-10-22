@@ -31,7 +31,7 @@ func _run() -> void:
 		and screen.theme.default_font_size == ShellTheme.BODY_FONT_SIZE,
 		"story screen did not use ShellTheme font and body-size contract")
 	_check_layout(screen)
-	(screen.find_child("StoryTab_日志", true, false) as Button).pressed.emit()
+	(screen.find_child("StoryTab_Journal", true, false) as Button).pressed.emit()
 	await _settle()
 	var first_entry := screen.find_child("JournalEntry_journal_p00_place_by_the_door", true, false) as Button
 	_expect(first_entry != null, "P00 journal entry is missing")
@@ -53,7 +53,7 @@ func _run() -> void:
 		_expect(read_events == ["journal_p00_place_by_the_door"], "entry_read did not emit exactly the stable id")
 		_expect(screen.saved_story() == {"schema_version": 1, "read_entry_ids": ["journal_p00_place_by_the_door"]},
 			"screen did not expose normalized saved story after reading")
-	(screen.find_child("StoryTab_对话", true, false) as Button).pressed.emit()
+	(screen.find_child("StoryTab_Dialogue", true, false) as Button).pressed.emit()
 	await _settle()
 	_check_conversation_paging(screen)
 	await _check_portrait_and_person_filter(screen)
@@ -111,7 +111,7 @@ func _check_conversation_paging(screen: StoryScreen) -> void:
 	var next_buttons := []
 	for value in all_next:
 		var button := value as Button
-		if button.text == "下一页" and _has_ancestor_name(button, "ConversationDetail"):
+		if button.text == "Next" and _has_ancestor_name(button, "ConversationDetail"):
 			next_buttons.append(button)
 	_expect(next_buttons.size() == 1 and not next_buttons[0].disabled,
 		"conversation detail did not expose an enabled page control for three short speech pages")
@@ -124,7 +124,7 @@ func _check_portrait_and_person_filter(screen: StoryScreen) -> void:
 	if filter == null: return
 	var mira_index := -1
 	for index in filter.item_count:
-		if filter.get_item_text(index) == "米拉": mira_index = index
+		if filter.get_item_text(index) == "Mira": mira_index = index
 	_expect(mira_index >= 0, "Mira is missing from the conversation filter")
 	if mira_index < 0: return
 	filter.item_selected.emit(mira_index)
@@ -188,7 +188,7 @@ func _check_latest_conversation_selected(screen: StoryScreen) -> void:
 	_expect(detail != null, "latest conversation detail is missing")
 	if detail == null:
 		return
-	_expect(detail.get_child(0) is Label and String((detail.get_child(0) as Label).text).contains("塔伦"),
+	_expect(detail.get_child(0) is Label and String((detail.get_child(0) as Label).text).contains("Taren"),
 		"returning to town did not select the newest-stage conversation first")
 
 

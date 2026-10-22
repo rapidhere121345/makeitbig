@@ -519,7 +519,7 @@ func update_tick() -> void:
 		for intent: Dictionary in planned.get("intents", []):
 			intents[int(intent.get("entity_id", 0))] = intent
 	else:
-		battle_report = "敌人战术快照被拒绝：%s" % String(planned.get("error", "unknown"))
+		battle_report = "Enemy tactics snapshot rejected: %s" % String(planned.get("error", "unknown"))
 	for enemy: CombatEnemyState in ordered:
 		_update_enemy_tick(enemy, intents.get(enemy.entity_id, {}))
 	_maybe_summon_reinforcements(_enemy_by_entity_id(elite_entity_id))

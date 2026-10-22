@@ -9,103 +9,103 @@
   "calibration_fixture_ids": ["calibration_convergent", "calibration_critical", "calibration_exponential"],
   "base_items": [
     {
-      "id": "ashwood_longbow", "name": "白蜡长弓", "slot": "main_hand",
+      "id": "ashwood_longbow", "name": "Ash Longbow", "slot": "main_hand",
       "modifiers": [{"parameter": "damage", "operation": "multiply", "value": 1.12}]
     },
     {
-      "id": "swift_recurve_bow", "name": "迅弦反曲弓", "slot": "main_hand",
+      "id": "swift_recurve_bow", "name": "Swiftstring Recurve", "slot": "main_hand",
       "modifiers": [{"parameter": "v", "operation": "multiply", "value": 1.10}]
     },
     {
-      "id": "lineage_quiver", "name": "谱系箭袋", "slot": "off_hand",
+      "id": "lineage_quiver", "name": "Lineage Quiver", "slot": "off_hand",
       "modifiers": [{"parameter": "T", "operation": "multiply", "value": 1.12}]
     },
     {
-      "id": "farwatch_quiver", "name": "远望箭袋", "slot": "off_hand",
+      "id": "farwatch_quiver", "name": "Farwatch Quiver", "slot": "off_hand",
       "modifiers": [{"parameter": "d", "operation": "multiply", "value": 1.10}]
     },
     {
-      "id": "turnfeather_gloves", "name": "导羽手套", "slot": "gloves",
+      "id": "turnfeather_gloves", "name": "Guiding Fletch Gloves", "slot": "gloves",
       "modifiers": [{"parameter": "turn", "operation": "multiply", "value": 0.94}]
     },
     {
-      "id": "piercer_gloves", "name": "穿弦手套", "slot": "gloves",
+      "id": "piercer_gloves", "name": "Piercestring Gloves", "slot": "gloves",
       "modifiers": [{"parameter": "p", "operation": "add", "value": 0.06}]
     },
     {
-      "id": "hawk_eye_ring", "name": "鹰眼戒指", "slot": "ring_1",
+      "id": "hawk_eye_ring", "name": "Hawkeye Ring", "slot": "ring_1",
       "modifiers": [{"parameter": "critical_chance", "operation": "add", "value": 0.08}]
     },
     {
-      "id": "vitality_ring", "name": "生机戒指", "slot": "ring_1",
+      "id": "vitality_ring", "name": "Vitality Ring", "slot": "ring_1",
       "modifiers": [{"parameter": "max_health", "operation": "multiply", "value": 1.12}]
     }
   ],
   "affix_families": [
     {
-      "id": "piercing_continuation", "name": "穿刺箭续行概率", "parameter": "p", "operation": "add",
+      "id": "piercing_continuation", "name": "Piercing Arrow Continuation Chance", "parameter": "p", "operation": "add",
       "compatible_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
       "tiers": [{"tier": 1, "value": 0.06}, {"tier": 2, "value": 0.07}, {"tier": 3, "value": 0.09}, {"tier": 4, "value": 0.12}]
     },
     {
-      "id": "projectile_lifetime", "name": "投射物持续时间", "parameter": "T", "operation": "multiply_bonus",
+      "id": "projectile_lifetime", "name": "Projectile Lifetime", "parameter": "T", "operation": "multiply_bonus",
       "compatible_slots": ["off_hand", "gloves", "ring_1"],
       "tiers": [{"tier": 1, "value": 0.12}, {"tier": 2, "value": 0.18}, {"tier": 3, "value": 0.25}, {"tier": 4, "value": 0.35}]
     },
     {
-      "id": "projectile_speed", "name": "投射物速度", "parameter": "v", "operation": "multiply_bonus",
+      "id": "projectile_speed", "name": "Projectile Speed", "parameter": "v", "operation": "multiply_bonus",
       "compatible_slots": ["main_hand", "off_hand", "gloves"],
       "tiers": [{"tier": 1, "value": 0.10}, {"tier": 2, "value": 0.16}, {"tier": 3, "value": 0.24}, {"tier": 4, "value": 0.34}]
     },
     {
-      "id": "seeking_distance", "name": "寻敌距离", "parameter": "d", "operation": "multiply_bonus",
+      "id": "seeking_distance", "name": "Targeting Distance", "parameter": "d", "operation": "multiply_bonus",
       "compatible_slots": ["main_hand", "off_hand", "ring_1"],
       "tiers": [{"tier": 1, "value": 0.10}, {"tier": 2, "value": 0.15}, {"tier": 3, "value": 0.22}, {"tier": 4, "value": 0.30}]
     },
     {
-      "id": "turn_response", "name": "转向响应", "parameter": "turn", "operation": "reduce_percent",
+      "id": "turn_response", "name": "Turn Response", "parameter": "turn", "operation": "reduce_percent",
       "compatible_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
       "tiers": [{"tier": 1, "value": 0.06}, {"tier": 2, "value": 0.09}, {"tier": 3, "value": 0.12}, {"tier": 4, "value": 0.16}]
     },
     {
-      "id": "carrier_power", "name": "载体基础威力", "parameter": "damage", "operation": "multiply_bonus",
+      "id": "carrier_power", "name": "Base Carrier Power", "parameter": "damage", "operation": "multiply_bonus",
       "compatible_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
       "tiers": [{"tier": 1, "value": 0.12}, {"tier": 2, "value": 0.18}, {"tier": 3, "value": 0.26}, {"tier": 4, "value": 0.36}]
     },
     {
-      "id": "critical_chance", "name": "暴击率", "parameter": "critical_chance", "operation": "add",
+      "id": "critical_chance", "name": "Critical Chance", "parameter": "critical_chance", "operation": "add",
       "compatible_slots": ["main_hand", "gloves", "ring_1"],
       "tiers": [{"tier": 1, "value": 0.08}, {"tier": 2, "value": 0.12}, {"tier": 3, "value": 0.18}, {"tier": 4, "value": 0.25}]
     },
     {
-      "id": "maximum_health", "name": "最大生命", "parameter": "max_health", "operation": "multiply_bonus",
+      "id": "maximum_health", "name": "Maximum Health", "parameter": "max_health", "operation": "multiply_bonus",
       "compatible_slots": ["gloves", "ring_1"],
       "tiers": [{"tier": 1, "value": 0.12}, {"tier": 2, "value": 0.20}, {"tier": 3, "value": 0.30}, {"tier": 4, "value": 0.45}]
     }
   ],
   "runes": [
     {
-      "id": "breeding_split", "name": "孳生分裂", "skill_id": "piercing_arrow",
+      "id": "breeding_split", "name": "Breeding Split", "skill_id": "piercing_arrow",
       "provides_interface": "breedable_event",
-      "semantics": "成功续行后生成一支可继续繁殖的子箭；母箭与子箭共享谱系到期时刻。"
+      "semantics": "Successful continuation creates a child arrow that can reproduce further; parent and child share the lineage expiry time."
     },
     {
-      "id": "branch_scale", "name": "分枝刻度", "skill_id": "hunter_mark",
+      "id": "branch_scale", "name": "Branch Tally", "skill_id": "hunter_mark",
       "provides_interface": "branch_hit_counter",
-      "semantics": "按分支统计命中，并将溢出命中转为暴击层。"
+      "semantics": "Track hits by branch and convert overflow hits into critical stacks."
     },
     {
-      "id": "afterimage_extension", "name": "掠影续时", "skill_id": "dash",
+      "id": "afterimage_extension", "name": "Fleeting Shadow", "skill_id": "dash",
       "provides_interface": "lineage_lifetime_pause",
-      "semantics": "突袭期间暂停已有箭谱系寿命。"
+      "semantics": "Pause existing arrow lineage lifetimes during Dash."
     }
   ],
   "laws": [
     {
-      "id": "pack_hunt_mark", "name": "群猎印记",
+      "id": "pack_hunt_mark", "name": "Pack Hunt Mark",
       "requires_interfaces": ["breedable_event"],
       "provides_interface": "branch_target_history",
-      "semantics": "仅对猎人印记目标按箭分支分别记录命中历史；不改变共同到期。"
+      "semantics": "Track hit history separately for each arrow branch against the Hunter's Mark target only; shared expiry is unchanged."
     }
   ],
   "item_instances": [

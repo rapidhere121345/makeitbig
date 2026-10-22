@@ -14,11 +14,11 @@
     "water_uv": [[0.820312, 0.874023], [0.852865, 0.929688], [0.911458, 0.970703]]
   },
   "placements": [
-    {"id": "contract", "interaction": "contract", "label": "行路契台", "feet_uv": [0.184245, 0.34375], "radius": 48},
-    {"id": "loadout", "interaction": "loadout", "label": "备行架", "feet_uv": [0.462891, 0.295898], "radius": 48},
-    {"id": "forge", "interaction": "forge", "label": "回火砧", "feet_uv": [0.720703, 0.394531], "radius": 48},
-    {"id": "training", "interaction": "training", "label": "验律场", "feet_uv": [0.263672, 0.563477], "radius": 48},
-    {"id": "proxy", "interaction": "proxy", "label": "代行舱", "feet_uv": [0.833333, 0.5], "radius": 48},
+    {"id": "contract", "interaction": "contract", "label": "Contract Board", "feet_uv": [0.184245, 0.34375], "radius": 48},
+    {"id": "loadout", "interaction": "loadout", "label": "Loadout", "feet_uv": [0.462891, 0.295898], "radius": 48},
+    {"id": "forge", "interaction": "forge", "label": "Tempering Anvil", "feet_uv": [0.720703, 0.394531], "radius": 48},
+    {"id": "training", "interaction": "training", "label": "Training", "feet_uv": [0.263672, 0.563477], "radius": 48},
+    {"id": "proxy", "interaction": "proxy", "label": "Proxy Bay", "feet_uv": [0.833333, 0.5], "radius": 48},
     {"id": "iven", "sprite": "resident.iven", "layer": "npc", "feet_uv": [0.18099, 0.313477], "role": "contract"},
     {"id": "taren", "sprite": "resident.taren", "layer": "npc", "feet_uv": [0.468099, 0.265625], "role": "loadout"},
     {"id": "oren", "sprite": "resident.oren", "layer": "npc", "feet_uv": [0.693359, 0.354492], "role": "forge"},

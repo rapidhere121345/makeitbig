@@ -1,165 +1,134 @@
-# 炉边镇模块化素材交付 brief
+# Hearthside Modular Asset Delivery Brief
 
-日期：2026-10-22。状态：**待生产规格**。
-对应 [空间与素材重建设计](../rebuild/TOWN_SPATIAL_ART_REDESIGN.md)。
-此文不是已生成素材的 provenance；实际生成后需保存来源、模型/工具、
-参数、原始输出、审核过的加工步骤和产物 SHA。
+Date: 2026-10-22. Status: **pending production specification**.
+Companion [spatial/art reconstruction design](../rebuild/TOWN_SPATIAL_ART_REDESIGN.md).
+Not provenance for generated assets: actual production must retain sources, model/tool, parameters, raw outputs, reviewed processing, and output SHA.
 
-## 1. 美术方向与生产顺序
+## 1. Art Direction and Production Order
 
-保留雪地暗木、石材、冷灰蓝环境和暖琥珀灯火的镇区身份，维持现有游侠的
-视觉尺度。旧镇区完整插画仅作为色彩/氛围参考。
+Retain snow, dark wood, stone, cold gray-blue environment, warm amber light, and existing Ranger scale. Old whole-town illustration is color/atmosphere reference only.
 
-先完成带角色比例尺的灰盒与一张相机/像素密度标定板，再生产可独立摆放的
-物件。固定三分之四俯视方向、平行投影关系、光向与像素密度；
-不让生成器对每个物件重新决定透视。相机标定板需要具体画出地面轴线、
-角色脚点、门洞、墙高和接触面，不能只用“isometric”一词约束。
+First finish a character-scaled greybox and camera/pixel-density calibration sheet; then independent objects. Lock three-quarter overhead view, parallel projection, light direction, density. Generator must not reinvent perspective per object. Calibration explicitly draws ground axes, character feet, doorways, wall height, contact surfaces; "isometric" alone is insufficient.
 
-当前 world 使用 design pixel，视口 640×360。首轮继续使用现有 actor
-48×48 动画画布作为标尺；画布尺寸不等于人物实体宽度。
-以下建议尺寸先在样板确认，确认后冻结；不可为了塞进画布非等比拉伸。
+World uses design pixels,640×360 viewport. Retain 48×48 actor animation canvas as initial ruler; canvas size is not physical body width. Confirm suggested dimensions in sample, then freeze; no nonuniform stretching to fit.
 
-## 2. 首批样板包
+## 2. First Sample Package
 
-| 交付组 | 初始建议 | 必须单独交付的内容 |
+| Group | Initial suggestion | Separate required deliveries |
 | --- | --- | --- |
-| 连续地面 | 样板 960×640；可用可平铺地块组成 | 无树、建筑、围栏及其固定投影的雪地/石路完整基底；路径边缘贴花 |
-| 备行架建筑 | 约 256×224 共同画布 | 墙基/完整下层、屋顶/上部、专门设计的去顶结构、接触阴影；外部服务站位 |
-| 松树 | 约 96×128 共同画布 | 完整树干/低枝/根部、树冠、显露态、单独投影 |
-| 围栏与门 | 每段约 64×64，按标定板修订 | 直段、转角、门柱；每段自己的脚点；门洞实际净空 |
-| 木堆 | 约 96×64 | 完整独立木堆、地面接触边、阴影；通常无显露态 |
-| 复核输出 | 固定相机/比例 | 单件、组合、所有上部移除、hero 前/后/侧方四组预览 |
+| Continuous ground |960×640 sample, possibly tiled |Complete snow/stone base without trees/buildings/fences/their fixed shadows; path-edge decals |
+| Loadout building |About 256×224 shared canvas |Base/complete lower, roof/upper, designed roof-off structure, contact shadows; exterior service socket |
+| Pine |About 96×128 shared canvas |Complete trunk/low branches/roots, canopy, revealed state, separate shadow |
+| Fence/gate |About 64×64 per segment, revised by calibration |Straight/corner/posts, own feet per segment, real doorway clearance |
+| Logs |About 96×64 |Complete independent pile, contact edge, shadow; usually no reveal |
+| Review output |Fixed camera/scale |Isolated, assembled, all uppers removed, hero front/back/side preview sets |
 
-首批不生成全镇大全景、不一次生成几十种候选、不先替换所有设施。
-建筑、树、围栏样板需在实际运行中证明分层、占地和显露后观感，再扩展同系列。
+No initial whole-town panorama, dozens of candidates, or all-facility replacement. Building/tree/fence samples must prove layering, ground occupancy, and revealed appearance in runtime before expanding the series.
 
-## 3. “遮挡后版本”具体是什么
+## 3. What a Revealed Version Means
 
-建筑去顶后应看到可信的梁柱截面、后方低墙/地板或完整室外地面。
-第一章交互发生在外部服务区，不需要借此新增完整室内玩法。
-全态和去顶态共同部分必须来自同一套已审核图层。
+Roof removal exposes credible beam/post sections, rear low walls/floor, or complete exterior ground. First-chapter interactions stay in exterior service zones; no full interior gameplay needed. Shared full/roof-off content must come from one reviewed layer set.
 
-树的显露态保留完整树干、低枝、根部及接触关系，移除或收拢遮人的上部树冠。
-树不能变成灰色半透明团。岩块不能为了露人变成有孔海绵；岩体遮挡过重时，
-重新安排可走区域与岩块形体。
+Trees retain complete trunk/low branches/roots/contact while removing/retracting upper canopy. No gray translucent blobs. Rocks do not become perforated sponges; excessive coverage requires revised walkable area and rock shape.
 
-最少采用：
+Minimum:
 
 ```text
-ground（一直存在）
-shadow/contact（按 part 归属，不重复烘焙）
-common/base（两态共享，画一次）
-upper_full / upper_revealed（互斥状态，共同 canvas、pivot）
+ground (always present)
+shadow/contact (owned per part, not baked twice)
+common/base (shared by both states, drawn once)
+upper_full / upper_revealed (exclusive states, shared canvas/pivot)
 ```
 
-`upper_revealed` 可以为空，但仅限已经交付完整下层、并且去上层后通过审核的物件。
-full/revealed 不允许独立无约束地生成：会造成门柱位置、纹理、透视和尺寸漂移。
-应锁定下层与相机后，基于同一构图生成/编辑上层，再完成逐像素对齐和必要的
-人工修整。生成器不能替代资产装配审核。
+upper_revealed may be empty only with complete lower content and approved upper-off appearance. Do not independently generate unconstrained full/revealed versions: doorposts, textures, perspective, dimensions drift. Lock lower/camera, generate/edit upper from same composition, then align pixels and hand-correct as needed. Generator does not replace assembly review.
 
-## 4. 每个包的最小数据
+## 4. Minimum Package Data
 
-下面是字段职责，最终序列化沿用项目 Resource/原生 scene 习惯；
-不要复制成第二份手工维护的房间布局。
+Field responsibilities below; serialization follows project Resource/native-scene conventions, not a second hand-maintained room layout.
 
-| 字段 | 作者/来源 | 校验 |
+| Field | Author/source | Validation |
 | --- | --- | --- |
-| asset_id / revision | 生产包 | 稳定且唯一；每次改图记录 revision |
-| logical_canvas / origin | 标定板与画布 | 两态一致；透明裁边不改变原点 |
-| parts | 已审核图层 | 每片纹理、局部 offset、层类别、sort anchor、rank |
-| footprint | 灰盒底座 | 有限、合法地面轮廓；与视觉接触面叠图审核 |
-| movement_margin | 作者参数 | baker 只外扩一次，异常凹角/窄通路报告 |
-| reveal_mode | 作者选择 | none 或 authored_variant；不自动套圆孔 |
-| reveal_mask | full 态上层遮人部分 | 排除投影/光晕/地面；AABB 仅作粗筛；切态后继续使用同一 full mask 判定 |
-| lower_content | 下层素材引用 | 可显露区域不存在透明空洞或旧结构残影 |
-| interaction / approach | 设施设计 | 保留设施 ID；脚心可达、朝向合理、门前净空 |
-| source / processing / hashes | 实际生产日志 | 原图可追溯；图层加工可重现；不伪称生成服务完全确定 |
+|asset_id / revision |Production package |Stable, unique; revision recorded per art change |
+|logical_canvas / origin |Calibration/canvas |Same both states; transparent trimming does not move origin |
+|parts |Reviewed layers |Texture, local offset, layer category, sort anchor, rank per part |
+|footprint |Greybox base |Finite legal ground contour, reviewed overlaid on contact art |
+|movement_margin |Author parameter |Baker expands once; report abnormal concavity/narrow routes |
+|reveal_mode |Author choice |none or authored_variant, no automatic circular holes |
+|reveal_mask |Full upper coverage |Exclude shadows/halos/ground; AABB broad phase only; same full mask after switching |
+|lower_content |Lower asset references |No transparent holes or old-structure residue in exposed regions |
+|interaction / approach |Facility design |Preserve ID, reachable foot center, sensible facing, door clearance |
+|source / processing / hashes |Actual production log |Traceable originals, reproducible processing; no false deterministic-service claim |
 
-绘画可以辅助 footprint 的设计，但不可从 PNG alpha 自动生成碰撞：
-树冠、屋顶、投影和环境雪纹的像素不代表地面占地。
-`asset_id` 不包含房间放置坐标；房间以稳定 `placement_id` 引用资源，
-展开后的 `placement_id/part_id` 在 plan 与绘制中保持一致。
-full/revealed 贴图、mask 的引用和内容 SHA 均参与表现资源校验，
-不能只写一个 `supports_cutaway=true` 就宣布具备显露能力。
+Art informs footprint design but PNG alpha must not auto-generate collision: canopy/roof/shadow/snow pixels are not ground occupancy. asset_id has no room coordinates; rooms reference stable placement_id. Expanded placement_id/part_id matches plan/drawing. Full/revealed textures and masks, references and content SHA, all enter presentation validation; supports_cutaway=true alone proves nothing.
 
-## 5. 生成约束模板
+## 5. Generation Constraint Templates
 
-每个实际请求必须替换方括号内容，并随产物保存确切参数和参考图。
-给生成服务的标定图需由灰盒导出或专门绘制；不得裁旧镇区建筑当作新物件主体。
+Replace bracketed placeholders for every actual request; retain exact parameters/reference images with outputs. Calibration must be greybox-exported or purpose-drawn; never crop old-town buildings as new-object subjects. These are future-request templates, not records of executed prompts.
 
-### 独立物件 full
+### Independent Object, Full
 
 ```text
-用途：可独立摆放的二维游戏环境物件生产素材。
-物件：[例如雪地松木备行架，外部服务区，无人物]。
-参考：[已审核相机标定板] 的视角、比例尺、地面轴向和光向；
-       [风格板] 仅约束冷灰蓝雪景、暗木石材、暖琥珀灯光、像素密度。
-固定画布：[尺寸]；地面原点：[坐标]；占地模板：[轮廓图]。
-完整画出物件，不出现邻居建筑、周围街道、地景构图或别的遮挡物。
-不裁掉屋顶、底座、后侧轮廓。底座与给定 footprint 对齐。
-透明背景；没有人物、UI、字、边框、网格、比例尺标记。
-物件投影按要求单独交付，不把街道或其他物体的阴影画入物件。
+Purpose: production asset for an independently placeable 2D game environment object.
+Object: [for example, snowy pine-wood Loadout building, exterior service area, no people].
+Reference: [approved camera calibration] for view, scale, ground axes, lighting;
+           [style sheet] only for cold gray-blue snow, dark wood/stone, amber light, pixel density.
+Fixed canvas: [size]; ground origin: [coordinates]; footprint template: [contour].
+Draw the complete object without neighboring buildings, streets, landscape composition, other occluders.
+Do not crop roof, base, rear outline. Align base to the given footprint.
+Transparent background; no people, UI, text, frame, grid, scale marks.
+Deliver object shadows separately as specified; no street/other-object shadows within the object.
 ```
 
-### 完整下层 / 遮挡后版本
+### Complete Lower / Revealed Version
 
 ```text
-使用同一已锁定画布、相机、原点和已批准下层，不改变共同结构的任何位置。
-交付：[去掉屋顶后的低墙/梁柱结构，或去掉冠层后的完整树干/低枝]。
-补画常态中被上部遮住的结构；不能只是擦除像素，不能只降低透明度。
-保留已确定的底座、接触边、材料和光向。
-展示完整独立物件，不附带邻居或环境地面。
-给出与 full 同原点的可直接叠合版本，由后续像素对齐审核确认。
+Use the same locked canvas, camera, origin, approved lower layers; move no shared structure.
+Deliver: [roof-off low walls/beam-post structure, or canopy-off complete trunk/low branches].
+Paint structure hidden by upper parts in the normal state; not mere erasure or alpha reduction.
+Retain established base, contact edges, materials, light direction.
+Show complete independent object without neighbors or environment ground.
+Provide directly overlayable same-origin version for later pixel-alignment review.
 ```
 
-### 地面
+### Ground
 
 ```text
-依据已批准灰盒通路平面，交付连续冬季雪地与石路基底。
-不画建筑、树、木堆、灯柱、围栏、人物，也不画这些物件的固定投影。
-即使未来会摆上建筑或树，该位置仍须是完整地面，不能留透明洞。
-地形边缘另交崖面/岸边模块；玩家能走的上表面必须与 footprint 模板一致。
-不要为了丰富构图在主路上添加未定义障碍物。
+Follow approved greybox routes to deliver continuous winter snow/stone-road base.
+No buildings, trees, logs, lamps, fences, people, or their fixed shadows.
+Future object positions still need complete ground, never transparent holes.
+Deliver cliff/shore modules separately; walkable top surfaces must match footprint template.
+Do not enrich composition with undefined main-road obstacles.
 ```
 
-透明背景能力、文件尺寸和图层能力以实际工具为准。若服务只能输出合成图，
-不能把其结果直接标为合格多层包；需要补交完整下层和对齐图层。
-背景去除仅用于独立物件的背景清理，不允许再把整镇插画分割成生产图层。
+Transparency, dimensions, and layering depend on actual tools. Composite-only outputs are not qualified multilayer packages: complete lower/aligned layers must be supplied. Background removal cleans independent objects only, not whole-town illustration segmentation into production layers.
 
-## 6. 入库前检查
+## 6. Before Import
 
-1. 原始输出与实际请求落盘；运行 PNG 由记录的加工步骤导出。
-2. 固定画布与 origin，对齐参考角色；正常态与显露态无尺寸跳动。
-3. 中性底色查看透明边、雪边、颜色污染；黑、白、灰底都不产生脏边。
-4. 在连续地面上移动物件，原位置无建筑残影或固定阴影。
-5. 隐藏上层后，能看到完整下层；“透明但无底图”不算通过。
-6. 叠加 footprint、movement envelope、actor radius 与交互站位，
-   审核碰撞余量和通路；关闭 overlay 再判断路是否可读。
-7. 在 renderer 中实测单态、过渡和双物件交叠；通过后才进入整镇素材批量生产。
+1. Store raw output and actual request; runtime PNGs derive from recorded processing.
+2. Lock canvas/origin, align reference actor; no normal/revealed size jumps.
+3. Inspect transparent/snow edges and color contamination on neutral, black, white, gray backgrounds; no dirty fringes.
+4. Move object on continuous ground; no building residue/fixed shadow at old position.
+5. Hide uppers and see complete lower; transparency without underplate fails.
+6. Overlay footprint, movement envelope, actor radius, interaction positions; review margins/routes, then hide overlay and judge route readability.
+7. Render single states, transitions, and two-object overlap; only then batch whole-town assets.
 
-自动门禁检查文件、锚点、mask 和可重现加工；视觉审核检查形体、材质、
-接地和去顶状态。两者均需通过，不能以单独一次测试 PASS 替代。
+Automatic gates check files, anchors, masks, reproducible processing. Visual review checks form, material, contact, roof-off state. Both must pass; one test PASS substitutes for neither.
 
-## 7. 已实现接口与预览入口
+## 7. Implemented Interface and Preview
 
-技术基础与真实 GPU 灰盒迭代见
-[2026-10-22 实施记录](../playtest/TOWN_MODULAR_FOUNDATION_20261022.md)。
-`EnvironmentObjectDefinition` 的实际字段以源码为准：
-`asset_id`、`canvas_size`、`visual_parts`、`ground_parts`、`footprints`、
-`movement_envelopes`、`sockets`。实例只支持平移，排序 rank 为非负整数。
-显露贴图与 mask 与 full 共用画布；mask 读取 **alpha 通道**，不是黑白亮度。
-当前版本由作者明确交付最终 movement envelope，不再自动外扩。
+Technical foundation/GPU greybox iterations: [2026-10-22 implementation record](../playtest/TOWN_MODULAR_FOUNDATION_20261022.md).
+Source defines actual EnvironmentObjectDefinition fields: asset_id, canvas_size, visual_parts, ground_parts, footprints, movement_envelopes, sockets. Instances translate only; sort rank nonnegative integer. Revealed texture/mask share full canvas. Mask reads **alpha**, not grayscale brightness. Current authors deliver final movement envelopes explicitly, without automatic expansion.
 
-复现灰盒（需要 X11 / RTX；DISPLAY 指向已有的独占验证显示）：
+Reproduce the greybox with X11 and a working OpenGL renderer; DISPLAY must point to an existing exclusive validation display. CPU Mesa/llvmpipe with Xvfb is accepted for rendered-pixel, UI, collision, and occlusion correctness. A discrete GPU is not required. Record the actual renderer and do not infer hardware performance from software-rendered checks.
 
 ```bash
 source scripts/project_env.sh
-__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia \
-  "$GODOT_BIN" --display-driver x11 --rendering-method gl_compatibility \
+"$GODOT_BIN" --display-driver x11 --rendering-method gl_compatibility \
   --audio-driver Dummy --path "$MIB_PROJECT_ROOT" \
   --script res://tools/modular_town_preview.gd -- \
   --output=res://build/current/modular-town-preview-new
 ```
 
-输出目录必须是新的 `res://build/` 子目录，包含 scene、manifest、合成测试
-图片、截图和检查记录。其顶部明确标 GREYBOX，不能拿来代替正式素材审核。
+Output must be a new res://build/ subdirectory, containing scene, manifest, synthetic test images, screenshots, checks. It is explicitly labeled GREYBOX and cannot replace production-art review.
+
+On an NVIDIA host, PRIME offload environment variables may be added when deliberately validating that renderer. Historical RTX evidence in the implementation report remains hardware-specific; it is not a prerequisite for future correctness acceptance.

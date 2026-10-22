@@ -90,14 +90,14 @@ func consume(events: Array, animations: RefCounted, tick: int) -> void:
 			"attack_resolved":
 				var outcome := String(event.get("outcome", ""))
 				if outcome == "blocked":
-					_append_mark(event, "blocked", "圣律屏障")
+					_append_mark(event, "blocked", "Sacred Law Barrier")
 				elif outcome == "miss" and String(event.get("source_id", "")).begins_with("ranger/"):
-					_append_mark(event, "miss", "落空")
+					_append_mark(event, "miss", "Missed")
 				elif outcome == "avoided" and String(event.get("target_id", "")) == "ranger":
-					_append_mark(event, "avoided", "闪避")
+					_append_mark(event, "avoided", "Dodge")
 			"death_applied":
 				if String(event.get("target_id", "")) != "ranger":
-					_append_mark(event, "death", "击破")
+					_append_mark(event, "death", "Defeated")
 
 
 func add_impact_traces(position: Vector2, aim: Vector2, generations: int) -> void:

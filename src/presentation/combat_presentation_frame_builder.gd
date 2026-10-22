@@ -121,14 +121,14 @@ func hud_frame(snapshot: Dictionary, input_view: Dictionary, action_edge_occlude
 		"room_index": int(snapshot["framework_room"].get("room_index", 0)),
 		"room_count": int(snapshot["framework_room"].get("room_count", 1)),
 		"room_elapsed_seconds": snapshot["elapsed"],
-		"room_display_name": String(room_presentation.get("display_name", "战斗场")),
+		"room_display_name": String(room_presentation.get("display_name", "Arena")),
 		"room_concept": String(room_presentation.get("concept", "")),
 		"room_landmark": String(room_presentation.get("landmark", "")),
 		"room_entry_hint": String(room_presentation.get("entry_hint", "")),
 		"room_exit_hint": String(room_presentation.get("exit_hint", "")),
 		"player_health": snapshot["player_health"],
 		"player_health_max": snapshot["player_maximum_health"],
-		"key_status": "闪避中" if snapshot["dodge_remaining_ticks"] > 0 else ("受创警戒" if snapshot["player_health"] < 35.0 else "稳定"),
+		"key_status": "Dodging" if snapshot["dodge_remaining_ticks"] > 0 else ("Damage Alert" if snapshot["player_health"] < 35.0 else "Stable"),
 		"boss_remaining": remaining.to_short_string(4),
 		"boss_maximum": snapshot["boss_maximum"].to_short_string(4),
 		"boss_ratio_known": ratio_known,
@@ -254,15 +254,15 @@ func loot_prompt(snapshot: Dictionary) -> Dictionary:
 	if available_count == 0:
 		if pending_count > 0:
 			return {
-				"state": "pending", "text": "正在拾取战利品…", "entity_id": "",
+				"state": "pending", "text": "Picking Up Loot...", "entity_id": "",
 				"available_count": 0, "in_range": false, "pending_count": pending_count,
 			}
 		return empty
 	var in_range := nearest_distance <= nearest_radius * nearest_radius + 0.000001
 	var state := "near" if in_range else "far"
-	var victory_prefix := "战斗已胜利 · " if bool(snapshot.get("battle_over", false)) and bool(snapshot.get("battle_victory", false)) else ""
+	var victory_prefix := "Combat Won · " if bool(snapshot.get("battle_over", false)) and bool(snapshot.get("battle_victory", false)) else ""
 	var count_suffix := " ×%d" % available_count if available_count > 1 else ""
-	var action_text := ("附近有战利品%s · 按 F 拾取" % count_suffix) if in_range else ("战利品在场%s · 靠近后按 F 拾取" % count_suffix)
+	var action_text := ("Loot Nearby%s · Press F to Pick Up" % count_suffix) if in_range else ("Loot on the Field%s · Move Closer and Press F to Pick Up" % count_suffix)
 	return {
 		"state": state,
 		"text": victory_prefix + action_text,
@@ -277,25 +277,25 @@ func enemy_public_label(enemy: CombatEnemyState) -> String:
 	if enemy == null:
 		return ""
 	if enemy.is_boss:
-		return "阈门巨像"
+		return "Threshold Colossus"
 	match enemy.kind_id:
-		"melee_pursuer": return "近战追猎者"
-		"charging_raider": return "冲锋掠袭者"
-		"fan_ranged": return "扇射游猎者"
-	return "敌人"
+		"melee_pursuer": return "Melee Pursuer"
+		"charging_raider": return "Charging Raider"
+		"fan_ranged": return "Fan-Shot Hunter"
+	return "Enemy"
 
 
 func hud_feedback(snapshot: Dictionary, input_view: Dictionary) -> String:
 	if snapshot["battle_over"]:
 		if snapshot["battle_victory"]:
-			return "目标已击破 · %d 次施放 · %d 个目标" % [snapshot["shots"], snapshot["defeated"]]
-		return "游侠倒下 · 返回基地调整构筑"
+			return "Target Defeated · %d Casts · %d Targets" % [snapshot["shots"], snapshot["defeated"]]
+		return "Ranger Down · Return to Hub to Adjust Your Build"
 	var proxy_failure: Dictionary = snapshot.get("proxy_failure", {})
 	if snapshot["selected_mode"] == "Auto" and not proxy_failure.is_empty():
 		var reason := String(proxy_failure.get("reason", ""))
 		if reason in ["skill is not ready", "skill not ready"]:
-			return "代理执行中 · 穿刺箭冷却"
-		return "代理受阻 · %s" % reason
+			return "Proxy Executing · Piercing Arrow on Cooldown"
+		return "Proxy Blocked · %s" % reason
 	var action_ui := attack_state(snapshot, input_view)
 	var action_label := String(action_ui.get("label", ""))
 	var buffered := bool(action_ui.get("buffered", false))
@@ -303,38 +303,38 @@ func hud_feedback(snapshot: Dictionary, input_view: Dictionary) -> String:
 	if snapshot["selected_mode"] == "Manual" and String(attack_target_ui.get("source", "")) == ATTACK_SOURCE_POINTER and action_label.is_empty() and not buffered:
 		match String(attack_target_ui.get("status", POINTER_STATUS_NONE)):
 			POINTER_STATUS_NO_TARGET:
-				return "鼠标未锁定目标 · 空白点击不会自动改选"
+				return "No Pointer Target · Empty Clicks Do Not Retarget"
 			POINTER_STATUS_LOST:
-				return "指针锁定已失效 · 松开后重新选择"
+				return "Pointer Lock Expired · Release and Select Again"
 			POINTER_STATUS_OUT_OF_RANGE:
-				return "指针目标在射程外 · 锁定保持"
-	if action_label == "拉弓":
-		return "穿刺箭拉弓 · 目标锁定%s" % (" · 下一发已缓冲" if buffered else "")
+				return "Pointer Target Out of Range · Lock Retained"
+	if action_label == "Draw":
+		return "Drawing Piercing Arrow · Target Locked%s" % (" · Next Shot Buffered" if buffered else "")
 	var outcome_text := ""
 	match String(snapshot["last_attack_outcome"].get("outcome", "")):
-		"blocked": outcome_text = "圣律屏障阻断"
-		"miss": outcome_text = "穿刺箭落空"
-		"killed": outcome_text = "穿刺箭击破目标"
-		"damage": outcome_text = "穿刺箭命中"
-	if action_label == "放箭":
-		return "放箭 · %s%s" % [outcome_text if not outcome_text.is_empty() else "判定结算", " · 下一发已缓冲" if buffered else ""]
-	if action_label == "收势":
-		return "收势%s%s" % [" · %s" % outcome_text if not outcome_text.is_empty() else "", " · 下一发已缓冲" if buffered else ""]
+		"blocked": outcome_text = "Sacred Law Barrier Block"
+		"miss": outcome_text = "Piercing Arrow Missed"
+		"killed": outcome_text = "Piercing Arrow Defeated Target"
+		"damage": outcome_text = "Piercing Arrow Hit"
+	if action_label == "Release":
+		return "Release · %s%s" % [outcome_text if not outcome_text.is_empty() else "Resolving", " · Next Shot Buffered" if buffered else ""]
+	if action_label == "Recovery":
+		return "Recovery%s%s" % [" · %s" % outcome_text if not outcome_text.is_empty() else "", " · Next Shot Buffered" if buffered else ""]
 	if buffered:
-		return "穿刺箭已缓冲 · 等待可用动作帧"
+		return "Piercing Arrow Buffered · Waiting for an Action Window"
 	# Only the latest accepted, still-live mark may replace routine feedback.
 	# Reports alone can outlive their target/room; arbitrary domain diagnostics
 	# are not player-facing text. Arrow actions and pointer warnings keep priority.
 	var marked := enemy_by_id(snapshot, int(snapshot["marked_entity_id"]))
 	if marked != null and marked.health > 0.0 and int(snapshot["sim_tick"]) < int(snapshot["hunter_mark_expires_tick"]):
-		var mark_report := "猎人印记锁定：%s。" % enemy_public_label(marked)
+		var mark_report := "Hunter's Mark locked: %s." % enemy_public_label(marked)
 		if String(snapshot.get("battle_report", "")) == mark_report:
 			return mark_report
 	if snapshot["shots"] == 0:
-		return "代理正在接近首个目标" if snapshot["selected_mode"] == "Auto" else "靠近目标后施放穿刺箭"
-	if outcome_text == "圣律屏障阻断" or outcome_text == "穿刺箭落空":
+		return "Proxy Approaching First Target" if snapshot["selected_mode"] == "Auto" else "Move Closer, Then Cast Piercing Arrow"
+	if outcome_text == "Sacred Law Barrier Block" or outcome_text == "Piercing Arrow Missed":
 		return outcome_text
-	return "%s · 对 Boss 伤害 %s · 已击败 %d" % [outcome_text, snapshot["boss_damage"].to_short_string(4), snapshot["defeated"]] if snapshot["boss"] != null else "%s · 已击败 %d · 剩余 %d" % [outcome_text, snapshot["defeated"], snapshot["enemies"].size()]
+	return "%s · Boss Damage %s · Defeated %d" % [outcome_text, snapshot["boss_damage"].to_short_string(4), snapshot["defeated"]] if snapshot["boss"] != null else "%s · Defeated %d · Remaining %d" % [outcome_text, snapshot["defeated"], snapshot["enemies"].size()]
 
 
 func attack_state(snapshot: Dictionary, input_view: Dictionary) -> Dictionary:
@@ -353,11 +353,11 @@ func attack_state(snapshot: Dictionary, input_view: Dictionary) -> Dictionary:
 		var impact_tick := start_tick + int(active.get("windup_ticks", PlayerActionTimelineScript.WINDUP_TICKS))
 		lock_clear_tick = impact_tick + PlayerActionTimelineScript.RECOVERY_TICKS
 		if phase == PlayerActionTimelineScript.PHASE_WINDUP:
-			label = "拉弓"
+			label = "Draw"
 			phase_tick = maxi(0, snapshot["sim_tick"] - start_tick)
 			phase_remaining_ticks = maxi(0, impact_tick - snapshot["sim_tick"])
 		elif phase == PlayerActionTimelineScript.PHASE_RECOVERY:
-			label = "放箭" if snapshot["sim_tick"] == impact_tick else "收势"
+			label = "Release" if snapshot["sim_tick"] == impact_tick else "Recovery"
 			phase_tick = maxi(0, snapshot["sim_tick"] - impact_tick)
 			phase_remaining_ticks = maxi(0, lock_clear_tick - snapshot["sim_tick"])
 	var ready_tick: int = snapshot["sim_tick"] + snapshot["attack_cooldown_ticks"]
@@ -459,14 +459,14 @@ func boss_remaining(snapshot: Dictionary) -> BigValue:
 
 func objective_label(snapshot: Dictionary) -> String:
 	match snapshot["objective_id"]:
-		"hunt_elite": return "猎杀精英"
-		"timed_break": return "限时击破（奖励%s）" % ("有效" if snapshot["timed_bonus_available"] else "已失去")
-		_: return "清除全部目标"
+		"hunt_elite": return "Hunt Elites"
+		"timed_break": return "Timed Defeat (Bonus %s)" % ("Active" if snapshot["timed_bonus_available"] else "Lost")
+		_: return "Clear All Targets"
 
 
 func hazard_status(snapshot: Dictionary) -> String:
 	if snapshot["hazard_states"].is_empty():
-		return "无"
+		return "None"
 	var parts: Array[String] = []
 	for state in snapshot["hazard_states"]:
 		parts.append("%s:%s" % [String(state.id), String(state.phase)])
@@ -476,7 +476,7 @@ func hazard_status(snapshot: Dictionary) -> String:
 func elite_status(snapshot: Dictionary) -> String:
 	var elite := enemy_by_id(snapshot, snapshot["elite_entity_id"])
 	if snapshot["battle_over"] or snapshot["elite_rule_ids"].is_empty() or elite == null or elite.health <= 0.0:
-		return "无"
+		return "None"
 	var parts: Array[String] = []
 	for rule in snapshot["elite_rule_ids"]:
 		if rule == "periodic_barrier":

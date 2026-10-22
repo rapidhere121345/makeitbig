@@ -54,10 +54,10 @@ func _test_layout_resolutions() -> void:
 func _test_presentation_and_spawn_profiles() -> void:
 	var catalog = RoomCatalogScript.new()
 	var rectangle_presentation: Dictionary = catalog.presentation("rectangle_arena")
-	_expect(String(rectangle_presentation.get("display_name", "")) == "破碎前哨", "catalog: rectangle presentation was not content-owned")
-	_expect(String(rectangle_presentation.get("exit_hint", "")) == "清场后穿过东侧残门。", "catalog: rectangle presentation fields were incomplete")
-	_expect(String(catalog.presentation("corridor").get("display_name", "")) == "风切通道", "catalog: corridor presentation was not resolved")
-	_expect(String(catalog.presentation("ring").get("display_name", "")) == "回收环场", "catalog: ring presentation was not resolved")
+	_expect(String(rectangle_presentation.get("display_name", "")) == "Shattered Outpost", "catalog: rectangle presentation was not content-owned")
+	_expect(String(rectangle_presentation.get("exit_hint", "")) == "After clearing the area, pass through the ruined gate to the east.", "catalog: rectangle presentation fields were incomplete")
+	_expect(String(catalog.presentation("corridor").get("display_name", "")) == "Windcut Passage", "catalog: corridor presentation was not resolved")
+	_expect(String(catalog.presentation("ring").get("display_name", "")) == "Salvage Ring", "catalog: ring presentation was not resolved")
 
 	_expect_offsets(catalog.spawn_offsets({"layout_id": "rectangle_arena", "room_id": "generated.rectangle"}, 5), [
 		Vector2(-145.0, -80.0), Vector2(0.0, -80.0), Vector2(145.0, -80.0),

@@ -24,17 +24,17 @@ const VEIL_ALPHA := 0.45
 const COLUMN_POSITION := Vector2(56.0, 74.0)
 const COLUMN_WIDTH := 416.0
 const CLASS_ID := "ranger"
-const IDENTITY_TEXT := "游侠 · 持弓的流浪者"
+const IDENTITY_TEXT := "Ranger · Wandering Archer"
 const TITLE_TEXT := "MAKE IT BIG"
-const PREMISE_TEXT := "寒原的旧路断了联系。
-炉边镇靠旧塔过冬，门边渐冷。
+const PREMISE_TEXT := "The old road has fallen silent.
+Hearthside relies on the old tower's fading warmth.
 
-带上弓，去旧路外段看看。"
-const NEW_GAME_TEXT := "新游戏 · 踏入寒原"
-const CONTINUE_TEXT := "继续旅程"
-const KICKER_TEXT := "圣律之下 · 寒原"
-const FOOTER_TEXT := "↑↓ / Enter 选择 · F1 设置"
-## Chinese body copy keeps the approved 18-22px UI band; the wordmark is the one
+Take your bow to the outer road."
+const NEW_GAME_TEXT := "New Game · Enter the Coldlands"
+const CONTINUE_TEXT := "Continue Journey"
+const KICKER_TEXT := "Beneath the Sacred Law · Coldlands"
+const FOOTER_TEXT := "Up/Down / Enter Select · F1 Settings"
+## Body copy keeps the approved 18-22px UI band; the wordmark is the one
 ## approved exception at 52px.
 const KICKER_FONT_SIZE := 18
 const BODY_FONT_SIZE := 22

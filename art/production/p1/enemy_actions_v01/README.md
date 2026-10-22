@@ -1,15 +1,15 @@
-# P1 概念敌人动作 v01
+# P1 Concept Enemy Actions v01
 
-正式素材：[enemies.png](enemies.png)，624×144、13列×3行、48×48单元、脚点(24,44)、12色、二值alpha。使用整数倍最近邻。生产过程与原始提示词见[批次记录](../../../../docs/art-production/p1-enemy-actions-v01/README.md)。
+Production asset: [enemies.png](enemies.png), 624x144, 13 columns x 3 rows, 48x48 cells, foot anchor (24,44), 12 colors, binary alpha. Use integer-scale nearest-neighbor filtering. See the [batch record](../../../../docs/art-production/p1-enemy-actions-v01/README.md) for the production process and original prompts.
 
-| 行 | 角色 | 轮廓 |
+| Row | Character | Silhouette |
 | --- | --- | --- |
-| 0 | `melee` / 钩爪追击者 | 骨白面具、钩爪、细长弯曲肢体，待机29×33可见像素 |
-| 1 | `charger` / 低伏冲锋兽 | 宽背旧甲、低头长角、四肢支撑，待机38×22 |
-| 2 | `ranged` / 残甲弓手 | 高窄躯干、垂弓、破斗篷，待机30×35 |
+| 0 | `melee` / Hookclaw Pursuer | Bone-white mask, hooked claws, long curved limbs; idle visible area 29x33 pixels |
+| 1 | `charger` / Low-Slung Charger | Broad old back armor, lowered horned head, four-legged stance; idle 38x22 |
+| 2 | `ranged` / Broken-Armor Archer | Tall narrow torso, lowered bow, torn cloak; idle 30x35 |
 
-每行格位一致：0待机；1–4行走四帧；5–6前摇两帧；7生效；8恢复；9受击；10–12倒地三帧。ID=`<role>.east.<action>.<index>`。0与8像素相同，是明示复用，共39 ID、36独立绘制、21动作。向西水平镜像，不冒充额外绘制方向。
+All rows use the same cells: 0 idle; 1-4 four walk frames; 5-6 two windup frames; 7 active; 8 recovery; 9 hit; 10-12 three death frames. ID=`<role>.east.<action>.<index>`. Cells 0 and 8 share identical pixels as declared reuse: 39 IDs, 36 unique drawings, 21 actions. West-facing frames are horizontal mirrors, not additional drawn directions.
 
-前摇由权威`state_started_tick/state_ends_tick`归一化分配两帧；生效、恢复跟随权威动作状态，不延后伤害。行走8fps，死亡6fps/500ms。真实击杀建立表现侧尸体，末帧短暂停留后消失；不保留碰撞，不改变结算。胜利切页不为最后一具尸体强行等待。
+The two windup frames use normalized authoritative `state_started_tick/state_ends_tick` timing. Active and recovery frames follow the authoritative action state without delaying damage. Walk: 8 fps; death: 6 fps/500 ms. Actual kills create presentation-only corpses that briefly hold the final frame before disappearing; they retain no collision and do not alter settlement. Victory page transitions do not wait for the final corpse.
 
-原图由内置imagegen参考v0.9图04生成；未裁切概念海报冒充动画，没有程序绘制替代原画。机械流程只有明示色键、明确裁切、统一缩放、脚点放置与12色色板归并。`manifest.json`列出每帧原始框、脚点、变换及哈希。先前校准与游侠资产原样保留。
+The source image was generated with built-in imagegen using v0.9 image 04 as reference. Cropped concept posters are not passed off as animation, and procedural drawings do not replace the original art. Mechanical processing is limited to declared color keys, explicit crops, uniform scaling, foot-anchor placement, and consolidation to a 12-color palette. `manifest.json` records each frame's original bounds, foot anchor, transforms, and hash. Earlier calibration and Ranger assets remain unchanged.

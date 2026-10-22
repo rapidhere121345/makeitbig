@@ -1,1194 +1,1139 @@
-# Make It Big 第一版游戏设计文档 v1.0
+# Make It Big First-Version Game Design Document v1.0
 
-文档定位：完整游戏的系统模型与长期规划，不是当前 Demo 的已实现清单。当前开发范围、启动方式和验证状态以 [README](../README.md)、`content/` 与运行实现为准。后续目标包括可变高度指数塔，尚未进入当前游侠首章 Demo。
+Purpose: full-game systems model and long-term planning, not an implemented-demo checklist. Current scope, launch instructions, and validation come from [README](../README.md), content/, and runtime code. Later goals include variable-height exponential towers, not yet part of the current Ranger first-chapter demo. Targets and timelines below preserve this v1 design; they are not evidence of implementation or a replacement for newer narrative scope decisions.
 
-## 0. 完整游戏产品定义
+## 0. Full-Game Product Definition
 
-一款 PC 端、低成本像素表现、轻度操作的暗黑刷宝游戏。玩家表面上组合技能、装备、符文、法则和自动代理组件，系统内部把这些 RPG 语义编译成事件表达式。乐趣不在于直接搭逻辑电路或观看数字自动上涨，而在于玩家自己发现：
+A PC dark-fantasy looter with inexpensive pixel presentation and light execution demands. Players combine skills, gear, runes, laws, and automated proxy components; internally, these RPG semantics compile into event expressions. Fun is not wiring logic circuits or watching numbers automatically rise, but discovering:
 
-- 普通参数何时越过临界点；
-- 哪些事件会分裂、继承、刷新或互相供能；
-- 一个引擎的结果如何成为另一个引擎的输入；
-- 最终如何由普通装备语义构成可变高度指数塔。
+- When ordinary parameters cross a critical threshold.
+- Which events split, inherit, refresh, or fuel one another.
+- How one engine's result becomes another's input.
+- Ultimately, how ordinary equipment semantics form a variable-height exponential tower.
 
-一句话版本：
+In one sentence:
 
-> 人负责发现构造，代理负责长期执行；装备负责把普通攻击变成增长阶层。
+> People discover structures; proxies execute them over time; gear turns ordinary attacks into growth classes.
 
-### 已定的产品边界
+### Fixed Product Boundaries
 
-- 不提供离线收益。客户端退出或系统休眠后不补算进度。
-- 客户端运行时允许完整自动模式持续数小时。
-- 手动和完整自动是一次契约中的两种互斥状态，不能战斗中接管或切换。
-- 手动允许自动瞄准、危险标记和拾取辅助，但移动、技能时机与轮换仍由玩家控制。
-- 两种模式使用完全相同的战斗语义与掉落池；手动额外获得“猎人宝箱”，同 Build、同难度、同时间下预期掉落价值约高 50%。
-- 大数不展开成十进制整数，也不生成天文数量的箭、毒层或单位。
-- 永久不朽完成后，生命防御系统真的退场；不会再出现“无视不朽”的伤害。
-- 第一版没有 Boss 限时、回血或常规失败倒计时。错误 Build 仍可能造成正伤害，但预计击杀时间可以达到数百乃至上千年，因而在实际意义上无法通关。玩家退出重试时 Boss 才恢复生命。
+- No offline rewards or catch-up after client exit/system sleep.
+- Full Auto may run for hours while the client remains running.
+- Manual and full Auto are mutually exclusive states within one Contract; no combat takeover/switching.
+- Manual allows aim assist, danger markers, and pickup assistance; players control movement, skill timing, and rotations.
+- Identical combat semantics/drop pools. Manual additionally earns Hunter's Chests, about 50% greater expected loot value with equal build, difficulty, and time.
+- Large numbers never expand into decimal integers or astronomical numbers of arrows, poison layers, or units.
+- Permanent immortality genuinely retires health/defense; no damage that ignores immortality.
+- V1 has no Boss time limit, healing, or ordinary failure countdown. Wrong builds may deal positive damage yet take hundreds/thousands of years to kill, practically unable to clear. Boss health resets only when quitting to retry.
 
-## 1. 第一版范围与时间线
+## 1. V1 Scope and Timeline
 
-第一轮通关目标为 12–18 小时。
+First completion target:12–18 hours.
 
-| 时间 | 玩家目标 | 数学与系统变化 |
+| Time | Player goal | Mathematical/system change |
 |---|---|---|
-| 0–2 小时 | 解锁三职业、符文系统与自动瞄准辅助 | 像传统 RPG 一样理解攻击、暴击、速度、资源与生存 |
-| 2–4 小时 | 发现任意一条指数路线，击败开局即可看见的高难度指数 Boss | 从收敛或线性过程跨入真实指数增长 |
-| 4–10 小时 | 获得代理核心、形成完整自动 Build；击败四个生存 Boss，完成永久不朽 | 自动化成为独立装备构筑；生命防御永久退场 |
-| 10–14 小时 | 完成 2–3 层固定指数嵌套 | 一个引擎的结算快照成为下一个引擎的参数 |
-| 14–18 小时 | 获得结果反馈，形成可变高度指数塔，击败最终 Boss | 最终目标约为 10↑↑10 |
-| 结尾 | 展示被封印的 g₁ / Graham 远景 | 只预告，不实现第一版战斗 |
+|0–2h |Unlock three classes, runes, aim assistance |Traditional RPG attack, crit, speed, resources, survival |
+|2–4h |Discover any exponential route; defeat difficult exponential Boss visible from start |Convergent/linear process becomes genuine exponential growth |
+|4–10h |Acquire proxy cores, complete Auto build; defeat four survival Bosses, permanent immortality |Automation becomes its own equipment build; health/defense permanently retires |
+|10–14h |Complete 2–3 fixed exponential nesting layers |One engine's settled snapshot becomes another's parameter |
+|14–18h |Acquire result feedback, form variable-height tower, defeat final Boss |Final target approximately 10↑↑10 |
+|Ending |Show sealed g₁/Graham horizon |Teaser only, no v1 combat implementation |
 
-开局可见的指数 Boss 是完整战斗，不显示 TTK、公式或解题提示，只显示血条。挑战本身无门票消耗。击败后解锁代理核心与不朽计划。
+The initially visible exponential Boss is a full fight showing only health, not TTK/formulas/solution hints. No challenge ticket cost. Victory unlocks proxy cores and immortality plan.
 
-## 2. 职业、技能与自由混搭
+## 2. Classes, Skills, Free Mixing
 
-初始职业只影响教程顺序，不形成永久职业锁。三职业解锁后，技能、装备、符文和法则可跨职业混搭。玩家有 3 个主动技能槽和 1 个闪避动作。
+Starting class changes tutorial order, not permanent class lock. Once three classes unlock, skills/gear/runes/laws mix freely. Three active slots and one Dodge action.
 
-| 职业 | 三个载体技能 | 首档风格 |
+| Class | Three carrier skills | Initial style |
 |---|---|---|
-| 游侠 | 穿刺箭、猎人印记、突袭 | 空间传播、分支繁殖、投射物寿命 |
-| 炼金 | 毒针、培养皿、爆炸瓶 | 单目标长链、层间继承、主动兑现 |
-| 法师 | 焚脉、回辉、星炉终仪 | 双资源递推、节奏轮换、热量结算 |
+|Ranger |Piercing Arrow, Hunter's Mark, Dash |Spatial spread, branching reproduction, projectile lifetime |
+|Alchemist |Poison Needle, Culture Dish, Explosive Flask |Long single-target chains, layer inheritance, active cashout |
+|Mage |Burning Vein, Returning Radiance, Star Furnace Finale |Dual-resource recurrence, rhythmic alternation, heat settlement |
 
-纯职业指数塔需要三个主动槽共同参与；跨职业塔仍可自由选择任意三个载体。触发技能和符文效果不额外占主动槽。
+Pure-class towers use all three active slots. Mixed towers may choose any three carriers. Triggered skills/rune effects require no extra active slots.
 
-## 3. 战斗求值与大数表达
+## 3. Combat Evaluation and Large Numbers
 
-### 3.1 普通数值阶段
+### 3.1 Ordinary Numeric Phase
 
-传统伤害暂以六个易懂部分表达：
+Six readable factors initially express traditional damage:
 
-基础载荷 × 加成汇总 × 独立更多 × 暴击层 × 事件次数/频率 × 敌人承伤
+Base payload × summed increases × independent more multipliers × crit layers × event count/frequency × enemy damage taken
 
-这些乘区只服务开局几小时的 RPG 可读性。玩家进入更高阶段后，决定胜负的是增长阶层、迭代长度和结构传递，不是继续堆若干个 ×1.3。更高潜能底材会替换已经失去意义的低阶词条池。
+These factors serve early-hours RPG readability. Higher phases depend on growth class, iteration length, structural transfer, not stacking more ×1.3. Higher-potential bases replace obsolete low-order affix pools.
 
-暴击率允许超过 100%。每完整超过 100% 形成一层额外暴击，每层再次应用暴击倍率。猎人印记可在后续构造中把大量事件转成暴击层数。
+Crit chance may exceed 100%. Each full additional 100% adds a crit layer applying the crit multiplier again. Later Hunter's Mark structures turn many events into crit layers.
 
-### 3.2 符号事件包
+### 3.2 Symbolic Event Packets
 
-大量事件不实例化为独立对象，而保存为：
+Large event populations are stored, not individually instantiated:
 
-事件数量表达式 × 伤害载荷 × 标签 × 来源谱系 × 已访问法则 × 目标历史 × 剩余寿命
+Event-count expression × damage payload × tags × source lineage × visited laws × target history × remaining lifetime
 
-处理原则：
+Principles:
 
-- 小事件数使用真实随机；进入巨大数量后使用期望值或集中近似。
-- 线性命中效果可直接乘入事件数量。
-- 分裂、状态复制和参数传递会重写表达式节点，而非生成同等数量对象。
-- 画面只显示少量代表箭、轨迹簇、毒雾和星炉脉冲。
-- 同一事件谱系不能第二次经过同一条变换法则，防止无边界环路。
-- “结果反馈”暗金是第一版唯一允许清除一次访问历史、把旧结果作为新种子的闭合边。
-- 战斗报告可展开事件树，显示来源、阻断位置和最终表达式。
+- Real randomness for small counts, expectation/concentration approximation at huge counts.
+- Linear on-hit effects multiply directly into count.
+- Splitting, state copying, parameter transfer rewrite expression nodes, not equivalent object populations.
+- Show only representative arrows, trail clusters, poison clouds, furnace pulses.
+- One event lineage cannot traverse the same transformation law twice, preventing unbounded loops.
+- Result-feedback unique is v1's sole closure that clears visit history once and uses old output as a new seed.
+- Reports expand event trees, showing sources, block points, final expressions.
 
-Boss 与玩家始终比较真实符号表达式，不设置“低阶数值一律免疫”的 rank 盾。主战斗界面只显示短数量级符号和血条；角色面板、木桩与报告可展开公式及来源。
+Boss/player comparisons always use real symbolic expressions, no blanket low-rank immunity shield. Main combat shows short magnitude symbols/health bars; character panels, dummies, reports expand formulas/provenance.
 
-## 4. 三条首档指数路线
+## 4. Three Initial Exponential Routes
 
-共同约束：
+Shared constraints:
 
-- 每条完整路线约需 1 枚语义符文、1 条通用法则以及 3–5 条临界或辅助数值词。
-- p、x、a、b 等参数完整显示，装备使用直接加系数的写法。
-- 系统不会在玩家首次构造前直接标注“这是指数答案”；只有木桩或实战验证后，战报才记录已经达到的增长阶层。
-- 分裂、继承、整链刷新、反向转化和结果反馈等结构语义，绝不进入普通数值词条池。
+- Each complete route needs about one semantic rune, one universal law,3–5 threshold/support numeric affixes.
+- Display p,x,a,b fully; gear adds coefficients directly.
+- Never label an exponential answer before first construction; only dummy/combat verification records achieved growth class.
+- Structural splitting, inheritance, whole-chain refresh, reverse conversion, result feedback never enter ordinary numeric-affix pools.
 
-### 4.1 游侠：空间分支繁殖
+### 4.1 Ranger: Spatial Branch Reproduction
 
-基础穿刺箭的续行概率改为 p = 25%。
+Base Piercing Arrow continuation probability becomes p=25%.
 
-语义零件：
+Semantic parts:
 
-1. 语义符文“孳生分裂”：成功续行后生成 1 支子箭；子箭继承整条谱系的同一到期时刻，并可继续分裂。
-2. 通用法则“群猎印记”：仅对猎人印记目标，将命中历史按箭的分支分别计算。没有该法则时，整条谱系共享目标历史，箭海会受真实敌人数限制。
+1. Breeding Split rune: successful continuation creates one child arrow, sharing the whole lineage's expiry and able to split again.
+2. Pack Hunt Mark universal law: only on Hunter's Mark targets, calculate hit history per branch. Otherwise lineage shares target history and real enemy count limits the arrow sea.
 
-若成功续行后母箭和一支可繁殖子箭进入下一代，则期望繁殖数为：
+If parent and one reproducing child enter the next generation on success:
 
 R = 2p
 
-- p < 50%：分支过程收敛；
-- p = 50%：处于临界；
-- p > 50%：进入指数增长；
-- p = 100%：达到完整的二叉繁殖上限。
+- p<50%: convergent branching.
+- p=50%: critical.
+- p>50%: exponential.
+- p=100%: full binary reproduction ceiling.
 
-T1 续行概率建议使用四档：
+Suggested T1 continuation tiers: +6 / +8 / +10 / +12 percentage points.
 
-＋6 / ＋8 / ＋10 / ＋12 个百分点
+At base 25%, two tier-IV affixes reach 49%, below threshold; three perfect/four midrange cross it. p caps 100%; excess becomes ordinary continuation-hit damage, not more branches.
 
-基础 25% 时，两条 IV 档只能到 49%，不能越线；三条极品或四条中值可以跨过真实临界。p 在 100% 封顶，溢出部分转成续行命中的普通伤害加成，不增加分支数。
-
-代数不设“最多 N 次”的硬词条，而由空间和时间自然产生：
+No hard "maximum N generations" affix. Space/time yield:
 
 g ≈ floor(T / (d / v + τ_turn))
 
-- T：整条谱系共享的剩余投射物持续时间；
-- v：投射物飞行速度；
-- d：本次寻敌距离，按近 / 中 / 远三档结算；
-- τ_turn：不可被速度压缩掉的最短转向时间。
+- T: remaining shared lineage projectile lifetime.
+- v: flight speed.
+- d: current targeting distance, near/mid/far bands.
+- τ_turn: minimum turn time speed cannot compress.
 
-子箭不会获得完整新寿命，只继承共同到期时刻。不同分支回击同一个猎人印记目标时，会以固定半径绕目标飞行一圈，保证存在非零飞行距离，也让速度词条具有真实意义。
+Children inherit shared expiry, not fresh full lifetime. Branches revisiting one marked target orbit once at fixed radius, guaranteeing nonzero travel distance and meaningful speed affixes.
 
-### 4.2 炼金：毒链传代
+### 4.2 Alchemist: Poison-Chain Inheritance
 
-语义零件：
+Semantic parts:
 
-1. 毒针语义符文允许毒层独立存在。
-2. 培养皿通用法则令新层继承上一层强度，并刷新整条毒链的剩余时间。
+1. Poison Needle semantic rune makes poison layers independent.
+2. Culture Dish universal law makes new layers inherit previous strength and refresh the entire chain's remaining time.
 
-第 n 层伤害为：
+Layer n damage:
 
 Dₙ = Dₙ₋₁ × x
 
-总毒伤是几何级数：
+Total poison damage is a geometric series:
 
 D × Σ xⁱ
 
-- 0 ≤ x < 1：收敛；
-- x = 1：线性；
-- x > 1：指数增长。
+- 0≤x<1: convergent.
+- x=1: linear.
+- x>1: exponential.
 
-x 的基础值建议为 0.80，T1 四档为：
+Suggested base x=0.80; T1 tiers +0.05 / +0.06 / +0.07 / +0.08.
+Two tier-IV affixes reach only 0.96; three perfect or four midrange exceed 1.
 
-＋0.05 / ＋0.06 / ＋0.07 / ＋0.08
+Evaluation:
 
-两条 IV 档只能到 0.96；三条极品或四条中值可以超过 1。
+- At most one layer per target per cast.
+- No in-combat layer cap.
+- Each layer snapshots only the x used for that application.
+- New layers refresh old timers, not old snapshots/damage.
+- No new layer within current poison duration clears the whole chain.
+- Poison ticks continuously, not as one expiry settlement.
 
-结算规则：
+Culture Dish attaches to one target, tentative base duration about 8s. Early recasts refresh itself seamlessly without damaging the poison chain. Explosive Flask consumes/clears the chain, compressing several future seconds into one primary-target burst; nearby targets receive only distance-attenuated secondary damage. It cashes out an anticipated chain break, not a cooldown freely copying accumulated damage. Retain single-Boss specialization, not an added full crowd-clearing kit.
 
-- 每次施法对每个目标最多添加 1 层。
-- 战斗内没有毒层上限。
-- 每一层只快照本次使用的 x。
-- 新层只刷新旧层计时，不重新快照或重算旧层伤害。
-- 超过当前毒持续时间没有施加新层时，整条链清空。
-- 毒持续伤害连续跳动，不在结束时一次结算。
+### 4.3 Mage: Dual-Resource Recurrence
 
-培养皿附着单个目标，基础持续时间暂定约 8 秒，可提前重施以无缝续杯；重施只刷新培养皿自身，不伤害毒链。爆炸瓶会消耗整条毒链，把未来若干秒毒伤压成一次主目标爆发并清空；附近目标只承受随距离衰减的副伤害。它是预判即将断链时的兑现工具，不是免费复制伤害的冷却按钮。该路线保持单体 Boss 专家定位，不额外补一套完整清群机制。
+Semantic parts:
 
-### 4.3 法师：双资源递推
+1. Burning Vein rune enables A→B with coefficient a.
+2. Returning Radiance law enables B→A with coefficient b and fixed injection c.
 
-语义零件：
-
-1. 焚脉语义符文打开 A→B，转化系数为 a。
-2. 回辉通用法则打开 B→A，转化系数为 b，并加入固定注入 c。
-
-每个完整循环满足：
+Each full cycle:
 
 A_(k+1) = a × b × A_k + c
 
-- a×b < 1：收敛到稳定值；
-- a×b = 1：因固定注入 c 而线性增长；
-- a×b > 1：指数增长。
+- a×b<1: converges to a stable value.
+- a×b=1: linear growth from fixed c.
+- a×b>1: exponential.
 
-a 和 b 的基础值均建议为 0.78，T1 四档均为：
+Suggested base a=b=0.78; each has T1 +0.10 / +0.12 / +0.14 / +0.16.
+One tier-IV on each gives only 0.94², below threshold; three well-distributed perfect affixes barely exceed 1, four midrange reliably exceed it.
 
-＋0.10 / ＋0.12 / ＋0.14 / ＋0.16
+Both steps deal damage and each cast adds fixed heat. Resources are uncapped in combat, but heat bounds the process. Wrong-resource casting costs action time/heat without conversion, preventing players/low-tier proxies from bypassing alternation by spamming both keys.
 
-各装备一条 IV 档仍只有 0.94²，无法越线；三条极品合理分配可以刚刚超过 1，四条中值则稳定超过。
+Star Furnace Finale automatically cashes out all energy and resets at full heat. Players may manually cash out early anticipating silence, knockback, or a combat window, usually sacrificing exponential cycles for certainty.
 
-焚脉和回辉两步都造成伤害，每次施法都会积累固定热量。资源值在战斗内不设上限，但热量为过程提供有限边界。资源不匹配时误放技能，会消耗动作时间和热量却不发生转化，防止玩家或低级代理同时狂按两键绕过轮换要求。
+## 5. Equipment Structure
 
-星炉终仪满热自动兑现全部能量并重置；玩家也可以预判沉默、击退或战斗窗口而提前手动兑现。提前兑现通常牺牲指数轮数，换取确定性。
+### 5.1 Character Equipment
 
-## 5. 装备结构
+Tentative 12 slots:
 
-### 5.1 角色装备
+- Seven armor: helmet, chest, trousers, leg armor, gloves, bracers, belt.
+- Two weapons: main hand/off hand.
+- Three jewelry: two rings, necklace.
 
-暂定 12 个槽位：
+Ordinary equipment has at most four random numeric affixes and one universal-law slot.
+Inscribing a universal law makes it orange legendary. Key laws exist only on named uniques, not extractable into ordinary Codex inscriptions.
 
-- 防具 7：头盔、胸甲、裤子、腿甲、手套、护腕、腰带；
-- 武器 2：主手、副手；
-- 首饰 3：两枚戒指、一条项链。
+Key uniques:
 
-普通装备最多拥有：
+- One fixed key law.
+- Two fixed thematic numeric affixes, refinement only.
+- Two thematic-pool random numeric affixes, rewrite/refinement allowed.
+- One small mutually exclusive evolution branch.
 
-- 4 条随机数值词；
-- 1 个通用法则槽。
+Uniques drop from targeted Bosses and the world. First relevant Boss victory unlocks a base version; repeats pursue better current affixes, seeds, evolutions. All key bases have Lootun-style research: acquisition/automatic dismantling progresses research; full bar crafts a base copy.
 
-通用法则刻入后，装备显示为橙色传奇。关键法则只存在于命名暗金，不能提取为普通法典刻印。
+### 5.2 Three Potential Tiers
 
-关键暗金结构：
+V1 uses three potential tiers for early exponential, fixed nesting, variable towers.
 
-- 1 条固定关键法则；
-- 2 条固定主题数值词，只能精炼；
-- 2 条主题池随机数值词，可以改写和精炼；
-- 1 个小型互斥进化分支。
+- Ordinary equipment cannot promote between tiers; early godlike seeds should not last to endgame.
+- Research can reforge named uniques into same-name higher-tier bases in a new stage, with entirely new seeds.
+- High-tier bases use new stage pools, not obsolete ordinary multipliers polluting late drops.
+- Potential determines base capability, pool, attainable grades, not four numeric slots.
 
-暗金同时来自目标 Boss 与世界掉落。首次击败对应 Boss 后解锁基础版本；重复掉落用于追逐更好的当前词、种子和进化。所有关键底材拥有 Lootun 式研究进度：获得或自动拆解会推进研究，满条可制作基础副本。
+Ordinary colors derive from completion:
 
-### 5.2 三档潜能底材
+- White:0 numeric affixes.
+- Blue:1–2.
+- Yellow:3–4.
+- Orange: ordinary equipment plus one universal law.
+- Unique: fixed named key law.
 
-第一版使用三档潜能，分别服务前期指数、固定嵌套和可变塔阶段。
+No separate increase-rarity action.
 
-- 普通装备不能跨档升格，避免前期神种子一直使用到终局。
-- 关键暗金进入新阶段后可用研究进度重铸同名高档基础版，但会生成全新种子。
-- 高档底材使用新的阶段词池，过时的普通乘区不会继续污染后期掉落。
-- 潜能档只决定基础能力、词池与可达档位，不限制四个数值槽。
+## 6. Law Token Forging, Referencing Astroloot
 
-普通装备颜色由完成度派生：
+### 6.1 Core Inspiration
 
-- 白：0 条数值词；
-- 蓝：1–2 条；
-- 黄：3–4 条；
-- 橙：普通装备加 1 条通用法则；
-- 暗金：固定命名关键法则。
+Borrow the choice experience of fixed, foreseeable sequences committed only when satisfied, not dice naming or Astroloot's nine-dice system.
 
-不另外设计“升稀有度”动作。
+1. Each generated item permanently receives law_seed. Seed plus complete current item snapshot deterministically produces its future complete ItemInstance sequence, fixed/reproducible.
+2. Choose item/action, not affix slot. Each Rewrite future selects an existing affix and replaces it with a different legal family/initial grade. Each Refinement selects a non-max affix, retaining family and increasing grade. Inscription appends into empty slots. Players choose among fully revealed futures, not slots.
+3. Exact preview/simulation is free, no Law Tokens.
+4. One token advances one step in that item's corresponding sequence. Commit future N once for N matching tokens, skipping intermediate results.
+5. No commitment, no cost; commitment irreversible. Canceling/changing preview never rerolls sequence.
 
-## 6. Astroloot 参考下的律筹锻造
+Affix reset, law replacement, game exit/reentry do not reset seed. V1 excludes destroying gear to transplant a numeric affix, protecting complete good-drop value.
 
-### 6.1 借鉴的核心
+References: Astroloot official site, Dice Wiki, developer fixed-seed response, listed at end.
+Current English uses Law Token / Law Tokens; this design's original working term was Law Tally / Law Tallies.
 
-借鉴 Astroloot 的是“固定且可预见的结果序列、满意才提交”的选择体验，不照搬其骰子命名或九种骰子体系：
+### 6.2 Three Token Types
 
-1. 每件物品生成时获得永久固定的圣律种子（law_seed）。圣律种子与完整当前物品快照一起，确定性地排出该件物品未来的完整 ItemInstance 结果序列，固定且可复现。
-2. 玩家只选物品和锻造动作，不选词条槽。每条改写未来自动选定一条已有词条，替换为不同合法家族与初始档；每条精炼未来自动选定一条未满档词条，保持家族、只提高档位；添铸未来自动附加进空槽。玩家只能在完整揭示的未来之间选择，不能指定落在哪个槽位。
-3. 查看与推演未来的精确结果免费，不消耗律筹。
-4. 一枚律筹代表沿该件装备的对应圣律序列推进一步；选择第 N 个未来结果并落锤时，一次消耗 N 枚对应律筹，中间结果被越过。
-5. 未落锤不花费；落锤后不可撤销。取消查看或改选其他未来不会重抽序列，不存在“取消即重掷”。
-
-重置词条、替换法则、进出游戏都不能重置圣律种子。第一版不开放“摧毁装备、提取某条数值词再移植”的能力，避免完整好掉落迅速失去价值。
-
-参考：Astroloot 官方站、Dice Wiki、开发者关于固定 seed 的回复，见文末。
-
-律筹的英文总称为 Law Tally，复数为 Law Tallies。
-
-### 6.2 三类律筹
-
-| 律筹 | 英文 | 功能 | 圣律序列 |
+| Token | English name | Function | Sequence |
 |---|---|---|---|
-| 添铸律筹 | Inscription Tally | 自动附加进空槽，加入一条完整数值词 | 每件物品独立 |
-| 改写律筹 | Rewrite Tally | 自动选定一条已有词条，替换为不同合法家族与初始档 | 每件物品独立 |
-| 精炼律筹 | Refinement Tally | 自动选定一条未满档词条，家族不变，只严格提高档位 | 每件物品独立 |
+|Addition |Inscription Token, formerly Inscription Tally |Automatically append a complete numeric affix into empty slot |Independent per item |
+|Replacement |Rewrite Token, formerly Rewrite Tally |Select existing affix, replace with different legal family/initial grade |Independent per item |
+|Upgrade |Refinement Token, formerly Refinement Tally |Select non-max affix, retain family, strictly increase grade |Independent per item |
 
-三类动作互不打乱彼此的圣律序列。四个数值槽不分前缀与后缀；同一件装备不能出现完全相同的词条。同词可跨不同装备叠加。
+Actions do not disturb one another's sequences. Four numeric slots have no prefix/suffix distinction; identical affixes cannot coexist on one item but stack across items.
 
-每阶段只有四个离散档值，不再附加“档位 + 档内随机小数”的第二追逐轴。精炼未来由圣律种子与当前物品快照决定升到下一档需要推进多少步、落在哪条词条上，且只显示真正的提升。
+Four discrete values per stage, no additional within-grade random decimals. Seed/current snapshot determine steps to next grade and selected affix; Refinement previews show only real improvements.
 
-### 6.3 改写洗牌袋
+### 6.3 Rewrite Shuffle Bag
 
-改写不是无限独立随机，而是沿该件物品的改写圣律序列加权、确定性地展开的洗牌袋：
+Rewrite is a weighted deterministic bag along the item's sequence, not infinite independent randomness:
 
-- 当前底材与阶段允许的每个合法词条，在一个大轮中至少出现一次；
-- 常见词可在袋中出现多张，稀有临界词至少有一张；
-- 已在本件装备上的同名词会被排除；
-- 圣律种子决定顺序，因此较远的目标只代表需要推进更多步，不代表永远不会出现；
-- 装备来源不改变圣律种子分布。普通怪同样可能掉落圣律路线最短的神底材。
+- Every legal affix for current base/stage appears at least once per large cycle.
+- Common affixes may occupy several tickets; rare thresholds at least one.
+- Affixes already on the item are excluded.
+- Seed sets order: distant targets need more steps, not impossible forever.
+- Drop source does not change seed distribution. Ordinary enemies may yield the shortest-law-route god base.
 
-软槽位倾向只改变词条出现频率，不改变同档数值。一个属性可在若干合理槽位出现，但不存在“只有项链上的同名词更强”的强制答案。
+Soft slot preferences change frequency, not same-grade value. Attributes may appear in several sensible slots; no mandatory stronger same-name necklace version.
 
-### 6.4 律镜
+### 6.4 Law Mirror
 
-中期解锁“律镜”，负责消除逐件翻库存的机械劳动：
+Middle-game Law Mirror removes mechanical inventory browsing:
 
-- 地面装备落地时自动按愿望单扫描；
-- 显示“当前好 / 可塑且便宜 / 仅适合拆解”；
-- 自动代理可读取同一分类进行拾取；
-- 锻造界面同时提供时间轴与目标搜索；
-- 玩家可输入最多四个已发现目标词，系统计算消耗律筹最少的完整路线，并展示所有被越过的中间结果；
-- 玩家仍可手动选择替代路线。
+- Automatically scans dropped equipment against wishlist.
+- Classifies good now / affordable potential / dismantle only.
+- Proxies read the same pickup classification.
+- Forge offers timeline and target search.
+- Up to four discovered target affixes; solve minimum-token full route and show all skipped results.
+- Players may manually choose alternatives.
 
-律镜只能搜索已经在掉落、成品或预览中见过的词条。未发现词不会在解锁时被直接公开。愿望单属于 Build 预设，玩家负责决定想构造什么，系统只负责求解机械路线。
+Search only affixes previously seen in drops, finished items, previews; unlocking reveals no undiscovered affixes. Wishlist belongs to build preset. Players decide construction; system solves the mechanical route.
 
-### 6.5 资源与返还
+### 6.5 Resources and Recovery
 
-常规经济包含：
+Ordinary economy:
 
-- 金币：锻造服务费；
-- 添铸律筹、改写律筹、精炼律筹：数值锻造；
-- 法则尘：法典刻印；
-- 突变核心：越界变异；
-- Boss 证明材料：任务和关键暗金用途，单独记录。
+- Gold: forging service fees.
+- Inscription/Rewrite/Refinement Tokens: numeric forging.
+- Law Dust: Codex inscriptions.
+- Mutation Cores: over-limit mutation.
+- Boss proof materials: separately recorded quest/key-unique uses.
 
-三类律筹均可直接掉落，也可由拆解装备获得碎片；契约可显示偏向哪一类律筹。基地提供 3:1 的亏损兑换，避免某类律筹长期溢出。角色装备、符文和代理组件共用这三类律筹。
+All tokens directly drop or arise as dismantled fragments. Contracts indicate type bias. Base offers lossy 3:1 exchange against persistent surplus. Character equipment, runes, proxies share the three types.
 
-装备不用时拆解，约返还 80% 已投入的律筹和法则尘。覆盖旧法则刻印时也返还 80% 旧法则尘。不朽化造成的防御退役是特殊的 100% 转换，不遵守常规损耗。
+Dismantling returns about 80% invested tokens/dust. Overwriting inscriptions returns 80% old dust. Immortality defense retirement uniquely converts 100%, not ordinary loss.
 
-锻造只在基地进行，锻造台旁直接放置训练木桩和表达式报告入口，形成：
+Forge only at base; adjacent dummy/expression report supports:
 
-刷取 → 落地扫描 → 回城鉴装 → 规划圣律序列 → 木桩验证 → 保存预设
+Farm → drop scan → return/inspect → plan law sequence → dummy validation → save preset
 
-## 7. T1 数值词条池
+## 7. T1 Numeric Affix Pool
 
-### 7.1 设计边界
+### 7.1 Boundaries
 
-T1 约 36 个词条家族：
+About 36 families: eight universal output/action, nine pure defense plus one interruption resistance, and six per class (18 total).
 
-- 8 个通用输出 / 动作；
-- 9 个纯防御 + 1 个抗打断；
-- 三职业各 6 个主题词，共 18 个。
+Threshold affixes bind specific carriers so one universal affix cannot raise several loops simultaneously. Attack/cast speed, duration, projectile speed, and similar support affixes share across classes by tags.
 
-临界词绑定具体载体，避免一条通用词同时推高多个回路。攻速、施法速度、持续时间、投射物速度等辅助词按标签跨职业复用。
+Candidate T1 four-grade families:
 
-T1 四档候选：
-
-| 分组 | 词条家族草案 |
+| Group | Draft families |
 |---|---|
-| 通用 8 | 载体基础威力、攻击速度、施法速度、暴击率、暴击倍率、范围、移动速度、闪避冷却恢复 |
-| 生存 / 控制 10 | 最大生命、物理减伤、元素减伤、腐化减伤、闪避概率、屏障容量、屏障生成、恢复强度、恢复频率、抗打断 |
-| 游侠 6 | 穿刺箭续行概率 p、投射物持续时间、投射物速度、续行命中威力、猎人印记暴击率、突袭持续时间 |
-| 炼金 6 | 毒层继承系数 x、毒持续时间、毒跳频率、毒针基础毒性、培养皿持续时间、爆炸瓶兑现时长 |
-| 法师 6 | 焚脉系数 a、回辉系数 b、固定注入 c、星炉热容量、每次施法热量降低、终仪兑现率 |
+| Universal 8 | Base carrier power, attack speed, cast speed, crit chance, crit multiplier, area, movement speed, Dodge cooldown recovery |
+| Survival/control 10 | Maximum health, physical reduction, elemental reduction, corruption reduction, evasion chance, barrier capacity, barrier generation, recovery strength, recovery frequency, interruption resistance |
+| Ranger 6 | Piercing Arrow continuation p, projectile lifetime, projectile speed, continuation-hit power, Hunter's Mark crit chance, Dash duration |
+| Alchemist 6 | Poison inheritance x, poison duration, poison tick frequency, Poison Needle base toxicity, Culture Dish duration, Explosive Flask cashout duration |
+| Mage 6 | Burning Vein a, Returning Radiance b, fixed injection c, furnace heat capacity, heat reduction per cast, Finale cashout rate |
 
-首轮可测四档锁值如下；后续只允许在平衡测试中改数值，不改变词条语义：
+Initial testable locked values; later balance tests may change numbers, not semantics:
 
-| 分组 | I / II / III / IV 档 |
+| Group | Grades I / II / III / IV |
 |---|---|
-| 载体基础威力 | +12% / +18% / +26% / +36% |
-| 攻击速度、施法速度 | +6% / +9% / +12% / +16% |
-| 暴击率 | +8 / +12 / +18 / +25 个百分点 |
-| 暴击倍率 | +15% / +25% / +40% / +60% |
-| 范围 | +10% / +15% / +22% / +30% |
-| 移动速度 | +4% / +6% / +9% / +12% |
-| 闪避冷却恢复 | +6% / +10% / +15% / +22% |
-| 最大生命 | +12% / +20% / +30% / +45% |
-| 三类减伤 | +4 / +6 / +9 / +12 个百分点 |
-| 回避 | +4 / +7 / +10 / +14 个百分点 |
-| 屏障容量 | +15% / +25% / +40% / +60% |
-| 屏障生成 | +10% / +18% / +28% / +42% |
-| 恢复强度 | +12% / +20% / +32% / +48% |
-| 恢复频率 | +6% / +10% / +15% / +22% |
-| 抗打断 | +8% / +14% / +22% / +32% |
-| 游侠 p | +0.06 / +0.08 / +0.10 / +0.12 |
-| 投射物持续、突袭持续 | +12% / +18% / +25% / +35% |
-| 投射物速度 | +10% / +16% / +24% / +34% |
-| 续行命中威力 | +15% / +25% / +40% / +60% |
-| 印记暴击率 | +12 / +20 / +32 / +50 个百分点 |
-| 炼金 x | +0.05 / +0.06 / +0.07 / +0.08 |
-| 毒持续、培养皿持续 | +12% / +18% / +25% / +35% |
-| 毒跳频率 | +8% / +12% / +18% / +25% |
-| 毒针基础毒性 | +15% / +25% / +40% / +60% |
-| 爆炸瓶兑现时长 | +0.8 / +1.2 / +1.8 / +2.6 秒 |
-| 法师 a、b | +0.10 / +0.12 / +0.14 / +0.16 |
-| 固定注入 c、终仪兑现率 | +15% / +25% / +40% / +60% |
-| 星炉热容量 | +10% / +16% / +24% / +34% |
-| 每次施法热量降低 | -5% / -8% / -12% / -16% |
+| Base carrier power | +12% / +18% / +26% / +36% |
+| Attack/cast speed | +6% / +9% / +12% / +16% |
+| Crit chance | +8 / +12 / +18 / +25 percentage points |
+| Crit multiplier | +15% / +25% / +40% / +60% |
+| Area | +10% / +15% / +22% / +30% |
+| Movement speed | +4% / +6% / +9% / +12% |
+| Dodge cooldown recovery | +6% / +10% / +15% / +22% |
+| Maximum health | +12% / +20% / +30% / +45% |
+| Three damage reductions | +4 / +6 / +9 / +12 percentage points |
+| Evasion | +4 / +7 / +10 / +14 percentage points |
+| Barrier capacity | +15% / +25% / +40% / +60% |
+| Barrier generation | +10% / +18% / +28% / +42% |
+| Recovery strength | +12% / +20% / +32% / +48% |
+| Recovery frequency | +6% / +10% / +15% / +22% |
+| Interruption resistance | +8% / +14% / +22% / +32% |
+| Ranger p | +0.06 / +0.08 / +0.10 / +0.12 |
+| Projectile/Dash duration | +12% / +18% / +25% / +35% |
+| Projectile speed | +10% / +16% / +24% / +34% |
+| Continuation-hit power | +15% / +25% / +40% / +60% |
+| Mark crit chance | +12 / +20 / +32 / +50 percentage points |
+| Alchemist x | +0.05 / +0.06 / +0.07 / +0.08 |
+| Poison/Culture Dish duration | +12% / +18% / +25% / +35% |
+| Poison tick frequency | +8% / +12% / +18% / +25% |
+| Needle base toxicity | +15% / +25% / +40% / +60% |
+| Flask cashout duration | +0.8 / +1.2 / +1.8 / +2.6 seconds |
+| Mage a,b | +0.10 / +0.12 / +0.14 / +0.16 |
+| Fixed c / Finale cashout rate | +15% / +25% / +40% / +60% |
+| Furnace heat capacity | +10% / +16% / +24% / +34% |
+| Heat reduction per cast | -5% / -8% / -12% / -16% |
 
-同组共享一组档值不代表共享同一词条 ID；例如投射物持续与突袭持续仍是两条独立词。所有百分点、秒数和倍率在界面明确单位。
+Shared grade values do not imply shared affix IDs: projectile and Dash duration remain independent. UI explicitly labels percentage points, seconds, multipliers.
 
-可改变增长性质的词条在相关结构规则尚未接通时仍允许掉落，但面板明确显示缺少的接口，例如“当前未接通：可繁殖事件 / 全链刷新 / 反向转化”。这既避免完全不明原因的死词，也把掉落变成构筑线索。
+Growth-changing affixes may drop before their structural interfaces connect, but panels clearly show missing interfaces, e.g. reproducing events / whole-chain refresh / reverse conversion. Avoid inexplicable dead affixes while making drops build clues.
 
-### 7.2 掉落完成度
+### 7.2 Drop Completion
 
-- 普通怪装备通常带 1–2 条数值词；
-- 精英通常带 2–3 条；
-- Boss 通常带 3–4 条；
-- 白色特殊底材仍可偶尔掉落；
-- IV 档从开局就有极低概率自然出现，难度主要提高高档权重；
-- 强敌不获得更好的圣律种子，只提供更完整的当前状态、更多律筹和更高档权重。
+- Ordinary enemies usually yield 1–2 numeric affixes.
+- Elites: 2–3.
+- Bosses: 3–4.
+- Special white bases occasionally drop.
+- Grade IV is naturally possible from the start at very low probability; difficulty primarily raises high-grade weights.
+- Strong enemies do not get better seeds, only more complete current items, more tokens, higher-grade weights.
 
-## 8. 通用法则
+## 8. Universal Laws
 
-第一版约 24 条：
+About 24 in v1: six per class and six cross-class.
 
-- 每职业 6 条；
-- 跨职业 6 条。
+Rules:
 
-规则：
+- Each compatible with 3–5 equipment slots.
+- Same effect in every compatible slot; no necklace/two-handed doubling.
+- A named law activates at most once across equipment.
+- Grade I has full semantics; quality improves only ancillary duration, retention, fixed injection, costs.
+- Laws do not enter the three token sequences.
 
-- 每条法则兼容 3–5 个装备槽；
-- 放在不同兼容槽时效果相同，不做项链或双手武器加倍；
-- 同名法则全身只能生效一次；
-- I 档已经具有完整语义，高品质只提高持续、保留率、固定注入或代价等附带参数；
-- 法则不进入三类律筹对应的圣律序列。
+Acquisition/Codex:
 
-获取与法典：
+1. No direct quest gifts of universal laws.
+2. Contracts select mechanism tags, e.g. mark / poison chain / return flow, not a named law.
+3. Every miss on a target-tag law advances visible research; hard guarantee in 3–5 Contracts.
+4. Guarantee still arrives as enemy/chest loot, prioritizing uncollected laws under that tag.
+5. First legendary with a law must be dismantled to permanently record it in Codex and gain Law Dust.
+6. Only after complete collection does loot focus on quality.
 
-1. 通用法则不由任务直接赠送。
-2. 玩家在契约中选择“印记 / 毒链 / 回流”等机制标签，而不是直接点名某条法则。
-3. 每次未获得目标标签法则都会推进可见研究条；3–5 次契约硬保底。
-4. 保底仍以怪物或宝箱掉落形式出现，并优先给该标签下尚未收录的法则。
-5. 首次获得带法则传奇装备后，必须拆解该装备才永久录入法典，同时获得法则尘。
-6. 全部收录后，掉落才转向品质追逐。
+Three initial key examples: Ranger Pack Hunt Mark; Alchemist Culture Dish inheritance / whole-chain refresh; Mage Returning Radiance return.
 
-首档三条关键法则示例：
+## 9. Runes
 
-- 游侠：群猎印记；
-- 炼金：培养皿传代 / 整链刷新；
-- 法师：回辉返还。
+Up to seven rune sockets per skill: no socket types/order, only compatible tags; at most one semantic rune per skill; generic numeric runes may repeat.
 
-## 9. 符文
+About 35 v1 cores: three semantic runes for each of nine skills (27), eight cross-skill numeric runes.
+Each physical rune has one immutable fixed core, two core-tag-related random side affixes, independent law seed.
 
-每个技能最多 7 个符文槽：
+Free lossless equip/unequip, infinite dedicated storage, automatic filtering. Side affixes use the same three tokens as equipment.
 
-- 无槽位类型；
-- 无排列顺序；
-- 只检查兼容标签；
-- 每个技能最多装备 1 枚语义符文；
-- 通用数值符文可以重复。
+Semantic runes remain entirely world drops, no skill-tag targeted Contracts. Limit long tails:
 
-第一版约 35 种符文核心：
+- Add only one new semantic rune per skill per stage to the world pool.
+- Account-wide shuffle bag prioritizes unseen current-stage cores.
+- Fully repeat only once all seen.
+- Duplicates do not upgrade semantics; value is side affixes, seeds, dismantled token fragments.
 
-- 9 个技能各 3 枚语义符文，共 27；
-- 8 枚跨技能通用数值符文。
+Expected discovery:
 
-每枚实体符文具有：
+World engine rune → identify required interface → choose corresponding mechanism-tag Contracts for universal laws → forge parameters beyond threshold.
 
-- 1 个不可改写的固定核心；
-- 2 条与核心标签相关的随机侧词；
-- 独立圣律种子。
+## 10. Uniques, Mutation, Research
 
-符文可免费、无损装卸；使用无限专用仓库和自动过滤。侧词使用与角色装备相同的三类律筹锻造。
+Universal laws enter Codex; key laws remain on named uniques, from targeted Bosses and world drops:
 
-语义符文坚持完全世界掉落，不开放技能标签定向契约。为控制长尾，采用：
+- First kill unlocks base version.
+- Repeats pursue shorter law routes, current high-grade affixes, evolution branches.
+- Full research bar crafts base copy.
+- New potential tier permits same-name higher-tier base reforge, generating a new seed.
 
-- 每个阶段只把每个技能的 1 枚新语义符文加入世界池；
-- 账号级洗牌袋优先掉落当前阶段尚未见过的核心；
-- 见全后才完全重复；
-- 重复核心不升级语义，价值来自新的侧词、圣律种子和拆解所得的律筹碎片。
+Over-limit mutation uses Mutation Cores. Each ordinary/unique item has one mutation slot. First insertion into Mutation Bench permanently generates three benefit+cost pairs from item seed. Preview free, commit one for one core. Irreversible, no reroll/second mutation; no commitment, no cost. Numeric sequences and mutation track remain independent.
 
-这会形成期望中的发现顺序：
+V1 has 12 theme packages: four universal, two per class, two cross-class. Benefits may amplify an existing tag group, push one numeric affix one grade beyond limit, or improve settlement retention. Costs may disable one numeric slot, increase action cost, shorten lifetime/status windows, or restrict targeting. No new semantic rune, universal law, result feedback, second closure, or growth-class change by mutation alone. Dismantling still returns 80% actual investment, not the Mutation Core.
 
-世界掉落给出发动机符文 → 玩家观察它需要什么接口 → 再选择对应机制标签契约追猎通用法则 → 使用律筹锻造把参数推过临界。
+## 11. Defense and Permanent Immortality
 
-## 10. 暗金、突变与研究
+Before immortality: mitigation, evasion, barriers, recovery.
+Base damage families: physical, elemental, corruption. Each of four survival Bosses emphasizes one pressure but no sole solution; any genuine defense combination may pass. Manual and full Auto both earn immortality materials.
 
-通用法则可法典化，关键法则必须绑定命名暗金。关键暗金采用 Boss 定向 + 世界掉落两种来源：
+After immortality:
 
-- 首杀解锁基础版本；
-- 重复掉落追逐更短圣律路线、当前高档词和进化分支；
-- 研究条满后可制作基础副本；
-- 进入新潜能档后可重铸同名高档基础版，新圣律种子重新生成。
+- Permanently exit health/death evaluation.
+- Pure health, three reductions, evasion, barrier, recovery affixes leave personal drop pools.
+- Each existing pure-defense affix offers three legal same-slot new-stage parameters, one chosen free.
+- Retirement choices cost no tokens and advance no ordinary law sequence.
+- Defense investment receives 100% treatment, not normal 80% loss.
+- Interruption/knockback resistance, silence handling, other control parameters remain.
+- Enemies still knock back, silence, interrupt loops, reduce efficiency, but cannot harm/kill the character.
 
-越界突变使用突变核心。每件普通装备或暗金只有 1 个突变槽；首次放入突变台时，由物品种子永久生成三组“收益 + 代价”，免费预览后选择一组提交。提交消耗 1 枚核心且对该件物品不可撤销、不可重抽、不可二次突变；不提交不花费。普通数值圣律序列与突变轨道互不污染。
+Tentative level cap 50, reached around immortality; about 30 talent points. Three small open trees, about 15–20 nodes each, cross-tree investment after class unlock. Free base respec, locked inside Contracts, at most two key talents active. Talent/equipment laws use distinct semantic pools, not stronger/weaker duplicates of one rule.
 
-首版使用 12 组主题包：4 组通用，三职业各 2 组，跨职业 2 组。收益只允许放大一个已有标签组、令一条数值词获得一档越界效果，或改善结算保留；代价只允许禁用一个普通数值槽、增加动作成本、缩短寿命 / 状态窗口，或限制目标方式。突变不能凭空提供语义符文、通用法则、结果反馈或第二条闭合边，也不能单独改变增长阶层。拆解突变装备仍按实际投入的 80% 返还，但突变核心不返还。
+## 12. Fixed Nesting and V1 Exponential Towers
 
-## 11. 防御与永久不朽
+Late v1 first teaches 2–3 fixed layers, then result feedback:
 
-不朽前防御分四类：
+1. An exponential engine ends and creates a settled snapshot.
+2. Snapshot becomes a subsequent active cast's parameter.
+3. Only one successor consumes each snapshot; branching needs specific gear.
+4. Connections reusable without per-fight use counts.
+5. Lineage records visited carriers and cannot revisit them.
+6. Result-feedback unique clears visit history once, making old result a new seed.
+7. At most one history-clearing closure per build.
+8. Player/proxy must execute the skill sequence anew; towers do not internally loop without actions.
+9. Snapshots exist only within the encounter and reset on exit.
 
-- 减伤；
-- 回避；
-- 屏障；
-- 恢复。
+Pure-class feedback:
 
-基础伤害分物理、元素、腐化三族。四个生存 Boss 各自偏向某类压力，但不设置唯一答案；玩家可以用减伤、回避、屏障、恢复或真实组合通过。手动与完整自动都能获得不朽材料。
+- Ranger: arrow count → Hunter's Mark overflow crit layers → next Piercing Arrow continuation.
+- Alchemist: poison-chain strength → Culture Dish spores → next Needle initial toxicity.
+- Mage: dual-resource result → furnace star count → next cycle's initial mana/arcana.
 
-完成不朽后：
+Pure/mixed builds connect through specific RPG semantics, not generic wire dragging. Original v1 requires only variable-height towers, final Boss about 10↑↑10. Fixed arrow ranks, g₁–g₆₄, beyond Graham's number remain later-version targets in this model; expression types reserve extensible nodes, not corresponding combat content.
 
-- 角色永久退出生命死亡判定；
-- 生命、三类减伤、闪避、屏障、恢复等纯防御词不再进入个人掉落池；
-- 已有纯防御词逐条显示三条同槽合法的新阶段参数，免费选择一条；
-- 该退役选择不消耗律筹，也不推进正常圣律序列；
-- 防御相关投资 100% 处理，不使用常规 80% 损耗；
-- 抗打断、击退抵抗、沉默处理等控制参数继续存在；
-- 敌人仍可击退、沉默、打断循环和降低效率，但不能伤害或杀死角色。
+## 13. Contracts and Mode Rewards
 
-等级上限暂定 50 级，约在不朽前后达到；总天赋点约 30。三棵小型开放天赋树每棵约 15–20 节点，职业解锁后可跨树投资；基地免费洗点，契约内锁定；最多激活 2 个关键天赋。天赋法则与装备法则使用不同语义池，避免同一规则只做强弱重复版。
+Continuous room chains:
 
-## 12. 固定嵌套与第一版指数塔
+- Random 6–12 rooms, expected length shown before entry.
+- Tentative clear, hold-point, elite-hunt, timed-destruction templates.
+- A few branches reveal loot tags/risks, e.g. projectile laws, toxicity, proxy memory, token type.
+- Proxy navigation attachments select preferred branches.
+- Short Contracts allow full Auto to restart for hours.
 
-第一版后段先学习 2–3 层固定嵌套，再获得结果反馈：
+Pre-immortality death keeps equipped/bagged items safe but loses unsettled Contract reward value/multiplier.
 
-1. 一个指数引擎结束，产生结算快照。
-2. 快照作为下一次主动施法的参数。
-3. 每个快照只能被一个后继消费；分叉必须由特定装备提供。
-4. 连接本身可反复使用，不设“每场只能若干次”。
-5. 同一谱系保存已经访问的载体，不能回到旧载体。
-6. 结果反馈暗金允许清除一次谱系访问历史，把旧结果变成新种子。
-7. 每套 Build 最多拥有一条清历史闭合边。
-8. 玩家或代理必须重新完成技能序列，指数塔不会内部无动作自循环。
-9. 所有快照只在当前遭遇中存在，退出遭遇后重置。
+Manual/Auto selected and locked at Contract start. Raw monster loot unchanged; Manual completion adds independent Hunter's Chest, about 50% greater expected value/hour under equal conditions. Never use APM, mouse paths, or key counts to determine rewards.
 
-三条纯职业反馈：
+## 14. Automated Proxy Builds
 
-- 游侠：箭数量 → 猎人印记的溢出暴击层 → 下一次穿刺箭的续行过程；
-- 炼金：毒链强度 → 培养皿孢子量 → 下一次毒针的初始毒性；
-- 法师：双资源循环结果 → 星炉星数 → 下一轮初始法力 / 奥能。
+Not a free idle switch or player-written IF/ELSE circuit. A second equipment build: bases give complete but limited behavior, capability affixes raise observation/timing/sequence/path capacity, firmware laws change one behavior's semantics. Only public player-visible information and legal player actions; no hidden coordinates, future RNG, unrevealed drops, free teleportation.
 
-纯职业与跨职业都通过具体 RPG 语义连接，不提供通用拖线电路界面。第一版最终只要求形成可变高度指数塔，最终 Boss 约为 10↑↑10。任意固定箭头阶、g₁–g₆₄ 和超过葛立恒数均留到后续版本；底层表达式类型会预留扩展节点，但不制作对应战斗内容。
+### 14.1 Seven Slots and Fixed Pipeline
 
-## 13. 契约与模式奖励
+Seven components: four strict cores (perception, movement, execution, memory), three untyped attachments chosen from scavenging/navigation/tactics/cycle regulation/stability. Attachment categories cannot repeat, preventing three copies of one efficiency multiplier.
 
-契约采用连续房间链：
-
-- 每次随机 6–12 个房间，进入前显示预计长度；
-- 房间模板暂定清场、守点、猎杀精英、限时破坏；
-- 少量分支提前展示掉落标签与风险，例如投射物法则、毒性参数、代理记忆、特定律筹；
-- 自动代理的导航附件可按偏好选择分支；
-- 短契约允许完整自动连续开启数小时。
-
-不朽前死亡：
-
-- 已装备与已经装袋的物品安全；
-- 损失尚未结算的契约奖励价值或倍率。
-
-手动和自动在开局选择契约模式并锁定。怪物原始掉落不因模式改变；手动完成后额外获得独立猎人宝箱，使同条件每小时预期价值约高 50%。不使用 APM、鼠标轨迹或按键次数判定奖励。
-
-## 14. 自动代理 Build
-
-代理不是免费挂机开关，也不是让玩家编写 IF / ELSE 的电路系统。它是第二套装备 Build：玩家通过组件基底获得完整但受限的行为，通过能力词提高观察、计时、序列和路径容量，再用固件法则改变一类行为语义。代理只能使用玩家同样可见的信息与可执行的动作，不能读取隐藏坐标、未来随机、未揭示掉落或无成本瞬移。
-
-### 14.1 七槽结构与固定流水线
-
-代理固定装备 7 件组件：
-
-- 4 个严格核心槽：感知、行动、执行、记忆；
-- 3 个无类型附件槽，从拾荒、导航、战术、循环调速、稳定五类中选择；
-- 同一附件类别不能重复，因此不存在把三个附件全堆成同一种效率乘区的答案。
-
-每件组件统一具有：
-
-| 字段 | 规格 |
+| Field | Specification |
 |---|---|
-| 固定协议 | 由基底决定，完整但受限，不可改写 |
-| 能力词 | 最多 3 条；使用添铸律筹、改写律筹、精炼律筹 |
-| 固件法则 | 最多 1 条；只改变一类行为语义，不直接增加伤害 |
-| 圣律种子 | 掉落时永久确定，三类圣律序列互不污染 |
-| 完成度 | 白 0 词、蓝 1–2 词、黄 3 词、橙 3 词加固件 |
+| Fixed protocol | Base-defined, complete but limited, immutable |
+| Capability affixes | At most three, forged with three token types |
+| Firmware law | At most one, changes one behavior, not direct damage |
+| Law seed | Permanent at drop; three independent sequences |
+| Completion | White 0 affixes, blue 1–2, yellow 3, orange 3+firmware |
 
-内部执行顺序不可被玩家重排：
+Fixed internal order:
 
-> 感知采样 → 更新记忆 → 战术判断 → 移动与施法 → 确认结果 → 后勤处理
+> Perception sample → update memory → tactical judgment → movement/casting → confirm result → logistics
 
-当多个动作同时成立时，系统固定仲裁：避免死亡或严重控制 → 保存 Build 状态 → 状态即将丢失时兑现 → 攻击 → 战后拾取与导航。固件可以改变其中一种行为的选择方式，但不能重写整条优先链。
+Simultaneous actions arbitrate: prevent death/severe control → preserve build state → cash out impending state loss → attack → postcombat pickup/navigation. Firmware changes one selection behavior, not the entire priority chain.
 
-### 14.2 四核心与 16 个首版基底
+### 14.2 Four Cores, 16 V1 Bases
 
-| 槽位 | 基底 | 固定协议 | 主要用途 |
+| Slot | Base | Fixed protocol | Main use |
 |---|---|---|---|
-| 感知 | 近敌视界 | 每 1 秒识别最近的 1 个可见合法敌人 | 首套白装、单技能清房 |
-| 感知 | 标记棱镜 | 区分标记、精英、Boss，并保留 2 个候选 | 游侠集火与目标延续 |
-| 感知 | 状态解析器 | 每 0.25 秒读取当前目标的 2 个公开状态 | 毒层、持续时间、资源 |
-| 感知 | 危机预兆 | 识别 1 个可见危险区或前摇，提前 0.6 秒报告 | 闪避与生存 Boss |
-| 行动 | 直趋步足 | 走最短可行路径，在技能槽 1 的射程内停步 | 首套白装 |
-| 行动 | 维距步足 | 保持预设近 / 中 / 远距离带，基础误差 ±1.5 米 | 通用远程 |
-| 行动 | 环猎步足 | 围绕当前单目标沿固定方向移动 | 游侠回旋与持续射击 |
-| 行动 | 规避步足 | 对最高优先可见危险执行闪避，并含基础脱困 | 生存与长时间自动 |
-| 执行 | 单键执行 | 目标、资源与冷却合法时施放技能槽 1 | 首套白装 |
-| 执行 | 交替执行 | 按固定 A→B 顺序调用技能槽 1、2 | 法师基础递推 |
-| 执行 | 维持执行 | 维持 1 个持续效果，在基础安全余量内刷新 | 印记与培养皿 |
-| 执行 | 兑现执行 | 最多 3 步并读取 1 个公开阈值，再调用兑现技能 | 爆炸瓶与星炉终仪 |
-| 记忆 | 短痕记忆 | 保存当前目标与上一个已提交动作 | 首套白装 |
-| 记忆 | 双时记忆 | 保存 2 个计时器，单次最长 8 秒 | 简单续杯 |
-| 记忆 | 循环寄存器 | 保存 4 个步骤与 2 个资源字段 | 法师轮换与三技能循环 |
-| 记忆 | 谱系缓存 | 保存 1 条事件谱系、1 个结算快照及消费回执 | 固定嵌套与结果反馈 |
+| Perception | Near-Enemy Sight | Identify nearest one visible legal enemy each 1s | First white set, one-skill rooms |
+| Perception | Mark Prism | Distinguish marks/elites/Bosses, retain two candidates | Ranger focus/target continuity |
+| Perception | State Parser | Read two public current-target states every 0.25s | Poison, durations, resources |
+| Perception | Danger Forewarning | Detect one visible danger/tell, report 0.6s early | Dodge/survival Bosses |
+| Movement | Direct-Approach Legs | Shortest feasible path, stop within slot 1 skill range | First white set |
+| Movement | Range-Keeping Legs | Preset near/mid/far band, base error ±1.5m | General ranged |
+| Movement | Circling Hunt Legs | Orbit current single target in fixed direction | Ranger orbit/sustained fire |
+| Movement | Evasive Legs | Dodge highest-priority visible danger, basic escape | Survival/long Auto |
+| Execution | Single-Key Executor | Cast slot 1 when target/resources/cooldown legal | First white set |
+| Execution | Alternating Executor | Fixed A→B on slots 1/2 | Mage basic recurrence |
+| Execution | Sustain Executor | Maintain one effect, refresh within base safety margin | Mark/Culture Dish |
+| Execution | Cash-Out Executor | Up to three steps, one public threshold, cashout skill | Flask/Finale |
+| Memory | Short-Trace Memory | Current target and last committed action | First white set |
+| Memory | Twin-Timer Memory | Two timers, at most 8s each | Simple refresh |
+| Memory | Loop Register | Four steps and two resource fields | Mage rotation/three-skill loop |
+| Memory | Lineage Cache | One event lineage, one settled snapshot, consumption acknowledgement | Fixed nesting/feedback |
 
-首批能力词只表达可观察能力，不提供一条笼统的“代理强度”：
+Initial affixes express observable capabilities, not generic proxy power:
 
-- 感知：扫描间隔、候选目标数、状态频道数、危险预警提前量、辨识精度；
-- 行动：响应延迟、重寻路间隔、路径预算、距离误差、闪避提前量、脱困时间；
-- 执行：可寻址技能槽数、队列深度、连招长度、结果确认、打断恢复、预施法窗口；
-- 记忆：目标记录数、计时器数、序列长度、结果回执数、保留时间、数值分辨档。
+- Perception: scan interval, candidates, state channels, danger lead time, recognition precision.
+- Movement: response latency, repath interval, path budget, distance error, Dodge lead time, escape time.
+- Execution: addressable skill slots, queue depth, combo length, result confirmation, interruption recovery, precast window.
+- Memory: target records, timers, sequence length, acknowledgements, retention time, numeric resolution grade.
 
-所有参数使用玩家能感知的离散档。例如 1 秒扫描必然看不到 0.7 秒前摇；只有 1 个计时器时，培养皿和毒链截止时间必然互相覆盖；序列长度 1 必然无法交替焚脉与回辉。低品质不会随机犯蠢。
+Perceptible discrete values: a 1s scan necessarily misses a 0.7s tell; one timer makes Dish/poison deadlines overwrite each other; sequence length 1 cannot alternate Burning Vein/Radiance. Low quality never randomly acts stupidly.
 
-### 14.3 五类附件与 10 个首版基底
+### 14.3 Five Attachment Categories, 10 V1 Bases
 
-| 类别 | 基底 | 固定协议 |
+| Category | Base | Fixed protocol |
 |---|---|---|
-| 拾荒 | 愿望拾取器 | 按律镜愿望单排列拾取优先级，并将物品送入结算箱 |
-| 拾荒 | 律筛 | 区分“当前好 / 可塑且便宜 / 拆解”，按预设保留 |
-| 导航 | 岔路罗盘 | 按法则、律筹、代理组件等公开标签选择分支 |
-| 导航 | 续约继电器 | 结算后按预设长度、难度与标签开启下一份契约 |
-| 战术 | 距离规尺 | 为三个主动技能分别保存近 / 中 / 远距离偏好 |
-| 战术 | 首领预案库 | 识别已经击败过的 Boss 阶段信号与公开交互 |
-| 循环调速 | 续杯节拍器 | 协调印记、培养皿等持续状态与主循环的刷新窗口 |
-| 循环调速 | 兑现监护器 | 在即将断链、过热或目标离场前建议提前兑现 |
-| 稳定 | 规避保险栓 | 处理闪避、药剂、打断恢复；不朽后转为抗沉默与防断环 |
-| 稳定 | 循环复位器 | 检测卡路、无目标、无伤害或无效重复施法并执行固定复位 |
+| Scavenging | Wish Collector | Prioritize Law Mirror wishlist, send items to settlement chest |
+| Scavenging | Law Sieve | Classify good now / affordable potential / dismantle; retain by preset |
+| Navigation | Fork Compass | Choose public law/token/proxy-tag branches |
+| Navigation | Renewal Relay | Open next Contract with preset length/difficulty/tags after results |
+| Tactics | Range Gauge | Separate near/mid/far preferences for three actives |
+| Tactics | Boss Plan Library | Recognize defeated Bosses' phase signals/public interactions |
+| Cycle regulation | Refresh Metronome | Coordinate Mark/Dish refresh windows with main loop |
+| Cycle regulation | Cash-Out Guardian | Advise early cashout before chain break/overheat/target departure |
+| Stability | Evasion Safety Latch | Dodge/potions/interruption recovery; silence/loop protection after immortality |
+| Stability | Loop Resetter | Detect stuck routes/no target/no damage/invalid repeated casts, fixed reset |
 
-典型组合：长时刷取用拾荒 + 导航 + 稳定；生存 Boss 用战术 + 循环调速 + 稳定；已经解出的速刷图用拾荒 + 导航 + 循环调速。
+Typical sets: scavenging+navigation+stability for long farming; tactics+cycle regulation+stability for survival Bosses; scavenging+navigation+cycle regulation for solved fast farms.
 
-### 14.4 首批 16 条固件法则
+### 14.4 First 16 Firmware Laws
 
-| 兼容位置 | 固件 | 完整语义 |
+| Compatible slot | Firmware | Complete semantics |
 |---|---|---|
-| 感知 | 标记者优先 | 合法范围内优先选择带指定公开标记的目标 |
-| 感知 | 目标延续 | 当前目标的关键状态尚未结束时不主动换目标 |
-| 感知 | 危险覆盖 | 严重危险识别结果可覆盖普通目标选择 |
-| 行动 | 闪避后归位 | 闪避完成后返回此前距离带或任务区域 |
-| 行动 | 环行不断链 | 环行时优先选择不会令持续链超时的可行路径 |
-| 行动 | 施法锚定 | 指定技能前摇期间停止主动位移 |
-| 执行 | 严格交替 | 上一步没有成功回执时不得推进 A→B 序列 |
-| 执行 | 无效施法抑制 | 资源、目标或射程不合法时不提交技能动作 |
-| 执行 | 安全续杯 | 依据剩余时间与自身误差计算最迟刷新时刻 |
-| 执行 | 阈值兑现 | 达到玩家设定的热量、毒链或快照档位后兑现 |
-| 记忆 | 计时继承 | 换目标或闪避不会清除仍有效的计时器 |
-| 记忆 | 分目标记账 | 状态、命中历史与刷新时间按目标分别保存 |
-| 记忆 | 谱系续接 | 后继动作只消费指定来源且已确认的结算快照 |
-| 附件 | 愿望单压倒 | 愿望目标出现时覆盖普通拾取优先级 |
-| 附件 | 风险加权岔路 | 收益标签相同时选择预测中断风险更低的分支 |
-| 附件 | 连续契约 | 通过全部停止检查后才开启下一份契约 |
+| Perception | Marked Target Priority | Prefer designated public mark within legal range |
+| Perception | Target Continuity | Do not proactively switch before current target's key state ends |
+| Perception | Danger Override | Severe visible danger overrides ordinary target choice |
+| Movement | Return After Dodge | Return to previous band/objective area after Dodge |
+| Movement | Unbroken Orbit | Prefer feasible orbit paths that do not time out persistent chains |
+| Movement | Casting Anchor | Stop voluntary movement during designated skill tell |
+| Execution | Strict Alternation | Never advance A→B without prior successful acknowledgement |
+| Execution | Invalid Cast Suppression | No action commitment with invalid resource/target/range |
+| Execution | Safe Refresh | Compute latest refresh from remaining time/own error |
+| Execution | Threshold Cash-Out | Cash out at player-set heat/poison/snapshot grade |
+| Memory | Timer Inheritance | Target change/Dodge preserves still-valid timers |
+| Memory | Per-Target Ledger | Separate states/hit history/refresh times per target |
+| Memory | Lineage Handoff | Successor consumes only confirmed snapshot from specified source |
+| Attachment | Wishlist Override | Desired item overrides ordinary pickup priority |
+| Attachment | Risk-Weighted Fork | With equal reward tags, choose lower predicted interruption risk |
+| Attachment | Continuous Contracts | Open next Contract only after all stop checks pass |
 
-I 档即包含完整语义；高档只改善安全余量、保留时间或支持字段数。拆解首件带固件组件后录入代理法典，机制标签契约连续 4 次未掉目标固件时硬保底。
+Grade I has complete semantics; higher grades only improve margins, retention, supported fields. Dismantle first firmware component to record proxy Codex. Four consecutive mechanism-tag Contracts without target firmware trigger hard guarantee.
 
-### 14.5 三职业自动化阶梯
+### 14.5 Class Automation Ladders
 
-- 游侠：白装只射最近目标；中档会标记并锁敌；高档能维持印记、选择距离档、环行并避险。
-- 炼金：白装只放毒针；中档能维持培养皿并同时记录两条时限；高档会确认上毒结果、预判断链并提前爆瓶。
-- 法师：白装只会焚脉并可能空转；中档能 A / B 交替；高档会确认转化、被打断后恢复相位并按风险提前终仪。
-- 不朽只移除死亡，不移除沉默、击退、失去目标和循环中断，因此稳定与循环组件在后期仍有价值。
+- Ranger: white fires at nearest; middle marks/locks; high maintains Mark, distance bands, orbit, danger avoidance.
+- Alchemist: white Needle only; middle maintains Dish/two deadlines; high confirms poison, predicts breaks, early Flask.
+- Mage: white Burning Vein only, possibly ineffective; middle A/B alternation; high confirms conversion, restores interrupted phase, risk-based early Finale.
+- Immortality removes death, not silence/knockback/lost targets/loop breaks; stability/cycle components retain late value.
 
-代理组件同样分三档潜能：本能档支持一目标、一技能和当前状态；协同档支持多技能、计时、状态辨识与基础闪避；预见档支持结果确认、短预测、主动兑现和三技能 / 指数塔序列。普通组件不能跨档升格。
+Three proxy potential tiers: Instinct, one target/skill/current state; Coordination, multi-skill/timing/state recognition/basic Dodge; Foresight, confirmation/short prediction/active cashout/three-skill and tower sequences. Ordinary components cannot promote between tiers.
 
-### 14.6 就绪预测、失败日志与停止条件
+### 14.6 Readiness, Failure Logs, Stop Conditions
 
-进入契约前只显示“稳定 / 吃力 / 未知”，绝不硬拦。结论来自代理对已知房间样本的快速回放：成功率、清房时长分位数、循环有效率、断链、误序、结算箱溢出和脱困次数。样本不足或缺少场景识别能力时显示未知，而不是假装精确。
+Before entry show stable / strained / unknown, never hard-block. Fast replays against known room samples assess success rate, clear-time quantiles, effective-loop ratio, breaks, wrong order, chest overflow, escape count. Insufficient samples/recognition means unknown, not false precision.
 
-每次失败保留：时间、可见状态、选中目标、候选动作及拒绝原因、资源、冷却、射程、视线、计时器、最后确认动作、打断与路径状态。报告归纳成一个主因、必要能力标签和最多 20 条相关事件，并提供短回放。例如：毒链 7 次断裂，其中 5 次因唯一计时器被培养皿覆盖，2 次因缺少施法回执；建议计时器 ≥2 或装备结果回执固件。
+Failures retain time, visible state, target, candidate actions/rejections, resources, cooldown, range, sight, timers, last confirmed action, interruption/path state. Report one main cause, required capability tags, at most 20 relevant events, short replay. Example: seven poison breaks, five from Dish overwriting sole timer, two missing cast acknowledgements; suggest ≥2 timers or result-acknowledgement firmware.
 
-以下停止条件不占附件槽：结算箱达到策略上限、愿望目标出现、材料达到目标、连续失败、存档校验失败、系统资源或温度报警。附件只能增加组合条件和复位能力，不能移除安全停止。
+Built-in stops consume no attachment slot: settlement chest policy limit, desired item, material goal, consecutive failures, failed save validation, system resource/temperature alarm. Attachments add combined conditions/reset capability, never remove safety stops.
 
-### 14.7 4–10 小时掉落节奏
+### 14.7 4–10h Drop Pacing
 
-阶段从指数 Boss 首杀开始计，不强制等待墙钟时间。
+Stage time begins at exponential Boss first kill, no mandatory wall-clock wait.
 
-| 阶段 | 池扩展与保证 | 目标能力 |
+| Stage | Pool expansion/guarantee | Capability goal |
 |---|---|---|
-| 首杀 | 固定掉落近敌视界、直趋步足、单键执行、短痕记忆各 1 件白装 | 自动完成预选的简单单技能房 |
-| 首杀后 0–1h | 开放第 2 组核心与 3 个附件；首份代理契约保证新基底 | 连续运行 10 分钟，无随机失误 |
-| 首杀后 1–2.5h | 开放第 3 组核心、4 个附件；第 4 份契约前保证首条固件 | 两技能轮换、基础拾取与选路 |
-| 首杀后 2.5–4h | 开放第 4 组核心；目标核心类别 3 次未见新基底则下次必新 | 三职业各形成一套可用自动方案 |
-| 首杀后 4–6h | 开放全部 16 核心、10 附件和 16 固件 | 至少一种三技能、续杯、兑现或谱系流程稳定运行 |
+| First kill | One white each Near-Enemy Sight, Direct-Approach Legs, Single-Key Executor, Short-Trace Memory | Auto-clear selected simple one-skill room |
+| +0–1h | Second core group, three attachments; first proxy Contract guarantees new base | Ten minutes without random mistakes |
+| +1–2.5h | Third core group, four attachments; first firmware before fourth Contract | Two-skill rotation, basic pickup/routes |
+| +2.5–4h | Fourth core group; three target-category misses guarantee new base next | Usable Auto plan per class |
+| +4–6h | All 16 cores/10 attachments/16 firmware | At least one stable three-skill, refresh, cashout, or lineage flow |
 
-每份代理标签契约结算保证 1 件代理物品，核心 / 附件基础权重 65% / 35%；阶段内采用账号级未见优先洗牌袋。10 小时时目标是至少见过 14 / 16 核心、8 / 10 附件和 8 条固件，而不是已经拥有全部毕业神装。首套完整自动 Build 的预算控制在 70–110 律筹值，P90 不超过 140。
+Every proxy-tag settlement guarantees one proxy item, base core/attachment weights 65%/35%; account-wide unseen-first stage shuffle bag. By 10h aim to have seen 14/16 cores,8/10 attachments,eight firmware, not all perfect gear. First full Auto build budget 70–110 token-value, P90≤140.
 
-## 15. 技术与原型验收
+## 15. Technology and Prototype Acceptance
 
-### 15.1 跨平台技术基线
+### 15.1 Cross-Platform Baseline
 
-- 引擎锁定 Godot 4.7.2 Standard、typed GDScript、Compatibility 渲染器；不引入 .NET 运行时。
-- 同一工程与同一内容数据导出 Linux x86_64、Windows x86_64；首轮实机基线为 Ubuntu 22.04+、Windows 10 / 11 64 位。
-- 逻辑与表现分离：权威模拟以 30 tick / 秒运行，画面可在 60 帧或更高帧率插值；掉帧、隐藏特效和代表箭数量不能改变伤害。
-- 首版不使用通用 ECS、外部行为树、SQLite、第三方大数库或 GDExtension。只有真实性能剖析证明 GDScript 热点无法满足后，才迁移纯模拟核。
-- 竞技场、标题、基地与教程等像素场景使用固定 1280×720 逻辑画布和最近邻采样；装备、锻造、训练、代理、研究、契约、结算与结尾等信息页在窗口至少 1280×720 时使用完整物理窗口作为逻辑画布，让更高分辨率提供真实排版空间。美术表现不能参与碰撞与求值。
+- Godot 4.7.2 Standard, typed GDScript, Compatibility renderer; no .NET runtime.
+- One project/content set exports Linux x86_64 and Windows x86_64. Initial hardware baseline Ubuntu 22.04+, Windows 10/11 64-bit.
+- Separate logic/presentation: authoritative 30 ticks/s, presentation 60 FPS or higher interpolation. Dropped frames, hidden effects, representative-arrow count never change damage.
+- No generic ECS, external behavior tree, SQLite, third-party big-number library, GDExtension in v1. Move only pure simulation hotspots after real profiling proves GDScript insufficient.
+- Arena/title/base/tutorial pixel scenes use fixed 1280×720 logical canvas, nearest-neighbor. Information pages (Loadout, Forge, Training, proxy, research, Contract, results, ending) use full physical window as logical canvas at minimum 1280×720, giving higher resolutions real layout space. Art never participates in collision/evaluation.
 
-权威数据流固定为：
+Fixed authoritative flow:
 
-> 手动输入 / 代理决策 → 统一战斗命令 → 固定步长模拟 → 事件包归约 → 大数求值 → 伤害 / 掉落 / 战报事件 → 表现与存档
+> Manual input / proxy decisions → unified commands → fixed-step simulation → packet reduction → large-number evaluation → damage/drop/report events → presentation/save
 
-手动和代理都只能产生同一种命令，不能直接调用技能节点。模拟核心不读取系统时间、渲染帧 delta、物理回调或未排序的字典遍历。
+Both executors emit identical commands, never call skill nodes directly. Simulation reads no system time, render delta, physics callbacks, unsorted dictionary traversal.
 
-### 15.2 确定性协议
+### 15.2 Deterministic Protocol
 
-- 时间统一为整数 tick，位置和概率在权威层使用定点整数；视觉层可以使用浮点。
-- 实体按稳定 ID 更新；同 tick 命令按 tick、actor_id、sequence 排序。
-- 战斗、掉落、三条锻造轨道和代理分别使用独立的版本化随机流；不把 Godot 内置 RNG 算法当成长期存档协议。
-- 存档与回放写入 sim_protocol_version、content_hash、随机流状态与规范状态哈希。
-- 确定性的目标是 Linux / Windows 战斗语义可重放，不要求粒子与动画逐像素相同。
+- Integer ticks; fixed-point integer authoritative positions/probabilities; floating point allowed visually.
+- Stable-ID entity updates; same-tick commands sort by tick,actor_id,sequence.
+- Independent versioned RNG streams for combat, loot, three Forge tracks, proxy. Godot RNG is not long-term save protocol.
+- Saves/replays record sim_protocol_version, content_hash, RNG state, canonical state hash.
+- Goal is Linux/Windows combat-semantic replay, not pixel-identical particles/animation.
 
-### 15.3 大数值与证明链
+### 15.3 Large Values and Proof Chains
 
-运行时数值采用“规范量级 + 来源表达式”双层结构：
+Two layers: canonical magnitude + source expression.
 
-1. `MagnitudeValue` 使用 layer / magnitude 表示正数。layer 0 是普通数；layer 1 表示 10^magnitude；layer 2 表示 10^(10^magnitude)，依此类推。`10↑↑h` 可在 O(1) 空间内保存。
-2. `MagnitudeExpr` 保存有限、不可变、结构哈希的表达式 DAG，首版节点只允许零、有限正数、加、乘、幂和有限高度幂塔。
-3. 每次法则变换另外记录 rule_id、输入 / 输出表达式、来源实体、tick 与阻断原因；战报按需展开，不把整条长时运行日志常驻内存。
+1. MagnitudeValue layer/magnitude represents positives: layer 0 ordinary, layer 1 10^magnitude, layer 2 10^(10^magnitude), etc. Store 10↑↑h in O(1) space.
+2. MagnitudeExpr finite immutable structurally hashed expression DAG; v1 nodes only zero, finite positives, add, multiply, power, finite-height towers.
+3. Every law transform records rule_id, input/output expressions, source entity, tick, blocking reason. Expand reports on demand, not entire long-run logs resident in memory.
 
-比较优先使用规范量级、结构同一性和逐层对数边界；无法证明时返回 UNKNOWN，绝不猜测。所有正式 Boss 与首版合法输出的比较必须在内容验证中证明不会得到 UNKNOWN。任意函数、负数、减法、负指数和无约束递归不进入第一版语义池。
+Compare canonical magnitude, structural identity, successive logarithmic bounds first. Unproven comparison returns UNKNOWN, never guesses. Content validation must prove every official Boss/legal v1 output comparison avoids UNKNOWN. No arbitrary functions, negatives, subtraction, negative exponents, unconstrained recursion in v1 semantics.
 
-事件包的合并键必须包含载荷、标签、来源谱系、已访问法则、目标历史和到期 tick。只有这些字段完全相同，才能合并事件数量；小规模 1–1,000 个真实事件与聚合事件包必须通过逐 tick 差分测试。
+Packet merge key includes payload, tags, source lineage, visited laws, target history, expiry tick. Merge counts only when all match. Tick-by-tick differential tests compare 1–1,000 real events against aggregation.
 
-### 15.4 存档与长时运行
+### 15.4 Saves and Long Runs
 
-- 存档使用版本化 JSON；64 位整数、定点数和种子写成规范字符串。
-- 在 tick 边界生成快照，先写临时文件并校验，再轮换 A / B 槽；损坏一槽可从另一槽恢复。
-- 自动模式每 30–60 秒及每房间结束检查点，开发构建保留最近 256 条命令用于复现。
-- 加载后从保存 tick 继续，绝不读取离线时长补算收益。
-- 在途遭遇若无法迁移到新模拟协议，安全退回当前房间起点；不猜测转换巨大事件状态。
-- 长时日志、表现对象和谱系缓存均有环形上限；每个房间释放临时对象。
+- Versioned JSON; 64-bit integers/fixed-point/seeds as canonical strings.
+- Snapshot at tick boundary, write/validate temporary file, rotate A/B slots. Recover one corrupt slot from the other.
+- Auto checkpoints every 30–60s and room end; development retains last 256 commands.
+- Resume saved tick, never offline elapsed-time rewards.
+- Unmigratable encounter safely returns to current room start; never guess huge-state conversion.
+- Bounded rings for logs/presentation objects/lineage caches; release room temporaries.
 
-### 15.5 Linux / Windows 交付
+### 15.5 Linux/Windows Delivery
 
-- 提交 `project.godot` 与 `export_presets.cfg`，导出模板版本必须与 Godot 4.7.2 一致。
-- CI 顺序：导入资源 → 无头单元测试 → 内容验证 → golden replay → Linux / Windows 正式导出 → 两端 smoke replay → 对比最终状态哈希。
-- Windows 产物必须在 Windows runner 真正启动；不能以“Linux 上成功导出 exe”代替 Windows 验证。
-- 首版无需联网、账号服务器或平台 SDK 才能运行；所有核心进度均为本地可恢复存档。
+- Commit project.godot/export_presets.cfg; export templates match Godot 4.7.2.
+- CI: import → headless units → content validation → golden replay → both exports → both-platform smoke replay → final-state hash comparison.
+- Windows artifact must actually launch on Windows runner; Linux exe export is not Windows validation.
+- No required network/account server/platform SDK; core progress is locally recoverable.
 
-Godot 版本与命令行依据：Godot 4.7.2 官方发行页、Godot 官方命令行与项目导出文档，见文末参考。
+Version/CLI sources: official Godot 4.7.2 release, CLI/export documentation, references below.
 
-### 15.6 表达式与事件
+### 15.6 Expressions and Events
 
-- 验证 10⁴、10¹⁰⁰、2^n、固定幂塔与 10↑↑10 的统一比较接口；
-- 不展开巨大整数；
-- 所有结构变换可输出证明链；
-- 相同语义在手动和自动执行器中得到相同结果；
-- 事件合并后仍保留触发标签、目标历史和谱系阻断信息。
+- Unified comparison for 10⁴,10¹⁰⁰,2^n,fixed towers,10↑↑10.
+- Never expand huge integers.
+- Every structural transform emits proof chain.
+- Manual/Auto identical semantics yield identical results.
+- Merging retains trigger tags, target history, lineage blocks.
 
-### 15.7 律筹锻造
+### 15.7 Law Token Forge
 
-- 圣律种子在保存、退出、重进后完全可复现；
-- 三类圣律序列互不污染；
-- 洗牌袋保证合法目标有限距离可达；
-- 四词愿望单路线求解可解释，不成为黑箱评分；
-- 落地扫描在高掉落量下不造成明显卡顿；
-- 拆解返还和 3:1 兑换不存在资源复制漏洞。
+- Seeds exactly reproducible after save/exit/reentry.
+- Three independent sequences.
+- Shuffle bag guarantees finite-distance legal targets.
+- Four-affix wishlist route explainable, not black-box scoring.
+- Drop scan without significant high-volume stalls.
+- No resource-duplication exploit in dismantling/3:1 exchange.
 
-### 15.8 长时间在线自动
+### 15.8 Long Online Auto
 
-- 2 / 8 / 24 小时 CPU、内存、温度和存档完整性测试；
-- 低频或无渲染后台模式；
-- 固定间隔检查点和崩溃恢复；
-- 可复现随机种子；
-- 背包策略、目标物出现、连续失败和材料条件可触发停止；
-- 客户端退出后零增长。
+- 2/8/24h CPU, memory, temperature, save-integrity tests.
+- Low-frequency/no-render background mode.
+- Fixed checkpoints/crash recovery.
+- Reproducible seeds.
+- Inventory strategy, target drop, consecutive failure, material goal can stop.
+- Zero growth after client exit.
 
-### 15.9 首轮可测默认值
+### 15.9 Initial Test Defaults
 
-- 圣律洗牌袋：每个合法词至少 1 张；通用词基础权重 3、职业辅助词 2、临界参数词 1。排除同件重复词后重新计算周期，不跨圣律种子动态补牌。
-- 标准自动契约每 15 分钟约 10V：直接掉落律筹 4V、拆解碎片 2V、可塑装备节省 2V、法则尘 1V、其他可兑换材料 1V；手动猎人宝箱额外 5V。
-- 游侠距离档中心为近 4 米、中 8 米、远 12 米；Boss 回旋半径 6 米；最短转向时间 0.12 秒；基础整谱系寿命 16 秒。
-- 炼金培养皿基础持续 8 秒；基础毒持续 3 秒；爆炸瓶兑现未来 3 秒毒伤，4 米内溅射从 50% 线性衰减到 10%。
-- 法师固定注入 c 基础为 10 单位；每个有效或无效施法增加 8 热量；热上限 100；提前终仪按当前能量 80% 兑现，满热自动终仪为 100%。
-- 通用法则、代理固件的标签契约统一第 4 次硬保底；关键底材研究条按 Boss / 阶段单独配置，但 P90 不超过 8 次目标活动。
-- 三档潜能的首轮切换为：阈门巨像首杀开放协同档；永久不朽开放预见档；结果反馈阶段提高预见档高品质权重，不再新增第四档。
+- Law shuffle bag: each legal affix at least one ticket; universal weight 3, class-support 2, threshold 1. Recompute cycle after excluding item duplicates; no dynamic cross-seed replenishment.
+- Standard 15-minute Auto Contract about 10 V: direct tokens 4 V, dismantled fragments 2 V, savings on viable gear 2 V, dust 1 V, other exchangeable materials 1 V. Manual chest adds 5 V.
+- Ranger near/mid/far centers 4/8/12m; Boss orbit 6m, minimum turn 0.12s, base shared lifetime 16s.
+- Alchemist Dish 8s, poison 3s, Flask cashes next 3s; splash within 4m linearly 50%→10%.
+- Mage base c = 10 units, valid/invalid casts add 8 heat, cap 100; early Finale 80% energy, full-heat automatic 100%.
+- Universal-law/firmware tag Contracts hard-guarantee on fourth. Key-base research configured by Boss/stage, P90≤eight target activities.
+- Initial potential switches: first Threshold Colossus kill opens Coordination; immortality opens Foresight; feedback increases high-quality Foresight weights, no fourth tier.
 
-这些是进入原型与首轮封闭测试的锁值，不是未完成设计。数值可根据验收数据调整，但任何调整都不能改变临界路线所需零件数、手动 / 自动规则或增长语义。
+Locked for prototype/first closed test, not undecided design. Acceptance data may tune numbers but never required component count, Manual/Auto rules, growth semantics.
 
-## 16. 第一版内容规格
+## 16. V1 Content Specification
 
-### 16.1 低成本内容预算
+### 16.1 Low-Cost Budget
 
-| 内容 | 第一版最低量 |
+| Content | V1 minimum |
 |---|---:|
-| 场景像素美术套件 | 4 套 |
-| 基础房间布局 | 7 个 |
-| 房间目标 | 4 类 |
-| 可用布局—目标组合 | 至少 24 个 |
-| 普通敌人基型 | 12 个 |
-| 精英变体法则 | 8 条 |
-| 正式 Boss | 8 个 |
-| 独立 Boss 场地 | 4 个，通过机关与入口变化复用 |
-| 环境危害 | 6 类 |
+| Pixel-scene art kits |4 |
+| Base room layouts |7 |
+| Objectives |4 types |
+| Valid layout/objective combinations |At least 24 |
+| Enemy archetypes |12 |
+| Elite variant laws |8 |
+| Official Bosses |8 |
+| Independent Boss arenas |4, reused through mechanisms/entrances |
+| Environment hazards |6 types |
 
-四套区域分别承担教程与临界参数、代理与生存、固定嵌套、结果反馈。美术采用有限色板、统一 16×16 或 32×32 模块、程序化染色与轮廓差异；不以换色怪冒充新机制。
+Four regions support tutorial/thresholds, proxies/survival, fixed nesting, feedback. Limited palette, unified 16×16 or 32×32 modules, procedural color/silhouette variation; recolors are not new mechanics.
 
-7 个布局骨架为矩形竞技场、长廊、十字、环形、双岛、同心层、三岔分支。4 类目标为清场、守点、猎杀精英、限时破坏；“限时破坏”只影响额外契约奖励，时间到不会杀死角色或令 Boss 回血。
+Seven skeletons: rectangle, corridor, cross, ring, twin islands, concentric layers, three-way fork. Objectives: clear, hold point, elite hunt, timed destruction. Timed destruction affects bonus rewards only; timeout neither kills nor heals Bosses.
 
-### 16.2 敌人、精英与环境危害
+### 16.2 Enemies, Elites, Hazards
 
-| 敌人基型 | 战斗职责 |
+| Archetype | Combat role |
 |---|---|
-| 铁牙徒 | 直接近战追击，提供基础物理压力 |
-| 冲城兽 | 直线蓄力冲锋，可被走位诱导 |
-| 棱光射手 | 扇形远程齐射，制造元素压力 |
-| 灰烬术士 | 放置公开地面持续区 |
-| 蚀巢召者 | 召唤低生命单位，改变目标数量 |
-| 守印盾卫 | 为附近敌人提供方向性护卫 |
-| 裂殖软泥 | 死亡分裂，测试清群表达式 |
-| 缄默蛾 | 释放可预警沉默脉冲 |
-| 推山傀儡 | 强击退，破坏站位与循环 |
-| 引力眼 | 周期牵引，迫使重新寻路 |
-| 盗契鼠 | 搬走守点能量或延迟任务进度 |
-| 星钉炮台 | 固定炮台，迫使目标优先或遮挡处理 |
+| Ironfang Adept | Direct melee pursuit, basic physical pressure |
+| Siege Beast | Straight charged rush, baitable by movement |
+| Prism Archer | Fan-shaped ranged volleys, elemental pressure |
+| Ash Warlock | Public persistent ground zones |
+| Corroded-Nest Summoner | Low-health summons change target count |
+| Seal Shieldguard | Directional protection for nearby enemies |
+| Fission Slime | Death splitting tests crowd expressions |
+| Silent Moth | Telegraphable silence pulses |
+| Mountain-Pushing Golem | Heavy knockback disrupts positions/loops |
+| Gravity Eye | Periodic pull forces repathing |
+| Contract-Stealing Rat | Removes hold-point energy/delays objectives |
+| Starpin Turret | Fixed turret demands priority/occlusion handling |
 
-8 条精英法则为加速、成对联结、危险区追踪、死亡分裂、周期屏障、召援、沉默脉冲、击退强化；同一精英最多叠加 2 条。6 类环境危害为移动火线、坠落预警区、腐化池、旋转推墙、间歇沉默塔、目标遮断门。
+Eight elite laws: acceleration, paired link, tracking danger zone, death splitting, periodic barrier, reinforcement, silence pulse, stronger knockback; at most two per elite. Six hazards: moving fireline, falling-impact warnings, corruption pools, rotating push walls, intermittent silence towers, target-obscuring gates.
 
-不朽后不再制作更高伤害敌人，而从缄默、击退、牵引、遮断、目标切换和任务干扰中组合 6 个控制型变体。所有控制都必须有视觉 / 音效前摇，并能在战报中追溯到打断了哪个 Build 状态。
+After immortality, no higher-damage enemies: combine silence/knockback/pull/occlusion/target-switch/objective interference into six control variants. All controls need visual/audio tells and reports tracing the interrupted build state.
 
-### 16.3 八个 Boss 与大数门槛
+### 16.3 Eight Bosses and Magnitude Thresholds
 
-| 阶段 | Boss | 战斗 / 数值职责 |
+| Stage | Boss | Combat/numeric role |
 |---|---|---|
-| 2–4h | 阈门巨像 | 生命约 10^12；合格首档指数 Build 45–120 秒击杀；首杀解锁代理与不朽计划 |
-| 4–10h | 铁刑官 | 持续物理与击退，授予减伤方向的生存证明 |
-| 4–10h | 棱光母体 | 可躲元素爆发，授予回避方向的生存证明 |
-| 4–10h | 腐潮园丁 | 腐化消耗与回复压制，授予恢复方向的生存证明 |
-| 4–10h | 断序者 | 混合多段、沉默与打断，授予屏障 / 稳定方向的生存证明 |
-| 10–12h | 双印档案官 | 生命约 10^(10^6)，验证两层固定嵌套 |
-| 12–14h | 三相编织者 | 生命约 10^(10^(10^6))，验证三层固定嵌套 |
-| 14–18h | 塔顶零号 | 生命约 10↑↑10，验证结果反馈形成的可变高度指数塔 |
+|2–4h | Threshold Colossus |About 10^12 health; qualified initial exponential build kills in 45–120s; first kill unlocks proxies/immortality plan |
+|4–10h | Iron Warden |Physical/knockback endurance, mitigation proof |
+|4–10h | Prismatic Matrix |Avoidable elemental bursts, evasion proof |
+|4–10h | Blight Gardener |Corruption drain/recovery suppression, recovery proof |
+|4–10h | Sequence Breaker |Mixed multihit/silence/interruption, barrier/stability proof |
+|10–12h | Twin-Seal Archivist |About 10^(10^6), two-layer nesting |
+|12–14h | Threefold Weaver |About 10^(10^(10^6)), three-layer nesting |
+|14–18h | Spire Zero |About 10↑↑10, feedback-built variable-height tower |
 
-四个生存 Boss 的击杀与证明分离：Boss 始终可受伤且可以被指数伤害直接击杀，不锁血、不回血；但不朽材料还要求在场地中主动开启 3 个各约 20 秒的证明段。Boss 已死时，其公开场地机关仍完成剩余生存压力。玩家失败只重来该段，已经击杀与已完成段保留。这样既测试生存，也不破坏“任何正伤害都能理论击杀”的统一规则。
+Four survival kills/proofs separate. Bosses always damageable, killable directly with exponential output, no health lock/healing. Materials additionally require actively starting three arena proof segments of about 20s each. After death, public mechanisms provide remaining pressure. Failure restarts only that segment; kill/completed segments persist. Tests survival without violating theoretical killability by any positive damage.
 
-### 16.4 契约生成约束
+### 16.4 Contract Generation
 
-- 一份契约从兼容的布局、目标、敌人职责、危害和掉落标签中按稳定种子组合；先验证可达性，再落地内容。
-- 任意连续 6 房不得出现完全相同的布局、目标与敌群组合；同一布局最多连续出现 2 次。
-- 早期每房只引入一个新问题；4 小时后最多叠加 2 个普通问题与 1 个精英问题。
-- 分支标签必须真实改变结算权重，不能只是装饰文本；代理读取的标签与玩家看到的标签完全相同。
-- 所有 Boss 无门票；普通契约消耗只作为选择承诺，失败不损失装备，只损失未结算奖励。
+- Stable seed combines compatible layout/objective/roles/hazards/tags; verify reachability before placing content.
+- No identical layout/objective/enemy combination within any six consecutive rooms; same layout at most twice consecutively.
+- Early rooms introduce one new problem; after 4h at most two ordinary plus one elite problem.
+- Branch tags genuinely change settlement weights, not decoration; proxies read exactly player-visible tags.
+- No Boss tickets; ordinary Contract cost only commits choice. Failure loses unsettled rewards, not equipment.
 
-## 17. 经济、掉落与保底锁值
+## 17. Economy, Loot, Guarantee Locks
 
-### 17.1 内部统一价值
+### 17.1 Internal Value
 
-引入只用于平衡与自动测试的“律筹值 V”：当前需要类型的 1 枚律筹 = 1V；其他类型按 3:1 兑换后的可用值计；10 法则尘 = 1V；装备取立即拆解价值与相对愿望单节省律筹数中的较高值。Boss 证明、首次暗金解锁和剧情物品不计 V。
+Token-value V is balance/test-only: one currently needed token=1 V; other types valued after 3:1 exchange;10 dust=1 V; equipment takes greater of immediate dismantling or wishlist-relative token savings. Boss proofs, first unique unlocks, story items excluded.
 
-标准 15 分钟、同难度契约的目标为：
+Standard 15-minute same-difficulty target:
 
-| 模式 | 期望可支配价值 |
+| Mode | Expected spendable value |
 |---|---:|
-| 完整自动 | 10V，允许区间 8–12V |
-| 手动猎人宝箱 | 额外 5V |
-| 手动合计 | 15V；长期为自动的 145%–155% |
+| Full Auto |10 V, acceptable 8–12 V |
+| Manual Hunter's Chest |Additional 5 V |
+| Manual total |15 V, long-run 145%–155% of Auto |
 
-猎人宝箱按契约基准时长和实际完成比例归一化；反复刷极短契约、暂停或高 APM 都不能提高单位时间倍率。自动与手动的原始怪物掉落完全相同。
+Chests normalize to baseline duration/actual completion fraction. Repeated tiny Contracts, pausing, high APM never increase value/time multiplier. Raw enemy loot identical across modes.
 
-### 17.2 构筑成本目标
+### 17.2 Build Cost Targets
 
-| 目标 | P50 预期成本 | P90 上限 |
+| Goal | P50 cost | P90 ceiling |
 |---|---:|---:|
-| 单件获得 1 条指定普通词 | 4–8V | 12V |
-| 单件完成 4 条指定 T1 词 | 20–30V | 36V |
-| 首条指数战斗 Build | 35–55V | 70V |
-| 稳定三技能代理 Build | 70–110V | 140V |
-| 两至三层固定嵌套升级 | 120–180V | 220V |
-| 结果反馈终局升级 | 180–260V | 320V |
+| One specified ordinary affix on one item |4–8 V |12 V |
+| Four specified T1 affixes on one item |20–30 V |36 V |
+| First exponential combat build |35–55 V |70 V |
+| Stable three-skill proxy |70–110 V |140 V |
+| Two/three-layer nesting upgrade |120–180 V |220 V |
+| Feedback endgame upgrade |180–260 V |320 V |
 
-金币只支付服务费，不形成第二个长刷门槛：每枚添铸律筹 40、每枚改写律筹 60、每枚精炼律筹 80、法则刻印 300 加法则尘、突变 1,000 加突变核心。0–10 小时金币总支出目标为总收入的 55%–75%；律筹已经足够时，金币缺口不得超过两个标准契约。
+Gold is service fee, not another long grind: Inscription 40/token, Rewrite 60, Refinement 80, law inscription 300+dust, mutation 1,000+core. At 0–10h target gold spending 55%–75% income. With enough tokens, gold shortage cannot exceed two standard Contracts.
 
-### 17.3 掉落与防套利规则
+### 17.3 Loot and Anti-Arbitrage
 
-- 普通 / 精英 / Boss 装备完成度继续按 1–2 / 2–3 / 3–4 词；强敌提高完整度、律筹数量与高档权重，不改变圣律种子的优劣分布。
-- 指定普通词的改写距离 P90 不超过 12 枚改写律筹；四词愿望路线 P90 不超过 36 枚对应律筹。
-- 通用法则标签 4 份契约硬保底；关键暗金采用首杀解锁、世界掉落与研究制作三路收敛。
-- 拆解返还以 0.1 枚律筹碎片精确记录。只返还真正落锤在物品上的投入；为了越过圣律序列中间结果而消耗的律筹不计装备投资，防止预览—拆解套利。
-- 3:1 兑换不额外收费，且所有购买、锻造、返还、兑换闭环的净资源增量必须 ≤0。
-- 代理与角色装备共享三类律筹，但代理阶段 P90 玩家仍需保留至少 20V 自由资源，不能被迫拆掉刚完成的指数 Build。
+- Ordinary/elite/Boss completion 1–2/2–3/3–4 affixes. Stronger enemies raise completion/token amounts/high-grade weights, not seed quality distribution.
+- Target ordinary-affix Rewrite distance P90≤12 Rewrite Tokens; four-affix wishlist P90≤36 matching tokens.
+- Law-tag hard guarantee four Contracts. Key uniques converge through first unlock/world/research.
+- Refunds record 0.1-token fragments. Only actual investment committed onto the item returns; tokens spent skipping intermediate sequence outcomes do not count as item investment, preventing preview/dismantle arbitrage.
+- No extra 3:1 fee. Every purchase/forge/refund/exchange cycle must have net resources≤0.
+- Shared character/proxy tokens, but proxy-stage P90 players retain≥20 V flexible resources, never forced to dismantle a just-completed exponential build.
 
-## 18. 界面、信息揭示与可读性
+## 18. Interface, Discovery, Readability
 
-### 18.1 基地闭环
+### 18.1 Base Loop
 
-基地只保留六个一眼可见的功能点：契约台、装备 / 符文页、律筹锻造台、训练木桩与战报、代理舱、不朽祭坛。物品详情从上到下固定显示：载体与数值 → 语义法则 → 当前接通 / 缺失接口 → 圣律序列预览入口 → 来源与研究进度。
+Only six immediately visible facilities: Contract Board, Loadout/runes, Law Token Forge, Training dummy/reports, Proxy Bay, immortality altar. Item detail order: carrier/numbers → semantic laws → connected/missing interfaces → sequence preview → source/research.
 
-Build 预设总是成对保存“角色 Build + 代理 Build”，但手动模式只装载角色侧；进入契约前确认模式，战斗中不能切换。基地改装免费、无时间成本；契约内装备、天赋、代理和模式均锁定。
+Presets always pair character+proxy builds, though Manual loads character side only. Confirm mode before entry, no combat switching. Free instantaneous base changes; equipment/talents/proxy/mode locked inside Contracts.
 
-### 18.2 战斗 HUD
+### 18.2 Combat HUD
 
-主画面只显示生命 / 不朽状态、三个主动技能、当前关键状态、目标血条、短数量级伤害与模式锁。不会把完整公式常驻屏幕。玩家可随时展开一层摘要：当前增长类型、迭代长度、最近一次阻断；战斗后再看完整事件树。
+Only health/immortality, three actives, current key state, target health, short damage magnitude, mode lock. No permanent full formulas. Expand one summary anytime: growth type, iteration length, latest block; full event tree after combat.
 
-大数显示分层：
+Magnitude tiers:
 
-- 小于 10^6：常规整数与千分位；
-- 科学计数仍可读时：`1.24e83`；
-- 指数本身巨大时：`10^(1.7e42)`；
-- 固定塔：`10↑↑3 · top=6.0`；
-- 可变高度：`10↑↑H`，单独显示高度 H 的来源表达式。
+- Below 10^6: ordinary integers/thousands separators.
+- Readable scientific notation: `1.24e83`.
+- Huge exponent: `10^(1.7e42)`.
+- Fixed tower: `10↑↑3 · top=6.0`.
+- Variable height: `10↑↑H`, separately show H's source expression.
 
-血条不是把巨大数压成浮点比例；同层时显示可计算比例，跨层时显示“相差 N 个指数层”或结构差。Boss 不显示推荐战力、TTK 或解题提示。
+No floating-point compression of huge health ratios: calculable ratio in same layer, otherwise N exponent-layer difference/structural gap. No recommended power, TTK, solution hints for Bosses.
 
-### 18.3 发现与解释
+### 18.3 Discovery and Explanation
 
-- p、x、a、b、寿命、距离档和热量等公式参数始终可见。
-- “收敛 / 临界 / 指数 / 固定塔 / 可变塔”的结论必须由玩家在木桩或实战中首次验证后，才写入法典与 Build 面板。
-- 未接通结构时，词条直接显示缺失接口，例如“需要：可繁殖事件”或“需要：整链刷新”，避免纯粹死词。
-- 战报先给一句可行动结论，再允许逐层展开表达式、来源、法则访问和阻断。自动失败同样先显示唯一主因。
-- 色彩不作为唯一信息；临界跨越、掉落品质和危险前摇同时使用图形、文字或音效编码。支持伤害数字密度、屏幕震动、闪烁与代表特效数量调节。
+- p,x,a,b,lifetime,distance bands,heat always visible.
+- Convergent/critical/exponential/fixed tower/variable tower conclusions enter Codex/build panel only after first dummy/combat verification.
+- Disconnected affixes explicitly show missing interface, e.g. requires reproducing events / whole-chain refresh, avoiding dead text.
+- Reports start with one actionable conclusion, then expression/source/visited-law/block expansion. Auto failures likewise one primary cause first.
+- Never color-only: thresholds/rarity/danger tells also use shape/text/audio. Adjustable damage-number density, shake, flashing, representative-effect count.
 
-## 19. 实施顺序与首个垂直切片
+## 19. Implementation Order and First Vertical Slice
 
-### 19.1 当前技术切片
+### 19.1 Technical Slice
 
-第一条可玩切片只实现游侠路线，先验证最高风险的共享寿命、分支聚合、目标历史和大数比较：
+First playable slice is Ranger only, testing highest-risk shared lifetime, branching aggregation, target history, large-number comparison:
 
-- 单房间像素竞技场、移动、闪避、自动瞄准、穿刺箭；
-- 普通敌群、训练木桩与无回血的阈门巨像原型；
-- p=25%、四档 p 词、孳生分裂、群猎印记、共享到期时间；
-- 收敛、临界、指数三套可切换预设；
-- 代表箭表现与符号事件包伤害；
-- 手动合同与白装代理合同互斥；
-- 最小确定性掉落、圣律种子预览和失败日志；
-- Linux / Windows x86_64 导出配置与无头测试。
+- Single pixel arena, movement, Dodge, aim assist, Piercing Arrow.
+- Ordinary enemies, dummy, nonhealing Threshold Colossus prototype.
+- p=25%, four p grades, Breeding Split, Pack Hunt Mark, shared expiry.
+- Switchable convergent/critical/exponential presets.
+- Representative arrows, symbolic-packet damage.
+- Mutually exclusive Manual/white-proxy Contracts.
+- Minimal deterministic drops, seed preview, failure logs.
+- Linux/Windows x86_64 export configuration/headless tests.
 
-`10↑↑10` 在这一切片先作为纯数值与比较测试，不提前制作最终反馈战斗。炼金、法师、完整背包、房间链、不朽与终局内容在语义核通过后增量接入。
+10↑↑10 initially numeric/comparison test only, not premature feedback combat. Add Alchemist/Mage/full inventory/room chains/immortality/endgame incrementally after semantic kernel passes.
 
-### 19.2 制作里程碑
+### 19.2 Milestones
 
-| 里程碑 | 完成定义 |
+| Milestone | Definition of done |
 |---|---|
-| M0 语义核 | 大数、事件包、确定性锻造、代理能力检查均可无头测试 |
-| M1 游侠切片 | 手动 / 自动各完成一场契约；p 临界三态可复现；双平台导出启动 |
-| M2 前期完成 | 三职业九技能、首批符文 / 法则、阈门巨像、0–4 小时进度闭环 |
-| M3 中期完成 | 契约链、律镜、完整代理掉落、四生存证明与永久不朽 |
-| M4 后期完成 | 两 / 三层嵌套、结果反馈、塔顶零号和结尾 g₁ 预告 |
-| M5 发布候选 | 经济 Monte Carlo、2 / 8 / 24 小时 soak、跨平台 replay 与存档恢复通过 |
+| M0 semantic kernel | Headless-testable numbers, packets, deterministic Forge, proxy capabilities |
+| M1 Ranger slice | One Contract per mode, reproducible three p regimes, both exports launch |
+| M2 early game | Three classes/nine skills, initial runes/laws, Colossus,0–4h loop |
+| M3 middle game | Chains, Law Mirror, full proxy drops, four proofs, immortality |
+| M4 late game | Two/three nesting layers, feedback, Spire Zero, ending g₁ teaser |
+| M5 release candidate | Economy Monte Carlo,2/8/24h soak, cross-platform replay/save recovery |
 
-内容采用稳定字符串 ID 与只含数据的资源定义；技能、法则和代理协议只能选择代码中已有的受限操作码，不能在内容文件中藏任意脚本。所有引用、标签兼容、保底、表达式预算与 Boss 可比较性在启动和 CI 中验证。
+Stable string IDs, data-only definitions. Skills/laws/protocols choose only restricted code-defined opcodes, no arbitrary scripts hidden in content. Startup/CI validate references, tag compatibility, guarantees, expression budgets, Boss comparability.
 
-## 20. 第一版验收与主要风险
+## 20. V1 Acceptance and Risks
 
-### 20.1 产品验收线
+### 20.1 Product Gates
 
-| 指标 | 通过线 |
+| Metric | Passing target |
 |---|---|
-| 首条指数路线 | P50 ≤3.5h，P90 ≤4h |
-| 白装代理首次稳定清房 | 阈门巨像首杀后 30 分钟内 |
-| 两技能自动循环 | P50 ≤6.5h，P90 ≤8h |
-| 完整自动 Build | P50 ≤8.5h，P90 ≤10h |
-| 永久不朽 | P50 8–9h，P90 ≤10h |
-| 两至三层固定嵌套 | P90 ≤14h |
-| 最终 Boss 首杀 | P50 15–16h，P90 ≤18h |
-| 通关构筑覆盖 | 三套纯职业及至少三套跨职业参考 Build 均可完成 |
+| First exponential route | P50≤3.5h, P90≤4h |
+| First stable white-proxy room | Within 30min of Colossus first kill |
+| Two-skill Auto loop | P50≤6.5h, P90≤8h |
+| Full Auto build | P50≤8.5h, P90≤10h |
+| Permanent immortality | P50 8–9h, P90≤10h |
+| Two/three-layer nesting | P90≤14h |
+| Final Boss first kill | P50 15–16h, P90≤18h |
+| Completion coverage | Three pure-class plus at least three mixed reference builds |
 
-### 20.2 系统验收线
+### 20.2 System Gates
 
-- 同一 seed、命令与内容哈希在 Linux / Windows 得到同一最终语义状态哈希。
-- 30 / 60 / 144Hz 渲染下，权威战斗结果一致；隐藏全部代表箭也不改变伤害。
-- p<0.5、p=0.5、p>0.5 分别产生收敛、临界与指数报告。
-- 1–1,000 个真实事件与聚合事件包逐 tick 等价；同谱系重复访问法则被阻断并有证明。
-- `10^4`、`10^100`、`2^n`、固定幂塔和 `10↑↑10` 比较通过；所有正式 Boss 不返回 UNKNOWN。
-- 每类底材至少跑 10,000 个圣律种子，合法目标实际不可达率为 0；经济闭环无正收益套利。
-- 三职业各准备简单、标准、毕业三套代理用例；低品质失败可由一个已显示参数或明确基底解决。
-- 标准图连续自动 2 小时不静默卡死；8 / 24 小时测试中只允许按公开停止条件结束，内存无持续增长。
-- 修改系统时钟不产生收益；写盘中断、损坏 A 槽后能从 B 槽恢复。
+- Same seed/commands/content hash produce same final semantic hash on Linux/Windows.
+- 30/60/144Hz rendering and hiding every representative arrow preserve authoritative results/damage.
+- p<0.5,p=0.5,p>0.5 report convergent/critical/exponential respectively.
+- 1–1,000 real events equivalent tick-by-tick to packets; repeated lineage law visits blocked with proof.
+- Comparisons 10^4,10^100,2^n,fixed towers,10↑↑10 pass; no official Boss UNKNOWN.
+- At least 10,000 seeds per base type, zero unreachable legal targets, no profitable economic cycles.
+- Simple/standard/finished proxy cases per class; one visible parameter or explicit base resolves low-quality failure.
+- Standard Auto 2h no silent sticking;8/24h ends only for public stops, no sustained memory growth.
+- System-clock edits yield no rewards; interrupted writes/corrupt A recover from B.
 
-### 20.3 风险控制
+### 20.3 Risk Controls
 
-| 风险 | 控制 |
+| Risk | Control |
 |---|---|
-| 规范化压死 Build 自由 | 同时保存来源表达式；只规范量级，不抹掉标签、谱系和法则结构 |
-| 符号系统膨胀成通用数学 | 只支持正数单调操作与有限节点；比较允许 UNKNOWN，正式内容禁止 UNKNOWN |
-| 聚合改变战斗语义 | 完整合并键 + 小规模真实实例差分测试 |
-| 代理变成隐藏编程语言 | 固定流水线和仲裁；基底提供 RPG 意图；禁止任意条件图与优先级重排 |
-| 26 个代理基底稀释掉落 | 分阶段入池、未见优先、类别与固件硬保底 |
-| 自动挤压手动或反之 | 同池同规则，手动仅通过独立宝箱保持约 +50% 时间价值；模式契约内锁定 |
-| 不朽令敌人失效 | 后期只增加可预警控制与任务干扰，绝不重新引入无视不朽伤害 |
-| 长时运行泄漏或存档损坏 | 环形日志、对象池、房间清理、A/B 快照、2/8/24 小时 soak |
-| 低成本画面撑不起 8 Boss | 4 套场景与 4 个场地复用，Boss 以轮廓、机关和机制区分而非堆动画 |
-| Windows 只导出未验证 | Windows runner 启动正式 exe，并与 Linux 跑同一 golden replay |
+| Normalization erases freedom | Keep source expressions; normalize magnitude, not tags/lineages/structure |
+| Symbolic system becomes universal math | Positive monotone operations/finite nodes; comparison may UNKNOWN, official content may not |
+| Aggregation changes semantics | Complete keys, small-instance differential tests |
+| Proxy hides programming language | Fixed pipeline/arbitration, RPG-intent bases, no arbitrary conditions/reordered priorities |
+|26 bases dilute drops | Staged pools, unseen-first, category/firmware guarantees |
+| Auto crowds out Manual or vice versa | Same pool/rules; independent Manual chest≈+50% time value; mode locked |
+| Immortality invalidates enemies | Telegraphable control/objective interference only, never immunity-bypassing damage |
+| Leaks/corrupt saves | Ring logs, pools, room cleanup, A/B snapshots,2/8/24h soak |
+| Cheap visuals cannot support 8 Bosses | Four kits/four arenas reused; silhouettes/mechanisms, not animation volume |
+| Windows exported but untested | Actual exe on Windows runner with same Linux golden replay |
 
-## 附录 A：24 条通用法则目录
+## Appendix A: 24 Universal Laws
 
-以下法则 I 档即拥有完整语义；II–IV 只增强最后一列附带参数。兼容槽中的“两戒”表示任一戒指槽。
+Grade I supplies full semantics; II–IV improve only the final-column parameter. "Both rings" means either ring slot.
 
-### A.1 游侠法则
+### A.1 Ranger
 
-| 法则 | 标签 / 兼容槽 | I 档完整语义 | 附带数 I / II / III / IV |
+| Law | Tags / slots | Grade-I semantics | Ancillary I / II / III / IV |
 |---|---|---|---|
-| 群猎印记 | 印记、分支；头、手、腕、戒、项链 | 仅对印记目标按箭分支分别记录命中历史；不改变共同到期 | 印记持续 +0 / 10% / 20% / 30% |
-| 回旋续猎 | 投射物、寻敌；主副手、手、戒 | 没有新目标时绕印记目标一次再寻敌；保留谱系与共同寿命 | 重寻敌半径 6 / 8 / 10 / 12 米 |
-| 余寿导羽 | 投射物、转向；主副手、腕、腰 | 转向不重置寿命，并保留本代飞行速度 | 速度保留 70% / 80% / 90% / 100% |
-| 印痕校准 | 印记、锁敌；头、手、两戒、项链 | 印记目标短暂离开视野时仍是候选；不穿越永久不可达区 | 宽限 0.4 / 0.7 / 1.1 / 1.6 秒 |
-| 突袭架弦 | 突袭、准备；主手、手、腿、腰 | 突袭结束帧可开始下一次穿刺箭前摇；不免费施法或刷新冷却 | 前摇缩短 10% / 15% / 20% / 25% |
-| 谱系收束 | 谱系、到期；副手、腕、戒、项链 | 共同到期时把尚未落地的合法箭归约成一次终点结算；不生成新箭 | 载荷保留 65% / 75% / 85% / 100% |
+| Pack Hunt Mark |Mark/branch; head,gloves,bracers,ring,necklace |Separate branch hit histories on marked target only; shared expiry unchanged |Mark duration +0 /10% /20% /30% |
+| Orbit Hunt Continuation |Projectile/targeting; main/off hand,gloves,ring |If no new target, orbit marked target once then seek; retain lineage/shared lifetime |Retarget radius 6/8/10/12m |
+| Remaining-Life Fletching |Projectile/turn; main/off hand,bracers,belt |Turns never reset life; retain current-generation speed |Speed retention 70%/80%/90%/100% |
+| Mark Calibration |Mark/lock; head,gloves,both rings,necklace |Briefly out-of-sight marked target remains candidate; no permanent unreachable-area crossing |Grace 0.4/0.7/1.1/1.6s |
+| Dash String-Setting |Dash/preparation; main hand,gloves,legs,belt |Start next Piercing Arrow tell on Dash's final frame; no free cast/cooldown reset |Tell reduction 10%/15%/20%/25% |
+| Lineage Convergence |Lineage/expiry; off hand,bracers,ring,necklace |At shared expiry reduce still-airborne legal arrows to one endpoint settlement; no new arrows |Payload retention 65%/75%/85%/100% |
 
-### A.2 炼金法则
+### A.2 Alchemist
 
-| 法则 | 标签 / 兼容槽 | I 档完整语义 | 附带数 I / II / III / IV |
+| Law | Tags / slots | Grade-I semantics | Ancillary I / II / III / IV |
 |---|---|---|---|
-| 培养皿传代 | 培养皿、继承；副手、手、腕、戒、项链 | 新层继承上一层强度并刷新整链；旧层不重新快照 | 刷新宽限 0 / 0.25 / 0.5 / 0.75 秒 |
-| 纯株培养 | 培养皿、单体；头、副手、手、戒 | 皿内只有一个敌人时，毒针唯一层始终交给该目标；不复制 | 离皿宽限 0.3 / 0.5 / 0.8 / 1.2 秒 |
-| 归巢毒针 | 毒针、失手保护；主副手、腕、腰 | 毒针完全未命中时返回并对原目标再尝试一次；命中后不返回 | 返回延迟 0.8 / 0.65 / 0.5 / 0.35 秒 |
-| 隔层析出 | 毒层、跳伤；主手、手、腕、项链 | 每新增 5 层，当前链额外跳一次；不加层、不刷新 | 载荷保留 55% / 70% / 85% / 100% |
-| 链尾析晶 | 毒链、到期；副手、腰、戒、项链 | 毒链自然到期时，把最后一个完整跳伤结算一次；主动爆瓶不触发 | 载荷保留 60% / 75% / 90% / 100% |
-| 爆瓶余馏 | 爆瓶、残留；主手、手、腕、腰 | 副目标获得一层不可继承、不可刷新的残毒；主目标整链仍清空 | 末层载荷 20% / 30% / 40% / 50% |
+| Culture Dish Inheritance |Dish/inheritance; off hand,gloves,bracers,ring,necklace |New layer inherits prior strength, refreshes whole chain, never resnapshots old layers |Refresh grace 0/0.25/0.5/0.75s |
+| Pure-Strain Culture |Dish/single target; head,off hand,gloves,ring |With one enemy in Dish, Needle's sole layer goes to it, never copies |Outside-Dish grace 0.3/0.5/0.8/1.2s |
+| Homing Needle |Needle/miss protection; main/off hand,bracers,belt |Complete miss returns for one retry on original target; hits never return |Return delay 0.8/0.65/0.5/0.35s |
+| Layer Precipitation |Poison/ticks; main hand,gloves,bracers,necklace |Every five new layers adds one current-chain tick, no layer/refresh |Payload retention 55%/70%/85%/100% |
+| Chain-Tail Crystal |Chain/expiry; off hand,belt,ring,necklace |Natural expiry settles final full tick once; active Flask does not trigger |Retention 60%/75%/90%/100% |
+| Flask Residual Distillate |Flask/residue; main hand,gloves,bracers,belt |Secondary targets get one noninheritable/nonrefreshable residual poison; primary chain still clears |Last-layer payload 20%/30%/40%/50% |
 
-### A.3 法师法则
+### A.3 Mage
 
-| 法则 | 标签 / 兼容槽 | I 档完整语义 | 附带数 I / II / III / IV |
+| Law | Tags / slots | Grade-I semantics | Ancillary I / II / III / IV |
 |---|---|---|---|
-| 回辉返还 | B→A、注入；副手、手、戒、项链 | 合法回辉按 b 把 B 转回 A 并加入 c；非法施法仍耗动作与热量 | c 额外 +0 / 10% / 20% / 30% |
-| 相位锁定 | 转化、打断；头、胸、腕、项链 | 前摇被打断时不提前扣输入资源；动作时间和热量不返还 | 相位保留 0.4 / 0.7 / 1.0 / 1.4 秒 |
-| 交替谐振 | 轮换、回执；主副手、手、戒 | 焚脉与回辉各成功一次后，下一轮加入一次固定注入；同技重复不推进 | c 的 25% / 40% / 60% / 80% |
-| 焚脉贯体 | 焚脉、穿透；主副手、腕、项链 | 焚脉伤害穿过主目标命中一个后继；资源转化只结算一次 | 后继载荷 45% / 60% / 75% / 90% |
-| 炉壁缓冲 | 热量、终仪；胸、裤、腕、腰 | 满热命令先提交自动终仪，再接受同 tick 的普通打断 | 终仪前摇缩短 0 / 10% / 20% / 30% |
-| 终仪定锚 | 终仪、位移；主手、胸、手、项链 | 已开始的终仪不因普通击退取消，结算点固定；沉默仍可阻止启动 | 可承受位移 2 / 3 / 4 / 6 米 |
+| Returning Radiance Return |B→A/injection; off hand,gloves,ring,necklace |Legal Radiance converts B to A by b and adds c; invalid casts still cost action/heat |Additional c +0/10%/20%/30% |
+| Phase Lock |Conversion/interruption; head,chest,bracers,necklace |Interrupted tell does not prematurely debit input; time/heat not refunded |Phase retention 0.4/0.7/1.0/1.4s |
+| Alternating Resonance |Rotation/acknowledgement; main/off hand,gloves,ring |One successful Vein and Radiance add one fixed injection next cycle; repeated same skill does not advance |25%/40%/60%/80% of c |
+| Body-Piercing Vein |Vein/pierce; main/off hand,bracers,necklace |Damage passes primary to one successor; resource conversion once only |Successor payload 45%/60%/75%/90% |
+| Furnace-Wall Buffer |Heat/Finale; chest,trousers,bracers,belt |Full-heat command commits automatic Finale before same-tick ordinary interruption |Finale tell reduction 0/10%/20%/30% |
+| Finale Anchor |Finale/displacement; main hand,chest,gloves,necklace |Ordinary knockback cannot cancel started Finale, fixed settlement point; silence may prevent start |Tolerated movement 2/3/4/6m |
 
-### A.4 跨职业法则
+### A.4 Cross-Class
 
-| 法则 | 标签 / 兼容槽 | I 档完整语义 | 附带数 I / II / III / IV |
+| Law | Tags / slots | Grade-I semantics | Ancillary I / II / III / IV |
 |---|---|---|---|
-| 快照接力 | 快照、后继；头、副手、两戒、项链 | 一个载体快照可供下一次不同主动技能消费；随后销毁且不能回旧载体 | 有效 2 / 3 / 4 / 6 个动作 |
-| 异源封装 | 标签、谱系；头、腕、腰、项链 | 跨职业传递保留来源职业、载体和结算标签，防止错误合并 | 保留 3 / 4 / 5 / 6 个标签 |
-| 余寿温育 | 投射物、状态；主副手、戒、项链 | 谱系结束时，剩余寿命决定下一放置状态持续；不能反向延长原谱系 | 换算 40% / 55% / 70% / 85% |
-| 标记蒸馏 | 印记、持续伤害；手、腕、两戒、项链 | 印记目标完成持续伤害结算后，生成供不同载体消费的一次载荷快照 | 保留 35% / 50% / 65% / 80% |
-| 热化引信 | 热量、兑现；主副手、腰、项链 | 满热终仪令已合法的爆瓶进入可兑现状态；仍需执行爆瓶 | 保留 1 / 1.5 / 2 / 3 秒 |
-| 三式合拍 | 三槽、回执；头、手、腰、项链 | 三个不同槽依次成功后，下一次单向快照不因普通换位丢失 | 序列保留 3 / 4 / 5 / 7 秒 |
+| Snapshot Relay |Snapshot/successor; head,off hand,both rings,necklace |Next different active consumes one carrier snapshot, then destroys it; no return to old carrier |Valid 2/3/4/6 actions |
+| Foreign-Source Packaging |Tags/lineage; head,bracers,belt,necklace |Cross-class handoff preserves source class/carrier/settlement tags against wrong merge |Retain 3/4/5/6 tags |
+| Remaining-Life Incubation |Projectile/state; main/off hand,ring,necklace |At lineage end, remaining life determines next placed state's duration; no retroactive lineage extension |Conversion 40%/55%/70%/85% |
+| Mark Distillation |Mark/DoT; gloves,bracers,both rings,necklace |Completed marked-target DoT settlement creates one payload snapshot for a different carrier |Retention 35%/50%/65%/80% |
+| Heat Fuse |Heat/cashout; main/off hand,belt,necklace |Full-heat Finale makes already-legal Flask cashable; Flask must still execute |Retention 1/1.5/2/3s |
+| Three-Form Synchrony |Three slots/acknowledgement; head,gloves,belt,necklace |After three distinct slots succeed in order, next one-way snapshot survives ordinary reposition |Sequence retention 3/4/5/7s |
 
-## 附录 B：35 枚符文目录
+## Appendix B: 35 Runes
 
-每个技能同一时间最多装备 1 枚语义符文；T1 / T2 / T3 是加入世界洗牌袋的阶段，不是同符文升级。
+At most one semantic rune per skill. T1/T2/T3 indicate world-shuffle-bag entry stage, not upgrades to one rune.
 
-### B.1 27 枚语义符文
+### B.1 27 Semantic Runes
 
-| 技能 | T1 | T2 | T3 |
+| Skill | T1 | T2 | T3 |
 |---|---|---|---|
-| 穿刺箭 | **孳生分裂**：续行后生一支可繁殖子箭，共享到期 | **载印穿界**：消费一个异源快照作初始载荷 | **高度箭簇**：读取外部 H 作为符号箭簇参数；不产生 H |
-| 猎人印记 | **分枝刻度**：按分支统计命中并把溢出命中转暴击层 | **快照印泥**：记录一个快照供一个后继读取 | **高度刻痕**：记录外部 H 供不同载体使用；不回传 |
-| 突袭 | **掠影续时**：突袭期间暂停已有箭谱系寿命 | **越界携行**：携带一个未消费快照跨位移；不复制 | **登塔踏步**：三槽完成后把外部 H 交给下一载体；不增高 |
-| 毒针 | **独立菌层**：每次合法施法产生一层独立毒，每目标每次最多一层 | **载荷接种**：消费异源快照作第一层毒性 | **高度孢子**：读取外部 H 作初始层序；不反写 |
-| 培养皿 | **单株温床**：固定一目标并公开皿与毒链两条计时 | **快照基质**：暂存一个快照，下一毒针命中时消费 | **塔层培养**：外部 H 映射为容量；容量不生成 H |
-| 爆炸瓶 | **定量压缩**：按预设秒数兑现未来毒伤并清空整链 | **分段破瓶**：同一兑现拆三次顺序脉冲，总载荷不增 | **高度蒸馏**：输出异源后继可读的高度候选；自身不消费 |
-| 焚脉 | **奥能焚转**：打开 A→B；资源不足仍产热 | **快照燃料**：消费异源快照作本次 A 输入 | **塔顶点火**：读取外部 H 作初始资源量级；不产 H |
-| 回辉 | **定相回声**：只在上次有效转化为焚脉时提交 | **余量封装**：将未进下一轮的余量输出为单次快照 | **高度回声**：保存外部 H 供终仪读；不接回终仪结果 |
-| 星炉终仪 | **定点终仪**：兑现全部能量，满热自动，随后资源与热量重置 | **星数封存**：输出只供不同载体消费的星数快照 | **塔高观测**：读取 H 并结算有限高度幂塔；不清历史 |
+| Piercing Arrow | **Breeding Split:** one reproducing child after continuation, shared expiry | **Seal-Carrying Pierce:** foreign snapshot as initial payload | **Height Arrow Cluster:** read external H as symbolic cluster parameter, never produce H |
+| Hunter's Mark | **Branch Tally:** per-branch hits, overflow into crit layers | **Snapshot Ink:** one snapshot for one successor | **Height Notch:** external H for a different carrier, no return |
+| Dash | **Fleeting Shadow:** pause existing arrow-lineage life during Dash | **Boundary Carry:** move one unconsumed snapshot, no copy | **Tower Step:** after three slots pass external H onward, never raise it |
+| Poison Needle | **Independent Culture:** one independent poison per legal cast, max one per target/cast | **Payload Inoculation:** foreign snapshot as first-layer toxicity | **Height Spore:** external H as initial layer index, no writeback |
+| Culture Dish | **Single-Strain Bed:** fix one target, expose Dish/chain timers | **Snapshot Medium:** hold one snapshot for next Needle hit | **Tower Culture:** map external H to capacity; capacity never generates H |
+| Explosive Flask | **Measured Compression:** preset future seconds, clear whole chain | **Segmented Flask:** split same cashout into three ordered pulses, unchanged total | **Height Distillation:** output height candidate for foreign successor, no self-consumption |
+| Burning Vein | **Arcane Burning Conversion:** A→B, insufficient resource still heats | **Snapshot Fuel:** foreign snapshot as current A input | **Tower-Top Ignition:** external H as initial resource magnitude, no H creation |
+| Returning Radiance | **Fixed-Phase Echo:** commit only if last valid conversion was Vein | **Remainder Packaging:** one snapshot of remainder not entering next cycle | **Height Echo:** hold external H for Finale, no receiving Finale result back |
+| Star Furnace Finale | **Fixed-Point Finale:** all energy, automatic at full heat, reset resources/heat | **Sealed Star Count:** snapshot only for different carrier | **Tower-Height Observation:** read H, settle finite-height tower, no history clear |
 
-### B.2 八枚通用数值符文
+### B.2 Eight Generic Numeric Runes
 
-| 符文 | 兼容标签 | I / II / III / IV |
+| Rune | Compatible tags | Grades I / II / III / IV |
 |---|---|---|
-| 强载 | 伤害载体 | 基础载荷 +10% / 16% / 24% / 34% |
-| 迅击 | 攻击 | 攻速 +5% / 8% / 11% / 15% |
-| 咏速 | 施法 | 施法速度 +5% / 8% / 11% / 15% |
-| 延时 | 投射物、状态 | 持续 +8% / 12% / 18% / 25% |
-| 广域 | 范围、放置、爆炸 | 范围 +8% / 12% / 18% / 25% |
-| 疾行 | 投射物 | 投射物速度 +8% / 13% / 19% / 27% |
-| 锐击 | 可暴击载体 | 暴击率 +6 / 10 / 15 / 21 个百分点 |
-| 稳式 | 有前摇技能 | 抗打断 +8% / 14% / 22% / 32% |
+| Heavy Payload | Damage carrier | Base payload +10%/16%/24%/34% |
+| Swift Strike | Attack | Speed +5%/8%/11%/15% |
+| Quick Chant | Cast | Speed +5%/8%/11%/15% |
+| Extended Time | Projectile/state | Duration +8%/12%/18%/25% |
+| Broad Field | Area/placement/explosion | Area +8%/12%/18%/25% |
+| Fleet Flight | Projectile | Speed +8%/13%/19%/27% |
+| Keen Strike | Crit-capable carrier | Crit chance +6/10/15/21 percentage points |
+| Steady Form | Skill with tell | Interruption resistance +8%/14%/22%/32% |
 
-## 附录 C：T2 / T3 替换词条池
+## Appendix C: T2/T3 Replacement Affix Pools
 
-进入新潜能档后，下表替换已经失去意义的基础威力、暴击倍率等小乘区，不与 T1 池混抽。所有值是首轮原型锁值。
+New potential tiers replace obsolete base-power/crit-multiplier small factors, never mixing with T1. Initial prototype locked values.
 
-### C.1 T2 固定嵌套阶段
+### C.1 T2 Fixed Nesting
 
-| 家族 | 作用 | I / II / III / IV |
+| Family | Effect | I / II / III / IV |
 |---|---|---|
-| 游侠起始代数 | 穿刺箭从有限额外代数开始；不改变分裂规则 | +1 / +2 / +3 / +4 代 |
-| 游侠共同余寿 | 增加整谱系共同寿命；不给子箭新寿命 | +1 / +1.5 / +2.2 / +3 秒 |
-| 炼金预热层序 | 每场首次合法毒针获得有限起始层；不重复 | +1 / +2 / +3 / +4 层 |
-| 炼金断链宽限 | 到期后短暂可刷新；宽限内不继续跳伤 | 0.2 / 0.35 / 0.55 / 0.8 秒 |
-| 法师起始注入 | 每场首次焚脉获得固定 c 注入 | +1 / +2 / +3 / +5 个 c |
-| 法师轮换容错 | 一次控制后保留最近已确认 A/B 相位 | 0.4 / 0.7 / 1 / 1.5 秒 |
-| 快照结算保留 | 单向传递时保留来源量级 | 60% / 70% / 80% / 90% |
-| 快照有效动作 | 快照可等待若干动作后再消费 | 1 / 2 / 3 / 4 动作 |
-| 后继准备窗口 | 消费快照技能的合法施放窗口 | 0.5 / 0.8 / 1.2 / 1.8 秒 |
-| 谱系字段预算 | 增加快照可保留来源标签；不加节点类型 | +1 / +2 / +3 / +4 字段 |
-| 三槽序列保留 | 位移或失去目标后暂存三技能进度 | 0.5 / 0.9 / 1.4 / 2 秒 |
-| 结算截断保护 | 控制造成提前兑现时保留完整整数迭代 | 1 / 2 / 3 / 4 轮 |
+| Ranger starting generations |Finite extra initial Arrow generations, splitting unchanged |+1/+2/+3/+4 generations |
+| Ranger shared remaining life |Whole-lineage life, no fresh child life |+1/+1.5/+2.2/+3s |
+| Alchemist warmup layer index |First legal Needle per encounter gets finite starting layers, nonrepeatable |+1/+2/+3/+4 layers |
+| Alchemist chain-break grace |Brief refresh after expiry, no ticks during grace |0.2/0.35/0.55/0.8s |
+| Mage starting injection |First Vein per encounter fixed c injection |+1/+2/+3/+5 copies of c |
+| Mage rotation tolerance |Retain latest confirmed A/B phase after one control |0.4/0.7/1/1.5s |
+| Snapshot settlement retention |Preserve source magnitude on one-way transfer |60%/70%/80%/90% |
+| Snapshot valid actions |Wait before consumption |1/2/3/4 actions |
+| Successor preparation window |Legal cast window for snapshot consumer |0.5/0.8/1.2/1.8s |
+| Lineage field budget |Additional retained source tags, not node types |+1/+2/+3/+4 fields |
+| Three-slot sequence retention |Progress after movement/target loss |0.5/0.9/1.4/2s |
+| Settlement truncation protection |Retain complete integer iterations on control-forced cashout |1/2/3/4 cycles |
 
-### C.2 T3 结果反馈阶段
+### C.2 T3 Result Feedback
 
-下列词只有装备“归一之冠”时生效；否则显示“当前未接通：结果反馈”。
+These affixes activate only with Crown of Return; otherwise show Missing interface: result feedback.
 
-| 家族 | 作用 | I / II / III / IV |
+| Family | Effect | I / II / III / IV |
 |---|---|---|
-| 初始塔高 | 每场第一次完整三槽序列获得固定 H 起点 | H+1 / +2 / +3 / +4 |
-| 完整序列增高 | 每完成一次合法三槽序列，提高下一反馈 H | +1 / +2 / +3 / +4 |
-| 反馈高度保留 | 新一轮读取旧结果时保留既有 H | 60% / 70% / 80% / 90% |
-| 顶项保留 | 塔高相同时保留上一轮 top 参数 | 50% / 65% / 80% / 95% |
-| 反馈候选寿命 | 结果等待下一轮三槽序列的有效动作 | 2 / 3 / 5 / 8 动作 |
-| 断序塔层保护 | 控制中断时保留已完成、未反馈的整数层 | 1 / 2 / 3 / 4 层 |
-| 高度记录精度 | 代理可辨识比较的 H 档数 | 4 / 6 / 8 / 10 档 |
-| 反馈回执容量 | 代理记忆保存的最近消费回执 | 1 / 2 / 3 / 4 条 |
-| 重启准备缩短 | 反馈完成后下一轮首技能准备缩短 | 10% / 16% / 24% / 34% |
-| 单源高度注入 | 一个合法外部快照每轮一次提高 H | +1 / +2 / +3 / +4 |
-| 塔层结算保留 | 提前终止时保留已完成塔层伤害 | 55% / 70% / 85% / 100% |
-| 三槽相位宽限 | 任一技能失去目标时序列暂不清空 | 0.5 / 0.8 / 1.2 / 1.8 秒 |
+| Initial tower height |First complete three-slot sequence each encounter gets fixed starting H |H+1/+2/+3/+4 |
+| Complete-sequence height gain |Each legal sequence raises next feedback H |+1/+2/+3/+4 |
+| Feedback height retention |Retain existing H when next cycle reads old result |60%/70%/80%/90% |
+| Top-term retention |Same-height tower keeps prior top parameter |50%/65%/80%/95% |
+| Feedback candidate lifetime |Actions while waiting for next three-slot sequence |2/3/5/8 actions |
+| Interrupted tower-layer protection |Retain complete not-yet-fed-back integer layers under control |1/2/3/4 layers |
+| Height-record precision |H grades proxy can distinguish/compare |4/6/8/10 grades |
+| Feedback acknowledgement capacity |Recent consumption receipts in proxy memory |1/2/3/4 |
+| Restart preparation reduction |Next first-skill preparation after feedback |10%/16%/24%/34% |
+| Single-source height injection |One legal external snapshot raises H once per cycle |+1/+2/+3/+4 |
+| Tower-layer settlement retention |Completed-layer damage retained on early termination |55%/70%/85%/100% |
+| Three-slot phase grace |Do not immediately clear sequence on any target loss |0.5/0.8/1.2/1.8s |
 
-内容验证器必须拒绝：无归一之冠却激活反馈词、两个清历史来源、H 被同一技能自产自用、未执行三槽序列便自动增高，以及任何高于有限高度幂塔的操作节点。
+Validator rejects feedback affixes without Crown, two history-clear sources, same skill self-producing/consuming H, automatic height gain without three-slot execution, and operations beyond finite-height towers.
 
-## 附录 D：关键暗金与突变目录
+## Appendix D: Key Uniques and Mutation
 
-### D.1 八件关键暗金
+### D.1 Eight Key Uniques
 
-| 来源 Boss | 暗金 | 固定关键法则与首杀用途 |
+| Source Boss | Unique | Fixed key law / first-kill use |
 |---|---|---|
-| 阈门巨像 | 阈门测径仪 | 显示实际增长阶层与首个阻断接口；不增伤。首杀解锁代理、不朽计划、协同潜能与指数报告 |
-| 铁刑官 | 不移铁楔 | 一次强击退只移动角色，不清除已确认相位和计时；授予物理 / 击退证明 |
-| 棱光母体 | 折光步衣 | 成功闪避公开元素爆发时保存闪避前目标与计时；授予回避证明，不提供免疫 |
-| 腐潮园丁 | 净种蒸馏釜 | 恢复事件清一层腐化压制；不朽后重铸为缩短一次沉默；授予恢复证明 |
-| 断序者 | 续章指环 | 被打断后从最后成功回执继续，不猜下一步；授予稳定证明并开放预见潜能 |
-| 双印档案官 | 单继档案册 | 一个快照供下一次不同技能消费；仍只有一个后继。解锁 T2 与两层嵌套 |
-| 三相编织者 | 归一之冠 | 完整三槽序列后可清一次谱系访问历史，将结果作下一轮新种；必须重跑三槽。它是唯一反馈来源并在最终 Boss 前获得 |
-| 塔顶零号 | 封印测高仪 | 记录本次最高塔高并展示被封印的 g₁ 远景；第一版内不再提供新战斗力量 |
+| Threshold Colossus | Threshold Gauge | Actual growth class/first blocked interface, no damage bonus. First kill unlocks proxy/immortality plan/Coordination/exponential report |
+| Iron Warden | Steadfast Wedge | Heavy knockback moves actor without clearing confirmed phase/timers; physical/knockback proof |
+| Prismatic Matrix | Prismstep Mantle | Successful public elemental-burst Dodge preserves prior target/timing; evasion proof, no immunity |
+| Blight Gardener | Seed-Cleansing Still | Recovery clears one corruption-suppression layer; reforges after immortality to shorten one silence; recovery proof |
+| Sequence Breaker | Continuance Ring | Resume last successful acknowledgement after interruption, never guess next; stability proof/Foresight unlock |
+| Twin-Seal Archivist | Single-Successor Ledger | One snapshot for next different skill, still one successor; T2/two-layer unlock |
+| Threefold Weaver | Crown of Return | After complete three-slot sequence, clear lineage visit history once and seed next cycle with result; must rerun three slots. Sole feedback source, acquired before final Boss |
+| Spire Zero | Sealed Height Gauge | Highest height record/sealed g₁ horizon; no further v1 combat power |
 
-全游戏只有归一之冠带 `result_feedback` 标签，一套 Build 最多装备一件。塔顶零号的奖励只承担结尾与后续版本接口，绝不反过来成为击败自己的必要物。
+Only Crown of Return carries result_feedback in the whole game; at most one per build. Zero's reward is ending/later-version interface, never its own defeat prerequisite.
 
-### D.2 十二组越界突变
+### D.2 Twelve Over-Limit Mutations
 
-| 分类 | 突变包 | 收益 | 代价 |
+| Category | Package | Benefit | Cost |
 |---|---|---|---|
-| 通用 | 独槽极化 | 指定已有数值词越过 IV 一档 | 禁用另一普通数值槽 |
-| 通用 | 急行超载 | 现有攻速或施法速度额外 +25% | 动作资源成本 +20% |
-| 通用 | 长效脆化 | 现有寿命或状态窗口 +40% | 技能范围 -25% |
-| 通用 | 结算偏置 | 现有兑现保留率 +15 个百分点 | 主目标只能是当前锁定目标 |
-| 游侠 | 轻羽越界 | 投射物速度越界一档，最短转向 -15% | 共同寿命 -20% |
-| 游侠 | 近猎偏执 | p 词越界一档 | 穿刺箭只在近 / 中档寻敌 |
-| 炼金 | 浓株越界 | x 词越界一档 | 基础毒持续 -25% |
-| 炼金 | 压瓶偏执 | 爆瓶兑现时长越界一档 | 爆瓶不再溅射 |
-| 法师 | 双相过载 | 指定 a 或 b 越界一档 | 每次施法热量 +25% |
-| 法师 | 炉心扩张 | 热容量越界一档 | 提前终仪兑现率 -15 个百分点 |
-| 跨职业 | 异源浓缩 | 跨职业快照保留 +15 个百分点 | 有效期 -1 动作，最低 1 |
-| 跨职业 | 三式孤注 | 已有三槽序列附带参数提高一档 | 三槽至少来自两职业，契约内锁定 |
+| Universal | Single-Slot Polarization | Existing specified numeric affix one grade beyond IV | Disable another numeric slot |
+| Universal | Haste Overload | Existing attack/cast speed additional +25% | Action resource cost +20% |
+| Universal | Lasting Brittleness | Existing life/status window +40% | Skill area -25% |
+| Universal | Settlement Bias | Existing cashout retention +15 percentage points | Primary only current locked target |
+| Ranger | Lightfeather Overreach | Projectile speed one grade beyond, minimum turn -15% | Shared life -20% |
+| Ranger | Close-Hunt Fixation | p affix one grade beyond | Arrow seeks only near/mid bands |
+| Alchemist | Concentrated-Strain Overreach | x one grade beyond | Base poison duration -25% |
+| Alchemist | Compressed-Flask Fixation | Cashout duration one grade beyond | No splash |
+| Mage | Dual-Phase Overload | Specified a or b one grade beyond | Heat/cast +25% |
+| Mage | Furnace-Core Expansion | Heat capacity one grade beyond | Early Finale rate -15 percentage points |
+| Cross-class | Foreign-Source Concentration | Snapshot retention +15 percentage points | Validity -1 action, minimum 1 |
+| Cross-class | Three-Form Commitment | Existing three-slot ancillary parameter one grade higher | At least two classes among three slots, Contract-locked |
 
-突变从不授予语义符文、法则、快照接口、反馈、闭合边或新表达式操作码。
+Mutation never grants semantic runes, laws, snapshot interfaces, feedback, closures, new expression opcodes.
 
-## 附录 E：三棵开放天赋树
+## Appendix E: Three Open Talent Trees
 
-每树 15 节点：第一层 5、第二层 5、第三层 2 个普通节点与 3 个关键天赋。每节点 1 点；第二层需本树 3 点、第三层需本树 8 点。总点数约 30，可跨树；全 Build 最多激活 2 个关键天赋。基地免费洗点，契约中锁定。
+Each has 15 nodes: five tier 1, five tier 2, two ordinary tier 3 plus three keystones. One point each; tier 2 needs three points in tree, tier 3 eight. About 30 total, cross-tree allowed, at most two active keystones across build. Free base respec, Contract-locked.
 
-### E.1 游侠：猎场学
+### E.1 Ranger: Hunting
 
-| 层 | 节点 | 效果 |
+| Tier | Node | Effect |
 |---|---|---|
-| 1 | 稳弦 | 投射物速度 +10% |
-| 1 | 长息 | 投射物共同寿命 +8% |
-| 1 | 锐眼 | 印记持续 +10% |
-| 1 | 轻步 | 突袭持续 +10% |
-| 1 | 收势 | 闪避冷却恢复 +8% |
-| 2 | 近距回转 | 最短转向时间 -8% |
-| 2 | 续行校准 | p 溢出转普通伤害效率 +20% |
-| 2 | 失焦追索 | 失去印记目标后保留候选 0.5 秒 |
-| 2 | 风切架势 | 突袭后下一技能抗打断 +25% |
-| 2 | 谱系辨识 | 战斗摘要显示有效代数与剩余寿命 |
-| 3 | 末代装填 | 到期未落地载荷保留 +15 个百分点 |
-| 3 | 三式节拍 | 三槽依次成功后，下一投射物前摇 -20% |
-| 关键 | 风行者 | 闪避与突袭不清除印记、箭谱系或三槽计时 |
-| 关键 | 临界猎手 | 每场首次到达 p 临界时固定 +2 代；不改 p、不重复 |
-| 关键 | 远近同猎 | 契约前选近 / 中 / 远姿态，分别改善转向 / 寻敌 / 寿命；契约内不切换 |
+|1 |Steady String |Projectile speed +10% |
+|1 |Long Breath |Shared life +8% |
+|1 |Keen Eye |Mark duration +10% |
+|1 |Light Step |Dash duration +10% |
+|1 |Composure |Dodge cooldown recovery +8% |
+|2 |Close-Range Turn |Minimum turn time -8% |
+|2 |Continuation Calibration |p overflow to ordinary-damage efficiency +20% |
+|2 |Lost-Target Pursuit |Retain candidate 0.5s after marked-target loss |
+|2 |Windcut Stance |Next skill after Dash interruption resistance +25% |
+|2 |Lineage Insight |Summary shows effective generations/remaining life |
+|3 |Final-Generation Reload |Unlanded expiry payload retention +15 percentage points |
+|3 |Three-Skill Rhythm |After three slots succeed in order, next projectile tell -20% |
+|Key |Windrunner |Dodge/Dash preserve Mark, arrow lineage, three-slot timers |
+|Key |Critical Hunter |First p-threshold reach per encounter gives fixed +2 generations, no p change/repeat |
+|Key |Hunt at Any Range |Before Contract choose near/mid/far stance improving turn/targeting/life respectively; no mid-Contract switching |
 
-### E.2 炼金：传代学
+### E.2 Alchemist: Cultivation
 
-| 层 | 节点 | 效果 |
+| Tier | Node | Effect |
 |---|---|---|
-| 1 | 精准接种 | 毒针投射物速度 +10% |
-| 1 | 长效菌株 | 基础毒持续 +8% |
-| 1 | 稳定皿壁 | 培养皿持续 +10% |
-| 1 | 细密跳动 | 毒跳频率 +8% |
-| 1 | 厚底瓶 | 爆瓶兑现时长 +0.5 秒 |
-| 2 | 断链预兆 | 毒链结束前 0.8 秒独立预警 |
-| 2 | 单株追踪 | 培养皿目标离场后保留 0.5 秒 |
-| 2 | 分层记录 | 战报显示每层 x 快照与来源 |
-| 2 | 稳手投瓶 | 爆瓶前摇抗打断 +25% |
-| 2 | 末跳保护 | 到期前已经提交的最后毒跳保证结算 |
-| 3 | 预热培养 | 每场首次培养皿获得 +1 个有限起始层序 |
-| 3 | 三式发酵 | 三槽依次成功后，下一毒层获一次等值固定注入 |
-| 关键 | 活体温床 | 培养皿目标死亡时皿转移到最近合法目标；原毒链不转移 |
-| 关键 | 刻度爆破 | 契约前选短 / 中 / 长兑现窗；总伤严格来自被消费毒链 |
-| 关键 | 纯株祖液 | 每场第一层毒获固定初始毒性；不继承上场结果、不重复 |
+|1 |Precise Inoculation |Needle speed +10% |
+|1 |Long-Lived Strain |Base poison duration +8% |
+|1 |Stable Culture Walls |Dish duration +10% |
+|1 |Fine Pulses |Poison tick frequency +8% |
+|1 |Thick-Bottomed Flask |Cashout duration +0.5s |
+|2 |Chainbreak Omen |Independent warning 0.8s before chain end |
+|2 |Single-Strain Tracking |Retain Dish target 0.5s after departure |
+|2 |Layered Records |Report each layer's x snapshot/source |
+|2 |Steady Flask Throw |Flask-tell interruption resistance +25% |
+|2 |Final Tick Protection |Last tick committed before expiry guaranteed to settle |
+|3 |Preheated Culture |First Dish per encounter +1 finite starting layer index |
+|3 |Three-Skill Fermentation |After three ordered slots, next poison layer gets one equal-value fixed injection |
+|Key |Living Hotbed |On Dish-target death, transfer Dish to nearest legal target, not poison chain |
+|Key |Measured Detonation |Choose short/mid/long cashout window before Contract; total strictly from consumed chain |
+|Key |Pure Ancestral Strain |First poison layer each encounter fixed initial toxicity; no prior-encounter inheritance/repeat |
 
-### E.3 法师：星炉学
+### E.3 Mage: Starforge
 
-| 层 | 节点 | 效果 |
+| Tier | Node | Effect |
 |---|---|---|
-| 1 | 焚流 | 焚脉施法速度 +8% |
-| 1 | 回光 | 回辉施法速度 +8% |
-| 1 | 炉容 | 热容量 +10% |
-| 1 | 冷壁 | 每次施法热量 -5% |
-| 1 | 星准 | 终仪兑现率 +10 个百分点，不越既定上限 |
-| 2 | 相位读数 | HUD 显示最后有效转化与下一合法相位 |
-| 2 | 断序记忆 | 打断后保留最后成功相位 0.6 秒 |
-| 2 | 空转警示 | 无效施法前以图形与音效提示资源不匹配 |
-| 2 | 注入校准 | 固定注入 c +15% |
-| 2 | 定锚咏唱 | 终仪可承受击退距离 +2 米 |
-| 3 | 初燃 | 每场第一次焚脉获得 +1c 固定注入 |
-| 3 | 三式点星 | 三槽依次成功后，下一终仪获一颗固定星；每序列一次 |
-| 关键 | 双相专注 | 一次普通控制不清已确认 A→B 或 B→A 相位；资源仍按实际动作算 |
-| 关键 | 星炉司仪 | 契约前指定自动终仪热阈；低阈减少递推轮数，不增兑现率 |
-| 关键 | 有序余辉 | 提前终仪后保留最近成功回执，便于正确重启；不保留能量或热量 |
+|1 |Burning Flow |Vein cast speed +8% |
+|1 |Returning Light |Radiance cast speed +8% |
+|1 |Furnace Capacity |Heat capacity +10% |
+|1 |Cold Walls |Heat/cast -5% |
+|1 |Stellar Precision |Finale cashout +10 percentage points, existing cap retained |
+|2 |Phase Readout |HUD last valid conversion/next legal phase |
+|2 |Broken-Sequence Memory |Retain last successful phase 0.6s after interruption |
+|2 |Idle-Cast Warning |Graphic/audio resource-mismatch warning before invalid cast |
+|2 |Injection Calibration |Fixed c +15% |
+|2 |Anchored Chant |Finale knockback tolerance +2m |
+|3 |First Flame |First Vein per encounter +1c fixed injection |
+|3 |Three-Skill Starfall |Three ordered slots grant next Finale one fixed star, once per sequence |
+|Key |Dual-Phase Focus |One ordinary control preserves confirmed A→B/B→A phase; resources still follow actual actions |
+|Key |Starforge Officiant |Set automatic Finale heat threshold before Contract; lower threshold reduces cycles, not higher cashout |
+|Key |Ordered Afterglow |Early Finale retains latest successful acknowledgement for correct restart, not energy/heat |
 
-## 21. 主要参考
+## 21. Main References
 
-### Astroloot：确定性锻造
+### Astroloot: Deterministic Forging
 
-- 官方网站：https://www.astroloot.com/
-- Dice 机制：https://astroloot.wiki.gg/wiki/Dice
-- 开发者关于固定 seed 的说明：https://steamcommunity.com/app/3498390/discussions/0/552359678119553271/
-- Steam 商店：https://store.steampowered.com/app/3498390/Astroloot/
+- Official site: https://www.astroloot.com/
+- Dice: https://astroloot.wiki.gg/wiki/Dice
+- Developer on fixed seeds: https://steamcommunity.com/app/3498390/discussions/0/552359678119553271/
+- Steam: https://store.steampowered.com/app/3498390/Astroloot/
 
-- 借鉴点：固定且可复现的结果序列、精确预览、满意后提交、不同工具对应不同动作。
-- 不照搬点：骰子命名、九种骰子体系、多层 tier / slot 轴、首版数值词提取移植。
+Borrow fixed/reproducible sequences, exact previews, satisfied commitment, different tools/actions. Do not copy dice names, nine-dice system, multilayer tier/slot axes, v1 numeric-affix extraction/transplant.
 
-### Lootun：研究与确定性收敛
+### Lootun: Research and Deterministic Convergence
 
-- 官方装备系统说明：https://steamcommunity.com/games/1960270/announcements/detail/4459137986475155588
-- 官方 1.3 更新：https://steamcommunity.com/games/1960270/announcements/detail/499476653639992278
-- 玩家锻造指南：https://steamcommunity.com/sharedfiles/filedetails/?id=3044062918
+- Official equipment description: https://steamcommunity.com/games/1960270/announcements/detail/4459137986475155588
+- Official 1.3 update: https://steamcommunity.com/games/1960270/announcements/detail/499476653639992278
+- Player Forge guide: https://steamcommunity.com/sharedfiles/filedetails/?id=3044062918
 
-借鉴点：目标物研究进度、重复掉落转化、确定性收敛。  
-不照搬点：大量近义升级轴和过多货币。
+Borrow target research, duplicate conversion, deterministic convergence; not numerous synonymous upgrade axes/excess currencies.
 
-### Godot：双平台实现
+### Godot: Dual-Platform Implementation
 
-- Godot 4.7.2：https://github.com/godotengine/godot/releases/tag/4.7.2-stable
-- 命令行运行：https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html
-- 项目导出：https://docs.godotengine.org/en/stable/tutorials/export/exporting_projects.html
-- Windows 导出：https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_windows.html
-- Linux 导出：https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_linux.html
+- Godot 4.7.2: https://github.com/godotengine/godot/releases/tag/4.7.2-stable
+- CLI: https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html
+- Export: https://docs.godotengine.org/en/stable/tutorials/export/exporting_projects.html
+- Windows: https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_windows.html
+- Linux: https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_linux.html
 
 ---
 
-本文件至此冻结为第一版制作基线。后续改动必须标记为数值平衡、内容增补或产品规则变更；其中产品规则变更需要同步更新原型验收用例。
+This file is frozen as the v1 production baseline. Later edits must be marked numeric balance, content addition, or product-rule change; product changes also update prototype acceptance cases.

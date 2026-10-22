@@ -11,7 +11,7 @@ set -euo pipefail
 
 MIB_PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 MIB_WORKSPACE_ROOT="$(cd "${MIB_PROJECT_ROOT}/.." && pwd -P)"
-MIB_USER_HOME="${HOME:-/home/rapidhere}"
+MIB_USER_HOME="${HOME:?HOME must be set for Godot user data}"
 MIB_XDG_ROOT="${MIB_XDG_ROOT:-${MIB_PROJECT_ROOT}/build/host-xdg}"
 
 export MIB_PROJECT_ROOT
@@ -60,12 +60,17 @@ _mib_resolve_godot() {
 }
 
 export GODOT_BIN="$(_mib_resolve_godot)"
-MIB_GODOT_VERSION_OUTPUT="$($GODOT_BIN --version 2>&1 | head -n 1)"
+export MIB_GODOT_BINARY_PATH="${MIB_GODOT_BINARY_PATH:-$GODOT_BIN}"
+if [[ ! -f "$MIB_GODOT_BINARY_PATH" || ! -x "$MIB_GODOT_BINARY_PATH" ]]; then
+  echo "Verified Godot engine binary is missing: ${MIB_GODOT_BINARY_PATH}" >&2
+  return 1
+fi
+MIB_GODOT_VERSION_OUTPUT="$("$GODOT_BIN" --version 2>&1 | head -n 1)"
 if [[ "$MIB_GODOT_VERSION_OUTPUT" != *"${MIB_GODOT_VERSION}.stable."* ]]; then
   echo "Expected Godot ${MIB_GODOT_VERSION}.stable, got: ${MIB_GODOT_VERSION_OUTPUT}" >&2
   return 1
 fi
-MIB_GODOT_BINARY_ACTUAL_SHA256="$(sha256sum "$GODOT_BIN" | awk '{print $1}')"
+MIB_GODOT_BINARY_ACTUAL_SHA256="$(sha256sum "$MIB_GODOT_BINARY_PATH" | awk '{print $1}')"
 if [[ "$MIB_GODOT_BINARY_ACTUAL_SHA256" != "$MIB_GODOT_BINARY_SHA256" ]]; then
   echo "Unexpected Godot binary SHA256: ${MIB_GODOT_BINARY_ACTUAL_SHA256}" >&2
   echo "Expected: ${MIB_GODOT_BINARY_SHA256}" >&2
@@ -98,4 +103,11 @@ mib_require_export_templates() {
     echo "Unexpected Godot export template version in ${MIB_GODOT_TEMPLATE_DIR}/version.txt" >&2
     return 1
   fi
+  local template
+  for template in linux_release.x86_64 windows_release_x86_64.exe; do
+    if [[ ! -f "$MIB_GODOT_TEMPLATE_DIR/$template" ]]; then
+      echo "Required export template is missing: $MIB_GODOT_TEMPLATE_DIR/$template" >&2
+      return 1
+    fi
+  done
 }

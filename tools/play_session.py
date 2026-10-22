@@ -160,7 +160,7 @@ def _wait_for_state(command_id: int):
 def _print_state(state, brief: bool) -> None:
     print("route:", state["route"], "window:", state["window"])
     for item in state["controls"]:
-        if brief and item.get("disabled") is not False and not item["text"].startswith(("HP", "目标", "第 ")):
+        if brief and item.get("disabled") is not False and not item["text"].startswith(("HP", "Target", "Room ")):
             continue
         if item["text"]:
             prefix = "BUTTON " if item.get("disabled") is False else "LOCKED " if item.get("disabled") else ""

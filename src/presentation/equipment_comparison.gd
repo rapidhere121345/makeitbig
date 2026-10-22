@@ -1,10 +1,10 @@
 class_name EquipmentComparison
 extends GridContainer
 ## A same-context comparison of the authoritative current and replacement builds.
-const LABELS := {"p":"续行概率", "T":"箭链寿命", "v":"箭速", "d":"射程", "turn":"转向耗时", "damage":"伤害", "critical_chance":"暴击率", "max_health":"生命"}
+const LABELS := {"p":"Continuation Chance", "T":"Arrow Chain Lifetime", "v":"Arrow Speed", "d":"Range", "turn":"Turn Time", "damage":"Damage", "critical_chance":"Critical Chance", "max_health":"Health"}
 const ORDER := ["p", "damage", "max_health", "T", "v", "d", "turn", "critical_chance"]
 
-func present(current: Dictionary, replacement: Dictionary, result_heading: String = "换装后") -> void:
+func present(current: Dictionary, replacement: Dictionary, result_heading: String = "When Equipped") -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -14,9 +14,9 @@ func present(current: Dictionary, replacement: Dictionary, result_heading: Strin
 	add_theme_constant_override("v_separation", 2)
 	var rows := comparison_rows(current, replacement)
 	if rows.is_empty():
-		_cell("暂无可用对比", ShellTheme.NEUTRAL)
+		_cell("No comparison available", ShellTheme.NEUTRAL)
 		return
-	for title in ["构筑属性", "当前", result_heading, "变化"]:
+	for title in ["Build Stats", "Current", result_heading, "Changes"]:
 		_cell(title, ShellTheme.NEUTRAL)
 	var changes := 0
 	for row in rows:
@@ -28,9 +28,9 @@ func present(current: Dictionary, replacement: Dictionary, result_heading: Strin
 		_cell(row.after_text, color)
 		_cell(row.delta_text, color)
 	if changes == 0:
-		_cell("属性数值相同", ShellTheme.NEUTRAL)
+		_cell("Identical stat values", ShellTheme.NEUTRAL)
 		_cell("—", ShellTheme.NEUTRAL)
-		_cell("看符文与法则", ShellTheme.BONE)
+		_cell("Compare runes and Laws", ShellTheme.BONE)
 		_cell("—", ShellTheme.NEUTRAL)
 
 
@@ -46,11 +46,11 @@ static func comparison_rows(current: Dictionary, replacement: Dictionary) -> Arr
 		var delta := after - before
 		var delta_text := ("+" if delta > 0 else "−") + _number(absf(delta), 2)
 		if key in ["p", "critical_chance"]:
-			delta_text = ("+" if delta > 0 else "−") + _number(absf(delta) * 100.0, 1) + "百分点"
+			delta_text = ("+" if delta > 0 else "−") + _number(absf(delta) * 100.0, 1) + " percentage points"
 		elif key == "turn":
-			delta_text = ("快 " if delta < 0 else "慢 ") + _number(absf(delta), 2) + "秒"
+			delta_text = ("Faster " if delta < 0 else "Slower ") + _number(absf(delta), 2) + "s"
 		elif key == "T":
-			delta_text += "秒"
+			delta_text += "s"
 		rows.append({"key": key, "label": LABELS[key], "changed": not is_equal_approx(before, after),
 			"before_text": _value(key, before), "after_text": ("↑ " if after > before else "↓ ") + _value(key, after),
 			"delta_text": delta_text, "improves": after < before if key == "turn" else after > before})
@@ -61,7 +61,7 @@ static func _finite_number(value: Variant) -> bool:
 
 static func _value(key: String, value: float) -> String:
 	if key in ["p", "critical_chance"]: return _number(value * 100.0, 1) + "%"
-	if key in ["turn", "T"]: return _number(value, 2) + "秒"
+	if key in ["turn", "T"]: return _number(value, 2) + "s"
 	return _number(value, 1)
 
 static func _number(value: float, decimals: int) -> String:

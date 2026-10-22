@@ -1,329 +1,223 @@
-# 炉边镇空间与素材重建设计
+# Hearthside Spatial and Art Reconstruction Design
 
-日期：2026-10-22。审查基线：`33cbd37`。
+Date: 2026-10-22. Review baseline: `33cbd37`.
 
-状态：初审与设计已完成；随后已实施作者/显露技术基础与独立灰盒。
-**正式新素材、镇区迁移及成品验收仍未完成。**
-本记录的第 2 节保留 `33cbd37` 初审证据，当前修复与验证状态见
-[实施记录](../playtest/TOWN_MODULAR_FOUNDATION_20261022.md)。
-未完成的目标方案不覆盖 `ARCHITECTURE.md` 中现有 runtime 的事实。
+Status: initial review/design complete; authored reveal foundation and independent greybox subsequently implemented. **Production new assets, town migration, and finished acceptance remain incomplete.** Section 2 preserves baseline 33cbd37 evidence; current fixes/validation: [implementation record](../playtest/TOWN_MODULAR_FOUNDATION_20261022.md). Unfinished targets do not override current runtime facts in ARCHITECTURE.md.
 
-## 1. 决策
+## 1. Decision
 
-重做镇区环境素材的生产单位：从“一张场景画分割成图层”改为
-“完整地面 + 带空间语义的独立物件 + 人工设计的遮挡后状态”。
+Change environment production units from slices of one scene illustration to **complete ground + independent spatially meaningful objects + artist-designed revealed states**.
 
-保留首章玩法、模拟内核、移动权威、静态空间索引和表现边界。
-重点重构素材契约、原生场景作者方式、绘制顺序和遮挡呈现。
-目前没有证据支持推倒 `MovementResolver`。
+Preserve first-chapter gameplay, simulation kernel, movement authority, static spatial index, and presentation boundary. Rebuild asset contracts, native authoring, draw order, and occlusion presentation. No evidence supports discarding MovementResolver.
 
-设计支柱：
+Pillars:
 
-- **路能看懂**：画面里的路、门洞、崖沿与实际可走范围一致。
-- **身体有占地**：碰撞来自地面接触体与明确留白，人物不会钻入视觉实体。
-- **遮挡后仍是完整场景**：收起树冠/屋顶后有真实画好的下层，不露空洞。
-- **像素风保持一致**：正常态和显露态均由美术设计，避免灰色雾孔破坏材质。
+- **Readable routes:** painted roads, doorways, cliffs match walkable space.
+- **Bodies occupy ground:** collision follows contact bodies and explicit clearance; actors do not enter visual solids.
+- **Complete scene after reveal:** removing canopy/roof exposes genuinely painted lower layers, not holes.
+- **Consistent pixels:** both normal/revealed states authored, avoiding gray fog holes that destroy materials.
 
-工作清单：
+Checklist:
 
-- [x] 追溯实际运行图层的原图与离线生成方式。
-- [x] 查看 R4-D 原始画面及独立 PNG，区分机制通过与美术质量通过。
-- [x] GPT 6.1 Sol / medium 独立审查 runtime、碰撞和测试缺口。
-- [x] 用 RTX 数值对照确认未开孔时的 shader 颜色错误。
-- [x] 给出素材交付契约、运行时职责、样板场景和验收门槛。
-- [x] 实施作者契约、显露控制器及独立灰盒，完成实际 GPU 迭代。
-- [ ] 生产第一组正式新素材，并完成镇区迁移与成品验收。
+- [x] Trace actual runtime layers to originals/offline generation.
+- [x] Inspect original R4-D frames and independent PNGs, separating mechanism acceptance from art quality.
+- [x] Independent GPT 6.1 Sol/medium review of runtime, collision, tests.
+- [x] RTX numeric comparison proves shader color bug without holes.
+- [x] Define delivery contract, responsibilities, sample scene, acceptance gates.
+- [x] Implement authoring/reveal controller/independent greybox; actual GPU iterations.
+- [ ] Produce first new production assets, migrate town, accept finished visuals.
 
-## 2. 已确认的问题
+## 2. Confirmed Problems
 
-### 2.1 素材没有被遮挡的部分
+### 2.1 Assets lack formerly hidden content
 
-实际链路是：
+Actual chain:
 
 ```text
-art/production/p1/hamlet_town/town.png（完整场景画）
-  + layout.json 的 foreground 多边形
+art/production/p1/hamlet_town/town.png (whole-scene illustration)
+  + layout.json foreground polygons
   -> tools/town_layers/bake.py
   -> content/rooms/town/layers/*.png
-  -> hearthside.tscn 中的 Sprite2D
+  -> hearthside.tscn Sprite2D
 ```
 
-`bake.py:25-64` 按脚点顺序分配像素 ownership；交叠像素只属于最后一个物件。
-地面只保留 `owner == 0` 的像素。`verify():73-98` 要求逐像素重组回原图、
-每个像素恰好出现一次。这证明的是原画分割完整，并不证明独立素材完整。
+bake.py:25-64 assigns pixel ownership by foot order; overlapping pixels belong only to the last object. Ground retains only owner==0. verify():73-98 requires exact reconstruction and exactly one owner per pixel, proving complete segmentation, not complete independent assets.
 
-本次 Pillow 只读统计：`ground.png` 的 1,474,560 个像素中，
-361,105 个 alpha 为 0，约 **24.49%**。物件移除/淡出后，原本被它覆盖的
-地面没有任何像素可以补上。重画后的正确场景必须允许图层间有完整重叠，
-不能继续把 `ownership=once` 当作通用资产正确性标准。
+Read-only Pillow count: of 1,474,560 ground.png pixels,361,105 have alpha 0, **24.49%**. Removing/fading objects leaves no ground beneath. Correct repainted scenes need complete layer overlap; ownership=once is not a general asset-validity criterion.
 
-直接查看：
+Direct inspection:
 
-- `layers/loadout.png` 包含建筑、雪地、杂物的复合剪片，内部留有多边形空区。
-- `layers/tree_east.png` 包含雪坡、岩面和局部树木，不能作为一棵独立树摆放。
-- `layers/ground.png` 留有大片物件形状的透明区域，阴影和环境结构仍混在底图。
+- layers/loadout.png combines building, snow, and clutter, with internal polygon voids.
+- layers/tree_east.png combines slope, rock, and partial trees, not an independent tree.
+- layers/ground.png has large object-shaped transparency, with shadows/environment still mixed into the base.
 
-R4-D 的 `p2_01_loadout_eaves.png` 与 `p2_09_tree_east_mira.png` 可以看见
-人物透出，但人物周围仍混有暗色建筑/岩面，不能据此判定自然的空间关系。
-`p2_24_tree_south_cover.png` 中角色、雪坡和树冠的前后关系也难以仅凭画面读懂。
-本次查看的是既有截图，不是一次新的全镇实时走查。
+R4-D p2_01_loadout_eaves.png and p2_09_tree_east_mira.png show actors but mix dark architecture/rock around them, not proof of natural space. p2_24_tree_south_cover.png also makes actor/slope/canopy depth difficult to read. Existing screenshots were inspected, not a new live whole-town walk.
 
-**结论：用户提出重新生成素材有直接依据。完整场景图可作气氛参考，
-不能再作为可移动、可显露物件的生产母版。**
+**Regenerating art is directly justified. Whole-scene art can be atmosphere reference, not a production master for movable/revealable objects.**
 
-### 2.2 未开孔也会变暗：GPU 已复现
+### 2.2 Darkening without cutout: GPU reproduced
 
-`occluder_cutout.gdshader:15-26` 使用：
+occluder_cutout.gdshader:15-26:
 
 ```glsl
 vec4 c = texture(TEXTURE, UV) * COLOR;
 ```
 
-CanvasItem fragment 中的 `COLOR` 已包含纹理采样，重复相乘会再次压暗颜色。
-`TownPresenter` 会给登记的原生遮挡件挂材质，即使其 `hole_count=0`。
+CanvasItem fragment COLOR already includes texture sampling, so multiplication darkens twice. TownPresenter assigns the material to registered native occluders even with hole_count=0.
 
-本次用同一张纯色贴图并排渲染三种情况：无材质、当前 shader、内存中将上式
-替换为 `COLOR` 的 shader；三个案例都不打开孔。采样结果：
+Rendered the same solid texture three ways without holes: no material, current shader, and an in-memory shader replacing the expression with COLOR.
 
-| 案例 | RGBA |
+| Case | RGBA |
 | --- | --- |
-| 无材质 | `(0.4980, 0.7490, 0.2471, 1.0)` |
-| 当前 shader | `(0.2471, 0.5608, 0.0627, 1.0)` |
-| 单次采样 | `(0.4980, 0.7490, 0.2471, 1.0)` |
+| No material | `(0.4980, 0.7490, 0.2471, 1.0)` |
+| Current shader | `(0.2471, 0.5608, 0.0627, 1.0)` |
+| Single sample | `(0.4980, 0.7490, 0.2471, 1.0)` |
 
-环境：Godot 4.7.2，Xvfb `:109`，X11，Compatibility / OpenGL 3.3，
-NVIDIA 595.91.07 / RTX 4080 SUPER；正常退出 0，临时显示已清理。
-证据在 `build/current/town_shader_identity_review.gd`、
-`town_shader_identity_review_109.log`、`town_shader_identity_review.png`。
-此前 `:98` 尝试因显示锁冲突失败，不计入验证。
-探针的退出 0 表示**成功复现缺陷并验证内存修正**，不是产品 shader 通过。
-本轮没有修改生产 shader。
+Godot 4.7.2, Xvfb `:109`, X11, Compatibility/OpenGL 3.3, NVIDIA 595.91.07/RTX 4080 SUPER; exit 0, temporary display cleaned. Evidence: `build/current/town_shader_identity_review.gd`, `town_shader_identity_review_109.log`, `town_shader_identity_review.png`. Earlier `:98` failed display-lock conflict, not counted. Exit 0 means **defect reproduced and in-memory correction verified**, not product shader pass. Production shader unchanged in this initial review.
 
-### 2.3 素材能力声明与实际交付不一致
+### 2.3 Declared capability differs from delivery
 
-- `tools/town_layers/bake.py:62` 仍输出 `supports_cutaway=false` /
-  `supports_fade=false`，README 也明确缺少 clean plate。
-- 当前 `layers/manifest.json` 两项为 true，`unknown_underplate` 仍为 transparent。
-- `town_scene_root.gd:69-74,192-195` 要求并重新发布 true，却没有检查底层画面。
+- tools/town_layers/bake.py:62 still emits supports_cutaway=false / supports_fade=false; README explicitly lacks a clean plate.
+- Current layers/manifest.json sets both true but unknown_underplate remains transparent.
+- town_scene_root.gd:69-74,192-195 requires/republishes true without checking underlying art.
 
-本次运行 `python3 tools/town_layers/bake.py --check` **失败**：
-`source/layout digest changed`。原图 SHA 匹配；`layout.json` 的登记 SHA 为
-`8f740098…`，实测为 `f7712d00…`。检查在这里提前退出；不能声称本次已通过
-后续冷生成检查。另有上述生成器/运行时能力声明矛盾。
+`python3 tools/town_layers/bake.py --check` **failed**, `source/layout digest changed`. Original-image SHA matches; recorded layout SHA `8f740098…` vs actual `f7712d00…`. Early exit means later cold-generation checks did not pass this time. Capability contradiction is separate.
 
-不得直接运行 `--author-scene` 修复该问题：它会重写已有碰撞修订。
-新生产链必须分别记录素材来源与场景放置来源，能力由交付数据和检查结果决定。
+Do not run --author-scene as a fix: it overwrites collision revisions. New production must separately trace asset provenance and placement provenance; capabilities follow delivered data and checks.
 
-### 2.4 “覆盖”还只是矩形相交
+### 2.4 Coverage is still rectangle overlap
 
-`OcclusionPlan.occluders_of():112-138` 用整个 art box 相交面积计算覆盖，
-并不识别树枝间隙、建筑空门或透明角落；actor 使用的完整动画格同样包含透明区。
-所以 AABB 只能用于粗筛，不能直接驱动最终显露状态。
+OcclusionPlan.occluders_of():112-138 uses whole art-box overlap, ignoring branches, open doors, transparent corners. Full actor animation cells also include transparency. AABB is broad phase only, not final reveal authority.
 
-另外：
+- town_presenter.gd:228-241 takes min across actors; a 10%-grazing NPC can keep the same piece opaque for a fully hidden hero.
+- Controller alpha floor 0.4 combined with presenter lerp(1,0.18,1-alpha) yields **0.508**, not 0.18. Two such fully covering pieces give combined foreground opacity≈75.8%.
+- occlusion_plan.gd:143-155 sums areas without union, double-counting overlap. This affects coverage reports, distinct from per-piece min.
 
-- `town_presenter.gd:228-241` 对多个 actor 的覆盖取 `min`。
-  NPC 只擦过 10% 时，可以让同件物体对被完全遮住的 hero 也保持不透明。
-- controller 最低 alpha 为 0.4，而 presenter 使用
-  `lerp(1, 0.18, 1 - alpha)`，最低结果是 **0.508**，不是 0.18。
-  两片完全覆盖且中心 alpha 均为 0.508 时，组合前景不透明度约 75.8%。
-- `occlusion_plan.gd:143-155` 把交叠面积求和，没有求并集；同一区域会重复计数。
-  此项影响整体覆盖报告，不能混同于上面的逐件 `min` 问题。
+These are code-derived findings; only the color issue received a new GPU counterexample this round.
 
-这些是代码可推导的问题；除颜色问题外，本轮未逐个重新跑 GPU 反例。
+### 2.5 Authoring unit is not yet a spatial object
 
-### 2.5 作者单位尚未成为空间物件
+Visuals, polygons, sort feet, and interaction sockets occupy parallel lists. Moving a building does not naturally move footprint, standing positions, and occlusion. hearthside.tscn:1001-1023 wedge/cliff/south-bank seals are useful patches, not reusable spatial-design rules.
 
-目前 visual、静态多边形、排序脚点和 interaction socket 分散在平行列表中。
-移动一个建筑，并不会自然带走它的占地、站位和遮挡定义。
-`hearthside.tscn:1001-1023` 的 wedge / cliff / south-bank seal 是有效的局部
-修补，但不能建立可复用的空间设计规则。
+One composite containing front/side walls, roof, ground, and clutter has one Y baseline and cannot express every approach direction. Canopy, rock, and trunk should not share one whole-slice hole treatment.
 
-一张包含前墙、侧墙、屋顶、地面与杂物的剪片只有一个 Y 基线，
-不可能对所有接近方向都表达正确的深度。树冠、岩面、树干也不应共用一种
-“整块开孔”处理。
+A smaller same-Y determinism bug: town bindings give actor rank 1, actual node defaults 0 because consume() omits rank; native fallback sort names differ from plan binding IDs. Exact-baseline rendering can disagree with plan; this is not the explanation for all visual issues.
 
-同 Y 时还有一处较小的确定性缺陷：town 的表现绑定给 actor rank=1，
-实际 render node 默认 rank=0，`consume()` 未传该 rank；
-native 的排序 fallback 名称也不等于 plan 的 binding ID。
-这会让精确同基线的绘制关系与遮挡计划不一致，不是所有观感问题的总解释。
+No new penetration or internal-triangle-edge stutter reproduced; do not call potential risks confirmed solver bugs.
 
-目前没有复现新的穿透或内部三角边卡顿，不能把这些潜在风险写成已确认 solver bug。
+## 3. Target Asset and Authoring Contract
 
-## 3. 目标素材与作者契约
+Detailed delivery/generation brief: [TOWN_MODULAR_ASSET_BRIEF.md](../art-production/TOWN_MODULAR_ASSET_BRIEF.md).
 
-详细交付清单与生成 brief 见
-[TOWN_MODULAR_ASSET_BRIEF.md](../art-production/TOWN_MODULAR_ASSET_BRIEF.md)。
-
-### 3.1 物件 prefab 是唯一编辑单位
+### 3.1 Object prefab is the sole editing unit
 
 ```text
-EnvironmentObject（实例只作平移；首版禁止任意缩放/旋转）
-├── GroundParts        地面贴花、接触阴影
-├── VisualParts        每片有明确 sort anchor / rank / stable part id
-├── RevealParts        full 与 revealed 状态，固定共同画布和锚点
-├── Footprint          地面接触占地，独立于贴图 alpha
-├── MovementEnvelope   明确的碰撞外扩，离线派生
-├── InteractionSocket  保持既有设施 ID
-└── ApproachArea       可站位与通路净空，参与作者检查
+EnvironmentObject (translation-only instances; no arbitrary scale/rotation in v1)
+|-- GroundParts        Ground decals, contact shadows
+|-- VisualParts        Explicit sort anchor / rank / stable part ID per piece
+|-- RevealParts        Full/revealed states, fixed shared canvas and anchors
+|-- Footprint          Ground contact, independent of texture alpha
+|-- MovementEnvelope   Explicit collision expansion, offline-derived
+|-- InteractionSocket  Existing facility ID retained
+`-- ApproachArea       Standing/route clearance checked during authoring
 ```
 
-这是一份待实现的逻辑契约，不是声称现有 scene 已支持该节点结构。
-艺术包仅交付局部资源；房间 `.tscn` 拥有实例与平移；离线 baker 将它们展开为
-现有 flat manifest / 空间索引。禁止为 prefab 再建一套运行时碰撞权威。
+This is a proposed logical contract, not a claim that current scenes already support this node structure. Art packages deliver local resources; room .tscn owns instances/translations; offline baker expands to existing flat manifest/index. No second runtime collision authority for prefabs.
 
-当前 `TownSceneRoot` 只接受直接 Sprite2D 子节点，且禁止 geometry 容器平移。
-实现时必须同步调整遍历/校验，并把局部坐标离线展开到世界坐标；
-不能只把节点套进一个父节点就认为 prefab 完成。
+Current TownSceneRoot accepts only direct Sprite2D children and forbids translated geometry containers. Update traversal/validation and bake local to world coordinates; merely parenting nodes is not a finished prefab.
 
-展开不变量：
+Expansion invariants:
 
-- `asset_id` 标识可复用资源，`placement_id` 标识房间中稳定的作者实例；
-  最终 part binding 为 `placement_id/part_id`，不使用运行时 Node instance ID。
-- footprint、socket、mask 位置和 sort anchor 只加一次实例平移。
-  纹理画布 offset 维持局部值，不再次加 placement。
-- 挂载时每个可排序 part 进入同一个 `SortRoot`；不把整栋 prefab 当作一个
-  父节点的 Y 值排序。full/revealed 是同一 part 的状态，不生成两个竞争排序 ID。
-- 用“同一资源的两个不同位置实例 + 对调插入顺序”的样板检查以上规则。
+- asset_id identifies reusable resources; placement_id identifies stable room-authored instances. Final bindings placement_id/part_id, never runtime Node instance IDs.
+- Add instance translation exactly once to footprint, socket, mask position, sort anchor. Texture-canvas offsets stay local, not placement-added twice.
+- Every sortable part enters one SortRoot at mount; do not sort a whole prefab by parent Y. Full/revealed are states of one part, not competing sort IDs.
+- Test two instances of one resource at different positions, swapping insertion order.
 
-资源传递沿用 `WorldAsset → native contract → RoomPresentationBinding /
-RoomPresentationProjector → plan / presenter`。在 occlusion-only binding 中新增
-严格校验的 presentation 资源描述（full/revealed 引用与内容 SHA、mask 引用与
-内容 SHA、局部锚点、reveal policy）；扩展现有封闭 schema 与版本检查，
-并纳入 `presentation_digest_input`。这些字段不得写入 gameplay metadata；
-更换显露美术应改变 presentation digest，不应改变 gameplay digest。
-plan 只带稳定 ID、不可变遮挡数据和空间关系，不携带节点或运行状态。
+Resource flow remains WorldAsset → native contract → RoomPresentationBinding / RoomPresentationProjector → plan / presenter. Occlusion-only bindings gain strictly validated presentation descriptors: full/revealed references and content SHA, mask reference/content SHA, local anchors, reveal policy. Extend closed schema/version checks and presentation_digest_input. No gameplay metadata; art changes alter presentation digest, not gameplay digest. Plan contains stable IDs, immutable coverage data, and spatial relationships, never nodes/runtime state.
 
-### 3.2 占地、余量、可走空间
+### 3.2 Footprint, margins, walkable space
 
-- `Footprint` 表达树根、墙基、木堆底座等**地面接触体**；
-  屋顶、树冠、灯光晕和投影不产生 movement blocker。
-- 对 footprint 作一次明确的外扩形成 `MovementEnvelope`。
-  初始美术安全余量建议 3–6 design px，样板中按物件校准，作为作者参数记录。
-- runtime 仍按 hero radius=6 扫掠。人物脚心停止距离是外扩边界再加角色半径，
-  不能在 baker 和 resolver 两边重复扩张。
-- 通路标准以**碰撞 envelope 之间的距离**衡量。样板先取主路 64–96 px、
-  单人支路至少 48 px；这是待游玩验证的设计起点，不是既有测量结果。
-  更窄的空隙应通过改摆位或补可见实体关闭。
-- 大型墙基采用简洁轮廓；长斜围栏按有真实脚点的段拆分。
-  离线检查按物件整体检查通路，避免把三角化内部边当作视觉边界。
-- 崖顶可走平台与崖面明确分开。首章桥面仅提供一个可走平面，
-  不暗示可走到桥下；不为此引入多层高度导航。
-- 隐形封条只能作为过渡修复。新版关掉的口袋必须在画面里有雪堆、围栏或岩体，
-  不能让“明明是一条路却撞空气”成为最终交付。
+- Footprint is **ground-contact body**: roots, wall bases, log bases. Roofs/canopies/halos/shadows do not create movement blockers.
+- One explicit expansion yields MovementEnvelope. Initial art-safety margin 3–6 design px, calibrated per sample object and recorded as author parameter.
+- Runtime still sweeps hero radius 6. Foot-center stopping distance adds actor radius to expanded boundary; baker/resolver must not both expand.
+- Route standards measure **distance between collision envelopes**. Begin sample main roads 64–96px, single-person branches≥48px. These are design starting points for playtesting, not existing measurements. Close narrower gaps by moving objects or adding visible solids.
+- Simple large-wall contours; split long diagonal fences into segments with real feet. Offline route checks treat whole objects, not triangulation internal edges as visible boundaries.
+- Separate cliff-top platforms from cliff faces. First-chapter bridge has one walkable plane, no implied under-bridge passage or multilevel height navigation.
+- Invisible seals are transitional only. Final closed pockets need visible snow/fence/rock, not apparent paths blocked by air.
 
-### 3.3 两种美术状态，保持空间实体
+### 3.3 Two art states preserve solid space
 
-| 类别 | 常态 | 被遮挡后的美术状态 |
+| Category | Normal | Revealed |
 | --- | --- | --- |
-| 地面、桥面 | 完整连续基底 | 始终保留，不参与显露 |
-| 树 | 根部/完整树干 + 树冠 | 树冠收起，保留画好的树干、低枝和地面 |
-| 设施建筑 | 墙基、下层结构 + 上部/屋顶 | 使用设计好的低墙/梁柱截面，屋顶收起 |
-| 小木堆、矮围栏、灯柱 | 完整独立 sprite | 通常只正确排序，无显露；布局保证可读 |
-| 长围栏/高墙 | 分段物件 | 仅前遮挡段有 authored revealed 态 |
-| 岩块、崖面 | 稳定实体 | 不为露人挖洞；调整可走范围和物件高度/摆位 |
+| Ground/bridge deck | Complete continuous base | Always present, not reveal participants |
+| Tree | Roots/complete trunk + canopy | Retract canopy, retain painted trunk/low branches/ground |
+| Facility | Base/lower structure + roof/upper | Authored low walls/beam-post sections, roof removed |
+| Small logs/low fence/lamp | Complete independent sprite | Usually correct sorting only; readable layout |
+| Long fence/high wall | Segmented objects | Authored reveal only on front-covering segments |
+| Rock/cliff | Stable solid | No holes for actors; adjust walkable area, height, placement |
 
-“透明版本”在此明确为**遮挡后美术版本**，不是给原图整体乘 alpha。
-低墙仍是实心墙；树干不会消失；脚下地面一直存在。第一章设施在外部服务区交互，
-不会为了去顶效果新增可进入的完整建筑室内。
+"Transparent version" means **authored revealed-art version**, not multiplying original alpha. Low walls remain solid, trunks remain, ground stays complete. Chapter-one interaction is in exterior service areas; roof removal does not add full accessible interiors.
 
-## 4. Runtime 的边界与重构点
+## 4. Runtime Boundaries and Refactoring
 
-保留：
+Retain:
 
-- `SimulationWorld` / `MovementResolver` 的 fixed tick 与提交边界。
-- `WorldAsset`、只读 spatial manifest、静态索引及 stable binding。
-- detached snapshot / presentation port；表现不得写回 movement / vision / projectile。
-- `WorldPresenter` 的共享排序域与相机，只统一排序输入，不另起平行系统。
+- SimulationWorld / MovementResolver fixed ticks and commit boundaries.
+- WorldAsset, read-only spatial manifest, static index, stable bindings.
+- Detached snapshots/presentation ports; presentation cannot write movement/vision/projectile facts.
+- WorldPresenter shared sort domain/camera; unify sort inputs, not a parallel system.
 
-改造：
+Change:
 
-1. **一个排序事实**：每个可排序 part 使用同一份 `(baseline, rank, binding_id)`，
-   同时供绘制与 plan 使用。地面贴花不进物体 Y 排序。
-2. **显式部件**：深度跨度大的建筑拆成有意义的前/后构件；
-   同一结构部件的 full/revealed 共用 anchor。不得一律把屋顶塞进最高 Foreground，
-   否则会覆盖实际上站在前面的 actor。
-3. **两阶段遮挡**：AABB 只粗筛；离线生成的遮挡 mask 或作者 polygon 作精判。
-   mask 不含地面、光晕、投影。actor 有脚锚相对的稳定头胸可读区域；
-   不以整张动画格的透明矩形作为分母。mask 可在 CPU 用位图/多边形查询，
-   避免每帧 GPU 回读；最终视觉测试仍看实际像素。
-   判定始终使用 **full 态的 mask**，结合主体位置与排序关系计算需求；
-   不能因为 revealed 态已经不遮人就自动关闭。`reveal_weight` 不得反向修改
-   判定输入，否则即使加进出阈值也会发生循环开关。
-4. **状态切换取代通用圆孔**：`OcclusionPlan` 提供前后与覆盖关系；
-   presentation controller 只输出 `reveal_weight`（0=full，1=revealed），
-   不再把旧 actor alpha 复用成孔 alpha。
-5. **只保护相关主体**：hero 始终保护；交谈中的 NPC 保护；
-   空闲 NPC 不应让全镇不断开洞。任一受保护主体需要显露就打开该 part，
-   离开后所有主体均 clear 才关闭。整件切态用最大需求，独立区域则各自保持状态。
-6. **过渡是表现细节**：首版用约 120–180 ms 的短过渡，进出阈值不同，
-   防止在树叶边缘反复切换；数值以样板观感定，不预先宣称正确。
-   共同结构只画一次。互斥状态用一次 premultiplied RGBA 插值再合成，
-   或经审核的像素抖动切换，不能用两个普通半透明 sprite 叠出重影和暗边。
-7. **能力检查**：声明支持 revealed 必须有完整下层资源、共同 canvas/anchor、
-   合法 mask 与去顶预览。移除全局硬编码 true。缺资源在生产检查时失败；
-   不能悄悄退回旧圆孔或替换占地。
+1. **One sort truth:** same `(baseline, rank, binding_id)` for each sortable part in drawing and plan. Ground decals stay outside object-Y sorting.
+2. **Explicit parts:** meaningful front/back components for deep buildings; full/revealed share anchors. Do not put every roof in highest Foreground, which would cover actors actually in front.
+3. **Two-phase coverage:** AABB broad phase, offline mask/authored polygon precise phase. Exclude ground, halos, shadows. Actors have stable head/chest readable regions relative to feet, not transparent full animation rectangles as denominators. CPU bitmap/polygon queries avoid per-frame GPU readback; final visual acceptance still examines pixels. Always use **full-state mask**, position, sort to calculate demand; revealed state not covering must not auto-close. reveal_weight never alters detection inputs, or even hysteresis will oscillate.
+4. **State switch, not generic circular holes:** OcclusionPlan supplies depth/coverage relations. Controller outputs reveal_weight only,0=full/1=revealed, not old actor-alpha reused as hole-alpha.
+5. **Relevant subjects only:** always hero, current conversation NPC, not idle NPCs opening the whole town. Any protected demand opens a part; all clear before closing. Whole-part transitions take maximum demand; independent regions keep separate states.
+6. **Presentation-only transitions:** initially 120–180ms, distinct enter/exit thresholds against leaf-edge oscillation; calibrate visually, no advance correctness claim. Draw common structure once. Mutually exclusive states use one premultiplied RGBA interpolation/composite or reviewed pixel dither, not two translucent sprites causing ghosts/dark edges.
+7. **Capability checks:** revealed support requires complete lower art, shared canvas/anchor, legal mask, roof-off preview. Remove global hardcoded true. Missing assets fail production checks, not silent old-circle fallback or changed footprint.
 
-新原型只需要一个物件定义/实例作者契约、baker 扩展和一个共享显露控制器。
-不引入通用 ECS、额外 SceneTree 玩法查询或另一个导航系统。
+Only one object definition/instance contract, baker extension, and shared reveal controller needed. No generic ECS, gameplay SceneTree queries, or extra navigation system.
 
-## 5. 实施顺序与淘汰条件
+## 5. Implementation Order and Retirement
 
-| 阶段 | 具体交付 | 过关条件 |
+| Stage | Delivery | Gate |
 | --- | --- | --- |
-| A：校准旧基线 | 修正 shader 单次采样、排序 tuple；加入有画面的恒等性回归；记录现有资产能力不足 | 未显露时颜色与原 sprite 一致；不以此宣布镇区重做完成 |
-| B：灰盒契约 | 960×640 样板房，640×360 视口，现有游侠；一建筑、一树、一围栏转角/门、一木堆与连续地面 | 四面贴边、门口往返和近物交互自然；人工能指出占地和可走区 |
-| C：新素材样板 | 按独立 brief 重生成上述物件的 full/revealed/下层和阴影 | 关掉全部上层仍是完整画面；移动物件后无背景残影；实际运行更自然 |
-| D：镇区替换 | 按区域替换设施、训练场、树木/小物件、岸线；保留设施与存档 ID | 每区通过，再跑完整玩家路线与碰撞回归 |
-| E：旧链退出 | 删除已无引用的整图剪片、旧圆孔路径、旧 ownership 门禁；更新来源与构建入口 | 冷构建与导出通过，新素材来源可追溯，无双来源解释 |
+| A: old baseline | Single-sample shader, sort tuple, image-backed identity regression, record asset deficits | Unrevealed colors match original sprite; not completed town remake |
+| B: greybox |960×640 sample,640×360 viewport, existing Ranger, one building/tree/fence corner+gate/log pile, continuous ground | Natural four-side contact, doorway roundtrip, near-object interaction; humans can identify contact/walkable areas |
+| C: new art sample | Independently regenerated full/revealed/lower/shadow assets per brief | Complete scene with all uppers off, no residue after moving objects, more natural in runtime |
+| D: town replacement | Facilities, Training, trees/props, shoreline by region; preserve facility/save IDs | Each region passes, then complete player route/collision regression |
+| E: retire old chain | Unreferenced whole-image cutouts, old hole path, ownership gates removed; provenance/build entry updated | Cold build/export pass, traceable new assets, no competing provenance explanations |
 
-样板失败时只修样板，不开始批量生成整镇素材。旧素材仅在迁移期间维持现版本；
-替换完成后按引用清理，保留必要生产来源，不保留一堆废弃候选。
+If sample fails, repair sample only, no mass town generation. Old assets support the existing version during migration only; after replacement clean by references, retaining necessary production sources, not abandoned candidates.
 
-阶段 B/C 使用独立房间。阶段 D 的“区域”必须包含连续底板、与其相交的全部
-旧剪片及新视觉部件、碰撞、站位和路线；作为一个闭合单元原子替换，
-并检查接缝处所有旧部件是否仍夹带背景。不能在同一区域把新地面和旧带孔地面
-叠起来，或者只换树而继续使用树下被切空的底图。若无法定义无交叠的区域边界，
-就在独立新镇 scene 内完成装配，整体切换，不强求区域混搭。
+B/C use independent rooms. A D-region includes continuous base and every intersecting old cutout/new visual/collision/socket/route. Replace atomically as a closed unit; check old bordering pieces for embedded background. Never stack new ground with old hole-filled ground or replace only a tree above missing ground. If nonoverlapping boundaries cannot be defined, assemble an independent new town and switch whole scenes rather than force mixed regions.
 
-布局兼容单独检查：现有 `TownRuntime.travel_snapshot()/restore_travel()` 保存/
-恢复内存中的位置与路线游标，当前恢复会拒绝落入障碍的旧位置；不能仅凭设施
-ID 未变就认为迁移安全。给布局与 travel 载荷加入明确版本，恢复时先校验位置。
-跨布局且位置失效时，由显式迁移边界选定已验证的入口或设施外安全 socket，
-清除旧路线游标，并记录迁移；同布局无效位置仍报告错误。禁止静默寻找最近可走点。
-若持久化存档确实承载相同位置数据，再同步升级其格式与迁移；本审查未证明
-镇区脚点已写入持久化存档，不能为此假设现有存档字段。
+Check layout compatibility separately: TownRuntime.travel_snapshot()/restore_travel() stores/restores in-memory positions/route cursors and currently rejects old positions inside blockers. Unchanged facility IDs do not prove safe migration. Add explicit layout/travel versions; validate restored position. For invalid cross-layout positions, an explicit migration boundary selects a verified entrance/safe exterior facility socket, clears old route cursor, records migration. Invalid same-layout positions still error. No silent nearest-walkable search. If persistent saves actually carry the same position payload, upgrade format/migration too; this audit did not establish persistent town-foot coordinates and must not invent existing fields.
 
-## 6. 新验收标准
+## 6. New Acceptance Criteria
 
-已有测试仍验证稳定 ID、输入、数据隔离、移动提交和 native manifest 一致性。
-不能用测试数量、成功截图数量或 `modulate.a == 1` 替代新画面的验收。
+Existing tests still cover stable IDs, input, isolation, movement commit, native/manifest consistency. Test counts, screenshot counts, or modulate.a==1 do not replace visual acceptance.
 
-| 检查 | 可观察证据 / 失败条件 |
+| Check | Observable evidence / failure condition |
 | --- | --- |
-| 素材完整性 | 单件在中性背景上看四周；从场景移走后无残影；所有可显露上层隐藏后没有未绘制区 |
-| 状态对齐 | full/revealed 的共同结构逐像素一致，无脚点漂移、阴影跳变、截面断裂 |
-| 显露稳定性 | hero 在树冠/屋顶后静止数秒，完全显露后不自动回切；判定只使用 full mask |
-| GPU 恒等性 | reveal=0 时，与无效果原 sprite 的像素对照一致；shader 编译失败直接拒绝 |
-| 真实遮挡 | 空门洞/树冠透明角不触发；头胸被实像素遮住才触发；前方经过不乱切层 |
-| 多物件/多主体 | hero 被两件覆盖仍可读；擦边 NPC 不能关闭 hero 的显露；非交谈 NPC 不造成无关跳变 |
-| 排序 | 前后穿行及精确同 Y；改变实例插入顺序，结果仍与 plan 一致 |
-| 实例与版本 | 同资源两实例各自平移正确；旧 travel 位置被新建筑占据时按显式迁移策略恢复，不沿用旧路线游标 |
-| 碰撞手感 | 每件四向接近、沿边斜走、反向离开、冲刺、角点与门洞；碰撞 overlay 与可见底座同看 |
-| 通路拓扑 | 使用同一 movement sweep 检查往返；采样可达区和边角发现死袋，不能只检查航点清空 |
-| 帧率/镜头 | 按固定 tick 驱动同一输入，在 30/60/144 render FPS 下比较权威轨迹；镜头移动时无贴图滑动/显露漂移 |
-| 游玩观感 | 不开调试 overlay 连续走完“入镇→契台→装备→锻造→训练→离镇”；人不穿岩、不卡空路、角色和物件皆可辨认 |
+| Asset completeness |Inspect isolated object on neutral background; no residue after removal; all revealable uppers hidden leaves no unpainted areas |
+| State alignment |Shared full/revealed structure pixel-identical, no foot drift, shadow jump, broken section |
+| Reveal stability |Stand behind roof/canopy for seconds; full reveal never self-reverts; detection uses full mask only |
+| GPU identity |reveal 0 matches original no-effect sprite; shader compile failure rejects |
+| Real coverage |Open doors/transparent canopy corners do not trigger; solid head/chest coverage does; passing in front does not switch wrongly |
+| Multiple objects/subjects |Hero readable behind two pieces; grazing NPC cannot close hero reveal; idle NPCs cause no unrelated switches |
+| Sorting |Front/back/exact-Y traversal, swapped instance insertion; rendering remains plan-consistent |
+| Instances/versions |Two resource instances translate independently; new building occupying old travel position invokes explicit migration, not old cursor |
+| Collision feel |Four-side approach, diagonal edge travel, reverse escape, dash, corners, doorways; view collision overlay with visible base |
+| Route topology |Same movement sweep for roundtrips; reachable-area/corner samples find dead pockets, not only cleared waypoints |
+| Frame rate/camera |Fixed-tick same input under 30/60/144 render FPS, compare authoritative paths; no camera texture/reveal drift |
+| Play feel |Without debug overlay, continuously enter town→Board→Loadout→Forge→Training→leave; no rock penetration/empty-road sticking, actors/objects identifiable |
 
-连通采样是查错工具，不等于数学证明；关键路径仍需要真实 sweep 和连续游玩。
-视觉记录包括状态前/中/后、短连续序列、GPU/显示/退出信息。
-先审核一个样板的美术质量，再将其作为整镇一致性基准。
+Connectivity sampling finds errors, not mathematical proof. Key paths still need real sweeps and continuous play. Visual records include before/mid/after states, short sequences, GPU/display/exit information. Approve one sample's art quality before using it as town-wide consistency baseline.
 
-## 7. 本轮验证边界
+## 7. Initial Review's Validation Boundary
 
-本轮读取并检查源码、素材 alpha、现有截图和来源 SHA；执行离线重现检查
-（失败）与独立 RTX shader 颜色探针（缺陷复现）。GPT 6.1 Sol / medium
-子代理仅作只读技术审查，未运行构建或改文件。
+Read source, alpha, existing screenshots, source SHA; ran offline reproduction check (**failed**) and independent RTX shader color probe (**defect reproduced**). GPT 6.1 Sol/medium subagent performed read-only technical review, no build/file changes.
 
-没有生成新的生产素材，没有改游戏代码，没有重新执行全量构建，也没有完成
-新版全镇 GPU 游玩。本设计的价值是给出可实施、可证伪的生产与验收契约，
-不能当作碰撞/遮挡已解决的交付声明。
+No new production art, game-code changes, full rebuild, or new whole-town GPU playthrough occurred in that initial review. This design gives implementable, falsifiable production/acceptance contracts, not a delivery claim that collision/occlusion are solved.

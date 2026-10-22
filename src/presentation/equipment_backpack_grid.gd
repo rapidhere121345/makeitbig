@@ -67,9 +67,9 @@ func configure(entries: Array, selected_id: String, columns: int = 4, node_prefi
 	add_child(_pager)
 	_previous_button = Button.new()
 	_previous_button.name = "BackpackPreviousPage"
-	_previous_button.text = "<" if _columns == 2 else "上页"
-	_previous_button.tooltip_text = "上一页"
-	_previous_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_previous_button.text = "<" if _columns == 2 else "Prev"
+	_previous_button.tooltip_text = "Previous Page"
+	_previous_button.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_previous_button.custom_minimum_size.x = 32.0 if _columns == 2 else 72.0
 	_previous_button.focus_mode = Control.FOCUS_ALL
 	_previous_button.pressed.connect(_change_page.bind(-1))
@@ -84,9 +84,9 @@ func configure(entries: Array, selected_id: String, columns: int = 4, node_prefi
 	_pager.add_child(_page_label)
 	_next_button = Button.new()
 	_next_button.name = "BackpackNextPage"
-	_next_button.text = ">" if _columns == 2 else "下页"
-	_next_button.tooltip_text = "下一页"
-	_next_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_next_button.text = ">" if _columns == 2 else "Next"
+	_next_button.tooltip_text = "Next Page"
+	_next_button.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_next_button.custom_minimum_size.x = 32.0 if _columns == 2 else 72.0
 	_next_button.focus_mode = Control.FOCUS_ALL
 	_next_button.pressed.connect(_change_page.bind(1))
@@ -249,16 +249,19 @@ func _add_entry(grid: GridContainer, entry: Dictionary, node_prefix: String) -> 
 		var badge := PanelContainer.new()
 		badge.name = "BackpackStatus_%s" % token
 		badge.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-		badge.offset_top = -24
+		badge.offset_top = -28
 		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var background := StyleBoxFlat.new()
 		background.bg_color = Color(0.035, 0.055, 0.075, 0.95)
 		badge.add_theme_stylebox_override("panel", background)
 		overlay.add_child(badge)
 		var label := Label.new()
-		label.text = status
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.text = String({"Equipped": "Worn", "This Run": "New"}.get(status, status))
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		label.clip_text = true
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 18)
 		label.add_theme_color_override("font_color", Shell.BONE)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -269,7 +272,9 @@ func _add_entry(grid: GridContainer, entry: Dictionary, node_prefix: String) -> 
 	button.flat = true
 	button.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	button.focus_mode = Control.FOCUS_ALL
-	button.tooltip_text = String(entry.get("tooltip", entry.get("display_name", "装备")))
+	button.tooltip_text = String(entry.get("tooltip", entry.get("display_name", "Equipment")))
+	if not status.is_empty():
+		button.tooltip_text += "\n" + status
 	button.mouse_entered.connect(_hover_entered.bind(instance_id))
 	button.mouse_exited.connect(_hover_exited.bind(instance_id))
 	button.focus_entered.connect(_focus_entered.bind(instance_id))

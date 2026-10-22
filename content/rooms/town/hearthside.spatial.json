@@ -9,7 +9,7 @@
 		"facilities": [
 			{
 				"id": "contract",
-				"label": "行路契台",
+				"label": "Contract Board",
 				"landmark_offset_y": -112.0,
 				"locked": false,
 				"order": 0.0,
@@ -21,7 +21,7 @@
 			},
 			{
 				"id": "loadout",
-				"label": "备行架",
+				"label": "Loadout",
 				"landmark_offset_y": -112.0,
 				"locked": false,
 				"order": 1.0,
@@ -33,7 +33,7 @@
 			},
 			{
 				"id": "forge",
-				"label": "回火砧",
+				"label": "Tempering Anvil",
 				"landmark_offset_y": -112.0,
 				"locked": false,
 				"order": 2.0,
@@ -45,7 +45,7 @@
 			},
 			{
 				"id": "training",
-				"label": "验律场",
+				"label": "Training",
 				"landmark_offset_y": -112.0,
 				"locked": false,
 				"order": 3.0,
@@ -57,7 +57,7 @@
 			},
 			{
 				"id": "proxy",
-				"label": "代行舱",
+				"label": "Proxy Bay",
 				"landmark_offset_y": -112.0,
 				"locked": true,
 				"order": 4.0,

@@ -1,96 +1,115 @@
-# 镇区离线图层与原生空间派生
+# Offline Town Layers and Native Spatial Derivation
 
-运行输入是 `content/rooms/town/hearthside.tscn`、同目录的
-`hearthside.spatial.json` 和 `layers/`。运行时读取原生节点与离线 PNG；
-`TownPresenter` 接收快照，与静态节点共用 `WorldPresenter.SortRoot`。
+Runtime inputs are `content/rooms/town/hearthside.tscn`, its neighboring
+`hearthside.spatial.json`, and `layers/`. Runtime loads native nodes and baked
+PNGs; `TownPresenter` consumes snapshots and shares `WorldPresenter.SortRoot`
+with static nodes. This is the legacy sliced-art pipeline, not the new modular
+environment-object authoring path.
 
-## 输入与转换参数
+## Inputs and Conversion
 
-| 输入 | 实际尺寸 / SHA256 |
+| Input | Dimensions / SHA256 |
 | --- | --- |
 | `art/production/p1/hamlet_town/town.png` | 1536 × 1024；`fa5d79265d233d9d013c097df44bc810419a31d41e8b756e1b3daf6c42186ee5` |
-| 同目录 `layout.json` | world = 1536 × 960；`8f740098d326fd312a0d6463332c5a7d587ed8ae77af0465ff40dbbbb39e1dd3` |
+| Neighboring `layout.json` | world = 1536 × 960; `48995ebb2520227967b63bde71d8c620cb81361bae696417d8d49cee758c165f` |
 
-`bake.py` 用 Pillow `Image.Resampling.NEAREST` 一次性把源图转换至
-1536 × 960（X 比例 1，Y 比例 15/16）。UV 点按 `(u × 1536, v × 960)`
-映射到该 world。图层 ownership 使用 `foreground` 的作者多边形，按
-`(feet_uv.y, id)` 排序；后一个 owner 覆盖交叠部分，每个像素只归一层。
+`bake.py` uses Pillow's `Image.Resampling.NEAREST` to normalize the source once
+to 1536 × 960 (X scale 1; Y scale 15/16). UV points map to world coordinates
+as `(u × 1536, v × 960)`. Authored `foreground` polygons assign ownership,
+ordered by `(feet_uv.y, id)`; later owners take overlaps. Each pixel has one owner.
 
-`ground.png` 仅保留 owner=0 的原始像素；每个 native PNG 仅保留自己的
-ownership，crop 为该 mask 的包围盒。PNG 使用 RGBA、`compress_level=9`。
-feet 保留作者的 world 浮点坐标；原生 Sprite2D 的 position=feet，
-offset=`crop.xy - feet`，centered=false。manifest 记录源文件及各产物 SHA、
-source/world 尺寸、feet、crop、interaction 和 owned_pixels。
+`ground.png` retains only owner=0 source pixels. Each native PNG retains only
+its own mask and crops to that mask's bounding box. Output is RGBA PNG with
+`compress_level=9`. Feet retain authored floating-point world coordinates;
+Sprite2D uses position=feet, offset=`crop.xy - feet`, centered=false. The
+manifest records source/output hashes, dimensions, feet, crop, interaction,
+and owned_pixels.
 
-未归属某层的区域为 RGBA `(0,0,0,0)`。`unknown_underplate="transparent"`，
-`supports_cutaway=false`，`supports_fade=false`；当前输入没有可证明的
-clean plate，静态 native 永久参与渲染。遮挡来自共享 Y 排序。
+Pixels outside a part are RGBA `(0,0,0,0)`. The generator declares
+`unknown_underplate="transparent"`, `supports_cutaway=false`,
+`supports_fade=false`: this source has no proven clean plate beneath the
+extracted pieces. Shared Y sorting establishes occlusion.
 
-## 原生玩法坐标规则
+**Known pre-existing drift:** the shipped legacy manifest/runtime expects
+`supports_cutaway=true` and `supports_fade=true`, while this generator still
+emits false/false. English migration preserves shipped behavior and all image
+bytes; it does not silently change either capability contract. A complete
+`--check` is therefore not claimed as passed for the final preserved manifest.
+Do not advertise complete underpainting or alter flags merely to silence this
+check. New modular assets require their own opaque underplate and authored
+full/revealed/mask resources.
 
-`--author-scene` 是一次性的作者数据转换入口：生成静态几何、边界、
-插槽与路线节点。转换后 `.tscn` 是玩法作者来源；后续编辑原生 scene
-时，直接派生 spatial manifest。再次使用 `--author-scene` 会覆盖原生
-scene，应只在明确需要重新转换输入时使用。
+## Native Gameplay Coordinates
 
-`TownSceneRoot.derive_spatial_manifest()` 对静态多边形顶点、圆心及作者
-插槽/路线用 `_pair()` 的 `snappedf(component, 1.0 / 64.0)`；圆半径也用
-`snappedf(radius, 1.0 / 64.0)`。多边形在原生坐标中三角化，再将输出顶点
-snapping，舍弃 snapping 后退化的三角形。spatial manifest 是此规则的派生
-产物；装载时不自动修复不一致的 manifest。
+`--author-scene` is a one-time conversion into static geometry, boundaries,
+sockets, and routes. Thereafter the `.tscn` is the gameplay source of truth:
+derive the spatial manifest directly from scene edits. Re-running
+`--author-scene` overwrites the native scene and may lose later authored fixes;
+do so only when explicitly requested.
 
-外边界由原生 `MovementBoundary` 的 `Rect2(14,14,1508,932)` 直接输出，
-四个整数不变。1/64 规则用于作者玩法数据派生；每 tick 的 actor feet
-保留 registry 的浮点运动结果。`TownPresenter.camera_world_offset()` 的
-`floor()` 仅影响表现，不写回 registry。
+`TownSceneRoot.derive_spatial_manifest()` uses `_pair()` with
+`snappedf(component, 1.0 / 64.0)` for static polygon vertices, circle centers,
+and authored sockets/routes. Radii use `snappedf(radius, 1.0 / 64.0)`.
+Polygons are triangulated in native coordinates, then output vertices are
+snapped; degenerate triangles are discarded. Loading never silently repairs
+an inconsistent derived manifest.
 
-2026-10-14 当前文件精度审计：比较 Godot 实际加载的原生 Vector2
-（float32）与静态 manifest 坐标；圆半径比较 metadata 的 float64 值。
-共检查 226 个静态作者点、22 个圆，派生结果有 162 个碰撞形状。
+The native `MovementBoundary` exports `Rect2(14,14,1508,932)` unchanged. The
+1/64 rule applies to authored gameplay data, not per-tick actor feet: those
+retain registry floating-point movement. `floor()` in
+`TownPresenter.camera_world_offset()` affects presentation only.
 
-| 误差 | 当前最大值（px） |
+The 2026-10-14 precision audit compared Godot-loaded native Vector2 (float32)
+with manifest coordinates, and metadata float64 radii with manifest radii.
+It covered 226 static points and 22 circles; that derivation had 162 shapes.
+
+| Error | Recorded maximum (px) |
 | --- | ---: |
-| X 分量 | 0.0018310546875 |
-| Y 分量 | 0.00048828125 |
-| 任一分量 | 0.0018310546875 |
-| 点的欧氏距离 | 0.0018673166632652283 |
-| 圆半径 | 0.0003599999999996939 |
+| X component | 0.0018310546875 |
+| Y component | 0.00048828125 |
+| Either component | 0.0018310546875 |
+| Point Euclidean distance | 0.0018673166632652283 |
+| Circle radius | 0.0003599999999996939 |
 
-理论 rounding 上限为每分量和半径 `1/128 px`、点的欧氏距离
-`sqrt(2)/128 px`。这些是几何数据的误差，不是像素重组误差。
+The theoretical rounding bounds are `1/128 px` per component/radius and
+`sqrt(2)/128 px` for point distance. These are geometry errors, not pixel
+recomposition errors.
 
-## 生成与只读检查
+## Generation and Read-Only Checks
 
 ```bash
 python3 tools/town_layers/bake.py --check
 ```
 
-该命令检查 SHA、ownership、逐像素重组和临时目录冷生成。已有前任验证
-报告：35 native / 1,474,560 pixels，ownership=once，recomposition=exact，
-cold_bytes=identical。本次收口未重复运行此检查。
+This checks hashes, ownership, pixel recomposition, and temporary-directory
+cold generation. Earlier evidence recorded 35 natives / 1,474,560 pixels,
+ownership=once, recomposition=exact, cold_bytes=identical. The final English
+manifest retains the pre-existing flag discrepancy described above, so this
+historical success must not be presented as a current complete `--check` pass.
 
-需要明确再生成图层时：
+For explicitly requested layer regeneration:
 
 ```bash
 python3 tools/town_layers/bake.py
 ```
 
-需要一次性重做作者输入转换时，使用 `bake.py --author-scene`；之后派生
-当前原生空间数据。Godot 必须在宿主机普通用户下运行：
+Use `bake.py --author-scene` only for an intentional author-source conversion;
+then derive spatial data. Run Godot as an ordinary user:
 
 ```bash
 source scripts/project_env.sh
 mib_godot --headless --path . --script res://tools/town_layers/bake_spatial.gd
 ```
 
-## 本次收口的检查证据
+## Historical Negative-Input Evidence
 
-本次实际运行的负向装载/source 检查与精度数据位于被 git 忽略的
-`build/current/town-negative-audit/`：`run.log` 记录命令、结果和验证范围；
-`check_negative.gd` 仅在内存中破坏装载输入；`check_sources.py` 只读核对
-SHA、尺寸、feet/crop、native 绑定、透明孔洞及权威边界源码，未执行再生成
-或重组。25 个负向输入被拒绝，修正后的装载日志无脚本错误。
+The earlier negative load/source audit lives in ignored
+`build/current/town-negative-audit/`. `run.log` records commands and scope;
+`check_negative.gd` corrupts inputs only in memory; `check_sources.py` checks
+hashes, dimensions, feet/crop, native bindings, transparent holes, and authority
+boundaries without regeneration/recomposition. It rejected 25 invalid inputs,
+and the corrected load log had no script errors.
 
-本次仅对负向门禁作补充，未运行图形穿行、完整构建、导出、发布或 golden
-更新。静态遮挡与贴边穿行的实际画面还需后续图形验收；宿主机虚拟显示的
-llvmpipe 与真实 GPU 的证据范围仍须分别记录。
+That audit did not run visual walkthroughs, a full build, exports, publication,
+or golden updates. Refer to later playtest reports for those checks. Record
+llvmpipe correctness evidence separately from hardware-specific evidence.

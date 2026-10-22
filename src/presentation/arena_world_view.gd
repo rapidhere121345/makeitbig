@@ -390,8 +390,8 @@ func room_concept_report(layout_id: String) -> Dictionary:
 	var concept: Dictionary = _room_catalog.presentation(layout_id) if _room_catalog != null else {}
 	return {
 		"layout_id": layout_id,
-		"title": String(concept.get("display_name", "战斗场")),
-		"landmark": String(concept.get("landmark", "边界标记")),
+		"title": String(concept.get("display_name", "Arena")),
+		"landmark": String(concept.get("landmark", "Boundary Marker")),
 		"concept": String(concept.get("concept", "")),
 		"entry_hint": String(concept.get("entry_hint", "")),
 		"exit_hint": String(concept.get("exit_hint", "")),

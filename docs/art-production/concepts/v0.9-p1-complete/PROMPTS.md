@@ -1,6 +1,6 @@
-# 当前概念原图提示词
+# Current Concept-Original Prompts
 
-保留当前生产参考原图的最后一条实际提示词。生成时的引用路径仅记录来源，不要求保留旧候选。
+Retains the final actual prompt for each current production-reference original. Generation-time reference paths record provenance; they do not require retaining old candidates.
 
 ## 01｜01_anchor
 

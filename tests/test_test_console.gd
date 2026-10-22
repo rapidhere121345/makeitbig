@@ -64,7 +64,7 @@ func _test_refresh_and_provider(console, body: TextEdit, failures: Array[String]
 	console.refresh()
 	_expect(_provider_calls == calls_before_refresh + 1, "console: refresh did not call the configured provider exactly once", failures)
 	_expect(body.text.contains("revision-7"), "console: refresh did not replace the rendered snapshot", failures)
-	for required_title: String in ["路线", "窗口分辨率", "逻辑分辨率", "构建标识", "档案标识", "训练报告", "原始报告", "代理协议", "代理指纹", "最近结算原始字段", "测试标记", "日志路径", "附加"]:
+	for required_title: String in ["Route", "Window Resolution", "Logical Resolution", "Build ID", "Profile ID", "Training Report", "Raw Report", "Proxy Protocol", "Proxy Fingerprint", "Latest Settlement Raw Fields", "Test Flags", "Log Path", "Additional"]:
 		_expect(body.text.contains(required_title), "console: required diagnostic category is absent: %s" % required_title, failures)
 	_expect(body.get_theme_font_size("font_size") >= 18, "console: body text dropped below 18px", failures)
 	_expect(body.wrap_mode == TextEdit.LINE_WRAPPING_BOUNDARY, "console: the snapshot body is not a readable wrapped region", failures)
@@ -92,7 +92,7 @@ func _snapshot() -> Dictionary:
 		"last_settlement_raw": {"reward": 12},
 		"test_flags": ["headless"],
 		"log_path": "user://playtest.log",
-		"sections": [{"title": "附加", "content": "revision-%d" % _provider_revision}],
+		"sections": [{"title": "Additional", "content": "revision-%d" % _provider_revision}],
 	}
 
 

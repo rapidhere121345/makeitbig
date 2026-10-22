@@ -8,20 +8,20 @@ func _initialize() -> void:
 		{"generation":0,"events_display":"10","magnitude":10.0},
 		{"generation":5,"events_display":"10","magnitude":10.0},
 	])
-	_expect(view.axis_caption().contains("事件量相同"), "flat axis must be described before draw")
+	_expect(view.axis_caption().contains("same event count"), "flat axis must be described before draw")
 	_expect(is_equal_approx(float(view.trace_report().flat_decade),1.0), "flat decade derived from current report")
 	view.present([
 		{"generation":0,"events_display":"1","magnitude":1.0},
 		{"generation":5,"events_display":"10","magnitude":10.0},
 	])
-	_expect(not view.axis_caption().contains("事件量相同"), "flat caption must not leak across reports")
+	_expect(not view.axis_caption().contains("same event count"), "flat caption must not leak across reports")
 	_expect(view.trace_report().flat_decade == null, "nonflat JSON report uses null, not NaN")
 	view.present([
 		{"generation":0,"events_display":"1","magnitude":1.0},
 		{"generation":5,"events_display":"10^^3(1.25)"},
 	])
 	_expect(view.trace_report().mode == "order" and view.trace_report().magnitudes == [1.0,null], "tower notation must not get a fabricated value")
-	_expect(view.axis_caption().contains("未采用"), "order-only caption")
+	_expect(view.axis_caption().contains("not used"), "order-only caption")
 	var serialized := JSON.stringify(view.trace_report())
 	_expect(JSON.parse_string(serialized).events_display == ["1","10^^3(1.25)"], "exact display values survive report serialization")
 	view.present([])

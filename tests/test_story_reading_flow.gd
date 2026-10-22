@@ -47,13 +47,13 @@ func _run() -> void:
 func _check_opening_completion_and_return() -> void:
 	screen.present(OPENING, {})
 	await _settle()
-	_expect(_button("StoryTab_对话").text == "对话\n未读 2" and _button("StoryTab_日志").text == "日志\n未读 1", "opening unread counts include unavailable entries")
+	_expect(_button("StoryTab_Dialogue").text == "Dialogue\nUnread 2" and _button("StoryTab_Journal").text == "Journal\nUnread 1", "opening unread counts include unavailable entries")
 	_button("OpenUnread_1").pressed.emit()
 	await _settle()
 	_expect(_selected_id("ConversationList") == "Conversation_talk_p00_leia_stool", "newest unread entry was not selected in its directory")
 	_expect(_focus_name() == "NextPage", "conversation did not focus forward paging")
 	await _key(KEY_ENTER)
-	_expect(_speech().begins_with("米拉：") and reads.is_empty() and _focus_name() == "NextPage", "Enter did not advance exactly one page without marking read")
+	_expect(_speech().begins_with("Mira: ") and reads.is_empty() and _focus_name() == "NextPage", "Enter did not advance exactly one page without marking read")
 	await _key(KEY_ESCAPE)
 	_expect(not screen.visible and reads.is_empty() and root.gui_get_focus_owner() == return_button, "early codex close marked read or trapped focus")
 	screen.present(OPENING, {})
@@ -64,15 +64,15 @@ func _check_opening_completion_and_return() -> void:
 	await _key(KEY_ENTER)
 	_expect(reads == ["talk_p00_leia_stool"], "conversation completion did not emit exactly one stable ID")
 	_expect(_selected_id("ConversationList") == "Conversation_talk_p00_mira_door" and _focus_name() == "NextPage", "completion did not select the next unread entry and reset its page/focus")
-	_expect(_button("StoryTab_对话").text == "对话\n未读 1", "conversation count did not update after completion")
+	_expect(_button("StoryTab_Dialogue").text == "Dialogue\nUnread 1", "conversation count did not update after completion")
 	for _page in range(3): await _key(KEY_E)
 	_expect(reads.size() == 1 and _focus_name() == "ReadConversation", "E paging produced an early conversation receipt")
 	await _key(KEY_E)
 	_expect(reads == ["talk_p00_leia_stool", "talk_p00_mira_door"], "E completion changed the wrong entry")
-	_expect(_button("StoryTab_对话").text == "对话\n未读 0" and screen.find_child("ConversationDetail", true, false) == null, "completed unread directory retained a stale detail")
-	_expect(_has_text(screen, "可读对话已全部听过") and _focus_name() == "ConversationUnreadFilter", "empty unread directory did not offer a focused way to reread")
+	_expect(_button("StoryTab_Dialogue").text == "Dialogue\nUnread 0" and screen.find_child("ConversationDetail", true, false) == null, "completed unread directory retained a stale detail")
+	_expect(_has_text(screen, "All available dialogue has been heard") and _focus_name() == "ConversationUnreadFilter", "empty unread directory did not offer a focused way to reread")
 	await _key(KEY_ENTER)
-	_expect(_selected_id("ConversationList") != "" and _has_text(screen, "已读 ·"), "keyboard unread toggle did not restore rereading")
+	_expect(_selected_id("ConversationList") != "" and _has_text(screen, "Read ·"), "keyboard unread toggle did not restore rereading")
 
 
 func _check_person_filter_and_restore() -> void:
@@ -80,11 +80,11 @@ func _check_person_filter_and_restore() -> void:
 	await _settle()
 	_set_unread(true, true)
 	await _settle()
-	_expect(_button("StoryTab_对话").text == "对话\n未读 1", "restored read state did not control unread count")
-	_select_person("米拉")
+	_expect(_button("StoryTab_Dialogue").text == "Dialogue\nUnread 1", "restored read state did not control unread count")
+	_select_person("Mira")
 	await _settle()
-	_expect(screen.find_child("ConversationPersonFilter", true, false) != null and _has_text(screen, "这位镇民暂无未读对话"), "empty person filter removed its controls or explanation")
-	_expect((screen.find_child("ConversationUnreadFilter", true, false) as CheckButton).text == "只看未读 0 / 1", "person count did not reflect evaluated resident entries")
+	_expect(screen.find_child("ConversationPersonFilter", true, false) != null and _has_text(screen, "This resident has no unread dialogue"), "empty person filter removed its controls or explanation")
+	_expect((screen.find_child("ConversationUnreadFilter", true, false) as CheckButton).text == "Unread Only 0 / 1", "person count did not reflect evaluated resident entries")
 	_set_unread(true, false)
 	await _settle()
 	_expect(_selected_id("ConversationList") == "Conversation_talk_p00_mira_door", "all entries did not retain the person filter")
@@ -93,23 +93,23 @@ func _check_person_filter_and_restore() -> void:
 	_expect(_button("ReadConversation").disabled, "rereading offered a duplicate read receipt")
 	_button("ReadConversation").pressed.emit()
 	_expect(reads == before, "disabled reread callback emitted another receipt")
-	_button("StoryTab_日志").pressed.emit()
+	_button("StoryTab_Journal").pressed.emit()
 	await _settle()
-	_button("StoryTab_对话").pressed.emit()
+	_button("StoryTab_Dialogue").pressed.emit()
 	await _settle()
 	screen.present({"completed_node_ids": ["tutorial_ranger_basics", "mainline_01_first_hunt"]}, screen.saved_story())
 	await _settle()
 	var filter := screen.find_child("ConversationPersonFilter", true, false) as OptionButton
-	_expect(filter.get_item_text(filter.selected) == "米拉" and _selected_id("ConversationList") == "Conversation_talk_p00_mira_door", "tabs or snapshot refresh lost the selected person")
-	_select_person("全部人物")
+	_expect(filter.get_item_text(filter.selected) == "Mira" and _selected_id("ConversationList") == "Conversation_talk_p00_mira_door", "tabs or snapshot refresh lost the selected person")
+	_select_person("All Characters")
 	_set_unread(true, true)
 	await _settle()
-	_expect(screen.find_child("Conversation_talk_p00_mira_door", true, false) == null and _button("StoryTab_对话").text == "对话\n未读 2", "combined all-person/unread filter included a read or unavailable conversation")
+	_expect(screen.find_child("Conversation_talk_p00_mira_door", true, false) == null and _button("StoryTab_Dialogue").text == "Dialogue\nUnread 2", "combined all-person/unread filter included a read or unavailable conversation")
 
 
 func _check_journal_completion() -> void:
 	screen.present(OPENING, {})
-	_button("StoryTab_日志").pressed.emit()
+	_button("StoryTab_Journal").pressed.emit()
 	await _settle()
 	_set_unread(false, true)
 	await _settle()
@@ -128,7 +128,7 @@ func _check_journal_completion() -> void:
 	for _page in range(2): await _key(KEY_E)
 	await _key(KEY_ENTER)
 	_expect(reads.size() == before.size() + 1 and reads.back() == "journal_p00_place_by_the_door", "journal explicit completion did not emit one stable ID")
-	_expect(_button("StoryTab_日志").text == "日志\n未读 0" and _has_text(screen, "可读日志已全部读完") and _focus_name() == "JournalUnreadFilter", "journal completion left stale selection/count/focus")
+	_expect(_button("StoryTab_Journal").text == "Journal\nUnread 0" and _has_text(screen, "All available journal entries have been read") and _focus_name() == "JournalUnreadFilter", "journal completion left stale selection/count/focus")
 	_set_unread(false, false)
 	await _settle()
 	_expect(_selected_id("JournalList") == "JournalEntry_journal_p00_place_by_the_door", "journal could not be reread")
@@ -136,10 +136,10 @@ func _check_journal_completion() -> void:
 	_expect(_button("ReadJournal").disabled and reads.size() == before.size() + 1, "journal reread changed receipts")
 	screen.present({}, {})
 	await _settle()
-	_expect(_has_text(screen, "还没有日志") and screen.find_child("JournalUnreadFilter", true, false) != null, "no-unlocked-journal state removed filter or explanation")
-	_button("StoryTab_对话").pressed.emit()
+	_expect(_has_text(screen, "No journal entries yet") and screen.find_child("JournalUnreadFilter", true, false) != null, "no-unlocked-journal state removed filter or explanation")
+	_button("StoryTab_Dialogue").pressed.emit()
 	await _settle()
-	_expect(_has_text(screen, "当前还没有可交谈的人") and screen.find_child("ConversationPersonFilter", true, false) != null, "no-unlocked-conversation state removed filter or explanation")
+	_expect(_has_text(screen, "No one is available to talk right now") and screen.find_child("ConversationPersonFilter", true, false) != null, "no-unlocked-conversation state removed filter or explanation")
 
 
 func _check_full_chapter_directory_and_layout() -> void:
@@ -163,12 +163,12 @@ func _check_full_chapter_directory_and_layout() -> void:
 	for viewport_size in [Vector2(1280, 720), Vector2(1600, 900)]:
 		host.size = viewport_size
 		await _settle()
-		for tab in ["目标", "对话", "日志", "生活"]:
+		for tab in ["Target", "Dialogue", "Journal", "Daily Life"]:
 			_button("StoryTab_" + tab).pressed.emit()
 			await _settle()
 			_check_bounds(screen, Rect2(Vector2.ZERO, viewport_size), tab)
 	host.size = Vector2(1280, 720)
-	_button("StoryTab_对话").pressed.emit()
+	_button("StoryTab_Dialogue").pressed.emit()
 	await _settle()
 	var read_count_before := reads.size()
 	for _entry in range(28):
@@ -176,12 +176,23 @@ func _check_full_chapter_directory_and_layout() -> void:
 		_expect(not selected_id.is_empty(), "unread completion lost the directory selection")
 		var entry := _entry_for(selected_id.trim_prefix("Conversation_"), screen.current_state().available_conversations)
 		for _page in range(entry.get("pages", []).size()): await _key(KEY_E)
-		_expect(_button("StoryTab_对话").text == "对话\n未读 %d" % (27 - _entry), "unread count drifted during chapter completion")
+		_expect(_button("StoryTab_Dialogue").text == "Dialogue\nUnread %d" % (27 - _entry), "unread count drifted during chapter completion")
 	_expect(reads.size() == read_count_before + 28 and screen.saved_story().read_entry_ids.size() == 28, "chapter completion dropped or duplicated stable receipts")
 	_expect(screen.current_state().current_objective == state.current_objective and screen.current_state().town_changes == state.town_changes, "reading changed objective or town progression")
 
 
 func _check_town_dialogue() -> void:
+	var partner := {"npc_name": "Mira", "npc": "mira"}
+	_expect(TownDialogueScript.speaker_line(partner, "Mira: Keep the lamp lit.") == {
+		"speaker": "Mira", "speech": "Keep the lamp lit.",
+	}, "ASCII speaker delimiters did not separate the name from dialogue")
+	_expect(TownDialogueScript.speaker_line(partner, "Wanderer: I will.") == {
+		"speaker": "Wanderer", "speech": "I will.",
+	}, "the player speaker was not recognized")
+	_expect(TownDialogueScript.speaker_line(partner, "Remember: keep the lamp lit.").speech == "Remember: keep the lamp lit.",
+		"a colon in ordinary prose was mistaken for a speaker delimiter")
+	_expect(TownDialogueScript.speaker_line(partner, "Mira\uff1aKeep the lamp lit.").speech == "Keep the lamp lit.",
+		"the legacy fullwidth speaker delimiter was no longer accepted")
 	var dialogue = TownDialogueScript.new()
 	host.add_child(dialogue)
 	var close := dialogue.find_child("CloseDialogue", true, false) as Button

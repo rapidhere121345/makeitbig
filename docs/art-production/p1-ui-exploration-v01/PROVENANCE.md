@@ -1,16 +1,16 @@
-# 炉边镇探索界面美术 · v01
+# Hearthside Exploration Interface Art - v01
 
-2026-10-08。用户要求继续提升 UI 美术品质并增加实际游戏资源。本包使用 **内置 imagegen** 生成三张原创图像，未使用外部游戏截图或商用游戏素材作为纹理。
+2026-10-08. The user requested further UI-art improvements and actual game resources. This package generated three original images with **built-in imagegen**, without external game screenshots or commercial-game assets as textures.
 
-| 文件 | 用途 |
+| File | Use |
 | --- | --- |
-| `contract_road.png` | 契约背景与右侧雪路插画；烘托出镇前的寒冷与危险。 |
-| `settlement_table.png` | 结算背景及标题横幅；归镇、检查战利品的炉边桌面。 |
-| `copper_frame.png` | 契约主面板、结算主面板、小镇标题与指路牌的九宫格边框。 |
+| `contract_road.png` | Contract background/right-side snow-road illustration, conveying cold and danger before departure. |
+| `settlement_table.png` | Results background/title banner, a fireside table for inspecting returned loot. |
+| `copper_frame.png` | Nine-slice borders for main Contract/results panels, town heading, and signposts. |
 
-三张图均为不透明 PNG。源文件保留生成分辨率；边框由 Godot 导入设置 `process/size_limit=256` 缩小为运行材质，并用 20px 边缘切分。正文继续使用独立的 22px/18px 中文控件；图像没有嵌入玩法文本。背景经过运行时压暗，插画位于独立区域；边框仅用于主要面板，次级控件保留细边。新资源通过 `ShellTheme` 缓存，改变窗口尺寸不会改变世界观察范围或玩法数据。
+All three are opaque PNGs. Originals retain generated resolution; Godot import `process/size_limit=256` reduces the frame into runtime material with 20px nine-slice edges. Body text used separate 22px/18px Chinese controls at production time; images embed no gameplay text. Runtime darkens backgrounds; illustration occupies a separate region. Frames serve major panels only; secondary controls retain thin borders. `ShellTheme` caches resources; window resizing changes neither world field of view nor gameplay data.
 
-原始输出保存在 imagegen 默认生成目录，项目中的文件是其未经重绘的副本。以下记录完整最终提示词；未使用 CLI/API 回退、外部参考图、二次图像编辑或图像裁切导出。
+Raw outputs reside in imagegen's default generation directory; project files are copies without repainting. Complete final prompts follow unchanged. No CLI/API fallback, external references, secondary image editing, or cropped export was used.
 
 ## contract_road
 

@@ -152,7 +152,7 @@ func _check_skill_and_edges(state: RefCounted) -> void:
 		var scroll := dialog.find_child("SkillDetailScroll", true, false) as ScrollContainer
 		var canonical: String = screen.call("_player_readable_skill_text", id)
 		var paragraphs := canonical
-		for heading: String in ["目标规则：", "完整效果：", "冷却：", "联动：", "限制："]:
+		for heading: String in ["Target Rule: ", "Full Effect: ", "Cooldown: ", "Synergy: ", "Limits: "]:
 			paragraphs = paragraphs.replace("\n" + heading, "\n\n" + heading)
 		_expect(label.text == paragraphs and not canonical.is_empty(), "all production characters retained with only semantic blank lines " + id)
 		_expect(label.get_theme_font_size("font_size") == 22, "core skill text is 22px " + id)

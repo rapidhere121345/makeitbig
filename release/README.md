@@ -1,21 +1,21 @@
-# 发布页与 build 规范
+# Release Page and Build Conventions
 
-这里保存发布页模板和发布配置。运行产物在被 git 忽略的 build/releases，不会提交到源码仓库。
+This directory contains release-page templates and configuration. Generated output lives in ignored `build/releases/`, not in source control.
 
-## 快速使用
+## Quick Start
 
-完成容器构建和双平台导出后，在项目根目录执行：
+After the full test gate and both platform exports, run from the project root:
 
     ./scripts/release.sh all
     ./scripts/release.sh verify --deep
 
-子命令为 package、index、prune、site、verify、all。package 读取 build/current/linux/make-it-big.x86_64 与 build/current/windows/make-it-big.exe，生成 build 元数据和 SHA256SUMS；prune 默认保留最近 20 个；site 生成可以直接静态托管的 build/releases。
+Subcommands are `package`, `index`, `prune`, `site`, `verify`, and `all`. `package` reads `build/current/linux/make-it-big.x86_64` and `build/current/windows/make-it-big.exe`, generating metadata and `SHA256SUMS`. `prune` retains 20 valid builds by default; `site` produces the static site in `build/releases/`. Because `all` invokes `prune`, review and approve any deletion of existing release history first.
 
-可用 MIB_RELEASE_ROOT 指定发布根。默认根必须在工作区内；只有明确设置 MIB_RELEASE_ALLOW_OUTSIDE=1 才允许使用工作区外的临时测试目录。
+Set `MIB_RELEASE_ROOT` to override the output root. It must be inside the checkout unless `MIB_RELEASE_ALLOW_OUTSIDE=1` explicitly permits an external test directory.
 
-## 目录格式
+## Layout
 
-默认 build ID 是 YYYYMMDD-HHMMSS-<git短SHA>，可用 package --id 指定：
+The default build ID is `YYYYMMDD-HHMMSS-<short-git-SHA>`; override it with `package --id`:
 
     build/releases/
       index.html
@@ -28,10 +28,10 @@
         linux/make-it-big.x86_64
         windows/make-it-big.exe
 
-build.json 是单个 build 的元数据事实来源，记录提交、时间、平台路径、大小和 SHA256。缺少的平台会被明确记录；完全没有导出文件时必须显式传 --allow-empty。
+`build.json` is the metadata source of truth for a build: revision, timestamp, platform paths, sizes, and SHA256 hashes. Missing platforms remain explicit; packaging with no exported files requires `--allow-empty`.
 
-prune 只处理 builds 的直接子目录，并且要求目录名匹配 build ID、存在有效 build.json、且不是符号链接。它不会递归清理其他目录。
+`prune` considers only direct children of `builds/` with valid build IDs and metadata, excluding symlinks. It does not recursively clean unrelated directories.
 
-## 安全边界
+## Boundaries
 
-release/site 是提交到仓库的页面源文件；build/releases 是生成的站点根。发布脚本只读取 build/current，写入配置的发布根，不运行 Docker、不操作 Tailscale、不重启服务。Windows/Linux 文件未签名，公开分发前由运维决定是否增加签名和 ACL。
+`release/site/` is committed page source; `build/releases/` is generated output. Release scripts read current exports and write the configured release root. They do not run Docker, configure Tailscale, or restart services. Windows/Linux binaries are unsigned; the operator must review signing and access control before public distribution.

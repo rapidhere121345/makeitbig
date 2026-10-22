@@ -33,7 +33,7 @@ const WORLD_SCALE_BASE := 2
 ## Hamlet copy colours: bone for the lead text, cool grey for secondary, the
 ## existing old-copper accent for links. The shared shell theme already carries a
 ## 1px ink drop shadow, which is what keeps the copy off the ground art.
-const TITLE_TEXT := "炉边镇"
+const TITLE_TEXT := "Hearthside"
 const COOL_GREY := Color("B0B8BA")
 const OLD_COPPER := ShellThemeScript.AMBER
 const HERO_SPEED := 96.0
@@ -59,42 +59,42 @@ const PROMPT_CLEARANCE := 4.0
 ## The themed 18px floor of ShellTheme.MIN_FONT_SIZE holds for every relocated
 ## row; the live proximity badge keeps the 20px body step.
 const PROMPT_FONT_SIZE := 22
-const HELP_COPY_TEXT := "WASD / 方向键移动 · 目标箭头指路 · 靠近后 E 交互\nTab 选择可见地标 · 成长 C · 见闻 J · Esc 离开地标 · F1 设置"
-const DETAIL_TITLE_TEXT := "镇中近况"
-const DETAIL_STATUS_EMPTY_TEXT := "本屏暂无新的状态提示。"
+const HELP_COPY_TEXT := "WASD / Arrows Move · Follow the objective arrow · E Interact nearby\nTab Select visible landmark · C Progression · J Journal · Esc Leave landmark · F1 Settings"
+const DETAIL_TITLE_TEXT := "Town News"
+const DETAIL_STATUS_EMPTY_TEXT := "No new status updates on this screen."
 ## Legacy design-space anchors of the pre-hamlet hub, kept for the hub entries
 ## whose placement the layout has not published yet.
 
 ## Short player-facing names of the authored mainline nodes. Shared by the next
 ## objective line and the contract marker so the two can never disagree.
 const _SHORT_NODE_LABELS := {
-	"tutorial_ranger_basics": "教程",
-	"mainline_01_first_hunt": "主线 01",
-	"mainline_02_priority_under_pressure": "主线 02",
-	"mainline_03_first_elite": "主线 03",
-	"mainline_04_hazard_and_forge": "主线 04",
-	"mainline_05_growth_gate": "主线 05",
-	"threshold_colossus": "阈门巨像",
-	"auto_certification": "AUTO 考核",
+	"tutorial_ranger_basics": "Tutorial",
+	"mainline_01_first_hunt": "Main Quest 01",
+	"mainline_02_priority_under_pressure": "Main Quest 02",
+	"mainline_03_first_elite": "Main Quest 03",
+	"mainline_04_hazard_and_forge": "Main Quest 04",
+	"mainline_05_growth_gate": "Main Quest 05",
+	"threshold_colossus": "Threshold Colossus",
+	"auto_certification": "AUTO Trial",
 }
 ## While the first hunt is pending, the header goal names the stand and the
 ## contract itself; the authored story line stays reachable as tooltip context.
-const FIRST_HUNT_OBJECTIVE_TEXT := "前往行路契台，接下「初次狩猎」"
+const FIRST_HUNT_OBJECTIVE_TEXT := "Contract Board: First Hunt"
 ## The authored reward a locked page is waiting for. Both the card and the world
 ## marker read this table, so "locked" always names the one real gate.
 const _UNLOCK_REASONS := {
-	"forge": "锻造奖励后开放",
-	"proxy": "首杀巨像后开放",
+	"forge": "Needs forge reward",
+	"proxy": "First Colossus Kill",
 }
-## Short, known English outcome/status tokens become Chinese copy; anything the
+## Stable outcome/status tokens become readable copy; anything the
 ## tables do not name is passed through verbatim, so a new save state is never
 ## renamed by a guess. The hub and its read-back API share the same two tables.
 const _KNOWN_OUTCOMES := {
-	"victory": "胜利",
-	"defeat": "失败",
-	"final_victory": "最终胜利",
-	"error": "出错",
-	"aborted": "中止",
+	"victory": "Victory",
+	"defeat": "Failure",
+	"final_victory": "Final Victory",
+	"error": "Error",
+	"aborted": "Aborted",
 }
 ## The published non-colour state marks: the filled diamond the world markers
 ## already use for a route that is open and highlighted, and the hollow one for a
@@ -580,7 +580,7 @@ func _build_ui() -> void:
 		_town_controller.abort_loading(town_load_report)
 		var failure := Label.new()
 		failure.name = "TownLoadFailure"
-		failure.text = "镇区装载失败：%s" % String(town_load_report.get("error", "unknown"))
+		failure.text = "Town loading failed: %s" % String(town_load_report.get("error", "unknown"))
 		failure.tooltip_text = str(town_load_report.get("errors", []))
 		failure.position = Vector2(24, 100)
 		_design_canvas.add_child(failure)
@@ -607,7 +607,7 @@ func _build_header() -> void:
 	_design_canvas.add_child(_header)
 	var row := HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", 8)
 	_header.add_child(row)
 	var identity := VBoxContainer.new()
 	identity.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -622,18 +622,25 @@ func _build_header() -> void:
 	objective.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	objective.add_theme_constant_override("separation", 0)
 	row.add_child(objective)
-	objective.add_child(_copy_label("当前目标", "HubObjectiveCaption", 18))
 	_objective_label = _copy_label("", "HubObjective", 22)
-	_objective_label.clip_text = true
-	_objective_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_objective_label.add_theme_constant_override("line_spacing", -6)
+	# Seed a real wrap width before the first synchronous container sort.
+	_objective_label.size = Vector2(400, 60)
+	_objective_label.custom_minimum_size.y = 60
+	_objective_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	objective.add_child(_objective_label)
-	_character_button = _compact_button("成长 C", "OpenCharacter")
+	_character_button = _compact_button("Talents C", "OpenCharacter")
+	_character_button.add_theme_font_size_override("font_size", 18)
 	_character_button.pressed.connect(func(): character_requested.emit())
 	row.add_child(_character_button)
-	_story_button = _compact_button("见闻 J", "OpenStory")
+	_story_button = _compact_button("Journal J", "OpenStory")
+	_story_button.add_theme_font_size_override("font_size", 18)
 	_story_button.pressed.connect(func(): story_requested.emit())
 	row.add_child(_story_button)
-	_info_toggle = _compact_button("近况", "HubInformationToggle")
+	_info_toggle = _compact_button("News", "HubInformationToggle")
+	_info_toggle.add_theme_font_size_override("font_size", 18)
+	_info_toggle.custom_minimum_size.x = 90
 	_info_toggle.pressed.connect(_on_information_toggle_pressed)
 	row.add_child(_info_toggle)
 	# The existing SessionMenu owns the F1 settings launcher at the top right.
@@ -672,7 +679,7 @@ func _build_feedback() -> void:
 	var title := _copy_label(DETAIL_TITLE_TEXT, "Title", 22)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_child(title)
-	var close := _compact_button("收起", "HubInformationClose")
+	var close := _compact_button("Collapse", "HubInformationClose")
 	close.pressed.connect(func(): set_information_details_expanded(false))
 	heading.add_child(close)
 	var scroll := ScrollContainer.new()
@@ -704,10 +711,10 @@ func _build_feedback() -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
 	column.add_child(actions)
-	var settings := _compact_button("画面与声音 F1", "HubSettings")
+	var settings := _compact_button("Display and Sound F1", "HubSettings")
 	settings.pressed.connect(_open_settings)
 	actions.add_child(settings)
-	var title_button := _compact_button("返回标题", "ReturnToTitle")
+	var title_button := _compact_button("Return to Title", "ReturnToTitle")
 	title_button.pressed.connect(_on_title_pressed)
 	actions.add_child(title_button)
 	_detail_panel.hide()
@@ -862,7 +869,7 @@ func _update_landmarks() -> void:
 		status.text = String(state.get("status", ""))
 		title.add_theme_color_override("font_color", ShellThemeScript.BONE if nearby or selected else COOL_GREY)
 		status.add_theme_color_override("font_color", ShellThemeScript.AMBER if nearby or selected else COOL_GREY)
-		landmark.tooltip_text = "%s\n%s\n%s\n点击指路；走近后点击或按 E 进入" % [
+		landmark.tooltip_text = "%s\n%s\n%s\nClick for directions; approach, then click or press E to enter" % [
 			title.text, status.text, String(state.get("detail", "")),
 		]
 		landmark.add_theme_stylebox_override("normal", _landmark_style(false, nearby))
@@ -965,23 +972,23 @@ func _apply_presentation() -> void:
 	var resources := _as_dictionary(_profile.get("resources", {}))
 	var law_tallies := _as_dictionary(resources.get("law_tallies", {}))
 	var progression := _as_dictionary(_profile.get("progression", {}))
-	var class_name_text := String({"ranger": "游侠", "alchemist": "炼金", "mage": "法师"}.get(String(_profile.get("initial_class", "未建立")), String(_profile.get("initial_class", "未建立"))))
+	var class_name_text := String({"ranger": "Ranger", "alchemist": "Alchemist", "mage": "Mage"}.get(String(_profile.get("initial_class", "Not Created")), String(_profile.get("initial_class", "Not Created"))))
 	_profile_label.text = "Lv.%d · %s" % [int(_character_snapshot.get("level", 1)), class_name_text]
-	_profile_label.tooltip_text = "经验 %d / %d\n律筹：添铸 %d · 改写 %d · 精炼 %d" % [
+	_profile_label.tooltip_text = "XP %d / %d\nLaw Tokens: Inscribe %d · Rewrite %d · Refine %d" % [
 		int(_character_snapshot.get("level_experience", 0)), int(_character_snapshot.get("next_level_experience", 0)),
 		int(law_tallies.get("inscribe", 0)), int(law_tallies.get("rewrite", 0)), int(law_tallies.get("refine", 0)),
 	]
 	var points := int(_character_snapshot.get("points_available", 0))
-	_character_button.text = "成长 C · %d点" % points if points > 0 else "成长 C"
+	_character_button.text = "Talents C · %d" % points if points > 0 else "Talents C"
 	_update_progress_markers(progression)
-	_progress_label.text = _early_progress_text(progression).replace("Build", "构筑").replace("Auto", "代行")
+	_progress_label.text = _early_progress_text(progression).replace("Build", "Build").replace("Auto", "Proxy")
 	_objective_label.text = _displayed_objective_text()
 	var story_text := String(_as_dictionary(_story_snapshot.get("current_objective", {})).get("text", ""))
 	if not story_text.is_empty() and story_text != _objective_label.text:
 		_objective_label.tooltip_text = "%s\n%s" % [_objective_label.text, story_text]
 	else:
 		_objective_label.tooltip_text = _objective_label.text
-	_detail_objective_label.text = "当前目标：" + _objective_label.text
+	_detail_objective_label.text = "Current Target: " + _objective_label.text
 	var message := _localized_status(_status_message)
 	_detail_status_label.text = message if not message.is_empty() else DETAIL_STATUS_EMPTY_TEXT
 	_detail_status_label.tooltip_text = _detail_status_label.text
@@ -999,7 +1006,7 @@ func _apply_presentation() -> void:
 	var unread := 0
 	for entry in _story_snapshot.get("journal_entries", []):
 		if not bool(entry.get("is_read", false)): unread += 1
-	_story_button.text = "见闻 J · %d" % unread if unread > 0 else "见闻 J"
+	_story_button.text = "Journal J · %d" % unread if unread > 0 else "Journal J"
 	# Reflow labels after live growth/unread counts update the top band.
 	_header.notification(Container.NOTIFICATION_SORT_CHILDREN)
 	(_header.get_child(0) as Container).notification(Container.NOTIFICATION_SORT_CHILDREN)
@@ -1046,7 +1053,7 @@ func _update_nearby_feature() -> void:
 	## nearby_resident_id() only yields a resident who is closer than the stand.
 	_nearby_label.text = _facility_prompt_text(feature_id)
 	if not resident_id.is_empty():
-		_nearby_label.text = "[E] 与%s交谈" % String(_resident_conversations[resident_id].get("npc_name", ""))
+		_nearby_label.text = "[E] Talk to %s" % String(_resident_conversations[resident_id].get("npc_name", ""))
 	_view.set_interaction_focus(true, resident_id if not resident_id.is_empty() else feature_id)
 	_nearby_label.tooltip_text = _nearby_label.text
 	_prompt_rect = _resolve_prompt_rect()
@@ -1060,7 +1067,7 @@ func _facility_prompt_text(feature_id: String) -> String:
 	var label := String(entry.get("label", ""))
 	if label.is_empty():
 		label = _nav_title(feature_id)
-	return "[E / Space] 进入 %s" % label
+	return "[E / Space] Enter %s" % label
 
 
 func get_prompt_rect() -> Rect2:
@@ -1083,7 +1090,7 @@ func set_information_details_expanded(expanded: bool) -> void:
 	if _detail_panel != null:
 		_detail_panel.visible = expanded
 	if _info_toggle != null:
-		_info_toggle.text = "收起近况" if expanded else "近况"
+		_info_toggle.text = "Close" if expanded else "News"
 	_update_resident_markers()
 	_update_nearby_feature()
 	_reflow_information_content.call_deferred()
@@ -1095,11 +1102,11 @@ func _on_information_toggle_pressed() -> void:
 
 func _settlement_text() -> String:
 	if _last_result.is_empty():
-		return "最近结算：暂无契约记录"
+		return "Latest Result: No Contract Record"
 	var rewards := _as_dictionary(_last_result.get("rewards", {}))
 	var equipment_count := maxi(0, int(rewards.get("equipment_drop_count", 0)))
-	var drop_summary := "装备 %d 件" % equipment_count if equipment_count > 0 else String(_last_result.get("drop", _last_result.get("last_drop", rewards.get("drop_label", rewards.get("drop_id", "无")))))
-	return "最近：%s\n掉落：%s" % [_localized_outcome(String(_last_result.get("outcome", "未知"))), drop_summary]
+	var drop_summary := "Equipment: %d Items" % equipment_count if equipment_count > 0 else String(_last_result.get("drop", _last_result.get("last_drop", rewards.get("drop_label", rewards.get("drop_id", "None")))))
+	return "Latest: %s\nDrops: %s" % [_localized_outcome(String(_last_result.get("outcome", "Unknown"))), drop_summary]
 
 
 func _localized_outcome(outcome: String) -> String:
@@ -1240,11 +1247,11 @@ func _update_progress_markers(progression: Dictionary) -> void:
 
 func _nav_title(feature_id: String) -> String:
 	return String({
-		"contract": "行路契台",
-		"loadout": "备行架",
-		"forge": "回火砧",
-		"training": "验律场",
-		"proxy": "代行舱",
+		"contract": "Contract Board",
+		"loadout": "Loadout",
+		"forge": "Tempering Anvil",
+		"training": "Training",
+		"proxy": "Proxy Bay",
 	}.get(feature_id, feature_id))
 
 
@@ -1278,18 +1285,18 @@ func _nav_detail(feature_id: String, progression: Dictionary, earned_rewards: Ar
 		"contract":
 			return _player_nav_node_label()
 		"loadout":
-			return "比较已开放" if "equipment_compare_unlock" in earned_rewards else "起步装备可查看"
+			return "Compare Gear" if "equipment_compare_unlock" in earned_rewards else "Inspect Starter Gear"
 		"forge":
-			return "已解锁" if "law_forge_unlock" in earned_rewards else "封印中"
+			return "Unlocked" if "law_forge_unlock" in earned_rewards else "Sealed"
 		"training":
-			return "已验证" if _training_verified(progression) else "未验证"
+			return "Verified" if _training_verified(progression) else "Unverified"
 		"proxy":
 			if bool(progression.get("proxy_unlocked", false)):
-				return "已解锁"
+				return "Unlocked"
 			var proxy_reason := String(_unlock_reasons.get("proxy", ""))
 			if proxy_reason.is_empty():
-				return "封印中"
-			return "封印中 · %s" % proxy_reason
+				return "Sealed"
+			return "Sealed · %s" % proxy_reason
 	return ""
 
 
@@ -1299,7 +1306,7 @@ func _player_nav_node_label() -> String:
 	var next_id := String(_campaign_snapshot.get("next_mainline_node_id", ""))
 	if _SHORT_NODE_LABELS.has(next_id):
 		return String(_SHORT_NODE_LABELS[next_id])
-	return "支线复测" if next_id.is_empty() else "可挑战"
+	return "Side-Contract Retest" if next_id.is_empty() else "Ready to Challenge"
 
 
 func _feature_entry(feature_id: String) -> Dictionary:
@@ -1329,7 +1336,7 @@ func _early_progress_text(progression: Dictionary) -> String:
 	var auto_wins := maxi(0, int(progression.get("auto_contract_wins", 0)))
 	var complete := bool(progression.get("early_game_complete", false))
 	var training_done := _training_verified(progression)
-	return "Build %s · 巨像 %s · Auto %s" % [
+	return "Build %s · Colossus %s · Auto %s" % [
 		"✓" if training_done else "…",
 		"✓" if colossus_done or auto_wins > 0 or complete else "…",
 		"✓" if auto_wins > 0 or complete else "…",
@@ -1338,7 +1345,7 @@ func _early_progress_text(progression: Dictionary) -> String:
 
 ## One derivation for every "training verified" read: the world nameplate used
 ## to check only the exponential-report heuristic while the progress line read
-## the authored completion keys, so a finished training still read 未验证.
+## the authored completion keys, so a finished training still read Unverified.
 func _training_verified(progression: Dictionary) -> bool:
 	return bool(progression.get(
 		"build_training_complete",
@@ -1356,24 +1363,24 @@ func _next_objective_text() -> String:
 	var next_id := String(_campaign_snapshot.get("next_mainline_node_id", ""))
 	match next_id:
 		"tutorial_ranger_basics":
-			return "完成游侠基础教程"
+			return "Complete Ranger Basics"
 		"mainline_01_first_hunt":
-			return "前往行路契台，接下「初次狩猎」"
+			return FIRST_HUNT_OBJECTIVE_TEXT
 		"mainline_02_priority_under_pressure":
-			return "前往行路契台，应对冲锋与远程压力"
+			return "Contract Board: ranged and charging foes"
 		"mainline_03_first_elite":
-			return "挑战首个精英，取得孳生分裂装备"
+			return "Defeat your first elite for Breeding Split"
 		"mainline_04_hazard_and_forge":
-			return "穿越危地，取得律筹锻造能力"
+			return "Cross the hazards to unlock Law Token forging"
 		"mainline_05_growth_gate":
-			return "修正构筑瓶颈，通过增长门槛"
+			return "Fix your build and pass the growth threshold"
 		"threshold_colossus":
-			return "准备并挑战阈门巨像"
+			return "Prepare to challenge the Threshold Colossus"
 		"auto_certification":
-			return "确认四白核心，完成一次 Auto 考核"
+			return "Install four Common cores; complete an Auto trial"
 	if bool(_campaign_snapshot.get("early_game_complete", false)):
-		return "前期毕业完成；可继续支线验证构筑"
-	return "前往行路契台查看当前可用节点"
+		return "Chapter complete: try side contracts"
+	return "Visit the Contract Board"
 
 
 func _first_hunt_pending() -> bool:

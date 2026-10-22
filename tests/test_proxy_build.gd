@@ -44,7 +44,7 @@ func _test_supported_combinations(catalog: Dictionary, failures: Array[String]) 
 			"supported build %d has wrong schema version" % index, failures)
 		_expect(_slots(resolved.cores) == ProxyBuild.SLOT_ORDER,
 			"supported build %d was not emitted in fixed slot order" % index, failures)
-		_expect(not JSON.stringify(resolved).contains("近敌视界") and not JSON.stringify(resolved).contains("protocol") and not JSON.stringify(resolved).contains("name"),
+		_expect(not JSON.stringify(resolved).contains("Near-Enemy Sight") and not JSON.stringify(resolved).contains("protocol") and not JSON.stringify(resolved).contains("name"),
 			"supported build %d leaked presentation fields" % index, failures)
 		_expect(resolved.command_contract == ["move", "piercing_arrow", "stop_move"],
 			"supported build %d has the wrong command contract" % index, failures)

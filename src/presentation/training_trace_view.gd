@@ -95,12 +95,12 @@ func is_drawing() -> bool:
 ## implying one.
 func axis_caption() -> String:
 	if _points.is_empty():
-		return "分代轨迹：没有与当前指纹一致的可画分代点。"
+		return "Generation trace: no drawable generation samples match the current fingerprint."
 	if _mode == MODE_LOG:
 		if is_finite(_flat_magnitude):
-			return "数值纵轴：log10 事件量（对数轴）· 本次每个分代的事件量相同（log10 = %s），节点画在同一高度，不做区分。" % _format_decade(_flat_magnitude)
-		return "分代采样点 · 纵轴：事件量（log10 对数轴）"
-	return "数值纵轴：未采用 · 仅表示分代先后，不比较高低"
+			return "Numeric Y-axis: log10 event count (log scale) · All generations have the same event count (log10 = %s); points share the same height." % _format_decade(_flat_magnitude)
+		return "Generation samples · Y-axis: event count (log10 scale)"
+	return "Numeric Y-axis: not used · Generation order only, not magnitude"
 
 
 ## Everything a test or the art pass may quote about the trace. Read-only.

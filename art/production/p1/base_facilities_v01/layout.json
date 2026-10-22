@@ -38,8 +38,8 @@
         32
       ],
       "split_row": 96,
-      "label": "行路契台",
-      "role": "契约"
+      "label": "Contract Board",
+      "role": "Contracts"
     },
     {
       "id": "loadout",
@@ -53,8 +53,8 @@
         30
       ],
       "split_row": 96,
-      "label": "备行架",
-      "role": "装备 / 符文"
+      "label": "Loadout",
+      "role": "Equipment / Runes"
     },
     {
       "id": "forge",
@@ -68,8 +68,8 @@
         36
       ],
       "split_row": 96,
-      "label": "回火砧",
-      "role": "命运锻造"
+      "label": "Tempering Anvil",
+      "role": "Destiny Forge"
     },
     {
       "id": "training",
@@ -83,8 +83,8 @@
         34
       ],
       "split_row": 96,
-      "label": "验律场",
-      "role": "训练 / 战报"
+      "label": "Training",
+      "role": "Training / Battle Reports"
     },
     {
       "id": "proxy",
@@ -98,8 +98,8 @@
         34
       ],
       "split_row": 96,
-      "label": "代行舱",
-      "role": "固定四白核心"
+      "label": "Proxy Bay",
+      "role": "Four Fixed White Cores"
     }
   ]
 }

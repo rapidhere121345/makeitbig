@@ -114,11 +114,11 @@ func _test_ranger_build_api_and_training(failures: Array[String]) -> void:
 	_expect(before.available_builds.size() == 3, "early game: all ranger builds must be available", failures)
 	for index in before.available_builds.size():
 		var build: Dictionary = before.available_builds[index]
-		_expect(build.name == "方案 %s" % String.chr(65 + index) and build.neutral_name == build.name,
+		_expect(build.name == "Preset %s" % String.chr(65 + index) and build.neutral_name == build.name,
 			"early game: unverified build name must be neutral", failures)
 		_expect(not bool(build.verified) and String(build.verified_growth_name).is_empty(),
 			"early game: growth conclusion leaked before training", failures)
-		_expect(String(build.skills[0].name) == "穿刺箭" and String(build.runes[0].name) == "孳生分裂" and String(build.laws[0].name) == "群猎印记",
+		_expect(String(build.skills[0].name) == "Piercing Arrow" and String(build.runes[0].name) == "Breeding Split" and String(build.laws[0].name) == "Pack Hunt Mark",
 			"early game: UI build details are incomplete", failures)
 	_expect(bool(before.available_builds[0].selected), "early game: convergent should be selected by default", failures)
 	var leaked: Dictionary = state.active_build_snapshot()
@@ -243,9 +243,9 @@ func _test_training_report_augmentation(failures: Array[String]) -> void:
 	starter.start_new_profile("ranger")
 	var starter_trial: Dictionary = starter.run_training_trial()
 	var starter_action := String(starter_trial.report.get("action", ""))
-	_expect(starter_action.contains("可繁殖子箭") and not starter_action.contains("breedable_event") and not starter_action.contains("branch_target_history"),
-		"training augmentation: missing breeding_split must use its Chinese name without raw ids", failures)
-	_expect(not starter_action.contains("寻找") and not starter_action.contains("实战"),
+	_expect(starter_action.contains("Breedable Child Arrows") and not starter_action.contains("breedable_event") and not starter_action.contains("branch_target_history"),
+		"training augmentation: missing breeding_split must use its English name without raw ids", failures)
+	_expect(not starter_action.contains("Find") and not starter_action.contains("combat"),
 		"training augmentation: interface action must outrank growth-state advice", failures)
 
 	# A crafted starting build with breeding_split but no pack_hunt_mark leaves
@@ -255,21 +255,21 @@ func _test_training_report_augmentation(failures: Array[String]) -> void:
 	if crafted != null:
 		var crafted_trial: Dictionary = crafted.run_training_trial()
 		var crafted_action := String(crafted_trial.report.get("action", ""))
-		_expect(crafted_action.contains("分支目标记录") and not crafted_action.contains("branch_target_history") and not crafted_action.contains("breedable_event"),
-			"training augmentation: missing pack_hunt_mark must use its Chinese name without raw ids", failures)
+		_expect(crafted_action.contains("Branch Target History") and not crafted_action.contains("branch_target_history") and not crafted_action.contains("breedable_event"),
+			"training augmentation: missing pack_hunt_mark must use its English name without raw ids", failures)
 	var known_interface_names := {
-		"piercing_continuation": "穿刺续行",
-		"breedable_event": "可繁殖子箭",
-		"branch_hit_counter": "分支命中计数",
-		"branch_target_history": "分支目标记录",
-		"lineage_lifetime_pause": "谱系寿命暂停",
+		"piercing_continuation": "Piercing Continuation",
+		"breedable_event": "Breedable Child Arrows",
+		"branch_hit_counter": "Branch Hit Counter",
+		"branch_target_history": "Branch Target History",
+		"lineage_lifetime_pause": "Lineage Lifetime Pause",
 	}
 	for interface_id in known_interface_names:
 		var known_action := TrainingReportBuilderScript.action({"missing_interfaces": [interface_id]})
 		_expect(known_action.contains(String(known_interface_names[interface_id])) and not known_action.contains(String(interface_id)),
-			"training augmentation: known interface %s leaked its raw id or lost its Chinese name" % interface_id, failures)
+			"training augmentation: known interface %s leaked its raw id or lost its English name" % interface_id, failures)
 	var fallback_action := TrainingReportBuilderScript.action({"missing_interfaces": ["lineage_lifetime_pause", "experimental_link"]})
-	_expect(fallback_action.contains("谱系寿命暂停") and fallback_action.contains("未收录接口（experimental_link）"),
+	_expect(fallback_action.contains("Lineage Lifetime Pause") and fallback_action.contains("Unknown Interface (experimental_link)"),
 		"training augmentation: fallback interface guidance must use shared names and retain unknown ids", failures)
 
 	# Tampering with the returned report must not pollute the stored map entry
@@ -862,7 +862,7 @@ func _test_forge_defaults_and_preview(failures: Array[String]) -> void:
 	var result_view: Dictionary = first_candidate.get("result_item_view", {}) as Dictionary
 	_expect(not raw_target.is_empty() and first_candidate.result_item == raw_candidate.get("result_item", {})
 		and not (first_candidate.result_item as Dictionary).has("base_name")
-		and result_view.get("base_name", "") == "白蜡长弓"
+		and result_view.get("base_name", "") == "Ash Longbow"
 		and not (result_view.get("affixes", []) as Array).is_empty()
 		and String(((result_view.get("affixes", []) as Array)[0] as Dictionary).get("family_name", "")) == String(first_candidate.get("family_name", "")),
 		"forge: raw result_item changed or its separate presentation view lost readable names", failures)

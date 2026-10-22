@@ -102,7 +102,7 @@ func _run() -> void:
 	var pending_button: Button = screen.find_child("TalentNode_ranger_wind_slice_stance", true, false) as Button
 	_expect(implemented_button != null and not implemented_button.disabled
 		and pending_button != null and not pending_button.disabled
-		and pending_button.text.contains("风切架势")
+		and pending_button.text.contains("Windcut Stance")
 		and pending_button.get_theme_font_size("font_size") >= 22,
 		"iconed pending wind-slice stopped being inspectable or lost its visible name", errors)
 	if pending_button != null:
@@ -110,7 +110,7 @@ func _run() -> void:
 	var allocate_button: Button = screen.find_child("AllocateTalentButton", true, false) as Button
 	var pending_detail: Label = screen.find_child("SelectedTalentState", true, false) as Label
 	_expect(allocate_button != null and allocate_button.disabled
-		and pending_detail != null and pending_detail.text.contains("该节点将在相关机制接入后开放"),
+		and pending_detail != null and pending_detail.text.contains("This node will unlock when its mechanic is implemented"),
 		"selecting iconed pending wind-slice did not keep allocation disabled while exposing its reason", errors)
 	for button in [implemented_button, pending_button]:
 		if button == null:
@@ -189,9 +189,9 @@ func _screen_snapshot() -> Dictionary:
 			nodes.append({
 				"id": talent_id, "name": String(source.name), "tier": int(source.layer),
 				"keystone": bool(source.is_key), "description": String(source.description), "allocated": false,
-				"can_allocate": not pending, "lock_reason": "该节点将在相关机制接入后开放" if pending else "",
+				"can_allocate": not pending, "lock_reason": "This node will unlock when its mechanic is implemented" if pending else "",
 			})
-	return {"trees": [{"id": "ranger", "name": "猎场学", "available": true, "nodes": nodes}]}
+	return {"trees": [{"id": "ranger", "name": "Hunting", "available": true, "nodes": nodes}]}
 
 
 func _bad_schema() -> Dictionary:

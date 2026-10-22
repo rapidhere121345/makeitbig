@@ -1,41 +1,41 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Make It Big — 版本下载</title>
-  <meta name="description" content="Make It Big 像素暗黑搜宝 Demo 的 Windows 与 Linux 构建下载。">
+  <title>Make It Big — Downloads</title>
+  <meta name="description" content="Download Windows and Linux builds of Make It Big, a pixel-art dark-fantasy loot demo.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="site-header">
-    <p class="eyebrow">像素暗黑搜宝 Demo</p>
+    <p class="eyebrow">Pixel-art dark-fantasy loot demo</p>
     <h1>Make It Big</h1>
-    <p>游侠首章 · 教程 / 炉边镇 / 契约 / 阈门巨像</p>
+    <p>Ranger Chapter One · Tutorial / Hearthside / Contracts / Threshold Colossus</p>
   </header>
   <main>
     <section class="panel" id="latest-panel" hidden>
-      <h2>最新构建</h2>
+      <h2>Latest Build</h2>
       <p class="build-id"><code id="latest-id"></code></p>
       <p class="meta" id="latest-meta"></p>
       <div class="downloads" id="latest-downloads"></div>
     </section>
     <section class="panel">
-      <h2>历史构建</h2>
-      <p class="hint">按时间倒序保留最近 <span id="keep-count">20</span> 个 build。</p>
+      <h2>Build History</h2>
+      <p class="hint">The latest <span id="keep-count">20</span> builds, newest first.</p>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Build</th><th>时间 (UTC)</th><th>Windows</th><th>Linux</th></tr>
+            <tr><th>Build</th><th>Time (UTC)</th><th>Windows</th><th>Linux</th></tr>
           </thead>
           <tbody id="history-body"></tbody>
         </table>
       </div>
     </section>
-    <noscript><p class="panel">此页面需要 JavaScript 显示下载列表；机器可读索引在 <a href="index.json">index.json</a>。</p></noscript>
+    <noscript><p class="panel">Enable JavaScript to display downloads, or read the machine-readable <a href="index.json">index.json</a>.</p></noscript>
   </main>
   <footer class="site-footer">
-    <p>下载文件未签名；首次运行时操作系统可能提示未知发布者。请使用每个 build 内的 SHA256SUMS 校验。</p>
+    <p>Downloads are unsigned; your operating system may warn about an unknown publisher. Verify files against each build's SHA256SUMS.</p>
   </footer>
   <script type="application/json" id="release-index">
 __RELEASE_INDEX_JSON__

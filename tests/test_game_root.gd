@@ -118,10 +118,10 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	var mode_picker: OptionButton = game.current_screen.get("_mode_picker")
 	var contract_picker: OptionButton = game.current_screen.get("_contract_picker")
 	_expect(build_label != null and not build_label.visible and continuation != null and "%" in continuation.text
-		and "构筑指纹：" not in build_label.text and growth_conclusion == "未验证"
+		and "Build Fingerprint: " not in build_label.text and growth_conclusion == "Unverified"
 		and "exponential" not in build_label.text.to_lower(),
 		"game root: contract did not present the real unverified Build safely", failures)
-	_expect(skill_label != null and skill_label.text == "穿刺箭" and "孳生分裂" in build_details and "群猎印记" in build_details, "game root: contract Build did not use the player-facing component names", failures)
+	_expect(skill_label != null and skill_label.text == "Piercing Arrow" and "Breeding Split" in build_details and "Pack Hunt Mark" in build_details, "game root: contract Build did not use the player-facing component names", failures)
 	_expect(mode_picker != null and mode_picker.selected == 0 and mode_picker.is_item_disabled(1), "game root: fresh contract was not Manual with Auto disabled", failures)
 	_expect(contract_picker != null and _selected_contract_id(contract_picker) == "mainline_01_first_hunt", "game root: contract board did not select the first available authored node", failures)
 	game.set("_auto_smoke_session", true)
@@ -147,7 +147,7 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	game.current_screen.call("_build_ui")
 	game.current_screen.call("_apply_presentation")
 	build_label = game.current_screen.get("_build_label")
-	_expect(build_label != null and game.current_screen._growth_conclusion(game.current_screen._resolved_build()) == "指数" and "exponential" not in build_label.text.to_lower(), "game root: verified growth state was not presented", failures)
+	_expect(build_label != null and game.current_screen._growth_conclusion(game.current_screen._resolved_build()) == "Exponential" and "exponential" not in build_label.text.to_lower(), "game root: verified growth state was not presented", failures)
 	var config := {
 		"contract_id": "mainline_01_first_hunt",
 		"mode": "Manual",
@@ -302,7 +302,7 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	var forge_status := String(game.current_screen.get("_status_message"))
 	_expect(String(premature_commit.get("error", "")) == "candidate_not_selected",
 		"game root: forge refusal lost its stable machine code: %s" % str(premature_commit), failures)
-	_expect(forge_status.contains("请先选择") and not forge_status.contains("candidate_not_selected"),
+	_expect(forge_status.contains("Select") and not forge_status.contains("candidate_not_selected"),
 		"game root: forge refusal was not player-readable: %s" % forge_status, failures)
 	var revealed: Dictionary = game.request_facility_action("forge", "forge_reveal", {})
 	var revealed_candidates: Array = ((revealed.get("session", {}) as Dictionary).get("candidates", []) as Array)
@@ -327,13 +327,13 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 		var retry_snapshot: Dictionary = game.application_state.forge_snapshot()
 		_expect(String((retry_snapshot.get("session", {}) as Dictionary).get("state", "")) == "selected",
 			"game root: failed forge save lost retry state: %s" % str(retry_snapshot.get("session", {})), failures)
-		_expect(forge_status.contains("装备和律筹均未改变") and not forge_status.contains("injected_save_failure"),
+		_expect(forge_status.contains("Equipment and Law Tokens are unchanged") and not forge_status.contains("injected_save_failure"),
 			"game root: failed forge save leaked an internal error: %s" % forge_status, failures)
 		game.save_store = real_save_store
 		forged = game.request_facility_action("forge", "forge_commit", {"session_id": forge_session_id})
 	_expect(bool(forged.get("ok", false)), "game root: forge candidate did not commit", failures)
 	forge_status = String(game.current_screen.get("_status_message"))
-	_expect(forge_status.contains("锻造完成") and not forge_target_name.is_empty() and forge_status.contains(forge_target_name),
+	_expect(forge_status.contains("Forged:") and not forge_target_name.is_empty() and forge_status.contains(forge_target_name),
 		"game root: forge success did not show a readable completion: %s" % forge_status, failures)
 	_expect(forge_target_id.is_empty() or not forge_status.contains(forge_target_id),
 		"game root: forge success leaked inventory instance id %s in: %s" % [forge_target_id, forge_status], failures)
@@ -425,8 +425,8 @@ func _test_proxy_player_flow(failures: Array[String]) -> void:
 	game.current_screen.call("_build_ui")
 	game.current_screen.call("_apply_presentation")
 	var first_cards: Array = game.current_screen.call("get_proxy_component_card_texts")
-	_expect(first_cards.size() == 1 and String(first_cards[0]).contains("标记棱镜")
-		and String(first_cards[0]).contains("尚未安装，当前代理构筑不变"),
+	_expect(first_cards.size() == 1 and String(first_cards[0]).contains("Mark Prism")
+		and String(first_cards[0]).contains("Not installed; current proxy build unchanged"),
 		"proxy player flow: marking settlement was not presented as uninstalled inventory", failures)
 	game.leave_result()
 
@@ -434,13 +434,13 @@ func _test_proxy_player_flow(failures: Array[String]) -> void:
 	var proxy_before: Dictionary = game.current_screen.get("_facility_data")
 	var catalog_before: Dictionary = (proxy_before.proxy as Dictionary).catalog
 	_expect(catalog_before.has("marking_prism")
-		and String((catalog_before.marking_prism as Dictionary).name) == "标记棱镜",
+		and String((catalog_before.marking_prism as Dictionary).name) == "Mark Prism",
 		"proxy player flow: player-readable keyed core catalog did not reach the facility", failures)
 	var marking: Dictionary = game.request_facility_action("proxy", "equip_proxy_core", {"core_id": "marking_prism"})
 	_expect(bool(marking.get("ok", false))
 		and String(game.application_state.profile.proxy_build.cores[0]) == "marking_prism"
 		and String(marking.resolved_proxy_build.semantic_fingerprint) != String(initial_resolved.semantic_fingerprint)
-		and String(game.current_screen.get("_status_message")).contains("标记棱镜"),
+		and String(game.current_screen.get("_status_message")).contains("Mark Prism"),
 		"proxy player flow: marking core could not be installed through the facility", failures)
 	game.leave_facility()
 

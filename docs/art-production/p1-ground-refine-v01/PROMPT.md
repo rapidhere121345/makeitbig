@@ -1,8 +1,8 @@
-# 仅土地纹理精细化
+# Ground-Texture Refinement Only
 
-2026-09-14。用户认可其他部分暂保留，仅要求地面稍精细。解释“文理/惊喜”为“纹理/精细”，不改变角色、Boss、雪量、布局、视角与尺寸。
+2026-09-14. The user accepted retaining other parts for now and requested slightly finer ground texture. Interpreted two source-language typos as "texture/refinement," with no changes to actors, Boss, snow amount, layout, view, or dimensions.
 
-使用内置 imagegen 定向编辑上一版ground.png，最终仍要在同机位Godot画面验证。旧资源与旧归档不覆盖。
+Built-in imagegen performs a targeted edit of the previous ground.png. Final validation still requires the same Godot camera. Existing resources and archives are not overwritten.
 
 Use case: precise-object-edit.
 Input image: edit target, the existing ground-only pixel-art field. Refine ONLY its ground texture moderately; retain the same dark cold slate palette, diagonal broad worn passage, overall lighting, 8:5 aspect ratio and exact ground-only coverage. Desired final logical resolution1024x640.

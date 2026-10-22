@@ -1,119 +1,79 @@
-# 炉边镇模块化基础与 GPU 灰盒验收
+# Hearthside Modular Foundation and GPU Greybox Acceptance
 
-日期：2026-10-22。范围：新作者契约、显露状态与真实运行链的样板验证。
-**状态：技术基础已实现；正式镇区素材重建与成品验收未完成。**
+Date: 2026-10-22. Scope: sample validation of the new authoring contract, reveal states, and actual runtime chain.
+**Status: technical foundation implemented; production town art reconstruction and finished-visual acceptance incomplete.**
 
-## 实施清单
+## Implementation Checklist
 
-- [x] 修正旧 cutout shader 重复乘贴图的问题，用 GPU 像素回归证明。
-- [x] 新增 `EnvironmentObjectDefinition` / `Placement` / `Baker`；
-  同资源多实例、确定性展开、平移一次、冲突原子拒绝。
-- [x] 完整底图校验、full/revealed/mask 同画布校验、表现资源内容指纹。
-- [x] 统一 actor/native 的排序 rank 与 stable ID，frame 与 plan 使用同一比较。
-- [x] 作者显露控制器：不可变 full mask、头胸区域精判、多主体最大需求、
-  进出阈值与 150 ms 过渡；不复用旧 alpha 档位。
-- [x] common 结构只绘一次；full/revealed 用 premultiplied 插值一次合成。
-- [x] 新流程仅保护玩家与当前交谈居民；旧剪片仍走原兼容路径。
-- [x] GPU shader 对照，以及三次实际挂载的灰盒走查、修正与复验。
-- [ ] 正式独立地面、建筑、树与设施美术生产。
-- [ ] 新镇区布局/素材整体迁移、完整首章路线的成品视觉验收。
+- [x] Fixed old cutout shader's repeated texture multiplication, proven by GPU pixel regression.
+- [x] Added `EnvironmentObjectDefinition` / `Placement` / `Baker`: multiple instances per resource, deterministic expansion, one translation, atomic rejection of conflicts.
+- [x] Complete-ground validation, shared full/revealed/mask canvas checks, presentation content fingerprints.
+- [x] Unified actor/native sort rank and stable ID; frame and plan use one comparator.
+- [x] Authored reveal controller: immutable full mask, precise head/chest checks, maximum demand across subjects, entry/exit thresholds,150ms transition; no reuse of old alpha tiers.
+- [x] Common structure drawn once; full/revealed composited once with premultiplied interpolation.
+- [x] New flow protects only player and current conversation resident; legacy cutouts retain compatibility path.
+- [x] GPU shader comparisons and three mounted greybox walks, fixes, and rechecks.
+- [ ] Production independent ground, buildings, trees, and facilities.
+- [ ] Whole-town layout/art migration and finished first-chapter visual acceptance.
 
-两个 Paseo 子代理均为 `devin/gpt-6-1-sol-medium` / `medium`，
-权限 `bypass`，未继续委派。分别负责 shader/GPU 验证和物件作者组件；
-父代理负责集成、源码审查、画面复核与最终门禁。
+Two Paseo subagents used `devin/gpt-6-1-sol-medium` / `medium`, `bypass`, without further delegation: shader/GPU validation and object-authoring components respectively. Parent integrated, reviewed code/images, and owned final gates.
 
-## 运行链
+## Runtime Chain
 
-`tools/modular_town_preview.gd` 从零生成明确标注 GREYBOX 的测试图片，
-组装 960×640 原生场景与 spatial manifest，经现有
-`TownController → SceneRuntime → MovementResolver / projector → TownPresenter`
-运行。使用真实游侠素材、640×360 逻辑视口、1280×720 整数 2x 显示。
-起点可通过合法 `place_hero` 安置，行走与贴边通过权威 tick 执行。
-没有另建一套移动模型，没有裁切旧镇区画面作为新素材。
+`tools/modular_town_preview.gd` generates clearly labeled GREYBOX test images from scratch, assembles a 960×640 native scene and spatial manifest, and runs through existing `TownController → SceneRuntime → MovementResolver / projector → TownPresenter`.
+Real Ranger assets,640×360 logical viewport,1280×720 integer 2x display. Legal `place_hero` sets starting points; authoritative ticks handle walking/edge contact. No separate movement model; no old-town image crops passed off as new art.
 
-`TownController.mount` 增加可选 scene/manifest 路径，游戏默认入口未切换。
-`TownSceneRoot.modular_environment_objects` 默认 false；
-新样板显式启用，旧镇区仍可加载。
+`TownController.mount` accepts optional scene/manifest paths; default game entry unchanged. `TownSceneRoot.modular_environment_objects` defaults false; sample explicitly enables it, old town still loads.
 
-## GPU 证据与两轮以上实际视觉复核
+## GPU Evidence and Repeated Visual Review
 
-环境均为 Godot 4.7.2、X11、Compatibility / OpenGL 3.3、
-NVIDIA 595.91.07 / RTX 4080 SUPER，Dummy audio。
-显示由执行者独占创建并退出清理；下列成功会话退出码均为 0。
+All environments: Godot 4.7.2, X11, Compatibility/OpenGL 3.3, NVIDIA 595.91.07/RTX 4080 SUPER, Dummy audio. Displays exclusively created/cleaned by operator; successful sessions below exited 0.
 
-| 会话 | 实际检查 | 结论与限制 |
+| Session | Actual checks | Conclusion and limits |
 | --- | --- | --- |
-| shader 修复对照，`:111` | 彩色半透明贴图、modulate/self_modulate、孔外与孔内像素 | 原版 RGBA 误差 0.145098、exit 1；修正版误差 0、exit 0 |
-| authored R1，`:111` | 合成像素对照、双遮挡件、透明 mask 空区、多人擦边、三秒保持 | 常态/中间态/显露参考误差均 0；是 shader 检查，不是场景验收 |
-| mounted R2，`:111` | 60 项检查、14 帧；实际挂载、真实角色、楼前阻挡、树前后、平移实例、相机、门口往返 | 技术检查通过；视觉发现悬空屋顶边条/树冠残片，显露态形体不通过 |
-| mounted R3，`:113` | 修成连通梁柱与完整树干后，重走同一路线，60 项/14 帧 | 技术检查通过；父代理看图发现横梁穿过角色头胸部，仍不满足可读性 |
-| mounted R4，`:113` | 改为低柱截面、去掉高横梁；同路线 60 项/14 帧 | 灰盒视觉复核通过：头胸可读，保留墙基/树干，无悬空残片、灰孔或底图空洞；不等于正式美术质量通过 |
+| Shader before/after, `:111` | Colored translucent texture, modulate/self_modulate, inside/outside pixels | Original RGBA error 0.145098, exit 1; fixed error 0, exit 0 |
+| authored R1, `:111` | Composite references, two occluders, empty mask areas, multi-subject grazing, three-second hold | Normal/intermediate/revealed errors all 0; shader check, not scene acceptance |
+| mounted R2, `:111` |60 checks/14 frames; actual mount/character, building block, front/back trees, translated instance, camera, doorway return | Technical checks pass; floating roof strips/canopy fragments fail revealed-form review |
+| mounted R3, `:113` | Connected beams/posts and complete trunk, same route,60 checks/14 frames | Technical pass; parent inspection found beam crossing head/chest, still unreadable |
+| mounted R4, `:113` | Low post sections, no high beam; same 60 checks/14 frames | Greybox visual pass: readable head/chest, wall bases/trunk retained, no floating fragments, gray holes, or missing ground; not production-art quality acceptance |
 
-父代理实际打开检查 R2/R3/R4 的常态、显露、树前后、贴墙和过门截图。
-R4 的 `03_open.png` 不再有穿过人物的横梁；`09_second_tree_camera_pan.png`
-保留完整树干，第二实例独立显露；过门/反向帧未见新卡点。
-门口仍出现两个相近的琥珀色引导箭头，属于现有引导 UI，记录但未纳入本轮修改。
+Parent actually opened R2/R3/R4 normal/revealed, tree front/back, wall-contact, and doorway screenshots. R4 `03_open.png` has no beam crossing the actor. `09_second_tree_camera_pan.png` retains complete trunk and independent second-instance reveal. Doorway/reverse frames show no new sticking. Two similar amber doorway arrows remain existing guidance UI, recorded but unchanged.
 
-30/120 Hz **输入帧 delta** 的门口往返各消耗 60 个模拟 tick，
-回到 `[600,440]`。这是权威轨迹对照，不是宣称 GPU 实测跑到 120 FPS。
-截图中静止角色可能有 idle 动画，场景帧哈希不要求相同；显露权重三秒保持为 1。
+30/120Hz **input frame deltas** each take 60 simulation ticks for doorway return to `[600,440]`. This compares authoritative trajectories, not a claim of measured 120 GPU FPS. Idle animation may change still-character frame hashes; reveal weight stays 1 for three seconds.
 
-证据：
+Evidence:
 
-- `build/current/cutout_gpu_before_111.log`、`cutout_gpu_after_111.log`
-- `build/current/authored-reveal-r1/`：四组像素对照图、日志、REPORT
-- `build/current/modular-town-preview-r2/REPORT.json` 与 `VISUAL_REPORT.txt`；
-  成功场景和 14 帧在其 `mounted/`，保留首次作者设置遗漏的失败记录
-- `build/current/modular-town-preview-r3/`；
-  日志 `build/current/modular-town-r3-engine.log`，退出记录 `.exit`
-- `build/current/modular-town-preview-r4/`；
-  日志 `build/current/modular-town-r4-engine.log`，退出记录 `.exit`
+- `build/current/cutout_gpu_before_111.log`, `cutout_gpu_after_111.log`
+- `build/current/authored-reveal-r1/`: four pixel-comparison sets, logs, REPORT
+- `build/current/modular-town-preview-r2/REPORT.json`, `VISUAL_REPORT.txt`; successful scene/14 frames in `mounted/`, initial missing-author-setting failure retained
+- `build/current/modular-town-preview-r3/`; `build/current/modular-town-r3-engine.log` and `.exit`
+- `build/current/modular-town-preview-r4/`; `build/current/modular-town-r4-engine.log` and `.exit`
 
-R2 初次因缺少 `SortRoot.y_sort_enabled` 被原生契约拒绝；
-修正样板作者设置后通过，没有绕过生产校验。
-显式 headless GPU 请求返回 `GPU SKIP` / exit 2，不能计为画面通过。
+R2 initially rejected for missing `SortRoot.y_sort_enabled`; corrected sample author settings passed without bypassing production validation. Explicit headless GPU requests return `GPU SKIP` / exit 2 and cannot count as visual passes.
 
-## 代码验证
+## Code Validation
 
-已运行并通过：项目 `check.sh`、物件作者测试、旧镇契约 212 个负例、
-镇区几何/runtime、world asset digest、world occlusion 定向检查。
-新物件测试已纳入 `scripts/test.sh` 和 `scripts/test.ps1`。
+Passed: project `check.sh`, object-authoring tests,212 legacy-town contract negatives, town geometry/runtime, world asset digest, targeted world occlusion. New object tests included in `scripts/test.sh` and `scripts/test.ps1`.
 
-代码审查补充了负 rank、水平/垂直翻转、未进入指纹的 z-index/tint/hidden
-作者覆盖的拒绝检查；不支持的作者变换失败，不在运行时猜测修复。
-纯 ground art 的指纹进入 presentation digest，但不因此声明 occlusion 通道。
+Review added rejection of negative rank, horizontal/vertical flips, and author z-index/tint/hidden overrides absent from fingerprints. Unsupported transforms fail rather than being guessed/repaired at runtime. Pure-ground art enters presentation digest without claiming an occlusion channel.
 
-首轮 `container_build.sh` 的 600 房间矩阵全部胜利，但因为父代理在执行期间
-编辑 `town_scene_root.gd`，`frozen runtime/content changed during run` 拒绝放行。
-这是并行执行失误，不能当作构建通过，也不是剧情测试 flake。
-源码冻结后的最终完整门禁结果如下。
+First `container_build.sh` won all 600 matrix rooms but parent edited `town_scene_root.gd` during execution, triggering `frozen runtime/content changed during run`. This parallel-execution mistake is not a build pass or story-test flake. Final frozen-source gate follows.
 
-最终门禁补记：独立 GPT 6.1 Sol 子代理以普通 uid=1000、独立进程组执行，
-2026-10-22 10:09:50 -07:00 完成，退出码 **0**。
-`modular-container-build-verified.log` 与同名前缀 `.exit` 记录：
+Final addendum: independent GPT 6.1 Sol subagent ran as ordinary uid=1000 in a separate process group; completed 2026-10-22 10:09:50 -07:00, exit **0**. `modular-container-build-verified.log` and matching `.exit` record:
 
 - `PASS test_environment_object.gd`
 - `STORY_READING_FLOW PASS`
 - `PASS test_repeatable_encounter_matrix.gd rooms=600 seeds=0..99 outcomes={"victory":600} ticks=33894`
 - `test gate passed: exit 0, no GDScript runtime errors`
-- Windows / Linux 导出完成，`SCENE_SMOKE_PASS ... route=title`
+- Windows/Linux exports completed, `SCENE_SMOKE_PASS ... route=title`
 - `host build flow passed`
 
-之前另一次主会话执行在工具等待被中断后停止于 510 房间且没有退出文件，
-同样未计为通过。最终独立执行的证据位于
-`build/current/modular-container-build-verified.{log,exit,pid,pgid}`。
-既有部分测试仍输出退出时的 ObjectDB/resource 清理警告；本记录不宣称零警告。
+Another earlier main-session run stopped at 510 rooms after tool-wait interruption, with no exit file; not counted as passing. Final independent evidence: `build/current/modular-container-build-verified.{log,exit,pid,pgid}`. Some existing tests still emit ObjectDB/resource cleanup warnings at exit; no zero-warning claim.
 
-## 生产阻塞与边界
+## Production Blockers and Boundaries
 
-当前会话及两个子代理都没有 `image_gen`/图像生成工具；已发现的 MCP 与插件
-也没有该入口。没有调用未公开服务、搜寻凭据或把旧剪片重新命名为新素材。
-程序画出的矩形、树形与格网明确属于灰盒测试，不作为正式美术交付。
+Neither main session nor either subagent had `image_gen`/image-generation tools; discovered MCP/plugins exposed none. No undisclosed service, credential searching, or renamed old cutouts. Programmatic rectangles, trees, and grids are explicitly greybox tests, not production art.
 
-新组件当前接收**明确编写的最终 movement_envelopes**，不会自动增加余量，
-避免与角色半径重复外扩。footprints 是作者接地数据；自动外扩、全镇通路净空、
-跨布局 travel 迁移尚未实施。完整底图校验能证明 alpha 覆盖，不能证明
-画面内容真的画对了；该部分必须经正式素材与实际游玩验收。
+New components accept **explicitly authored final movement_envelopes**, adding no automatic margin and avoiding duplicate hero-radius expansion. Footprints are authored ground-contact data. Automatic expansion, whole-town clearance, and cross-layout travel migration remain unimplemented. Complete-ground checks prove alpha coverage, not correct painted content; production assets and playtesting must verify that.
 
-解阻后按 [素材 brief](../art-production/TOWN_MODULAR_ASSET_BRIEF.md) 生产首组
-独立素材，替换灰盒资源后使用同一运行链复验，再进行全镇的闭合区域/整体迁移。
+When unblocked, produce the first independent set using the [asset brief](../art-production/TOWN_MODULAR_ASSET_BRIEF.md), replace greybox resources, recheck the same runtime chain, then migrate closed regions/the whole town.

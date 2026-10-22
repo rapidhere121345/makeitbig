@@ -1,12 +1,12 @@
-# 详细文档
+# Detailed Documentation
 
-这里放需要长期查阅的系统、叙事、宿主机工作流和美术生产说明。当前状态与快速操作见根目录的 [README.md](../README.md)，整体协作约定见 [AGENTS.md](../AGENTS.md)。
+Long-lived references for systems, narrative, host workflows, and art production live here. See the root [README.md](../README.md) for current status and quick operations, and [AGENTS.md](../AGENTS.md) for collaboration rules.
 
-- [HOST_WORKFLOW.md](HOST_WORKFLOW.md)：宿主机工作区的固定环境和构建顺序。
-- [GRAPHICAL_VALIDATION.md](GRAPHICAL_VALIDATION.md)：宿主机窗口检查和 headless 验收记录。
-- [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md)：Windows/Linux 发布页、最近 20 个 build 和 Tailscale 上线边界。
-- [SYSTEMS_DESIGN.md](SYSTEMS_DESIGN.md)：完整游戏的系统模型和长期规划。
-- [narrative/](narrative/README.md)：世界观、剧情和体验单元。
-- [art-production/](art-production/README.md)：可复现的美术生产配方、来源和导入检查。
+- [HOST_WORKFLOW.md](HOST_WORKFLOW.md): fixed host workspace environment and build order.
+- [GRAPHICAL_VALIDATION.md](GRAPHICAL_VALIDATION.md): host window checks and headless acceptance records.
+- [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md): Windows/Linux release pages, the latest 20 builds, and Tailscale publishing boundaries.
+- [SYSTEMS_DESIGN.md](SYSTEMS_DESIGN.md): full-game systems model and long-term plans.
+- [narrative/](narrative/README.md): world, story, and experience units.
+- [art-production/](art-production/README.md): reproducible art recipes, provenance, and import checks.
 
-设计约定已并入实现与验收记录；视觉参考原图在 [art-production/concepts/](art-production/concepts/)，技术文档继续留在本目录。
+Design conventions are incorporated into implementation and acceptance records. Original visual references live in [art-production/concepts/](art-production/concepts/); technical documentation remains here.

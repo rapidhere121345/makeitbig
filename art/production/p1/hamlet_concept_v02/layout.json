@@ -20,7 +20,7 @@
       ],
       "layer": "object",
       "split_row": 176,
-      "label": "守冬塔与共炉棚"
+      "label": "Winterwatch Tower and Shared Hearth Shelter"
     },
     {
       "id": "contract",
@@ -32,7 +32,7 @@
       "layer": "object",
       "split_row": 82,
       "interaction": "contract",
-      "label": "行路契台"
+      "label": "Contract Board"
     },
     {
       "id": "loadout",
@@ -44,7 +44,7 @@
       "layer": "object",
       "split_row": 78,
       "interaction": "loadout",
-      "label": "备行架"
+      "label": "Loadout"
     },
     {
       "id": "forge",
@@ -56,7 +56,7 @@
       "layer": "object",
       "split_row": 102,
       "interaction": "forge",
-      "label": "回火砧"
+      "label": "Tempering Anvil"
     },
     {
       "id": "training",
@@ -68,7 +68,7 @@
       "layer": "object",
       "split_row": 72,
       "interaction": "training",
-      "label": "验律场"
+      "label": "Training"
     },
     {
       "id": "proxy",
@@ -80,7 +80,7 @@
       "layer": "object",
       "split_row": 80,
       "interaction": "proxy",
-      "label": "代行舱"
+      "label": "Proxy Bay"
     },
     {
       "id": "mira",

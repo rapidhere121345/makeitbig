@@ -28,6 +28,7 @@ func _run() -> void:
 
 	screen.present(_snapshot(false, false))
 	await process_frame
+	_test_point_count_copy(screen, failures)
 	_test_selected_node_and_copy(screen, failures)
 	_test_long_detail_dark_paper_contrast(screen, failures)
 	_test_locked_screen_never_emits(screen, requested, refunded, resets, failures)
@@ -46,6 +47,17 @@ func _run() -> void:
 		quit(1)
 
 
+func _test_point_count_copy(screen, failures: Array[String]) -> void:
+	var snapshot := _snapshot(false, false)
+	var points := screen.get("_points_label") as Label
+	for count in [0, 1, 2]:
+		snapshot["points_available"] = count
+		screen.present(snapshot)
+		_expect(points != null and points.text == "%d %s" % [count, "point" if count == 1 else "points"],
+			"available talent points lost their spacing or singular/plural form", failures)
+	screen.present(_snapshot(false, false))
+
+
 func _test_selected_node_and_copy(screen, failures: Array[String]) -> void:
 	var board: Control = screen.find_child("RangerTalentBoard", true, false) as Control
 	var nodes := _talent_nodes(screen)
@@ -55,8 +67,8 @@ func _test_selected_node_and_copy(screen, failures: Array[String]) -> void:
 	selected.emit_signal("pressed")
 	var title: Label = screen.find_child("SelectedTalentName", true, false) as Label
 	var description: Label = screen.find_child("SelectedTalentDescription", true, false) as Label
-	_expect(title != null and title.text == "稳息瞄准", "central click did not select the node for the fixed detail panel", failures)
-	_expect(description != null and description.autowrap_mode != TextServer.AUTOWRAP_OFF and "站定" in description.text, "long node description did not remain readable wrapped copy", failures)
+	_expect(title != null and title.text == "Steady Aim", "central click did not select the node for the fixed detail panel", failures)
+	_expect(description != null and description.autowrap_mode != TextServer.AUTOWRAP_OFF and "standing still" in description.text, "long node description did not remain readable wrapped copy", failures)
 	var stance_gate: Label = screen.find_child("StanceGateLabel", true, false) as Label
 	var stance_row: HBoxContainer = screen.find_child("StanceRow", true, false) as HBoxContainer
 	_expect(stance_gate != null and stance_gate.visible and stance_row != null and not stance_row.visible, "stance controls appeared before their key talent snapshot flag", failures)
@@ -83,7 +95,7 @@ func _test_signals_wait_for_authoritative_present(screen, requested: Array[Strin
 	var allocate: Button = screen.find_child("AllocateTalentButton", true, false) as Button
 	allocate.emit_signal("pressed")
 	_expect(requested == ["aim"], "allocate did not emit exactly the selected talent id", failures)
-	_expect(allocate.disabled and "等待角色档案更新" in (screen.find_child("CharacterStatus", true, false) as Label).text, "allocate press invented an immediate success state", failures)
+	_expect(allocate.disabled and "waiting for the character profile to update" in (screen.find_child("CharacterStatus", true, false) as Label).text, "allocate press invented an immediate success state", failures)
 
 	screen.present(_snapshot(false, true))
 	var refund: Button = screen.find_child("RefundTalentButton", true, false) as Button
@@ -145,8 +157,8 @@ func _test_desktop_bounds_and_readability(screen, failures: Array[String]) -> vo
 
 
 func _test_talent_board_annotations(screen: Control, node_buttons: Array[Button], resolution: Vector2i, failures: Array[String]) -> void:
-	var expected_headings := ["Ⅰ 开端", "Ⅱ 深猎", "Ⅲ 要诀"]
-	var expected_gates := ["前层合计3点", "前层合计8点"]
+	var expected_headings := ["Ⅰ\nStart", "Ⅱ\nHunt", "Ⅲ\nKey"]
+	var expected_gates := ["3 prior pts", "8 prior pts"]
 	var annotations: Array[Control] = []
 	for tier in range(3):
 		var heading: Label = screen.find_child("TalentTierHeading_%d" % (tier + 1), true, false) as Label
@@ -166,7 +178,7 @@ func _test_talent_board_annotations(screen: Control, node_buttons: Array[Button]
 
 func _talent_board_title(screen: Control) -> Label:
 	for label in screen.find_children("*", "Label", true, false):
-		if label is Label and (label as Label).text == "猎场学 · 三层追猎路线":
+		if label is Label and (label as Label).text == "Hunting · Three-Tier Hunting Paths":
 			return label as Label
 	return null
 
@@ -196,23 +208,23 @@ func _snapshot(locked: bool, aim_allocated: bool, stance_available: bool = false
 		"stance_available": stance_available,
 		"unlocked_classes": ["ranger"],
 		"trees": [{
-			"id": "ranger", "name": "猎场学", "available": true,
+			"id": "ranger", "name": "Hunting", "available": true,
 			"nodes": [
-				_node("trail", "寻迹", 1, false, "沿着猎物留下的痕迹前进。", true, false),
-				_node("mark", "猎印", 1, false, "标记当前猎物。", false, true),
-				_node("step", "轻步", 1, false, "避开不必要的冲突。", false, false, "需要前置天赋"),
-				_node("camp", "扎营", 1, false, "回到营火时恢复准备。", false, false, "需要前置天赋"),
-				_node("watch", "守望", 1, false, "观察猎场的变化。", false, false, "需要前置天赋"),
-				_node("aim", "稳息瞄准", 2, false, "站定后压低呼吸，令下一箭更容易命中要害。", aim_allocated, not aim_allocated),
-				_node("hook", "钩索", 2, false, "在地形间快速转换位置。", false, false, "需要前置天赋"),
-				_node("cover", "掩体", 2, false, "利用掩体保持安全距离。", false, false, "需要前置天赋"),
-				_node("echo", "回声", 2, false, "记录猎物移动的回声。", false, false, "需要前置天赋"),
-				_node("wind", "听风", 2, false, "从风向判断敌人的接近。", false, false, "需要前置天赋"),
-				_node("near_key", "近猎要诀", 3, true, "开启近距离姿态。", false, false, "需要第二层关键天赋"),
-				_node("mid_key", "中程要诀", 3, true, "开启中距离姿态。", false, false, "需要第二层关键天赋"),
-				_node("far_key", "远猎要诀", 3, true, "开启远距离姿态。", false, false, "需要第二层关键天赋"),
-					_node("lure", "诱引", 3, false, "三槽依次成功后，下一支穿刺箭前摇从5 tick降为4 tick（-20%）。顺序为穿刺箭实际命中→猎人印记成功→突袭成功；下一支箭被接受时消费一次加速。落空、被屏障阻断、动作被打断或重新进入遭遇都会清空序列。需要本树第1+2层合计已投8点。", false, false, "需要关键天赋"),
-				_node("endure", "耐行", 3, false, "拉长一段追猎的续航。", false, false, "需要关键天赋"),
+				_node("trail", "Tracking", 1, false, "Follow the traces left by your prey.", true, false),
+				_node("mark", "Hunting Mark", 1, false, "Mark the current prey.", false, true),
+				_node("step", "Light Step", 1, false, "Avoid unnecessary conflicts.", false, false, "Requires a prerequisite talent"),
+				_node("camp", "Make Camp", 1, false, "Recover your readiness at the campfire.", false, false, "Requires a prerequisite talent"),
+				_node("watch", "Watch", 1, false, "Observe changes in the hunting grounds.", false, false, "Requires a prerequisite talent"),
+				_node("aim", "Steady Aim", 2, false, "Steady your breathing while standing still, making the next arrow more likely to strike a weak point.", aim_allocated, not aim_allocated),
+				_node("hook", "Grapple", 2, false, "Quickly reposition across terrain.", false, false, "Requires a prerequisite talent"),
+				_node("cover", "Cover", 2, false, "Use cover to maintain a safe distance.", false, false, "Requires a prerequisite talent"),
+				_node("echo", "Echo", 2, false, "Record echoes of the prey's movement.", false, false, "Requires a prerequisite talent"),
+				_node("wind", "Listen to the Wind", 2, false, "Read the wind to detect approaching enemies.", false, false, "Requires a prerequisite talent"),
+				_node("near_key", "Close Hunt Mastery", 3, true, "Unlock the close-range stance.", false, false, "Requires a tier-two keystone"),
+				_node("mid_key", "Midrange Mastery", 3, true, "Unlock the midrange stance.", false, false, "Requires a tier-two keystone"),
+				_node("far_key", "Far Hunt Mastery", 3, true, "Unlock the long-range stance.", false, false, "Requires a tier-two keystone"),
+					_node("lure", "Lure", 3, false, "After all three slots succeed in order, the next Piercing Arrow's windup drops from 5 to 4 ticks (-20%). Sequence: actual Piercing Arrow hit -> successful Hunter's Mark -> successful Dash. Consumes the one-use speedup when the next arrow is accepted. A miss, barrier block, interrupted action, or encounter re-entry clears the sequence. Requires 8 total points in tiers 1+2 of this tree.", false, false, "Requires a keystone"),
+				_node("endure", "Endurance", 3, false, "Extend your hunting endurance.", false, false, "Requires a keystone"),
 			],
 		}],
 	}

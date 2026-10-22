@@ -6,7 +6,7 @@ signal query_changed(query: Dictionary)
 
 const Shell = preload("res://src/presentation/shell_theme.gd")
 const Readable = preload("res://src/presentation/player_readable_build.gd")
-const SORTS := {"name": "按名称", "highest_tier": "按最高词条阶", "affix_count": "按词条数"}
+const SORTS := {"name": "By Name", "highest_tier": "By Highest Affix Tier", "affix_count": "By Affix Count"}
 
 var _query: Dictionary = default_query()
 var _families: Dictionary = {}
@@ -38,7 +38,7 @@ func _init() -> void:
 	add_child(row)
 	_keyword = LineEdit.new()
 	_keyword.name = "CandidateKeywordFilter"
-	_keyword.placeholder_text = "搜索装备或词条"
+	_keyword.placeholder_text = "Search equipment or affixes"
 	_keyword.clear_button_enabled = true
 	_keyword.custom_minimum_size = Vector2(150, 36)
 	_keyword.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -53,11 +53,11 @@ func _init() -> void:
 		_sort.set_item_metadata(_sort.item_count - 1, key)
 	_sort.item_selected.connect(func(index: int): _change("sort", _sort.get_item_metadata(index)))
 	row.add_child(_sort)
-	_toggle = _button("筛选", "CandidateFiltersToggle")
+	_toggle = _button("Filter", "CandidateFiltersToggle")
 	_toggle.pressed.connect(_open_filters)
 	row.add_child(_toggle)
-	_reset = _button("重置", "CandidateFiltersReset")
-	_reset.tooltip_text = "清除筛选，重新显示这个槽位的全部候选"
+	_reset = _button("Reset", "CandidateFiltersReset")
+	_reset.tooltip_text = "Clear filters to show all candidates for this slot"
 	_reset.pressed.connect(reset_query)
 	row.add_child(_reset)
 	for control: Control in [_keyword, _sort, _toggle, _reset]:
@@ -84,7 +84,7 @@ func configure(query: Dictionary, candidates: Array[Dictionary], families: Dicti
 	_query.merge(query, true)
 	_families = families.duplicate(true)
 	_family.clear()
-	_family.add_item("全部词条家族")
+	_family.add_item("All Affix Families")
 	_family.set_item_metadata(0, "")
 	var ids: Array[String] = []
 	for item in candidates:
@@ -94,7 +94,7 @@ func configure(query: Dictionary, candidates: Array[Dictionary], families: Dicti
 				ids.append(id)
 	ids.sort()
 	for id in ids:
-		_family.add_item(String(_families.get(id, {}).get("name", "未收录词条")))
+		_family.add_item(String(_families.get(id, {}).get("name", "Unknown Affix")))
 		_family.set_item_metadata(_family.item_count - 1, id)
 	_sync_controls()
 
@@ -122,8 +122,8 @@ func reset_query() -> void:
 func _build_dialog() -> void:
 	_dialog = AcceptDialog.new()
 	_dialog.name = "CandidateFilterDialog"
-	_dialog.title = "筛选同槽装备"
-	_dialog.ok_button_text = "完成"
+	_dialog.title = "Filter Same-Slot Equipment"
+	_dialog.ok_button_text = "Complete"
 	_dialog.theme = Shell.create()
 	_dialog.get_label().hide()
 	_dialog.confirmed.connect(_restore_focus)
@@ -142,7 +142,7 @@ func _build_dialog() -> void:
 	body.add_theme_constant_override("separation", 10)
 	margin.add_child(body)
 	var note := Label.new()
-	note.text = "只改变显示；装备和奖励都会保留。"
+	note.text = "Only the display changes; equipment and rewards are retained."
 	note.add_theme_font_size_override("font_size", 18)
 	note.add_theme_color_override("font_color", Shell.NEUTRAL)
 	body.add_child(note)
@@ -155,10 +155,10 @@ func _build_dialog() -> void:
 	_tier.name = "CandidateMinimumTierFilter"
 	_tier.add_theme_font_size_override("font_size", 22)
 	for value in range(5):
-		_tier.add_item("不限词条阶级" if value == 0 else "至少 %s 词条" % Readable.new().tier_label(value))
+		_tier.add_item("Any Affix Tier" if value == 0 else "At Least %s Affixes" % Readable.new().tier_label(value))
 	_tier.item_selected.connect(func(index: int): _change("min_tier", index))
 	body.add_child(_tier)
-	for entry in [["requires_rune", "含符文", "CandidateRuneFilter"], ["requires_law", "含法则", "CandidateLawFilter"], ["requires_salvage", "可拆解", "CandidateSalvageFilter"]]:
+	for entry in [["requires_rune", "With Rune", "CandidateRuneFilter"], ["requires_law", "With Law", "CandidateLawFilter"], ["requires_salvage", "Salvageable", "CandidateSalvageFilter"]]:
 		var check := CheckButton.new()
 		check.name = entry[2]
 		check.text = entry[1]
@@ -196,18 +196,18 @@ func _change(key: String, value: Variant) -> void:
 func _update_summary() -> void:
 	var parts: Array[String] = []
 	if not String(_query.keyword).strip_edges().is_empty():
-		parts.append("关键词：%s" % String(_query.keyword).strip_edges())
+		parts.append("Keyword: %s" % String(_query.keyword).strip_edges())
 	if not String(_query.family).is_empty():
-		parts.append("词条家族：%s" % String(_families.get(_query.family, {}).get("name", "未收录词条")))
+		parts.append("Affix family: %s" % String(_families.get(_query.family, {}).get("name", "Unknown Affix")))
 	if int(_query.min_tier) > 0:
-		parts.append("最低阶：%s" % Readable.new().tier_label(int(_query.min_tier)))
-	for pair in [["requires_rune", "含符文"], ["requires_law", "含法则"], ["requires_salvage", "可拆解"]]:
+		parts.append("Minimum tier: %s" % Readable.new().tier_label(int(_query.min_tier)))
+	for pair in [["requires_rune", "With Rune"], ["requires_law", "With Law"], ["requires_salvage", "Salvageable"]]:
 		if bool(_query[pair[0]]): parts.append(pair[1])
-	_toggle.text = "筛选" if parts.is_empty() else "筛选 · %d" % parts.size()
+	_toggle.text = "Filter" if parts.is_empty() else "Filters · %d" % parts.size()
 	_reset.disabled = parts.is_empty() and _query.sort == "name"
-	var filters := "；".join(parts)
-	_summary.text = "%d / %d 件候选" % [_match_count, _total_count] + (" · " + filters if not filters.is_empty() else " · 本槽位没有可替换候选。" if _total_count == 0 else " · 点击物品固定比较")
-	_summary.tooltip_text = _summary.text + "；排序：" + String(SORTS.get(_query.sort, "按名称")).trim_prefix("按")
+	var filters := "; ".join(parts)
+	_summary.text = "%d / %d candidates" % [_match_count, _total_count] + (" · " + filters if not filters.is_empty() else " · No replacement candidates for this slot." if _total_count == 0 else " · Click an item to pin its comparison")
+	_summary.tooltip_text = _summary.text + "; sort: " + String(SORTS.get(_query.sort, "By Name")).trim_prefix("By ")
 	_toggle.tooltip_text = _summary.tooltip_text
 
 

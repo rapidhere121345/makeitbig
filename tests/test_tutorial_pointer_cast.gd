@@ -58,16 +58,16 @@ func _test_empty_click_hint_lifecycle(screen) -> void:
 		"tutorial empty click: the click cast from empty ground")
 	_expect(not bool(screen.get_checklist_snapshot().cast_hit),
 		"tutorial empty click: empty ground completed the cast checklist")
-	_expect(screen.hint_active() and screen.current_status_text().contains("没点到训练靶"),
+	_expect(screen.hint_active() and screen.current_status_text().contains("Missed the training target"),
 		"tutorial empty click: no actionable hint appeared")
-	_expect(screen.current_status_text().contains("空格"),
+	_expect(screen.current_status_text().contains("Space"),
 		"tutorial empty click: the hint omitted the assisted-aim alternative")
 	## A successful target cast is a newer intent: it must clear the standing
 	## empty-click hint immediately, not let it outlive the windup.
 	var hit: Dictionary = screen.pointer_cast_at_arena(screen.TARGET_POSITION + TutorialScreenScript.TARGET_PICK_ANCHOR_OFFSET)
 	_expect(bool(hit.get("accepted", false)) and String(hit.get("reason", "")) == "hit",
 		"tutorial empty click: the follow-up target click did not cast")
-	_expect(not screen.hint_active() and not screen.current_status_text().contains("没点到训练靶"),
+	_expect(not screen.hint_active() and not screen.current_status_text().contains("Missed the training target"),
 		"tutorial empty click: a successful cast left the old hint on screen")
 	_advance_ticks(screen, PlayerActionTimelineScript.WINDUP_TICKS + PlayerActionTimelineScript.RECOVERY_TICKS + 40)
 	_expect(bool(screen.get_checklist_snapshot().cast_hit),
@@ -85,7 +85,7 @@ func _test_target_click_casts(screen) -> void:
 	var range_receipt: Dictionary = screen.pointer_cast_at_arena(anchor)
 	_expect(not bool(range_receipt.get("accepted", true)) and String(range_receipt.get("reason", "")) == "range",
 		"tutorial target click: an out-of-range target click reported the wrong reason")
-	_expect(screen.current_status_text().contains("还射不到"),
+	_expect(screen.current_status_text().contains("Out of range"),
 		"tutorial target click: the out-of-range guidance disappeared")
 
 
@@ -125,7 +125,7 @@ func _test_real_event_dispatch_routes_to_tutorial() -> void:
 		release.pressed = false
 		Input.parse_input_event(release)
 		await _frames(1)
-		_expect(screen.current_status_text().contains("没点到训练靶") and screen.hint_active(),
+		_expect(screen.current_status_text().contains("Missed the training target") and screen.hint_active(),
 			"a real dispatched empty click never reached the tutorial")
 	game.queue_free()
 	await _frames(2)
@@ -135,7 +135,7 @@ func _test_copy_remains_single_mention(screen) -> void:
 	var copy := _visible_copy(screen)
 	_expect(copy.count("Space") == 1 and copy.count("WASD") == 1 and copy.count("Shift") == 1,
 		"tutorial copy: key instructions are no longer single-mention")
-	_expect(copy.contains("点靶"), "tutorial copy: the click-on-target rule is missing")
+	_expect(copy.contains("the target"), "tutorial copy: the click-on-target rule is missing")
 
 
 func _test_viewport_wrapper_routes_clicks(screen) -> void:

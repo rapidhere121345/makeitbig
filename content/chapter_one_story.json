@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "chapter_id": "chapter_one_remaining_warmth",
-  "title": "第一幕：余温",
+  "title": "Act I: Remaining Warmth",
   "campaign_nodes": [
     "tutorial_ranger_basics",
     "mainline_01_first_hunt",
@@ -15,27 +15,27 @@
   "npcs": [
     {
       "id": "mira",
-      "name": "米拉",
+      "name": "Mira",
       "reveal_node": "tutorial_ranger_basics"
     },
     {
       "id": "leia",
-      "name": "莱娅",
+      "name": "Leia",
       "reveal_node": "tutorial_ranger_basics"
     },
     {
       "id": "taren",
-      "name": "塔伦",
+      "name": "Taren",
       "reveal_node": "mainline_01_first_hunt"
     },
     {
       "id": "oren",
-      "name": "奥伦",
+      "name": "Oren",
       "reveal_node": "mainline_02_priority_under_pressure"
     },
     {
       "id": "iven",
-      "name": "伊文",
+      "name": "Iven",
       "reveal_node": "mainline_03_first_elite"
     }
   ],
@@ -48,49 +48,49 @@
           "tutorial_ranger_basics"
         ]
       },
-      "title": "门边的位置",
+      "title": "A Place by the Door",
       "objective": {
         "id": "clear_outer_road",
-        "text": "沿寒原旧路清通外段，带回能用的材料与装备",
+        "text": "Clear the outer stretch of the old road across the cold plains and bring back usable materials and equipment",
         "campaign_node": "mainline_01_first_hunt"
       },
       "journal": {
         "id": "journal_p00_place_by_the_door",
-        "entry_type": "主线",
+        "entry_type": "Main Story",
         "pages": [
-          "共炉厅的门缝漏着风。莱娅把凳子拖向塔侧，原处只留下一道磨痕；那里曾够人坐下暖手，如今暖不到了。",
-          "旧路的货签早已磨平，深处却还站着挡路的巨像。旧世界没能留下完整的解释，只留下一些仍在工作的东西，和靠它们过冬的人。",
-          "米拉照旧轮班，莱娅跟着看接头。流浪者带弓去外段，先找能用的材料与装备；回来时，门内还留着歇脚的位置。"
+          "Wind slips through the gap in Hearth Hall's door. Leia drags the stool toward the tower, leaving only a scrape where it stood. Once, someone could sit there and warm their hands. The warmth no longer reaches it.",
+          "The old road's cargo labels have worn smooth, yet a colossus still blocks the depths. The old world left no complete explanation, only a few things still working and the people who depend on them to survive the winter.",
+          "Mira keeps her usual shifts, with Leia learning to watch the coupling beside her. The Wanderer takes a bow to the outer road to find usable materials and equipment. On their return, a place to rest will still be waiting inside."
         ]
       },
       "conversations": [
         {
           "id": "talk_p00_mira_door",
           "npc": "mira",
-          "title": "先把门带上",
+          "title": "Close the Door First",
           "pages": [
-            "米拉：流浪者，把门带上。风进来了。门边已经暖不到，莱娅把凳子搬去塔侧；搬货的人回来，总得有地方坐。",
-            "流浪者：练过弓，也认得出镇的方向了。可旧路那头究竟有什么，值得你们一班接一班地守着？",
-            "米拉：旧件一天天少下去，塔里的东西却还在转。谁也讲不清从前出了什么事。巨像挡着深处，先从外段找起，捡回还能用的。",
-            "米拉：我守住厅里的火，你去争一段能走的路。出门前把弓看好，回来带什么都能商量，人得先回来。"
+            "Mira: Wanderer, close the door. The wind's getting in. It isn't warm by the entrance anymore, so Leia moved the stool toward the tower. When the haulers come back, they need somewhere to sit.",
+            "Wanderer: I've practiced with the bow, and I know the way back to town. But what's out on that old road that makes you keep watch, shift after shift?",
+            "Mira: We have fewer old parts every day, but the machinery in the tower keeps turning. No one can explain what happened before. The colossus blocks the depths. Start outside it and bring back whatever still works.",
+            "Mira: I'll keep the fire here. You win us a little road we can walk. Check your bow before you go. We can talk about whatever you bring back, but first you have to come back yourself."
           ]
         },
         {
           "id": "talk_p00_leia_stool",
           "npc": "leia",
-          "title": "凳子放哪",
+          "title": "Where the Stool Goes",
           "pages": [
-            "莱娅：我以前坐在门边，听旧路上的脚步声。如今风比人先到，连这张等人歇脚的凳子也得往里搬。",
-            "米拉：门边的位置留着。来塔侧跟我看接头吧；等路上的人回来，我们总得有热饭，也得有人接下一班。",
-            "莱娅：那我跟你学。流浪者，你去找能带回来的东西，我学着照看留下的人；这张凳子还要给人坐。"
+            "Leia: I used to sit by the door and listen for footsteps on the old road. Now the wind gets here before anyone does. Even the stool we kept for tired travelers has to move inside.",
+            "Mira: We'll keep that place by the door. Come watch the coupling with me by the tower. When people return, there should be hot food, and someone ready for the next shift.",
+            "Leia: Then teach me. Wanderer, you find things worth bringing home. I'll learn to look after the people who stay. Someone will need this stool again."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p00_door_position",
-          "title": "门边换位",
-          "description": "凳子移到塔侧，门边的位置留着；米拉守住厅里的暖，莱娅开始跟她看接头。"
+          "title": "A Seat Moved Inward",
+          "description": "The stool moves toward the tower, while its place by the door is kept. Mira tends the hall's warmth, and Leia begins learning to watch the coupling."
         }
       ]
     },
@@ -102,37 +102,37 @@
           "mainline_01_first_hunt"
         ]
       },
-      "title": "旧路外段",
+      "title": "The Outer Road",
       "objective": {
         "id": "learn_priority_and_dodge",
-        "text": "进入旧货道的装卸区，清通下一段回收路",
+        "text": "Enter the loading grounds on the old freight road and clear the next stretch of the salvage route",
         "campaign_node": "mainline_02_priority_under_pressure"
       },
       "journal": {
         "id": "journal_p01_outer_road",
-        "entry_type": "主线",
+        "entry_type": "Main Story",
         "pages": [
-          "流浪者从旧路外段归来，这一段重新能够往返。磨平的货签和过大的装卸空间，还留下从前货运生活的轮廓。",
-          "塔伦认得往里的货道，也愿意听弓在路上哪里不顺手。接下来的搜寻要让装备更合用，让回程少些险处。"
+          "The Wanderer returns from the outer road. This stretch can be traveled both ways again. Worn cargo labels and oversized loading grounds still trace the shape of the freight traffic that once passed through.",
+          "Taren knows the freight road farther in and wants to hear where the bow proved awkward. The next search should make the equipment more useful and the journey home less dangerous."
         ]
       },
       "conversations": [
         {
           "id": "talk_p01_taren_route",
           "npc": "taren",
-          "title": "先把外段看清",
+          "title": "Learn the Outer Road",
           "pages": [
-            "塔伦：你从旧路外段回来了，弓也还在手里。以前我试弓只想着射得准，现在得想，它能不能护你走回来。",
-            "塔伦：往里是装卸区，旧货道还认得出来。别急着奔巨像去，先把这段路走熟，回来告诉我弓哪里不顺手。",
-            "流浪者：这一趟让我知道，旧路还走得进去。我想找些合用的装备，再试试这把弓能把我带到多远。"
+            "Taren: You came back from the outer road with your bow still in hand. I used to test bows just to see if they shot straight. Now I have to ask whether one can bring you home.",
+            "Taren: Farther in are the loading grounds. You can still make out the old freight road. Don't rush the colossus. Learn this stretch first, then tell me where the bow let you down.",
+            "Wanderer: This trip showed me the old road can still be traveled. I want to find equipment that fits, then see how far this bow can take me."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p01_outer_road_open",
-          "title": "外段可往返",
-          "description": "回收路外段重新能走，搬运少绕一次；塔伦能沿这段货道说明更深处的来路。"
+          "title": "An Open Round Trip",
+          "description": "The outer salvage road is passable again, sparing haulers one detour. Taren can use this freight route to explain the way farther in."
         }
       ]
     },
@@ -147,36 +147,36 @@
           "equipment_discovered"
         ]
       },
-      "title": "一件不在计划里的东西",
+      "title": "An Unplanned Find",
       "objective": {
         "id": "compare_first_real_find",
-        "text": "比较带回的装备，准备深入旧路的下一趟",
+        "text": "Compare the equipment you brought back and prepare for another trip deeper along the old road",
         "campaign_node": "mainline_03_first_elite"
       },
       "journal": {
         "id": "journal_p02_unexpected_find",
-        "entry_type": "发现",
+        "entry_type": "Discovery",
         "pages": [
-          "带回的装备还带着寒意，已经放进背包。它不在预先的清单上；旧世界散了，这些东西却仍能在人手里起作用。",
-          "奥伦先问它还能用在哪里。与身上的装备放在一起看，才知道能补什么缺口；也可以先留着。下一趟走得回来，比一眼看着亮更要紧。"
+          "The equipment in the pack still carries the cold from outside. It was not on the list. The old world fell apart, but these things can still do useful work in someone's hands.",
+          "Oren's first question is what it can still do. Compare it with what you wear to see which gap it fills, or simply keep it for now. Getting home next time matters more than a promising shine."
         ]
       },
       "conversations": [
         {
           "id": "talk_p02_oren_unlisted",
           "npc": "oren",
-          "title": "不在清单上",
+          "title": "Not on the List",
           "pages": [
-            "奥伦：刚从外头带回的？先暖暖手。清单没写它，不代表没用。从前用它的人不在眼前了，还能做什么，得放到你手里看。",
-            "奥伦：先留着，和身上的比一比。这镇里没有几件东西是新的，我总先找还能用的那一处。能护你回来，就值得留下。"
+            "Oren: Fresh from outside? Warm your hands first. Not being on the list doesn't make it useless. The people who used it before are gone. We'll have to see what it can do in your hands.",
+            "Oren: Keep it for now and compare it with what you're wearing. Almost nothing in this town is new. I always look for the part that still works. If it helps you get home, it's worth keeping."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p02_return_shelf",
-          "title": "归货棚添一格",
-          "description": "归货棚留着暂放和比较的地方，奥伦接住流浪者带回的旧物。"
+          "title": "Room in the Salvage Shed",
+          "description": "The Salvage Shed keeps space for setting finds aside and comparing them. Oren receives the old things the Wanderer brings home."
         }
       ]
     },
@@ -191,36 +191,36 @@
           "growth_observed"
         ]
       },
-      "title": "把结果记下来",
+      "title": "Write Down the Result",
       "objective": {
         "id": "inspect_growth_report",
-        "text": "试清当前接法的长处，沿旧路继续寻找缺口",
+        "text": "Test the strengths of the current setup and keep searching the old road for what it lacks",
         "campaign_node": "mainline_04_hazard_and_forge"
       },
       "journal": {
         "id": "journal_p03_more_then_no_more",
-        "entry_type": "训练",
+        "entry_type": "Training",
         "pages": [
-          "第一次增长观察留下了结果，属于当时的装备、天赋与接法。伊文像记路况一样保留它，让下一次尝试有可比较的来处。",
-          "知道自己看见了什么，才知道下一趟要问什么。流浪者可以带着这个问题继续上路，训练与阅读都不是出征的门票。"
+          "The first growth observation leaves a result tied to the equipment, talents, and setup used at the time. Iven keeps it like a record of road conditions, giving the next attempt something real to compare against.",
+          "Knowing what you saw tells you what to ask next. The Wanderer can carry that question back onto the road. Neither Training nor reading is a ticket required for departure."
         ]
       },
       "conversations": [
         {
           "id": "talk_p03_iven_where_stopped",
           "npc": "iven",
-          "title": "先留着结果",
+          "title": "Keep the Result First",
           "pages": [
-            "伊文：这次见到的结果留下了。走旧路时我也这样，记清脚下那一段，下一次才知道是路变了，还是自己走偏。",
-            "流浪者：我会把当时带的装备和接法一起留下。只带着一个好看的结果出门，遇见不同的东西就没了主意。"
+            "Iven: We've kept what you saw this time. I do the same on the old road: record the stretch beneath my feet, so next time I know whether the road changed or I strayed.",
+            "Wanderer: I'll keep the equipment and setup alongside it. If I leave with nothing but an impressive result, I won't know what to do when I meet something different."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p03_record_desk",
-          "title": "续记桌开页",
-          "description": "伊文留下首次实际观察的接法与结果，和旧路上的见闻一起供下次对照。"
+          "title": "A Page at the Record Desk",
+          "description": "Iven keeps the setup and result of the first actual observation alongside reports from the old road, ready for comparison next time."
         }
       ]
     },
@@ -232,56 +232,56 @@
           "mainline_04_hazard_and_forge"
         ]
       },
-      "title": "知道该往哪找",
+      "title": "Knowing Where to Look",
       "objective": {
         "id": "choose_targeted_contract",
-        "text": "按装备缺口选择来源，为巨像前的旧路做准备",
+        "text": "Choose a source that addresses your equipment gaps and prepare for the road before the colossus",
         "campaign_node": "mainline_05_growth_gate"
       },
       "journal": {
         "id": "journal_p04_knowing_where_to_look",
-        "entry_type": "主线",
+        "entry_type": "Main Story",
         "pages": [
-          "走过旧路上的险处，下一趟的目标可以更明确。塔伦从试弓的习惯出发，帮流浪者把当前接法的缺口与货物来源对照。",
-          "契台旁的小牌记着来源类别、风雪、塌口与回头路。知道去哪里找，不等于知道这次一定会带回哪一件。",
-          "米拉维持外段值守，莱娅把凉饭放在台边，等有人来接手。旧路上的搜寻与镇里的轮班，托住同一场漫长寒冬。"
+          "After facing the old road's dangers, the next trip can have a clearer purpose. Drawing on his habit of testing bows, Taren helps the Wanderer match gaps in the current setup to possible sources.",
+          "Small signs beside the Contract Board list source categories, storms, collapsed passages, and ways back. Knowing where to look does not mean knowing exactly what this trip will bring.",
+          "Mira maintains the outer watch. Leia leaves a cold meal beside the station while she waits for relief. Searches on the old road and shifts in town sustain the same long winter."
         ]
       },
       "conversations": [
         {
           "id": "talk_p04_taren_source",
           "npc": "taren",
-          "title": "哪一类，不是哪一件",
+          "title": "Which Kind, Not Which Piece",
           "pages": [
-            "塔伦：我试弓时，总先找最不顺的那一处。你挑装备也可以这样想：现在这套接法，究竟少了什么？",
-            "流浪者：我想沿着缺口去找，而不是见到亮眼的东西就换。旧路上的每一趟，总得给下一趟留下些什么。",
-            "塔伦：契台记着哪类旧货常从哪里来，也记着塌口和回头路。具体带回哪件得看这一趟，我能帮你少走些盲路。"
+            "Taren: When I test a bow, I start with what feels worst. Try choosing equipment that way. What is this setup actually missing?",
+            "Wanderer: I want to follow the gap, not switch whenever something catches my eye. Every trip along the old road should leave something for the next one.",
+            "Taren: The Contract Board says where different kinds of old stock tend to turn up. It also marks collapses and ways back. The exact find depends on the trip, but I can spare you some blind searching."
           ]
         },
         {
           "id": "talk_p04_mira_watch",
           "npc": "mira",
-          "title": "值守照旧",
+          "title": "The Watch Goes On",
           "pages": [
-            "米拉：这趟还往旧路去？你肯往里找，归货棚就多些盼头；可镇里这点暖，仍得我们自己一班班守。",
-            "米拉：伊文带消息，塔伦帮你看弓，奥伦接住带回的旧物。别把整座镇子的担子都背上，今天走好今天这一段。"
+            "Mira: Back to the old road? Your searching gives the Salvage Shed something to hope for. But we still have to keep this little warmth alive, one shift at a time.",
+            "Mira: Iven brings news, Taren helps with your bow, and Oren takes in what you find. Don't carry the whole town on your back. Walk today's stretch well."
           ]
         },
         {
           "id": "talk_p04_leia_cold_meal",
           "npc": "leia",
-          "title": "台边的饭",
+          "title": "A Meal by the Station",
           "pages": [
-            "莱娅：饭放在台边，已经凉了。我以前只盯着门口，怕错过回来的人；现在守着接头，才知道米拉一直在等人替班。",
-            "莱娅：我还不能一个人接下整班，但能把这一会儿看清楚。等米拉来，我把读数说给她听，再去把饭暖热。"
+            "Leia: I left my meal by the station. It's cold now. I used to watch the door, afraid I'd miss someone coming home. Watching the coupling has shown me how long Mira's been waiting for relief.",
+            "Leia: I can't take a whole shift alone yet, but I can pay attention for this little while. When Mira comes, I'll give her the readings, then warm up my food."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p04_route_board",
-          "title": "契台标注来源",
-          "description": "契台的来处小牌记下货物类别、风险和回头路，值守的人仍按原班照看外段。"
+          "title": "Sources on the Board",
+          "description": "The Contract Board's source signs record stock categories, risks, and ways back. The watch keeps its usual shifts along the outer stretch."
         }
       ]
     },
@@ -293,65 +293,65 @@
           "mainline_04_hazard_and_forge"
         ]
       },
-      "title": "留下与拆掉",
+      "title": "Keep or Take Apart",
       "objective": {
         "id": "make_keep_or_salvage_choice",
-        "text": "决定哪些旧物留用、改铸或拆解，准备继续开路",
+        "text": "Decide which old finds to keep, reforge, or salvage before opening more of the road",
         "campaign_node": "mainline_05_growth_gate"
       },
       "journal": {
         "id": "journal_p05_what_to_keep",
-        "entry_type": "选择",
+        "entry_type": "Choice",
         "pages": [
-          "回火砧旁能留物，也能拆解。奥伦看重旧物还能承担的用途；保留、改铸或拆成材料，都要由流浪者想清后决定。",
-          "米拉去接莱娅的班，让她把饭暖热。莱娅学着说清刚才看过的读数，也问清拿不准的地方，才离开操作台。",
-          "弓上的增长办法不能直接当成塔里的修补方案。奥伦先照看认得的外侧，流浪者则准备适合自己下一趟的装备。"
+          "Beside the Tempering Anvil, things can be kept or taken apart. Oren values the work old objects can still do. Keeping, reforging, or breaking them down for materials is a decision the Wanderer must make deliberately.",
+          "Mira relieves Leia so she can warm her meal. Leia learns to explain the readings she saw and ask about what she does not understand before leaving the station.",
+          "The bow's growth methods cannot simply become a repair plan for the tower. Oren tends the outer parts he knows, while the Wanderer prepares equipment suited to the next journey."
         ]
       },
       "conversations": [
         {
           "id": "talk_p05_oren_keep",
           "npc": "oren",
-          "title": "这件先不拆",
+          "title": "Don't Salvage This Yet",
           "pages": [
-            "奥伦：别急着拆。完整的未必合你的手，旧的也未必该丢；我这张砧上，好些东西都是多看一眼才留下的。",
-            "流浪者：我先想清它能接进哪一套，再决定留还是改。要拆也得知道失去什么，总不能每次回来都从头找起。",
-            "奥伦：这就对了。想改的先看落锤会变成什么。能继续陪你上路的留下，其余的拆成材料，也还能补别的缺口。"
+            "Oren: Don't rush to take it apart. Whole doesn't always mean useful to you, and old doesn't always mean rubbish. Plenty of things on this anvil only survived because I looked twice.",
+            "Wanderer: I'll work out which setup it fits before I keep or change it. If I take it apart, I should know what I'm losing. I can't start searching from nothing every time I come home.",
+            "Oren: Exactly. If you want to reforge it, look at what the hammer will leave you first. Keep what can travel with you. The rest can become materials and fill another gap."
           ]
         },
         {
           "id": "talk_p05_mira_dry_gloves",
           "npc": "mira",
-          "title": "手套先晾着",
+          "title": "Let the Gloves Dry",
           "pages": [
-            "米拉：湿手套先晾在炉旁，别戴着冻硬的东西出门。你在这里慢慢挑装备，我去替莱娅看一会儿接头。",
-            "米拉：她总怕自己少看一眼就误了事。你带回的东西让奥伦有得修，我替她这一班，让她有空把饭吃热。"
+            "Mira: Leave those wet gloves by the hearth. Don't go out wearing something frozen stiff. Take your time with the equipment. I'll watch the coupling for Leia.",
+            "Mira: She's always afraid one missed glance will cost us. What you bring back gives Oren something to repair. Covering her shift gives her time for a hot meal."
           ]
         },
         {
           "id": "talk_p05_leia_handoff",
           "npc": "leia",
-          "title": "问清再走",
+          "title": "Ask Before You Leave",
           "pages": [
-            "莱娅：米拉来替我了。我把刚才那处读数告诉她，也把拿不准的地方问清；原来交班不是说一句没事就能走。",
-            "莱娅：你在旧路上找合用的东西，我在这儿学着接住别人留下的活。等会儿去暖饭，这回我知道为什么能离开台边。"
+            "Leia: Mira came to relieve me. I told her about that reading and asked about the part I wasn't sure of. Handing over isn't just saying everything's fine and walking away.",
+            "Leia: You find useful things on the old road. I'm learning to take over the work someone else leaves me. I'll warm my meal in a moment. This time I know why it's safe to leave the station."
           ]
         },
         {
           "id": "talk_p05_oren_local_part",
           "npc": "oren",
-          "title": "认得这一截",
+          "title": "The Part I Know",
           "pages": [
-            "奥伦：旧接头的外侧我认得，磨坏了还能慢慢修。你那把弓的接法倒让我想起，旧东西总得找着合用的地方。",
-            "奥伦：可弓上能用的办法，不能就往塔里装。里面怎么接的还没看清；先把我认得的这一截补好，也是在帮你守住回来的地方。"
+            "Oren: I know the outside of that old coupling. When it wears down, I can still mend it bit by bit. Your bow's setup reminds me that old things need the right use.",
+            "Oren: But what works on a bow can't just be fitted to the tower. We haven't seen how it's connected inside. Mending the part I do know helps keep somewhere for you to return to."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p05_salvage_corner",
-          "title": "拆解角成型",
-          "description": "回火砧旁留下待拆物和记录，奥伦看用途，流浪者决定怎样留拆；莱娅问清后交班。"
+          "title": "A Salvage Corner Takes Shape",
+          "description": "Finds awaiting salvage and their records gather beside the Tempering Anvil. Oren considers their uses; the Wanderer decides what to keep or dismantle. Leia asks her questions before handing over."
         }
       ]
     },
@@ -366,56 +366,56 @@
           "exponential_observed"
         ]
       },
-      "title": "第一次真正不同",
+      "title": "The First Real Difference",
       "objective": {
         "id": "challenge_threshold_colossus",
-        "text": "挑战堵住回收路的阈门巨像，按实际瓶颈调整装备",
+        "text": "Challenge the Threshold Colossus blocking the salvage road and adjust equipment to the bottlenecks you actually encounter",
         "campaign_node": "threshold_colossus"
       },
       "journal": {
         "id": "journal_p06_first_real_difference",
-        "entry_type": "成长",
+        "entry_type": "Growth",
         "pages": [
-          "箭的后代在已观察的条件下一代多过一代，出现了指数增长。这是整套装备与接法共同的结果，共享寿命仍在倒数。",
-          "伊文留下整套条件，也保留残缺的旧记号。这次发现给流浪者更多上路的底气，还不能说明完整灾变的来由。",
-          "米拉把饭留在厅里，塔上仍照旧轮班。战斗里见到的增长与镇中的供热各有条件，开路与守镇仍需要不同的人。"
+          "Under the observed conditions, each generation of arrows outnumbers the last: exponential growth. It is the combined result of the full equipment setup, and the shared lifetime is still counting down.",
+          "Iven keeps the complete conditions alongside fragmentary old markings. This discovery gives the Wanderer more confidence for the road, but it does not explain the whole catastrophe.",
+          "Mira leaves a meal in the hall, and the tower's shifts go on as usual. Growth in battle and heat in town each depend on their own conditions. Opening the road and keeping the town still take different hands."
         ]
       },
       "conversations": [
         {
           "id": "talk_p06_iven_last_piece",
           "npc": "iven",
-          "title": "前面的也得在",
+          "title": "The Earlier Pieces Matter Too",
           "pages": [
-            "伊文：这回箭的后代一代多过一代了。我看旧路的岔口，总想着多一条出口；你这一套接法，却让下一代自己多了起来。",
-            "流浪者：是整套装备和接法一起起了作用。单拿最后一件出来不够；我想带着它上路，看它能替我打开多少空间。",
-            "伊文：把整套留下。我会把看得见的险处告诉你，你把弓准备好；再大的增长，也得有个人把脚下的路走过去。"
+            "Iven: This time, each generation of arrows outnumbers the last. At a fork in the old road I always wish for one more way out. Your setup makes the next generation produce more on its own.",
+            "Wanderer: The equipment and setup did it together. The last piece alone isn't enough. I want to take all of it onto the road and see how much room it can open.",
+            "Iven: Keep the whole setup. I'll tell you about the dangers I can see, and you ready your bow. However great the growth, someone still has to walk the road beneath their feet."
           ]
         },
         {
           "id": "talk_p06_mira_meal",
           "npc": "mira",
-          "title": "饭留在厅里",
+          "title": "A Meal in the Hall",
           "pages": [
-            "米拉：饭给你留在厅里了。听说你看见了箭越接越多，我也多了些盼头；但一顿热饭不用等路全通了才吃。",
-            "米拉：先坐一会儿。你照看自己的弓，我们照旧轮班守塔，莱娅也在学。下一趟出门，你身后有人接着这点暖。"
+            "Mira: I left you a meal in the hall. They tell me you saw more and more arrows carrying on. That gives me hope too. But you don't have to wait until the whole road is open to eat something hot.",
+            "Mira: Sit awhile. You look after your bow. We'll keep taking turns at the tower, and Leia's learning. Next time you go out, there'll be people behind you keeping this warmth."
           ]
         },
         {
           "id": "talk_p06_iven_blank",
           "npc": "iven",
-          "title": "空白留下",
+          "title": "Leave the Gaps",
           "pages": [
-            "伊文：旧路上的记号只剩日期末位，和你这次的结果摆在一起，确实让人想猜：从前的人是不是也见过这种增长？",
-            "伊文：可我没找到能接上的那一段。两张都留着，空白也留着；眼下先拿你亲眼见过的办法走路，别拿猜想押命。"
+            "Iven: Only the last digit of a date remains on the old road's markings. Put beside your result, it does make you wonder: did people back then see growth like this too?",
+            "Iven: But I haven't found the missing link. We'll keep both records, gaps and all. For now, trust what you've seen with your own eyes. Don't wager your life on a guess."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p06_warm_meal",
-          "title": "热饭多一份",
-          "description": "米拉给回收者留一份热饭；看见战斗增长后，居民仍照原班守塔。"
+          "title": "One More Hot Meal",
+          "description": "Mira sets aside a hot meal for the salvager. Even after seeing growth in battle, the residents keep their usual tower shifts."
         }
       ]
     },
@@ -427,67 +427,67 @@
           "threshold_colossus"
         ]
       },
-      "title": "阈门巨像",
+      "title": "Threshold Colossus",
       "objective": {
         "id": "configure_first_auto",
-        "text": "巨像已倒下；整理四枚白色核心，准备起步代行",
+        "text": "The colossus has fallen; sort the four white cores and prepare a starter proxy",
         "campaign_node": ""
       },
       "journal": {
         "id": "journal_p07_threshold_colossus",
-        "entry_type": "首杀",
+        "entry_type": "First Kill",
         "pages": [
-          "阈门巨像倒下了。门上的加固痕迹一层压着一层，早已没人能说清当初要挡住什么；如今，深处的回收路确实能走了。",
-          "首杀结算带来四枚白色核心，提供起步代行的条件。眼下先整理所得，路已经打开，接下来的安排仍由流浪者决定。",
-          "回到厅里，风仍从门缝钻进来。米拉继续值守，莱娅去问这一班的读数，凳子还在塔侧。搬货的人能少绕一段，塔却不会因此自己修好。"
+          "The Threshold Colossus has fallen. Reinforcements overlap across the gate, and no one can say what they were first meant to keep out. But now the salvage road into the depths truly is passable.",
+          "The first-kill rewards include four white cores, enough to begin proxy operation. For now, sort what was gained. The road is open, and the Wanderer still decides what comes next.",
+          "Back in the hall, wind still slips through the door. Mira keeps watch, Leia asks about this shift's readings, and the stool remains by the tower. Haulers have a shorter route, but the tower will not repair itself."
         ]
       },
       "conversations": [
         {
           "id": "talk_p07_taren_door",
           "npc": "taren",
-          "title": "到门后了",
+          "title": "Beyond the Gate",
           "pages": [
-            "塔伦：到门后了？我记得那门加固过好几层，巨像还守在那里。如今它倒了，至少这段回收路不用再绕。",
-            "流浪者：到了。门后的旧痕还在，我说不清从前发生过什么。沿路找来的装备接住了这一趟，路是确实走通了。",
-            "塔伦：那我把来处牌改好。少绕一段，搬货的人就少在风里站一阵。你先去暖手，货单我来写。"
+            "Taren: You made it beyond the gate? I remember all those layers of reinforcement, with the colossus still standing guard. Now it's down, we can at least stop detouring around this stretch.",
+            "Wanderer: I did. The old scars are still there. I can't explain what happened before, but the equipment I found along the way carried me through. The road really is open.",
+            "Taren: Then I'll update the source signs. One less detour means less time for the haulers in the wind. Go warm your hands. I'll write the cargo list."
           ]
         },
         {
           "id": "talk_p07_mira_route",
           "npc": "mira",
-          "title": "路先通了",
+          "title": "The Road Is Open",
           "pages": [
-            "米拉：旧路深处终于不再由巨像守着了。消息送到厅里，我先想到的，是搬货的人能少在风里绕多久。",
-            "米拉：你替镇子争到了通路，我们得把它接住。接头还要照看，今晚仍有人值守；这是我能答应你的事。",
-            "米拉：回来就坐下吧。开路的人也该有人替他端一碗饭，不能每次进门，先问的都是下一趟什么时候走。"
+            "Mira: The colossus no longer guards the depths of the old road. When word reached the hall, my first thought was how much wandering in the wind it would spare the haulers.",
+            "Mira: You've won the town a way through. We have to make use of it. The coupling still needs watching, and someone will be on duty tonight. That much I can promise.",
+            "Mira: Now you're home, sit down. Someone should bring a bowl to the person who opened the road. We shouldn't ask when you're leaving again every time you come through the door."
           ]
         },
         {
           "id": "talk_p07_oren_leave_closed",
           "npc": "oren",
-          "title": "先别拆它",
+          "title": "Don't Dismantle It Yet",
           "pages": [
-            "奥伦：路通了，能接近守冬塔的外壳，这已经够我忙一阵。看清哪处还能修，总比一口气把旧东西全撬开强。",
-            "奥伦：里面的接法没摸清，先别拆塔。普通装备你照自己的用途留拆；我会守着这张砧，让带回来的旧物继续有用。"
+            "Oren: The road's open, and we can reach the Winterwatch Tower's casing. That will keep me busy awhile. Finding what we can still mend beats prying every old thing apart at once.",
+            "Oren: We don't know the connections inside. Leave the tower intact for now. Keep or salvage ordinary equipment as it suits you. I'll stay at this anvil and keep the things you bring back useful."
           ]
         },
         {
           "id": "talk_p07_leia_stool_wait",
           "npc": "leia",
-          "title": "凳子先放这",
+          "title": "Leave the Stool Here",
           "pages": [
-            "莱娅：听说巨像倒了，我第一眼还是去看这张凳子。以前盼有人从路上回来，今天你真把挡路的东西搬开了。",
-            "莱娅：门边还冷，凳子先放塔侧。我去问米拉这一班的读数；路通不通靠你，回来能不能暖手，我们也得出力。",
-            "莱娅：等有人再走进这扇门，我想先告诉他哪里能坐，而不是只问他外面怎么样。现在我也有能照看的地方了。"
+            "Leia: When I heard the colossus had fallen, I looked at this stool first. I used to hope someone would come back along the road. Today you really moved what was blocking it.",
+            "Leia: It's still cold by the door. The stool can stay near the tower. I'll ask Mira about this shift's readings. Opening the road is your work; making sure you can warm your hands when you return is ours too.",
+            "Leia: Next time someone comes through that door, I want to tell them where they can sit before asking what it was like outside. Now there's something I can look after too."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p07_recovery_road",
-          "title": "回收路可通",
-          "description": "巨像阻隔消失，回收路可以直达；接头仍需照看，凳子暂留塔侧。"
+          "title": "The Salvage Road Opens",
+          "description": "The colossus no longer blocks the direct salvage route. The coupling still needs watching, and the stool stays by the tower for now."
         }
       ]
     },
@@ -502,64 +502,64 @@
           "proxy_unlocked"
         ]
       },
-      "title": "让它照着做",
+      "title": "Let It Follow the Plan",
       "objective": {
         "id": "finish_contemporary_recovery",
-        "text": "安排一号槽的接法，完成一次基础 Auto 考核",
+        "text": "Arrange the slot 1 setup and complete a basic Auto assessment",
         "campaign_node": "auto_certification"
       },
       "journal": {
         "id": "journal_p08_let_it_follow_the_plan",
         "entry_type": "Auto",
         "pages": [
-          "巨像后的四枚白色核心已能用于起步代行，四白执行只使用一号槽。流浪者可以选合用的接法，完成一次基础 Auto 考核。",
-          "塔伦希望反复的往返少些盲走，奥伦照看舱架，伊文等待实际结果。让代行照着做，仍要知道这一次它能够做什么。",
-          "莱娅学着对照眼前情况与上一班读数，不合时叫米拉。无论出征还是交班，主动接住一段事，都从看清这一段开始。"
+          "The four white cores gained after the colossus can support a starter proxy. Four-white-core execution uses only slot 1. The Wanderer can choose a suitable setup and complete a basic Auto assessment.",
+          "Taren hopes to reduce blind searching on repeated journeys. Oren tends the chassis, and Iven waits for actual results. Letting a proxy follow a plan still requires knowing what it can do this time.",
+          "Leia learns to compare what she sees with the previous shift's readings and call Mira when they disagree. On a journey or at a handover, taking responsibility for a stretch begins with seeing it clearly."
         ]
       },
       "conversations": [
         {
           "id": "talk_p08_iven_which_step",
           "npc": "iven",
-          "title": "先做它能做的",
+          "title": "Start with What It Can Do",
           "pages": [
-            "伊文：四枚白色核心能让代行起步，可旧路上的事得一段段试。先把这次能执行的安排给它，别一口气让它替人探完所有岔口。",
-            "流浪者：我先安排一号槽，选基础考核。开路时试过的接法，能不能照着做成，还得等这一趟的实际结果。"
+            "Iven: Four white cores can get a proxy started, but the old road still has to be tested a stretch at a time. Give it a plan it can carry out now. Don't send it to explore every fork for us at once.",
+            "Wanderer: I'll arrange slot 1 and choose the basic assessment. Whether it can follow the setup I tested while opening the road still depends on this trip's actual result."
           ]
         },
         {
           "id": "talk_p08_leia_compare",
           "npc": "leia",
-          "title": "照着也要核",
+          "title": "Following Still Means Checking",
           "pages": [
-            "莱娅：你让代行照着做，我也拿着上一班的读数去看接头。以前只怕记错，现在会想，眼前的情况有没有变。",
-            "莱娅：对不上就叫米拉，不硬照旧数填下去。我能接住一点活，还不够接整班；但不用一直站在旁边等别人开口了。"
+            "Leia: You're having the proxy follow a plan. I take the previous shift's readings to the coupling. I used to worry only about remembering them wrong. Now I ask whether what's in front of me has changed.",
+            "Leia: If it doesn't match, I call Mira instead of filling in the old numbers anyway. I can take on a little work, not a whole shift yet. But I don't have to stand aside waiting to be asked."
           ]
         },
         {
           "id": "talk_p08_oren_proxy_mount",
           "npc": "oren",
-          "title": "舱架与接法",
+          "title": "Chassis and Setup",
           "pages": [
-            "奥伦：舱架的松紧我能看，装进去的接法得你来定。你在旧路上挑过的装备，到了这里也不能只看外壳结不结实。",
-            "奥伦：先让它做能做的那一段。若能替人省一次来回，我们就多些工夫照看镇里；架子摆在这儿，我把能看住的地方看住。"
+            "Oren: I can check the chassis fittings. You decide what setup goes inside. The equipment you chose on the old road still needs more than a sturdy shell here.",
+            "Oren: Let it do the stretch it can handle first. If it saves someone one round trip, we'll have more time for the town. The frame's here. I'll watch the parts I know."
           ]
         },
         {
           "id": "talk_p08_taren_short_route",
           "npc": "taren",
-          "title": "先选短路",
+          "title": "Choose a Short Route First",
           "pages": [
-            "塔伦：试新弓，我不会第一箭就去最远的靶。代行也先选能做的短路，回来看看，它到底把你的安排做成了多少。",
-            "塔伦：我盼的是以后运货少一段盲走，不是又添一件得人追着收拾的东西。巨像倒了，这条路还得慢慢走熟。"
+            "Taren: When I test a new bow, the first arrow doesn't go to the farthest target. Choose a short route the proxy can handle, then see how much of your plan it actually carried out.",
+            "Taren: I want less blind wandering on future cargo runs, not another thing we have to chase around cleaning up after. The colossus is down, but we still have to learn this road."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p08_proxy_bay",
-          "title": "代行舱起步",
-          "description": "四枚白色核心安置在代行舱架上，居民各看住自己熟悉的一段，执行安排留给流浪者。"
+          "title": "A Starter Proxy Bay",
+          "description": "Four white cores are fitted to the proxy chassis. Each resident tends the part they know, while execution planning remains with the Wanderer."
         }
       ]
     },
@@ -574,77 +574,77 @@
           "early_game_complete"
         ]
       },
-      "title": "重新通行",
+      "title": "Passage Restored",
       "objective": {
         "id": "chapter_one_epilogue",
-        "text": "回收路重新通行，外段暂稳；回厅里吃一顿热饭",
+        "text": "The salvage road is open and the outer stretch is stable for now; return to the hall for a hot meal",
         "campaign_node": ""
       },
       "journal": {
         "id": "journal_p09_open_again",
-        "entry_type": "生活",
+        "entry_type": "Daily Life",
         "pages": [
-          "基础 Auto 考核已经完成，归货棚写下本次可直送。巨像阻隔的路打开了，外段暖流暂稳，搬货的人少受一程风。",
-          "凳子往门边挪回一点，那处仍比塔侧冷。米拉还在值守，莱娅去盛热饭；她从等待脚步声，走到了能接住一点活的地方。",
-          "伊文留下走过的条件，塔伦收好货单，奥伦仍留着工具。整座塔并未修好，但这条回收路已重新把大家的日常连起来。",
-          "流浪者找到了能继续上路的办法，也在归来的厅里有了位置。首章停在这一顿热饭上，今晚先坐下，听人把话说完。"
+          "The basic Auto assessment is complete. The Salvage Shed records that this delivery can go direct. The road the colossus blocked is open, warmth along the outer stretch is stable for now, and haulers face one less journey in the wind.",
+          "The stool moves a little closer to the door, though it is still colder there than by the tower. Mira keeps watch and Leia goes to serve hot food. She has moved from waiting for footsteps to taking on a little of the work.",
+          "Iven keeps the conditions of the journey, Taren puts away the cargo list, and Oren keeps his tools ready. The tower is not fully repaired, but the salvage road connects their daily lives again.",
+          "The Wanderer has found a way to keep traveling, and a place in the hall to return to. The first chapter ends with this hot meal. Tonight, sit awhile and let people finish what they have to say."
         ]
       },
       "conversations": [
         {
           "id": "talk_p09_mira_steady",
           "npc": "mira",
-          "title": "先吃饭",
+          "title": "Eat First",
           "pages": [
-            "米拉：考核完成，归货棚也能写下本次可直送了。外段这一截暂时稳住，今晚搬货的人回来，可以少受一程风。",
-            "米拉：门边还是冷，整座塔也还没修好。可你把路打开，大家把手里的活接起来，这顿饭就比从前坐得踏实。",
-            "米拉：先吃饭吧。今晚不用把每一句话都说成下一件差事；你从寒原回来，也是这张桌边该有的人。"
+            "Mira: The assessment's done, and the Salvage Shed can mark this delivery direct. The outer stretch is holding for now. When the haulers come home tonight, they'll have spent less time in the wind.",
+            "Mira: It's still cold by the door, and the whole tower isn't repaired. But you opened the road, and everyone took up their part. This meal feels a little more secure than it used to.",
+            "Mira: Eat first. Tonight, not every word has to become the next errand. You've come back from the cold plains. You belong at this table too."
           ]
         },
         {
           "id": "talk_p09_leia_stool_nearer",
           "npc": "leia",
-          "title": "挪回一点",
+          "title": "A Little Closer",
           "pages": [
-            "莱娅：凳子能往门边挪回一点了，那里还冷，先停在这儿。以前我守着它等人回来，现在也会看哪里够暖。",
-            "莱娅：米拉还在台边，我去盛热饭，再把这一班听明白。轮到我能做的那一会儿，就不用大家一直替我惦记。",
-            "莱娅：你去旧路找回能用的东西，我也找到了自己能做的事。这张凳子不只用来等了；来，先坐下吧。"
+            "Leia: We can move the stool a little toward the door again. It's still cold there, so here is far enough. I used to guard it while waiting for someone to return. Now I check where it's warm enough.",
+            "Leia: Mira's still at the station. I'll serve the food, then make sure I understand this shift. When it's my turn to handle what I can, everyone won't have to keep worrying for me.",
+            "Leia: You went to the old road and found things we could use. I found something I could do too. This stool isn't just for waiting anymore. Come, sit down."
           ]
         },
         {
           "id": "talk_p09_iven_small_record",
           "npc": "iven",
-          "title": "只记这一段",
+          "title": "Record This Stretch",
           "pages": [
-            "伊文：这次考核的结果收好了，旧路的来处也比起初清楚。以前大家问我能不能走，我只能指着风雪里的一小段。",
-            "伊文：现在可以把你走过、试过的那段告诉后来的人。没走过的先空着，但这点实在的消息，已经能让人少绕路。",
-            "伊文：今晚我也去厅里坐一会儿。记录留在桌上，人不必一直守着纸；有人回来把话说清，比独自猜一夜强。"
+            "Iven: The assessment result is filed, and we know more about where the old road leads. Before, when people asked if it was passable, I could only point to a little stretch in the snow.",
+            "Iven: Now I can tell the next traveler about the part you've walked and tested. We'll leave the unknown parts blank. But this much solid news already means fewer detours.",
+            "Iven: I'll sit in the hall tonight too. The records can stay on the desk; a person needn't guard the paper forever. Someone coming home and explaining things beats a night of guessing alone."
           ]
         },
         {
           "id": "talk_p09_taren_direct_note",
           "npc": "taren",
-          "title": "本次可直送",
+          "title": "Direct Delivery This Time",
           "pages": [
-            "塔伦：棚上写了本次可直送，货单总算有了一条短些的路。往后仍要逐批看，但今天能少绕，就记今天这一笔。",
-            "塔伦：我试过不少弓，最记得的却是你带着装备一次次回来的样子。合用的东西留在人手里，才能把靶上的本事带上路。"
+            "Taren: The shed says this delivery can go direct. At last the cargo list has a shorter route. We'll still check each load, but if today's detour is gone, today's entry should say so.",
+            "Taren: I've tested plenty of bows. What I remember most is you returning with your equipment, again and again. Useful things need to stay in someone's hands to bring what works at the target onto the road."
           ]
         },
         {
           "id": "talk_p09_oren_temporary",
           "npc": "oren",
-          "title": "工具还留着",
+          "title": "Keep the Tools Ready",
           "pages": [
-            "奥伦：外段暂稳，工具先留着，再对几班读数。旧物还得慢慢照看；能继续用的东西，不会因为庆祝一晚就自己变牢。",
-            "奥伦：你带回的东西，我会按能用的地方看。旧路找来的，砧上留下的，都是让人再走一趟的底气。今晚先去吃饭。"
+            "Oren: The outer stretch is holding for now. Keep the tools ready and compare a few more shifts' readings. Old things still need tending. One night's celebration won't make them mend themselves.",
+            "Oren: I'll look at what you bring back for the uses it still has. What we find on the road and keep at the anvil gives people the confidence for another trip. Tonight, go eat."
           ]
         }
       ],
       "town_changes": [
         {
           "id": "town_p09_direct_delivery",
-          "title": "本次可直送",
-          "description": "归货棚新增本次可直送的说明，外段供热暂稳；凳子稍近门边，工具和值守仍留着。"
+          "title": "Direct Delivery This Time",
+          "description": "The Salvage Shed adds a note for this direct delivery. Heating along the outer stretch is stable for now. The stool is a little nearer the door, while tools and watchkeepers remain ready."
         }
       ]
     }
@@ -658,7 +658,7 @@
       },
       "objective": {
         "id": "clear_outer_road",
-        "text": "沿寒原旧路清通外段，带回能用的材料与装备",
+        "text": "Clear the outer stretch of the old road across the cold plains and bring back usable materials and equipment",
         "campaign_node": "mainline_01_first_hunt"
       }
     },
@@ -670,7 +670,7 @@
       },
       "objective": {
         "id": "learn_priority_and_dodge",
-        "text": "进入旧货道的装卸区，清通下一段回收路",
+        "text": "Enter the loading grounds on the old freight road and clear the next stretch of the salvage route",
         "campaign_node": "mainline_02_priority_under_pressure"
       }
     },
@@ -682,7 +682,7 @@
       },
       "objective": {
         "id": "compare_first_real_find",
-        "text": "比较带回的装备，准备深入旧路的下一趟",
+        "text": "Compare the equipment you brought back and prepare for another trip deeper along the old road",
         "campaign_node": "mainline_03_first_elite"
       }
     },
@@ -694,7 +694,7 @@
       },
       "objective": {
         "id": "inspect_growth_report",
-        "text": "试清当前接法的长处，沿旧路继续寻找缺口",
+        "text": "Test the strengths of the current setup and keep searching the old road for what it lacks",
         "campaign_node": "mainline_04_hazard_and_forge"
       }
     },
@@ -706,7 +706,7 @@
       },
       "objective": {
         "id": "choose_targeted_contract",
-        "text": "按装备缺口选择来源，为巨像前的旧路做准备",
+        "text": "Choose a source that addresses your equipment gaps and prepare for the road before the colossus",
         "campaign_node": "mainline_05_growth_gate"
       }
     },
@@ -718,7 +718,7 @@
       },
       "objective": {
         "id": "make_keep_or_salvage_choice",
-        "text": "决定哪些旧物留用、改铸或拆解，准备继续开路",
+        "text": "Decide which old finds to keep, reforge, or salvage before opening more of the road",
         "campaign_node": "mainline_05_growth_gate"
       }
     },
@@ -730,7 +730,7 @@
       },
       "objective": {
         "id": "challenge_threshold_colossus",
-        "text": "挑战堵住回收路的阈门巨像，按实际瓶颈调整装备",
+        "text": "Challenge the Threshold Colossus blocking the salvage road and adjust equipment to the bottlenecks you actually encounter",
         "campaign_node": "threshold_colossus"
       }
     },
@@ -742,7 +742,7 @@
       },
       "objective": {
         "id": "configure_first_auto",
-        "text": "巨像已倒下；整理四枚白色核心，准备起步代行",
+        "text": "The colossus has fallen; sort the four white cores and prepare a starter proxy",
         "campaign_node": ""
       }
     },
@@ -757,7 +757,7 @@
       },
       "objective": {
         "id": "finish_contemporary_recovery",
-        "text": "安排一号槽的接法，完成一次基础 Auto 考核",
+        "text": "Arrange the slot 1 setup and complete a basic Auto assessment",
         "campaign_node": "auto_certification"
       }
     },
@@ -772,45 +772,45 @@
       },
       "objective": {
         "id": "chapter_one_epilogue",
-        "text": "回收路重新通行，外段暂稳；回厅里吃一顿热饭",
+        "text": "The salvage road is open and the outer stretch is stable for now; return to the hall for a hot meal",
         "campaign_node": ""
       }
     }
   ],
   "growth_reactions": {
     "convergent": {
-      "title": "多了，然后停了",
+      "title": "More, Then No More",
       "journal_pages": [
-        "第一次观察里，箭的分支多了一阵，随后衰减停下。这套接法在当时条件下呈现收敛，结果已经留下，不能当成越接越多。",
-        "伊文记下停在何处，像记下一段走不通的旧路。这个发现让下一次搜寻有了问题：哪一处接法还没能撑住后续分支。"
+        "In the first observation, arrow branches grew for a while, then dwindled and stopped. Under those conditions, this setup was convergent. The recorded result cannot be called ever-increasing growth.",
+        "Iven records where it stopped, like a break in the old road. The discovery gives the next search a question: which part of the setup could not sustain the branches that followed?"
       ],
       "conversation_pages": [
-        "伊文：这次多了一阵，后来停下了。我在旧路上碰见断口，也先记在哪儿，不能因为想过去就把它画成通路。",
-        "流浪者：那我就知道要找什么了。先把这套接法留下，换过合用的装备再试，看停下的地方会不会跟着变。",
-        "伊文：能带回一个明确的问题，也算这一趟没有白走。停在哪一步写清楚，下一次才知道自己往前走了多少。"
+        "Iven: There were more for a while, then it stopped. When I find a broken stretch of road, I mark where it is first. Wanting to cross doesn't make it a passage.",
+        "Wanderer: Then I know what to look for. I'll keep this setup, try some better-fitting equipment, and see whether the stopping point changes with it.",
+        "Iven: Bringing home a clear question means the trip wasn't wasted. Write down exactly where it stopped. Next time you'll know how much farther you got."
       ]
     },
     "critical": {
-      "title": "刚好接住",
+      "title": "Just Enough to Carry On",
       "journal_pages": [
-        "第一次观察里，每一代刚好接住上一代，没有越来越少，也没有越来越快。这是当时接法留下的临界结果，不是指数增长。",
-        "伊文把这次条件与结果一起留下。流浪者看到了接续能够维持的边缘，下一趟可以据此寻找还缺的那一处。"
+        "In the first observation, each generation just sustained the one before it, neither dwindling nor accelerating. That was the setup's critical result under those conditions, not exponential growth.",
+        "Iven keeps the conditions alongside the result. The Wanderer has seen the edge where continuation can sustain itself and can search for what is still missing on the next trip."
       ],
       "conversation_pages": [
-        "伊文：这次刚好接住了，没变少，也没越接越多。像旧路上一处窄桥，脚下能站住，还不等于有余地搬更多货。",
-        "流浪者：我先记住这条边缘。它比凭感觉换装备清楚；下一趟找来的东西，得看看能不能让后面多接住一些。"
+        "Iven: This time it held steady. No fewer, but no more either. Like a narrow bridge on the old road: being able to stand on it doesn't mean there's room for more cargo.",
+        "Wanderer: I'll remember that edge. It's clearer than changing equipment by feel. Next time I find something, I'll see whether it lets the later generations carry a little more."
       ]
     },
     "exponential": {
-      "title": "这一段接上了",
+      "title": "This Stretch Connects",
       "journal_pages": [
-        "第一次观察里，箭的后代一代多过一代，在共享寿命内出现了指数增长。这个结果来自当时整套装备、天赋与接法。",
-        "这次增长给继续开路带来底气。伊文保留当时条件，流浪者可以带着整套办法应战，换了场地仍要看实际结果。"
+        "In the first observation, each generation of arrows outnumbered the last, producing exponential growth within the shared lifetime. The result came from the full equipment, talents, and setup used at that moment.",
+        "This growth gives confidence for opening more of the road. Iven keeps the conditions. The Wanderer can take the whole method into battle, but a different field still calls for an actual result."
       ],
       "conversation_pages": [
-        "伊文：这次每一代都比上一代多了。沿路找来的东西，终于在这套接法里互相接住；这就是你亲眼见到的指数增长。",
-        "流浪者：我想带着整套再走一趟。共享寿命还在倒数，路上的敌人也各不一样；但现在我知道，这个办法确实发生过。",
-        "伊文：把它发生时的条件写下。我继续记路上的险处，你准备上路的弓；我们各看清一段，下一趟就少些盲走。"
+        "Iven: Each generation outnumbered the last this time. The things you found along the way finally support one another in this setup. That's exponential growth you've seen with your own eyes.",
+        "Wanderer: I want to take the whole setup out again. The shared lifetime is still counting down, and enemies on the road differ. But now I know this method really did work.",
+        "Iven: Write down the conditions that made it happen. I'll keep noting the road's dangers, and you ready your bow. If each of us sees one stretch clearly, next time we do less blind wandering."
       ]
     }
   }

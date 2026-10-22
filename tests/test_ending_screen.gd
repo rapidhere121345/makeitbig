@@ -3,7 +3,7 @@ extends SceneTree
 const EndingScreenScript = preload("res://src/presentation/ending_screen.gd")
 
 ## The dedicated early-return illustration, and the floor
-## no Chinese copy may fall under (approved baseline: 正文 18-22 显示像素).
+## no English copy may fall under (approved baseline: Text 18-22 display pixels).
 const ILLUSTRATION_PATH := "res://art/production/p1/hearth_return_v01/background.png"
 const ILLUSTRATION_SIZE := Vector2(640.0, 360.0)
 const FONT_FLOOR := 18
@@ -34,20 +34,20 @@ func _run() -> void:
 	var preview: Label = screen.find_child("MidgamePreview", true, false)
 	var profile_label: Label = screen.get("_profile_label")
 	var result_label: Label = screen.get("_result_label")
-	_expect(title != null and title.text == "炉边回望",
+	_expect(title != null and title.text == "Looking Back at the Hearth",
 		"ending: title did not present the journey ending", failures)
-	_expect(copy != null and "阈门巨像" in copy.text and "代理平安归来" in copy.text and "下一段路" in copy.text,
+	_expect(copy != null and "Threshold Colossus" in copy.text and "proxy home safely" in copy.text and "next road" in copy.text,
 		"ending: completion copy did not close the journey in player language", failures)
-	_expect(profile_label != null and "职业：游侠" in profile_label.text and "契约胜场：7" in profile_label.text and "代理胜场：1" in profile_label.text,
-		"ending: profile summary lost the Chinese class or the graduation progress", failures)
-	_expect(result_label != null and "前期毕业契约" in result_label.text and "最终胜利" in result_label.text
-		and "代理出征" in result_label.text and "用时：0.47" in result_label.text and "本次装备：2 件" in result_label.text
+	_expect(profile_label != null and "Class: Ranger" in profile_label.text and "Contract wins: 7" in profile_label.text and "Proxy wins: 1" in profile_label.text,
+		"ending: profile summary lost the English class or the graduation progress", failures)
+	_expect(result_label != null and "Early Graduation Contract" in result_label.text and "Final Victory" in result_label.text
+		and "Proxy Expedition" in result_label.text and "Time: 0.47" in result_label.text and "Equipment gained: 2" in result_label.text
 		and "Tick" not in result_label.text
 		and "FINAL_VICTORY" not in result_label.text and "auto_certification" not in result_label.text,
-		"ending: the Chinese graduation summary lost a quantity or kept a raw enum: %s" % (result_label.text if result_label != null else "<missing>"), failures)
+		"ending: the English graduation summary lost a quantity or kept a raw enum: %s" % (result_label.text if result_label != null else "<missing>"), failures)
 	var raw_record: Label = screen.find_child("EndingRawRecord", true, false)
 	_expect(raw_record == null, "ending: raw contract record escaped the test console", failures)
-	_expect(preview != null and "未解的圣律" in preview.text and "整理装备" in preview.text and "支线契约" in preview.text and "g1" not in preview.text,
+	_expect(preview != null and "Unsolved Sacred Laws" in preview.text and "sort your equipment" in preview.text and "side contracts" in preview.text and "g1" not in preview.text,
 		"ending: onward guidance is missing or contains an internal id", failures)
 
 	# --- early-return staging is separate from the full-game E03 repair ---
@@ -88,10 +88,10 @@ func _run() -> void:
 		_expect(illustration.load_scene() and illustration.scene_report().get("layers", []).size() == 4,
 			"ending: repeated loading duplicated static layers", failures)
 	var boundary: Label = screen.find_child("ReturnStoryBoundary", true, false)
-	_expect(boundary != null and boundary.text.contains("风仍冷") and boundary.text.contains("接头仍需照看"),
+	_expect(boundary != null and boundary.text.contains("wind is still cold") and boundary.text.contains("connections need tending"),
 		"ending: the early-return caption falsely advanced the repair", failures)
 	var caption: Label = screen.find_child("EndingIllustrationCaption", true, false)
-	_expect(caption != null and caption.text == "哈姆雷特 · 炉边镇", "ending: the illustration lost its place caption", failures)
+	_expect(caption != null and caption.text == "Hamlet · Hearthside", "ending: the illustration lost its place caption", failures)
 
 	# --- the summary is read back from the payload that was handed over ---
 	_expect(String(screen.get_presented_result().get("contract_id", "")) == "auto_certification"
@@ -101,7 +101,7 @@ func _run() -> void:
 		"ending: the presented profile is not readable from the screen", failures)
 
 	# --- pinned footer, one scrolling middle, nothing past the sides, no copy under
-	#     the approved Chinese floor ---
+	#     the approved text floor ---
 	await _frames(4)
 	var bounds := Rect2(Vector2.ZERO, screen.size)
 	var header: Control = screen.find_child("EndingHeader", true, false)

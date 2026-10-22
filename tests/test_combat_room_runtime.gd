@@ -84,7 +84,8 @@ func _run() -> void:
 			"runtime: existing zero-based room index and total were not passed to the arena", failures)
 		room_node.call("refresh_presentation")
 		var heading := (room_node.get("presentation").get("hud") as Node).find_child("EncounterHeading", true, false) as Label
-		_expect(heading != null and heading.text.contains("第 2 / 2 房") and heading.text.contains("清除"),
+		_expect(heading != null and heading.text.contains("Room 2/2") and heading.text.contains("Clear foes")
+			and heading.tooltip_text.contains("Room 2 / 2") and heading.tooltip_text.contains("Clear"),
 			"runtime: second-room metadata did not reach the persistent HUD objective", failures)
 		source_room.enemy_ids[0] = "fan_ranged"
 		source_room.drop_tags.append("damage")

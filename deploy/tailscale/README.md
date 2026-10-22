@@ -1,10 +1,10 @@
-# Tailscale 发布页
+# Tailscale Release Page
 
-当前发布链路运行在宿主机。项目目录为 `/data/paseo-makeitbig/project`；Tailscale 服务由宿主机运维控制，项目脚本只负责生成和校验 `build/releases/`。
+This is the existing **host-operator** workflow for `/data/paseo-makeitbig/project`. The operator controls Tailscale; project scripts only generate and validate `build/releases/`. These host exposure commands are not instructions to change the devbox's network or visibility policy.
 
-## 宿主机准备
+## Prepare on the Host
 
-在宿主机项目目录执行：
+After a passing build, run from the host checkout:
 
 ```bash
 ./scripts/release.sh all
@@ -13,45 +13,50 @@
 ./deploy/tailscale/stage_release_page.sh --check
 ```
 
-`release.sh all` 将页面、索引、校验清单和最近 20 个 build 写入 `build/releases/`。`stage_release_page.sh` 只校验这个唯一静态发布根，并确认最新 build 同时有 Linux 与 Windows 下载；它不会复制另一份二进制，也不会修改宿主机网络。`MIB_RELEASE_STAGING_DIR` 如果被设置，必须解析到与 `MIB_RELEASE_ROOT` 相同的目录。
+`release.sh all` writes the page, index, checksums, and latest 20 builds to `build/releases/`. It may prune older builds: review and approve deletion first. Staging validates this single root and requires both Linux and Windows downloads in the latest build. It neither duplicates binaries nor changes networking. If set, `MIB_RELEASE_STAGING_DIR` must resolve to `MIB_RELEASE_ROOT`.
 
-## 宿主机实际上线
+## Host Exposure
 
-先在宿主机确认发布根的真实路径。默认使用 `/data/paseo-makeitbig/project`；不一致时设置 `MIB_RELEASE_HOST_ROOT`。确认宿主机能看到 `build/releases/index.html` 后，在宿主机执行：
+Confirm the real host release path first. The default checkout is `/data/paseo-makeitbig/project`; override it with `MIB_RELEASE_HOST_ROOT` if different. After verifying that the host can see `build/releases/index.html`, an authorized operator may run:
 
 ```bash
 MIB_RELEASE_HOST_ROOT=/data/paseo-makeitbig/project ./deploy/tailscale/serve_host.sh.example serve
 ```
 
-该命令把完整发布页作为静态根暴露，因此首页可以浏览最新 build 和历史 build，并提供两个平台的下载。访问地址由 `tailscale serve status` 显示。关闭配置：
+This exposes the generated static root, including current/history pages and both downloads. `tailscale serve status` reports the URL. To remove that exposure:
 
 ```bash
 ./deploy/tailscale/serve_host.sh.example off
 ```
 
-`serve_host.sh.example` 只能在有 Tailscale 客户端的宿主机执行；没有宿主机 Tailscale 客户端时执行会失败，这是边界设计。
+`serve_host.sh.example` intentionally fails outside a host with the Tailscale client. Do not install Tailscale/TUN or add networks to a sandbox to bypass that boundary.
 
-## funnel 与访问控制
+## Funnel and Access Control
 
-`funnel` 会把下载页公开到互联网，页面没有额外鉴权；只有在 tailnet policy、节点证书、ACL 和未签名二进制风险完成审查后，才由宿主机明确执行：
+`funnel` exposes downloads publicly without application authentication. Only an explicit host-operator action after policy, certificate, ACL, and unsigned-binary review may invoke:
 
 ```bash
 ./deploy/tailscale/serve_host.sh.example funnel
 ```
 
-默认使用 `serve`。tailnet-only 访问权限由 Tailscale ACL 控制。不要把项目根目录作为 serve 目标，只暴露 `build/releases/`。
+Use tailnet-only `serve` by default. Tailscale ACLs govern access. Never serve the project checkout; expose only generated `build/releases/`.
 
-## 上线前清单
+## Exposure Checklist
 
-- `release.sh all`、`release.sh verify --deep`、`deploy/tailscale/validate.sh` 和 `stage_release_page.sh --check` 通过。
-- `build/releases/index.json` 的最新 build 同时列出 Linux 与 Windows，且 `SHA256SUMS` 与 metadata 校验通过。
-- 宿主机确认发布根路径与项目工作区一致，`tailscale serve status` 指向 `build/releases/`。
-- tailnet 内能打开首页、浏览历史 build，并下载两个平台文件。
-- 没有执行 OCX、Paseo 或 Jingwei 重启；本目录的项目脚本不会执行这些操作。
-# 当前发布地址
+- Local packaging, `release.sh verify --deep`, static deployment validation, and staging checks pass.
+- The latest `index.json` build lists both platforms and passes metadata/checksum verification.
+- The host confirms the release path, and `tailscale serve status` targets `build/releases/`.
+- A tailnet client can load the page/history and download both files.
+- No OCX, Paseo, or Jingwei restart occurs; these scripts never restart them.
 
-Tailnet-only：<https://example-runtime.tail99c4e8.ts.net:8448>。
+## Existing Endpoint
 
-该地址由宿主机 Tailscale Serve 指向项目的 `build/releases/`；项目脚本不运行 `tailscaled`。
+Existing host tailnet-only URL: <https://example-runtime.tail99c4e8.ts.net:8448>.
+It points to the host release root, not the devbox. Availability must be checked
+separately when publication is requested. Project scripts never run `tailscaled`.
+
+For a sandbox-managed service, use the sanctioned AF Infra control plane and
+an operator-approved contract. Do not reuse another project's exposure, publish
+an X11 port, mount the host desktop socket, or change outbound proxies.
 
 <!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->

@@ -2,8 +2,8 @@ extends RefCounted
 ## Code-native combat markings for the concept pass (ART_BIBLE v0.9 §07/§09).
 ##
 ## The bible draws an authoritative range as a hard edge outline plus sparse
-## hatching ("真实范围的硬边轮廓 + 稀疏斜纹") and reads the hunter mark as an open
-## bracket above the target ("标记=目标上方开口括号"). Danger geometry is
+## hatching ("hard-edged actual-range outline + sparse hatching") and reads the hunter mark as an open
+## bracket above the target ("mark = open bracket above the target"). Danger geometry is
 ## generated from the simulation's own numbers and never baked into an atlas, so
 ## everything here takes plain value geometry and returns line segments:
 ##

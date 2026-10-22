@@ -51,17 +51,17 @@ func _test_action_precedence_and_order(failures: Array[String]) -> void:
 		"missing_interfaces": ["experimental_link", "breedable_event"],
 		"growth_classification": "exponential",
 	})
-	_expect(first == "补齐可繁殖子箭接口，让后代能继续分叉。",
+	_expect(first == "Add the Breedable Child Arrows interface so descendants can keep branching.",
 		"action: breedable_event must outrank other gaps and growth advice", failures)
 	var second := TrainingReportBuilder.action({"missing_interfaces": ["branch_target_history"]})
-	_expect(second == "补齐分支目标记录接口，让分叉后代被持续追踪。",
+	_expect(second == "Add the Branch Target History interface to keep tracking branched descendants.",
 		"action: branch history must outrank growth advice", failures)
 	var fallback := TrainingReportBuilder.action({
 		"missing_interfaces": ["lineage_lifetime_pause", "experimental_link"],
 	})
-	_expect(fallback.contains("、") and fallback.contains("experimental_link"),
+	_expect(fallback.contains(", ") and fallback.contains("experimental_link"),
 		"action: remaining interfaces must use sorted shared names and retain unknown ids", failures)
-	_expect(TrainingReportBuilder.action({"growth_classification": "critical"}) == "尝试小幅提高续生概率，再回来验证是否突破临界增长。",
+	_expect(TrainingReportBuilder.action({"growth_classification": "critical"}) == "Try a small increase in continuation chance, then test whether growth exceeds critical.",
 		"action: critical growth sentence must remain unchanged", failures)
 
 

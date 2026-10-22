@@ -1,5 +1,5 @@
-# 当前敌人动作来源
+# Current Enemy Action Sources
 
-当前近战、冲锋与远程动作原图在 sources/，使用 recipe.final.json 打包。PROMPTS.json 保留实际提示词和生成来源；角色外形参考仍使用 calibration_v01 与保留的敌人概念原图。
+Current melee, charge, and ranged action originals are in sources/, packed with recipe.final.json. PROMPTS.json retains actual prompts and generation sources; appearance references remain calibration_v01 and retained enemy-concept originals.
 
-统一维护入口见 [来源说明](../README.md)。
+Shared maintenance entry: [source notes](../README.md).

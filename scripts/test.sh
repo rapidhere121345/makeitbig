@@ -6,6 +6,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source "${SCRIPT_DIR}/project_env.sh"
 cd "$MIB_PROJECT_ROOT"
 
+python3 -B scripts/check_english.py
+python3 -B tools/test_check_english.py
+python3 -B tools/test_devbox_preflight.py
+
 RUNTIME_RESOURCE_VIOLATIONS="$(grep -R -n -E --include='*.gd' --include='*.tscn' 'preload\([[:space:]]*"res://(tools|build)/|load\([[:space:]]*"res://build/' src || true)"
 if [[ -n "$RUNTIME_RESOURCE_VIOLATIONS" ]] || grep -q -E 'res://(tools|build)/' project.godot; then
   echo "Runtime code must not compile-link excluded tools/ or build/ resources:" >&2

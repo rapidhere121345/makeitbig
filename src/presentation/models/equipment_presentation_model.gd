@@ -7,16 +7,16 @@ extends RefCounted
 
 const PlayerReadableBuildScript = preload("res://src/presentation/player_readable_build.gd")
 const LAW_TALLY_LABELS: Dictionary = {
-	"inscribe": "添铸律筹",
-	"rewrite": "改写律筹",
-	"refine": "精炼律筹",
+	"inscribe": "Inscribe Law Tokens",
+	"rewrite": "Rewrite Law Tokens",
+	"refine": "Refine Law Tokens",
 }
 
 var readable: PlayerReadableBuildScript
 var base_items: Dictionary
 var affix_families: Dictionary
 var salvage_previews: Dictionary
-var unknown_base_label := "未知底材"
+var unknown_base_label := "Unknown Base"
 
 
 func _init(
@@ -24,7 +24,7 @@ func _init(
 	snapshot_base_items: Dictionary = {},
 	snapshot_affix_families: Dictionary = {},
 	snapshot_salvage_previews: Dictionary = {},
-	missing_item_label: String = "未知底材"
+	missing_item_label: String = "Unknown Base"
 ) -> void:
 	readable = readable_build if readable_build != null else PlayerReadableBuildScript.new()
 	base_items = snapshot_base_items
@@ -140,7 +140,7 @@ func affix_labels(value: Variant, published_names: bool) -> Array[String]:
 			var explicit := String(affix.get("name", "")).strip_edges()
 			label = explicit if not explicit.is_empty() else published_name("affix_families", family_id)
 			if label == family_id:
-				label = "未识别词条"
+				label = "Unknown Affix"
 		var tier := ""
 		if affix.has("tier"):
 			tier = " " + readable.tier_label(int(affix.get("tier", 0))) if published_names else " T%d" % int(affix.get("tier", 0))
@@ -152,32 +152,32 @@ func compact_difference(item: Dictionary) -> String:
 	var labels: Array[String] = []
 	for raw_affix in _array(item.get("affixes", [])):
 		if raw_affix is Dictionary:
-			labels.append(readable.format_affix(raw_affix).get_slice("：", 0))
+			labels.append(readable.format_affix(raw_affix).get_slice(": ", 0))
 	if not labels.is_empty():
 		var shown := labels.slice(0, 2)
 		if labels.size() > 2:
 			shown.append("+%d" % (labels.size() - 2))
-		return "；".join(shown)
+		return "; ".join(shown)
 	var parts: Array[String] = []
 	var rune_id := String(item.get("rune_id", "")).strip_edges()
 	var law_id := String(item.get("law_id", "")).strip_edges()
 	if not rune_id.is_empty():
-		parts.append("符文 %s" % modifier_name(rune_id))
+		parts.append("Rune %s" % modifier_name(rune_id))
 	if not law_id.is_empty():
-		parts.append("法则 %s" % modifier_name(law_id))
-	return "；".join(parts) if not parts.is_empty() else "无词条"
+		parts.append("Law %s" % modifier_name(law_id))
+	return "; ".join(parts) if not parts.is_empty() else "No Affixes"
 
 
 func current_inline_summary(item: Dictionary) -> String:
 	var base_effects := _base_effect_labels(item)
 	var affix_identities := _affix_identities(item)
-	return "%s · 底材 %s · %s\n词缀 %s · 符文 %s · 法则 %s" % [
+	return "%s · Base %s · %s\nAffixes %s · Rune %s · Law %s" % [
 		readable.slot_label(String(item.get("slot", ""))),
 		display_name(item),
-		"；".join(base_effects) if not base_effects.is_empty() else "无",
-		"；".join(affix_identities) if not affix_identities.is_empty() else "无",
-		modifier_name(String(item.get("rune_id", ""))).get_slice("｜", 0),
-		modifier_name(String(item.get("law_id", ""))).get_slice("｜", 0),
+		"; ".join(base_effects) if not base_effects.is_empty() else "None",
+		"; ".join(affix_identities) if not affix_identities.is_empty() else "None",
+		modifier_name(String(item.get("rune_id", ""))).get_slice("|", 0),
+		modifier_name(String(item.get("law_id", ""))).get_slice("|", 0),
 	]
 
 
@@ -191,20 +191,20 @@ func candidate_inline_facts(item: Dictionary, comparison_note: String = "") -> S
 	var affix_identities := _affix_identities(item)
 	var extras: Array[String] = []
 	if not affix_identities.is_empty():
-		extras.append("词缀 " + "、".join(affix_identities))
+		extras.append("Affixes " + ", ".join(affix_identities))
 	if not String(item.get("rune_id", "")).is_empty():
-		extras.append("含符文")
+		extras.append("With Rune")
 	if not String(item.get("law_id", "")).is_empty():
-		extras.append("含法则")
-	var base_text := "；".join(base_effects) if not base_effects.is_empty() else "无"
+		extras.append("With Law")
+	var base_text := "; ".join(base_effects) if not base_effects.is_empty() else "None"
 	if comparison_note == "included" and not base_effects.is_empty():
-		base_text += " · 倍率已计入上方比较"
+		base_text += " · Multiplier included in the comparison above"
 	elif comparison_note == "no_preview":
-		base_text += " · 暂无有效预览，倍率未比较"
+		base_text += " · No valid preview; multiplier not compared"
 	var lines: Array[String] = [
 		readable.slot_label(String(item.get("slot", ""))),
-		"底材属性：%s" % base_text,
-		" · ".join(extras) if not extras.is_empty() else "无词缀 / 符文 / 法则",
+		"Base Stats: %s" % base_text,
+		" · ".join(extras) if not extras.is_empty() else "No Affixes / Runes / Laws",
 	]
 	return "\n".join(lines)
 
@@ -227,32 +227,32 @@ func salvage_action(item: Dictionary) -> Dictionary:
 
 func result_face(entry: Dictionary) -> String:
 	var affixes := affix_labels(entry.get("affixes", null), true)
-	var line := "%s · 收入库存 · 尚未装备，当前构筑不变\n词条：%s" % [
+	var line := "%s · Stored · Not equipped; current build unchanged\nAffixes: %s" % [
 		readable.slot_label(String(entry.get("slot", ""))),
-		"、" .join(affixes) if not affixes.is_empty() else "无记录",
+		", " .join(affixes) if not affixes.is_empty() else "No Record",
 	]
 	if entry.has("rune_id") or entry.has("law_id") or entry.has("current_parameters") or entry.has("equipped_parameters"):
-		line += "\n完整属性见详情"
+		line += "\nSee details for full stats"
 	return line
 
 
 func result_full(entry: Dictionary) -> String:
 	var current := _dictionary(entry.get("current_parameters", {}))
 	var equipped := _dictionary(entry.get("equipped_parameters", {}))
-	return "已收入装备库存 · 尚未装备，当前构筑不变\n%s" % readable.format_item(entry, current, equipped)
+	return "Added to equipment storage · Not equipped; current build unchanged\n%s" % readable.format_item(entry, current, equipped)
 
 
 func result_audit(entry: Dictionary) -> String:
 	var slot := String(entry.get("slot", ""))
-	var slot_label: String = String(readable.slot_label(slot)) if not slot.is_empty() else "未知"
+	var slot_label: String = String(readable.slot_label(slot)) if not slot.is_empty() else "Unknown"
 	var base_id := String(entry.get("base_item_id", ""))
-	var base_text := base_id if not base_id.is_empty() else "未知底材"
+	var base_text := base_id if not base_id.is_empty() else "Unknown Base"
 	var affixes := affix_labels(entry.get("affixes", null), false)
-	var line := "槽位: %s    名称: %s    底材: %s    词条: %s    ID: %s" % [
+	var line := "Slot: %s    Name: %s    Base: %s    Affixes: %s    ID: %s" % [
 		slot_label,
 		display_name(entry),
 		base_text,
-		" / ".join(affixes) if not affixes.is_empty() else "无",
+		" / ".join(affixes) if not affixes.is_empty() else "None",
 		instance_id_text(entry.get("instance_id", null)),
 	]
 	var extras := _result_extra_fields(entry)
@@ -267,18 +267,18 @@ func published_name(table: String, id: String) -> String:
 
 func modifier_name(modifier_id: String) -> String:
 	if modifier_id.is_empty():
-		return "无"
+		return "None"
 	var rune_text := String(readable.format_rune(modifier_id))
-	if not rune_text.contains("未识别符文"):
-		return rune_text.trim_prefix("符文：")
-	return String(readable.format_law(modifier_id)).trim_prefix("法则：")
+	if not rune_text.contains("Unknown Rune"):
+		return rune_text.trim_prefix("Rune: ")
+	return String(readable.format_law(modifier_id)).trim_prefix("Law: ")
 
 
 func instance_id_text(value: Variant) -> String:
 	if not value is String and not value is int and not value is float:
-		return "未知"
+		return "Unknown"
 	var instance_id := String(value)
-	return instance_id if not instance_id.is_empty() else "未知"
+	return instance_id if not instance_id.is_empty() else "Unknown"
 
 
 func _base_effect_labels(item: Dictionary) -> Array[String]:
@@ -286,7 +286,7 @@ func _base_effect_labels(item: Dictionary) -> Array[String]:
 	var base := _dictionary(base_items.get(String(item.get("base_item_id", "")), {}))
 	for raw_modifier in _array(base.get("modifiers", [])):
 		if raw_modifier is Dictionary:
-			labels.append(String(readable.format_modifier(raw_modifier)).get_slice("（", 0))
+			labels.append(String(readable.format_modifier(raw_modifier)).get_slice("(", 0))
 	return labels
 
 
@@ -298,7 +298,7 @@ func _affix_identities(item: Dictionary) -> Array[String]:
 		var affix: Dictionary = raw_affix
 		var family := _dictionary(affix_families.get(String(affix.get("family_id", "")), {}))
 		identities.append("%s %s" % [
-			String(family.get("name", "未识别词条")),
+			String(family.get("name", "Unknown Affix")),
 			String(readable.tier_label(int(affix.get("tier", 0)))),
 		])
 	return identities
@@ -309,16 +309,16 @@ func _result_extra_fields(entry: Dictionary) -> String:
 	var source: Variant = entry.get("source", null)
 	var source_text := _raw_text(source)
 	if not source_text.is_empty():
-		parts.append("来源: %s" % source_text)
+		parts.append("Source: %s" % source_text)
 	var rune_id := String(entry.get("rune_id", "")).strip_edges()
 	if not rune_id.is_empty():
-		parts.append("符文: %s" % rune_id)
+		parts.append("Rune: %s" % rune_id)
 	var law_id := String(entry.get("law_id", "")).strip_edges()
 	if not law_id.is_empty():
-		parts.append("法则: %s" % law_id)
+		parts.append("Law: %s" % law_id)
 	var law_seed: Variant = entry.get("law_seed", null)
 	if law_seed is int or law_seed is float or law_seed is String:
-		parts.append("圣律种子: %s" % str(law_seed))
+		parts.append("Sacred Law Seed: %s" % str(law_seed))
 	return "    ".join(parts)
 
 

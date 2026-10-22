@@ -1,5 +1,7 @@
-# 当前图标生产来源
+# Current Icon Production Sources
 
-当前18张原图在 sources/，覆盖15枚游侠天赋与3枚律筹。EXECUTED_PROMPTS.json 保留实际提示词，SOURCE_REGISTER.json 保留来源与哈希，recipe.json 保留格位与打包参数。UI材质重建仍使用该批次的正式图标。
+The 18 current originals in sources/ cover 15 Ranger talents and three Law Tokens. EXECUTED_PROMPTS.json retains actual prompts, SOURCE_REGISTER.json retains sources/hashes, and recipe.json retains cells/packing parameters. UI material reconstruction still uses this batch's production icons.
 
-统一维护入口见 [来源说明](../README.md)。
+EXECUTED_PROMPTS.json is an immutable historical source artifact, not localized interface copy. Its bilingual subject names remain verbatim to avoid falsifying executed prompts; the surrounding prompts already describe each subject in English. Current English UI uses Law Tokens rather than the historical "Law Tallies."
+
+Shared maintenance entry: [source notes](../README.md).

@@ -146,7 +146,7 @@ func _test_mark_lookup(failures: Array[String]) -> void:
 	_expect(art.mark("research") == null and art.mark("immortality") == null,
 		"facility art: an unmapped page must not borrow another facility's mark", failures)
 	_expect(art.mark_size("research") == Vector2i.ZERO, "facility art: an unmapped page must report no mark size", failures)
-	_expect(art.facility_key("装备 / 符文页  // LOADOUT") == "loadout",
+	_expect(art.facility_key("Equipment / Runes  // LOADOUT") == "loadout",
 		"facility art: a screen title must resolve to its published facility key", failures)
 	_expect(art.facility_key("forge") == "forge", "facility art: the forge route must resolve to its own mark", failures)
 
@@ -320,7 +320,7 @@ func _test_screen_glyphs(failures: Array[String]) -> void:
 	# A page with no published cell keeps its text and draws no substitute.
 	screen.present("research", {}, {}, "", {})
 	_expect(screen.facility_mark() == null, "facility screen: an unmapped page drew a substitute header mark", failures)
-	_expect(screen.get_visible_text().contains("研究页"), "facility screen: the unmapped page lost its own title copy", failures)
+	_expect(screen.get_visible_text().contains("Research"), "facility screen: the unmapped page lost its own title copy", failures)
 
 	var snapshot: Dictionary = _real_loadout_snapshot()
 	screen.present("loadout", {}, {}, "", snapshot)
@@ -332,12 +332,12 @@ func _test_screen_glyphs(failures: Array[String]) -> void:
 		"facility screen: the art pass dropped the focused current item's unequip action", failures)
 	_expect(screen.get_action_button("Equip_equipped_main") == null,
 		"facility screen: an equipped item still offers an equip action", failures)
-	_expect(text.contains("未装配") and text.contains("白蜡长弓") and text.contains("符文 孳生分裂")
-		and text.contains("法则 群猎印记")
-		and not text.contains("instance_id：equipped_main"),
+	_expect(text.contains("Unequipped") and text.contains("Ash Longbow") and text.contains("Rune Breeding Split")
+		and text.contains("Law Pack Hunt Mark")
+		and not text.contains("instance_id: equipped_main"),
 		"facility screen: the default card lost its readable facts or exposed raw fields", failures)
 	var current_toggle: Button = screen.get_action_button("CurrentItemFieldsToggle_main_hand")
-	_expect(current_toggle == null and not text.contains("instance_id：equipped_main"),
+	_expect(current_toggle == null and not text.contains("instance_id: equipped_main"),
 		"facility screen: current raw item fields escaped the test console", failures)
 	_focus_backpack(screen, "loot:bow/2")
 	_expect(screen.get_action_button("Equip_loot_bow_2") != null,
@@ -356,7 +356,7 @@ func _test_screen_glyphs(failures: Array[String]) -> void:
 	for raw_slot: Variant in snapshot["equipment_slots"]:
 		var slot := String(raw_slot)
 		var is_open := slot in (snapshot["prototype_open_slots"] as Array)
-		_expect(slots_text != null and slots_text.text.contains("%s：%s" % [screen._slot_title(slot), "开放" if is_open else "未开放"]),
+		_expect(slots_text != null and slots_text.text.contains("%s: %s" % [screen._slot_title(slot), "Available" if is_open else "Unavailable"]),
 			"facility screen: slot reference lost the real state for " + slot, failures)
 		if not is_open:
 			_expect(screen.find_child(_icon_node_name("LoadoutSlotCell", slot), true, false) == null,
@@ -382,7 +382,7 @@ func _test_screen_glyphs(failures: Array[String]) -> void:
 		var reference_text: Label = screen.find_child("ItemDetailText", true, false) as Label
 		var reference_dialog: AcceptDialog = screen.find_child("ItemDetailDialog", true, false) as AcceptDialog
 		_expect(reference_dialog != null and reference_dialog.visible and reference_text != null
-			and reference_text.text.contains("孳生分裂") and reference_text.text.contains("群猎印记"),
+			and reference_text.text.contains("Breeding Split") and reference_text.text.contains("Pack Hunt Mark"),
 			"facility screen: complete build reference lost active rune or law names", failures)
 		if reference_dialog != null:
 			reference_dialog.hide()
@@ -448,14 +448,14 @@ func _test_screen_glyphs(failures: Array[String]) -> void:
 	var equip_label: Button = screen.get_action_button("Equip_loot_bow_2")
 	# Missing catalogue and art entries keep a safe readable fallback and a real
 	# equip action. Internal IDs belong to the test console, not item names.
-	_expect(equip_label != null and equip_label.text == "装备此候选"
-		and equip_label.tooltip_text == "装备并应用 · 未知底材",
+	_expect(equip_label != null and equip_label.text == "Equip"
+		and equip_label.tooltip_text == "Equip and Apply · Unknown Base",
 		"facility screen: an unpublished base id changed the item's own copy: %s" % ("" if equip_label == null else "%s / %s" % [equip_label.text, equip_label.tooltip_text]), failures)
 	var unpublished_name: Label = screen.find_child("CandidateName_loot_bow_2", true, false) as Label
-	_expect(unpublished_name != null and unpublished_name.visible and unpublished_name.text == "未知底材",
+	_expect(unpublished_name != null and unpublished_name.visible and unpublished_name.text == "Unknown Base",
 		"facility screen: an unpublished base id lost the candidate's own readable name", failures)
 	var candidate_toggle: Button = screen.get_action_button("CandidateFieldsToggle_loot_bow_2")
-	_expect(candidate_toggle == null and not screen.get_visible_text().contains("底材 modifiers"),
+	_expect(candidate_toggle == null and not screen.get_visible_text().contains("Base modifiers"),
 		"facility screen: unpublished item exposed raw fields outside the test console", failures)
 	_expect("equipment.unpublished_relic" in screen.missing_art_ids(),
 		"facility screen: an unpublished base id was not reported as missing art", failures)
@@ -759,12 +759,12 @@ func _real_loadout_snapshot() -> Dictionary:
 		"equipment_slots": ["head", "chest", "pants", "leg_armor", "gloves", "bracers", "belt", "main_hand", "off_hand", "ring_1", "ring_2", "necklace"],
 		"prototype_open_slots": ["main_hand", "off_hand", "gloves", "ring_1"],
 		"base_items": {
-			"ashwood_longbow": {"id": "ashwood_longbow", "name": "白蜡长弓", "slot": "main_hand"},
-			"swift_recurve_bow": {"id": "swift_recurve_bow", "name": "迅弦反曲弓", "slot": "main_hand"},
-			"turnfeather_gloves": {"id": "turnfeather_gloves", "name": "导羽手套", "slot": "gloves"},
-			"vitality_ring": {"id": "vitality_ring", "name": "生机戒指", "slot": "ring_1"},
+			"ashwood_longbow": {"id": "ashwood_longbow", "name": "Ash Longbow", "slot": "main_hand"},
+			"swift_recurve_bow": {"id": "swift_recurve_bow", "name": "Swiftstring Recurve", "slot": "main_hand"},
+			"turnfeather_gloves": {"id": "turnfeather_gloves", "name": "Guiding Fletch Gloves", "slot": "gloves"},
+			"vitality_ring": {"id": "vitality_ring", "name": "Vitality Ring", "slot": "ring_1"},
 		},
-		"affix_families": {"piercing_continuation": {"id": "piercing_continuation", "name": "穿刺箭续行概率", "tiers": [{"tier": 2, "value": 0.07}]}},
+		"affix_families": {"piercing_continuation": {"id": "piercing_continuation", "name": "Piercing Arrow Continuation Chance", "tiers": [{"tier": 2, "value": 0.07}]}},
 		"inventory_equipment": [
 			{"instance_id": "equipped_main", "base_item_id": "ashwood_longbow", "slot": "main_hand", "affixes": [], "rune_id": "breeding_split", "law_id": "pack_hunt_mark"},
 			{"instance_id": "loot:bow/2", "base_item_id": "swift_recurve_bow", "slot": "main_hand", "affixes": [], "rune_id": "", "law_id": ""},
@@ -795,12 +795,12 @@ func _real_loadout_snapshot() -> Dictionary:
 func _forge_snapshot(unlocked: bool) -> Dictionary:
 	var snapshot: Dictionary = _real_loadout_snapshot()
 	var target: Dictionary = (snapshot["inventory_equipment"] as Array)[0].duplicate(true)
-	target["base_name"] = "白蜡长弓"
+	target["base_name"] = "Ash Longbow"
 	var other: Dictionary = (snapshot["inventory_equipment"] as Array)[1].duplicate(true)
-	other["base_name"] = "迅弦反曲弓"
+	other["base_name"] = "Swiftstring Recurve"
 	snapshot["ok"] = true
 	snapshot["unlocked"] = unlocked
-	snapshot["locked_reason"] = "完成主线 04，取得律筹锻造权" if not unlocked else ""
+	snapshot["locked_reason"] = "Complete Main Quest 04 to unlock Law Token forging" if not unlocked else ""
 	snapshot["inventory_items"] = [target.duplicate(true), other]
 	snapshot["target_item"] = target
 	snapshot["target_instance_id"] = "equipped_main"

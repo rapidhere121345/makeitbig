@@ -101,7 +101,7 @@ func _check_font_coverage() -> void:
 	var characters := {}
 	_collect_cjk("res://src", characters)
 	_collect_cjk("res://content", characters)
-	for character: String in "0123456789%+−×→←◆◇·：，。！？（）「」":
+	for character: String in "0123456789%+−×→←◆◇·: , .!?()''":
 		characters[character] = true
 	for font: FontFile in [Shell.ui_font(), Shell.data_font()]:
 		_expect(font != null and not font.allow_system_fallback, "bundled font does not rely on system fallback")

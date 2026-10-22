@@ -28,13 +28,13 @@ func _run() -> void:
 	var keyword := screen.find_child("CandidateKeywordFilter", true, false) as LineEdit
 	var same_search := keyword.get_instance_id()
 	keyword.grab_focus()
-	keyword.text = "迅弓"
+	keyword.text = "Swift Bow"
 	keyword.caret_column = 1
 	keyword.text_changed.emit(keyword.text)
 	await _settle()
 	_expect(keyword.get_instance_id() == same_search and is_instance_valid(keyword) and keyword.has_focus() and keyword.caret_column == 1,
 		"Filtering replaced the search field or lost its editing cursor")
-	_expect(screen.get_visible_text().contains("点击重置可查看全部"), "Empty search has no recovery action")
+	_expect(screen.get_visible_text().contains("Click Reset to view all"), "Empty search has no recovery action")
 	bar.reset_query()
 	await _settle()
 	_expect(screen.backpack_cell("loot:bow/2") != null and screen.backpack_cell("equipped_main") != null, "Reset did not restore the owned item and candidate")
@@ -74,8 +74,8 @@ func _check_comparison() -> void:
 	var rows := Comparison.comparison_rows(current, replacement)
 	var by_key := {}
 	for row in rows: by_key[row.key] = row
-	_expect(by_key.p.delta_text == "−7百分点" and not by_key.p.improves, "Probability delta must use percentage points")
-	_expect(by_key.turn.delta_text == "快 0.04秒" and by_key.turn.improves, "Shorter turn time was not identified as faster")
+	_expect(by_key.p.delta_text == "−7 percentage points" and not by_key.p.improves, "Probability delta must use percentage points")
+	_expect(by_key.turn.delta_text == "Faster 0.04s" and by_key.turn.improves, "Shorter turn time was not identified as faster")
 	_expect(by_key.damage.delta_text == "+12", "Damage comparison has no exact delta")
 	_expect(Comparison.comparison_rows({"p": 0.5}, {"damage": 12}).is_empty(), "Disjoint parameters became a fake comparison")
 	_expect(Comparison.comparison_rows({"damage": 1}, {"damage": NAN}).is_empty(), "Nonfinite preview was rendered as a valid attribute")

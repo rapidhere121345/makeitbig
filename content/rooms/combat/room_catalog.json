@@ -9,11 +9,11 @@
       "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
-        "display_name": "破碎前哨",
-        "concept": "开阔的方形前庭，先读清敌群从哪一侧逼近。",
-        "landmark": "关隘残门",
-        "entry_hint": "从南侧进入前庭，保持退路，先处理迎面敌群。",
-        "exit_hint": "清场后穿过东侧残门。"
+        "display_name": "Shattered Outpost",
+        "concept": "An open square forecourt. First read which side the enemy pack is approaching from.",
+        "landmark": "Ruined Gate",
+        "entry_hint": "Enter the forecourt from the south, keep a retreat route open, and deal with the enemies ahead first.",
+        "exit_hint": "After clearing the area, pass through the ruined gate to the east."
       },
       "spawn_profiles": {
         "default": {
@@ -95,11 +95,11 @@
       "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
-        "display_name": "风切通道",
-        "concept": "狭长风口，横向走位比直线后撤更重要。",
-        "landmark": "峡口旗标",
-        "entry_hint": "沿旗标横向走位，避开冲锋线和远程扇面。",
-        "exit_hint": "清场后穿过东侧风门。"
+        "display_name": "Windcut Passage",
+        "concept": "A narrow wind gap where lateral movement matters more than retreating in a straight line.",
+        "landmark": "Gorge Banner",
+        "entry_hint": "Move sideways along the banners to avoid charge lanes and ranged fans.",
+        "exit_hint": "After clearing the area, pass through the wind gate to the east."
       },
       "spawn_profiles": {
         "default": {
@@ -138,11 +138,11 @@
       "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
       "schema_version": 1,
       "presentation": {
-        "display_name": "回收环场",
-        "concept": "环带形回收场，中央区域不可通行，内外边缘限定可走环带。",
-        "landmark": "环形灯标",
-        "entry_hint": "沿环带绕行中央灯标，利用环带拉开距离，内外边缘会真实阻挡。",
-        "exit_hint": "清场后沿东南环门离场。"
+        "display_name": "Salvage Ring",
+        "concept": "A ring-shaped salvage yard with an impassable center; inner and outer edges define the walkable ring.",
+        "landmark": "Ring Beacon",
+        "entry_hint": "Circle the central beacon along the ring to gain distance; the inner and outer edges physically block movement.",
+        "exit_hint": "After clearing the area, leave through the southeastern ring gate."
       },
       "spawn_profiles": {
         "default": {

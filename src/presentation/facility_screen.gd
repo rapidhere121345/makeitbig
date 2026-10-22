@@ -40,30 +40,30 @@ const FACILITY_TEXTURES: Dictionary = {
 	"training": "res://art/production/p1/legacy_facility_stations/training_report.png",
 }
 const FACILITY_TITLES: Dictionary = {
-	"loadout": "备行架 · 装备与符文",
-	"forge": "回火砧 · 律筹锻造",
-	"training": "验律场 · 训练与战报",
-	"proxy": "代行舱 · 核心编组",
-	"immortality": "恒生坛 · 不朽",
-	"research": "研究页 · 法则与残片",
+	"loadout": "Loadout · Equipment and Runes",
+	"forge": "Tempering Anvil · Law Token Forge",
+	"training": "Training · Trials and Reports",
+	"proxy": "Proxy Bay · Core Assembly",
+	"immortality": "Eternal Altar · Immortality",
+	"research": "Research · Laws and Fragments",
 }
 ## One 18px neutral line under the Chinese title, stating what the page can and
 ## cannot do. The route id stays the lookup key, so a title can be reworded
 ## without moving a single published cell.
 const FACILITY_SUBTITLES: Dictionary = {
-	"loadout": "挑选战利品，比较换装后的变化",
-	"forge": "推演免费；确认落锤后才消耗律筹",
-	"training": "试一箭，看看你的装备能让箭链走多远",
-	"proxy": "四槽装配；契约开始时冻结当前代理构筑",
-	"immortality": "中期内容；本页只作路线说明",
-	"research": "只展示已发现结论与缺失接口",
+	"loadout": "Choose loot and compare the effects of equipping it",
+	"forge": "Forecasts are free; Law Tokens are spent only when you commit",
+	"training": "Fire an arrow and see how far your equipment can take its chain",
+	"proxy": "Assemble four slots; the proxy build freezes when the contract starts",
+	"immortality": "Midgame content; this page is a roadmap only",
+	"research": "Only discovered conclusions and missing interfaces are shown",
 }
 ## Published Chinese names of the item parameters the item tables modify. Only a
 ## parameter the project already names under the same key is translated; every
 ## other parameter keeps its raw key on the card instead of borrowing a name it
 ## does not own.
 ## The two operations the item tables use, written the way a player reads one real
-## modifier: damage multiply 1.12 -> 伤害×1.12. Any other operation keeps its raw
+## modifier: damage multiply 1.12 -> Damage×1.12. Any other operation keeps its raw
 ## word, so an unknown operation is never dressed up as a symbol it may not mean.
 ## The player-facing proxy surface only lists the six behaviors implemented by
 ## the runtime. Slot order is fixed even when the installed core changes.
@@ -71,37 +71,37 @@ const CORE_ORDER: Array[String] = ["near_enemy_horizon", "direct_gait", "single_
 const IMPLEMENTED_CORE_IDS: Array[String] = ["near_enemy_horizon", "marking_prism", "direct_gait", "distance_keeping_gait", "single_key_execution", "short_trace_memory"]
 const PROXY_SLOT_ORDER: Array[String] = ["perception", "movement", "execution", "memory"]
 const PROXY_SLOT_LABELS: Dictionary = {
-	"perception": "感知槽",
-	"movement": "行动槽",
-	"execution": "执行槽",
-	"memory": "记忆槽",
+	"perception": "Perception Slot",
+	"movement": "Action Slot",
+	"execution": "Execution Slot",
+	"memory": "Memory Slot",
 }
 const CORE_ROLES: Dictionary = {
-	"near_enemy_horizon": "感知",
-	"marking_prism": "感知",
-	"direct_gait": "行动",
-	"distance_keeping_gait": "行动",
-	"single_key_execution": "执行",
-	"short_trace_memory": "记忆",
+	"near_enemy_horizon": "Perception",
+	"marking_prism": "Perception",
+	"direct_gait": "Action",
+	"distance_keeping_gait": "Action",
+	"single_key_execution": "Execution",
+	"short_trace_memory": "Memory",
 }
 const FORGE_TRACKS: Array[String] = ["inscribe", "rewrite", "refine"]
 const FORGE_TRACK_TITLES: Dictionary = {
-	"inscribe": "添铸",
-	"rewrite": "改写",
-	"refine": "精炼",
+	"inscribe": "Inscribe",
+	"rewrite": "Rewrite",
+	"refine": "Refine",
 }
 const FORGE_OPERATION_EXPLANATIONS: Dictionary = {
-	"inscribe": "新增一个词条；自动定位追加位。",
-	"rewrite": "圣律序列决定替换哪条已有词条；不能指定。",
-	"refine": "圣律序列决定提升哪条可精炼词条；不能指定。",
+	"inscribe": "Add one affix; the new slot is selected automatically.",
+	"rewrite": "The Sacred Law sequence selects the existing affix to replace; you cannot choose it.",
+	"refine": "The Sacred Law sequence selects the eligible affix to refine; you cannot choose it.",
 }
 ## Surface copy for the published training terms only (early_items.json and
 ## ranger_presets.json). Interface names come from the shared content vocabulary.
-const TRAINING_GROWTH_NAMES := {"convergent": "收敛", "critical": "临界", "exponential": "指数"}
+const TRAINING_GROWTH_NAMES := {"convergent": "Convergent", "critical": "Critical", "exponential": "Exponential"}
 const LAW_TALLY_LABELS: Dictionary = {
-	"inscribe": "添铸律筹",
-	"rewrite": "改写律筹",
-	"refine": "精炼律筹",
+	"inscribe": "Inscribe Law Tokens",
+	"rewrite": "Rewrite Law Tokens",
+	"refine": "Refine Law Tokens",
 }
 ## Two authored skill lines plus a 32px icon need this much logical lane width
 ## before a two-column grid is safe. Narrow windows stack the four actions in one
@@ -449,7 +449,8 @@ func _build_ui() -> void:
 	header.add_child(_subtitle_label)
 	_back_button = Button.new()
 	_back_button.name = "ReturnToBaseButton"
-	_back_button.text = "返回基地"
+	_back_button.text = "Hub"
+	_back_button.tooltip_text = "Return to Hub"
 	# A wrapping Button reports a one-pixel minimum width, so in a plain row it would
 	# be squeezed to its own padding and wrap into a tall empty box. The return button
 	# is a fixed short label: give it the width its text needs on one line.
@@ -508,9 +509,9 @@ func _build_ui() -> void:
 
 	_salvage_dialog = ConfirmationDialog.new()
 	_salvage_dialog.name = "SalvageConfirmation"
-	_salvage_dialog.title = "拆解确认"
-	_salvage_dialog.ok_button_text = "确认拆解"
-	_salvage_dialog.cancel_button_text = "取消"
+	_salvage_dialog.title = "Confirm Salvage"
+	_salvage_dialog.ok_button_text = "Confirm Salvage"
+	_salvage_dialog.cancel_button_text = "Cancel"
 	_salvage_dialog.confirmed.connect(_on_salvage_confirmed)
 	_salvage_dialog.canceled.connect(_on_salvage_canceled)
 	_salvage_dialog.close_requested.connect(_on_salvage_canceled)
@@ -518,8 +519,8 @@ func _build_ui() -> void:
 
 	_skill_detail_dialog = AcceptDialog.new()
 	_skill_detail_dialog.name = "SkillDetailDialog"
-	_skill_detail_dialog.title = "完整技能说明"
-	_skill_detail_dialog.ok_button_text = "关闭"
+	_skill_detail_dialog.title = "Full Skill Details"
+	_skill_detail_dialog.ok_button_text = "Close"
 	_skill_detail_dialog.dialog_autowrap = false
 	_skill_detail_dialog.about_to_popup.connect(_layout_skill_detail_dialog)
 	_skill_detail_dialog.size_changed.connect(_layout_skill_detail_dialog)
@@ -557,8 +558,8 @@ func _build_ui() -> void:
 
 	_item_detail_dialog = AcceptDialog.new()
 	_item_detail_dialog.name = "ItemDetailDialog"
-	_item_detail_dialog.title = "完整装备详情"
-	_item_detail_dialog.ok_button_text = "关闭"
+	_item_detail_dialog.title = "Full Equipment Details"
+	_item_detail_dialog.ok_button_text = "Close"
 	_item_detail_dialog.dialog_autowrap = false
 	_item_detail_dialog.about_to_popup.connect(_layout_item_detail_dialog)
 	_item_detail_dialog.size_changed.connect(_layout_item_detail_dialog)
@@ -588,7 +589,8 @@ func _sync_back_button() -> void:
 		return
 	var context := _as_dictionary(_facility_data.get("initial_focus", {}))
 	var return_route := String(_facility_data.get("return_route", context.get("return_route", "")))
-	_back_button.text = "返回结算" if return_route == "result" else "返回基地"
+	_back_button.text = "Results" if return_route == "result" else "Hub"
+	_back_button.tooltip_text = "Return to Results" if return_route == "result" else "Return to Hub"
 
 
 func _apply_presentation() -> void:
@@ -629,12 +631,13 @@ func _apply_presentation() -> void:
 	# out for the frame the layout module names, including the very first build.
 	_layout_frame = _measure_layout_frame()
 	_cards.custom_minimum_size.x = _layout_frame.x
-	_title_label.text = String(FACILITY_TITLES.get(_facility_id, "未知设施"))
-	_subtitle_label.text = String(FACILITY_SUBTITLES.get(_facility_id, "UNKNOWN FACILITY · 该入口尚未登记"))
+	_title_label.text = String(FACILITY_TITLES.get(_facility_id, "Unknown Facility"))
+	_subtitle_label.text = String(FACILITY_SUBTITLES.get(_facility_id, "UNKNOWN FACILITY · This entry is not registered"))
 	# The mark belongs to the page, not to one data branch: it is placed before any
 	# builder runs, so a page that has no snapshot still shows its own published
 	# cell instead of dropping it.
-	if _has_page_mark() and not (_facility_id == "forge" and bool(_facility_data.get("ok", false))) and not (_facility_id == "loadout" and _has_real_loadout_data()):
+	# Forge owns its compact mark for every nonempty snapshot, even without "ok".
+	if _has_page_mark() and not (_facility_id == "forge" and not _facility_data.is_empty()) and not (_facility_id == "loadout" and _has_real_loadout_data()):
 		_page_lead_row()
 
 	match _facility_id:
@@ -651,7 +654,7 @@ func _apply_presentation() -> void:
 		"research":
 			_build_research()
 		_:
-			_add_card("未识别设施", "id: %s\n该入口尚未登记，未执行任何操作。" % _facility_id)
+			_add_card("Unrecognized Facility", "id: %s\nThis entry is not registered. No action was performed." % _facility_id)
 
 	_status_label.text = PlayerFacingStatusScript.message(_status_message)
 	_status_label.visible = not _status_message.is_empty()
@@ -1028,10 +1031,10 @@ func _note_label(text: String) -> Label:
 	return label
 
 
-## "键：值" stays one Label so the value cannot be read without the key that
+## "Key: Value" stays one Label so the value cannot be read without the key that
 ## names it, and text collection sees exactly what the screen shows.
 func _fact_label(parent: Container, key: String, value: String, color: Color = ShellThemeScript.BONE) -> Label:
-	var label := _body_label("%s：%s" % [key, value], color)
+	var label := _body_label("%s: %s" % [key, value], color)
 	parent.add_child(label)
 	return label
 
@@ -1186,21 +1189,21 @@ func _build_legacy_loadout() -> void:
 		var selected := bool(build.get("selected", false)) or preset_id == active_id
 		var verified := bool(build.get("verified", false))
 		var display_name := _build_display_name(build, rendered, verified)
-		var title := "%s%s" % ["[当前套件] " if selected else "", display_name]
-		var p_text := _format_value(build.get("p", _nested_value(build, ["parameters", "p"], "未知")))
-		var conclusion := "未验证"
+		var title := "%s%s" % ["[Current Kit] " if selected else "", display_name]
+		var p_text := _format_value(build.get("p", _nested_value(build, ["parameters", "p"], "Unknown")))
+		var conclusion := "Unverified"
 		if verified:
-			conclusion = String(build.get("state", build.get("growth_state", build.get("conclusion", build.get("verified_growth_name", "已验证")))))
-		var body := "续行概率：%s\n增长结论：%s\n技能：%s\n符文：%s\n法则：%s\n装备词条 / 校准：%s" % [
+			conclusion = String(build.get("state", build.get("growth_state", build.get("conclusion", build.get("verified_growth_name", "Verified")))))
+		var body := "Continuation Chance: %s\nGrowth Conclusion: %s\nSkill: %s\nRune: %s\nLaw: %s\nEquipment Affixes / Calibration: %s" % [
 			p_text,
 			conclusion,
-			_component_text(build, "skill", "穿刺箭"),
-			_component_text(build, "rune", "孳生分裂"),
-			_component_text(build, "law", "群猎印记"),
+			_component_text(build, "skill", "Piercing Arrow"),
+			_component_text(build, "rune", "Breeding Split"),
+			_component_text(build, "law", "Pack Hunt Mark"),
 			_equipment_text(build),
 		]
 		_add_card(title, body, "BuildCard_%s" % preset_id)
-		_add_payload_action("选择 %s" % display_name, "select_ranger_build", {"preset_id": preset_id}, "SelectBuild_%s" % preset_id)
+		_add_payload_action("Select %s" % display_name, "select_ranger_build", {"preset_id": preset_id}, "SelectBuild_%s" % preset_id)
 		# The calibration presets name their skill, rune and law; each one that the
 		# icon batch publishes gets its own cell beside the card it belongs to.
 		var card: Node = find_child("BuildCard_%s" % preset_id, true, false)
@@ -1211,7 +1214,7 @@ func _build_legacy_loadout() -> void:
 			], "LegacyBuildIcon")
 		rendered += 1
 	if rendered == 0:
-		_add_card("Build 数据不可用", "尚未取得可用套件；p、零件参数与验证结论均保持未知。", "BuildDataUnavailable")
+		_add_card("Build data unavailable", "No valid kit is available; p, component stats, and verification results remain unknown.", "BuildDataUnavailable")
 
 
 func _has_real_loadout_data() -> bool:
@@ -1251,23 +1254,23 @@ func _build_real_loadout() -> void:
 	var hero := _workbench_region(stage,"LoadoutHeroRegion",regions.hero)
 	slot_column.add_theme_constant_override("separation", 2)
 	_build_slot_grid(slot_column, slots, open, equipped, inventory, {})
-	var character_note := _note_label("选择装备槽位，在背包中比较和替换")
+	var character_note := _note_label("Select a slot to compare and replace equipment in your backpack")
 	character_note.name = "LoadoutCharacterDescription"
 	slot_column.add_child(character_note)
 	_build_loadout_skill_strip(left)
-	var locked := _section_in(left, "行囊与成长", "ClosedEquipmentSlots")
+	var locked := _section_in(left, "Backpack and Progression", "ClosedEquipmentSlots")
 	var locked_style := _recessed_panel_style("well")
 	locked_style.content_margin_top = 4
 	locked_style.content_margin_bottom = 4
 	_section_panel(locked).add_theme_stylebox_override("panel", locked_style)
 	locked.add_theme_constant_override("separation", 2)
-	var reason := _note_label("主手 · 副手 · 手套 · 戒指\n" + _resolved_build_fact_lines()[1].get_slice("　", 0))
+	var reason := _note_label("Main Hand · Off Hand · Gloves · Ring\n" + _resolved_build_fact_lines()[1].get_slice("    Class:", 0))
 	reason.name = "ClosedSlotReason"
 	locked.add_child(reason)
 	var slot_reference := Button.new()
 	slot_reference.name = "ClosedSlotReferenceToggle"
-	slot_reference.text = "完整12槽参考"
-	slot_reference.tooltip_text = "在弹窗中查看全部槽位与开放状态；本页第一屏不承载长表。"
+	slot_reference.text = "All 12 Slots"
+	slot_reference.tooltip_text = "View all slots and availability in the popup, without a long table on this page."
 	slot_reference.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	slot_reference.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slot_reference.pressed.connect(_on_closed_slot_reference_pressed)
@@ -1275,7 +1278,7 @@ func _build_real_loadout() -> void:
 	reference_actions.name = "LoadoutReferenceActions"
 	reference_actions.add_theme_constant_override("separation", 6)
 	left.add_child(reference_actions)
-	slot_reference.text = "槽位说明"
+	slot_reference.text = "Slot Details"
 	slot_reference.add_theme_font_size_override("font_size", 18)
 	reference_actions.add_child(slot_reference)
 	_build_character_column(hero)
@@ -1339,6 +1342,8 @@ func _build_loadout_skill_strip(parent: Container) -> void:
 			var skin := ShellThemeScript.panel_style("button" if state == "normal" else ("selected" if state == "pressed" else state))
 			skin.content_margin_top = 3
 			skin.content_margin_bottom = 3
+			skin.content_margin_left = 4
+			skin.content_margin_right = 4
 			button.add_theme_stylebox_override(state, skin)
 		# Exactly one authored break: the compact cooldown uses the short seconds
 		# token so the icon, binding and value all fit without a third soft-wrapped
@@ -1348,15 +1353,15 @@ func _build_loadout_skill_strip(parent: Container) -> void:
 		button.focus_mode = Control.FOCUS_ALL
 		if skill_id.is_empty():
 			button.name = "SkillSummary_empty_%d" % (index + 1)
-			button.text = "技能槽 %d\n完成主线后开放" % (index + 1)
+			button.text = "Slot %d\nLocked" % (index + 1)
 			button.disabled = true
-			button.tooltip_text = "完成主线后开放该技能槽"
+			button.tooltip_text = "This skill slot unlocks through the main quest"
 			row.add_child(button)
 			continue
 		var skill := _player_skill_entry(skill_id)
 		button.name = "SkillSummary_%s" % _stable_node_token(skill_id)
 		button.text = _compact_skill_text(skill, index + 1)
-		button.tooltip_text = "点击查看%s的完整目标、效果、冷却、联动与限制" % String(skill.get("name", "该技能"))
+		button.tooltip_text = "Click to view %s's full targeting, effects, cooldown, synergies, and limits" % String(skill.get("name", "this skill"))
 		var texture: Texture2D = _skill_icons.icon(skill_id)
 		if texture != null:
 			button.icon = texture
@@ -1369,15 +1374,15 @@ func _build_loadout_skill_strip(parent: Container) -> void:
 
 func _compact_skill_text(skill: Dictionary, slot_index: int) -> String:
 	if skill.is_empty():
-		return "技能槽 %d\n说明不可用" % slot_index
+		return "Skill Slot %d\nDetails unavailable" % slot_index
 	var bindings := _as_array(skill.get("key_bindings", []))
-	var primary_binding := "未绑定"
+	var primary_binding := "Unbound"
 	if not bindings.is_empty():
-		primary_binding = String(bindings[0]).replace("鼠标左键", "左键").replace("鼠标右键", "右键")
+		primary_binding = String(bindings[0]).replace("Left Mouse Button", "Left-click").replace("Right Mouse Button", "Right-click")
 	var ticks_per_second := maxi(1, _skill_registry.ticks_per_second)
 	var cooldown_seconds := float(int(skill.get("cooldown_ticks", 0))) / float(ticks_per_second)
-	return "%s\n%s %s秒" % [
-		String(skill.get("name", "技能槽 %d" % slot_index)),
+	return "%s\n%s %ss" % [
+		String(skill.get("name", "Skill Slot %d" % slot_index)),
 		primary_binding,
 		("%.2f" % cooldown_seconds).trim_suffix("0").trim_suffix("0").trim_suffix("."),
 	]
@@ -1390,7 +1395,7 @@ func _on_skill_summary_pressed(skill_id: String) -> void:
 	if skill.is_empty():
 		return
 	var readable_text := _readable_build.format_skill(skill)
-	_skill_detail_dialog.title = "完整技能说明 · %s" % String(skill.get("name", "技能"))
+	_skill_detail_dialog.title = "Full Skill Details · %s" % String(skill.get("name", "Skill"))
 	_skill_detail_dialog.dialog_text = ""
 	_skill_detail_text.text = _skill_detail_paragraphs(readable_text)
 	_skill_detail_scroll.scroll_vertical = 0
@@ -1406,7 +1411,7 @@ func _on_skill_summary_pressed(skill_id: String) -> void:
 ## neither rewritten nor abbreviated by this presentation.
 func _skill_detail_paragraphs(readable_text: String) -> String:
 	var result := readable_text
-	for heading: String in ["目标规则：", "完整效果：", "冷却：", "联动：", "限制："]:
+	for heading: String in ["Target Rule: ", "Full Effect: ", "Cooldown: ", "Synergy: ", "Limits: "]:
 		result = result.replace("\n" + heading, "\n\n" + heading)
 	return result
 
@@ -1463,9 +1468,9 @@ func _player_readable_skill_text(skill_id: String) -> String:
 func _build_loadout_details_entry(parent: Container) -> void:
 	var toggle := Button.new()
 	toggle.name = "LoadoutDetailsToggle"
-	toggle.text = "构筑详情"
+	toggle.text = "Build Details"
 	toggle.add_theme_font_size_override("font_size", 18)
-	toggle.tooltip_text = "在弹窗中查看最终参数、增长分类与接口；不改变当前构筑。"
+	toggle.tooltip_text = "View final stats, growth classification, and interfaces in a popup; your build stays unchanged."
 	toggle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toggle.pressed.connect(_on_loadout_details_reference_pressed)
@@ -1478,8 +1483,8 @@ func _on_loadout_details_reference_pressed() -> void:
 	for kind in ["runes", "laws"]:
 		for value in _as_array(active.get(kind, [])):
 			lines.append(_player_modifier_name(_display_value(value)))
-	_show_item_detail("构筑参考", "\n".join(lines), get_action_button("LoadoutDetailsToggle"))
-	_item_detail_dialog.title = "构筑详情"
+	_show_item_detail("Build Reference", "\n".join(lines), get_action_button("LoadoutDetailsToggle"))
+	_item_detail_dialog.title = "Build Details"
 
 
 func _on_closed_slot_reference_pressed() -> void:
@@ -1487,12 +1492,12 @@ func _on_closed_slot_reference_pressed() -> void:
 		return
 	var slots := _as_array(_facility_data.get("equipment_slots", []))
 	var open := _as_array(_facility_data.get("prototype_open_slots", []))
-	var lines: Array[String] = ["全部 12 槽状态"]
+	var lines: Array[String] = ["All 12 Slot States"]
 	for raw_slot in slots:
 		var slot := String(raw_slot)
-		lines.append("%s：%s" % [_slot_title(slot), "开放" if slot in open else "未开放"])
-	_show_item_detail("槽位参考", "\n".join(lines), get_action_button("ClosedSlotReferenceToggle"))
-	_item_detail_dialog.title = "全部槽位说明"
+		lines.append("%s: %s" % [_slot_title(slot), "Available" if slot in open else "Unavailable"])
+	_show_item_detail("Slot Reference", "\n".join(lines), get_action_button("ClosedSlotReferenceToggle"))
+	_item_detail_dialog.title = "All Slot Details"
 
 
 ## Readable reference facts for the complete build dialog. Growth classification
@@ -1505,7 +1510,7 @@ func _resolved_build_fact_lines() -> Array[String]:
 		parameter_lines.append(_readable_build.format_parameter(parameter, parameters.get(parameter, null)))
 	var fingerprint := String(resolved.get("build_fingerprint", ""))
 	var training := _as_dictionary(_facility_data.get("training", {}))
-	var classification := "未验证"
+	var classification := "Unverified"
 	var report := _matched_training_report(training, fingerprint)
 	if not report.is_empty():
 		var reported := String(report.get("state", "")).strip_edges()
@@ -1513,10 +1518,10 @@ func _resolved_build_fact_lines() -> Array[String]:
 			classification = reported
 	classification = String(TRAINING_GROWTH_NAMES.get(classification, classification))
 	return [
-		"最终参数：" + "  ·  ".join(parameter_lines),
-		"增长分类：%s　职业：%s" % [classification, String({"ranger":"游侠", "alchemist":"炼金", "mage":"法师"}.get(String(_profile.get("initial_class", "")), "未建立"))],
-		"接通接口：%s" % _resolved_interface_facts_text(resolved.get("connected_interfaces", [])),
-		"缺失接口：%s" % _resolved_interface_facts_text(resolved.get("missing_interfaces", [])),
+		"Final Stats: " + "  ·  ".join(parameter_lines),
+		"Growth Classification: %s    Class: %s" % [classification, String({"ranger":"Ranger", "alchemist":"Alchemist", "mage":"Mage"}.get(String(_profile.get("initial_class", "")), "Not Created"))],
+		"Connected Interfaces: %s" % _resolved_interface_facts_text(resolved.get("connected_interfaces", [])),
+		"Missing Interfaces: %s" % _resolved_interface_facts_text(resolved.get("missing_interfaces", [])),
 	]
 
 
@@ -1571,13 +1576,13 @@ func _slot_cell(slot: String, equipped_ids: Dictionary, inventory: Array, _open_
 		icon.set_meta("canonical_id",canonical)
 		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		column.add_child(icon)
-	var state := _note_label("未装配" if item.is_empty() else "已装配")
+	var state := _note_label("Unequipped" if item.is_empty() else "Equipped")
 	state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(state)
 	var button := Button.new()
 	button.name = "SlotFocus_" + token
 	button.flat = true
-	button.tooltip_text = "当前对比" if focused else "切换对比到" + _slot_title(slot)
+	button.tooltip_text = "Current Comparison" if focused else "Compare With" + _slot_title(slot)
 	button.pressed.connect(_on_slot_focus_pressed.bind(slot))
 	cell.add_child(button)
 	return cell
@@ -1587,9 +1592,9 @@ func _build_slot_compare(open_slots: Array, equipped_ids: Dictionary, inventory:
 	var section := _section_in(composition.get("parent", _cards), "", "SlotCompareSection")
 	_section_panel(section).add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	if _focus_slot.is_empty() or _focus_slot not in open_slots:
-		section.add_child(_note_label("本页没有可对比的开放槽位。"))
+		section.add_child(_note_label("No available slots on this page can be compared."))
 		return
-	var candidates_panel := _section_in(section, "装备背包 · %s" % _slot_title(_focus_slot), "CandidateListPanel_%s" % _stable_node_token(_focus_slot))
+	var candidates_panel := _section_in(section, "Equipment Backpack · %s" % _slot_title(_focus_slot), "CandidateListPanel_%s" % _stable_node_token(_focus_slot))
 	var panel_style := _section_panel(candidates_panel).get_theme_stylebox("panel").duplicate() as StyleBox
 	panel_style.content_margin_top = 6
 	panel_style.content_margin_bottom = 6
@@ -1621,7 +1626,7 @@ func _refresh_candidate_results() -> void:
 	var alternatives := _filter_sort_candidates(all_alternatives)
 	_candidate_filter_bar.set_result_count(alternatives.size(), all_alternatives.size())
 	if current.is_empty() and alternatives.is_empty():
-		_candidate_results.add_child(_note_label("没有符合条件的候选；点击重置可查看全部。" if not all_alternatives.is_empty() else "本槽位没有可替换候选。"))
+		_candidate_results.add_child(_note_label("No candidates match. Click Reset to view all." if not all_alternatives.is_empty() else "No replacement candidates for this slot."))
 		return
 	# Inventory density lives in one icon grid. Hover, keyboard focus, and controller
 	# focus all select the same one-item detail pane, so long prose is instantiated
@@ -1656,10 +1661,10 @@ func _refresh_candidate_results() -> void:
 	_loadout_empty_hint.alignment = BoxContainer.ALIGNMENT_CENTER
 	_loadout_empty_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_loadout_empty_hint.custom_minimum_size.y = 246
-	var hint_title := _body_label("没有符合条件的候选" if alternatives.is_empty() and not all_alternatives.is_empty() else "挑一件战利品，看看它能改变什么")
+	var hint_title := _body_label("No Matching Candidates" if alternatives.is_empty() and not all_alternatives.is_empty() else "Choose a piece of loot to see what it changes")
 	hint_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_loadout_empty_hint.add_child(hint_title)
-	var hint_note := _note_label("点击重置可查看全部\n已装备物品仍可查看" if alternatives.is_empty() and not all_alternatives.is_empty() else "悬停查看 · 点击固定比较\n装备前先看收益，也看代价")
+	var hint_note := _note_label("Click Reset to view all\nEquipped items can still be inspected" if alternatives.is_empty() and not all_alternatives.is_empty() else "Hover to inspect · Click to pin comparison\nReview both gains and costs before equipping")
 	hint_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_loadout_empty_hint.add_child(hint_note)
 	backpack_row.add_child(_loadout_empty_hint)
@@ -1700,7 +1705,7 @@ func _backpack_entries(items: Array, icon_prefix: String) -> Array:
 			"canonical_id": canonical,
 			"icon": _body_icon_texture(canonical),
 			"icon_node_name": "%s_%s" % [icon_prefix, _stable_node_token(instance_id)],
-			"status_label": "已装备" if instance_id in _as_dictionary(_as_dictionary(_facility_data.get("active_build", {})).get("equipped_item_ids", {})).values() else ("本次" if instance_id == _loadout_review_instance_id else ""),
+			"status_label": "Equipped" if instance_id in _as_dictionary(_as_dictionary(_facility_data.get("active_build", {})).get("equipped_item_ids", {})).values() else ("This Run" if instance_id == _loadout_review_instance_id else ""),
 		})
 	return entries
 
@@ -1709,7 +1714,7 @@ func _on_loadout_backpack_inspected(instance_id: String) -> void:
 	if instance_id.is_empty():
 		# Focus transfer from an inventory cell to an action in the shared detail
 		# pane settles after the cell's focus_exited signal. Decide on the next idle
-		# turn so moving toward "完整详情" does not destroy the button mid-click.
+		# turn so moving toward "Full Details" does not destroy the button mid-click.
 		call_deferred("_finish_loadout_backpack_exit")
 		return
 	if instance_id == _loadout_backpack_selection:
@@ -1786,7 +1791,7 @@ func _add_current_item_backpack_detail(item: Dictionary) -> void:
 	var instance_id := String(item.get("instance_id", ""))
 	var slot := String(item.get("slot", _focus_slot))
 	var token := _stable_node_token(instance_id)
-	var title := _body_label("已装备 · %s" % _item_display_name(item))
+	var title := _body_label("Equipped · %s" % _item_display_name(item))
 	title.name = "BackpackDetailName"
 	_loadout_backpack_detail.add_child(title)
 	var summary := _note_label(_item_inline_summary_text(item))
@@ -1795,18 +1800,18 @@ func _add_current_item_backpack_detail(item: Dictionary) -> void:
 	_loadout_backpack_detail.add_child(summary)
 	var actions := _make_row("BackpackActions")
 	_loadout_backpack_detail.add_child(actions)
-	_action_button(actions, "卸下", "unequip_item", {"slot": slot}, "Unequip_%s" % _stable_node_token(slot))
+	_action_button(actions, "Unequip", "unequip_item", {"slot": slot}, "Unequip_%s" % _stable_node_token(slot))
 	_add_full_item_detail_button(
 		actions,
 		item,
-		"已装备 · %s" % _item_display_name(item),
+		"Equipped · %s" % _item_display_name(item),
 		_item_summary_text(item, true)
 	)
 	var salvage := _salvage_action_for(item, instance_id)
 	if not salvage.is_empty():
 		var salvage_button := Button.new()
 		salvage_button.name = "Salvage_%s" % token
-		salvage_button.text = "拆解并卸下（%s ×%d）" % [String(salvage.get("label", "")), int(salvage.get("amount", 0))]
+		salvage_button.text = "Salvage and Unequip (%s x%d)" % [String(salvage.get("label", "")), int(salvage.get("amount", 0))]
 		salvage_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		salvage_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		salvage_button.pressed.connect(_on_salvage_pressed.bind(
@@ -1825,9 +1830,9 @@ func _add_full_item_detail_button(parent: Container, item: Dictionary, title_tex
 	var instance_id := String(item.get("instance_id", ""))
 	var button := Button.new()
 	button.name = "FullItemDetails_%s" % _stable_node_token(instance_id)
-	button.text = "完整装备详情"
+	button.text = "Full Equipment Details"
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	button.tooltip_text = "打开完整装备说明；关闭后返回此按钮"
+	button.tooltip_text = "Open full item details; closing returns focus to this button"
 	button.focus_mode = Control.FOCUS_ALL
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.pressed.connect(_show_item_detail.bind(title_text, detail_text, button))
@@ -1839,7 +1844,7 @@ func _show_item_detail(title_text: String, detail_text: String, source: Control)
 	if _item_detail_dialog == null or _item_detail_dialog_text == null:
 		return
 	_item_detail_return_focus = source
-	_item_detail_dialog.title = "完整装备详情 · %s" % title_text
+	_item_detail_dialog.title = "Full Equipment Details · %s" % title_text
 	_item_detail_dialog.dialog_text = ""
 	_item_detail_dialog_text.text = detail_text
 	_item_detail_scroll.scroll_vertical = 0
@@ -1915,9 +1920,9 @@ func _build_character_column(parent: Container) -> void:
 	_character_view = view
 	# The full identity copy remains with the open equipment slots, where it is
 	# visible without reducing the authored portrait cell.
-	view.tooltip_text = "当前游侠 · 白兜帽 · 长弓与行囊\n装备改变属性，当前不改变外观。"
+	view.tooltip_text = "Current Ranger · White Hood · Longbow and Backpack\nEquipment changes stats, not the current appearance."
 	view.mouse_filter = Control.MOUSE_FILTER_STOP
-	var caption := _note_label("当前游侠 · 白兜帽\n长弓与行囊 · 外观固定")
+	var caption := _note_label("Current Ranger · White Hood\nLongbow and Backpack · Fixed Appearance")
 	caption.name = "LoadoutCharacterCaption"
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	caption.visible = false
@@ -1959,12 +1964,12 @@ func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	name_label.name = "CandidateName_%s" % token
 	headline.add_child(name_label)
 	if instance_id == _loadout_review_instance_id:
-		var located := _note_label("本次掉落 · 已定位")
+		var located := _note_label("This Run's Drop · Located")
 		located.name = "ReviewedDrop_%s" % token
 		located.add_theme_color_override("font_color", ShellThemeScript.AMBER)
 		headline.add_child(located)
 	var preview_state_text := _candidate_preview_state_text(item)
-	var preview_summary := _note_label("成长已验证" if preview_state_text.begins_with("圣律预览：已验证") else "成长待验证")
+	var preview_summary := _note_label("Verified" if preview_state_text.begins_with("Sacred Law Preview: Verified") else "Unverified")
 	preview_summary.name = "CandidatePreviewStateSummary_%s" % token
 	preview_summary.tooltip_text = preview_state_text
 	preview_summary.size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -1973,8 +1978,8 @@ func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	headline.add_child(preview_summary)
 	var actions := _make_row("BackpackActions")
 	content.add_child(actions)
-	var equip := _action_button(actions, "装备此候选", "equip_item", {"instance_id": instance_id}, "Equip_%s" % token)
-	equip.tooltip_text = "装备并应用 · " + _item_display_name(item)
+	var equip := _action_button(actions, "Equip", "equip_item", {"instance_id": instance_id}, "Equip_%s" % token)
+	equip.tooltip_text = "Equip and Apply · " + _item_display_name(item)
 	var decision_text := _candidate_decision_text(instance_id)
 	var preview := _equip_preview_data(instance_id)
 	_add_interface_changes(content, preview)
@@ -2001,7 +2006,7 @@ func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	var summary := _note_label(_candidate_inline_item_facts(item))
 	summary.name = "CandidateSummary_%s" % token
 	comparison_body.add_child(summary)
-	var detail_text := "%s\n\n装备结论\n%s\n\n圣律预览\n%s\n%s" % [
+	var detail_text := "%s\n\nEquipment Conclusion\n%s\n\nSacred Law Preview\n%s\n%s" % [
 		_item_summary_text(item, true),
 		decision_text,
 		preview_state_text,
@@ -2011,15 +2016,15 @@ func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	# The shared pane already establishes that this is equipment. The shorter label
 	# keeps all three candidate actions on one readable line at 1280x720; the dialog
 	# title and tooltip still use the complete wording.
-	full_detail.text = "完整详情"
+	full_detail.text = "Details"
 	var salvage := _salvage_action_for(item, instance_id)
 	if not salvage.is_empty():
 		var salvage_button := Button.new()
 		salvage_button.name = "Salvage_%s" % token
-		salvage_button.text = "拆解 ×%d" % int(salvage.get("amount", 0))
+		salvage_button.text = "Salvage ×%d" % int(salvage.get("amount", 0))
 		salvage_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		salvage_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		salvage_button.tooltip_text = "拆解为 %s ×%d" % [String(salvage.get("label", "")), int(salvage.get("amount", 0))]
+		salvage_button.tooltip_text = "Salvage into %s x%d" % [String(salvage.get("label", "")), int(salvage.get("amount", 0))]
 		salvage_button.pressed.connect(_on_salvage_pressed.bind(
 			instance_id,
 			_salvage_item_identity(item),
@@ -2038,26 +2043,26 @@ func _add_interface_changes(parent: Container, preview: Dictionary) -> void:
 		for value in preview.get(key, []):
 			names.append(EarlyInterfaceVocabularyScript.player_name(String(value)))
 		if not names.is_empty():
-			var note := _note_label(("获得：" if key == "interfaces_gained" else "失去：") + "、".join(names))
+			var note := _note_label(("Gained: " if key == "interfaces_gained" else "Lost: ") + ", ".join(names))
 			note.name = "InterfaceGained" if key == "interfaces_gained" else "InterfaceLost"
 			note.add_theme_color_override("font_color", ShellThemeScript.PROXY if key == "interfaces_gained" else ShellThemeScript.WARNING)
 			parent.add_child(note)
 
 
-## 圣律预览 is a state word, not a promise: a classification only appears when the
+## Sacred Law Preview is a state word, not a promise: a classification only appears when the
 ## candidate's own fingerprint has passed the test range.
 func _candidate_preview_state_text(item: Dictionary) -> String:
 	var preview := _equip_preview_data(String(item.get("instance_id", "")))
 	if preview.is_empty():
-		return "圣律预览：未验证（这件候选没有预览数据）"
+		return "Sacred Law Preview: Unverified (no preview data for this candidate)"
 	var fingerprint := String(preview.get("build_fingerprint", "")).strip_edges()
 	var training := _as_dictionary(_facility_data.get("training", {}))
 	var report := _matched_training_report(training, fingerprint)
 	if not report.is_empty():
 		var classification := String(report.get("state", "")).strip_edges()
-		var readable_classification := String(TRAINING_GROWTH_NAMES.get(classification, classification if not classification.is_empty() else "未知"))
-		return "圣律预览：已验证 · 增长分类 %s" % readable_classification
-	return "圣律预览：未验证（这套构筑尚未通过验律场；未知不等于失败）"
+		var readable_classification := String(TRAINING_GROWTH_NAMES.get(classification, classification if not classification.is_empty() else "Unknown"))
+		return "Sacred Law Preview: Verified · Growth classification %s" % readable_classification
+	return "Sacred Law Preview: Unverified (this build has not passed Training; unknown does not mean failure)"
 
 
 func _same_slot_candidates(slot: String, equipped_id: String, inventory: Array) -> Array[Dictionary]:
@@ -2085,7 +2090,7 @@ func _on_candidate_query_changed(query: Dictionary) -> void:
 
 
 ## The formal 12-slot table minus the four open ones: a lock line each and one
-## shared reason. No action, no icon, and never the word 未装配.
+## shared reason. No action, no icon, and never the word Unequipped.
 ## Rune/law row: the shared formatter owns all player-facing names and semantics.
 
 
@@ -2149,7 +2154,7 @@ func _item_display_name(item: Dictionary) -> String:
 
 func _joined_or_none(value: Variant) -> String:
 	var text := _display_value(value)
-	return text if not text.is_empty() else "无"
+	return text if not text.is_empty() else "None"
 
 
 ## The upstream equip preview for one candidate, or {} when the snapshot has no
@@ -2186,7 +2191,7 @@ func _item_detail_text(item: Dictionary) -> String:
 		var family := _as_dictionary(families.get(family_id, {}))
 		var tier := int(affix.get("tier", 0))
 		var effect := _affix_effect_text(family, tier)
-		affixes.append("%d. %s T%d%s（family_id：%s）" % [
+		affixes.append("%d. %s T%d%s(family_id: %s)" % [
 			affix_index,
 			String(family.get("name", family_id)),
 			tier,
@@ -2194,14 +2199,14 @@ func _item_detail_text(item: Dictionary) -> String:
 			family_id,
 		])
 		affix_index += 1
-	return "%s\n槽位：%s\ninstance_id：%s\n底材 modifiers：%s\naffixes：%s\nrune：%s  ·  law：%s" % [
+	return "%s\nSlot: %s\ninstance_id: %s\nBase modifiers: %s\naffixes: %s\nrune: %s  ·  law: %s" % [
 		_item_display_name(item),
-		String(item.get("slot", "未知")),
-		String(item.get("instance_id", "未知")),
-		"；".join(modifiers) if not modifiers.is_empty() else "无",
-		"；".join(affixes) if not affixes.is_empty() else "无",
-		String(item.get("rune_id", "")) if not String(item.get("rune_id", "")).is_empty() else "无",
-		String(item.get("law_id", "")) if not String(item.get("law_id", "")).is_empty() else "无",
+		String(item.get("slot", "Unknown")),
+		String(item.get("instance_id", "Unknown")),
+		"; ".join(modifiers) if not modifiers.is_empty() else "None",
+		"; ".join(affixes) if not affixes.is_empty() else "None",
+		String(item.get("rune_id", "")) if not String(item.get("rune_id", "")).is_empty() else "None",
+		String(item.get("law_id", "")) if not String(item.get("law_id", "")).is_empty() else "None",
 	]
 
 
@@ -2231,8 +2236,8 @@ func _raw_entry_count(item: Dictionary) -> int:
 func _raw_field_reason(item: Dictionary) -> String:
 	var instance_id := String(item.get("instance_id", ""))
 	if instance_id.length() > INSTANCE_ID_DISPLAY_LIMIT:
-		return "instance_id 共 %d 字符" % instance_id.length()
-	return "内部条目 %d 条" % _raw_entry_count(item)
+		return "instance_id: %d characters" % instance_id.length()
+	return "%d internal entries" % _raw_entry_count(item)
 
 
 ## The player-facing facts of one item, one line each: the published base name, the
@@ -2281,10 +2286,10 @@ func _field_block_toggle(kind: String, owner_id: String) -> Button:
 		String(FIELD_BLOCK_TOGGLE_PREFIXES.get(kind, "FieldBlockToggle")),
 		_stable_node_token(owner_id),
 	]
-	toggle.text = "收起原始明细" if open else "展开原始明细"
+	toggle.text = "Hide Raw Details" if open else "Show Raw Details"
 	toggle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	toggle.tooltip_text = "只展开这一件的原始字段，不会装备、拆解或改动任何数据"
+	toggle.tooltip_text = "Show only this item's raw fields; no equipment, salvage, or data changes"
 	toggle.pressed.connect(_on_field_block_toggled.bind(kind, owner_id))
 	return toggle
 
@@ -2333,20 +2338,20 @@ func _equip_preview_text(instance_id: String) -> String:
 				var current_float := float(current_value)
 				if absf(next_float - current_float) <= 0.0001:
 					continue
-				parameter_changes.append("%s：%s → %s（%s%s）" % [
+				parameter_changes.append("%s: %s → %s(%s%s)" % [
 					_readable_build.parameter_name(parameter),
 					_readable_build.format_parameter_value(parameter, current_float),
 					_readable_build.format_parameter_value(parameter, next_float),
 					"+" if next_float > current_float else "", _format_value(next_float - current_float),
 				])
 			else:
-				parameter_changes.append("%s：未记录 → %s（新增）" % [_readable_build.parameter_name(parameter), _readable_build.format_parameter_value(parameter, next_float)])
+				parameter_changes.append("%s: Not Recorded -> %s (New)" % [_readable_build.parameter_name(parameter), _readable_build.format_parameter_value(parameter, next_float)])
 		if not parameter_changes.is_empty():
-			lines.append("装备后构筑变化：" + "  ·  ".join(parameter_changes))
-	_append_preview_group(lines, preview, "interfaces_gained", "获得接口")
-	_append_preview_group(lines, preview, "interfaces_lost", "失去接口")
-	_append_preview_group(lines, preview, "tags_gained", "获得标签")
-	_append_preview_group(lines, preview, "tags_lost", "失去标签")
+			lines.append("Build Changes When Equipped:" + "  ·  ".join(parameter_changes))
+	_append_preview_group(lines, preview, "interfaces_gained", "Interfaces Gained")
+	_append_preview_group(lines, preview, "interfaces_lost", "Interfaces Lost")
+	_append_preview_group(lines, preview, "tags_gained", "Tags Gained")
+	_append_preview_group(lines, preview, "tags_lost", "Tags Lost")
 	return "\n".join(lines)
 
 
@@ -2360,7 +2365,7 @@ func _candidate_decision_text(instance_id: String) -> String:
 		_as_dictionary(resolved.get("final_parameters", {})),
 		preview
 	)
-	return summary.replace("参数：", "装备后参数：")
+	return summary.replace("Stats: ", "Stats When Equipped: ")
 
 
 func _append_preview_group(lines: Array[String], preview: Dictionary, key: String, label: String) -> void:
@@ -2371,9 +2376,9 @@ func _append_preview_group(lines: Array[String], preview: Dictionary, key: Strin
 		var names: Array[String] = []
 		for value in values:
 			names.append(EarlyInterfaceVocabularyScript.player_name(String(value)))
-		lines.append("%s：%s" % [label, "，".join(names)])
+		lines.append("%s: %s" % [label, ", ".join(names)])
 	else:
-		lines.append("%s：%d 项" % [label, values.size()])
+		lines.append("%s: %d items" % [label, values.size()])
 
 
 func _is_number(value: Variant) -> bool:
@@ -2382,9 +2387,9 @@ func _is_number(value: Variant) -> bool:
 
 func _modifier_text(modifier: Dictionary) -> String:
 	return "%s %s %s" % [
-		String(modifier.get("parameter", "未知")),
-		String(modifier.get("operation", "未知")),
-		_format_value(modifier.get("value", "未知")),
+		String(modifier.get("parameter", "Unknown")),
+		String(modifier.get("operation", "Unknown")),
+		_format_value(modifier.get("value", "Unknown")),
 	]
 
 
@@ -2442,8 +2447,8 @@ func _on_salvage_pressed(instance_id: String, readable_identity: String, operati
 	if instance_id.is_empty() or operation not in LAW_TALLY_LABELS or amount < 1 or _salvage_dialog == null:
 		return
 	_pending_salvage = {"instance_id": instance_id, "operation": operation, "amount": amount, "equipped_slot": equipped_slot}
-	var equipped_notice := "\n当前已装备：确认后会先安全卸下%s，再拆解。" % _slot_display_name(equipped_slot) if not equipped_slot.is_empty() else ""
-	_salvage_dialog.dialog_text = "即将拆解：%s\n返还：%s ×%d%s\n拆解不可撤销，确认后无法恢复。" % [
+	var equipped_notice := "\nCurrently equipped: confirming safely unequips %s before salvaging." % _slot_display_name(equipped_slot) if not equipped_slot.is_empty() else ""
+	_salvage_dialog.dialog_text = "Salvaging: %s\nReturns: %s x%d%s\nSalvage is irreversible. The item cannot be recovered after confirmation." % [
 		readable_identity,
 		String(LAW_TALLY_LABELS[operation]),
 		amount,
@@ -2466,20 +2471,20 @@ func _on_salvage_canceled() -> void:
 
 func _build_forge() -> void:
 	if _facility_data.is_empty():
-		_section("锻造状态不可用","ForgeUnavailable").add_child(_body_label("尚未取得锻造数据。"))
+		_section("Forge State Unavailable","ForgeUnavailable").add_child(_body_label("Forge data is not yet available."))
 		return
 	var session := _forge_session()
 	var candidates := _forge_candidates()
 	var selected_id := String(session.get("selected_candidate_id", ""))
 	var selected := _forge_candidate_by_id(selected_id)
-	var browse_status := "尚未推演候选"
+	var browse_status := "No Candidates Forecast Yet"
 	if not candidates.is_empty():
-		browse_status = "正在浏览第 %d / %d 项" % [_forge_candidate_index + 1, candidates.size()]
+		browse_status = "Viewing %d / %d" % [_forge_candidate_index + 1, candidates.size()]
 		if not selected.is_empty():
-			browse_status += " · 已选定第 %d 项" % (_forge_candidate_index_by_id(selected_id) + 1)
+			browse_status += " · Candidate %d selected" % (_forge_candidate_index_by_id(selected_id) + 1)
 	var columns := _forge_stage_columns("ForgeConceptRoot", FacilityLayoutScript.FORGE_WEIGHTS, [
-		{"title": "第一步 · 选择", "status": "目标装备与律筹"},
-		{"title": "第二步 · 预见与落锤", "status": browse_status},
+		{"title": "Step 1 · Choose", "status": "Target Equipment and Law Tokens"},
+		{"title": "Step 2 · Forecast and Commit", "status": browse_status},
 	])
 	var input: VBoxContainer = columns[0]
 	var workflow: VBoxContainer = columns[1]
@@ -2503,13 +2508,13 @@ func _build_forge() -> void:
 	target_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	target_copy.add_theme_constant_override("separation", 2)
 	target_row.add_child(target_copy)
-	var label := _body_label("目标 · %s" % _forge_item_title(target))
+	var label := _body_label("Target · %s" % _forge_item_title(target))
 	label.name = "ForgeTargetItem"
 	label.tooltip_text = _forge_readable_item_text(target)
 	target_copy.add_child(label)
-	var target_note := _note_label("悬停背包查看词条")
+	var target_note := _note_label("Hover over Backpack Items to Inspect Affixes")
 	target_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	target_note.tooltip_text = "在下方背包中悬停或聚焦装备可查看完整词条。"
+	target_note.tooltip_text = "Hover over or focus equipment in the backpack below to see all affixes."
 	target_copy.add_child(target_note)
 	# Operation choice belongs to the active target. Keeping it in the same compact
 	# workbench makes all three choices available before the locally scrolling
@@ -2525,15 +2530,15 @@ func _build_forge() -> void:
 		operation_button.name = "ForgeOperation_%s" % operation
 		operation_button.add_theme_font_size_override("font_size", 22)
 		operation_button.text = "%s\n×%d" % [String(FORGE_TRACK_TITLES[operation]), _law_tally(operation, tallies)]
-		operation_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-		operation_button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		operation_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+		operation_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		operation_button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		operation_button.expand_icon = false
 		operation_button.add_theme_constant_override("icon_max_width", 32)
 		operation_button.add_theme_constant_override("h_separation", 4)
 		operation_button.icon = _progression_icons.icon("law_token.%s" % operation)
-		operation_button.tooltip_text = ("当前操作 · " if operation == _forge_operation else "") + String(FORGE_OPERATION_EXPLANATIONS[operation])
-		operation_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		operation_button.tooltip_text = ("Current Operation · " if operation == _forge_operation else "") + String(FORGE_OPERATION_EXPLANATIONS[operation])
+		operation_button.autowrap_mode = TextServer.AUTOWRAP_OFF
 		operation_button.custom_minimum_size.y = 48
 		operation_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		operation_button.disabled = operation == _forge_operation
@@ -2541,8 +2546,8 @@ func _build_forge() -> void:
 			operation_button.add_theme_stylebox_override("disabled", ShellThemeScript.panel_style("selected"))
 			operation_button.add_theme_color_override("font_disabled_color", ShellThemeScript.BONE)
 			operation_button.add_theme_color_override("icon_disabled_color", Color.WHITE)
-		# Keep the real 32px icon beside two readable lines. Vertical icon stacking
-		# consumes the inventory's first-screen space at 1280x720.
+		# Stack the icon above two authored lines so English operation names stay
+		# intact in the narrow three-column workbench.
 		for state in ["normal", "hover", "pressed", "disabled"]:
 			var style_kind: String = {"normal":"button", "hover":"hover", "pressed":"selected", "disabled":"disabled"}[state]
 			if state == "disabled" and operation == _forge_operation:
@@ -2557,11 +2562,11 @@ func _build_forge() -> void:
 		operation_row.add_child(operation_button)
 	_build_forge_inventory(input,_as_array(_facility_data.get("inventory_items",[])),String(_facility_data.get("target_instance_id","")))
 	if not bool(_facility_data.get("unlocked",false)):
-		var locked := _section_in(workflow,"律筹锻造台未解锁","ForgeLocked")
-		locked.add_child(_body_label(String(_facility_data.get("locked_reason","尚未满足解锁条件"))))
+		var locked := _section_in(workflow,"Law Token Forge Locked","ForgeLocked")
+		locked.add_child(_body_label(String(_facility_data.get("locked_reason","Unlock requirements not yet met"))))
 	else:
 		if candidates.is_empty():
-			var reveal_panel := _section_in(workflow,"使用律筹预见未来","ForgeRevealPanel")
+			var reveal_panel := _section_in(workflow,"Forecast a Future with Law Tokens","ForgeRevealPanel")
 			reveal_panel.add_child(_note_label(String(FORGE_OPERATION_EXPLANATIONS[_forge_operation])))
 			var block_reason := _forge_operation_block_reason(_forge_operation)
 			if not block_reason.is_empty():
@@ -2624,9 +2629,9 @@ func _on_forge_operation_selected(operation: String) -> void:
 
 
 func _build_forge_browse(parent: Container) -> void:
-	var panel := _section_in(parent, "未来结果", "ForgeBrowsePanel")
+	var panel := _section_in(parent, "Future Outcome", "ForgeBrowsePanel")
 	var candidates := _forge_candidates()
-	var browse := _body_label("尚未预见未来。选好装备与律筹后，点击下方按钮推演。")
+	var browse := _body_label("No future has been forecast. Choose equipment and Law Tokens, then use the button below.")
 	browse.name = "ForgeBrowseSelectionState"
 	panel.add_child(browse)
 	if candidates.is_empty():
@@ -2634,29 +2639,29 @@ func _build_forge_browse(parent: Container) -> void:
 	var candidate := _current_forge_candidate()
 	var candidate_id := String(candidate.get("candidate_id", ""))
 	var selected_id := String(_forge_session().get("selected_candidate_id", ""))
-	var relation := "正在查看 · 尚未选定"
+	var relation := "Viewing · Not Selected"
 	if candidate_id == selected_id:
-		relation = "已选定当前未来 · 可确认落锤"
+		relation = "Current Future Selected · Ready to Commit"
 	elif not selected_id.is_empty():
-		relation = "正在查看新未来 · 已选定第 %d 项" % (_forge_candidate_index_by_id(selected_id) + 1)
-	browse.text = "%s\n候选第 %d / %d 项 · 若选定将消耗 %d 枚%s\n%s" % [
+		relation = "Viewing a New Future · Candidate %d Selected" % (_forge_candidate_index_by_id(selected_id) + 1)
+	browse.text = "%s\nCandidate %d / %d · Selecting costs %d %s\n%s" % [
 		relation, _forge_candidate_index + 1, candidates.size(),
-		_forge_candidate_cost(candidate), _law_token_name(_forge_session_operation()),
+		_forge_candidate_cost(candidate), _law_token_name(_forge_session_operation(), _forge_candidate_cost(candidate)),
 		_forge_candidate_change_text(candidate),
 	]
 	var equipped := bool(candidate.get("target_is_equipped", false))
-	panel.add_child(_note_label("落锤后当前构筑变化" if equipped else "落锤不会改变当前构筑；装备后预计变化"))
+	panel.add_child(_note_label("Current Build Changes After Commit" if equipped else "Commit leaves current build unchanged; expected changes when equipped"))
 	var impact := _as_dictionary(candidate.get("build_comparison", {}))
 	_add_interface_changes(panel, impact)
 	var comparison = preload("res://src/presentation/equipment_comparison.gd").new()
 	comparison.name = "ForgeBuildComparison"
-	comparison.present(impact.get("current_parameters", {}), impact.get("result_parameters", {}), "落锤后" if equipped else "装备后")
+	comparison.present(impact.get("current_parameters", {}), impact.get("result_parameters", {}), "After Commit" if equipped else "When Equipped")
 	panel.add_child(comparison)
 	var result_item := _forge_candidate_result_item_view(candidate)
-	var detail := _add_full_item_detail_button(panel, result_item, "锻造预见 · " + _forge_item_title(result_item),
-		"预见结果\n%s\n\n%s" % [_forge_readable_item_text(result_item), _forge_build_change_text(candidate)])
+	var detail := _add_full_item_detail_button(panel, result_item, "Forge Forecast · " + _forge_item_title(result_item),
+		"Forecast Outcome\n%s\n\n%s" % [_forge_readable_item_text(result_item), _forge_build_change_text(candidate)])
 	detail.name = "ForgeFullResultDetail"
-	detail.text = "完整装备与构筑详情"
+	detail.text = "Full Equipment and Build Details"
 
 
 
@@ -2680,7 +2685,7 @@ func _on_forge_cancel_selection() -> void:
 
 ## Target inventory inside the first lane of the two-column forge composition.
 func _build_forge_inventory(parent: Container, inventory: Array, target_id: String) -> void:
-	var section := _section_in(parent, "选择锻造目标", "ForgeInventorySection")
+	var section := _section_in(parent, "Select Forge Target", "ForgeInventorySection")
 	var panel := _section_panel(section)
 	if panel != null:
 		panel.custom_minimum_size.x = 0.0
@@ -2766,7 +2771,7 @@ func _render_forge_backpack_detail(instance_id: String) -> void:
 	action_row.add_child(name_label)
 	var choose := Button.new()
 	choose.name = "SelectForgeItem_%s" % instance_token
-	choose.text = "当前目标" if selected else "设为目标"
+	choose.text = "Current Target" if selected else "Set as Target"
 	choose.disabled = selected
 	choose.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	choose.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2808,7 +2813,7 @@ func _build_forge_dock() -> void:
 		var reveal := Button.new()
 		reveal.name = "ForgeReveal"
 		reveal.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
-		reveal.text = "使用%s预见未来 · 暂不消耗" % _law_token_name(_forge_operation)
+		reveal.text = "Forecast with %s · No Tokens Spent Yet" % _law_token_name(_forge_operation)
 		reveal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		reveal.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		reveal.disabled = not _forge_operation_block_reason(_forge_operation).is_empty() or not _forge_can_start()
@@ -2818,18 +2823,20 @@ func _build_forge_dock() -> void:
 	var candidates := _forge_candidates()
 	var previous := Button.new()
 	previous.name = "ForgePreviousCandidate"
-	previous.text = "上一项"
+	previous.text = "Prev"
+	previous.tooltip_text = "Previous Candidate"
 	# These are short dock actions. Keep every one on a single line so the pinned
 	# footer has a stable height instead of being pushed below a 1080p window.
-	previous.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	previous.autowrap_mode = TextServer.AUTOWRAP_OFF
 	previous.custom_minimum_size.x = 100
 	previous.disabled = candidates.size() <= 1
 	previous.pressed.connect(_on_forge_candidate_shift.bind(-1))
 	_actions.add_child(previous)
 	var next := Button.new()
 	next.name = "ForgeNextCandidate"
-	next.text = "下一项"
-	next.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	next.text = "Next"
+	next.tooltip_text = "Next Candidate"
+	next.autowrap_mode = TextServer.AUTOWRAP_OFF
 	next.custom_minimum_size.x = 100
 	next.disabled = candidates.size() <= 1
 	next.pressed.connect(_on_forge_candidate_shift.bind(1))
@@ -2837,7 +2844,7 @@ func _build_forge_dock() -> void:
 	if bool(session.get("has_more", false)):
 		var more := Button.new()
 		more.name = "ForgeRevealMore"
-		more.text = "预见更多"
+		more.text = "Forecast More"
 		more.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		more.custom_minimum_size.x = 120
 		more.pressed.connect(_on_forge_reveal_more)
@@ -2848,7 +2855,7 @@ func _build_forge_dock() -> void:
 		var select := Button.new()
 		select.name = "ForgeSelectCandidate"
 		select.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
-		select.text = "选择当前未来" if selected_id.is_empty() else "改选当前未来"
+		select.text = "Select Current Future" if selected_id.is_empty() else "Switch to Current Future"
 		select.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		select.custom_minimum_size.x = 164
 		select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2860,11 +2867,11 @@ func _build_forge_dock() -> void:
 		confirm.name = "ForgeConfirmSelection"
 		confirm.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
 		var selected := _forge_candidate_by_id(selected_id)
-		confirm.text = "确认落锤 · 消耗 %d 枚%s" % [_forge_candidate_cost(selected), _law_token_name(_forge_session_operation())]
+		confirm.text = "Confirm Commit · Spend %d %s" % [_forge_candidate_cost(selected), _law_token_name(_forge_session_operation(), _forge_candidate_cost(selected))]
 		if not _forge_candidate_affordable(selected):
-			confirm.text = "律筹不足 · 需要 %d 枚%s，持有 %d 枚" % [
+			confirm.text = "Not Enough Law Tokens · Need %d %s, Have %d" % [
 				_forge_candidate_cost(selected),
-				_law_token_name(_forge_session_operation()),
+				_law_token_name(_forge_session_operation(), _forge_candidate_cost(selected)),
 				_law_tally(_forge_session_operation()),
 			]
 		confirm.disabled = selected.is_empty() or not _forge_candidate_affordable(selected) or String(session.get("session_id", "")) == _forge_committed_session_id
@@ -2875,7 +2882,7 @@ func _build_forge_dock() -> void:
 		_actions.add_child(confirm)
 	var cancel := Button.new()
 	cancel.name = "ForgeCancelSelection"
-	cancel.text = "取消本次锻造"
+	cancel.text = "Cancel This Forge"
 	cancel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	cancel.custom_minimum_size.x = 180
 	cancel.disabled = _forge_session().is_empty()
@@ -2889,47 +2896,47 @@ func _build_forge_dock() -> void:
 ## the next step — and then the matched report's R / g / event count over its trace.
 ## The parameter wall, the fingerprint and the untranslated report line wait behind
 ## the page's own reference toggle. A fingerprint that has not passed the range
-## shows 未验证 on both sides; unknown is never written as a failure, and a report
+## shows Unverified on both sides; unknown is never written as a failure, and a report
 ## from another build is never drawn as this build's reading.
 func _build_training() -> void:
 	var resolved := _training_resolved_build()
 	if resolved.is_empty():
-		var unavailable := _section("训练数据不可用", "TrainingUnavailable")
-		unavailable.add_child(_body_label("当前构筑无法解析：参数、接通接口与增长结论暂不可用。"))
-		_add_payload_action("运行训练试验", "run_training_trial", {}, "RunTrainingTrial")
+		var unavailable := _section("Training Data Unavailable", "TrainingUnavailable")
+		unavailable.add_child(_body_label("The current build cannot be resolved: stats, connected interfaces, and growth conclusions are unavailable."))
+		_add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
 		return
 	var training := _as_dictionary(_facility_data.get("training", {}))
 	var fingerprint := String(resolved.get("build_fingerprint", "")).strip_edges()
 	var matched := _matched_training_report(training, fingerprint)
 	var verified := not matched.is_empty()
 	var row := _page_lead_row()
-	var current_panel := _section_in(row, "当前构筑", "TrainingActiveBuild")
-	var growth_conclusion := "未验证"
+	var current_panel := _section_in(row, "Current Build", "TrainingActiveBuild")
+	var growth_conclusion := "Unverified"
 	if verified:
 		var classification := String(matched.get("state", "")).strip_edges()
 		if not classification.is_empty():
 			growth_conclusion = String(TRAINING_GROWTH_NAMES.get(classification, classification))
-	_training_card(current_panel, "增长结论", growth_conclusion, true, "TrainingConclusionCard")
-	current_panel.add_child(_note_label("增长结论只在验律场通过该指纹后显示；未验证不等于失败。"))
-	_training_card(current_panel, "接通接口", _training_interface_text(resolved.get("connected_interfaces", [])), false, "TrainingConnectedCard")
-	_training_card(current_panel, "缺失接口", _training_interface_text(resolved.get("missing_interfaces", [])), false, "TrainingMissingCard")
-	var report_panel := _section_in(row, "当前构筑验律报告", "TrainingLastReport")
-	var identity := _note_label("状态：已完成 · 这份报告属于当前构筑") if verified else _note_label("状态：尚未训练\n下一步：运行训练试验")
+	_training_card(current_panel, "Growth Conclusion", growth_conclusion, true, "TrainingConclusionCard")
+	current_panel.add_child(_note_label("Growth conclusions appear only after this fingerprint passes Training; unverified does not mean failure."))
+	_training_card(current_panel, "Connected Interfaces", _training_interface_text(resolved.get("connected_interfaces", [])), false, "TrainingConnectedCard")
+	_training_card(current_panel, "Missing Interfaces", _training_interface_text(resolved.get("missing_interfaces", [])), false, "TrainingMissingCard")
+	var report_panel := _section_in(row, "Current Build Training Report", "TrainingLastReport")
+	var identity := _note_label("Status: Complete · This report belongs to the current build") if verified else _note_label("Status: Not Yet Trained\nNext Step: Run Training Trial")
 	identity.name = "TrainingReportIdentity"
 	report_panel.add_child(identity)
 	var action := String(matched.get("action", "")).strip_edges()
 	if not action.is_empty():
-		_training_card(report_panel, "下一步", action, false, "TrainingNextStepCard")
+		_training_card(report_panel, "Next Step", action, false, "TrainingNextStepCard")
 	var readings := _body_label(_training_readings_text(matched))
 	readings.name = "TrainingReading"
 	report_panel.add_child(readings)
 	_add_growth_trace(report_panel, matched)
 	if matched.is_empty():
-		report_panel.add_child(_note_label("未知不等于失败：训练完成前不会给出增长结论。"))
+		report_panel.add_child(_note_label("Unknown does not mean failure: no growth conclusion is given until training completes."))
 	else:
-		report_panel.add_child(_note_label("以上读数来自当前构筑的训练结果。"))
+		report_panel.add_child(_note_label("These readings come from the current build's training results."))
 	_build_training_details(resolved, training, fingerprint, verified)
-	_add_payload_action("运行训练试验", "run_training_trial", {}, "RunTrainingTrial")
+	_add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
 
 
 ## One readable card of the training page: an 18px state word over the value the
@@ -2965,10 +2972,10 @@ func _training_card(parent: Container, title_text: String, value_text: String, f
 ## unfolding the loadout's detail block never unfolds this one. Nothing is removed
 ## from the page: the surface states the conclusion, the fold keeps the evidence.
 func _build_training_details(resolved: Dictionary, training: Dictionary, fingerprint: String, verified: bool) -> void:
-	var section := _section("参考数据", "TrainingReferenceData")
+	var section := _section("Reference Data", "TrainingReferenceData")
 	var toggle := Button.new()
 	toggle.name = "TrainingDetailsToggle"
-	toggle.text = "收起训练明细" if _training_details_open else "展开训练明细（最终参数 / 完整曲线）"
+	toggle.text = "Hide Training Details" if _training_details_open else "Show Training Details (Final Stats / Full Curve)"
 	toggle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toggle.pressed.connect(_on_training_details_toggled)
@@ -2979,9 +2986,9 @@ func _build_training_details(resolved: Dictionary, training: Dictionary, fingerp
 	var parameter_lines: Array[String] = []
 	for parameter in PlayerReadableBuildScript.PARAMETER_ORDER:
 		parameter_lines.append(_readable_build.format_parameter(parameter, parameters.get(parameter, null)))
-	_fact_label(section, "最终参数", "  ·  ".join(parameter_lines))
-	_fact_label(section, "接通接口", _training_interface_text(resolved.get("connected_interfaces", [])))
-	_fact_label(section, "缺失接口", _training_interface_text(resolved.get("missing_interfaces", [])))
+	_fact_label(section, "Final Stats", "  ·  ".join(parameter_lines))
+	_fact_label(section, "Connected Interfaces", _training_interface_text(resolved.get("connected_interfaces", [])))
+	_fact_label(section, "Missing Interfaces", _training_interface_text(resolved.get("missing_interfaces", [])))
 	section.add_child(_body_label(_training_report_text(training, fingerprint, verified)))
 
 
@@ -3010,7 +3017,7 @@ func _add_growth_trace(parent: Container, matched: Dictionary) -> void:
 	parent.add_child(axis)
 	# The trace always draws every point of the reading line; only its labels thin out
 	# when they would collide, so the rule is stated instead of implied.
-	parent.add_child(_note_label("曲线保留本次训练的全部采样节点。"))
+	parent.add_child(_note_label("The curve retains every sample from this trial."))
 
 
 ## The generational trace the training page really drew, for tests and the report.
@@ -3056,11 +3063,11 @@ func _training_resolved_build() -> Dictionary:
 ## never reprinted here as if it belonged to the current Build.
 func _training_readings_text(report: Dictionary) -> String:
 	if report.is_empty():
-		return "当前构筑尚未训练"
-	return "训练读数：R %s · g %s · 总事件 %s" % [
-		_format_value(report.get("R", report.get("r", "未知"))),
-		_format_value(report.get("g", "未知")),
-		String(report.get("event_count_display", _format_value(report.get("event_count", "未知")))),
+		return "Current build not yet trained"
+	return "Training readings: R %s · g %s · Total Events %s" % [
+		_format_value(report.get("R", report.get("r", "Unknown"))),
+		_format_value(report.get("g", "Unknown")),
+		String(report.get("event_count_display", _format_value(report.get("event_count", "Unknown")))),
 	]
 
 
@@ -3072,17 +3079,17 @@ func _training_readings_text(report: Dictionary) -> String:
 func _training_report_text(training: Dictionary, fingerprint: String, verified: bool) -> String:
 	var report := _matched_training_report(training, fingerprint) if verified else {}
 	if report.is_empty():
-		return "当前构筑尚未训练"
+		return "Current build not yet trained"
 	var lines: Array[String] = [
 		_training_readings_text(report),
-		"增长分类：%s" % String(TRAINING_GROWTH_NAMES.get(String(report.get("state", "未知")), String(report.get("state", "未知")))),
+		"Growth Classification: %s" % String(TRAINING_GROWTH_NAMES.get(String(report.get("state", "Unknown")), String(report.get("state", "Unknown")))),
 	]
 	var curve := _growth_curve_line(report.get("growth_curve", []))
 	if not curve.is_empty():
-		lines.append("事件增长曲线：%s" % curve)
+		lines.append("Event Growth Curve: %s" % curve)
 	var action := String(report.get("action", "")).strip_edges()
 	if not action.is_empty():
-		lines.append("下一步：%s" % action)
+		lines.append("Next Step: %s" % action)
 	return "\n".join(lines)
 
 
@@ -3187,31 +3194,31 @@ func _build_proxy() -> void:
 	var unlocked := bool(proxy.get("unlocked", progression.get("proxy_unlocked", false)))
 	if not unlocked:
 		_build_proxy_core_strip(CORE_ORDER.duplicate(), false)
-		var locked := _section("代理舱 · 封印中", "ProxyLocked")
-		locked.add_child(_body_label("封印条件：使用 Manual 击败阈门巨像。\n首杀前不能选择 Auto。"))
-		locked.add_child(_note_label("封印期间不提供操作，也不能配置。"))
-		var capability := _section("解锁后的能力", "ProxyUnlockPreview")
-		capability.add_child(_body_label("首杀固定奖励提供四个白色核心预览：寻找最近目标 → 沿最短可行方向控距（贴身后撤）→ 施放技能槽 1。"))
+		var locked := _section("Proxy Bay · Sealed", "ProxyLocked")
+		locked.add_child(_body_label("Unlock requirement: defeat the Threshold Colossus in Manual.\nAuto cannot be selected before the first kill."))
+		locked.add_child(_note_label("Actions and configuration are unavailable while sealed."))
+		var capability := _section("Abilities After Unlock", "ProxyUnlockPreview")
+		capability.add_child(_body_label("The first-kill reward previews four Common cores: find the nearest target -> maintain distance along the shortest viable path (retreat at close range) -> cast skill slot 1."))
 		return
 	var core_ids := _proxy_core_ids(proxy)
 	_build_proxy_core_strip(core_ids, true)
-	var status := _section("Auto 已可用", "ProxyAuto")
-	status.add_child(_body_label("代理舱已解锁，可使用 Auto 契约清房。契约开始时冻结当前四槽构筑，进行中的契约不会随装配变化。"))
-	status.add_child(_note_label("附件尚未开放"))
+	var status := _section("Auto Available", "ProxyAuto")
+	status.add_child(_body_label("The Proxy Bay is unlocked for Auto contracts. Your four-slot build freezes at contract start; later changes do not affect an active contract."))
+	status.add_child(_note_label("Attachments Not Yet Available"))
 	_build_proxy_inventory(proxy, core_ids)
 	_build_proxy_distance_settings(proxy, core_ids)
-	var progress := _section("前期进度", "ProxyProgress")
-	_fact_label(progress, "自动胜场", str(int(progression.get("auto_contract_wins", 0))))
-	_fact_label(progress, "前期完成", "是" if bool(progression.get("early_game_complete", false)) else "否")
+	var progress := _section("Early Progress", "ProxyProgress")
+	_fact_label(progress, "Auto Wins", str(int(progression.get("auto_contract_wins", 0))))
+	_fact_label(progress, "Early Chapter Complete", "Yes" if bool(progression.get("early_game_complete", false)) else "No")
 
 
 ## The four fixed cores of the first-kill reward, each in its own slot cell. The
 ## locked page previews them with the reward wording; the unlocked page states
 ## which ones are connected and keeps the same fixed order.
 func _build_proxy_core_strip(core_ids: Array[String], unlocked: bool) -> void:
-	var heading := "首杀固定奖励 · 四白预览（封印中）"
+	var heading := "First-Kill Reward · Four Common Cores (Sealed Preview)"
 	if unlocked:
-		heading = "当前装配 · 感知 → 行动 → 执行 → 记忆"
+		heading = "Current Assembly · Perception -> Action -> Execution -> Memory"
 	var section := _section_in(_page_lead_row(), heading, "ProxyCoreStrip")
 	var row := _make_row("ProxyCoreRow")
 	section.add_child(row)
@@ -3234,8 +3241,8 @@ func _proxy_core_cell(core_id: String, unlocked: bool) -> PanelContainer:
 		icon.name = "%s_%s" % ["CoreIcon" if unlocked else "RewardCoreIcon", _stable_node_token(canonical)]
 		icon.set_meta("canonical_id", canonical)
 		content.add_child(icon)
-	content.add_child(_body_label("%s · %s" % [_proxy_core_display_name(core_id, {}), String(CORE_ROLES.get(core_id, "核心"))]))
-	content.add_child(_note_label("已接通" if unlocked else "封印中"))
+	content.add_child(_body_label("%s · %s" % [_proxy_core_display_name(core_id, {}), String(CORE_ROLES.get(core_id, "Core"))]))
+	content.add_child(_note_label("Connected" if unlocked else "Sealed"))
 	return cell
 
 
@@ -3263,7 +3270,7 @@ func _proxy_core_ids(proxy: Dictionary) -> Array[String]:
 
 
 func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> void:
-	var section := _section("核心库存与协议", "ProxyInventory")
+	var section := _section("Core Inventory and Protocols", "ProxyInventory")
 	var catalog := _as_dictionary(proxy.get("catalog", {}))
 	var owned := {}
 	for value in _as_array(proxy.get("inventory", [])):
@@ -3282,17 +3289,17 @@ func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> 
 		row.add_theme_constant_override("separation", 4)
 		section.add_child(row)
 		var slot := String(definition.get("slot", _proxy_core_slot(core_id)))
-		var state := "未拥有"
+		var state := "Not Owned"
 		if core_id in installed_ids:
-			state = "已安装"
+			state = "Installed"
 		elif owned.has(core_id):
-			state = "库存中"
+			state = "In Storage"
 		row.add_child(_body_label("%s · %s · %s" % [_proxy_core_display_name(core_id, definition), String(PROXY_SLOT_LABELS.get(slot, slot)), state]))
-		row.add_child(_note_label("协议：%s" % String(definition.get("protocol", _as_dictionary(owned.get(core_id, {})).get("protocol", "未记录")))))
+		row.add_child(_note_label("Protocol: %s" % String(definition.get("protocol", _as_dictionary(owned.get(core_id, {})).get("protocol", "Not Recorded")))))
 		if owned.has(core_id) and core_id not in installed_ids:
 			var button := Button.new()
 			button.name = "ProxyEquip_%s" % _stable_node_token(core_id)
-			button.text = "安装到%s" % String(PROXY_SLOT_LABELS.get(slot, slot))
+			button.text = "Install in %s" % String(PROXY_SLOT_LABELS.get(slot, slot))
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			button.pressed.connect(_on_payload_action_pressed.bind("equip_proxy_core", {"core_id": core_id}))
@@ -3302,17 +3309,17 @@ func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> 
 func _build_proxy_distance_settings(proxy: Dictionary, installed_ids: Array[String]) -> void:
 	if "distance_keeping_gait" not in installed_ids:
 		return
-	var section := _section("维距档位", "ProxyDistanceBand")
-	section.add_child(_note_label("所有距离带都会跟随穿刺箭的实际射程调整。"))
+	var section := _section("Distance Band", "ProxyDistanceBand")
+	section.add_child(_note_label("All distance bands scale with Piercing Arrow's actual range."))
 	var settings := _as_dictionary(_as_dictionary(proxy.get("build", {})).get("settings", {}))
 	var current := String(_as_dictionary(settings.get("distance_keeping_gait", {})).get("distance_band", "mid"))
 	if current not in ["near", "mid", "far"]:
 		current = "mid"
-	var labels := {"near": "近", "mid": "中", "far": "远"}
+	var labels := {"near": "Near", "mid": "Mid", "far": "Far"}
 	for band in ["near", "mid", "far"]:
 		var button := Button.new()
 		button.name = "ProxyDistanceBand_%s" % band
-		button.text = "%s（当前）" % labels[band] if band == current else String(labels[band])
+		button.text = "%s (Current)" % labels[band] if band == current else String(labels[band])
 		button.disabled = band == current
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3338,31 +3345,31 @@ func _proxy_core_display_name(core_id: String, definition: Dictionary) -> String
 	if not name.is_empty():
 		return name
 	var labels := {
-		"near_enemy_horizon": "近敌视界",
-		"marking_prism": "标记棱镜",
-		"direct_gait": "直趋步足",
-		"distance_keeping_gait": "维距步足",
-		"single_key_execution": "单键执行",
-		"short_trace_memory": "短痕记忆",
+		"near_enemy_horizon": "Near-Enemy Sight",
+		"marking_prism": "Mark Prism",
+		"direct_gait": "Direct-Approach Legs",
+		"distance_keeping_gait": "Range-Keeping Legs",
+		"single_key_execution": "Single-Key Executor",
+		"short_trace_memory": "Short-Trace Memory",
 	}
 	return String(labels.get(core_id, core_id))
 
 
 func _build_immortality() -> void:
-	var section := _section("中期内容", "ImmortalityMidgame")
-	section.add_child(_body_label("不朽系统属于中期内容，前期任务不依赖。\n本页仅作路线说明，不提供可点击操作。"))
+	var section := _section("Midgame Content", "ImmortalityMidgame")
+	section.add_child(_body_label("Immortality is a midgame system, not required for early quests.\nThis page is a roadmap only; no actions are available."))
 
 
 func _build_research() -> void:
-	var discoveries := _section("已发现结论", "ResearchDiscoveries")
-	discoveries.add_child(_body_label("收敛 / 临界 / 指数及更高层增长只展示已被木桩或实战验证的条目。\n档案发现记录接口待补。"))
-	var targets := _section("目标研究", "ResearchTargets")
-	targets.add_child(_body_label("选择机制标签与目标法则，追踪契约来源和硬保底进度。\n目标选择与追踪接口待补。"))
-	var missing := _section("缺失接口", "ResearchMissingInterfaces")
-	missing.add_child(_body_label("需要：可繁殖事件\n需要：整链刷新\n需要：结果反馈\n\n物品应直说缺什么，不把死词伪装成可用。"))
-	_add_action("查看已发现结论", "inspect_discoveries")
-	_add_action("设为目标研究", "set_research_target")
-	_add_action("检查缺失接口", "inspect_missing_interfaces")
+	var discoveries := _section("Discovered Conclusions", "ResearchDiscoveries")
+	discoveries.add_child(_body_label("Convergent / Critical / Exponential and higher growth entries appear only after dummy or combat verification.\nProfile discovery tracking is not yet implemented."))
+	var targets := _section("Target Research", "ResearchTargets")
+	targets.add_child(_body_label("Choose mechanic tags and target Laws to track contract sources and guaranteed-drop progress.\nTarget selection and tracking are not yet implemented."))
+	var missing := _section("Missing Interfaces", "ResearchMissingInterfaces")
+	missing.add_child(_body_label("Requires: breedable events\nRequires: full-chain refresh\nRequires: result feedback\n\nItems should state what is missing, not present inactive terms as usable."))
+	_add_action("View Discovered Conclusions", "inspect_discoveries")
+	_add_action("Set as Research Target", "set_research_target")
+	_add_action("Check Missing Interfaces", "inspect_missing_interfaces")
 
 
 func _forge_session() -> Dictionary:
@@ -3441,7 +3448,7 @@ func _forge_candidate_cost(candidate: Dictionary) -> int:
 
 func _forge_candidate_family_name(candidate: Dictionary) -> String:
 	var formatted := _readable_build.format_affix(candidate)
-	var named := formatted.get_slice("：", 0)
+	var named := formatted.get_slice(": ", 0)
 	var tier := _readable_build.tier_label(int(candidate.get("tier", 0)))
 	return named.trim_suffix(" " + tier) if named.ends_with(" " + tier) else named
 
@@ -3453,11 +3460,11 @@ func _forge_candidate_change_text(candidate: Dictionary) -> String:
 	]
 	var operation := String(candidate.get("operation", _forge_session_operation()))
 	if operation == "inscribe":
-		return "新增：%s" % result
-	var previous_name := String(candidate.get("previous_family_name", "已有词条"))
+		return "New: %s" % result
+	var previous_name := String(candidate.get("previous_family_name", "Existing Affix"))
 	var previous_tier := _readable_build.tier_label(int(candidate.get("previous_tier", 0)))
-	return "%s：%s %s → %s" % [
-		"自动精炼" if operation == "refine" else "自动改写",
+	return "%s: %s %s → %s" % [
+		"Automatic Refine" if operation == "refine" else "Automatic Rewrite",
 		previous_name,
 		previous_tier,
 		result,
@@ -3473,8 +3480,9 @@ func _forge_revision() -> int:
 	return int(_facility_data.get("revision", -1))
 
 
-func _law_token_name(operation: String) -> String:
-	return String(LAW_TALLY_LABELS.get(operation, "律筹"))
+func _law_token_name(operation: String, count: int = -1) -> String:
+	var label := String(LAW_TALLY_LABELS.get(operation, "Law Tokens"))
+	return label.trim_suffix("s") if count == 1 else label
 
 
 func _law_tally(operation: String, tallies: Dictionary = {}) -> int:
@@ -3491,20 +3499,20 @@ func _forge_candidate_affordable(candidate: Dictionary) -> bool:
 
 func _forge_operation_block_reason(operation: String) -> String:
 	if not bool(_facility_data.get("unlocked", false)):
-		return "律筹锻造台尚未解锁。"
+		return "The Law Token Forge is not yet unlocked."
 	if _as_dictionary(_facility_data.get("target_item", {})).is_empty() or String(_facility_data.get("target_instance_id", "")).is_empty():
-		return "请先选择目标装备。"
+		return "Select target equipment first."
 	match String(_facility_data.get("blocked_reason", "")):
 		"affix_limit_reached":
-			return "词条已满（最多 %d 条），无法添铸。" % LawForgeScript.MAX_AFFIXES
+			return "Affixes full (maximum %d); cannot inscribe." % LawForgeScript.MAX_AFFIXES
 		"affix_required":
-			return "%s需要至少一个已有词条。" % String(FORGE_TRACK_TITLES.get(operation, "此操作"))
+			return "%s requires at least one existing affix." % String(FORGE_TRACK_TITLES.get(operation, "This operation"))
 		"rewrite_not_legal":
-			return "当前装备没有可用的新词条可供改写。"
+			return "This item has no eligible new affix for rewriting."
 		"max_tier":
-			return "所有已有词条均已是最高阶，无法再精炼。"
+			return "All existing affixes are at their highest tier and cannot be refined."
 	if _law_tally(operation) <= 0:
-		return "没有%s，无法推演可落锤结果。" % _law_token_name(operation)
+		return "No %s available; cannot forecast a committable outcome." % _law_token_name(operation)
 	return ""
 
 
@@ -3553,20 +3561,20 @@ func _on_forge_target_selected(instance_id: String) -> void:
 ## Every value is read directly from the passed forge snapshot; this never
 ## re-evaluates the build and never shows a formula, TTK, power rating, or
 ## instance_id. Up to two affixes as family_name + Chinese tier, then a "+N" overflow; with
-## no affixes it falls back to rune/law; with neither it says "无词条".
+## no affixes it falls back to rune/law; with neither it says "No Affixes".
 func _item_difference_summary_text(item: Dictionary) -> String:
 	return _equipment_model.compact_difference(item)
 
 
 func _forge_item_title(item: Dictionary) -> String:
 	if item.is_empty():
-		return "未选择目标装备"
+		return "No Target Equipment Selected"
 	return String(item.get("base_name", _item_display_name(item)))
 
 
 func _forge_readable_item_text(item: Dictionary) -> String:
 	if item.is_empty():
-		return "暂无装备数据"
+		return "No Equipment Data"
 	return "%s\n%s" % [_forge_item_title(item), _readable_build.format_item(item)]
 
 
@@ -3582,24 +3590,24 @@ func _forge_build_change_text(candidate: Dictionary) -> String:
 	var preview_impact := String(candidate.get("preview_impact", ""))
 	var target_is_equipped: Variant = candidate.get("target_is_equipped", null)
 	if not (target_is_equipped is bool):
-		return "锻造目标装备状态缺失"
+		return "Forge target equipment state is missing"
 	var heading := ""
 	if bool(target_is_equipped) and preview_impact == "current_build_immediate":
-		heading = "目标当前已装备 · 落锤后当前构筑变化"
+		heading = "Target Equipped · Current Build Changes After Commit"
 	elif not bool(target_is_equipped) and preview_impact == "equip_after_commit":
-		heading = "目标当前未装备 · 落锤不会改变当前构筑；装备后预计变化"
+		heading = "Target Not Equipped · Commit Leaves Current Build Unchanged; Expected Changes When Equipped"
 	else:
-		return "锻造预览语义不一致"
+		return "Inconsistent Forge Preview Semantics"
 	if current.is_empty() or after.is_empty():
-		return "%s：暂无数据" % heading
+		return "%s: No Data" % heading
 	var comparison_text := _readable_build.format_comparison(current, after)
-	var lines: Array[String] = ["%s：" % heading]
+	var lines: Array[String] = ["%s: " % heading]
 	if comparison_text.is_empty():
-		lines.append("参数无变化")
+		lines.append("No Stat Changes")
 	else:
 		lines.append(comparison_text)
-	_append_preview_group(lines, comparison, "interfaces_gained", "获得接口")
-	_append_preview_group(lines, comparison, "interfaces_lost", "失去接口")
+	_append_preview_group(lines, comparison, "interfaces_gained", "Interfaces Gained")
+	_append_preview_group(lines, comparison, "interfaces_lost", "Interfaces Lost")
 	return "\n".join(lines)
 
 
@@ -3713,18 +3721,18 @@ func _component_text(build: Dictionary, key: String, fallback: String) -> String
 		value = values[0] if not values.is_empty() else null
 	var text := _display_value(value)
 	if key == "skill" and not text.is_empty():
-		return "穿刺箭"
+		return "Piercing Arrow"
 	if text.is_empty():
 		return fallback
 	var labels := {
-		"piercing_arrow": "穿刺箭", "spawning_split": "孳生分裂", "spawn_split": "孳生分裂",
-		"pack_hunt_mark": "群猎印记", "group_hunt_mark": "群猎印记",
+		"piercing_arrow": "Piercing Arrow", "spawning_split": "Breeding Split", "spawn_split": "Breeding Split",
+		"pack_hunt_mark": "Pack Hunt Mark", "group_hunt_mark": "Pack Hunt Mark",
 	}
 	return String(labels.get(text.to_lower(), text))
 
 
 ## The stable id behind a legacy component field, when the snapshot carries one.
-## A display-only object such as {"name": "孳生分裂"} has no id, so the lookup
+## A display-only object such as {"name": "Breeding Split"} has no id, so the lookup
 ## stays empty and the component keeps its text without borrowing other art.
 func _component_id(build: Dictionary, key: String) -> String:
 	var value: Variant = build.get("%s_id" % key, build.get(key, null))
@@ -3742,11 +3750,11 @@ func _component_id(build: Dictionary, key: String) -> String:
 
 func _build_display_name(build: Dictionary, index: int, verified: bool) -> String:
 	if verified:
-		return String(build.get("verified_growth_name", build.get("growth_name", build.get("state", build.get("name", build.get("id", "已验证方案"))))))
+		return String(build.get("verified_growth_name", build.get("growth_name", build.get("state", build.get("name", build.get("id", "Verified Preset"))))))
 	var neutral_name := String(build.get("neutral_name", "")).strip_edges()
 	if not neutral_name.is_empty():
 		return neutral_name
-	return "方案 %s" % String.chr(65 + clampi(index, 0, 25))
+	return "Preset %s" % String.chr(65 + clampi(index, 0, 25))
 
 
 func _equipment_text(build: Dictionary) -> String:
@@ -3759,11 +3767,11 @@ func _equipment_text(build: Dictionary) -> String:
 				var detail := _display_value(equipment.get(key))
 				if not detail.is_empty() and detail not in details:
 					details.append(detail)
-		value = "；".join(details) if not details.is_empty() else null
+		value = "; ".join(details) if not details.is_empty() else null
 	if value == null:
 		value = _nested_value(build, ["components", "equipment_summary"], null)
 	var text := _display_value(value)
-	return text if not text.is_empty() else "未知"
+	return text if not text.is_empty() else "Unknown"
 
 
 func _display_value(value: Variant) -> String:
@@ -3775,12 +3783,12 @@ func _display_value(value: Variant) -> String:
 		var parts: Array[String] = []
 		for key in dictionary:
 			parts.append("%s=%s" % [String(key), _format_value(dictionary[key])])
-		return "，".join(parts)
+		return ", ".join(parts)
 	if value is Array:
 		var parts: Array[String] = []
 		for item in value:
 			parts.append(_display_value(item))
-		return "，".join(parts)
+		return ", ".join(parts)
 	return "" if value == null else str(value)
 
 

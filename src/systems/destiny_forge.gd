@@ -255,11 +255,12 @@ func _normalize_family(raw_family: Variant) -> Dictionary:
 
 func _normalize_track(track: String) -> String:
 	match track.to_lower():
-		"add", "augment", "添铸":
+		# Legacy operation inputs remain accepted; these are not display labels.
+		"add", "augment", "\u6dfb\u94f8":
 			return TRACK_ADD
-		"rewrite", "reforge", "改写":
+		"rewrite", "reforge", "\u6539\u5199":
 			return TRACK_REWRITE
-		"refine", "upgrade", "精炼":
+		"refine", "upgrade", "\u7cbe\u70bc":
 			return TRACK_REFINE
 	return ""
 

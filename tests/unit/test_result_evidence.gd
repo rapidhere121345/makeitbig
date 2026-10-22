@@ -14,7 +14,7 @@ func _run() -> void:
 	var data := {"outcome":"defeat","rooms_completed":1,"room_count":3,"defeated":0,
 		"elapsed_seconds":12.0,"casts":24,"contract_id":"threshold_colossus","mode":"Manual",
 		"room_results":[{"outcome":"victory"},{"outcome":"defeat"}],
-		"primary_bottleneck":{"title":"增长收敛","action":"去定向支线获取增长概率词条"}}
+		"primary_bottleneck":{"title":"Growth converged","action":"Find growth-chance affixes in targeted side contracts"}}
 	var before := data.duplicate(true)
 	screen.present(data)
 	await _settle()
@@ -28,22 +28,22 @@ func _run() -> void:
 	_expect(screen._reported_route_steps()[0].state == "completed" and screen._reported_route_steps()[1].state == "failed","room states were inferred incorrectly")
 	var bar := screen.find_child("RoomCompletionBar",true,false) as ProgressBar
 	_expect(bar.visible and bar.value == 1 and bar.max_value == 3,"bar must use authoritative room numerator/denominator")
-	_expect(_text(screen,"observed").contains("击杀 0"),"reported zero was hidden")
-	_expect(_text(screen,"bottleneck") == "增长收敛","real bottleneck not surfaced")
-	_expect(_text(screen,"next").contains("定向支线"),"supplied action not surfaced")
+	_expect(_text(screen,"observed").contains("Kills 0"),"reported zero was hidden")
+	_expect(_text(screen,"bottleneck") == "Growth converged","real bottleneck not surfaced")
+	_expect(_text(screen,"next").contains("targeted side contracts"),"supplied action not surfaced")
 	for id in ["observed","unverified","bottleneck","next"]:
 		var card := screen.find_child("EvidenceCard_"+id,true,false) as Control
 		_expect(card != null and card.is_visible_in_tree(),id+" card not reachable from report detail")
 		var label := screen.find_child("EvidenceBody_"+id,true,false) as Label
 		_expect(label != null and label.is_visible_in_tree() and label.get_theme_font_size("font_size") >= 18,id+" text below floor or hidden")
-	_expect(_text(screen,"unverified").contains("构筑成长结论") and _text(screen,"unverified").contains("验律场"),"growth follow-up left the player-facing result card")
+	_expect(_text(screen,"unverified").contains("build growth conclusions") and _text(screen,"unverified").contains("Training"),"growth follow-up left the player-facing result card")
 	screen.present({"outcome":"victory","room_count":3})
 	await _settle()
 	_expect(not bar.visible,"missing completed rooms was shown as zero")
 	_expect(screen._reported_route_steps().is_empty(),"missing route invented nodes")
-	_expect(_text(screen,"observed").contains("没有可用"),"missing combat fields invented readings")
-	_expect(not _text(screen,"bottleneck").contains("增长收敛"),"previous failure leaked to victory")
-	_expect(not _text(screen,"next").contains("定向支线"),"previous action leaked to new result")
+	_expect(_text(screen,"observed").contains("No"),"missing combat fields invented readings")
+	_expect(not _text(screen,"bottleneck").contains("Growth converged"),"previous failure leaked to victory")
+	_expect(not _text(screen,"next").contains("targeted side contracts"),"previous action leaked to new result")
 	for pair in [[4,3],[-1,3],[0,0],[1.5,3]]:
 		screen.present({"outcome":"victory","rooms_completed":pair[0],"room_count":pair[1]})
 		_expect(not bar.visible,"invalid progress was silently clamped")

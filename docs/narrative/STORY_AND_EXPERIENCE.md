@@ -1,1141 +1,1153 @@
-# 完整剧情与体验流程：探索、验证、积累与一席之暖
+# Full Story and Experience Flow: Exploration, Validation, Accumulation, and a Seat in the Warmth
 
-完整游戏 · 刷宝本位重写版 · 2026-09-13  
-中文主稿；关键名称、核心对白与界面短句提供英文工作稿。
+Full game | Loot-first rewrite | 2026-09-13
 
-> 掉落带来可能性。探索形成假设。积累补足条件。验证确认突破。  
-> 故事回应玩家已经做成的事。
+English edition of the complete design manuscript, including key names, dialogue, and interface copy.
 
-## 00｜阅读与实施约定
+> Drops create possibilities. Exploration forms hypotheses. Accumulation supplies the conditions. Validation confirms a breakthrough.
+>
+> The story responds to what the player has actually accomplished.
 
-本稿是独立完整的剧情与玩家体验稿，与《世界观设定集：圣律、遗迹与构筑者》配套。旧稿保留，但“按剧情取得三件遗物便逐步升阶”的安排撤销。完整游戏不能沿用原型按主线发齐一条游侠答案的流程。
+## 00 | Reading and Implementation Conventions
 
-这不是一款以通读章节为主要活动的剧情体验游戏。玩家的大部分主动决策发生在战斗、拾取、比较、锻造、研究、配置和实测中。故事提供出发理由、生活关系、局部变化与更大的未知，不替玩家配置下一套装备。
+This is a self-contained, complete story and player-experience manuscript, paired with Worldbuilding: Sacred Law, Ruins, and Builders. The earlier manuscript remains on record, but its plan to advance tiers by awarding three story relics is withdrawn. The full game must not copy the prototype's mainline delivery of a complete Ranger solution.
 
-主角只称流浪者 / the Wanderer，无真名、称呼来源与教会关联。应许教会 / Church of the Promise 只留下名字与曾帮助人类使用圣律的历史轮廓。大失控的作者事实是滥用圣律导致组合爆炸；人物无法还原完整历史。整体基调绝望，小镇的微小改善真实保留。
+This is not a narrative game whose main activity is reading chapters. Most active decisions happen in combat, looting, comparison, forging, research, configuration, and actual testing. Story supplies reasons to leave, everyday relationships, local changes, and greater unknowns; it does not assemble the player's next loadout.
 
-当前内部测试目标为 10¹⁰⁰，完整游戏实际通关终局为 g₆₄。TREE(3) 及更大存在只作终局远景。永久不朽不反悔，无终祷文无法使用；最终接座只服务民用维修，不授予战斗力量。
+The protagonist is called only the Wanderer, with no personal name, origin for the title, or church affiliation. The Church of the Promise leaves only its name and the historical outline of having helped humanity use Sacred Law. The authorial truth of the Great Unraveling is combinatorial explosion caused by abusing Sacred Law; characters cannot reconstruct the complete history. The overall tone is despairing, while the town's small improvements remain real.
 
-本文区分三种约束：
+The current internal test target is 10¹⁰⁰; the full game's actual final clear is g₆₄. TREE(3) and greater presences serve only as a distant endgame horizon. Permanent Immortality is never revoked. The Endless Prayer cannot be used. The final socket serves civilian repairs only and grants no combat power.
 
-- 固定事实：称呼、世界边界、版本目标、不朽、失效提示与结局。
-- 体验合同：每阶段必须存在的发现、配装、验证、追逐与故事后果。
-- GDD 细化：新高阶语义、兼容槽、精确求值、掉落权重、资源预算和时长，必须实现并验证，不能以“剧情已写”当作系统已完成。
+This document distinguishes three kinds of constraint:
 
-文中编号是内容定位，不是任务 ID，不直接替换程序稳定 ID。全文覆盖三十八个主要体验单元：P00–P09、M00–M09、L00–L13、E00–E03；六条生活支线为 S01–S06。体验单元不是三十八次强制出征，也不是三十八张地图。
+- Fixed facts: names, world boundaries, version targets, Immortality, failure notices, and the ending.
+- Experience contract: discovery, gearing, validation, pursuit, and story consequences that each stage must contain.
+- GDD elaboration: new high-order semantics, compatible slots, exact evaluation, drop weights, resource budgets, and durations must be implemented and verified. Writing the story does not complete the system.
 
-## 01｜三期四幕与三条贯穿线
+These numbers locate content; they are not quest IDs and do not replace stable program IDs. The manuscript covers thirty-eight main experience units: P00-P09, M00-M09, L00-L13, and E00-E03, plus six everyday-life side stories, S01-S06. Experience units do not mean thirty-eight mandatory expeditions or thirty-eight maps.
 
-### 1.1 阶段组织
+## 01 | Three Stages, Four Acts, and Three Throughlines
 
-| 游戏阶段 | 故事幕 | 体验单元 | 构筑与刷宝重心 | 当下成果 |
+### 1.1 Stage Organization
+
+| Game stage | Story act | Experience units | Build and loot focus | Immediate outcome |
 |---|---|---|---|---|
-| 前期 | 余温 / Remaining Warmth | P00–P09 | 探索掉落、首条指数、参数取舍、阈门、起步 Auto | 一条回收路可通，外段供热暂稳 |
-| 中期 | 走得更远 / Farther Along | M00–M09 | 定向追猎、种子与研究、完整代理、防御方案与四项证明 | 远行更可靠，永久不朽成立 |
-| 后期前段 | 未止之物 / What Has Not Ceased | L00–L04 | 来源与后继、多技能两层和三层、双印、三相 | 获得局部样板、反馈载体与失效符文 |
-| 后期后段 | 一席之暖 / A Seat in the Warmth | L05–L13、E00–E03 | 反馈优化、高阶组合、g 序列、g₆₄、零号 | 有限维修、交班、暖处；世界仍未知 |
+| Early | Remaining Warmth | P00-P09 | Exploring drops, first exponential build, parameter tradeoffs, Threshold, starter Auto | One salvage road opens; outer heating is stable for now |
+| Middle | Farther Along | M00-M09 | Targeted hunts, seeds and research, full proxy, defense plans and four proofs | More reliable travel; permanent Immortality established |
+| Early late game | What Has Not Ceased | L00-L04 | Sources and successors, two- and three-layer multi-skill structures, Dual Seal, Threefold Phase | Local template, feedback carrier, and unusable rune acquired |
+| Later late game | A Seat in the Warmth | L05-L13, E00-E03 | Feedback optimization, high-order combinations, g sequence, g₆₄, Zero | Limited repairs, handover, a warm place; the world remains unknown |
 
-### 1.2 三条线并行，不互相代替
+### 1.2 Three Parallel Lines, Not Substitutes
 
-生活行动线：供热外段不稳 → 打通回收路 → 寻找可比较样板 → 核对本地条件 → 向高塔回收合用接座 → 有限维修与交班。
+Everyday action: unstable outer heating -> open the salvage road -> find a comparable template -> verify local conditions -> recover a suitable socket from the high tower -> limited repairs and handover.
 
-玩家成长线：普通技能 → 首条指数 → 更可靠的刷取与代理 → 防御证明与不朽 → 固定嵌套 → 反馈 → 高阶复合 → g 序列 → 可兑现的 g₆₄ 级结果。
+Player growth: ordinary skills -> first exponential build -> more reliable farming and proxy operation -> defense proofs and Immortality -> fixed nesting -> feedback -> high-order composition -> g sequence -> a realizable g₆₄-level result.
 
-未知扩大线：无人使用的旧设备仍在运行 → 用途与结果分离 → 理论无限却失效的符文 → 已经超出常识的自身力量 → g₆₄ 之后仍有更深标记。
+Expanding unknowns: unused old machinery still runs -> purpose separates from outcome -> a theoretically infinite yet unusable rune -> one's own power already exceeds common understanding -> deeper markings remain beyond g₆₄.
 
-生活线给出需要，成长线由实际构筑推进，未知线通过可选物证与场景加深。不能用拿到民用接片代替成长，不能用收齐残片代替构筑，也不能用更大数字代替关系变化。
+Everyday life supplies the need, actual builds advance growth, and optional evidence and scenery deepen the unknown. Acquiring a civilian coupler cannot replace growth, collecting fragments cannot replace buildcraft, and larger numbers cannot replace changing relationships.
 
-### 1.3 非线性规则
+### 1.3 Nonlinear Rules
 
-P02–P06、M01–M07、L00–L03、L05–L12 都包含可往返活动。玩家可以先试后刷、先存底材、先优化原路线，或因新掉落转向另一条合法路线。
+P02-P06, M01-M07, L00-L03, and L05-L12 all include repeatable, revisitable activities. Players may test before farming, stockpile bases, optimize their original route, or follow a new drop into another valid route.
 
-编号只表达设计阅读顺序。剧情条件只使用真实结果，不使用“必须先读完上一单元”“必须失败一次”“必须装备指定物品”作为放行。某阶段预计采用某类构筑，不等于给 Boss 设置阶层免疫。
+Numbering indicates design reading order only. Story conditions use actual results, not gates requiring the previous unit to be read, one failure, or a specified equipped item. Expecting a build category at a stage does not authorize tier immunity for bosses.
 
-已自然完成的条件直接承认，不要求为了播放对白再锻造、再失败或再刷一份材料。理解深入和幸运的玩家可以更快，困难玩家得到可行动反馈与可见保底，而非无尽碰运气。
+Recognize conditions already fulfilled naturally. Never demand another forge, failure, or material farm merely to play dialogue. Knowledgeable or lucky players may progress faster; struggling players receive actionable feedback and visible guarantees rather than endless gambling.
 
-## 02｜玩家主循环与突破判定
+## 02 | The Player Loop and Breakthrough Criteria
 
-### 2.1 一次有意义的回合
+### 2.1 A Meaningful Cycle
 
-探索契约，获得不全在预期中的物品；比较它们能做什么；形成一项可检验的设想；选择缺口对应的回收方向；积累底材与资源；在基地做真实变更；训练或实战判断变化；保存有效方案，再尝试原先困难的目标。
+Explore contracts and find some unexpected items; compare what they can do; form a testable hypothesis; choose a salvage direction matching the gap; accumulate bases and resources; make a real change at base; evaluate it in Training or combat; save a working setup and retry the previously difficult target.
 
-这是一种循环，不要求每一轮包含所有动作。玩家可以只为补资源出征，也可以一次新掉落就接通此前准备。每次回城应有实事可做，不能只有下一段对白。
+This is a loop, not a requirement to perform every action each time. An expedition may simply replenish resources, or one new drop may connect earlier preparations. Each return to town should offer real work, not only the next conversation.
 
-### 2.2 四个状态分开记录
+### 2.2 Record Four States Separately
 
-| 状态 | 发生条件 | 玩家反馈 | 不自动意味着 |
+| State | Condition | Player feedback | Does not automatically mean |
 |---|---|---|---|
-| 能力已发现 | 合法获得或看到相应物品效果 | 核心、参数、兼容与来源可查 | 构筑成立 |
-| 结构已验证 | 真实运行支持该增长性质 | 记录输入、条件、输出和阻断 | 所有场景都稳定 |
-| 当前方案适用 | 在所选实际条件下能可靠完成目标 | 条件化战报与可复核记录 | 对未知场景保证成功 |
-| 挑战已完成 | 真实 Boss 或契约结算胜利 | 首杀、奖励与世界变化 | 掌握历史真相或自动升阶 |
+| Capability discovered | Legitimately obtain or see the relevant item effect | Core, parameters, compatibility, and source can be inspected | Build established |
+| Structure verified | Actual execution supports that growth property | Record inputs, conditions, outputs, and blockers | Stable in every setting |
+| Current setup applicable | Reliably completes the goal under the selected actual conditions | Conditional battle report and reviewable records | Guaranteed success in unknown settings |
+| Challenge complete | Actual boss or contract victory settles | First kill, rewards, and world changes | Historical truth understood or automatic tier advancement |
 
-“稳定”只能描述已验证条件与合理样本，不能凭一次理想木桩实验保证所有地图。样本不足时明确未验证。
+"Stable" describes verified conditions and reasonable samples only. One ideal dummy test cannot guarantee every map. Insufficient samples must be labeled unverified.
 
-### 2.3 物品与资源的职责
+### 2.3 Roles of Items and Resources
 
-语义符文改变技能行为；通用法则补充兼容关系；数值词推动临界、窗口、寿命、保留与效率；命名暗金提供独特但局部的能力；代理组件解决执行条件。
+Semantic runes change skill behavior; general Laws add compatibility relationships; numeric affixes affect criticality, windows, lifetimes, retention, and efficiency; named uniques provide distinctive but local abilities; proxy components solve execution conditions.
 
-装备底材、词池与种子决定投入选择。添铸、改写、精炼互不污染轨道，预览免费且准确，提交不可撤销。常规拆解约返还 80% 投入；研究积累可制作基础副本；这些规则不因剧情需要而失效。
+Equipment bases, affix pools, and seeds determine investment choices. Inscribe, Rewrite, and Refine do not contaminate one another's tracks. Previews are free and exact; committed changes are irreversible. Ordinary salvage returns about 80% of investment, and accumulated research can produce basic copies. Story needs never invalidate these rules.
 
-正式十二槽、普通四数值词与一通用法则、技能最多一枚语义符文等承载规则继续有效。高阶设计必须给出兼容的实际方案，不能悄悄把所有新能力都堆进同一个技能槽。
+Capacity rules remain in force: twelve full-game slots, four ordinary numeric affixes plus one general Law, at most one semantic rune per skill, and related limits. High-order designs must specify a compatible practical setup, not quietly pile every new ability into one skill slot.
 
-### 2.4 信息纪律
+### 2.4 Information Discipline
 
-正常装备直接说明触发与限制；缺口报告指出实际主因及相关能力类别，不公布一套必买清单。未发现的完整解法不在新手教程直接列出。
+Ordinary equipment states triggers and limits directly. Gap reports identify actual main causes and relevant capability categories, not a mandatory shopping list. Beginner tutorials do not list complete undiscovered solutions.
 
-玩家可以不知道教会为何消失，但必须有办法判断自己的链在哪里断了。固定历史文本可以含糊，资源成本和装配结果不能含糊。
+Players may not know why the Church vanished, but they must be able to identify where their own chain broke. Historical texts may be ambiguous; resource costs and assembly results may not.
 
-## 03｜人物、设施与统一用语
+## 03 | Characters, Facilities, and Shared Terminology
 
-### 3.1 主要人物
+### 3.1 Main Characters
 
-流浪者 / the Wanderer：熟悉回收工作的行动者。最初想带回能用的东西，后来通过构筑越过极大障碍。能承认未知，不发表文明复兴宣言。没有个人姓名或教会资格。
+The Wanderer: a practical salvager. Initially seeks usable things to bring home, then overcomes immense obstacles through buildcraft. Can acknowledge the unknown, without declaring a revival of civilization. Has neither a personal name nor church credentials.
 
-米拉 / Mira：守冬塔外段值守者。关心今晚怎么维持、试验时拿什么替代；愿意协助有边界的改变。人物回报是最后能坐下来吃热饭。
+Mira: keeps the outer watch at Winterwatch Tower. Cares about getting through tonight and what can substitute during a trial; supports changes with clear limits. Her character payoff is finally sitting down to a hot meal.
 
-伊文 / Iven：当代记录者。区分观察与猜测，帮助保留上下文。不是全知导师；不会每次都告诉玩家该换哪一件装备。
+Iven: a present-day recorder who separates observation from speculation and preserves context. Not an omniscient mentor who always tells the player which item to replace.
 
-塔伦 / Taren：行路商人。提供路线、物资与近期消息，使探索有方向；不会准确预言某次世界掉落。石渠聚落只需货单与来信承载，不必新增城市。
+Taren: a traveling merchant providing routes, supplies, and recent news to guide exploration, without predicting exact world drops. Stonechannel settlement needs only cargo lists and letters, not another explorable city.
 
-莱娅 / Leia：值守学徒。已会基础工作，后来学会复核和在条件不一致时停下；结尾能接一班，不成为被预言的圣律天才。
+Leia: an apprentice watchkeeper who already knows the basics, later learning to cross-check and stop when conditions disagree. By the end she can take a shift, not become a prophesied Sacred Law prodigy.
 
-奥伦 / Oren：迁居来的修补者。擅长普通装配与材料。强调“认得这一截不等于认得整座塔”，把谨慎写成能力，而不是阻止玩家玩的理由。
+Oren: a repairer who moved here, skilled in ordinary assembly and materials. His principle is that knowing one section does not mean knowing the whole tower. Caution is a competence, not an excuse to prevent play.
 
-### 3.2 六设施与回访目的
+### 3.2 Six Facilities and Reasons to Return
 
-| 叙事名 / 英文 | 功能名 / 既有 ID | 每次回访的实际用途 | 首次短句 |
+| Narrative name | Function / existing ID | Practical purpose on return | First short line |
 |---|---|---|---|
-| 行路契台 / Wayfarer's Board | 契约台 / contract | 选择来源标签、风险与 Manual / Auto | 先看去哪，再看带回什么。 |
-| 备行架 / Expedition Rack | 装备与符文 / loadout | 比较、装卸、方案与愿望单 | 看它能接什么，再看外表。 |
-| 回火砧 / Tempering Anvil | 律筹锻造 / forge | 预览、提交、拆解、研究 | 看清再落锤。 |
-| 验律场 / Proving Yard | 训练与战报 / training | 对照实际变更与战斗条件 | 让结果自己出现。 |
-| 代行舱 / Proxy Bay | 代理构筑 / proxy | 解决感知、记忆、动作和后勤缺口 | 它只会照装好的办法做。 |
-| 恒生坛 / Everlife Altar | 永久不朽 / immortality | 检查四项证明、确认不可逆的收益 | 把四处的结果都核完。 |
+| Contract Board | Contracts / contract | Choose source tags, risk, and Manual / Auto | First see where to go, then what comes back. |
+| Loadout | Equipment and runes / loadout | Compare, equip, remove, save setups, and maintain wishlists | See what it connects to before its appearance. |
+| Tempering Anvil | Law Token Forge / forge | Preview, commit, salvage, research | Look before the hammer falls. |
+| Training | Training and reports / training | Compare actual changes and combat conditions | Let the result show itself. |
+| Proxy Bay | Proxy builds / proxy | Solve perception, memory, action, and logistics gaps | It only follows the method you fit. |
+| Everlife Altar | Permanent Immortality / immortality | Check four proofs and confirm irreversible benefits | Check the results from all four places. |
 
-守冬塔 / Winterward Generator、共炉厅 / Hearth Hall、归货棚 / Return Shed、续记桌 / Record Desk 是生活位置，不新增经营界面。律镜 / Law Mirror、复现簿 / Replication Ledger、法则册 / Law Codex、突变台 / Mutation Bench 属已有功能内的子页。
+Winterwatch Tower, Hearth Hall, the Salvage Shed, and the Record Desk are everyday places, not new management screens. The Law Lens, Replication Ledger, Law Codex, and Mutation Bench are subpages within existing functions.
 
-### 3.3 民用物件
+### 3.3 Civilian Objects
 
-稳热接片 / Heat-Steady Coupler：前期外段临时维修。
+Heat-Steady Coupler: temporary early-game repairs to the outer stretch.
 
-接续样板 / Junction Template：后期比对局部接口，不含完整原理。
+Junction Template: compares local interfaces in the late game; does not contain complete principles.
 
-调流接座 / Flow-Regulating Socket：终局合用部件，须与已有材料、装配与复核共同完成维修。
+Flow-Regulating Socket: a suitable endgame part; repairs also require existing materials, assembly, and verification.
 
-炉边续记 / The Hearthstead Record：本地有限步骤与停止条件。
+The Hearthside Record: local finite procedures and stopping conditions.
 
-它们不占必需装备槽，不作为战斗力量奖励，不开启另一条刷材料领取结局的任务。
+These occupy no required equipment slots, grant no combat power, and do not open another material-farming quest to claim the ending.
 
-## 04｜第一幕：余温——首先学会发现构筑
+## 04 | Act I: Remaining Warmth - Learning to Discover Builds
 
-### P00｜门边的位置 / The Place by the Door
+### P00 | A Place by the Door
 
-处境：共炉厅门边不再暖和。米拉扶着外段接头，莱娅把一张凳子搬近塔侧。开场说过去曾有繁荣、教会只剩名字、旧世界已经毁灭；不说明组合爆炸的完整因果。
+Situation: it is no longer warm beside Hearth Hall's door. Mira supports the outer coupling while Leia moves a stool toward the tower. The opening establishes past prosperity, a Church reduced to a name, and a ruined old world, without explaining the full causality of combinatorial explosion.
 
-米拉：“流浪者，把门带上。风进来了。”  
-莱娅：“这张也搬过去？”  
-米拉：“先搬。门边暖不到了。”
+Mira: "Wanderer, close the door. The wind's getting in."
 
-操作：很快进入移动、闪避与起步技能练习。初始职业只改变技能教学，不改变人物与主线。固定起步装保障能玩，不预装完整指数答案。
+Leia: "Move this one too?"
 
-出口：玩家知道当前需要合用部件和可往返的路。没有现实倒计时，不用居民生命催促玩家跳过刷宝。
+Mira: "For now. The warmth no longer reaches the door."
 
-### P01｜旧路外段 / The Outer Road
+Play: quickly move into movement, Dodge, and starter-skill practice. Starting class changes skill instruction, not characters or the main story. Fixed starter equipment ensures playability without preassembling a complete exponential solution.
 
-目标：清理一段能进入回收区的旧路。普通战斗先展示目标优先、前摇与结算，逐步开放另外两个主动技能的使用，不以阅读宗教残片解锁。
+Exit: the player understands the need for suitable parts and a road that allows a return journey. No real-time countdown or threatened residents' lives pressures players to skip looting.
 
-战利品：早期普通装备、材料与少量清晰词条先产生比较。正式版不必等到多段剧情之后才允许看见真实装备差异。界面按认知负担逐步展开，掉落本身保持真实。
+### P01 | The Outer Road
 
-塔伦：“先把外段看清。深处那批，还没人带回来。”
+Goal: clear a stretch of old road into the salvage grounds. Ordinary combat first demonstrates target priority, windup, and settlement, gradually opening the other two active skills. Reading religious fragments does not unlock them.
 
-场景：过大的旧装卸空间、磨平的货签和一个晚班杯，提示旧生活规模。可选阅读，不堵出征。
+Loot: early ordinary equipment, materials, and a few clear affixes introduce comparison. The full game need not delay real equipment differences until several story sequences have passed. Reveal the interface according to cognitive load while keeping drops genuine.
 
-返回后：可以继续向内，也可以整理已有装备；不把“点完所有设施”做成第一段考试。
+Taren: "Learn the outer stretch first. No one's brought back what's deeper in."
 
-### P02｜一件不在计划里的东西 / An Unexpected Find
+Scene: oversized loading grounds, worn cargo labels, and a late-shift cup suggest the scale of former life. Reading is optional and never blocks departure.
 
-触发：玩家首次获得当前阶段的新语义符文，或见到足以提出不同构筑思路的真实物品。它可能出自普通敌人、精英或箱子，不固定在某一条主线的第三次结算。
+On return: continue inward or sort existing equipment. Clicking every facility must not become the first exam.
 
-操作：查看它改变什么、兼容哪个技能。可以马上试，也可以先存起来。世界掉落的未见优先机制控制长尾；不直接显示“你的指数发动机已经齐了”。
+### P02 | An Unexpected Find
 
-奥伦：“这件不在要带回的清单上。”  
-流浪者：“先留着。”
+Trigger: first obtain a new semantic rune for the current stage, or encounter a real item suggesting another build idea. It may come from an ordinary enemy, elite, or chest, not a fixed third settlement on one mainline.
 
-奖励意义：一种可能，而不是阶层。若玩家先拿到其他职业的新东西，可以保存、转向或继续原路线，剧情不评价谁走错了。
+Play: inspect what it changes and which skill it fits. Test immediately or store it. World-drop unseen-first priority limits the long tail; do not announce that the player's exponential engine is complete.
 
-### P03｜多了，然后停了 / More, Then No More
+Oren: "This wasn't on the list of things to bring back."
 
-触发：玩家主动训练，或在实际战斗后查看新能力的结果。剧情根据实测分支：还未形成有效增长、参数已过线但窗口不足，或已经成功。
+Wanderer: "Keep it for now."
 
-未成立示例：流浪者：“比上次多。后来停了。”伊文：“停在哪一步，先留着。”
+Reward meaning: a possibility, not a tier. A new item for another class may be stored, followed into a new direction, or set aside while continuing the original route. Story does not judge a route wrong.
 
-已成立示例：伊文：“这一段接上了。”流浪者：“换个地方再试。”
+### P03 | More, Then No More
 
-玩法：报告只归纳真实主因，如共享命中历史、继承系数、转化损耗或计时覆盖。需要更详细信息时再展开。不能为了演示失败偷偷降低玩家装备。
+Trigger: voluntarily train or inspect a new capability's result after real combat. Story branches on observation: effective growth not yet established, parameters over threshold but insufficient window, or success already achieved.
 
-出口：玩家形成一项可检验的下一步设想；已经成功的人直接进入更合适的挑战，不强制返回补演失败。
+Unestablished example: Wanderer: "More than last time. Then it stopped." Iven: "Keep the step where it stopped."
 
-### P04｜知道该往哪找 / Knowing Where to Look
+Established example: Iven: "This stretch connects." Wanderer: "Let's try somewhere else."
 
-行动：根据自己的缺口选择机制标签、装备类别或律筹来源。法则通过机制标签契约追猎，语义符文仍来自世界池；两者不混成 NPC 指定购物单。
+Play: the report summarizes actual main causes, such as shared hit history, inheritance coefficient, conversion loss, or overwritten timers. Expand for detail only when needed. Never secretly weaken equipment to demonstrate failure.
 
-塔伦：“哪一类东西常从那边出来，我能告诉你。下一次是哪一件，我不知道。”
+Exit: the player forms a testable next hypothesis. Successful players proceed to a more suitable challenge, without being forced back to reenact failure.
 
-探索价值：同一地区的路线、目标与风险变化真实影响收益和构筑适用性。玩家可以选择较稳路线积累资源，或冒险接近更合适的掉落标签。
+### P04 | Knowing Where to Look
 
-保底：研究进度可见，防止无限等待；不直接赠送完整毕业配方。每次契约仍有装备、种子、材料和见闻等多重收获。
+Action: choose mechanic tags, equipment categories, or Law Token sources matching one's gaps. Hunt Laws through mechanic-tag contracts; semantic runes still come from the world pool. Do not merge them into an NPC-prescribed shopping list.
 
-### P05｜留下与拆掉 / What to Keep
+Taren: "I can tell you what kinds of things tend to come from there. Which piece comes next, I don't know."
 
-行动：在备行架与回火砧之间作真实选择。可能保留颜色较低但轨道便宜的底材，也可能选择当前更强、却少一处未来接口的装备。愿望由玩家决定。
+Exploration value: routes, objectives, and risks within a region genuinely affect rewards and build suitability. Choose a safer resource route or risk pursuing more appropriate drop tags.
 
-奥伦：“完整的这件，未必更适合你。”  
-流浪者：“这件先不拆。”
+Guarantee: visible research progress prevents indefinite waiting without gifting a complete final recipe. Each contract still yields multiple gains: equipment, seeds, materials, and discoveries.
 
-系统体验：免费预览，决定添铸、改写或精炼；提交花费准确；淘汰物拆解形成后续资源。首次拆解带通用法则传奇，按规则永久录入法典，不能既当场保留装备又假称完成拆解。
+### P05 | What to Keep
 
-不强制消费：已靠掉落得到合用配装，可以不锻造；不为了完成教程要求花掉刚好有用的律筹。
+Action: make real choices between Loadout and the Tempering Anvil. Keep a lower-rarity base with a cheaper track, or choose stronger current equipment that lacks a future interface. The player sets the wishlist.
 
-出口：玩家能够说出这次保留与舍弃的理由，随后用实际结果检验，而非只看战力箭头。
+Oren: "The complete one may not suit you better."
 
-### P06｜第一次真正不同 / The First Real Difference
+Wanderer: "Don't take this one apart yet."
 
-成长：结构、参数和运行窗口一起达到可用条件。可以在训练首次发现，也可以在挑战中突然发现。记录实际采用的路线，不固定最后换的是哪一件。
+System experience: preview freely and choose Inscribe, Rewrite, or Refine; committed costs are exact; salvage discarded gear into future resources. The first salvage of a legendary bearing a general Law permanently records it in the Codex under the rules. Do not retain the equipment while pretending it was salvaged.
 
-允许的快感：一枚新戒指或一条词的最终提升补齐此前积累，结果突然不再衰减。这是完成已有构筑，不是该物独自提供下一阶力量。
+No compulsory spending: a suitable dropped loadout need not be forged. Do not demand useful Law Tokens merely to complete a tutorial.
 
-伊文：“最后换的是这一件？”  
-流浪者：“前面的也得在。”
+Exit: the player can explain what was kept and discarded, then test those reasons through actual results rather than a power-score arrow.
 
-首次增长主题可作为非阻断标题出现：“圣律从未失效。失控的是结果。”它回应玩家所见，不让 NPC 宣布已解开大失控。
+### P06 | The First Real Difference
 
-后续目标：有的玩家已经能打阈门，有的仍需增加寿命、保持距离、减少误序或提高实际输出。数学过线、能用与可靠通关不强行合并。
+Growth: structure, parameters, and execution window jointly become usable. First discovery may happen in Training or suddenly during a challenge. Record the route actually used; do not prescribe the final changed item.
 
-### P07｜阈门巨像 / Threshold Colossus
+Intended payoff: a new ring or affix supplies the final improvement after earlier accumulation, and the result suddenly stops decaying. This completes an existing build; that item alone does not grant the next tier's power.
 
-目标从早期可见、无门票。玩家不需要先在验律场获得认证，不需要带阈门测径仪；该物是胜利后奖励之一。
+Iven: "This was the last piece you changed?"
 
-场景：门被加固过不止一次，巨像仍在执行。作者知道它与灾变隔离有关，玩家只看到危险与封闭痕迹。
+Wanderer: "The earlier pieces have to be there too."
 
-战斗：真实伤害与目标比较。低效构筑仍造成正伤害；无阶层免疫、锁血、强制回血或剧情装备检测。当前内测按 10¹⁰⁰ 新目标单独调校，不沿用旧验收作为完成证据。
+The first-growth theme may appear as a nonblocking title: "Sacred Law never failed. Its results escaped control." It responds to what the player saw, not an NPC announcing the Great Unraveling solved.
 
-失败：按实际瓶颈返回 P03–P05，可以继续优化，也可换路线。没有强制失败过场。胜利：回收路真实可通，首杀收益与四白代理起步包按产品规则结算。
+Next goals: some players can already fight the Threshold; others need longer lifetimes, maintained distance, fewer sequence errors, or greater actual output. Crossing the mathematical threshold, usability, and reliable clears are not conflated.
 
-塔伦：“到门后了？”流浪者：“到了。”塔伦：“下一趟能少绕一段。”
+### P07 | Threshold Colossus
 
-### P08｜让它照着做 / Let It Follow the Plan
+The target is visible early and requires no ticket. Players need neither Training certification nor the Threshold Gauge, which is one of the victory rewards.
 
-行动：玩家配置四白起步核心，选择适合基础单技能执行的短 Auto 契约。四白并不能完成全部指数三技能方案，更不能突然接替复杂反馈。
+Scene: the gate has been reinforced more than once; the colossus still executes its function. The author knows it concerns catastrophe containment; players see only danger and traces of sealing.
 
-第一次差异：手动能用的组合，代理可能因只能用一号槽而无法完成。界面直接说明能力范围，允许改选适合的契约或装配，不假装自动智能已经完整。
+Combat: compare real damage against the target. Inefficient builds still deal positive damage. No tier immunity, health locks, compulsory healing, or story-equipment checks. Tune the current internal test separately for the new 10¹⁰⁰ target; old acceptance is not completion evidence.
 
-伊文：“它照哪一步做？”流浪者：“先做它能做的。”
+Failure: return to P03-P05 according to the actual bottleneck, optimizing or changing route. No forced-failure cutscene. Victory: the salvage road genuinely opens; first-kill rewards and the four-white-core proxy starter pack settle under product rules.
 
-本单元证明代理链路真实，不是正式版强制每个玩家从此改玩 Auto。首次成功可记录，纯手动玩家后续主线不被 Auto 使用次数门锁拦住。当前原型的 Auto 毕业验收仍单列。
+Taren: "Beyond the gate?" Wanderer: "Yes." Taren: "One less detour next time."
 
-### P09｜重新通行 / Open Again
+### P08 | Let It Follow the Plan
 
-触发：阈门胜利后当代回收工作完成。正式版生活结果不等待玩家强制刷满 Auto 次数。
+Action: fit four white starter cores and choose a short Auto contract suited to basic single-skill execution. Four whites cannot run every exponential three-skill setup, much less suddenly handle complex feedback.
 
-归货棚出现“本次可直送。无需绕行”。稳热接片与已有工具完成外段临时维修。凳子能移回一点，但门边依然冷。
+First difference: a manually usable combination may fail under a proxy limited to slot 1. State capability limits directly and allow a suitable contract or assembly change; do not pretend automation is already complete.
 
-米拉：“这一段稳住了。”  
-流浪者：“里面呢？”  
-米拉：“里面没开过。先吃饭。”
+Iven: "Which step does it follow?" Wanderer: "Start with what it can do."
 
-世界结果：开路和暂稳持久，不因下一章重新写为完全失败。下一步有更广的契约、材料与代理需求，不是 NPC 发放第二阶力量。
+This unit demonstrates a real proxy chain, not a full-game mandate to switch to Auto. Record the first success if applicable; later mainline progress for manual-only players must not require an Auto usage count. The current prototype's Auto graduation acceptance remains separately specified.
 
-## 05｜前期三条路线：具体发现问题，不公布玩家答案
+### P09 | Open Again
 
-本章是制作参考与平衡基线，不作为新手一进游戏就看到的完整攻略。沿用早期 GDD 的参数，新的 10¹⁰⁰ 内测目标与完整时长须重新验证。
+Trigger: complete the present-day salvage work after the Threshold victory. Full-game everyday consequences do not wait for a compulsory Auto grind.
 
-### 5.1 游侠：空间分支繁殖
+The Salvage Shed displays "Direct delivery this time. No detour needed." The Heat-Steady Coupler and existing tools complete temporary outer repairs. The stool moves back a little, though the doorway remains cold.
 
-已知构成：孳生分裂提供可继续分裂的子箭；群猎印记使标记目标的命中历史按分支处理；多个数值词改变续行概率与运行条件。
+Mira: "This stretch is holding."
 
-期望繁殖数 R = 2p。基础 p = 25%，两条 +12 个百分点仍为 49%，尚未过线；p > 50% 才进入相应指数增长区。此后仍受共享寿命、飞行速度、寻敌距离与非零转向时间约束。
+Wanderer: "And inside?"
 
-发现问题：箭变多但很快停止，是概率不足，还是共享历史限制，或根本没有时间再繁殖？这三个问题有不同反馈与回收方向。
+Mira: "We've never opened it. Eat first."
 
-刷取选择：概率与寿命如何分配；更快飞行是否值得牺牲普通伤害；适合开阔地的方案能否在单体 Boss 身上展开。临界词不是唯一有价值的掉落。
+World result: the open road and temporary stability persist, rather than becoming total failures next chapter. Next come broader contracts, materials, and proxy needs, not NPC-issued second-tier power.
 
-成功与余地：过线后先形成可用方案，再追逐启动速度、不同距离下的代数、清群效率与稳定代理。不是得到群猎印记就完成毕业。
+## 05 | Three Early Routes: Discover Concrete Problems, Not Prescribed Answers
 
-### 5.2 炼金：毒链传代
+This section is a production reference and balance baseline, not a complete walkthrough shown to new players on entry. It uses early GDD parameters; the new 10¹⁰⁰ internal target and full durations require renewed validation.
 
-已知构成：独立毒层语义、培养皿的继承与整链刷新、继承系数及施加窗口。Dₙ = Dₙ₋₁ × x；x < 1 时相应级数收敛，x = 1 时总量线性增长，x > 1 时形成指数增长。
+### 5.1 Ranger: Spatial Branch Reproduction
 
-基础 x = 0.80，两条最高 +0.08 仍为 0.96。多件装备共同补足临界，但不因此消除培养皿与毒链的不同计时需求。
+Known components: Breeding Split creates child arrows that can split further; Pack Hunt Mark handles hit history on the marked target by branch; multiple numeric affixes change continuation chance and execution conditions.
 
-发现问题：层数不少而强度没有扩大；换装后强度扩大却总在位移时归零；代理只记一个计时器使两种时限互相覆盖。
+Expected reproduction number R = 2p. Base p = 25%; two +12-percentage-point affixes yield only 49%, still below threshold. Only p > 50% enters the corresponding exponential growth region. Shared lifetime, flight speed, targeting distance, and nonzero turn time still constrain it.
 
-刷取选择：继承与续杯窗口、施法间隔、状态读取、稳定性。爆炸瓶消耗毒链兑现，提前兑现换取确定输出，不免费复制全部未来伤害。
+Discovery questions: if arrows multiply but soon stop, is probability too low, shared history limiting them, or time insufficient for another generation? These three problems need different feedback and salvage directions.
 
-成功与余地：保留单体长链的专长，不能为剧情关卡硬补一套免费清群能力。玩家可改变契约、准备另一方案或调整执行。
+Farming choices: how to divide probability and lifetime; whether faster flight is worth ordinary damage; whether an open-ground setup works against a single boss. Threshold affixes are not the only valuable drops.
 
-### 5.3 法师：双资源递推
+Success and headroom: establish a usable setup after crossing threshold, then pursue startup speed, generations at different distances, pack-clearing efficiency, and stable proxy operation. Obtaining Pack Hunt Mark is not graduation.
 
-已知构成：焚脉打开 A→B，回辉打开 B→A 并加入 c，完整循环 Aₖ₊₁ = abAₖ + c。ab > 1 是指数增长条件，单侧转化高并不等于整轮成立。
+### 5.2 Alchemist: Poison-Chain Inheritance
 
-基础 a = b = 0.78；各一条 +0.16 只有 0.94²，仍不足。多个词需要合理分配，两步必须有真实成功回执。
+Known components: independent poison-layer semantics, culture inheritance and whole-chain refresh, inheritance coefficient, and application window. Dₙ = Dₙ₋₁ × x; the corresponding series converges for x < 1, total quantity grows linearly for x = 1, and growth is exponential for x > 1.
 
-发现问题：面板一侧很强，完整循环仍损失；资源不匹配的误放只消耗动作与热量；热量到顶前可运行轮数不足。
+Base x = 0.80; even two maximum +0.08 affixes yield only 0.96. Multiple pieces jointly reach criticality, without removing the culture's and poison chain's separate timing needs.
 
-刷取选择：两侧转化、起始注入、热量窗口、交替容错与兑现时机。星炉终仪可以提前兑现换取安全的实际结果，不把未执行的未来值发给玩家。
+Discovery problems: many layers without rising potency; stronger potency after changing gear but resets during movement; a proxy with one timer overwrites the two different deadlines.
 
-成功与余地：一次木桩交替成功不等于代理能在沉默后接回正确相位。循环记忆与动作确认继续成为装备目标。
+Farming choices: inheritance and refresh window, cast interval, state reading, and stability. The explosive flask consumes the chain to cash out; early cash-out trades potential for certain output, not a free copy of all future damage.
 
-### 5.4 共同约束
+Success and headroom: retain the specialty of long single-target chains. Do not bolt on free pack clearing for a story stage. Players may change contracts, prepare another setup, or adjust execution.
 
-每条完整起步路线约需一枚语义符文、一条通用法则和三至五条关键或辅助数值词；这是设计参考，不是通关点名配方。正式版保留三套纯职业及跨职业构筑的合法空间。
+### 5.3 Mage: Dual-Resource Recurrence
 
-不设“职业等级达到某值就自动指数”。任务经验与技能开放不能代替装备组合。等级、潜能档、运算阶和已完成挑战必须在文案中分开。
+Known components: Burning Vein opens A→B; Returning Radiance opens B→A and adds c; the complete cycle is Aₖ₊₁ = abAₖ + c. Exponential growth requires ab > 1. Strong conversion on one side does not establish a complete cycle.
 
-## 06｜第二幕：走得更远——把可用变成可靠
+Base a = b = 0.78; one +0.16 affix on each side gives only 0.94², still insufficient. Distribute multiple affixes sensibly, and require actual success receipts for both steps.
 
-### M00｜路的另一头 / The Other End of the Road
+Discovery problems: one strong panel value still leaves a losing full cycle; resource-mismatched casts consume only actions and heat; too few rounds fit before the heat cap.
 
-塔伦带来石渠的货单：几枚接头、一种本地少见的食材和近期道路消息。更远的需求不是神器预言。
+Farming choices: both conversion sides, starting injection, heat window, alternation tolerance, and cash-out timing. Starforge Final Rite can cash out early for a safe actual result, without awarding unexecuted future values.
 
-塔伦：“那边也在修。”流浪者：“修好了什么？”塔伦：“一段水道。还没敢说整条。”
+Success and headroom: one successful dummy alternation does not prove the proxy can recover the correct phase after silence. Loop memory and action confirmation remain gearing goals.
 
-玩法：更多机制标签、代理类别与区域压力出现。玩家选择先扩充装备、研究、代理或尝试生存区域。没有必须先去指定 Boss 领下一阶段护符的线性命令。
+### 5.4 Shared Constraints
 
-可选物件：车旁余程灯芯，文字“车灯还能烧一段。下一处歇脚时，再换”。不建立希望条或马车养成。
+Each complete starter route needs roughly one semantic rune, one general Law, and three to five key or supporting numeric affixes. This is a design reference, not a named-item clear recipe. The full game preserves valid space for three pure-class routes and cross-class builds.
 
-### M01｜镜里只有这件东西 / Only This Piece in the Mirror
+No class level automatically grants exponential growth. Quest experience and skill unlocks cannot replace equipment combinations. Copy must distinguish level, potential band, operation tier, and completed challenges.
 
-律镜开始减少逐件检查的机械劳动。玩家用已发现词建立愿望单，比较当前好、可塑且便宜、适合拆解的底材。
+## 06 | Act II: Farther Along - From Usable to Reliable
 
-伊文：“镜里这一项，按它列出的条件会发生。”流浪者：“下面那句呢？”伊文：“是我猜的。我挪到旁边。”
+### M00 | The Other End of the Road
 
-操作：预览至少作为可用功能出现，不强制玩家花费。想要什么仍由玩家决定；未发现词不能在解锁时一次全亮。镜子不能预言 NPC 命运或高塔奖励。
+Taren brings Stonechannel's cargo list: a few couplings, an ingredient uncommon here, and recent road news. Needs farther away are not prophecies of artifacts.
 
-佐敦之戒可进入合适戒指掉落池，属于正常同档风味物品，不占一个独占法则或承担通关条件。
+Taren: "They're repairing things there too." Wanderer: "What have they fixed?" Taren: "A stretch of waterway. They won't claim the whole thing yet."
 
-### M02｜同一条路，另一种办法 / Another Way Through
+Play: introduce more mechanic tags, proxy categories, and regional pressures. Players choose to expand equipment, research, or proxy capabilities, or try survival regions. No linear order sends them to a specified boss for the next stage's amulet.
 
-行动：玩家在已清理过的地区选择不同契约组合。原方案可能擅长单体却不适合清群；原来较慢的方案在目标持续稳定时更合算。
+Optional object: a Wick for the Next Mile beside the cart, reading "The lamp will burn a while longer. Change it at the next rest stop." No hope meter or cart-development system.
 
-叙事：奥伦看到玩家留下两套装备，不问哪一套永远更强，只问这次带去哪。选择带来角色关系，不需要新增剧情分支地图。
+### M01 | Only This Piece in the Mirror
 
-奥伦：“那套不拆？”流浪者：“另一边还能用。”
+The Law Lens begins reducing repetitive item inspection. Players build wishlists from discovered affixes, comparing useful-now bases, cheap reshaping candidates, and salvage candidates.
 
-成长：法则收录、重复种子、研究副本与材料使换路线不必全部从零。普通拆解损耗保留真实取舍，不强迫所有东西随阶段报废。
+Iven: "This entry in the lens will happen under the conditions listed." Wanderer: "And the line below?" Iven: "My guess. I'll move it aside."
 
-### M03｜它漏掉了哪一步 / The Step It Missed
+Play: preview must at least be available, without compulsory spending. Players still decide what they want. Unlocking the lens must not reveal every undiscovered affix. It cannot predict NPC fates or high-tower rewards.
 
-行动：为当前方案配置更完整的代理。四核心与三个附件槽共同承担能力，不能只靠升级一件“代理等级核心”。
+Zoltun's Ring may enter an appropriate ring drop pool as an ordinary same-band flavor item. It neither consumes an exclusive Law nor serves as a clear condition.
 
-报告样例：扫描间隔错过公开前摇；只有一个计时器；没有成功回执就推进序列；换目标清掉仍有效记录。只显示实际发生的主因，不为了剧情制造故障。
+### M02 | Another Way Through
 
-伊文：“是它没看见，还是看见以后没做？”流浪者：“先看记录。”
+Action: choose different contract combinations in previously cleared regions. The original setup may excel at single targets but not packs; a formerly slower setup may pay off when a target remains stable.
 
-追逐：类别契约、固件、能力词、种子与附件组合。已手动解决的问题成为新的执行条件问题；代理解决机械执行，不替玩家提出未知构筑。
+Narrative: seeing two retained loadouts, Oren asks where this one is going, not which is always stronger. Choices develop relationships without requiring new story-branch maps.
 
-四位生存 Boss 的探索从这里并行，顺序由玩家决定。以下 M04–M07 是内容定位，不是强制顺序。
+Oren: "Not taking that set apart?" Wanderer: "It still works on the other route."
 
-### M04｜沉铁廊：承压之证 / Ironfall Galleries
+Growth: recorded Laws, repeat seeds, research copies, and materials keep route changes from starting entirely over. Ordinary salvage losses preserve real tradeoffs without forcing every item obsolete at a stage boundary.
 
-处境：支承面修补过许多次，冲击仍在继续。铁刑官不宣读罪状，不认证主角。
+### M03 | The Step It Missed
 
-构筑问题：如何在持续压力与击退下保住自己的输出和生命。减伤、回避、屏障、恢复可组合，不只接受某一防御答案。
+Action: configure a fuller proxy for the current setup. Four cores and three attachment slots jointly supply capabilities; upgrading one "proxy level core" cannot do it all.
 
-探索与积累：先在区域契约识别实际压力，调整防御与执行；也可直接挑战。击杀与三段公开证明分开完成，已完成部分保留。
+Report examples: scan interval missed a public windup; only one timer available; sequence advanced without a success receipt; target switch cleared valid records. Show only actual main causes, never faults manufactured for story.
 
-不移铁楔是首杀相关收益，可以改善后续相位保持，不是完成这处证明的先决条件。取得它不自动完成另外三项证明。
+Iven: "Did it fail to see, or see and fail to act?" Wanderer: "Let's check the record."
 
-奥伦：“受力的地方，我认得一些。”流浪者：“它为什么还在撞？”奥伦：“那我答不上来。”
+Pursuit: category contracts, firmware, capability affixes, seeds, and attachment combinations. A manually solved problem becomes an execution-condition problem. Proxies solve mechanical execution, not undiscovered build ideas.
 
-### M05｜折光庭：让光过去 / Prism Court
+Exploration of the four survival bosses proceeds in parallel from here, in player-chosen order. M04-M07 locate content rather than mandate an order.
 
-处境：光路指向已经不在原位的接收处。棱光母体没有母神身份，也没有原文明讲解。
+### M04 | Ironfall Galleries: Proof Under Pressure
 
-构筑问题：如何识别公开危险、移动避让，又不使核心状态不断丢失。手动时机和代理预警都可尝试，能力不足有明确反馈。
+Situation: the supporting surfaces have been repaired many times; impacts continue. The Iron Warden neither reads charges nor certifies the protagonist.
 
-折光步衣保存成功闪避后的目标与计时，不替玩家完成闪避。击杀与回避方向的证明分别记录，玩家不必穿步衣才受认可。
+Build question: maintain output and life under sustained pressure and knockback. Damage reduction, avoidance, barriers, and recovery may combine; there is no single accepted defense answer.
 
-雷诺的警徽在项链槽已可用的合适阶段进入正常掉落。塔伦只说“这根链是后来穿的”，不讲雷诺来到本世界的经过。
+Exploration and accumulation: identify pressure in regional contracts and adjust defense and execution, or challenge directly. Complete the kill and three public proof segments separately; retain completed parts.
 
-### M06｜腐潮园：留下能继续的部分 / Blight Gardens
+The Steadfast Wedge is a first-kill-related reward that can improve later phase retention, not a prerequisite for this proof. Obtaining it does not complete the other three proofs.
 
-处境：容器边界仍在，内部的生长早已越过它。一块照料牌只剩“……今日无需追加”。
+Oren: "I know something about the load-bearing parts." Wanderer: "Why is it still striking?" Oren: "That I can't answer."
 
-构筑问题：恢复受到压制时怎样维持生存；为了防御腾出的词条是否让攻击条件重新不足。玩家需要平衡完整方案，不只是把所有格子堆成防御。
+### M05 | Prism Court: Let the Light Pass
 
-净种蒸馏釜按既有恢复语义运作；不朽后转既定沉默用途，不额外编写圣物代价。此处首杀不净化全世界。
+Situation: light paths point toward receivers no longer in place. The Prismatic Matrix is not a mother goddess and does not explain the lost civilization.
 
-可以带回一小块便于比较的普通样片，不作为新的角色力量钥匙。
+Build question: recognize public dangers and move around them without repeatedly losing core states. Try manual timing or proxy warnings, with clear feedback for insufficient capability.
 
-米拉：“先单放。别接到正在用的地方。”
+The Prismstep Mantle retains targets and timers after a successful Dodge; it does not dodge for the player. Record the kill and avoidance proof separately, without requiring the mantle for recognition.
 
-### M07｜断响厅：尚未写完的一步 / Hushed Hall
+Raynor's Badge enters normal drops at a suitable stage after the necklace slot becomes available. Taren says only, "The chain was added later," without explaining how Raynor came to this world.
 
-处境：声音规律截断，再从别处开始。断序者不是掌握时间真相的神。
+### M06 | Blight Gardens: Keep What Can Continue
 
-构筑问题：控制造成哪一步中断；怎样从最后真实回执恢复，或在断链前兑现。不同方案可用不同保持与执行能力解决，不点名一枚指环作为唯一答案。
+Situation: the container boundary remains, but growth inside crossed it long ago. A care sign retains only "...no additional dose needed today."
 
-续章指环保留其局部续接作用，不补造未完成动作，不在提前击败此 Boss 时开放完整预见档。
+Build question: survive suppressed recovery, and judge whether affixes freed for defense leave attack conditions insufficient again. Balance the whole setup rather than fill every slot with defense.
 
-伊文：“最后确认的是哪一步？”流浪者：“这里。”伊文：“后面先空着。”
+The Seed-Cleansing Still follows established recovery semantics; after Immortality it takes its designated silence-related role, without invented relic costs. This first kill does not purify the world.
 
-四处压力使玩家逐渐形成更可靠的刷取与战斗方案。数值和组件追逐贯穿其间，而不是四段证明小游戏之间只播放对白。
+A small ordinary sample may be brought back for comparison, not as a new key to character power.
 
-### M08｜恒生 / Everlife
+Mira: "Keep it separate first. Don't connect it to anything in use."
 
-条件：四项真实证明齐备，玩家在恒生坛主动确认。不要求阅读四块古碑、穿齐四件暗金或完成所有生活支线。
+### M07 | Hushed Hall: An Unfinished Step
 
-伊文：“四处的结果都在。”米拉：“都核过了？”流浪者：“开始吧。”
+Situation: sound cuts off in a pattern, then starts elsewhere. The Sequence Breaker is not a god who knows time's truth.
 
-收益：永久不朽真实生效，角色退出生命死亡判定。界面准确展示纯防御词退役、同槽合法替换与 100% 投入处理；不消耗正常锻造轨道。控制与效率问题继续存在。
+Build question: which step crowd control interrupts, and how to resume from the last real receipt or cash out before a chain breaks. Different setups may use different retention and execution capabilities; no ring is the sole named answer.
 
-预见档的获取池由此开放，不发放整套成品高阶代理。没有神谕、血统、灵魂税、强制牺牲或终局反悔。
+The Continuance Ring retains its local continuation role. It does not fabricate unfinished actions or unlock the full Foresight band when this boss is defeated early.
 
-### M09｜空下的药袋 / The Empty Medicine Pouch
+Iven: "Which step was last confirmed?" Wanderer: "Here." Iven: "Leave the rest blank for now."
 
-米拉把为流浪者单留的伤药放回公共药柜，袋子改装螺帽。
+These four pressures gradually produce more reliable farming and combat setups. Numeric and component pursuits run throughout, rather than conversations between four proof minigames.
 
-米拉：“这份不用替你留了。”流浪者：“给需要的人。”莱娅：“明早还留饭吗？”流浪者：“留。”
+### M08 | Everlife
 
-玩家可以继续装备转换、配置新池中的组件，或直接尝试后期回收。没有强制连续锻造和循环次数考核。
+Condition: four real proofs complete, followed by voluntary confirmation at the Everlife Altar. No requirement to read four tablets, wear four uniques, or finish every everyday side story.
 
-本幕结果：个人死亡风险退出；物资与路线改善保留；居民尚有普通风险；历史仍不清楚。玩家没有因不朽获得所有装备语义或世界解释。
+Iven: "The results from all four places are here." Mira: "All checked?" Wanderer: "Begin."
 
-## 07｜第三幕：未止之物——多件装备成为一个过程
+Benefit: permanent Immortality genuinely activates; the character leaves health-based death checks. The interface accurately shows pure-defense affix retirement, valid same-slot replacements, and 100% investment handling, without consuming ordinary forging tracks. Control and efficiency problems remain.
 
-### L00｜先有接法，再进档案库 / A Connection Before the Archive
+This opens the Foresight acquisition pool, not a complete finished high-tier proxy. No oracle, bloodline, soul tax, forced sacrifice, or endgame revocation.
 
-当下动机：米拉与奥伦发现暂时维修仍局限于外段，需要能比较的接续样板。双印库有可观察的成对接面，值得接近；那里不保证有可读历史。
+### M09 | The Empty Medicine Pouch
 
-成长：阶段世界池与契约来源开始允许最小两层构筑。必须在双印首杀之前可得；不能把第一次必需的承接能力唯一放在单继档案册里。
+Mira returns the Wanderer's reserved medicine to the communal cabinet and repurposes the pouch for nuts.
 
-玩家需要已有来源引擎、合法后继、快照保留与动作窗口。发现一枚新承接符文只是开始。可以先刷条件，也可试探双印；不设置“验律场已盖章”门锁。
+Mira: "We don't need to reserve this for you anymore." Wanderer: "Give it to someone who needs it." Leia: "Still save you breakfast?" Wanderer: "Yes."
 
-奥伦：“边能对上。接进去会怎样，还没试。”流浪者：“先拿小的去验。”
+Players may continue converting equipment, fit components from the new pool, or try late-game salvage directly. No compulsory consecutive forging or cycle-count exam.
 
-### L01｜送到下一处 / To the Next Step
+Act outcome: personal death risk is removed; supply and route improvements persist; residents retain ordinary risks; history remains unclear. Immortality does not grant every equipment semantic or explain the world.
 
-探索循环：在较易契约中取来源与承接类零件，在实际训练中看见快照生成、等待、消费或过期，再选择补保留、延迟、窗口或执行能力。
+## 07 | Act III: What Has Not Ceased - Many Items Become One Process
 
-具体问题：第一个过程完成，不代表后继能消费；损耗过大可能削弱收益；目标离场可能让接收动作失去条件。换入更强后继时，也可能挤掉来源的临界词。
+### L00 | A Connection Before the Archive
 
-伊文：“前一处成了，后一处没接到。”流浪者：“分开记。”
+Immediate motivation: Mira and Oren find temporary repairs remain confined to the outer stretch and need a comparable Junction Template. The Twin-Seal Archive has observable paired interfaces worth approaching, but promises no readable history.
 
-出口：真实两层性质已被验证，或已有其他合法方案能完成目标。玩家可以继续使其可靠，不能由一件装备获得时直接设置“两层完成”。
+Growth: the stage's world pool and contract sources begin allowing a minimal two-layer build. These must be available before the first Twin-Seal kill. The first necessary handoff capability cannot exist only in the Single-Successor Ledger.
 
-### L02｜双印档案官与无终祷文 / Twin-Seal Archivist
+Players need an existing source engine, valid successor, snapshot retention, and action window. A new handoff rune is only a beginning. Farm the conditions first or probe Twin-Seal, without a Training-stamp gate.
 
-场景：双印库的成对印面许多只剩一半，保存的是结果关系的残存作用，不是一座等待开启的完整教会档案馆。
+Oren: "The edges match. We haven't tested what happens when they're joined." Wanderer: "Test a small one first."
 
-战斗：以实际结果越过双印，不检查指定装备。单继档案册提供专门单一后继用途与后续优化价值；不反向承担自己的首杀前置。
+### L01 | To the Next Step
 
-回收：接续样板与无终祷文在可检查区域获得，不吞掉正常战利品。附近落款只剩应许教会的名字。
+Exploration loop: obtain source and handoff parts in easier contracts; observe snapshots being created, waiting, consumed, or expiring in actual Training; then choose more retention, delay, window, or execution capability.
 
-流浪者：“这几道越来越浅。”伊文：“后面呢？”流浪者：“还在写。”
+Concrete problems: completion of the first process does not mean a successor can consume it; excessive loss may weaken gains; target departure may invalidate the receiving action. A stronger successor may also displace a threshold affix from the source.
 
-玩家可查看形式 1 + 1/2 + 1/3 + …，但尝试装备仅提示“不知道为什么，这个东西失效了”。原装备不变，不扣材料，无修复任务。查看与尝试可以以后再做，不要求用它完成本段。
+Iven: "The first part worked. The next didn't receive it." Wanderer: "Record them separately."
 
-后果：得到能用的暗金、可比样板，以及不能用的无限暗示；不是获得神力或教会真相。
+Exit: an actual two-layer property is verified, or another valid setup can complete the target. Players may keep improving reliability. Obtaining an item must not directly set "two layers complete."
 
-### L03｜第三处也要接上 / The Third Connection
+### L02 | Twin-Seal Archivist and the Endless Prayer
 
-生活：回镇后在旁路比对样板。一向能接，一向不能。米拉不允许把未知面直接接到在用供热上；这不会变成居民伤亡或装备销毁演出。
+Scene: many paired seal faces in the Twin-Seal Archive retain only one half. What remains is the residual operation of result relationships, not a complete church archive awaiting an unlock.
 
-莱娅：“剩下的也能这样？”奥伦：“别一起算进去。”
+Combat: overcome Twin-Seal with actual results, without specified-equipment checks. The Single-Successor Ledger supplies a specialized single-successor role and later optimization value; it cannot be its own first-kill prerequisite.
 
-成长：为三技能固定嵌套寻找第二次合法承接。三枚技能必须各有实际作用，载体与谱系访问限制继续有效。三件物品的图标相连不算构筑。
+Salvage: obtain the Junction Template and Endless Prayer in an inspectable area, without replacing normal loot. A nearby attribution retains only the Church of the Promise's name.
 
-积累与验证：玩家调整来源增长、两次保留损耗、快照有效动作与三槽序列宽限。可能换成另一职业作为中间载体；叙事不要求单一职业组合。
+Wanderer: "These strokes grow fainter." Iven: "And after them?" Wanderer: "It is still writing."
 
-出口：三层固定嵌套可用，或其他合法方案满足下一挑战。三相奖励中的归一之冠不是当前构筑条件。
+Players can inspect the form 1 + 1/2 + 1/3 + …, but attempting to equip it displays only "For some unknown reason, this thing no longer works." Existing equipment stays unchanged, no materials are charged, and no repair quest appears. Inspection and attempts may wait until later; this segment does not require using it.
 
-### L04｜三相编织者 / Threefold Weaver
+Consequence: a usable unique, a comparable template, and an unusable suggestion of infinity, not divine power or the Church's truth.
 
-三相织场早在玩家进入前就已运转，没有加冕台。三处作用彼此接续，却看不见这些结果曾服务什么生活。
+### L03 | The Third Connection
 
-战斗主要检验来源、承接与有限执行条件。不能暗中要求尚未取得的归一之冠或结果反馈，也不能为了阻止高效构筑锁血。
+Everyday life: compare the template on a bypass after returning. One direction connects; the other does not. Mira refuses to connect an unknown face directly to active heating. This does not become a resident-casualty or equipment-destruction spectacle.
 
-胜利后获得冠的基础版本与正常收益，近处干扰解除。重复掉落仍可追逐更合用词条和种子，不重复演示首次开路。
+Leia: "Will the rest work like this too?" Oren: "Don't count them in together."
 
-流浪者：“这里停了。”伊文：“能确认的这一处？”流浪者：“这一处。”
+Growth: find a second valid handoff for fixed three-skill nesting. All three skills must actually contribute; carrier and lineage-access restrictions remain. Connected icons for three items do not constitute a build.
 
-出口只确认玩家获得了反馈闭合的重要载体。反馈是否成立、能保持多久，留给实际装配与运行判断。
+Accumulation and validation: adjust source growth, losses across two retention steps, snapshot-valid actions, and three-slot sequence grace. Another class may become the intermediate carrier; story does not demand a single-class combination.
 
-## 08｜第四幕前段：一席之暖——后期仍然需要刷宝
+Exit: usable fixed three-layer nesting, or another valid setup meeting the next challenge. The Crown of Return awarded by Threefold is not a condition of the current build.
 
-### L05｜冠之外的缺口 / What the Crown Does Not Supply
+### L04 | Threefold Weaver
 
-玩家装上归一之冠，发现它只提供既定的合法闭合边。原来的三技能序列、来源强度、快照与后继条件仍要成立。
+The Threefold Loom was operating long before the player's arrival and has no coronation dais. Three effects hand off to one another, but nothing reveals the lives these results once served.
 
-可能的问题：换冠失去一条关键词；上一轮结果到达下一轮前失效；回送完成后没有真实重新施法；代理把未成功的动作当作已完成。
+Combat chiefly tests sources, handoffs, and finite execution conditions. Do not secretly require the unacquired Crown of Return or result feedback, or lock health to obstruct efficient builds.
 
-伊文：“留下来的能再用？”流浪者：“得接回去。还得再做。”
+Victory awards the base crown and normal rewards, clearing nearby interference. Repeat drops still offer better-fitting affixes and seeds, without reenacting the first opening of the route.
 
-已经准备充分的玩家可以立即成立，剧情不安排必败。未成立者回到标签契约、种子与研究追逐，不再接一个“唤醒冠”的主线任务。
+Wanderer: "It stopped here." Iven: "This is the part we can confirm?" Wanderer: "This part."
 
-### L06｜不只是再高一点 / More Than Another Layer
+The exit confirms only acquisition of an important carrier for feedback closure. Actual assembly and execution determine whether feedback works and how long it lasts.
 
-目标：先使反馈幂塔成为可复现方案，再优化启动、保留和抗干扰。10↑↑10 是真实可经过的中间刻度，不代表完整游戏结束。
+## 08 | Early Act IV: A Seat in the Warmth - Loot Still Matters Late
 
-刷取选择：较高保留与较短周期如何分配；断序保护与纯输出如何取舍；同样的增长阶层，哪套更适合狭窄通道、目标切换或持续单体。
+### L05 | What the Crown Does Not Supply
 
-报告区分实际塔高、来源结果、完整回送次数与中断，不展示虚构的自动升阶进度。
+Fitting the Crown of Return reveals that it supplies only the designated valid closing edge. The existing three-skill sequence, source strength, snapshot, and successor conditions must still hold.
 
-生活：奥伦把样板与本地接面记录交给流浪者。需要的是合用接座，不是把整座旧塔搬回来。
+Possible problems: the crown displaces a key affix; the previous round's result expires before the next; completed return is not followed by an actual recast; the proxy treats an unsuccessful action as complete.
 
-### L07｜旧地方的新用途 / A New Use for an Old Find
+Iven: "Can what remains be used again?" Wanderer: "It has to connect back. Then we have to do it again."
 
-触发：玩家在后期世界池中发现能将完整结果作为后继复合载荷的新语义，或在已有收藏中发现它与新能力的兼容可能。不是固定取得一件“递阶铭文”。
+Prepared players may succeed immediately, without a scripted failure. Others return to tagged contracts, seeds, and research rather than receive another mainline quest to "awaken the crown."
 
-玩法：来源、承接、复合和兑现四类职责开始显露。某件物品只打开其中一种行为，普通数值词仍决定能否在当前场景完整执行。
+### L06 | More Than Another Layer
 
-流浪者：“这件以前留过。”奥伦：“当时没地方用。”
+Goal: make the feedback power tower reproducible, then optimize startup, retention, and interference resistance. 10↑↑10 is a real intermediate milestone, not the full game's end.
 
-重返旧区域有具体目的：某种能力标签、合用侧词、短命运路线或研究进度。旧地图不只因为任务要求重跑，而是成为主动选择的来源。
+Farming choices: higher retention versus shorter cycles; sequence-break protection versus pure output; which setup at the same growth tier suits narrow passages, target switching, or sustained single-target combat.
 
-出口：一个值得试的更高阶假设。不给运算阶升级动画，不因物品入袋就改变伤害类型。
+Reports distinguish actual tower height, source result, complete return count, and interruptions, without fictional automatic tier-progress meters.
 
-### L08｜把整个过程接过去 / Carry the Whole Process
+Everyday life: Oren gives the Wanderer the template and local interface records. They need a suitable socket, not the entire old tower brought home.
 
-构筑任务：原先只接数值的后继，必须与新的复合承接能力共同工作，才能将一个已完成过程用于更高层的有限重复。具体条件与受限语义见第 10 章。
+### L07 | A New Use for an Old Find
 
-验证重点：是否取得完整而非预计结果；是否保留必要来源信息；后继是否消费正确对象；计时与执行能否容纳兑现。
+Trigger: discover new semantics in the late-game world pool that use complete results as successor composition payloads, or discover a new compatibility in an existing collection. No fixed acquisition of a "tier-raising inscription."
 
-玩家可以追求较快较脆的配置，或保留较多容错；不用固定三个名字组成必刷套装。缺少任一必要职责会给出对应真实反馈，不用“圣物未齐”概括。
+Play: four roles emerge: source, handoff, composition, and cash-out. Each item opens only one behavior; ordinary numeric affixes still determine whether the whole process can execute in the current setting.
 
-伊文：“你接过去的是哪个结果？”流浪者：“已经做完的这一份。”
+Wanderer: "I kept this before." Oren: "There was nowhere to use it then."
 
-### L09｜新的结构真的发生了 / A New Structure, Verified
+Return to old regions for concrete purposes: a capability tag, suitable secondary affix, short Fate route, or research progress. Old maps become chosen sources rather than quest-mandated reruns.
 
-条件：高阶复合构筑在训练或实战真实成立。界面只在求值可验证时记录新运算性质。更高塔并不自动叫作更高运算阶。
+Exit: a higher-order hypothesis worth testing. No operation-tier upgrade animation or damage-type change simply because an item enters the pack.
 
-玩家仍需考虑实际载荷与窗口。刚能构成的高阶表达式，未必比成熟旧方案在短契约里更有效；选择继续用旧方案积累也合理。
+### L08 | Carry the Whole Process
 
-伊文：“不是同一列变长了。”流浪者：“整列进了下一步。”
+Build task: a formerly numeric-only successor must work with new composition-handoff capabilities to use a completed process in higher-level finite repetition. See section 10 for concrete conditions and restricted semantics.
 
-故事：高塔的目标仍在远处，旧遗迹中相似的接续痕迹比玩家刚确认的更多。人物不会因此知道它们当年组合成了什么。
+Validation focus: complete rather than projected result; necessary source information retained; correct object consumed by the successor; timing and execution sufficient for cash-out.
 
-### L10｜第一道 g 标记 / The First g Mark
+Players may pursue a faster, fragile setup or more tolerance. Do not prescribe three names as a mandatory farming set. Each missing role gives corresponding real feedback, not the blanket explanation "relics incomplete."
 
-成长：通过继续补足复合层次、有效载荷与执行条件，实际输出首次达到或超过 g₁ 所指的标尺。不是做完两次指定契约就从三阶升到四阶。
+Iven: "Which result did you pass along?" Wanderer: "This one, already completed."
 
-获得新物品、尝试新组合、改写旧底材和保存有效方案可交错发生。一次幸运掉落可能成为最后拼图，但必须能追溯此前所有依赖。
+### L09 | A New Structure, Verified
 
-报告区分“目标 g₁”“历史已达 g₁”“本场当前结果”。记录不提供下一场免费 g₁ 种子，战斗状态仍在遭遇结束后重置。
+Condition: a high-order composition genuinely works in Training or combat. Record a new operation property only when evaluation is verifiable. A taller tower is not automatically a higher operation tier.
 
-流浪者：“写下来的短了。”伊文：“只写已经确认的。”
+Actual payload and windows still matter. A newly viable high-order expression may be less effective in short contracts than a mature old setup; continuing to accumulate with the old setup is reasonable.
 
-### L11｜下一轮用什么 / What the Next Round Uses
+Iven: "It isn't the same sequence getting longer." Wanderer: "The whole sequence went into the next step."
 
-新问题：如何让上一轮已完成的结果决定下一轮的复合层次，而非只当普通伤害或同阶塔高。该能力来自合法的参数承接组合，不再由一件“阶序回填”独立交付。
+Story: the high tower remains distant. Old ruins contain more similar connection traces than the player has just verified, but characters do not thereby learn what those once combined into.
 
-成长条件：完整复合载荷、正确参数路由、既定唯一反馈闭合边、重新执行的三技能序列与足够保持条件共同成立。每个条件都必须有物品或技能来源。
+### L10 | The First g Mark
 
-反馈：传错字段、结果过期、取了未完成回执或丢失来源，都说明具体阻断。成功后登记实际递升，不能用 UI 下标自增冒充 g₂。
+Growth: further composition depth, effective payload, and execution conditions bring actual output to or beyond the g₁ benchmark for the first time. Two specified contracts do not promote a player from third to fourth tier.
 
-这段仍有掉落与资源目标，不是解锁按钮后的自动动画。无终祷文保持失效。
+New items, combinations, rewritten old bases, and saved working setups may interleave. A lucky drop may be the final piece, but every earlier dependency must remain traceable.
 
-### L12｜把能成的一次留下来 / Making It Work Again
+Reports distinguish "target g₁," "historically reached g₁," and "current encounter result." Records do not supply a free g₁ seed next encounter; combat state still resets after encounters.
 
-追逐方向：让已成立的 g 序列在有限战斗中启动、持续与兑现。累积的是合用装备和执行方案，不是跨遭遇偷带数值快照。
+Wanderer: "It takes less writing now." Iven: "Write only what's confirmed."
 
-玩家针对当前瓶颈追猎不同能力：反馈候选保留、动作窗口、回执容量、沉默应对、目标延续或材料效率。手动玩家可以用操作弥补部分执行要求，Auto 必须具备相应装配能力。
+### L11 | What the Next Round Uses
 
-不要求固定六十四次契约、六十四件钥匙、六十四张地图，或至少失败一次。g 序列下标是数学定义，不是剧情收集数量。
+New question: make the previous round's completed result determine the next round's composition depth, rather than ordinary damage or same-tier tower height. This capability comes from valid parameter-handoff combinations, not a single standalone "order backfill" item.
 
-米拉：“这次还带那件不能用的？”流浪者：“留在这里。”米拉：“饭还是给你留着。”
+Growth conditions: complete composition payload, correct parameter routing, the designated unique feedback-closing edge, a re-executed three-skill sequence, and sufficient retention must all hold. Every condition needs an item or skill source.
 
-出口：玩家已有能继续挑战的实际方案。是否先在训练达到 g₆₄，由玩家决定；不增加最终认证门。
+Feedback: wrong field passed, expired result, unfinished receipt selected, or lost source each identify a specific blocker. Register actual escalation after success; an incrementing UI subscript cannot impersonate g₂.
 
-### L13｜高塔前的选择 / Before the Spire
+This segment retains drop and resource goals, not an automatic animation after an unlock button. The Endless Prayer remains unusable.
 
-当下目标清楚：在无声高塔越过零号，找到符合已验接面条件的接座。NPC 不要求献出 g₆₄，也不能保证任何发光部件都能修塔。
+### L12 | Making It Work Again
 
-奥伦：“看相同的接面。看不清的，别硬拆。”米拉：“不用把整座塔搬回来。”流浪者：“带能用的。”
+Pursuit: start, sustain, and cash out an established g sequence within finite combat. Accumulate suitable equipment and execution plans, not numeric snapshots smuggled across encounters.
 
-玩家可以继续刷种子、换高阶组合、提高代理可靠性，或直接进入最终战。主线不点名完整装配，不检查彩蛋、不消耗门票、不强制退休旧方案。
+Hunt capabilities addressing the current bottleneck: feedback-candidate retention, action windows, receipt capacity, silence response, target continuity, or material efficiency. Manual play can compensate for some execution needs; Auto requires corresponding fitted capabilities.
 
-本段将生活目的与大数挑战放在一起：付出越来越大，想带回来的仍是能够用上的一小部分。
+No fixed requirement for sixty-four contracts, keys, or maps, or at least one failure. The g sequence's subscript is a mathematical definition, not a story collection count.
 
-## 09｜终局四单元：胜利成立，真相仍远
+Mira: "Taking the unusable thing again?" Wanderer: "I'll leave it here." Mira: "I'll still save you a meal."
 
-### E00｜塔顶零号 / Spire Zero
+Exit: the player has an actual setup for further challenges. Reaching g₆₄ in Training first is optional; do not add a final certification gate.
 
-无声高塔 / Silent Spire。零号是大失控持续作用在本区域的可接近表现，不是圣律本源、教会创始者或最终犯人。
+### L13 | Before the Spire
 
-玩家以真实合法构筑完成可兑现的 g₆₄ 级结果并战胜零号。可在战前训练已达到，也可在战斗中首次达到；不得以训练记录直接加给当前伤害。最终目标应由真实表达式与战斗条件调校，而非检查“装备齐全”后播放胜利。
+The immediate goal is clear: pass Zero in the Silent Spire and find a socket matching verified interface conditions. NPCs do not demand a sacrifice of g₆₄ or guarantee that any glowing part can repair the tower.
 
-无回血、锁血、阶层免疫或无视不朽的伤害。公开控制、目标条件与执行窗口构成压力。其他足够强的合法方案同样认可，不能写死唯一三技能配方。
+Oren: "Look for matching interfaces. Don't force apart what you can't make out." Mira: "You don't need to bring the whole tower home." Wanderer: "Just what we can use."
 
-胜利先明确结算，回收区域开放，封印测高仪记录结果。调流接座经已知条件确认可以带走。零号不在下一帧复活。
+Players may keep farming seeds, change high-order combinations, improve proxy reliability, or enter the final fight. Mainline progress neither names a complete assembly nor checks Easter eggs, consumes tickets, or forces old setups into retirement.
 
-流浪者：“这枚能带走。”没有“我终于明白了”。
+This segment places an everyday purpose beside an immense-number challenge: effort grows ever larger, but what one hopes to bring back remains a small, useful part.
 
-### E01｜不在刻度之内 / Beyond the Scale
+## 09 | Four Ending Units: Victory Is Real, Truth Remains Distant
 
-已胜利后，深处出现不同于零号的回应。叙事附页留下：“可辨刻度：TREE(3)。对应之物：未明。”标记之外还有另一道回应。
+### E00 | Spire Zero
 
-作者确定它们是更大尺度的 Boss 级存在，人物不知道名字、身份与动机。没有新战斗血条、解锁任务、强制续关或科学讲座。
+The Silent Spire. Zero is an approachable manifestation of the Great Unraveling's continuing effect in this region, not Sacred Law's source, the Church's founder, or the ultimate culprit.
 
-不是运行时比较失败造成“神秘”，也不是数值溢出。它是有限、刻意的叙事远景，不冒充已制作对应战斗系统。
+With a real, legal build, the player produces a realizable g₆₄-level result and defeats Zero. It may have been reached in earlier Training or first reached in this fight; a Training record cannot be added directly to current damage. Tune the final target against actual expressions and combat conditions, not an "equipment complete" check followed by a victory animation.
 
-更大的存在不攻击小镇、不绕过不朽、不取消首杀。玩家感到的绝望来自尺度，而非奖励被没收。
+No healing, health locks, tier immunity, or damage bypassing Immortality. Public crowd control, target conditions, and execution windows supply pressure. Recognize other sufficiently strong legal setups rather than hard-code one three-skill recipe.
 
-### E02｜把这一步交出去 / Pass On This Step
+First settle victory explicitly, open the salvage area, and record the result in the Sealed Height Gauge. Confirm the Flow-Regulating Socket can be removed under known conditions. Zero does not revive the next frame.
 
-回到哈姆雷特。奥伦复核接座与已有样板；米拉在外段装配；莱娅按有限步骤检查。此前材料、测量与练习在此共同产生结果，不是一枚万能零件点亮全世界。
+Wanderer: "This one can come with us." No "Now I finally understand."
 
-米拉：“只开这一段。”莱娅：“声音变了就停。这里漏，就退回原位。”米拉：“对。”
+### E01 | Beyond the Scale
 
-伊文写“外段已验。内段未开”。塔伦可以抄走记录，但其他装置仍需另验。最终战后不再强制刷材料，不拿玩家毕业装备填维修槽。
+After victory, a response unlike Zero's appears in the depths. A narrative appendix reads: "Discernible scale: TREE(3). Corresponding entity: unknown." Another response lies beyond the marking.
 
-状态：外段供热可靠改善；莱娅能够接一班；未知部分仍封着。故事承认普通手艺与协作，没有将主角力量变成全镇共享的神力。
+The author knows these are larger-scale boss-level entities. Characters know neither names, identities, nor motives. No new combat health bar, unlock quest, compulsory continuation, or science lecture.
 
-### E03｜门边也能坐了 / A Seat by the Door
+This is not "mystery" created by a failed runtime comparison or numeric overflow. It is a finite, deliberate narrative horizon, not a claim that the corresponding combat systems exist.
 
-莱娅把开场挪走的凳子搬回门边。风没有变暖，门仍要关好。米拉交班，坐下来吃热饭。塔伦放下行囊。
+Greater entities do not attack the town, bypass Immortality, or revoke first kills. Despair comes from scale, not confiscated rewards.
 
-塔伦：“上面到底是什么？”  
-流浪者：“我不知道。”  
-塔伦：“里面还在响？”  
-流浪者：“还在。”  
-米拉：“这里也能坐了。吃饭吧。”
+### E02 | Pass On This Step
 
-结束文字：
+Return to Hearthside. Oren checks the socket against existing templates; Mira assembles it on the outer stretch; Leia follows finite inspection steps. Earlier materials, measurements, and practice jointly produce the result. One universal part does not light the whole world.
 
-> 旧世界没有向他们作出解释。  
-> 今晚，门边也能坐人了。  
-> The old world offered no explanation. Tonight, there was a warm seat by the door.
+Mira: "Open only this stretch." Leia: "If the sound changes, stop. If it leaks here, return it to its old position." Mira: "Right."
 
-通关后保留装备、构筑记录、不朽、首杀与供热改善。可以继续契约与优化，不清空玩家此前投入，不重演未修好状态。无终祷文仍失效，远景不是本轮必打续章。
+Iven writes, "Outer section verified. Inner section unopened." Taren may copy the record, but other devices still need separate checks. No compulsory material farming after the final battle or sacrificing completed endgame gear to repair slots.
 
-## 10｜完整高阶成长规格：不再用物品名代替系统
+State: outer heating improves reliably; Leia can take a shift; unknown sections remain sealed. Story recognizes ordinary craft and cooperation, without turning the protagonist's power into divinity shared by the town.
 
-### 10.1 本章解决什么
+### E03 | A Seat by the Door
 
-本章给出完整后期必须具备的构筑职责、来源、验证问题和玩家活动。它不是宣称当前 GDD 已支持高阶运算，也不是把一个未经测试的配方称作唯一正确答案。
+Leia returns the opening's displaced stool to the doorway. The wind is no warmer; the door still needs closing. Mira hands over her shift and sits down to hot food. Taren puts down his pack.
 
-旧三重承印、递阶铭文、阶序回填不进入本版正式物品目录。归一之冠保留既有唯一反馈闭合职责，但不能独自提供输出引擎、全部承接、临界参数与执行能力。
+Taren: "What was really up there?"
 
-必须制作的是可探索的装备生态和可执行方案，不是另起三个名字重新做三把钥匙。任何新语义都要说明自己只补足哪一项职责，并测试脱离配套条件时不会单独完成阶层突破。
+Wanderer: "I don't know."
 
-### 10.2 各阶段的最低体验合同
+Taren: "Still making noise inside?"
 
-| 成长段 | 必须共同成立的条件 | 掉落与积累目标 | 验证问题 | 成功后的继续追逐 |
+Wanderer: "Still."
+
+Mira: "You can sit here now too. Let's eat."
+
+Closing text:
+
+> The old world offered no explanation.
+>
+> Tonight, there was a warm seat by the door.
+
+After completion, retain equipment, build records, Immortality, first kills, and heating improvements. Contracts and optimization remain available; do not erase investment or replay the unrepaired state. The Endless Prayer remains unusable; the horizon is not a compulsory sequel chapter in this run.
+
+## 10 | Full High-Order Growth Specification: Item Names Are Not Systems
+
+### 10.1 What This Section Solves
+
+This section defines build roles, sources, validation questions, and player activities required for the complete late game. It does not claim the current GDD already supports high-order operations or declare an untested recipe uniquely correct.
+
+The old Triple Handoff Seal, Tier-Raising Inscription, and Order Backfill do not enter this edition's official item catalog. The Crown of Return retains its established unique feedback-closing role, but cannot alone supply the output engine, every handoff, threshold parameters, and execution capability.
+
+Production must deliver an explorable equipment ecosystem and executable setups, not three renamed keys. Each new semantic must state the specific role it fills and be tested to ensure it cannot independently cause a tier breakthrough without supporting conditions.
+
+### 10.2 Minimum Experience Contract by Stage
+
+| Growth segment | Jointly necessary conditions | Drop and accumulation goals | Validation question | Pursuit after success |
 |---|---|---|---|---|
-| 首档指数 | 发动机、通用法则、临界数值、有限运行条件 | 世界符文、机制法则、多槽词与种子 | 是否跨临界；实际迭代为何停止 | 启动、寿命、速度与材料效率 |
-| 稳定代理 | 可用角色构筑、感知、记忆、执行、路径条件 | 核心类别、能力词、固件与附件 | 手动可做的动作，代理漏在哪里 | 可靠续杯、兑现与长期停止策略 |
-| 两层嵌套 | 已完成来源、合法后继、保留、消费窗口 | 双印前可得的承接内容与多个支持词 | 来源是否真的被下一步消费 | 减少损耗、扩大适用场景 |
-| 三层嵌套 | 两次合法承接、三技能实际职责、谱系限制 | 第二承接方向、序列与窗口词 | 第二次承接是否使前部失效 | 三段平衡、抗中断与复用 |
-| 反馈幂塔 | 成熟序列、冠的闭合边、真实回送、重新执行 | 高档底材、保留、候选寿命、相位与回执 | 是否有真实新一轮，是否保住旧结果 | 周期更短、容错与更高可兑现结果 |
-| 固定高阶复合 | 完整过程载荷、复合承接、有限重复、兑现 | 新阶段世界语义、机制法则及配套参数 | 是否改变运算结构，而非只加塔高 | 多条可用实现、低成本与稳态版本 |
-| g 序列递升 | 完整已确认结果、正确阶参数路由、唯一闭合、重新执行 | 路由与保持能力、结构字段与执行预算 | 上一结果是否真实成为下一轮运算阶 | 更长连续有效运行、抗断与恢复 |
-| g₆₄ 终局 | 合法高阶构筑在实际战斗中产生足够可兑现结果 | 可替代的成熟装备方案及执行配置 | 结果是否达到目标并实际击败零号 | 通关后效率、其他方案与收藏 |
+| First exponential | Engine, general Law, threshold values, finite execution conditions | World runes, mechanic Laws, multi-slot affixes and seeds | Has the threshold been crossed; why did actual iteration stop? | Startup, lifetime, speed, material efficiency |
+| Stable proxy | Usable character build, perception, memory, execution, path conditions | Core categories, capability affixes, firmware, attachments | Where does the proxy miss an action manual play can perform? | Reliable refresh, cash-out, long-term stopping strategy |
+| Two-layer nesting | Completed source, legal successor, retention, consumption window | Handoff content available before Twin-Seal and multiple support affixes | Did the next step actually consume the source? | Less loss, broader applicability |
+| Three-layer nesting | Two legal handoffs, real roles for three skills, lineage restrictions | Second handoff direction, sequence and window affixes | Does the second handoff invalidate the earlier part? | Three-part balance, interruption resistance, reuse |
+| Feedback power tower | Mature sequence, crown's closing edge, actual return, re-execution | High-band bases, retention, candidate lifetime, phase, receipts | Is there a real new round; is the old result retained? | Shorter cycles, tolerance, higher realizable results |
+| Fixed high-order composition | Complete process payload, composition handoff, finite repetition, cash-out | New-stage world semantics, mechanic Laws, supporting parameters | Does operation structure change, rather than tower height alone? | Multiple implementations, low-cost and steady-state versions |
+| g-sequence escalation | Complete confirmed result, correct order-parameter routing, unique closure, re-execution | Routing and retention, structural fields, execution budget | Does the previous result truly become the next round's operation order? | Longer valid continuous runs, break resistance, recovery |
+| g₆₄ endgame | Legal high-order build produces enough realizable output in actual combat | Alternative mature gear setups and execution configurations | Does the result reach the target and actually defeat Zero? | Post-clear efficiency, other setups, collection |
 
-“最低体验”不是给玩家的强制勾选单。验证可来自自然战斗，不要求先到木桩；稳定性不足要有诊断渠道，不要求人为造成一次失败。
+"Minimum experience" is not a mandatory player checklist. Natural combat may validate it without a dummy prerequisite. Insufficient stability needs a diagnostic channel, not an artificially required failure.
 
-### 10.3 六种职责，不是六件套
+### 10.3 Six Roles, Not a Six-Piece Set
 
-来源：生成真实完成的攻击、状态或资源结果。没有来源，后面的承接不能凭空生成大数。
+Source: generate actual completed attack, state, or resource results. Without a source, later handoffs cannot create large numbers from nothing.
 
-承接：使某个后继技能能够消费特定结果类型。不同后继可以对同一来源提出不同条件，不提供万能插口。
+Handoff: let a successor skill consume a specific result type. Different successors may impose different conditions on one source; no universal socket.
 
-复合：在受限的合法规则中，将已经完成的过程作为更高层有限重复的组成部分。不是将屏幕伤害文字复制成另一种运算符。
+Composition: under restricted legal rules, use a completed process as part of higher-level finite repetition. It is not copying onscreen damage text into another operator.
 
-路由：明确结果进入哪一个参数，例如初始载荷、重复次数或运算阶。这些含义不得混用。一次合法来源不能无条件复制到任意多个位置。
+Routing: specify which parameter receives the result, such as initial payload, repeat count, or operation order. These meanings cannot be conflated. One legal source cannot be copied unconditionally into arbitrary positions.
 
-保持：由寿命、保留比例、有效动作、字段预算与目标状态支持传递；这些多由数值词改善，不额外偷偷增加结构语义。
+Retention: support transfer through lifetime, retained proportion, valid actions, field budget, and target state. Mostly improved by numeric affixes, without secretly adding structural semantics.
 
-兑现：在真实动作与公开条件下，将合法结果用于伤害或后继。预计值、尚未执行的动作与历史最好成绩不能直接兑现。
+Cash-out: apply a legal result to damage or a successor through real actions and public conditions. Projections, unexecuted actions, and historical bests cannot be cashed out directly.
 
-这些职责分布于三个主动技能、每技能至多一枚语义符文、装备通用法则、命名暗金与多件支持装备。某些已有能力可同时满足相关职责，不以人为规定必须凑满六件来制造积累。
+These roles span three active skills, at most one semantic rune per skill, equipment general Laws, named uniques, and multiple support pieces. Existing abilities may satisfy related roles together; do not manufacture accumulation by requiring six pieces.
 
-### 10.4 三职业的高阶操作方向
+### 10.4 High-Order Directions for Three Classes
 
-以下是新增内容必须支持的设计方向，不是对现有技能已经拥有这些效果的陈述。高阶语义需要放入阶段世界池，并经过兼容验证；普通数值词只调整参数。
+These are design directions new content must support, not claims that existing skills already have these effects. High-order semantics require stage world-pool placement and compatibility verification; ordinary numeric affixes adjust parameters only.
 
-游侠方向：穿刺箭提供真实完成的谱系结果；猎人印记通过适配语义保存并识别可供后继使用的图样；突袭的高阶分支对图样执行合法接续或兑现。玩家观察的是箭、标记、位置与一次次实际动作，不是自由搭电路。概率、共享寿命、保留与位置条件仍有作用。
+Ranger: Piercing Arrow supplies actually completed lineage results; Hunter's Mark uses adapted semantics to preserve and identify patterns for successors; a high-order Dash branch performs legal continuation or cash-out on those patterns. Players see arrows, marks, positions, and actual actions, not unrestricted circuit construction. Probability, shared lifetime, retention, and position conditions remain relevant.
 
-炼金方向：毒针与培养皿保留独立层、传代和计时职责；高阶分支将已确认的培养过程作为可被下一轮使用的复合载荷；爆炸瓶负责真实兑现与清空。不能把已经消耗的毒链免费复制回来。继承、续杯、载荷保持与兑现时机共同决定可用性。
+Alchemist: Poison Needle and Culture retain independent-layer, inheritance, and timing roles; a high-order branch makes a confirmed cultivation process into a composition payload for the next round; Explosive Flask handles actual cash-out and clearing. Spent poison chains cannot be copied back for free. Inheritance, refresh, payload retention, and cash-out timing jointly determine usability.
 
-法师方向：焚脉与回辉保留相位、转化和回执；高阶分支使一个完成的资源循环成为后继复合过程的输入；星炉终仪承担有限窗口内的结算。资源不匹配或动作未完成仍不能推进。两侧转化、热量与相位保留继续产生选择。
+Mage: Burning Vein and Returning Radiance retain phase, conversion, and receipts; a high-order branch makes a completed resource cycle an input to successor composition; Starforge Final Rite settles within a finite window. Resource mismatches or unfinished actions still cannot advance. Both conversion sides, heat, and phase retention continue producing choices.
 
-跨职业方向：只按明确兼容的结果类型接通，不按名字相似放行。游侠→炼金→法师、炼金→法师→游侠、法师→游侠→炼金可以作为探索方向，也允许只混合两职业；具体技能与物品由 GDD 验证选择，不将这里的排列强制为玩家或内容制作的唯一解。
+Cross-class: connect only explicitly compatible result types, not similar names. Ranger→Alchemist→Mage, Alchemist→Mage→Ranger, and Mage→Ranger→Alchemist are exploration directions; two-class mixtures are also allowed. The GDD verifies concrete skills and items. These permutations are not the sole solution for players or production.
 
-### 10.5 一个合法配装应怎样被写清楚
+### 10.5 Documenting a Legal Loadout
 
-主线在 GDD 中为每个通关参考方案登记：三个具体技能及各自语义符文；各装备槽的底材、通用法则和数值词；唯一反馈暗金；代理配置或手动动作；来源和消费关系；启动条件、持续限制、兑现条件和失败原因。
+For each reference clear setup, the mainline GDD records: three concrete skills and their semantic runes; each equipment slot's base, general Law, and numeric affixes; the unique feedback item; proxy configuration or manual actions; source-consumption relationships; startup conditions, sustain limits, cash-out conditions, and failure causes.
 
-示意槽位分工可以是：头部归一之冠负责反馈；主手承担来源相关法则；一处身体装备承担承接兼容；一枚戒指承接合法参数路由；其余装备在临界、保持、控制应对与效率间分配。只是合法性检查模板，不固定每个职业都必须如此装配，也不允许同名通用法则重复生效。
+Illustrative slot roles: Crown of Return on the head handles feedback; main hand carries a source-related Law; one body piece provides handoff compatibility; one ring handles legal parameter routing; other gear balances criticality, retention, control response, and efficiency. This is a legality-check template, not mandatory assembly for every class, and does not permit duplicate same-name general Laws to stack.
 
-高阶符文若替换当前技能的起步语义，必须重新说明如何保留或重建该技能的来源能力。不得假设玩家同时装两枚语义符文。不同潜能档不能用一个未声明的额外槽偷渡所有条件。
+If a high-order rune replaces a skill's starter semantics, explain again how its source capability survives or is rebuilt. Never assume two simultaneous semantic runes. Potential bands cannot smuggle in every condition through an undeclared extra slot.
 
-最低通关覆盖继续要求三套纯职业与至少三套跨职业参考方案。每套都应真实可获得、可装配、可运行，不用隐藏调试装备证明可行。没有这些见证时，高阶内容仍属于待实现，不得宣布正式验收通过。
+Minimum clear coverage still requires three pure-class and at least three cross-class reference setups. Each must be genuinely obtainable, equippable, and executable, not demonstrated with hidden debug gear. Without those witnesses, high-order content remains unimplemented and cannot pass official acceptance.
 
-### 10.6 g 标尺与真实求值
+### 10.6 The g Scale and Actual Evaluation
 
-数学标尺保持：g₁ = 3↑↑↑↑3；gₖ₊₁ = 3↑^(gₖ)3，其中 ↑^(gₖ) 表示 gₖ 个上箭头，不是普通幂。g₆₄ 是有限数，不是无限。
+Keep the mathematical scale: g₁ = 3↑↑↑↑3; gₖ₊₁ = 3↑^(gₖ)3, where ↑^(gₖ) denotes gₖ up-arrows, not ordinary exponentiation. g₆₄ is finite, not infinity.
 
-固定高阶成长必须存在合法构筑，使实际结果达到或超过 g₁ 所指的值；进一步的阶参数路由必须能使上一轮已完成结果参与下一轮定义。参数 3、运算阶与来源都须由技能和物品规则追溯，不能因为角色有三个技能槽，就认定任何三技能组合自动等于这个表达式。
+Fixed high-order growth requires a legal build whose actual result reaches or exceeds g₁; further order-parameter routing must let the previous completed result participate in the next round's definition. The parameter 3, operation order, and source must trace to skill and item rules. Three skill slots do not automatically make any three-skill combination equal this expression.
 
-可以用有限且受限的符号操作压缩大量同构作用，不需要展开天文数量的箭或事件。压缩必须与技能实际定义的有限过程等价，有输入、来源、完成条件与小规模对照证明；不能只因剧情说“该升阶了”就插入 gₖ 常量。
+Finite, restricted symbolic operations may compress many isomorphic effects without expanding astronomical arrow or event counts. Compression must equal the finite process actually defined by the skills, with inputs, sources, completion conditions, and small-scale comparison proofs. Story timing cannot justify inserting a gₖ constant.
 
-保留损耗、提前兑现或不完整执行若改变结果，记录改变后的真实表达式。不能仍沿用完美参考式的 g 标记。是否达到某标尺由真实比较决定。
+If retention loss, early cash-out, or incomplete execution changes a result, record the changed actual expression, not the perfect reference expression's g label. Actual comparison determines whether a benchmark was reached.
 
-本场快照、反馈候选与循环状态不跨遭遇携带；永久保存的是物品、法典、研究、不朽、方案和已验证记录。新战斗必须按自身启动条件重新产生结果。
+Encounter snapshots, feedback candidates, and loop state do not cross encounters. Items, Codex, research, Immortality, setups, and verified records persist. Each new battle must generate results again from its own startup conditions.
 
-g₆₄ 用于完整游戏的实际力量与最终挑战标尺，不要求新增单次伤害门槛或“g₆₄ 已达”认证位。累计有效伤害和其他合法结构按真实结算比较；若足以击败零号，不能因为不是标准参考式而拒绝胜利。
+g₆₄ is the full game's actual-power and final-challenge benchmark, not a requirement for a new single-hit threshold or "g₆₄ reached" certification bit. Compare cumulative effective damage and other legal structures through actual settlement. A setup sufficient to defeat Zero cannot be denied victory for differing from the reference expression.
 
-### 10.7 一轮执行不等于一次契约
+### 10.7 One Execution Round Is Not One Contract
 
-反馈的一轮发生在战斗动作序列中；契约包含房间与遭遇；剧情体验单元描述玩家活动。三者不能混为一谈。
+A feedback round occurs within a combat action sequence; contracts contain rooms and encounters; narrative experience units describe player activity. Do not conflate the three.
 
-走到 g₆₄ 不意味着强制刷六十四份契约，也不能装备一件物品后等待六十四帧自动完成。完整三技能重新执行、合法回执与有限窗口依然是条件。最小稳定窗口、所需周期与控制压力必须由数值验证给出。
+Reaching g₆₄ does not mean farming sixty-four contracts, or equipping one item and waiting sixty-four frames. Full three-skill re-execution, valid receipts, and finite windows remain conditions. Numeric validation must establish the minimum stable window, required cycles, and control pressure.
 
-高阶动作也不要求玩家真的执行 gₖ 次按钮输入。符合规则的有限重复可以被符号化结算；玩家操作的是 RPG 技能和构筑，不是计算器。
+High-order actions do not demand gₖ literal button presses. Rule-compliant finite repetition may settle symbolically. Players operate RPG skills and builds, not a calculator.
 
-## 11｜掉落、研究与重复契约的完整组织
+## 11 | Organizing Drops, Research, and Repeat Contracts
 
-### 11.1 获取职责
+### 11.1 Acquisition Roles
 
-| 内容 | 正式版来源 | 长尾控制与积累 | 叙事不得替换为 |
+| Content | Full-game source | Long-tail control and accumulation | Story must not replace it with |
 |---|---|---|---|
-| 语义符文 | 阶段世界掉落 | 未见优先、重复侧词与种子 | NPC 点名发放下一阶答案 |
-| 通用法则 | 机制标签契约及正常战利品 | 可见研究、保底；首次拆解录法典 | 完成对白直接领取法则 |
-| 普通装备 | 普通敌人、精英、箱与契约 | 种子、当前词与锻造轨道 | 只有 Boss 出好底材 |
-| 关键暗金 | Boss 定向与世界掉落 | 首杀基础版、研究副本、重复优化 | 一次首杀后再无刷取价值 |
-| 代理核心与附件 | 代理类别契约、阶段池 | 未见优先、类别与固件保底 | 自动智能随剧情无条件毕业 |
-| 锻造资源 | 正常掉落与拆解 | 三骰独立轨道及既有兑换 | 为剧情追加不可见材料税 |
-| 民用回收结果 | 已完成契约的独立叙事记录 | 不吞装备、不额外刷终局 | 一件生活零件授予战斗阶层 |
+| Semantic runes | Stage world drops | Unseen-first priority, repeat secondary affixes and seeds | NPC-prescribed next-tier answers |
+| General Laws | Mechanic-tag contracts and ordinary loot | Visible research, guarantees; first salvage records the Codex | A Law claimed directly after dialogue |
+| Ordinary equipment | Ordinary enemies, elites, chests, contracts | Seeds, current affixes, forging tracks | Good bases exclusive to bosses |
+| Key uniques | Targeted bosses and world drops | First-kill basic version, research copies, repeat optimization | No farming value after one first kill |
+| Proxy cores and attachments | Proxy-category contracts, stage pools | Unseen-first, category and firmware guarantees | Automation unconditionally completed by story |
+| Forging resources | Ordinary drops and salvage | Three independent dice tracks and existing exchanges | Hidden extra story material taxes |
+| Civilian salvage results | Separate narrative records of completed contracts | No lost equipment or extra endgame farming | A household part granting a combat tier |
 
-具体保底次数沿正式经济 GDD 统一，不在不同对白中产生不同承诺。旧“3–5 次”设计区间与最终锁值若冲突，以主线同步后的单一数值表为准，界面与结算必须一致。
+Use the official economy GDD's unified guarantee counts, not conflicting promises in dialogue. If the old "3-5 attempts" range conflicts with final locked values, use the single numeric table synchronized with mainline design. Interface and settlement must agree.
 
-### 11.2 六类重复工作命名
+### 11.2 Names for Six Kinds of Repeat Work
 
-备行之物 / Gear for the Road：偏向当前阶段装备与底材。玩家关注当前提升、接口位置与可塑性，不承诺必出某件毕业装备。
+Gear for the Road: favors current-stage equipment and bases. Players consider immediate improvements, interface positions, and reshaping potential; no guaranteed final item.
 
-回火之需 / Forge Supplies：偏向所选律筹与加工资源。用来执行已经形成的计划，不要求每次剧情推进都来交固定配额。
+Forge Supplies: favors selected Law Tokens and processing resources. Supports existing plans rather than fixed quotas for every story advance.
 
-循迹回收 / Following the Traces：按机制标签追猎通用法则。标签体现真实权重，NPC 只提供方向。
+Following the Traces: hunt general Laws by mechanic tag. Tags reflect actual weights; NPCs provide direction only.
 
-代行试路 / A Route for the Proxy：偏向代理类别与固件，同时验证已知房间中的实际执行。不是另用一套伤害公式。
+A Route for the Proxy: favors proxy categories and firmware while testing actual execution in known rooms. It does not use a separate damage formula.
 
-旧器复得 / Finding It Again：围绕已解锁关键底材的研究与重复获得组织目标；不是唯一真品破损后才能接受的任务。
+Finding It Again: organizes research and repeat acquisition of unlocked key bases, not a quest available only after a unique original breaks.
 
-深段回收 / Deeper Salvage：后期混合目标与控制压力，提供新阶段来源与高阶支持。它不固定只掉高阶物，仍需底材、侧词与愿望单判断。
+Deeper Salvage: late-game mixed objectives and control pressure provide new-stage sources and high-order support. Drops are not exclusively high-order; bases, secondary affixes, and wishlist judgments still matter.
 
-这些是既有契约标签组合的叙事名称，不要求新增六套完全独立系统。可沿用稳定任务 ID，并使中文名字与真实来源对应。
+These are narrative names for existing contract-tag combinations, not six independent new systems. Reuse stable quest IDs and align displayed names with actual sources.
 
-### 11.3 重复不取消故事
+### 11.3 Repetition Does Not Revoke Story
 
-首杀与开路只结算一次。重复 Boss 是已有区域的可重复挑战，不需要新增“古神每次复活”的确定世界事实。清理支段、处理不同目标和继续回收可以支持多次进入，不能每次回镇都说道路第一次打通。
+Settle first kills and route openings once. Repeat bosses are repeatable challenges in existing regions, not evidence that an ancient god canonically resurrects each time. Side stretches, differing objectives, and continued salvage support repeat visits. Never announce a first road opening after every return.
 
-已读对白默认短化或跳过；未读残片可在适合位置继续遇到。罕见掉落的兴奋不被一段长旁白遮住。
+Shorten or skip read dialogue by default; unread fragments may still appear at suitable locations. Long narration must not bury the excitement of rare loot.
 
-### 11.4 防止空转
+### 11.4 Preventing Empty Loops
 
-每种回收方向都应至少推进一项真实需求：合用底材、可用词、研究、法则收录、代理能力或资源。不是每次必须有直接提升，但玩家应能判断为什么选择这一方向。
+Each salvage direction should advance at least one actual need: suitable bases, usable affixes, research, Law collection, proxy capability, or resources. Not every run needs a direct upgrade, but players should understand why they chose that direction.
 
-不要给每个刷取行为添加故事任务，也不要为证明“有积累”规定最低出征次数。一次幸运收获可以让计划提前完成；后续追逐应来自玩家的效率与方案目标。
+Do not attach a story quest to every farming action or impose minimum expedition counts to prove accumulation. One lucky find may complete a plan early. Further pursuit should come from the player's efficiency and setup goals.
 
-## 12｜Boss、暗金与敌人完整表
+## 12 | Complete Boss, Unique, and Enemy Roster
 
-### 12.1 八个 Boss 的叙事与玩法职责
+### 12.1 Narrative and Gameplay Roles of Eight Bosses
 
-| Boss / 英文 | 地点 | 核心压力与故事作用 | 首杀相关暗金 | 前置防循环要求 |
+| Boss | Location | Core pressure and story role | First-kill-related unique | Avoiding prerequisite cycles |
 |---|---|---|---|---|
-| 阈门巨像 / Threshold Colossus | 阈门 | 首档构筑的真实目标；局部隔离残迹 | 阈门测径仪 | 不需要自己的记录物才能指数 |
-| 铁刑官 / Iron Warden | 沉铁廊 | 承压与击退；重复冲击余波 | 不移铁楔 | 不需要铁楔才能证明 |
-| 棱光母体 / Prismatic Matrix | 折光庭 | 可读投送危险；接收端缺席 | 折光步衣 | 不需要步衣才能闪避或证明 |
-| 腐潮园丁 / Blight Gardener | 腐潮园 | 腐化压制与恢复；延续失去边界 | 净种蒸馏釜 | 不需要釜才能完成此处恢复方案 |
-| 断序者 / Sequence Breaker | 断响厅 | 中断与稳定；截断未令过程停止 | 续章指环 | 不要求先有指环；不提前发预见档 |
-| 双印档案官 / Twin-Seal Archivist | 双印库 | 两层适用目标；残存接续 | 单继档案册 | 最小两层能力已有合法来源 |
-| 三相编织者 / Threefold Weaver | 三相织场 | 三层适用目标；未止复杂作用 | 归一之冠 | 不以反馈作为隐含首杀条件 |
-| 塔顶零号 / Spire Zero | 无声高塔 | g₆₄ 终局；本区域可接近的一段余波 | 封印测高仪 | 不依赖测高仪提供战斗能力 |
+| Threshold Colossus | Threshold | Actual target for starter builds; local containment traces | Threshold Gauge | Exponential growth does not require its own recording item |
+| Iron Warden | Ironfall Galleries | Pressure and knockback; repeated-impact aftermath | Steadfast Wedge | Proof does not require the wedge |
+| Prismatic Matrix | Prism Court | Readable projected hazards; absent receiver | Prismstep Mantle | Dodge and proof do not require the mantle |
+| Blight Gardener | Blight Gardens | Corruption suppression and recovery; continuation without boundaries | Seed-Cleansing Still | This recovery setup does not require the still |
+| Sequence Breaker | Hushed Hall | Interruption and stability; truncation did not stop the process | Continuance Ring | Ring not required first; no early Foresight band |
+| Twin-Seal Archivist | Twin-Seal Archive | Target suited to two layers; residual handoffs | Single-Successor Ledger | Minimal two-layer capability already has legal sources |
+| Threefold Weaver | Threefold Loom | Target suited to three layers; continuing complex effects | Crown of Return | Feedback is not a hidden first-kill requirement |
+| Spire Zero | Silent Spire | g₆₄ ending; an approachable part of this region's aftermath | Sealed Height Gauge | Gauge grants no prerequisite combat ability |
 
-### 12.2 八件暗金作用边界
+### 12.2 Boundaries of Eight Uniques
 
-阈门测径仪 / Threshold Gauge：记录真实增长与阻断，不增伤。
+Threshold Gauge: records actual growth and blockers, without adding damage.
 
-不移铁楔 / Steadfast Wedge：强击退后保留已确认相位和计时，不代表完全免疫位移。
+Steadfast Wedge: retains confirmed phase and timers after strong knockback, not complete displacement immunity.
 
-折光步衣 / Prismstep Mantle：成功闪避后保存目标与计时，不自动替玩家闪避。
+Prismstep Mantle: preserves targets and timers after a successful Dodge, not automatic dodging.
 
-净种蒸馏釜 / Seed-Cleansing Still：恢复事件与腐化压制按既有规则处理；不朽后转为已约定的沉默用途。
+Seed-Cleansing Still: handles recovery events and corruption suppression by existing rules; after Immortality, switches to the agreed silence-related use.
 
-续章指环 / Continuance Ring：从最后成功回执续接，不生成未来或未完成的动作。
+Continuance Ring: resumes from the last successful receipt, without creating future or unfinished actions.
 
-单继档案册 / Single-Successor Ledger：专门单一后继快照载体，不垄断初次两层的唯一能力来源。
+Single-Successor Ledger: a specialized single-successor snapshot carrier, not the exclusive capability source for the first two-layer build.
 
-归一之冠 / Crown of Return：保留唯一反馈与清史边，必须重新执行序列；数值支持与承接仍需配齐。
+Crown of Return: retains the unique feedback and history-clearing edge; the sequence must execute again, with numeric support and handoffs still required.
 
-封印测高仪 / Sealed Height Gauge：记录 g₆₄ 终局，承载 TREE(3) 与更深回应的叙事附页，不提供反向首杀前置。
+Sealed Height Gauge: records the g₆₄ ending and carries the narrative appendix for TREE(3) and deeper responses, without becoming a circular first-kill prerequisite.
 
-这些名称不是古代教会原官阶或履历；档案册里没有完整教会史，冠不认证教皇身份。
+These names are not ancient church offices or biographies. The ledger holds no complete Church history; the crown does not certify a pope.
 
-### 12.3 普通敌人与遭遇职责
+### 12.3 Ordinary Enemies and Encounter Roles
 
-| 敌人 | 职责 | 让玩家观察什么 |
+| Enemy | Role | What players observe |
 |---|---|---|
-| 铁牙徒 | 近战追击 | 基础空间与清场效率 |
-| 冲城兽 | 可读直线冲锋 | 前摇、诱导与位移 |
-| 棱光射手 | 扇形齐射 | 目标优先与躲避 |
-| 灰烬术士 | 公开地面持续区 | 站位与连续施法取舍 |
-| 蚀巢召者 | 低生命召援 | 真实目标数变化 |
-| 守印盾卫 | 方向性护卫 | 改变攻击位置与对象 |
-| 裂殖软泥 | 死亡分裂 | 清群构筑与分支处理 |
-| 缄默蛾 | 可预警沉默 | 续杯、兑现与断序恢复 |
-| 推山傀儡 | 强击退 | 距离与状态保持 |
-| 引力眼 | 周期牵引 | 寻路与执行预算 |
-| 盗契鼠 | 任务进度干扰 | 目标选择与任务效率 |
-| 星钉炮台 | 固定压制 | 遮挡、切换与优先目标 |
+| Ironfang Follower | Melee pursuit | Basic space and clearing efficiency |
+| Siege Beast | Readable straight charge | Windup, baiting, movement |
+| Prism Archer | Fan volleys | Target priority and avoidance |
+| Ash Caster | Public persistent ground zone | Positioning versus sustained casting |
+| Blightnest Summoner | Reinforcements at low health | Actual changes in target count |
+| Sealguard | Directional protection | Changing attack position and target |
+| Fission Slime | Splits on death | Pack-clearing builds and branch handling |
+| Silence Moth | Telegraphable silence | Refresh, cash-out, sequence recovery |
+| Mountain-Pusher Golem | Strong knockback | Distance and state retention |
+| Gravity Eye | Periodic pull | Pathfinding and execution budget |
+| Contract-Thief Rat | Objective-progress interference | Target selection and task efficiency |
+| Starpin Turret | Fixed suppression | Cover, switching, priority targets |
 
-精英与环境沿用既有加速、联结、追踪危险、分裂、屏障、召援、沉默、击退等组合；移动火线、坠落预警、腐化池、推墙、沉默塔、遮断门必须有真实反馈。
+Elites and environments reuse combinations of acceleration, links, tracking hazards, splitting, barriers, reinforcements, silence, and knockback. Moving firelines, falling-object warnings, corruption pools, pushing walls, silence towers, and blocking gates require real feedback.
 
-不朽后控制与任务干扰仍有意义，不新增绕过不朽的更高伤害。限时破坏只影响额外奖励，不让超时恢复 Boss 生命或杀死主角。
+Control and objective interference still matter after Immortality; no higher damage bypasses it. Timed destruction affects bonus rewards only. Timeout neither restores boss health nor kills the protagonist.
 
-## 13｜六条生活支线
+## 13 | Six Everyday Side Stories
 
-所有生活支线均可选，不包含成长必需语义，不收取玩家必需装备，不决定是否获得完整结局。它们在多次自然回城中变化，通常不新增独立跑图。
+All everyday side stories are optional. They contain no growth-essential semantics, take no necessary equipment, and do not determine access to the complete ending. They change across natural returns, usually without separate map runs.
 
-### S01｜空下的药袋 / The Empty Medicine Pouch
+### S01 | The Empty Medicine Pouch
 
-前期米拉留出一份伤药；不朽后放回公共药柜，袋子改装螺帽。与 M09 共用场景，不重复演出。
+Early on Mira reserves medicine; after Immortality it returns to the communal cabinet, and the pouch holds nuts. Shares M09's scene rather than replaying it.
 
-一句回报：“这次装螺帽。药留给别人。”不新增牺牲，不否认不朽。
+One-line payoff: "Nuts this time. The medicine is for someone else." No added sacrifice or denial of Immortality.
 
-### S02｜给石渠的那一批 / A Batch for Stonechannel
+### S02 | A Batch for Stonechannel
 
-塔伦带来普通接头需求。玩家在已有契约结算中可附带完成回收记录，不从已装备物品中强制扣除。
+Taren brings a request for ordinary couplings. Existing contract settlement can also complete the salvage record, without compulsory deductions from equipped items.
 
-来信说几枚能用，另一枚待复核；下一批货带回一种本地缺少的食材。结局是互相帮助有实物结果，不是开通无限商店或确认普适圣律原理。
+A letter says several work and another needs checking. The next shipment brings an ingredient scarce here. The outcome is material evidence of mutual help, not an infinite shop or confirmation of universal Sacred Law principles.
 
-### S03｜先别拆它 / Leave It Closed
+### S03 | Leave It Closed
 
-奥伦检查一件外部局部可用、内部未知的旧物。可选阅读两种意见，但不要求玩家猜谜选对才能保住装备。
+Oren examines an old object with a partly usable exterior and unknown interior. Two opinions are optional reading, not a riddle whose correct answer preserves equipment.
 
-结果：先检查能接近的部分，保留未知内部。“先记住能用的这一面。”这是人物判断，不变成禁止玩家拆解正常战利品的系统规则。
+Result: inspect accessible parts first and preserve the unknown interior. "Remember this usable face first." A character judgment, not a system rule against salvaging normal loot.
 
-### S04｜空白留下 / Leave the Blank
+### S04 | Leave the Blank
 
-伊文发现两张记号看似矛盾，一张是当代抄写，一张只剩日期末位。可以对照出处，不能靠三选一猜出作者也未指定的年表。
+Iven finds two apparently contradictory markings: a present-day copy and one retaining only a date's last digit. Compare sources, but do not guess an author-undefined chronology from three choices.
 
-两张都留下，旁注不确定性。“空着不等于忘了。”不触发完整灾难解释。
+Keep both, noting uncertainty. "Leaving it blank doesn't mean forgetting." No complete catastrophe explanation unlocks.
 
-### S05｜离开的人也有归处 / A Place Elsewhere
+### S05 | A Place Elsewhere
 
-奥伦协助一户居民迁往近期水源更稳定的地方。迁居不是因玩家刷宝太慢，也不因拒交材料。
+Oren helps a household move somewhere with a recently more reliable water supply. They do not leave because the player farms too slowly or refuses materials.
 
-塔伦后来带回平安口信。结尾小镇改善不强迫他们返乡，留下的人也不指责他们。世界不只存在一个等待主角批准的居住选择。
+Taren later brings word of their safety. The ending's town improvements do not force them home, and those who stay do not blame them. The world has more than one living arrangement awaiting protagonist approval.
 
-### S06｜趁饭还热 / While the Food Is Warm
+### S06 | While the Food Is Warm
 
-莱娅前期在操作台边吃凉饭；中期学会核对记录；后期能受监督完成一段操作。她的进步在玩家多次回城中自然出现，不需专门刷学徒经验。
+Early Leia eats cold food by the station; in the middle she learns to check records; later she completes a segment under supervision. Progress appears naturally across returns, without farming apprentice experience.
 
-E02 后接一班值守，E03 让米拉先吃。她没有因此获得教会传承或预知未来的能力。
+After E02 she takes a shift; in E03 she lets Mira eat first. This grants neither Church inheritance nor foresight.
 
-## 14｜浅致敬与碎片投放
+## 14 | Light Homages and Fragment Placement
 
-### 14.1 七项固定方案
+### 14.1 Seven Fixed Homages
 
-| 编号 | 指定参照 | 元素与时机 | 实际边界 |
+| Number | Reference | Element and timing | Practical boundary |
 |---|---|---|---|
-| H01 | 暗黑地牢 I | 哈姆雷特 / Hamlet，P00 即出现 | 仅地名与独立小镇生活 |
-| H02 | 暗黑地牢 II | 余程灯芯 / Wick for the Next Mile，M00 车旁 | 可读小物，不新增马车系统 |
-| H03 | 冰汽时代 | 守冬塔 / Winterward Generator，共炉厅热源 | 不照搬城市与法令机制 |
-| H04 | 星际争霸 I | 迷路的幽灵特工 / Lost Ghost Operative，早期回镇可见 | 非功能性 NPC，三句对话 |
-| H05 | 星际争霸 II | 雷诺的警徽 / Raynor's Badge，正式项链槽可用后 | 正常同档命名项链，不是必刷暗金 |
-| H06 | 暗黑破坏神 III | 佐敦之戒 / Zoltun's Ring，中期适合的普通掉落体验 | 正常戒指，不是乔丹之石 |
-| H07 | 暗黑破坏神系列 | 《未知的记录》 / Records of the Unknown，备行架旁 | 凯恩署名札记，不是本作史料认证 |
+| H01 | Darkest Dungeon I | Hearthside (original homage name: Hamlet), present at P00 | Place-name homage and independent town life only |
+| H02 | Darkest Dungeon II | Wick for the Next Mile, beside the cart in M00 | Readable small object, no new carriage system |
+| H03 | Frostpunk | Winterwatch Tower (design alias: Winterward Generator), heat source for Hearth Hall | No copied city or law mechanics |
+| H04 | StarCraft I | Lost Ghost Operative, visible on early town returns | Nonfunctional NPC, three dialogue lines |
+| H05 | StarCraft II | Raynor's Badge, after the full-game necklace slot opens | Ordinary same-band named necklace, not a mandatory unique |
+| H06 | Diablo III | Zoltun's Ring, an appropriate ordinary midgame drop | Ordinary ring, not the Stone of Jordan |
+| H07 | Diablo series | Records of the Unknown, beside Loadout | Note signed Cain, not authenticated history for this world |
 
-主角 the Wanderer 保留暗黑破坏神 IV 的浅层语感，不采用原作身份；凯恩不归为四代专属人物。
+The protagonist's title, the Wanderer, retains a light Diablo IV resonance without adopting its character identity. Cain is not treated as exclusive to the fourth game.
 
-### 14.2 可直接投放的文本
+### 14.2 Ready-to-Place Text
 
-幽灵特工：“任务坐标对不上。”流浪者：“这里是哈姆雷特。”幽灵特工：“那我确实走错了。”重复交流：“我再核对一遍。”没有战斗支援、隐身系统、核打击和传送门任务。
+Ghost Operative: "Mission coordinates don't match." Wanderer: "This is Hearthside." Ghost Operative: "Then I really did take a wrong turn." Repeat interaction: "I'll check again." No combat assistance, cloaking system, nuclear strike, or portal quest.
 
-雷诺的警徽：“背面的别针已经弯了，有人穿上一根细链。徽记留在这里。它的主人没有。”不确认原作人物来到此地、已经死亡或与教会有关。
+Raynor's Badge: "The pin on the back is bent. Someone threaded a fine chain through it. The badge stayed here. Its owner did not." This does not confirm that the original character came here, died, or had Church ties.
 
-佐敦之戒：“内圈刻着‘佐敦’。旁边还有一行小字：结论尚早。”戒指与文案为本作浅致敬，不宣称是原作物品复刻。
+Zoltun's Ring: "'Zoltun' is engraved inside. Beside it, smaller letters read: conclusions are premature." The ring and copy are a light homage, not a claim to reproduce the original game's item.
 
-《未知的记录》逐字正文：“书里面写着难以理解的永恒之战的故事，没人知道那是什么。扉页简单写着一个叫凯恩的名字”。不追加赫拉迪姆、神魔年表或本世界解释。
+Records of the Unknown, text-locked body in English: "The book tells incomprehensible stories of an eternal war. No one knows what it is. The flyleaf bears only the name of someone called Cain." Add no Horadrim, divine/demonic chronology, or explanation of this world.
 
-### 14.3 碎片投放地图
+### 14.3 Fragment Placement Map
 
-配套设定集提供 F01–F28。F01–F03 用于旧路生活规模；F04–F07 用于四处生存区域；F08–F10 用于后期接续与停止痕迹；F11、F17、F18、F21、F22 用于终局；F12 与 F19–F20 支撑无终祷文；F13–F16、F23–F28 进入当代记录与回城环境。
+The companion worldbuilding manuscript supplies F01-F28. F01-F03 show the scale of life on the old road; F04-F07 serve the four survival regions; F08-F10 show late-game handoff and stopping traces; F11, F17, F18, F21, and F22 serve the ending; F12 and F19-F20 support the Endless Prayer; F13-F16 and F23-F28 enter present-day records and town-return environments.
 
-古代物证、当代见闻、个人猜测明确区分。收齐全部残片不自动拼出历史结论。F28 中戒指只是某份记录的最后拼图，不要求玩家本人也必须最后换戒指。
+Clearly distinguish ancient evidence, present-day reports, and personal speculation. Collecting every fragment does not automatically solve history. F28's ring is only the last piece in one record, not a requirement that the player also change a ring last.
 
-碎片不是构筑必需教程；正式效果、奖励与证明说明不碎片化。重复契约可以遇到未读物，但不能要求停下来读完才能拾取战利品。
+Fragments are not essential build tutorials. Do not fragment official effects, rewards, or proof instructions. Repeat contracts may contain unread objects, but reading them cannot be required before taking loot.
 
-## 15｜双语名称完整目录
+## 15 | Complete English Name Catalog and Design Aliases
 
-### 15.1 三职业九技能
+### 15.1 Three Classes, Nine Skills
 
-| 职业 / 英文 | 技能中文 | 英文工作名 |
+| Class | Canonical skill name | Earlier English design alias |
 |---|---|---|
-| 游侠 / Ranger | 穿刺箭 | Piercing Arrow |
-| 游侠 / Ranger | 猎人印记 | Hunter's Mark |
-| 游侠 / Ranger | 突袭 | Rush |
-| 炼金 / Alchemist | 毒针 | Venom Needle |
-| 炼金 / Alchemist | 培养皿 | Culture Dish |
-| 炼金 / Alchemist | 爆炸瓶 | Blast Vial |
-| 法师 / Mage | 焚脉 | Veinburn |
-| 法师 / Mage | 回辉 | Radiant Return |
-| 法师 / Mage | 星炉终仪 | Starfurnace Finale |
+| Ranger | Piercing Arrow | Piercing Arrow |
+| Ranger | Hunter's Mark | Hunter's Mark |
+| Ranger | Dash | Rush |
+| Alchemist | Poison Needle | Venom Needle |
+| Alchemist | Culture | Culture Dish |
+| Alchemist | Explosive Flask | Blast Vial |
+| Mage | Burning Vein | Veinburn |
+| Mage | Returning Radiance | Radiant Return |
+| Mage | Starforge Final Rite | Starfurnace Finale |
 
-译名不新增技能效果；星炉终仪的“仪”不证明教会仪式来源。三职业共享同一主角与故事身份，解锁后允许混搭。
+Names add no skill effects. "Rite" in Starforge Final Rite does not prove a Church ritual origin. All three classes share one protagonist and story identity; mixing becomes available after unlocks.
 
-### 15.2 十六枚代理核心
+### 15.2 Sixteen Proxy Cores
 
-| 类别 | 中文 | 英文工作名 | 基础行为边界 |
+| Category | Canonical name | Earlier English design alias | Basic behavior boundary |
 |---|---|---|---|
-| 感知 | 近敌视界 | Near-Target Sight | 起步：按频率识别最近合法目标 |
-| 感知 | 标记棱镜 | Marking Prism | 区分标记与目标类别 |
-| 感知 | 状态解析器 | State Analyzer | 读取支持数量的公开状态 |
-| 感知 | 危机预兆 | Hazard Forecaster | 识别可见危险与公开前摇 |
-| 移动 | 直趋步足 | Direct-Path Stride | 起步：进入一号槽射程 |
-| 移动 | 维距步足 | Rangekeeping Stride | 维持预设距离带 |
-| 移动 | 环猎步足 | Circling Stride | 围绕当前目标移动 |
-| 移动 | 规避步足 | Evasive Stride | 处理已识别危险与脱困 |
-| 执行 | 单键执行 | Single-Skill Executor | 起步：仅调用一号技能槽 |
-| 执行 | 交替执行 | Alternating Executor | 按受限顺序调用两技能 |
-| 执行 | 维持执行 | Sustaining Executor | 维持与刷新支持的效果 |
-| 执行 | 兑现执行 | Cash-Out Executor | 按公开阈值执行兑现 |
-| 记忆 | 短痕记忆 | Short-Trace Memory | 起步：当前目标与上个动作 |
-| 记忆 | 双时记忆 | Dual-Timer Memory | 保存两条支持时限 |
-| 记忆 | 循环寄存器 | Cycle Register | 保存序列与资源字段 |
-| 记忆 | 谱系缓存 | Lineage Cache | 保存谱系、快照与消费回执 |
+| Perception | Near-Enemy Sight | Near-Target Sight | Starter: identify nearest valid target at its scan frequency |
+| Perception | Mark Prism | Marking Prism | Distinguish marks and target categories |
+| Perception | State Parser | State Analyzer | Read the supported number of public states |
+| Perception | Danger Forewarning | Hazard Forecaster | Recognize visible dangers and public windups |
+| Movement | Direct-Approach Legs | Direct-Path Stride | Starter: enter slot 1 range |
+| Movement | Range-Keeping Legs | Rangekeeping Stride | Maintain preset range band |
+| Movement | Circling Hunt Legs | Circling Stride | Move around the current target |
+| Movement | Evasive Legs | Evasive Stride | Handle recognized dangers and escape |
+| Execution | Single-Key Executor | Single-Skill Executor | Starter: call skill slot 1 only |
+| Execution | Alternating Executor | Alternating Executor | Use two skills in a restricted sequence |
+| Execution | Sustain Executor | Sustaining Executor | Maintain and refresh supported effects |
+| Execution | Cash-Out Executor | Cash-Out Executor | Cash out according to public thresholds |
+| Memory | Short-Trace Memory | Short-Trace Memory | Starter: current target and previous action |
+| Memory | Twin-Timer Memory | Dual-Timer Memory | Store two supported deadlines |
+| Memory | Loop Register | Cycle Register | Store sequence and resource fields |
+| Memory | Lineage Cache | Lineage Cache | Store lineage, snapshot, and consumption receipt |
 
-四白为近敌视界、直趋步足、单键执行、短痕记忆。名字不能被解释成全知感知、任意脚本或能储存无限事件。
+The four whites are Near-Enemy Sight, Direct-Approach Legs, Single-Key Executor, and Short-Trace Memory. Names do not imply omniscient perception, arbitrary scripts, or infinite event storage.
 
-### 15.3 十枚代理附件
+### 15.3 Ten Proxy Attachments
 
-| 类别 | 中文 | 英文工作名 | 用途 |
+| Category | Canonical name | Earlier English design alias | Purpose |
 |---|---|---|---|
-| 拾荒 | 愿望拾取器 | Wishlist Collector | 按玩家愿望安排拾取 |
-| 拾荒 | 律筛 | Law Sieve | 按当前与可塑价值筛选 |
-| 导航 | 岔路罗盘 | Branch Compass | 按公开标签选路 |
-| 导航 | 续约继电器 | Contract Relay | 满足停止检查后续约 |
-| 战术 | 距离规尺 | Range Gauge | 保存各技能距离偏好 |
-| 战术 | 首领预案库 | Boss Response Archive | 使用已知战斗信号，不提供历史百科 |
-| 循环调速 | 续杯节拍器 | Refresh Metronome | 协调刷新窗口 |
-| 循环调速 | 兑现监护器 | Cash-Out Monitor | 在风险到来前建议兑现 |
-| 稳定 | 规避保险栓 | Evasion Safeguard | 生存或不朽后的控制应对 |
-| 稳定 | 循环复位器 | Cycle Resetter | 处理卡路、无效重复与断序 |
+| Scavenging | Wish Collector | Wishlist Collector | Arrange pickups by player wishes |
+| Scavenging | Law Sieve | Law Sieve | Filter by current and reshaping value |
+| Navigation | Fork Compass | Branch Compass | Choose routes by public tags |
+| Navigation | Renewal Relay | Contract Relay | Renew after stop checks pass |
+| Tactics | Range Gauge | Range Gauge | Store each skill's range preference |
+| Tactics | Boss Plan Library | Boss Response Archive | Use known combat signals, not historical encyclopedic knowledge |
+| Loop pacing | Refresh Metronome | Refresh Metronome | Coordinate refresh windows |
+| Loop pacing | Cash-Out Guardian | Cash-Out Monitor | Recommend cash-out before danger |
+| Stability | Evasion Safety Latch | Evasion Safeguard | Survival or post-Immortality control response |
+| Stability | Loop Resetter | Cycle Resetter | Handle blocked paths, invalid repetition, and broken sequences |
 
-三个附件槽、同类不重复。续约不意味着离线收益，预案不意味着未知 Boss 攻略自动齐全。
+Three attachment slots, without duplicate categories. Renewal does not imply offline rewards; plans do not automatically supply complete strategies for unknown bosses.
 
-### 15.4 十六条固件工作译名
+### 15.4 Sixteen Firmware Names
 
-| 中文 | 英文工作名 |
+| Canonical name | Earlier English design alias |
 |---|---|
-| 标记者优先 | Marked Target First |
-| 目标延续 | Target Continuity |
-| 危险覆盖 | Hazard Override |
-| 闪避后归位 | Return After Dodge |
-| 环行不断链 | Chain-Preserving Orbit |
-| 施法锚定 | Casting Anchor |
-| 严格交替 | Strict Alternation |
-| 无效施法抑制 | Invalid Cast Suppression |
-| 安全续杯 | Safe Refresh |
-| 阈值兑现 | Threshold Cash-Out |
-| 计时继承 | Timer Carryover |
-| 分目标记账 | Per-Target Records |
-| 谱系续接 | Lineage Continuation |
-| 愿望单压倒 | Wishlist Override |
-| 风险加权岔路 | Risk-Weighted Branching |
-| 连续契约 | Contract Continuation |
+| Marked Target Priority | Marked Target First |
+| Target Continuity | Target Continuity |
+| Danger Override | Hazard Override |
+| Return After Dodge | Return After Dodge |
+| Unbroken Orbit | Chain-Preserving Orbit |
+| Casting Anchor | Casting Anchor |
+| Strict Alternation | Strict Alternation |
+| Invalid Cast Suppression | Invalid Cast Suppression |
+| Safe Refresh | Safe Refresh |
+| Threshold Cash-Out | Threshold Cash-Out |
+| Timer Inheritance | Timer Carryover |
+| Per-Target Ledger | Per-Target Records |
+| Lineage Handoff | Lineage Continuation |
+| Wishlist Override | Wishlist Override |
+| Risk-Weighted Fork | Risk-Weighted Branching |
+| Continuous Contracts | Contract Continuation |
 
-固件仍遵守固定执行流程与既有行为语义；译名不开放任意条件图，不新增伤害法则。更高品质主要改善参数与支持范围，不让一次品级提升凭空变成另一种完整结构。
+Firmware still follows fixed execution flows and existing behavioral semantics. Names grant neither arbitrary condition graphs nor new damage Laws. Higher quality mainly improves parameters and supported scope; one quality increase does not conjure an entirely different structure.
 
-## 16｜核心对白与界面短句双语
+## 16 | Core Dialogue and Interface Copy
 
-### 16.1 开场
+### 16.1 Opening
 
-中文：
+English localization of the opening:
 
-> 很久以前，人们学会了使用圣律。  
-> 旧渠越过高地。粮食存过长冬。灯亮在没有日光的地方。  
-> 那段历史留下一个名字。应许教会。  
-> 后来，那个世界不在了。没有人能把发生过的事讲清楚。  
-> 有些旧物却还在工作。有些还能让人活下去。  
-> 哈姆雷特就建在一座仍会发热的旧塔旁。如今，它的暖意越来越少。
+> Long ago, people learned to use Sacred Law.
+>
+> Channels crossed the highlands. Grain lasted through long winters. Lamps shone where daylight never reached.
+>
+> That history left a name. The Church of the Promise.
+>
+> Then that world was gone. No one can tell the whole of what happened.
+>
+> Some old things still work. Some still keep people alive.
+>
+> Hearthside was built beside an old tower that still gives off heat. Now there is less warmth to go around.
 
-English working draft:
+### 16.2 Key Lines
 
-> Long ago, people learned to use the Sacred Laws.  
-> Channels crossed the highlands. Grain lasted through long winters. Lamps shone where daylight never reached.  
-> That history left a name. The Church of the Promise.  
-> Then that world was gone. No one can tell the whole of what happened.  
-> Some old things still work. Some still keep people alive.  
-> Hamlet was built beside an old tower that still gives off heat. Now there is less warmth to go around.
+| Scene | English copy |
+|---|---|
+| Opening | Wanderer, close the door. The wind's getting in. |
+| New drop | Keep it for now. |
+| Comparison | The intact one may not suit you better. |
+| Validation | Record where it stopped. |
+| Success | This part connects now. |
+| Final piece | The earlier pieces still have to be there. |
+| Theme | Sacred Law never failed. Its results escaped control. |
+| Present-day record | Record what happened. Put what you think beside it. |
+| Immortality confirmed | Permanent Immortality is active. |
+| Endless Prayer | For some unknown reason, this thing no longer works. |
+| Salvage purpose | Bring back what we can use. |
+| Repair record | Outer section tested. Inner section unopened. |
+| Protagonist's answer | I don't know. |
+| Last line | It's warm enough to sit here now. Come and eat. |
 
-### 16.2 关键短句
+### 16.3 Functional States
 
-| 场景 | 简体中文 | 英文工作稿 |
+| English copy | Constraint |
+|---|---|
+| New capability discovered | Does not claim a breakthrough |
+| Current build untested | Does not mean necessarily ineffective |
+| Verified under these conditions | No guarantee across every setting |
+| Main bottleneck | Follow with an actual cause |
+| View parameters and sources | Expand on demand |
+| Reached / Target | Do not confuse current and target |
+| Best recorded result | Not a free value for this encounter |
+| Preview costs no materials | Must match the actual economy |
+| Cannot be undone after confirmation | Show only at an actual commit |
+| This stage is complete | Proof segments are genuinely saved |
+
+Existing exact UI copy such as "Unequipped" and "AUTO locked" continues to follow project conventions. This table does not authorize indiscriminate global replacement of every interface line.
+
+Narrative English is localization copy: uncertainty must not become divine intent or verified history in translation. The Endless Prayer failure message and Cain note remain text-locked in their approved English localization.
+
+## 17 | Events, State, and Narrative Delivery
+
+### 17.1 Three Persistent State Categories
+
+| State category | Saved content | Not saved as free combat capability |
 |---|---|---|
-| 开局 | 流浪者，把门带上。风进来了。 | Wanderer, close the door. The wind's getting in. |
-| 新掉落 | 先留着。 | Keep it for now. |
-| 比较 | 完整的这件，未必更适合你。 | The intact one may not suit you better. |
-| 验证 | 停在哪一步，先留着。 | Record where it stopped. |
-| 成功 | 这一段接上了。 | This part connects now. |
-| 最后拼图 | 前面的也得在。 | The earlier pieces still have to be there. |
-| 主题 | 圣律从未失效。失控的是结果。 | The Sacred Laws never failed. The results ran out of control. |
-| 当代记录 | 发生过的可以记。你觉得是什么，写在旁边。 | Record what happened. Put what you think beside it. |
-| 不朽确认 | 永久不朽已生效。 | Permanent immortality is active. |
-| 无终祷文 | 不知道为什么，这个东西失效了 | For some reason, this thing no longer works. |
-| 回收目的 | 带能用的。 | Bring back what we can use. |
-| 维修记录 | 外段已验。内段未开。 | Outer section tested. Inner section unopened. |
-| 主角回答 | 我不知道。 | I don't know. |
-| 最后一句 | 这里也能坐了。吃饭吧。 | It's warm enough to sit here now. Come and eat. |
+| Property and builds | Legal items, Codex, research, wishlists, equipment presets, proxy configurations | Does not fill in unacquired capabilities |
+| Verified records | Build fingerprint, conditions, actual output, bottlenecks, sources | Does not copy the last result into this encounter's initial value |
+| World and story | First kills, proofs, Immortality, salvage records, read dialogue, heating, handover | No repeat first-kill rewards or upgrades for reading text |
 
-### 16.3 功能状态
+Combat snapshots, lineage access, feedback candidates, and loop state reset under encounter rules. After configuration changes, old verification conclusions must show their original conditions, not claim the new setup passed.
 
-| 简体中文 | 英文工作稿 | 约束 |
+### 17.2 Key Triggers and Forbidden Shortcuts
+
+| Event | May trigger | Must not trigger |
 |---|---|---|
-| 新能力已发现 | New capability discovered | 不宣称已突破 |
-| 当前方案未验证 | Current build untested | 不等于一定无效 |
-| 已验证：本次条件下成立 | Verified under these conditions | 不能保证所有场景 |
-| 当前主要瓶颈 | Main bottleneck | 后接真实原因 |
-| 查看参数与来源 | View parameters and sources | 按需展开 |
-| 已达到 / 目标 | Reached / Target | 当前与目标不得混写 |
-| 历史最好结果 | Best recorded result | 不作为本场免费数值 |
-| 预览不消耗材料 | Preview costs no materials | 与真实经济一致 |
-| 提交后不可撤销 | Cannot be undone after confirmation | 只在真实提交处提示 |
-| 本段已完成 | This stage is complete | 证明分段真实保存 |
+| New semantic item obtained | Discovery notice, optional comparison dialogue | Automatically set exponential, nesting, or g tier |
+| Structure established in actual testing | Corresponding record, brief thematic feedback | Automatically award the next loadout |
+| Actual boss victory | First-kill rewards, salvage, route changes | Unseal the world or revoke earlier achievements |
+| Four proofs complete | Enable confirmation at Everlife Altar | Secretly change gear or drops before confirmation |
+| Permanent Immortality confirmed | Pure-defense conversion, Foresight pool opening, medicine-pouch change | Finished proxy automation or hidden debt |
+| Endless Prayer obtained | Inspection and retention | Become an effective combat rune |
+| Endless Prayer equip request | Fixed failure message, unchanged original state | Materials consumed, equipment replaced, hidden repair |
+| g₆₄ actually reached | Current battle report and historical record | Skip an unfinished Zero fight |
+| Zero victory and salvage complete | Horizon, limited repairs, handover, ending | Mandatory new boss or ending-material farm |
 
-既有精确 UI 文案如“未装配”“AUTO 已锁定”继续按项目规范使用。本表不要求无授权全局替换所有现有界面短句。
+If a condition was reached early, later dialogue uses a brief acknowledgment rather than rebuilding the gate. Classes and Manual / Auto share one world state. Residents do not call players lazy for choosing Auto.
 
-剧情英文是本地化工作稿，不将中文未知翻译成神意或已证实历史。无终祷文的中文提示和凯恩札记逐字保护。
+### 17.3 Dialogue Budget
 
-## 17｜事件、状态与叙事投放
+Before a contract: one immediate goal line plus necessary limits. Key return conversations usually span three to six lines. Large subtitles do not obscure combat; story pauses do not interrupt looting. Compress read dialogue by default, with replay from an appropriate entry.
 
-### 17.1 三类持久状态
+Opening and ending may run longer, but skipping loses no items, proofs, first kills, or heating state. Optional historical reading is never a ticket to mechanical growth.
 
-| 状态类 | 保存内容 | 不保存为免费战斗能力 |
+### 17.4 Failure and Retry
+
+Ordinary failure does not confiscate equipped items or safely settled gains. Handle unsettled rewards by existing rules and report an actual next step. Failed proofs retry unfinished segments only. Forced resident deaths, damaged endgame gear, or hidden deductions from civilization's hope are outside this manuscript.
+
+After Immortality, failure comes only from still-valid task, control, or efficiency conditions, not renewed injury or death. No guaranteed-lethal damage is added for narrative tension.
+
+## 18 | Full Game, Internal Testing, and Production Handoff
+
+### 18.1 Two Target Levels
+
+| Scope | Target for this iteration | Do not confuse with |
 |---|---|---|
-| 财产与构筑 | 合法物品、法典、研究、愿望单、装备预设、代理配置 | 不自动填齐未获得能力 |
-| 已验证记录 | 构筑指纹、条件、真实输出、瓶颈与来源 | 不把上场结果复制为本场初值 |
-| 世界与剧情 | 首杀、证明、不朽、回收记录、已读对白、供热与交班 | 不重复发首杀，不因读过文本就升级 |
+| Current internal test | 10¹⁰⁰ | Does not mean the repository's old 10¹² Colossus acceptance is already updated |
+| Full game | Actual g₆₄ ending and A Seat in the Warmth | Does not stop at 10↑↑10 or merely tease g₁ |
+| Endgame horizon | TREE(3) and greater boss-level entities | Does not require two new playable bosses this iteration |
+| Endless Prayer | Obtainable, inspectable, unequippable | No infinite execution or repair minigame |
 
-战斗中的快照、谱系访问、反馈候选和循环状态按遭遇规则重置。配置变化应使旧验证结论显示其原条件，不能冒称新方案已通过。
+Neither the old 12-18 hours nor prototype 90-150 minutes can be promised as measured results for the new full experience. Reestablish official duration, material budget, and high-order pacing through playtests and economy validation, not fixed farm counts filling time.
 
-### 17.2 关键触发与禁止捷径
+### 18.2 Prototype Constraints Are Not the Full-Game Recipe
 
-| 事件 | 可以触发 | 不可以触发 |
-|---|---|---|
-| 新语义物品获得 | 新发现提示、可选比较对白 | 自动设置指数、嵌套或 g 阶 |
-| 实测结构成立 | 对应记录、短主题反馈 | 自动发下一套配装 |
-| Boss 实际胜利 | 首杀奖励、回收与通路变化 | 全世界封印解除或撤销旧成果 |
-| 四项证明完成 | 恒生坛可确认 | 未确认就偷改装备与掉落 |
-| 永久不朽确认 | 纯防御转换、预见档池开放、药袋变化 | 自动代理毕业或隐藏负债 |
-| 无终祷文获得 | 可查看与保留 | 成为有效战斗符文 |
-| 无终祷文装备请求 | 固定失败提示，原状态保持 | 消耗材料、替换装备、隐藏修复 |
-| g₆₄ 实际达成 | 当前战报与历史记录 | 跳过仍未完成的零号战斗 |
-| 零号胜利与回收完成 | 远景、有限维修、交班与结局 | 强制新 Boss 或结局材料刷取 |
+The existing prototype's single Ranger route, four slots, fixed mainline rewards, and Auto graduation isolate test questions. This manuscript does not directly modify prototype code or demand every full-game feature fit into this internal test.
 
-若玩家提前达成某项条件，后续对白使用简短承认版本，不重新设门槛。不同职业与 Manual / Auto 使用同一世界状态，居民不因选择 Auto 指责玩家懒惰。
+Full-game migration requires stage world drops for semantic runes; mechanic-tag hunts for general Laws; viable three-class and cross-class play; equipment, seeds, forging, research, and proxies throughout growth; story conditions based on testing and actual victories, not prototype reward order.
 
-### 17.3 对白预算
+The prototype may retain controlled acquisition for validation, explicitly labeled a test exception rather than written as every player's mandatory story. Full-game manual-only players do not need an Auto count to enter later story.
 
-契约前一句当下目标加必要限制；回城关键对话通常三至六句。战斗不被大段字幕遮挡，拾取不被剧情暂停打断。已读对白默认压缩，可在合适入口回看。
+### 18.3 Work the Mainline GDD Must Add
 
-开场和结局可以稍长，但跳过不丢物品、证明、首杀与供热状态。可选历史阅读永远不是机械成长门票。
+1. Reconcile the 10¹⁰⁰ and g₆₄ targets, old boss values, and actual growth pacing. Changing display strings alone is insufficient.
 
-### 17.4 失败与重试
+2. Replace item-acquisition tier advancement with actual builds and measured results. Distinguish targets, current results, and historical records.
 
-普通失败不没收已装备物品与已安全结算成果，按既有规则处理未结算奖励；报告给出真实下一步。证明失败只重试未完成片段。因玩家失败强制杀死居民、损坏毕业装备或扣除隐藏文明希望，均不在本稿范围。
+3. Complete two-layer availability before Twin-Seal and three-layer availability before Threefold. Remove circular first-kill prerequisites relying solely on the boss's own reward.
 
-不朽后失败只可能来自任务、控制与效率等仍合法的条件，不重新造成主角受伤死亡。没有为制造剧情张力而加入的必死伤害。
+4. Build section 10's high-order semantics, compatibility, and sources. Supply three pure-class and at least three cross-class clear witnesses, verifying one semantic per skill, Law uniqueness, and the unique feedback edge.
 
-## 18｜完整游戏、内部测试与制作交接
+5. Extend restricted symbolic representation, comparison, and cash-out. Official playable combat cannot return UNKNOWN to feign mystery, or use ∞, NaN, or overflow to simulate power.
 
-### 18.1 两级目标
+6. Maintain world drops, mechanic hunts, research, forging, proxies, and the item-exit economy throughout late play. Breakthroughs must retain pursuits of startup, stability, efficiency, and setup diversity.
 
-| 范围 | 本轮目标 | 不能混淆的内容 |
-|---|---|---|
-| 当前内部测试 | 10¹⁰⁰ | 不等于仓库旧 10¹² 巨像验收已经更新 |
-| 完整游戏 | g₆₄ 实际终局与一席之暖 | 不停在 10↑↑10 或只预告 g₁ |
-| 终局远景 | TREE(3) 及更大 Boss 级存在 | 不要求本轮增加两场可打 Boss |
-| 无终祷文 | 可得、可看、不可装备 | 不实现无限运行或修复小游戏 |
+7. Give the Endless Prayer only an explicit unequippable state and fixed message, unbypassable in either mode. Open Foresight consistently with permanent Immortality and convert existing pure-defense investment as agreed.
 
-旧 12–18 小时与原型 90–150 分钟均不能直接承诺为新完整体验的实测结果。正式时长、材料预算与高阶节奏须通过实际试玩和经济验证重新确定，不用固定刷取次数填满时长。
+8. Persist first kills, proofs, heating, and handover. Skipping and replay do not duplicate rewards. Immortality is never revoked.
 
-### 18.2 原型收束不能成为正式配方
+These are full-delivery requirements, not story content removable as "not implemented yet." Implementation may be staged; documentation must not pretend it is complete.
 
-既有原型的游侠单路线、四槽、固定主线奖励与 Auto 毕业用于测试集中问题。本版不直接修改原型代码，也不要求本轮将所有正式内容塞入内测。
+### 18.4 Art and Text Handoff
 
-正式版需要迁移：语义符文回到阶段世界掉落；通用法则回到机制标签追猎；三职业与跨职业可用；装备、种子、锻造、研究与代理贯穿成长；剧情条件基于实测与实际胜利，而非原型奖励顺序。
+Art follows existing style, pixel specifications, and performance rules. This manuscript defines semantics only: the stool's before-and-after doorway placement, finite heating and unknown depths, eight bosses' distinct aftermaths, readable ordinary and key equipment, six functional points, the Endless Prayer, and seven homages.
 
-原型仍可保留受控获取以便验证，但必须标注测试例外，不得在完整剧情中继续写成每位玩家必经的故事。正式版不要求纯手动玩家完成 Auto 次数才能进入后续故事。
+The three old tier-advancing relics are absent from the current asset list. Exclusive silhouettes for new high-order components must await legal item specifications. Do not draw three world-saving relics first and force systems into a three-piece set.
 
-### 18.3 主线必须补入 GDD 的工作
+The original manuscript was independently authored by the primary agent in its originating session. English is working copy; core terms are fixed, and final typesetting must fit interface space. Do not give the Wanderer a personal name, add a Church identity to the crown, or draw a fully reconstructible historical timeline into the ruins.
 
-一：统一 10¹⁰⁰ 与 g₆₄ 两级目标、旧 Boss 数值与真实成长节奏，不能只改显示字符串。
+## 19 | Delivery Acceptance and Content Completeness
 
-二：将成长记录从“拿到物品即升阶”改为真实构筑与实测结果；明确目标、当前结果与历史记录的区别。
+### 19.1 Loot-First Acceptance
 
-三：补齐双印前的两层可得性、三相前的三层可得性，消除自身奖励作为自身首杀唯一前置的循环。
+- Current goals and ordinary equipment effects are understandable without reading ancient fragments.
+- One new semantic item in an empty or mismatched build cannot independently complete a tier breakthrough.
+- A final piece added to mature preparations may trigger an immediate real breakthrough, without story delay.
+- Players can explain a gearing or forging tradeoff; ordinary drops and seeds have value.
+- Exploration, validation, and accumulation may interleave, without prescribed failures or minimum farming counts.
+- First kills are not the only worthwhile drops; research and alternatives genuinely exist.
+- Proxy capability needs fitting and validation, not story-granted perfect execution.
+- High-order content has genuinely compatible recipes and realizable output, not item names plus subtitles.
 
-四：按第 10 章制作高阶语义、兼容与来源，提供三纯职业及至少三跨职业通关见证；验证每技能一语义、法则唯一与唯一反馈边。
+### 19.2 Story Completeness Acceptance
 
-五：扩展受限符号表示、比较与兑现。正式可战斗内容不能返回 UNKNOWN 伪装神秘，不用 ∞、NaN 或溢出来模拟力量。
+- Thirty-eight experience units cover the opening, early breakthrough, midgame proofs and Immortality, fixed nesting, feedback, high-order growth, g sequence, g₆₄, Zero, horizon, repairs, handover, and ending.
+- Five main NPCs, eight bosses, eight uniques, six facilities, six everyday side stories, and seven homages all have places and roles.
+- Nine skills, sixteen proxy cores, ten attachments, and sixteen firmware entries have working English names, with earlier design aliases retained where needed.
+- Obtaining, inspecting, and failing to equip the Endless Prayer are simple and complete, with no hidden repair or activation path.
+- The Wanderer gains neither Church truth nor identity certification; history remains highly fragmented.
+- Hearthside's early achievements and final improvements both persist; faint hope is not reversed.
 
-六：保持世界掉落、机制追猎、研究、锻造、代理与物品退出经济贯穿后期。突破后必须仍有启动、稳定、效率与方案多样性的追逐。
+### 19.3 Typical Rejection Cases
 
-七：无终祷文只做显式不可装备状态和固定提示；两种模式均不能绕过。预见档统一随永久不朽开放，已有纯防御投入按约定转换。
+Automatic feedback growth on acquiring the crown; g₁ awarded directly after two high-order contracts; three relics required to fight Zero; a mandatory story failure; ordinary loot reduced to meaningless gold; or a hidden repair quest for the theoretical-infinity rune all violate this edition.
 
-八：首杀、证明、供热与交班持久，跳过和回放不重复奖励，不朽不反悔。
+The system must recognize a sudden breakthrough from long-kept equipment plus one final affix; an expert finding a valid setup earlier than expected; continued efficiency gains without a growth-tier change; and skipping repeated instruction after an objective is already passed.
 
-以上是完整交付要求，不是可以以“暂未实现”删除的剧情内容；实现可以分阶段，文档不冒充已经完成。
+### 19.4 Sources and Replacement of Earlier Manuscripts
 
-### 18.4 美术与文本交接
+This edition was rewritten after rereading the latest Feishu text and earlier user comments. It builds on the early full design's discovery principle of one semantic rune, one general Law, and multiple threshold and support affixes, together with world drops, mechanic hunts, Law Token forging, research, proxies, and Immortality.
 
-美术沿既有风格、像素规格与性能规范制作。本稿只定义语义：门边凳子的前后变化、有限供热与未知深处、八 Boss 的不同余波、可辨的普通与关键装备、六功能点、无终祷文和七项致敬。
+Confirmed world, character, ending, and designated-homage material from earlier manuscripts is fully retained; growth paths are rebuilt to the latest user requirements. The three tier-advancing relics and their fixed acquisition flow are withdrawn, not hidden production dependencies. Earlier documents are historical references, not parallel sources of conflicting rules.
 
-旧三件升阶遗物不在当前资产清单。新增高阶组件的独占造型必须等合法物品规格确定，不能先画三件救世圣物倒逼系统变成三件套。
+This manuscript does not claim implementation or change the official game name, GDD, code, or art assets. Internal test scope must not reduce the full game's content goals.
 
-全套文字由本会话主代理独立创作。英文为工作稿；核心术语固定，最终排版要结合界面空间。不得给流浪者补真名、给冠补教会身份或给遗迹画出一份可拼全的历史年表。
-
-## 19｜交付验收与内容完整性
-
-### 19.1 刷宝本位验收
-
-- 不读古代残片也能理解当前目标与正常装备效果。
-- 一件新语义物品进入空白或不匹配构筑时，不独自完成阶层突破。
-- 一件最后拼图进入成熟准备时，可以立即触发真实突破，不被剧情拖延。
-- 玩家可以解释一次选装或锻造取舍，普通掉落与种子有价值。
-- 探索、验证、积累的顺序允许交错，不设固定失败与最低刷取次数。
-- 首杀不是唯一值得追逐的掉落，研究与替代方案真实存在。
-- 代理能力需要装配与验证，不凭剧情获得完美执行。
-- 高阶内容存在真实兼容配方与可兑现输出，不是道具名加字幕。
-
-### 19.2 故事完整性验收
-
-- 三十八个体验单元覆盖开场、前期突破、中期证明与不朽、固定嵌套、反馈、高阶、g 序列、g₆₄、零号、远景、维修、交班与结局。
-- 五名主要 NPC、八 Boss、八件暗金、六设施、六生活支线、七项致敬均有位置与作用。
-- 九技能、十六代理核心、十附件与十六固件具备中英工作名。
-- 无终祷文取得、查看与失败简单完整，无隐含修复或生效路径。
-- 流浪者不获得教会真相或身份认证；历史保持高度碎片化。
-- 哈姆雷特前期成果与终局改善都持续存在；微弱希望不被反转。
-
-### 19.3 不通过的典型情形
-
-“拿到冠后自动把增长档设为反馈”“完成两份高阶契约直接发 g₁”“凑齐三枚圣物才能打零号”“为了剧情必须失败一次”“普通掉落只剩无意义金币”“理论无限符文暗藏修复任务”，均不符合本版。
-
-“玩家靠长期保留的装备与最后一条词突然完成突破”“高手比预期更早发现合法方案”“不换增长阶层也能持续优化效率”“已通过目标便跳过重复教学”，均应被系统承认。
-
-### 19.4 来源与旧稿替换
-
-本版回读最新飞书正文与既往用户评论，并以早期完整设计中一语义符文、一通用法则、多条临界与支持词的发现原则，以及世界掉落、机制追猎、律筹锻造、研究、代理和不朽规则为基础重新创作。
-
-旧稿中世界、人物、结局和指定致敬的已确认部分在此完整保留；成长路径按用户最新要求重建。三件升阶遗物及其固定获取流程撤销，不作为后续制作的隐藏依赖。旧文档只供回溯，不再与本版并列选择冲突规则。
-
-本稿未宣称代码已实现，未修改正式游戏名、GDD、代码或美术资产。完整游戏的内容目标不能因内部测试范围而删减。
-
-> 流浪者不是领到了足够多的答案。  
-> 是在无数可以放在一起的东西里，找到了能让结果发生的办法。  
-> 高塔深处依然没有回答。  
-> 门边，有一碗还热的饭。
+> The Wanderer was not handed enough answers.
+>
+> Among countless things that could be put together, they found a way to make a result happen.
+>
+> The depths of the spire still offered no answer.
+>
+> By the door, a bowl of food was still warm.

@@ -49,7 +49,7 @@ func evaluate(progress_snapshot: Dictionary, saved_story: Dictionary) -> Diction
 		for conversation_value in unit.conversations:
 			var conversation: Dictionary = (conversation_value as Dictionary).duplicate(true)
 			var npc: Dictionary = registry.get_npc(String(conversation.npc))
-			conversation["npc_name"] = String(npc.get("name", "未知"))
+			conversation["npc_name"] = String(npc.get("name", "Unknown"))
 			conversation["stage"] = int(unit.stage)
 			conversation["is_read"] = read_ids.has(String(conversation.id))
 			available_conversations.append(conversation)
@@ -101,7 +101,7 @@ func default_saved_story() -> Dictionary:
 
 func _objective_for(unit: Dictionary, snapshot: Dictionary) -> Dictionary:
 	if unit.is_empty():
-		return {"id": "story_not_started", "text": "完成起步练习，进入旧路外段", "campaign_node": "tutorial_ranger_basics"}
+		return {"id": "story_not_started", "text": "Complete the starting exercises and enter the Outer Old Road", "campaign_node": "tutorial_ranger_basics"}
 	var objective: Dictionary = (unit.objective as Dictionary).duplicate(true)
 	return objective
 

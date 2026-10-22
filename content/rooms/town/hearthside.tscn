@@ -1250,7 +1250,7 @@ metadata/kind = "interaction"
 
 metadata/id = "contract"
 
-metadata/label = "行路契台"
+metadata/label = "Contract Board"
 
 metadata/radius = 48
 
@@ -1270,7 +1270,7 @@ metadata/kind = "interaction"
 
 metadata/id = "loadout"
 
-metadata/label = "备行架"
+metadata/label = "Loadout"
 
 metadata/radius = 48
 
@@ -1290,7 +1290,7 @@ metadata/kind = "interaction"
 
 metadata/id = "forge"
 
-metadata/label = "回火砧"
+metadata/label = "Tempering Anvil"
 
 metadata/radius = 48
 
@@ -1310,7 +1310,7 @@ metadata/kind = "interaction"
 
 metadata/id = "training"
 
-metadata/label = "验律场"
+metadata/label = "Training"
 
 metadata/radius = 48
 
@@ -1330,7 +1330,7 @@ metadata/kind = "interaction"
 
 metadata/id = "proxy"
 
-metadata/label = "代行舱"
+metadata/label = "Proxy Bay"
 
 metadata/radius = 48
 

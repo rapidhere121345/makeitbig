@@ -23,9 +23,9 @@ func _run() -> void:
 		"outcome": "victory",
 		"proxy_component_drops": [{
 			"id": "navigation_prism",
-			"name": "导航棱镜",
+			"name": "Navigation Prism",
 			"slot": "perception",
-			"protocol": "只用于验证协议详情展开。",
+			"protocol": "Only used to verify expanded protocol details.",
 		}],
 		"rewards": {
 			"equipment_drops": [{

@@ -33,14 +33,14 @@ func _run() -> void:
 	_expect(_is_disabled(picker, "tutorial_ranger_basics") and _is_disabled(picker, "mainline_02_priority_under_pressure"), "contract screen: completed or locked fixed nodes stayed clickable", failures)
 	_expect(not _is_disabled(picker, "mainline_01_first_hunt") and not _is_disabled(picker, "side_targeted_equipment"), "contract screen: available mainline or repeatable side node was disabled", failures)
 	_expect(mode_picker != null and mode_picker.selected == 0 and mode_picker.is_item_disabled(1), "contract screen: pre-Boss node did not lock to Manual", failures)
-	_expect(reward_label != null and "固定起步装" in reward_label.text and "猎人印记" in first_reward.text,
+	_expect(reward_label != null and "Fixed Starter Gear" in reward_label.text and "Hunter's Mark" in first_reward.text,
 		"contract screen: authored drop/reward tags were not explained", failures)
-	_expect(info_label != null and "战利品方向" not in info_label.text,
+	_expect(info_label != null and "Loot Focus" not in info_label.text,
 		"contract screen: route brief still mixed reward facts into its hierarchy", failures)
 	_expect(screen.find_child("ContractModePanel", true, false) != null
 		and screen.find_child("ModeHeading", true, false) != null,
 		"contract screen: mode selection was not grouped into its own decision block", failures)
-	_expect(String(screen.call("_tag_summary", ["breeding_split_item", "pack_hunt_mark_item"])).contains("获得后需在备行架装备"),
+	_expect(String(screen.call("_tag_summary", ["breeding_split_item", "pack_hunt_mark_item"])).contains("equip it at the Loadout after obtaining it"),
 		"contract screen: semantic item rewards omitted manual-equip guidance", failures)
 	screen.call("_on_start_pressed")
 	_expect(starts.size() == 1 and starts[0].contract_id == "mainline_01_first_hunt" and starts[0].mode == "Manual" and int(starts[0].room_count) == 1, "contract screen: mainline start payload did not use selected authored node", failures)
@@ -75,20 +75,20 @@ func _run() -> void:
 	screen.present({"initial_class": "ranger"}, {"contract_id": "side_targeted_equipment"}, "", pity_snapshot)
 	_expect(_selected_id(picker) == "side_targeted_equipment", "contract screen: repeatable side node from previous config was not selected", failures)
 	_expect(seed_edit != null and seed_edit.text == "8123", "contract screen: suggested_seed was not applied on first present", failures)
-	_expect("已完成 2 次 / 本次第 3 次" in info_label.text, "contract screen: repeatable completion/attempt copy missing", failures)
-	_expect("保底" not in info_label.text, "contract screen: non-pity side node showed pity copy", failures)
-	_expect("推荐" not in info_label.text and "战力" not in info_label.text, "contract screen: contract summary leaked power/tier recommendation copy", failures)
+	_expect("Completed 2 times / Run 3" in info_label.text, "contract screen: repeatable completion/attempt copy missing", failures)
+	_expect("Guaranteed Drop" not in info_label.text, "contract screen: non-pity side node showed pity copy", failures)
+	_expect("Recommended" not in info_label.text and "Power" not in info_label.text, "contract screen: contract summary leaked power/tier recommendation copy", failures)
 	var fate_index := _index_of(picker, "side_affix_and_law_tallies")
 	picker.select(fate_index)
 	screen.call("_on_contract_selected", fate_index)
-	_expect("本次触发定向装备保底" in info_label.text and "每 3 次完成触发一次定向装备保底" in String(screen.call("_repeatable_progress_text", screen.call("_selected_contract"))), "contract screen: third-attempt pity copy missing", failures)
+	_expect("Guaranteed targeted equipment this run" in info_label.text and "Guaranteed targeted equipment every 3 completions" in String(screen.call("_repeatable_progress_text", screen.call("_selected_contract"))), "contract screen: third-attempt pity copy missing", failures)
 	_expect(seed_edit.text == "9001", "contract screen: switching node did not apply its suggested_seed", failures)
 	seed_edit.text = "4242"
 	screen.call("_on_start_pressed")
 	_expect(starts.size() == 3 and starts[2].contract_id == "side_affix_and_law_tallies" and int(starts[2].seed) == 4242, "contract screen: hand-edited seed was not used in start payload", failures)
 	seed_edit.text = "9007199254740992"
 	screen.call("_on_start_pressed")
-	_expect(starts.size() == 3 and "契约准备数据无效" in String((screen.get("_status_label") as Label).text),
+	_expect(starts.size() == 3 and "Invalid contract preparation data" in String((screen.get("_status_label") as Label).text),
 		"contract screen: an unsafe positive seed was emitted or exposed a technical error", failures)
 	seed_edit.text = "-9007199254740992"
 	screen.call("_on_start_pressed")
@@ -100,7 +100,7 @@ func _run() -> void:
 	route_button.pressed.emit()
 	var route_dialog := screen.get("_contract_details_dialog") as AcceptDialog
 	var route_copy := route_dialog.find_child("RouteAndRewards", true, false) as Label
-	_expect(route_dialog.visible and "每 3 次完成触发一次定向装备保底" in route_copy.text and "战利品方向" in route_copy.text,
+	_expect(route_dialog.visible and "Guaranteed targeted equipment every 3 completions" in route_copy.text and "Loot focus" in route_copy.text,
 		"contract screen: compact view discarded full reward/pity receipt", failures)
 	route_dialog.hide()
 	route_dialog.canceled.emit()
@@ -112,25 +112,25 @@ func _run() -> void:
 		"completion_count": 3, "next_attempt_number": 4, "suggested_seed": 9002,
 	})
 	screen.present({"initial_class": "ranger"}, {"contract_id": "side_affix_and_law_tallies"}, "", pity_snapshot_2)
-	_expect("距保底还有 2 次" in info_label.text and "本次触发保底" not in info_label.text, "contract screen: off-cycle pity remaining-count copy wrong", failures)
-	_expect("已完成 3 次 / 本次第 4 次" in info_label.text, "contract screen: repeated attempt copy after completion not shown", failures)
+	_expect("guarantee in 2 runs" in info_label.text and "Guaranteed drop this run" not in info_label.text, "contract screen: off-cycle pity remaining-count copy wrong", failures)
+	_expect("Completed 3 times / Run 4" in info_label.text, "contract screen: repeated attempt copy after completion not shown", failures)
 
 	# Legacy snapshot without the optional fields keeps previous_config seed / 52969 fallback.
 	screen.present({"initial_class": "ranger"}, {}, "", _snapshot(false, "mainline_01_first_hunt"))
 	_expect(seed_edit.text == "52969", "contract screen: legacy snapshot did not fall back to default seed", failures)
-	_expect("已完成" not in info_label.text, "contract screen: legacy node showed repeatable progress copy", failures)
+	_expect("Complete" not in info_label.text, "contract screen: legacy node showed repeatable progress copy", failures)
 	var build_label: Label = screen.get("_build_label")
-	_expect(build_label != null and "当前构筑数据不可用" in build_label.text, "contract screen: legacy snapshot without resolved build did not degrade gracefully", failures)
-	_expect("方案" not in _all_text(screen), "contract screen: legacy snapshot leaked preset A/B/C naming", failures)
-	_expect("穿刺箭" in _all_text(screen.get("_skill_row")) and "猎人印记" in _all_text(screen.get("_skill_row")) and "突袭" in _all_text(screen.get("_skill_row")) and "闪避" in _all_text(screen.get("_skill_row")), "contract screen: skill Chinese mapping missing", failures)
-	_expect("核心技能说明" not in build_label.text and "tick" not in build_label.text,
+	_expect(build_label != null and "Current build data unavailable" in build_label.text, "contract screen: legacy snapshot without resolved build did not degrade gracefully", failures)
+	_expect("Preset" not in _all_text(screen), "contract screen: legacy snapshot leaked preset A/B/C naming", failures)
+	_expect("Piercing Arrow" in _all_text(screen.get("_skill_row")) and "Hunter's Mark" in _all_text(screen.get("_skill_row")) and "Dash" in _all_text(screen.get("_skill_row")) and "Dodge" in _all_text(screen.get("_skill_row")), "contract screen: skill English mapping missing", failures)
+	_expect("Core skill details" not in build_label.text and "tick" not in build_label.text,
 		"contract screen: full rules leaked into default view", failures)
 	var details_button: Button = screen.find_child("BuildDetailsButton", true, false)
 	_expect(details_button != null and screen.get("_details_dialog") == null, "contract screen: details must be available and created on demand", failures)
 	details_button.pressed.emit()
 	var details: AcceptDialog = screen.get("_details_dialog")
 	var details_label: Label = screen.get("_details_label")
-	_expect(details != null and details.visible and "核心技能说明" in details_label.text and "冷却：13 tick" in details_label.text and "持续免受伤害" in details_label.text,
+	_expect(details != null and details.visible and "Core skill details" in details_label.text and "Cooldown: 13 tick" in details_label.text and "immune to damage throughout" in details_label.text,
 		"contract screen: opening details lost the complete skill rules", failures)
 	details.hide()
 	details.canceled.emit()
@@ -143,7 +143,7 @@ func _run() -> void:
 	})
 	screen.present({"initial_class": "ranger"}, {"contract_id": "side_targeted_equipment", "seed": 606}, "", bad_snapshot)
 	_expect(seed_edit.text == "606", "contract screen: invalid suggested_seed overrode previous_config seed", failures)
-	_expect("已完成" not in info_label.text, "contract screen: invalid progress fields rendered progress copy", failures)
+	_expect("Complete" not in info_label.text, "contract screen: invalid progress fields rendered progress copy", failures)
 	var negative_seed_snapshot := _snapshot(true, "auto_certification")
 	_set_node_fields(negative_seed_snapshot, "side_targeted_equipment", {
 		"completion_count": 1, "next_attempt_number": 2, "suggested_seed": -404,
@@ -160,21 +160,22 @@ func _run() -> void:
 	(unverified_snapshot["active_build"] as Dictionary)["runes"] = ["breeding_split"]
 	(unverified_snapshot["active_build"] as Dictionary)["laws"] = ["pack_hunt_mark"]
 	screen.present({"initial_class": "ranger"}, {"contract_id": "auto_certification"}, "", unverified_snapshot)
-	_expect(_parameter_text(screen, "p") == "49%" and _parameter_text(screen, "T") == "34 秒"
+	_expect(_parameter_text(screen, "p") == "49%" and _parameter_text(screen, "T") == "34 s"
 		and _parameter_text(screen, "d") == "18" and _parameter_text(screen, "damage") == "12.5" and _parameter_text(screen, "max_health") == "100",
 		"contract screen: five decision parameters were not rendered", failures)
-	_expect("投射物速度" not in build_label.text and "转向时间" not in build_label.text and "核心技能说明" not in build_label.text,
+	_expect("Projectile Speed" not in build_label.text and "Turn Time" not in build_label.text and "Core skill details" not in build_label.text,
 		"contract screen: complete rule receipt remained in default view", failures)
 	details_button.pressed.emit()
-	_expect("投射物速度：750.2" in details_label.text and "转向时间（数值越低越好）：0.4 秒（越低越好）" in details_label.text,
+	_expect("Projectile Speed: 750.2" in details_label.text and "Turn Time (Lower Is Better): 0.4 s" in details_label.text
+		and "0.4 s (Lower Is Better)" not in details_label.text,
 		"contract screen: details omitted remaining authoritative parameters", failures)
 	_expect("breedable_event" not in build_label.text and "branch_target_history" not in build_label.text and "ffffffffffff" not in build_label.text,
 		"contract screen: raw diagnostic ids leaked into the build summary", failures)
-	_expect("增长结论：未验证" in details_label.text, "contract screen: unverified build did not show 未验证", failures)
+	_expect("Growth Conclusion: Unverified" in details_label.text, "contract screen: unverified build did not show Unverified", failures)
 	_expect("exponential" not in _all_text(screen), "contract screen: unverified build leaked growth classification", failures)
-	_expect("方案" not in _all_text(screen), "contract screen: resolved summary leaked preset A/B/C naming", failures)
-	_expect("符文：孳生分裂" in details_label.text and "法则：群猎印记" in details_label.text, "contract screen: rune/law Chinese mapping missing", failures)
-	_expect("备行架" in details_button.tooltip_text and "切换" not in build_label.text, "contract screen: read-only guidance did not point at real equipment", failures)
+	_expect("Preset" not in _all_text(screen), "contract screen: resolved summary leaked preset A/B/C naming", failures)
+	_expect("Rune: Breeding Split" in details_label.text and "Law: Pack Hunt Mark" in details_label.text, "contract screen: rune/law English mapping missing", failures)
+	_expect("Loadout" in details_button.tooltip_text and "Switch" not in build_label.text, "contract screen: read-only guidance did not point at real equipment", failures)
 
 	# Verified fingerprint unlocks the real growth classification.
 	var verified_snapshot := _snapshot(true, "auto_certification")
@@ -184,9 +185,9 @@ func _run() -> void:
 	}
 	screen.present({"initial_class": "ranger"}, {"contract_id": "auto_certification"}, "", verified_snapshot)
 	details_button.pressed.emit()
-	_expect("增长结论：指数" in details_label.text and "未验证" not in details_label.text and "临界" not in details_label.text,
+	_expect("Growth Conclusion: Exponential" in details_label.text and "Unverified" not in details_label.text and "Critical" not in details_label.text,
 		"contract screen: verified build did not use the report state as the readable classification", failures)
-	_expect("方案" not in _all_text(screen), "contract screen: verified summary leaked preset A/B/C naming", failures)
+	_expect("Preset" not in _all_text(screen), "contract screen: verified summary leaked preset A/B/C naming", failures)
 
 	# A map key alone cannot verify a different report, nor can resolved state leak through it.
 	var mismatched_snapshot := _snapshot(true, "auto_certification")
@@ -196,7 +197,7 @@ func _run() -> void:
 	}
 	screen.present({"initial_class": "ranger"}, {"contract_id": "auto_certification"}, "", mismatched_snapshot)
 	details_button.pressed.emit()
-	_expect("增长结论：未验证" in details_label.text and "指数" not in details_label.text and "临界" not in details_label.text,
+	_expect("Growth Conclusion: Unverified" in details_label.text and "Exponential" not in details_label.text and "Critical" not in details_label.text,
 		"contract screen: mismatched report fingerprint impersonated a verified build", failures)
 
 	# Only parameters that exist are shown.
@@ -213,8 +214,8 @@ func _run() -> void:
 	screen.present({"initial_class": "ranger"}, {"contract_id": "auto_certification"}, "", broken_snapshot)
 	details_button.pressed.emit()
 	details.hide()
-	_expect("当前构筑数据不可用" in build_label.text, "contract screen: broken resolved build did not degrade gracefully", failures)
-	_expect("p=" not in build_label.text and "exponential" not in _all_text(screen) and "方案" not in _all_text(screen), "contract screen: broken resolved build leaked parameters or classification", failures)
+	_expect("Current build data unavailable" in build_label.text, "contract screen: broken resolved build did not degrade gracefully", failures)
+	_expect("p=" not in build_label.text and "exponential" not in _all_text(screen) and "Preset" not in _all_text(screen), "contract screen: broken resolved build leaked parameters or classification", failures)
 
 	# Workspace: content scrolls but commitment and exit stay pinned onscreen.
 	await _wait_frames(2)
@@ -266,9 +267,9 @@ func _run() -> void:
 	var experience: int = load("res://src/systems/character_progression.gd").contract_experience("mainline_01_first_hunt", true)
 	screen.present(app.profile, {}, "", real_snapshot)
 	var objective: Label = screen.find_child("CombatObjective", true, false)
-	_expect("清除敌人" in objective.text and "旧路外段" in info_label.text and "炉边镇" in info_label.text and "猎人印记" in first_reward.text and ("完成经验 %d" % experience) in (screen.get("_objective_meta") as Label).text,
+	_expect("Clear Enemies" in objective.text and "Outer Old Road" in info_label.text and "Hearthside" in info_label.text and "Hunter's Mark" in first_reward.text and ("Completion XP %d" % experience) in (screen.get("_objective_meta") as Label).text,
 		"contract screen: fresh-save goal/reward not linked to town and road", failures)
-	_expect("猎人印记" not in _all_text(screen.get("_skill_row")) and "穿刺箭" in _all_text(screen.get("_skill_row")),
+	_expect("Hunter's Mark" not in _all_text(screen.get("_skill_row")) and "Piercing Arrow" in _all_text(screen.get("_skill_row")),
 		"contract screen: first-clear skill reward impersonated an already equipped skill", failures)
 	for viewport_size in [Vector2(1280,720), Vector2(1600,900)]:
 		screen.size = viewport_size
@@ -277,6 +278,8 @@ func _run() -> void:
 			"contract screen: fresh-save goals/rewards require scrolling at " + str(viewport_size), failures)
 		_expect((screen.get("_parameter_grid") as Control).get_global_rect().end.y <= (screen.get("_build_scroll") as Control).get_global_rect().end.y,
 			"contract screen: decision build requires scrolling at " + str(viewport_size), failures)
+		_expect((screen.get("_build_scroll") as Control).get_global_rect().encloses(details_button.get_global_rect()),
+			"contract screen: build details action is partially cropped at " + str(viewport_size), failures)
 
 	# A visible transition locks every commitment control and emits the exact
 	# validated config once completion is forced through the public test hook.

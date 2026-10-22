@@ -1,6 +1,6 @@
-# 色键背景修正
+# Chroma-Key Background Correction
 
-首次生成的透明外观实际为 RGB 棋盘，不是 alpha。原始输出保留；以下内置 imagegen 定向修正后再按色键清理。
+The first output's apparent transparency was an RGB checkerboard, not alpha. Raw output is retained; the following targeted built-in imagegen corrections precede chroma-key cleanup.
 
 ## decals
 
@@ -17,4 +17,3 @@ Use case: precise-object-edit. Edit this image ONLY to replace every grey/white 
 ## boss
 
 Use case: precise-object-edit. Edit this image ONLY to replace every grey/white checkerboard BACKGROUND pixel, including enclosed holes inside archways or equipment, with completely flat solid chroma-key green #00FF00. The delivered image must have ZERO checkerboard anywhere. Keep all actual asset pixels, silhouettes, materials, colors, positions and sheet layout unchanged. Do not tint any actual object green. Do not add shadow, text, frames, glow, or new assets. Keep the original canvas aspect and dimensions. The final background is uniform opaque pure green, NOT transparency or a representation of transparency. This is a technical asset extraction fix.
-

@@ -10,6 +10,7 @@ func run() -> Array[String]:
 	var failures: Array[String] = []
 	_test_forge_determinism_and_cost(failures)
 	_test_forge_tracks_and_bag(failures)
+	_test_legacy_forge_operation_inputs(failures)
 	_test_proxy_modes_prediction_and_failure(failures)
 	_test_profile_proxy_installation(failures)
 	_test_white_ranger(failures)
@@ -55,6 +56,18 @@ func _test_forge_tracks_and_bag(failures: Array[String]) -> void:
 	for candidate in bag_preview:
 		seen[candidate.family] = true
 	_expect(seen.has("rare") and seen.has("utility"), "forge: one weighted bag cycle must cover every legal family", failures)
+
+
+func _test_legacy_forge_operation_inputs(failures: Array[String]) -> void:
+	var forge := DestinyForge.new()
+	# Compatibility-only inputs, never player-facing copy.
+	for pair: Array in [
+		["\u6dfb\u94f8", DestinyForge.TRACK_ADD],
+		["\u6539\u5199", DestinyForge.TRACK_REWRITE],
+		["\u7cbe\u70bc", DestinyForge.TRACK_REFINE],
+	]:
+		forge.set_dice(pair[0], 7)
+		_expect(forge.get_dice(pair[1]) == 7, "forge: a legacy operation input no longer resolves to its stable track", failures)
 
 
 func _test_proxy_modes_prediction_and_failure(failures: Array[String]) -> void:

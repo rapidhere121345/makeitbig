@@ -17,43 +17,43 @@
   "presets": [
     {
       "id": "convergent",
-      "name": "收敛",
+      "name": "Convergent",
       "p": 0.49,
-      "skills": [{ "id": "piercing_arrow", "name": "穿刺箭" }],
-      "runes": [{ "id": "breeding_split", "name": "孳生分裂", "semantics": "命中后的延续事件分裂为两个同源后继" }],
-      "laws": [{ "id": "pack_hunt_mark", "name": "群猎印记", "semantics": "同源后继共享猎群标记并参与分支增长" }],
+      "skills": [{ "id": "piercing_arrow", "name": "Piercing Arrow" }],
+      "runes": [{ "id": "breeding_split", "name": "Breeding Split", "semantics": "After a hit, continuation events split into two successors of the same lineage" }],
+      "laws": [{ "id": "pack_hunt_mark", "name": "Pack Hunt Mark", "semantics": "Same-lineage successors share pack marks and contribute to branch growth" }],
       "equipment": {
-        "name": "原型续航校准套装",
-        "description": "延长共享寿命并校准箭速，使三档 Build 可在同一训练窗口比较。",
-        "calibration": "共享寿命 34 秒 · 寻敌距离 150 · 箭速 620 · 最短转向 0.18 秒；本档 p=0.49。",
+        "name": "Prototype Endurance Calibration Set",
+        "description": "Extends shared lifetime and calibrates arrow speed so all three builds can be compared in the same Training window.",
+        "calibration": "Shared lifetime 34 s | Targeting distance 150 | Arrow speed 620 | Minimum turn time 0.18 s; this preset has p=0.49.",
         "parameter_source": "prototype_equipped_parameters"
       }
     },
     {
       "id": "critical",
-      "name": "临界",
+      "name": "Critical",
       "p": 0.50,
-      "skills": [{ "id": "piercing_arrow", "name": "穿刺箭" }],
-      "runes": [{ "id": "breeding_split", "name": "孳生分裂", "semantics": "命中后的延续事件分裂为两个同源后继" }],
-      "laws": [{ "id": "pack_hunt_mark", "name": "群猎印记", "semantics": "同源后继共享猎群标记并参与分支增长" }],
+      "skills": [{ "id": "piercing_arrow", "name": "Piercing Arrow" }],
+      "runes": [{ "id": "breeding_split", "name": "Breeding Split", "semantics": "After a hit, continuation events split into two successors of the same lineage" }],
+      "laws": [{ "id": "pack_hunt_mark", "name": "Pack Hunt Mark", "semantics": "Same-lineage successors share pack marks and contribute to branch growth" }],
       "equipment": {
-        "name": "原型续航校准套装",
-        "description": "延长共享寿命并校准箭速，使三档 Build 可在同一训练窗口比较。",
-        "calibration": "共享寿命 34 秒 · 寻敌距离 150 · 箭速 620 · 最短转向 0.18 秒；本档 p=0.50。",
+        "name": "Prototype Endurance Calibration Set",
+        "description": "Extends shared lifetime and calibrates arrow speed so all three builds can be compared in the same Training window.",
+        "calibration": "Shared lifetime 34 s | Targeting distance 150 | Arrow speed 620 | Minimum turn time 0.18 s; this preset has p=0.50.",
         "parameter_source": "prototype_equipped_parameters"
       }
     },
     {
       "id": "exponential",
-      "name": "指数",
+      "name": "Exponential",
       "p": 0.61,
-      "skills": [{ "id": "piercing_arrow", "name": "穿刺箭" }],
-      "runes": [{ "id": "breeding_split", "name": "孳生分裂", "semantics": "命中后的延续事件分裂为两个同源后继" }],
-      "laws": [{ "id": "pack_hunt_mark", "name": "群猎印记", "semantics": "同源后继共享猎群标记并参与分支增长" }],
+      "skills": [{ "id": "piercing_arrow", "name": "Piercing Arrow" }],
+      "runes": [{ "id": "breeding_split", "name": "Breeding Split", "semantics": "After a hit, continuation events split into two successors of the same lineage" }],
+      "laws": [{ "id": "pack_hunt_mark", "name": "Pack Hunt Mark", "semantics": "Same-lineage successors share pack marks and contribute to branch growth" }],
       "equipment": {
-        "name": "原型续航校准套装",
-        "description": "旧版约 63 秒通关配置；延长共享寿命并校准箭速。",
-        "calibration": "共享寿命 34 秒 · 寻敌距离 150 · 箭速 620 · 最短转向 0.18 秒；本档 p=0.61。",
+        "name": "Prototype Endurance Calibration Set",
+        "description": "Legacy configuration with an approximately 63-second clear; extends shared lifetime and calibrates arrow speed.",
+        "calibration": "Shared lifetime 34 s | Targeting distance 150 | Arrow speed 620 | Minimum turn time 0.18 s; this preset has p=0.61.",
         "parameter_source": "prototype_equipped_parameters"
       }
     }

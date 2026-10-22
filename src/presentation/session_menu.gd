@@ -61,7 +61,7 @@ func _ready() -> void:
 	column.add_child(_heading)
 	_note = _label("", 18)
 	column.add_child(_note)
-	_resume = _button("继续游戏", "ResumeButton", column)
+	_resume = _button("Resume", "ResumeButton", column)
 	_resume.pressed.connect(close_menu)
 	var display := HBoxContainer.new()
 	display.add_theme_constant_override("separation", 12)
@@ -74,14 +74,14 @@ func _ready() -> void:
 	display.add_child(_resolution)
 	_fullscreen = CheckButton.new()
 	_fullscreen.name = "FullscreenToggle"
-	_fullscreen.text = "全屏"
+	_fullscreen.text = "Fullscreen"
 	display.add_child(_fullscreen)
-	var apply := _button("应用显示设置", "ApplyDisplay", column)
+	var apply := _button("Apply Display Settings", "ApplyDisplay", column)
 	apply.pressed.connect(func(): display_requested.emit(RESOLUTIONS[_resolution.selected], _fullscreen.button_pressed))
 	var volume_row := HBoxContainer.new()
 	volume_row.add_theme_constant_override("separation", 16)
 	column.add_child(volume_row)
-	_volume_label = _label("音效 45%", 22)
+	_volume_label = _label("Sound 45%", 22)
 	_volume_label.custom_minimum_size.x = 146
 	volume_row.add_child(_volume_label)
 	_volume = HSlider.new()
@@ -93,11 +93,11 @@ func _ready() -> void:
 	_volume.custom_minimum_size = Vector2(200, 36)
 	_volume.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_volume.value_changed.connect(func(value: float):
-		_volume_label.text = "音效 %d%%" % int(value)
+		_volume_label.text = "Sound %d%%" % int(value)
 		effects_volume_changed.emit(value / 100.0))
 	volume_row.add_child(_volume)
-	column.add_child(_label("WASD 移动   鼠标左键 锁定射击\n空格 辅助射击   Q 印记   E 突袭\nShift / 右键 闪避   Tab 战报\nEsc 暂停 / 继续   F1 设置   F11 全屏", 18))
-	_abandon = _button("撤离本次契约", "AbandonButton", column)
+	column.add_child(_label("WASD Move   Left-click Target and shoot\nSpace Aim assist   Q Mark   E Assault\nShift / Right-click Dodge   Tab Battle report\nEsc Pause / Resume   F1 Settings   F11 Fullscreen", 18))
+	_abandon = _button("Abandon Contract", "AbandonButton", column)
 	_abandon.pressed.connect(_request_abandon)
 	get_viewport().size_changed.connect(_fit)
 	set_route("title")
@@ -124,9 +124,9 @@ func _button(text: String, node_name: String, parent: Node) -> Button:
 func set_route(route: String) -> void:
 	_arena = route == "arena"
 	_launcher.visible = route in ["title", "base", "arena"]
-	_launcher.text = "暂停 Esc" if _arena else "设置 F1"
-	_heading.text = "战斗已暂停" if _arena else "游戏设置"
-	_note.text = "继续时恢复当前战斗。撤离不会获得本次奖励。" if _arena else "显示与音效设置立即用于当前游戏。"
+	_launcher.text = "Pause Esc" if _arena else "Settings F1"
+	_heading.text = "Combat Paused" if _arena else "Game Settings"
+	_note.text = "Resume to continue combat. Abandoning forfeits this contract's rewards." if _arena else "Display and sound settings apply immediately."
 	_abandon.visible = _arena
 	_fit()
 
@@ -136,7 +136,7 @@ func sync_settings(resolution: Vector2i, fullscreen: bool, volume: float) -> voi
 	_resolution.select(index if index >= 0 else 2)
 	_fullscreen.set_pressed_no_signal(fullscreen)
 	_volume.set_value_no_signal(clampf(volume, 0, 1) * 100)
-	_volume_label.text = "音效 %d%%" % int(_volume.value)
+	_volume_label.text = "Sound %d%%" % int(_volume.value)
 
 
 func open_menu() -> void:
@@ -146,7 +146,7 @@ func open_menu() -> void:
 	_return_focus = weakref(focus) if focus != null else null
 	_open = true
 	_confirm_abandon = false
-	_abandon.text = "撤离本次契约"
+	_abandon.text = "Abandon Contract"
 	_shade.show()
 	_panel.show()
 	_fit()
@@ -175,7 +175,7 @@ func is_open() -> bool:
 func _request_abandon() -> void:
 	if not _confirm_abandon:
 		_confirm_abandon = true
-		_abandon.text = "确认撤离 · 放弃本次奖励"
+		_abandon.text = "Confirm Abandon · Forfeit Rewards"
 		return
 	close_menu()
 	abandon_requested.emit()

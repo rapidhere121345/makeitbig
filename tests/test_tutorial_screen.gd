@@ -81,10 +81,10 @@ func _test_layout_and_ranger_copy(screen, failures: Array[String]) -> void:
 
 func _test_action_copy(screen, failures: Array[String]) -> void:
 	var copy := _visible_copy(screen)
-	_expect("tick" not in copy and "缓冲" not in copy and "木桩" not in copy, "tutorial: technical timing or contradictory target copy exposed", failures)
-	_expect("敌人训练靶" in copy and "旧路" in copy and "炉边镇" in copy, "tutorial: target identity or opening context missing", failures)
+	_expect("tick" not in copy and "Buffered" not in copy and "Training Dummy" not in copy, "tutorial: technical timing or contradictory target copy exposed", failures)
+	_expect("training target" in copy and "old road" in copy and "Hearthside" in copy, "tutorial: target identity or opening context missing", failures)
 	if screen.is_enter_enabled():
-		_expect("训练完成" in copy and "箭已命中" in copy and "进入炉边镇" in copy, "tutorial: completed actions have no feedback or next step", failures)
+		_expect("Practice complete" in copy and "Arrow hit" in copy and "Enter Hearthside" in copy, "tutorial: completed actions have no feedback or next step", failures)
 	else:
 		_expect(copy.count("WASD") == 1 and copy.count("Space") == 1 and copy.count("Shift") == 1, "tutorial: key instructions repeated", failures)
 

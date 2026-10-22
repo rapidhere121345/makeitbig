@@ -319,21 +319,21 @@ func request_dodge(direction: Vector2 = Vector2.ZERO) -> bool:
 func request_cast() -> bool:
 	if not _built or _hero_position.distance_to(TARGET_POSITION) > CAST_RANGE:
 		if _status_label != null:
-			_status_label.text = "还射不到：向右靠近敌人训练靶，再试一次。"
+			_status_label.text = "Out of range: move right toward the training target, then try again."
 		return false
 	_last_direction = _hero_position.direction_to(TARGET_POSITION)
 	_process_tutorial_action_events(_action_timeline.advance(_anim_tick))
 	var receipt: Dictionary = _action_timeline.request_attack(_anim_tick, 1, _last_direction, _anim_tick)
 	if not bool(receipt.get("accepted", false)):
 		if _status_label != null:
-			_status_label.text = "正在收弓，稍等片刻再射。"
+			_status_label.text = "Recovering from the shot. Wait a moment before firing."
 		return false
 	## A successful shot is a newer intent than any standing input hint; the
 	## windup status below must replace it immediately.
 	_hint_seconds = 0.0
 	_process_tutorial_action_events(_action_timeline.advance(_anim_tick))
 	if String(receipt.get("status", "")) in ["buffered", "replaced"] and _status_label != null:
-		_status_label.text = "已准备接着射出下一箭。"
+		_status_label.text = "Next arrow queued."
 	_sync_arena()
 	_update_checklist()
 	return true
@@ -353,7 +353,7 @@ func _attempt_pointer_cast(viewport_position: Vector2) -> void:
 ## itself or the expiring hint.
 func pointer_cast_at_arena(arena_position: Vector2) -> Dictionary:
 	if not _pointer_hits_target(arena_position):
-		_show_hint("没点到训练靶 · 点亮靶上的圆圈，或按空格辅助瞄准")
+		_show_hint("Missed the training target · Click its circle, or press Space for aim assist")
 		return {"accepted": false, "reason": "empty"}
 	if request_cast():
 		return {"accepted": true, "reason": "hit"}
@@ -407,13 +407,13 @@ func _process_tutorial_action_events(events: Array) -> void:
 				}
 				_latch_ranger_event(EVENT_CAST, "ranger:cast:%d:action:%d" % [_cast_events, int(event.get("action_instance_id", 0))])
 				if _status_label != null:
-					_status_label.text = "正在拉弓，等箭射出。"
+					_status_label.text = "Drawing the bow. Wait for the arrow to fire."
 			"action_impact":
 				_release_projectile(event)
 			"action_interrupted":
 				_attack_origins.erase(int(event.get("action_instance_id", 0)))
 				if _status_label != null:
-					_status_label.text = "闪避打断了拉弓；站稳后再试一次。"
+					_status_label.text = "Dodging interrupted the draw. Steady yourself and try again."
 			"action_ended":
 				_attack_origins.erase(int(event.get("action_instance_id", 0)))
 
@@ -563,7 +563,7 @@ func _build_ui() -> void:
 	_layout_design_canvas()
 
 	var title := Label.new()
-	title.text = "出发前 · 雪地试弓"
+	title.text = "Before Departure · A Bow in the Snow"
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", ShellThemeScript.AMBER)
 	_place_control(title, Rect2(32.0, 8.0, 760.0, 42.0))
@@ -590,7 +590,7 @@ func _build_ui() -> void:
 	arena_frame.add_child(_arena)
 	_load_tutorial_art()
 
-	var intro := _guide_label("", "旧路失联，炉边镇仍靠旧塔的余温。出发前，先在雪地里熟悉手中的弓。")
+	var intro := _guide_label("", "The old road is silent. Hearthside needs the old tower's warmth. Practice your bow before setting out.")
 	intro.name = "TutorialIntro"
 	_place_control(intro, Rect2(32.0, 48.0, 1216.0, 28.0))
 	_design_canvas.add_child(intro)
@@ -600,7 +600,8 @@ func _build_ui() -> void:
 	guide.add_theme_constant_override("separation", 20)
 	_design_canvas.add_child(guide)
 	var heading := Label.new()
-	heading.text = "试好身手，再进镇"
+	heading.text = "Practice Before Departure"
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.add_theme_font_size_override("font_size", 24)
 	heading.add_theme_color_override("font_color", ShellThemeScript.AMBER)
 	guide.add_child(heading)
@@ -611,14 +612,14 @@ func _build_ui() -> void:
 	_cast_label = _guide_label("", "")
 	guide.add_child(_cast_label)
 	var rule := Label.new()
-	rule.text = "三项顺序不限。右侧是敌人训练靶，本场不会攻击你。左键要点在靶上，空格可辅助瞄准，箭命中才算完成。"
+	rule.text = "Any order. The target will not attack. An arrow must hit to count."
 	rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rule.add_theme_font_size_override("font_size", 18)
 	rule.add_theme_color_override("font_color", ShellThemeScript.NEUTRAL)
 	guide.add_child(rule)
 
 	_status_label = Label.new()
-	_status_label.text = "先向右走，靠近敌人训练靶。"
+	_status_label.text = "First, move right toward the training target."
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status_label.add_theme_font_size_override("font_size", 20)
 	_status_label.add_theme_color_override("font_color", ShellThemeScript.PROXY)
@@ -627,7 +628,7 @@ func _build_ui() -> void:
 
 	_enter_button = Button.new()
 	_enter_button.name = "EnterBaseButton"
-	_enter_button.text = "完成三项训练后进入基地"
+	_enter_button.text = "Complete All Three Exercises"
 	_enter_button.disabled = true
 	_enter_button.custom_minimum_size.y = 58.0
 	_enter_button.pressed.connect(_on_completed_pressed)
@@ -673,7 +674,7 @@ func _sync_art_note() -> void:
 		return
 	var pending: bool = _art == null or not _art.has_real_art()
 	_art_note.visible = pending
-	_art_note.text = "ASSETS PENDING：教程美术资源未就绪，本关仅显示玩法示意。" if pending else ""
+	_art_note.text = "ASSETS PENDING: tutorial artwork is not ready; this area shows gameplay placeholders." if pending else ""
 
 
 ## The validated arena art, for tests and for the graphics check.
@@ -729,7 +730,7 @@ func apply_art_for_test(art) -> void:
 
 func _apply_presentation() -> void:
 	# Only Ranger is playable in this slice; do not expose placeholder class copy.
-	_class_label.text = "游侠 / Ranger"
+	_class_label.text = "Ranger"
 
 
 func _layout_design_canvas() -> void:
@@ -804,26 +805,26 @@ func _update_checklist() -> void:
 	## (movement, phases) must not erase it mid-sentence for up to 1.4 s.
 	if _hint_seconds > 0.0:
 		return
-	_move_label.text = "%s 走近训练靶\n%s" % [_mark(_move_complete), "步伐已熟悉" if _move_complete else "WASD / 方向键 · 在雪地里走一段"]
-	_dodge_label.text = "%s 试一次闪避\n%s" % [_mark(_dodge_complete), "闪避已完成" if _dodge_complete else "Shift / Ctrl / 鼠标右键 · 快速移开"]
-	_cast_label.text = "%s 穿刺箭命中\n%s" % [_mark(_cast_complete), "箭已命中敌人训练靶" if _cast_complete else "Space 辅助瞄准 · 左键点靶射击"]
+	_move_label.text = "%s Approach the training target\n%s" % [_mark(_move_complete), "Movement practiced" if _move_complete else "WASD / Arrow keys · Walk through the snow"]
+	_dodge_label.text = "%s Try a dodge\n%s" % [_mark(_dodge_complete), "Dodge complete" if _dodge_complete else "Shift / Ctrl / Right-click · Dodge away"]
+	_cast_label.text = "%s Hit with Piercing Arrow\n%s" % [_mark(_cast_complete), "Arrow hit the training target" if _cast_complete else "Space Aim assist · Left-click the target to shoot"]
 	var was_locked := _enter_button.disabled
 	_enter_button.disabled = not _all_complete()
-	_enter_button.text = "进入炉边镇" if _all_complete() else "先完成三项练习"
+	_enter_button.text = "Enter Hearthside" if _all_complete() else "Complete All Three Exercises"
 	if _all_complete():
-		_status_label.text = "训练完成。弓与脚步都准备好了，进炉边镇歇歇脚。"
+		_status_label.text = "Practice complete. Your bow and footing are ready. Head into Hearthside for a rest."
 		if was_locked:
 			_enter_button.grab_focus()
 	elif _action_timeline.phase_at(_anim_tick) == PlayerActionTimelineScript.PHASE_WINDUP:
-		_status_label.text = "正在拉弓，等箭射出。闪避会打断这一箭。"
+		_status_label.text = "Drawing the bow. Wait for the shot; dodging will interrupt it."
 	elif _action_timeline.phase_at(_anim_tick) == PlayerActionTimelineScript.PHASE_RECOVERY:
-		_status_label.text = "正在收弓，很快就能再射。"
+		_status_label.text = "Recovering from the shot. You can fire again shortly."
 	elif not _cast_complete:
-		_status_label.text = "已进入射程，可以试射。命中时训练靶会闪亮。" if _hero_position.distance_to(TARGET_POSITION) <= CAST_RANGE else "还射不到：向右靠近训练靶，走进它周围的青色圈。"
+		_status_label.text = "In range. Try a shot; the target flashes when hit." if _hero_position.distance_to(TARGET_POSITION) <= CAST_RANGE else "Out of range: move right toward the target, inside its cyan ring."
 	elif not _dodge_complete:
-		_status_label.text = "命中了！再试一次闪避，练习快速移开。"
+		_status_label.text = "A hit! Now try dodging to practice getting clear."
 	else:
-		_status_label.text = "命中与闪避已完成，再走一段熟悉脚步。"
+		_status_label.text = "Hit and dodge complete. Walk a little farther to practice movement."
 
 
 func _mark(done: bool) -> String:
