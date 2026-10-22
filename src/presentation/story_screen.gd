@@ -190,8 +190,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		if detail != null:
 			var next := detail.find_child("NextPage", true, false) as Button
 			var read := detail.find_child("ReadConversation" if _tab == 1 else "ReadJournal", true, false) as Button
-			if _can_focus(next): next.pressed.emit()
-			elif _can_focus(read): read.pressed.emit()
+			if next != null and not next.disabled: next.pressed.emit()
+			elif _can_focus(read) and (next == null or next.disabled): read.pressed.emit()
 	else:
 		return
 	get_viewport().set_input_as_handled()
