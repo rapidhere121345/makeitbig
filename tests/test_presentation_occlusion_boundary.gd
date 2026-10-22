@@ -32,6 +32,20 @@ func _initialize() -> void:
 			_expect(bool(controller.set_cover("actor/1", 0.5).get("ok", false)), "occlusion cover update failed", failures)
 			controller.update(0.1)
 			_expect(controller.alpha("actor/1") < 1.0, "occlusion alpha did not transition", failures)
+	# Tiny but real Y differences must take precedence over rank in both
+	# frame order and the occlusion plan; approximate equality changes depth.
+	var close_entries := raw_entries.duplicate(true)
+	close_entries[0].baseline_y = 5.000001
+	close_entries[0].rank = 0
+	close_entries[1].baseline_y = 5.0
+	close_entries[1].rank = 1
+	var close_frame := FrameScript.build(4, 2, close_entries)
+	_expect(close_frame.ok, "close-baseline frame rejected", failures)
+	if close_frame.ok:
+		_expect(close_frame.value.entries[0].stable_id == "foreground/1", "frame ignored a small baseline difference", failures)
+		var close_plan: Dictionary = close_frame.value.occlusion_plan()
+		_expect(close_plan.ok and close_plan.value.entries()[0].stable_id == close_frame.value.entries[0].stable_id,
+			"frame and plan order disagree at close baselines", failures)
 	for failure: String in failures:
 		printerr("- %s" % failure)
 	print("PASS test_presentation_occlusion_boundary.gd" if failures.is_empty() else "FAIL test_presentation_occlusion_boundary.gd")

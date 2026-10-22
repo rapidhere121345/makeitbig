@@ -3,6 +3,7 @@ extends RefCounted
 
 const SelfScript := preload("res://src/presentation/presentation_frame.gd")
 const OcclusionPlanScript := preload("res://src/presentation/occlusion/occlusion_plan.gd")
+const SortRelation := preload("res://src/presentation/occlusion_query.gd")
 
 const ENTRY_FIELDS: Array[String] = ["stable_id", "visual_id", "feet_anchor", "baseline_y", "rank", "art_box"]
 
@@ -54,11 +55,7 @@ static func build(authoritative_tick: int, revision: int, raw_entries: Variant) 
 		})
 		seen[stable_id] = true
 	result.entries.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
-		if not is_equal_approx(float(left["baseline_y"]), float(right["baseline_y"])):
-			return float(left["baseline_y"]) < float(right["baseline_y"])
-		if int(left["rank"]) != int(right["rank"]):
-			return int(left["rank"]) < int(right["rank"])
-		return String(left["stable_id"]) < String(right["stable_id"])
+		return SortRelation.precedes(left, right)
 	)
 	return {"ok": true, "error": "", "value": result}
 

@@ -401,6 +401,7 @@ func talk_to_resident(resident_id: String) -> bool:
 	if not _town.resident_positions().has(resident_id) or _town.hero_world_position().distance_to(_town.resident_positions()[resident_id]) > TALK_RADIUS: return false
 	var opened := _dialogue.open_conversation(_resident_conversations[resident_id])
 	if opened:
+		_view.protect_dialogue_resident(resident_id)
 		_nearby_panel.hide()
 		_prompt_rect = Rect2()
 		_update_resident_markers()
@@ -421,7 +422,10 @@ func _build_town_dialogue() -> void:
 	_dialogue = TownDialogueScript.new()
 	_design_canvas.add_child(_dialogue)
 	_dialogue.finished.connect(func(entry_id: String): conversation_read.emit(entry_id))
-	_dialogue.dismissed.connect(func(): _update_nearby_feature())
+	_dialogue.dismissed.connect(func():
+		_view.protect_dialogue_resident("")
+		_update_nearby_feature()
+	)
 
 
 func _refresh_town_conversations() -> void:

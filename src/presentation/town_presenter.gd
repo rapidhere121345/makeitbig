@@ -6,6 +6,7 @@ extends Node2D
 const RangerAnimationScript := preload("res://src/presentation/ranger_animation.gd")
 const HamletLifeAnimationScript := preload("res://src/presentation/hamlet_life_animation.gd")
 const OcclusionControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
+const AuthoredRevealScript := preload("res://src/presentation/occlusion/authored_reveal_controller.gd")
 const HERO_ID := "town/ranger"
 const HERO_VISUAL_ID := "ranger.town.idle"
 const DESTINATION_EDGE_MARGIN := Vector2(22, 96)
@@ -31,6 +32,8 @@ var _attached := false
 var _hero_frame: Dictionary = {}
 var _presentation_runtime: Variant = null
 var _occlusion_controller = OcclusionControllerScript.new()
+var _authored_reveal = AuthoredRevealScript.new()
+var _protected_resident := ""
 var _occlusion_report: Dictionary = {"available": false, "reason": "presentation_unbound", "alphas": {}}
 
 
@@ -71,6 +74,8 @@ func load_character_assets() -> Dictionary:
 
 
 func attach(presenter: Variant, initial_state: Dictionary, presentation_runtime: Variant = null) -> Dictionary:
+	_authored_reveal.clear()
+	_protected_resident = ""
 	_occluder_piece_cache.clear()
 	_occluder_materials.clear()
 	_occluder_hole_anchors.clear()
@@ -175,13 +180,13 @@ func consume(state: Dictionary) -> void:
 		return
 	world_viewport.size = Vector2i(_state.get("view_size", Vector2(640, 360)))
 	world_presenter.position = -camera_world_offset()
-	world_presenter.sync_actor(HERO_ID, hero_world_position())
+	world_presenter.sync_actor(HERO_ID, hero_world_position(), Vector2.ZERO, 1, HERO_ID)
 	_update_interaction_anchor()
 	_hero_frame = ranger_animation.resolve({"facing": _state.get("hero_facing", "south"), "moving": _state.get("hero_moving", false),
 		"tick": int(_state.get("tick", 0)), "phase_ticks": int(_state.get("tick", 0))})
 	_apply_frame(_hero_sprite, _hero_frame)
 	for id: String in _resident_views:
-		world_presenter.sync_actor("town/npc/" + id, (_state.get("residents", {}) as Dictionary).get(id, Vector2.ZERO))
+		world_presenter.sync_actor("town/npc/" + id, (_state.get("residents", {}) as Dictionary).get(id, Vector2.ZERO), Vector2.ZERO, 1, "town/npc/" + id)
 	_update_life()
 	_update_destination()
 	_sync_occlusion(0.0)
@@ -236,7 +241,7 @@ func _sync_occlusion(display_delta: float) -> void:
 			if occluder_id.is_empty():
 				continue
 			var cover := float(occluder.get("cover_fraction", 0.0))
-			occluder_covers[occluder_id] = minf(float(occluder_covers.get(occluder_id, INF)), cover)
+			occluder_covers[occluder_id] = maxf(float(occluder_covers.get(occluder_id, 0.0)), cover)
 			if anchor.is_finite():
 				(occluder_holes.get_or_add(occluder_id, []) as Array).append(anchor)
 	## Every plan entry that is not an actor is a native front piece: covered
@@ -246,8 +251,24 @@ func _sync_occlusion(display_delta: float) -> void:
 		var stable_id := String(entry.get("stable_id", ""))
 		if stable_id.is_empty() or actor_ids.has(stable_id):
 			continue
+		var native := _occluder_piece(stable_id)
+		if native != null and native.has_meta("reveal_policy"):
+			if native.get_meta("reveal_policy") == "authored_variant" and not _authored_reveal.has_piece(stable_id):
+				var registered: Dictionary = _authored_reveal.register_native_piece(stable_id, native as Sprite2D)
+				if not registered.ok:
+					_reset_occlusion("authored_reveal_invalid", [registered.error])
+					return
+			continue
 		_occlusion_controller.set_occluder_cover(stable_id, float(occluder_covers.get(stable_id, 0.0)))
-		_occluder_piece(stable_id)
+	var protected: Array[Dictionary] = []
+	for actor_id: String in actor_presentation_ids():
+		if actor_id != HERO_ID and actor_id != "town/npc/" + _protected_resident:
+			continue
+		var anchor := _actor_world_position(actor_id)
+		if anchor.is_finite():
+			protected.append({"stable_id": actor_id, "baseline_y": anchor.y, "rank": 1,
+				"readability_box": Rect2(anchor + Vector2(-8, -34), Vector2(16, 28))})
+	_authored_reveal.update(entries, protected, maxf(display_delta, 0.0))
 	_occlusion_controller.update(maxf(display_delta, 0.0))
 	var alphas: Dictionary = {}
 	var window_alphas: Dictionary = {}
@@ -267,10 +288,12 @@ func _sync_occlusion(display_delta: float) -> void:
 			piece.modulate.a = 1.0
 			_apply_occluder_cutout(occluder_id, piece, occluder_holes.get(occluder_id, []), piece_alpha)
 	_occlusion_report = {"available": true, "reason": "", "plan_size": entries.size(),
-		"occluded_ids": occluded_ids, "alphas": alphas, "occluder_alphas": window_alphas}
+		"occluded_ids": occluded_ids, "alphas": alphas, "occluder_alphas": window_alphas,
+		"authored_reveal": _authored_reveal.report()}
 
 
 func _reset_occlusion(reason: String, errors: Array = []) -> void:
+	_authored_reveal.reset()
 	for actor_id: String in actor_presentation_ids():
 		_apply_actor_alpha(actor_id, 1.0)
 	_occlusion_controller.clear_occluders()
@@ -395,6 +418,10 @@ static func _find_binding_piece(root: Node, binding_id: String) -> CanvasItem:
 
 func occlusion_report() -> Dictionary:
 	return _occlusion_report.duplicate(true)
+
+
+func protect_dialogue_resident(resident_id: String) -> void:
+	_protected_resident = resident_id if _resident_views.has(resident_id) else ""
 
 
 func actor_alpha(stable_id: String) -> float:
@@ -632,8 +659,14 @@ func life_report() -> Dictionary:
 
 
 func render_audit() -> Dictionary:
-	return {"ready": is_ready(), "view_size": Vector2(world_viewport.size), "ground_source_path": "res://content/rooms/town/layers/ground.png", "runtime_background_patches": 0,
-		"unknown_underplate": "transparent", "supports_cutaway": true, "supports_fade": true,
+	var contract: Dictionary = {}
+	if _presentation_runtime != null:
+		var value: Variant = _presentation_runtime.get("native_scene_contract")
+		if value is Dictionary:
+			contract = value
+	return {"ready": is_ready(), "view_size": Vector2(world_viewport.size), "ground_source_path": contract.get("ground_source_path", ""), "runtime_background_patches": 0,
+		"unknown_underplate": contract.get("unknown_underplate", "unknown"),
+		"supports_cutaway": contract.get("supports_cutaway", false), "supports_fade": contract.get("supports_fade", false),
 		"occlusion_available": bool(_occlusion_report.get("available", false)),
 		"shared_sort_root": world_presenter != null and world_presenter.sort_root.y_sort_enabled,
 		"native_count": world_presenter.sort_root.get_child_count() - world_presenter.actor_ids().size() if world_presenter != null else 0}

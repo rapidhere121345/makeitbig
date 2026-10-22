@@ -88,6 +88,8 @@ func mount_world_scene(scene: PackedScene, setup: RoomSceneSetupPort = null, nat
 			instance.free()
 			return null
 		_native_bindings[String(bindings[path])] = node
+		if node is Node2D:
+			node.set_meta("sort_stable_id", String(bindings[path]))
 	native_world_layer.add_child(instance)
 	_native_scene = instance
 	for group_name: String in LAYER_NAMES:

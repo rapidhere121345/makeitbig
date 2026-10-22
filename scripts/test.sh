@@ -62,6 +62,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_game_root_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_exploration.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_geometry_rebuild.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_environment_object.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_native_contract.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_runtime.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_playtest_comfort.gd

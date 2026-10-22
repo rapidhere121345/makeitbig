@@ -2,7 +2,7 @@ shader_type canvas_item;
 
 // Per-piece cutout window for native occluders. Each hole punches a soft
 // elliptical disc (in viewport pixel space) through the piece so a covered
-// actor reads through it. When hole_count is 0 the piece renders opaque.
+// actor reads through it. When hole_count is 0 the piece renders unchanged.
 // Presentation-only: never consulted by movement, vision, or combat.
 
 const int MAX_HOLES = 8;
@@ -13,7 +13,8 @@ uniform float feather = 9.0;
 uniform float inner_alpha = 0.18;
 
 void fragment() {
-	vec4 c = texture(TEXTURE, UV) * COLOR;
+	// Fragment COLOR already contains the texture and CanvasItem modulation.
+	vec4 c = COLOR;
 	float keep = 1.0;
 	for (int i = 0; i < MAX_HOLES; i++) {
 		if (i >= hole_count) {

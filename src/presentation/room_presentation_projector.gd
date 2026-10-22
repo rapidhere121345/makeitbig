@@ -121,7 +121,7 @@ static func derive_static_bindings(native_scene_root: Node, occlusion_bindings: 
 		bindings.append({
 			"stable_id": stable_id,
 			"visual_id": stable_id,
-			"rank": 0,
+			"rank": int((node as Node).get_meta("sort_rank", 0)),
 			"art_box": Rect2(art_box.position - feet, art_box.size),
 			"feet_anchor": feet,
 		})

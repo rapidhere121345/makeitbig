@@ -606,7 +606,7 @@ static func _validate_authoring_sockets(value: Variant, errors: Array[String]) -
 ## Digest separation.  Gameplay and presentation digests are computed
 ## from detached halves of the canonical manifest.  Bindings carrying
 ## any gameplay channel feed the gameplay digest; bindings carrying
-## occlusion feed the presentation digest.  A mixed binding lands in
+## occlusion and native visuals feed the presentation digest. A mixed binding lands in
 ## both halves on purpose: changing it changes both truths, while a
 ## pure-presentation piece can never move the gameplay digest.
 
@@ -641,7 +641,10 @@ static func _digest_bindings(bindings_value: Variant, gameplay: bool) -> Array:
 				if bool(channels.get(channel, false)):
 					result.append(binding)
 					break
-		elif bool(channels.get("occlusion", false)):
+		# Ground art is presentation truth without being an occluder.
+		# Include native visual fingerprints without inventing a gameplay or
+		# occlusion channel merely to make asset changes affect the digest.
+		elif bool(channels.get("occlusion", false)) or String(binding.get("kind", "")) == "native_visual":
 			result.append(binding)
 	return result
 

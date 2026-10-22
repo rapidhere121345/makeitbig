@@ -16,13 +16,13 @@ var town = TownRuntimeScript.new()
 var load_report := {"ok": false, "error": "town_not_loaded"}
 
 
-func mount(world_parent: Node) -> Dictionary:
+func mount(world_parent: Node, scene_path: String = SCENE_PATH, manifest_path: String = MANIFEST_PATH) -> Dictionary:
 	if scene_runtime != null:
 		return {"ok": false, "error": "town_already_mounted"}
-	if not FileAccess.file_exists(MANIFEST_PATH) or not ResourceLoader.exists(SCENE_PATH):
+	if not FileAccess.file_exists(manifest_path) or not ResourceLoader.exists(scene_path):
 		load_report = {"ok": false, "error": "town_native_source_missing"}
 		return load_report
-	var manifest_payload: Variant = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST_PATH))
+	var manifest_payload: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
 	var manifest := SpatialManifestScript.new(manifest_payload)
 	if not manifest.is_valid():
 		load_report = {"ok": false, "error": "town_manifest_invalid"}
@@ -32,7 +32,7 @@ func mount(world_parent: Node) -> Dictionary:
 	world_parent.add_child(scene_runtime)
 	load_report = scene_runtime.mount(
 		{"room_id": "town/hearthside", "world_asset_id": "town/hearthside", "encounter_id": "town/exploration", "ruleset_id": "town/v1", "tags": ["town", "chapter_one"]},
-		{"world_scene_path": SCENE_PATH, "manifest_path": MANIFEST_PATH,
+		{"world_scene_path": scene_path, "manifest_path": manifest_path,
 			"gameplay_digest": manifest.gameplay_digest_sha256(), "presentation_digest": manifest.presentation_digest_sha256(), "schema_version": 1},
 		null, null, 0, 30, TownSetupPort.new().bind(self))
 	if not bool(load_report.get("ok", false)):

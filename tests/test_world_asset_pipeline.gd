@@ -103,6 +103,12 @@ func _test_digest_separation() -> void:
 	(socket_changed["spawn_interaction_exit_sockets"] as Array)[0]["position"] = [64.0, 170.0]
 	_expect(SpatialManifestScript.gameplay_digest_input(socket_changed) != gameplay_base, "digest: socket move did not move the gameplay digest")
 	_expect(SpatialManifestScript.presentation_digest_input(socket_changed) == presentation_base, "digest: socket move moved the presentation digest")
+	var ground_changed := base.duplicate(true)
+	ground_changed.stable_bindings.append({"binding_id": "town/ground", "kind": "native_visual",
+		"source": "ground-content-sha", "channels": {"occlusion": false}})
+	_expect(SpatialManifestScript.gameplay_digest_input(ground_changed) == gameplay_base, "digest: nonoccluding ground art changed gameplay")
+	_expect(SpatialManifestScript.presentation_digest_input(ground_changed) != presentation_base, "digest: nonoccluding ground art was omitted")
+	_expect(SpatialManifestScript.new(ground_changed).occlusion_bindings().size() == SpatialManifestScript.new(base).occlusion_bindings().size(), "digest: ground became an occluder")
 
 
 func _test_authoring_validation_rejects_invalid_data() -> void:

@@ -21,6 +21,7 @@ const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.g
 const EnemyScript = preload("res://src/runtime/world/combat_enemy_state.gd")
 const OcclusionPlanScript = preload("res://src/presentation/occlusion/occlusion_plan.gd")
 const OcclusionControllerScript = preload("res://src/presentation/occlusion/occlusion_controller.gd")
+const AuthoredRevealScript = preload("res://src/presentation/occlusion/authored_reveal_controller.gd")
 
 ## Visual-overlap budget: at most this much total local opacity may sit on top of
 ## the hero's own cell, so a per-channel comparison against the source pixels can
@@ -55,6 +56,7 @@ func _run() -> void:
 	_test_pieces()
 	await _test_town_scene()
 	_test_town_cover_tiers()
+	_test_authored_reveal()
 	_test_arena()
 	_test_room_concept_geometry()
 	_test_world_frame_projection()
@@ -72,6 +74,57 @@ func _run() -> void:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _test_authored_reveal() -> void:
+	var full := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	full.fill(Color.FOREST_GREEN)
+	var revealed := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	revealed.fill(Color.TRANSPARENT)
+	var mask := full.duplicate() as Image
+	mask.fill_rect(Rect2i(0, 0, 8, 16), Color.TRANSPARENT)
+	var sprite := Sprite2D.new()
+	sprite.texture = ImageTexture.create_from_image(full)
+	var controller := AuthoredRevealScript.new()
+	var bound := controller.register_piece("tree/upper", sprite, ImageTexture.create_from_image(revealed), mask)
+	_expect(bound.ok, "authored reveal: valid complete states rejected")
+	var part := {"stable_id": "tree/upper", "baseline_y": 16.0, "rank": 0, "art_box": Rect2(0, 0, 16, 16)}
+	var subject := {"stable_id": "hero", "baseline_y": 8.0, "rank": 1, "readability_box": Rect2(0, 0, 8, 8)}
+	controller.update([part], [subject], 0.2)
+	_expect(not controller.report()["tree/upper"].open, "authored reveal: transparent region opened")
+	subject.readability_box = Rect2(8, 0, 8, 8)
+	var graze := {"stable_id": "npc", "baseline_y": 8.0, "rank": 1, "readability_box": Rect2(0, 0, 8, 8)}
+	controller.update([part], [subject, graze], 0.2)
+	_expect(controller.report()["tree/upper"].weight == 1.0, "authored reveal: grazing NPC suppressed hero")
+	# The renderer owns an immutable full-state mask, not the caller's image
+	# or the currently visible revealed texture.
+	mask.fill(Color.TRANSPARENT)
+	for frame in range(180):
+		controller.update([part], [graze, subject], 1.0 / 60.0)
+	_expect(controller.report()["tree/upper"].weight == 1.0, "authored reveal: open state oscillated or mutable mask leaked")
+	subject.baseline_y = 16.0
+	controller.update([part], [subject], 0.2)
+	_expect(controller.report()["tree/upper"].weight == 0.0, "authored reveal: equal Y ignored actor rank")
+	part.rank = 2
+	controller.update([part], [subject], 0.2)
+	_expect(controller.report()["tree/upper"].weight == 1.0, "authored reveal: equal Y ignored part rank")
+	controller.update([part], [], 0.05)
+	var closing: float = controller.report()["tree/upper"].weight
+	_expect(closing > 0.0 and closing < 1.0, "authored reveal: close did not interpolate")
+	controller.update([part], [], 0.2)
+	_expect(controller.report()["tree/upper"].weight == 0.0, "authored reveal: stale revealed state remained")
+	_expect(sprite.modulate == Color.WHITE and sprite.texture.get_image().get_data() == full.get_data(), "authored reveal: modified full-state art")
+	controller.clear()
+	_expect(sprite.material == null, "authored reveal: did not restore prior material")
+	for flip: String in ["flip_h", "flip_v"]:
+		sprite.set(flip, true)
+		_expect(not controller.register_piece("tree/flipped", sprite, ImageTexture.create_from_image(revealed), full).ok,
+			"authored reveal: accepted a flipped mask mapping")
+		sprite.set(flip, false)
+	var wrong_size := Image.create(4, 4, false, Image.FORMAT_RGBA8)
+	_expect(not controller.register_piece("tree/invalid", sprite, ImageTexture.create_from_image(revealed), wrong_size).ok,
+		"authored reveal: accepted misaligned mask canvas")
+	sprite.free()
 
 
 func _test_posed_boss_geometry() -> void:

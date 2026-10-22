@@ -4,6 +4,8 @@ extends Node2D
 ## Native town author source. Geometry, sockets and routes live in this scene;
 ## its six-field manifest is a detached offline derivative checked before READY.
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
+const EnvironmentBaker := preload("res://src/runtime/world/environment_object_baker.gd")
+const EnvironmentDefinition := preload("res://src/runtime/world/environment_object_definition.gd")
 const GROUPS: Array[String] = ["Ground", "GroundEffects", "SortRoot", "Foreground", "GeometrySources", "Sockets"]
 const LAYERS_MANIFEST := "res://content/rooms/town/layers/manifest.json"
 
@@ -15,11 +17,13 @@ const LAYERS_MANIFEST := "res://content/rooms/town/layers/manifest.json"
 @export var world_asset_id := "town/hearthside"
 @export var gameplay_source := "hearthside.spatial.json"
 @export var presentation_source := "town_presenter"
+@export var modular_environment_objects := false
+@export var modular_underplate_path := ""
 
 
 func bind_native_art() -> Array[String]:
 	var errors: Array[String] = []
-	for group: String in ["Ground", "SortRoot"]:
+	for group: String in _visual_groups():
 		var parent := get_node_or_null(group)
 		if parent == null:
 			errors.append("missing_native_group:" + group)
@@ -46,6 +50,9 @@ func bind_native_art() -> Array[String]:
 
 func validate_contract(expected: Dictionary = {}) -> Dictionary:
 	var errors: Array[String] = []
+	if modular_environment_objects:
+		var expansion := EnvironmentBaker.expand(self)
+		errors.append_array(expansion.errors)
 	for group: String in GROUPS:
 		if not get_node_or_null(group) is Node2D:
 			errors.append("missing_native_group:" + group)
@@ -54,13 +61,18 @@ func validate_contract(expected: Dictionary = {}) -> Dictionary:
 		return {"ok": false, "errors": errors, "value": {}}
 	if scene_id.is_empty() or world_asset_id.is_empty() or gameplay_source.is_empty() or presentation_source.is_empty():
 		errors.append("invalid_town_identity")
-	var layer_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYERS_MANIFEST)) if FileAccess.file_exists(LAYERS_MANIFEST) else null
-	if not _has_static_layer_policy(layer_value):
-		errors.append("invalid_town_layer_manifest")
+	if modular_environment_objects:
+		errors.append_array(_modular_layer_errors())
+	else:
+		var layer_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYERS_MANIFEST)) if FileAccess.file_exists(LAYERS_MANIFEST) else null
+		if not _has_static_layer_policy(layer_value):
+			errors.append("invalid_town_layer_manifest")
 	errors.append_array(bind_native_art())
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors, "value": {}}
 	var spatial := derive_spatial_manifest()
+	if spatial.get("ok", true) == false:
+		return {"ok": false, "errors": spatial.errors, "value": {}}
 	var manifest = SpatialManifestScript.new(spatial)
 	errors.append_array(manifest.validate())
 	var bindings := {}
@@ -70,7 +82,9 @@ func validate_contract(expected: Dictionary = {}) -> Dictionary:
 		"scene_id": scene_id, "world_asset_id": world_asset_id, "gameplay_source": gameplay_source,
 		"presentation_source": presentation_source, "groups": GROUPS.duplicate(), "bindings": bindings,
 		"movement_binding": "town/movement-boundary", "authored_bounds": Rect2(Vector2.ZERO, world_size),
-		"spatial_manifest": manifest.snapshot(), "unknown_underplate": "transparent", "supports_cutaway": true, "supports_fade": true,
+		"spatial_manifest": manifest.snapshot(), "unknown_underplate": "opaque" if modular_environment_objects else "transparent",
+		"ground_source_path": modular_underplate_path if modular_environment_objects else "res://content/rooms/town/layers/ground.png",
+		"supports_cutaway": true, "supports_fade": not modular_environment_objects,
 	}
 	for key: String in expected:
 		if contract.has(key) and contract[key] != expected[key]:
@@ -79,16 +93,31 @@ func validate_contract(expected: Dictionary = {}) -> Dictionary:
 
 
 func derive_spatial_manifest() -> Dictionary:
+	if modular_environment_objects:
+		var expansion := EnvironmentBaker.expand(self)
+		if not expansion.ok:
+			return {"ok": false, "errors": expansion.errors, "value": {}}
 	var errors := _spatial_source_errors()
+	if modular_environment_objects and errors.is_empty():
+		errors.append_array(bind_native_art())
+		errors.append_array(_modular_layer_errors())
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors, "value": {}}
 	var bindings: Array[Dictionary] = []
+	var image_records := {}
 	var boundary: Rect2 = get_node("GeometrySources/MovementBoundary").get_meta("rect", Rect2())
 	bindings.append({"binding_id": "town/movement-boundary", "source": "town.native.v1", "geometry": {"type": "rect", "rect": _rect(boundary)},
 		"channels": {"movement": true, "navigation": true, "vision": false, "projectile": false, "occlusion": false}})
-	for group: String in ["Ground", "SortRoot"]:
+	for group: String in _visual_groups():
 		for node: Node2D in get_node(group).get_children():
-			bindings.append({"binding_id": String(node.get_meta("binding_id", "")), "kind": "native_visual", "channels": {"occlusion": group == "SortRoot"}})
+			var binding := {"binding_id": String(node.get_meta("binding_id", "")), "kind": "native_visual", "channels": {"occlusion": group == "SortRoot"}}
+			if modular_environment_objects:
+				var fingerprint := _visual_fingerprint(node as Sprite2D, group, image_records)
+				errors.append_array(fingerprint.errors)
+				binding.source = "town.modular.visual.v1:" + String(fingerprint.value)
+			bindings.append(binding)
+	if not errors.is_empty():
+		return {"ok": false, "errors": errors, "value": {}}
 	var geometry: Array[Dictionary] = []
 	for shape: Polygon2D in get_node("GeometrySources/Static").get_children():
 		var id := String(shape.get_meta("binding_id", ""))
@@ -170,6 +199,96 @@ func _spatial_source_errors() -> Array[String]:
 				errors.append("invalid_native_route_point:" + String(point.name))
 			else:
 				_check_source_transform(point, true, errors)
+	return errors
+
+
+func _visual_groups() -> Array[String]:
+	return ["Ground", "GroundEffects", "SortRoot"] if modular_environment_objects else ["Ground", "SortRoot"]
+
+
+## Hash decoded pixels rather than source PNG bytes: imported textures also
+## work after export, where their source images need not exist.
+func _visual_fingerprint(sprite: Sprite2D, group: String, images: Dictionary) -> Dictionary:
+	var errors: Array[String] = []
+	var full_path := String(sprite.get_meta("texture_path", ""))
+	var policy := String(sprite.get_meta("reveal_policy", ""))
+	var record := {
+		"asset_id": String(sprite.get_meta("environment_asset_id", "")), "group": group,
+		"position": [sprite.position.x, sprite.position.y], "offset": [sprite.offset.x, sprite.offset.y],
+		"rank": int(sprite.get_meta("sort_rank", 0)), "stable_id": String(sprite.get_meta("sort_stable_id", sprite.get_meta("binding_id", ""))),
+		"centered": sprite.centered, "policy": policy, "full": {},
+	}
+	for role: String in (["full", "variant", "mask"] if policy == "authored_variant" else ["full"]):
+		var path := full_path if role == "full" else String(sprite.get_meta("reveal_" + role + "_path", ""))
+		if role == "full" and policy == "authored_variant" and String(sprite.get_meta("reveal_full_path", "")) != full_path:
+			errors.append("invalid_modular_full_reference:" + String(sprite.name))
+		if not images.has(path):
+			images[path] = _image_fingerprint(path, sprite.texture if role == "full" else null)
+		var image_record: Dictionary = images[path]
+		if image_record.is_empty():
+			errors.append("invalid_modular_presentation_image:" + path)
+		elif role != "full" and image_record["size"] != [int(sprite.texture.get_width()), int(sprite.texture.get_height())]:
+			errors.append("modular_variant_canvas_mismatch:" + path)
+		record[role] = image_record
+	return {"errors": errors, "value": SpatialManifestScript.digest_payload_sha256(record)}
+
+
+static func _image_fingerprint(path: String, supplied: Texture2D = null) -> Dictionary:
+	var texture := supplied if supplied != null else EnvironmentDefinition.read_texture(path)
+	if texture == null:
+		return {}
+	var image := texture.get_image()
+	if image == null or image.is_empty():
+		return {}
+	if image.is_compressed() and image.decompress() != OK:
+		return {}
+	image.convert(Image.FORMAT_RGBA8)
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	context.update(image.get_data())
+	return {"path": path, "size": [image.get_width(), image.get_height()], "rgba8_sha256": context.finish().hex_encode()}
+
+
+## Modular reveal requires a real, fully opaque world-sized lower layer.
+## This checks delivery data, not whether the image is artistically complete.
+func _modular_layer_errors() -> Array[String]:
+	var errors: Array[String] = []
+	var texture := EnvironmentDefinition.read_texture(modular_underplate_path) if not modular_underplate_path.is_empty() else null
+	if texture == null or texture.get_size() != world_size:
+		return ["invalid_modular_underplate"]
+	var image := texture.get_image()
+	if image == null or image.is_empty():
+		return ["invalid_modular_underplate"]
+	if image.is_compressed() and image.decompress() != OK:
+		return ["invalid_modular_underplate"]
+	for y: int in image.get_height():
+		for x: int in image.get_width():
+			if image.get_pixel(x, y).a < 1.0:
+				return ["incomplete_modular_underplate"]
+	var found := false
+	var ground := get_node("Ground") as Node2D
+	if not ground.visible or ground.modulate != Color.WHITE or ground.self_modulate != Color.WHITE or ground.material != null:
+		errors.append("invalid_modular_underplate_group")
+	for node: Node in get_node("Ground").get_children():
+		if node is Sprite2D and String(node.get_meta("texture_path", "")) == modular_underplate_path:
+			found = true
+			var sprite := node as Sprite2D
+			if sprite.position != Vector2.ZERO or sprite.centered or sprite.offset != Vector2.ZERO or sprite.transform != Transform2D.IDENTITY or not sprite.visible or sprite.modulate != Color.WHITE or sprite.self_modulate != Color.WHITE or sprite.material != null or sprite.region_enabled or sprite.get_meta("reveal_policy", "") != "none":
+				errors.append("invalid_modular_underplate_visual")
+	if not found:
+		errors.append("missing_modular_underplate_visual")
+	for group: String in _visual_groups():
+		for node: Node in get_node(group).get_children():
+			if node is Sprite2D:
+				_check_source_transform(node, true, errors)
+				if not node.offset.is_finite() or node.region_enabled or node.hframes != 1 or node.vframes != 1 or node.flip_h or node.flip_v:
+					errors.append("unsupported_modular_visual_canvas:" + String(node.name))
+				# These overrides have no author field/fingerprint and can
+				# bypass the shared sort domain or alter full-state pixels.
+				if node.z_index != 0 or not node.z_as_relative or not node.visible or node.modulate != Color.WHITE or node.self_modulate != Color.WHITE or node.material != null:
+					errors.append("unsupported_modular_visual_override:" + String(node.name))
+				if node.get_meta("reveal_policy", "") not in ["none", "authored_variant"]:
+					errors.append("missing_modular_reveal_policy:" + String(node.name))
 	return errors
 
 

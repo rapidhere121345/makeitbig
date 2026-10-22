@@ -92,6 +92,8 @@ if ($LASTEXITCODE -ne 0) { throw "Rebuild sample tests failed with exit code $LA
 if ($LASTEXITCODE -ne 0) { throw "test_native_concave_sample failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_town_geometry_rebuild.gd
 if ($LASTEXITCODE -ne 0) { throw "Town geometry rebuild tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_environment_object.gd
+if ($LASTEXITCODE -ne 0) { throw "Environment object tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_town_native_contract.gd
 if ($LASTEXITCODE -ne 0) { throw "test_town_native_contract failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_town_runtime.gd
