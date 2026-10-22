@@ -16,8 +16,8 @@ approved provisioning is recorded separately below. A checker executed from stdi
 without placing a file in the target. Its output is retained on the original
 host in ignored `build/current/devbox-release-prerequisites.json`.
 
-**Current verdict: headless/export prerequisites installed; actual CPU graphics
-acceptance remains pending.** A discrete GPU is not required.
+**Current verdict: headless/export tooling and standalone CPU graphics acceptance
+pass.** A discrete GPU is not required.
 The project has not been moved, so target-side project tests and exports have
 not run and cannot be claimed as passed.
 
@@ -94,19 +94,49 @@ Activate only in the intended project shell:
 source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
 ```
 
-The current graphical result remains **unverified**: Xvfb has not started,
-because creating its owned temporary X11 IPC files needs the explicit sandbox
-exception discussed with the operator. The smoke launcher refuses without
-approval. Installed libraries and a successful version probe are not a rendered
-pixel pass.
+The operator explicitly approved the narrow Xvfb-owned temporary IPC exception
+after reviewing its risks. The guarded standalone graphics fixture now passes;
+the launcher still refuses unless permission is explicitly enabled for that
+invocation. This is not migration or acceptance of the full game in the target.
 
 Ignored original-host evidence:
 
 - `build/current/devbox-release-prerequisites-offline-installed.json`
-- `build/current/devbox-cpu-portable/provisioning.json`
+- `build/current/devbox-cpu-portable/provisioning.json`: initial static
+  provisioning snapshot, before graphical approval.
 - `build/current/devbox-cpu-portable/godot-launch-contract.log`
 - `build/current/devbox-scoped-release-prerequisites.json`: scoped launcher,
   raw engine SHA, both templates, and Pillow all pass.
+
+### Actual CPU Rendering Proof
+
+Target UID 1000, private display `:197`, Godot
+`4.7.2.stable.official.ed1daf0bf`, Mesa 26.0.8-1ubuntu0.3, OpenGL 4.5,
+llvmpipe LLVM 21.1.8 (256 bits).
+
+Display startup, the explicitly labeled custom GLX probe, and the Godot fixture
+all pass. Godot actually renders a SubViewport and canvas shader, samples two
+pixels, verifies their different red/blue ranges and the llvmpipe adapter,
+saves the offscreen image and composed window, and exits 0 with
+`CPU_FIXTURE PASS`. Both PNGs were visually inspected.
+
+The owned Xvfb PID/process group 210512 exits 0 and is reaped. Its display
+socket and lock do not remain; the freshly generated authentication cookie is
+removed and no xauth sidecars remain. TCP listening was disabled by
+`-nolisten tcp`, authentication was private (`0600`), and MIT-SHM was disabled.
+Before/after snapshots of the selected network, privilege, filesystem,
+mount-count, IPC, and start-time fields are byte-identical (SHA256
+`2e646bdf9568566c7ba0e25f80bcf1fb38cf5d3056cab8ea44805f523655c10e`).
+All 1,707 listed static runtime files still match their hashes after rendering.
+
+The logs retain a nonfatal rootless X11-directory diagnostic and an unsupported
+V-Sync warning; neither prevented the actual pixel checks. No privilege or
+filesystem-policy workaround was used to silence them.
+
+Evidence: ignored `build/current/devbox-cpu-acceptance.0Cjdcl/` contains
+`result.json`, `cleanup.json`, renderer logs, the fixture source, the two PNGs,
+boundary snapshots, and `post-render-integrity.json`. This is functional
+software-rendering evidence, not full-game or GPU-performance certification.
 
 ### Actual Headless Export Proof
 
@@ -152,6 +182,10 @@ download was needed for this offline installation.
 Any display run must use its own authentication cookie, disable TCP listeners,
 avoid `-ac`/`xhost +`, and clean only its own processes and newly created IPC.
 Do not weaken isolation or visibility restrictions to make a graphics test pass.
+The approved test changes none of those container settings. This is a scoped
+configuration/cleanup check, not a full gateway penetration audit; `0600`
+authentication also does not isolate mutually untrusted processes sharing UID
+1000. No target display remains running.
 
 ## Provisioning Before Acceptance
 
@@ -164,8 +198,8 @@ Before declaring the target accepted:
 2. Preserve standard `4.7.2.stable` export templates with `version.txt`,
    `linux_release.x86_64`, and `windows_release_x86_64.exe`. Configure the
    template directory explicitly; do not copy a broken host-specific symlink.
-3. Obtain only the narrowly scoped temporary X11 IPC exception, if needed,
-   then verify the installed CPU stack using actual Godot-rendered pixels.
+3. The narrowly scoped temporary X11 IPC exception and standalone rendered-pixel
+   verification now pass. Keep that scope for any later graphical run.
    No host driver, device access, privileged mount, root remount, or network
    change is needed for Mesa llvmpipe.
 4. Use the isolated Python/Pillow toolchain for the art pipeline. Preserve font

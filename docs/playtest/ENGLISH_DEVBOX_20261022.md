@@ -180,9 +180,15 @@ See `docs/DEVBOX_READINESS.md` for exact paths, versions, evidence, and limits.
   visibility is unchanged, and no ports are published.
 - No proxy/DNS bypass, external download, new mount/device/network, host
   desktop socket, credential access, or existing-project modification occurred.
-- Actual devbox GLX/Godot shader rendering remains **unverified**. The narrow
-  exception for owned temporary X11 IPC is pending; the launcher refuses
-  without approval. No target display or listener was started.
+- After explicit approval for Xvfb-owned temporary IPC, standalone target
+  GLX/Godot shader rendering passes as UID 1000 on display `:197`: Mesa
+  llvmpipe LLVM 21.1.8, OpenGL 4.5, Godot 4.7.2, actual SubViewport/canvas-shader
+  pixel assertions, and two inspected PNGs. All three checks exit 0.
+- The owned display is stopped/reaped; its socket, lock, and private test cookie
+  are cleaned. Selected before/after sandbox boundary snapshots match exactly,
+  and all 1,707 listed static runtime-file hashes remain unchanged. TCP was
+  disabled; no new gateway, port mapping, network, mount, or privilege was added.
+  Evidence: `build/current/devbox-cpu-acceptance.0Cjdcl/`.
 
 The operator must persist approved resource limits in the authoritative
 container configuration before a later recreation. This task does not edit
@@ -195,6 +201,8 @@ while the shipped legacy manifest expects true/true. English migration keeps
 the shipped flags and all image bytes; no complete legacy cold-generation pass
 is claimed. See `tools/town_layers/README.md`.
 
-Native Windows smoke/replay, actual devbox graphics, production town art,
-signing/hosting/ACL review, and publication remain distinct operator or future
-acceptance steps. No Tailscale exposure or deployment was performed here.
+Native Windows smoke/replay, full-game acceptance after authorized migration,
+production town art, signing/hosting/ACL review, and publication remain distinct
+operator or future steps. Standalone devbox graphics acceptance does not replace
+the moved game's own tests. No migration, activation, Tailscale exposure, or
+deployment was performed here.
