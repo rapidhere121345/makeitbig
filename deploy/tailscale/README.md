@@ -1,6 +1,8 @@
 # Tailscale Release Page
 
-This is the existing **host-operator** workflow for `/data/paseo-makeitbig/project`. The operator controls Tailscale; project scripts only generate and validate `build/releases/`. These host exposure commands are not instructions to change the devbox's network or visibility policy.
+This is the **host-operator** workflow. The operator controls Tailscale; project scripts only generate and validate a release root. These host exposure commands are not instructions to change the devbox's network or visibility policy.
+
+**Active endpoint (2026-10-22):** `https://example-runtime.tail99c4e8.ts.net:8448/` serves the filesystem directory `/data/claude/workspace/makeitbig/release-online` directly (tailnet-only; funnel off). The operator repointed it from the old host `build/releases/` proxy. The 20 prior releases were preserved — moved atomically to `build/releases-archive-20261023T042838Z-98b8bde4` under the original checkout, deep-verified, not deleted. To publish a validated build, copy its `builds/<id>/` directory into `release-online/builds/`, then run `MIB_RELEASE_ROOT=<abs path>/release-online ./scripts/release.sh index`, `site`, and `verify --deep` against that root.
 
 ## Prepare on the Host
 
@@ -45,15 +47,16 @@ Use tailnet-only `serve` by default. Tailscale ACLs govern access. Never serve t
 
 - Local packaging, `release.sh verify --deep`, static deployment validation, and staging checks pass.
 - The latest `index.json` build lists both platforms and passes metadata/checksum verification.
-- The host confirms the release path, and `tailscale serve status` targets `build/releases/`.
+- The host confirms the release path, and `tailscale serve status` targets the configured release root (currently `release-online/`).
 - A tailnet client can load the page/history and download both files.
 - No OCX, Paseo, or Jingwei restart occurs; these scripts never restart them.
 
 ## Existing Endpoint
 
 Existing host tailnet-only URL: <https://example-runtime.tail99c4e8.ts.net:8448>.
-It points to the host release root, not the devbox. Availability must be checked
-separately when publication is requested. Project scripts never run `tailscaled`.
+Since 2026-10-22 it maps to `release-online/` under the devbox checkout (see the
+header note). Availability must be checked separately when publication is
+requested. Project scripts never run `tailscaled`.
 
 For a sandbox-managed service, use the sanctioned AF Infra control plane and
 an operator-approved contract. Do not reuse another project's exposure, publish
