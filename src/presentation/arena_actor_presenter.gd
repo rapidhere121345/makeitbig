@@ -1,6 +1,8 @@
 class_name ArenaActorPresenter
 extends RefCounted
 
+const Readability = preload("res://src/presentation/actor_readability.gd")
+
 ## Read-only actor projection.
 ##
 ## This service owns actor draw order, sprite placement, Boss part assembly,
@@ -317,10 +319,14 @@ func sync_sort_views(domain: WorldPresenter, frame: Dictionary, world_view: RefC
 		view.art_to_native = art_to_native
 		if String(drawable.kind) == "structure" or String(drawable.kind) == "tower":
 			## Whole-object pairs draw through their own reveal material on this
-			## drawable's SortView; legacy pieces and every actor keep material
-			## null, so an asset-mode change can never strand a stale shader.
+			## drawable's SortView. Actor contrast stays on separate sort views
+			## and never replaces a structure's reveal shader.
 			var piece_id := "tower" if String(drawable.kind) == "tower" else String(drawable.get("sprite", ""))
 			view.material = world_view.paired_reveal_material(piece_id, drawable.world)
+		elif String(drawable.kind) in ["player", "enemy", "boss_part"]:
+			Readability.apply_unique(view, "hero" if String(drawable.kind) == "player" else "hostile")
+		else:
+			view.material = null
 		domain.sync_actor(id, art_to_native * (drawable.world as Vector2), Vector2.ZERO, int(drawable.rank), id)
 		view.queue_redraw()
 	_record_report(detached, "actors")
@@ -437,6 +443,7 @@ func _draw_ranger_frame(canvas: CanvasItem, frame: Dictionary, world_view: RefCo
 	var rect: Rect2i = action_frame.get("rect", Rect2i())
 	if texture == null or rect.size.x <= 0 or rect.size.y <= 0:
 		return
+	Readability.bind_region(canvas, texture, Rect2(rect))
 	var anchor: Vector2i = action_frame.get("anchor", RangerAnimationScript.DEFAULT_ANCHOR)
 	var draw_offset: Vector2i = action_frame.get("draw_offset", Vector2i.ZERO)
 	var facing := String(action_frame.get("facing", _player_facing_name(frame["player_facing"])))
@@ -523,6 +530,7 @@ func _draw_enemy_action_frame(canvas: CanvasItem, world_view: RefCounted, action
 	var rect: Rect2i = action_frame.get("rect", Rect2i())
 	if texture == null or rect.size.x <= 0 or rect.size.y <= 0:
 		return
+	Readability.bind_region(canvas, texture, Rect2(rect))
 	var anchor := Vector2(action_frame.get("anchor", EnemyAnimationScript.DEFAULT_ANCHOR))
 	var region := Rect2(rect)
 	var destination := Rect2((feet_world - anchor).round(), region.size)

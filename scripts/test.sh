@@ -88,6 +88,8 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_generated_town_layout.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_playtest_comfort.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_session_menu.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_localization.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_actor_readability.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_character_progression.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_talent_build.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_talent_runtime.gd

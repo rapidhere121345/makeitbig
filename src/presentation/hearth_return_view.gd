@@ -3,6 +3,7 @@ extends TextureRect
 ## Dedicated early-return scene based on v0.9 story panel 02, not final E03.
 ## The bench stays away from the cold door, Mira is still working, Leia records.
 ## No repair/shift-handover flag is inferred from Auto graduation.
+const Readability = preload("res://src/presentation/actor_readability.gd")
 const Ranger = preload("res://src/presentation/ranger_animation.gd")
 const Life = preload("res://src/presentation/hamlet_life_animation.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
@@ -30,6 +31,7 @@ const ATMOSPHERE_BOUNDS := Rect2(Vector2.ZERO, Vector2(NATIVE_SIZE))
 const HEARTH_LIGHT_FEET := Vector2(189.0, 187.0)
 const NPC_LIFE_DIR := "res://art/production/p1/actors_v02/residents/"
 var _errors: Array[String] = []
+var _art_root: Node2D
 var _atmosphere_layer: AtmosphereLayerScript
 var _layers: Array[Dictionary] = []
 var _effects: Array[Dictionary] = []
@@ -48,7 +50,7 @@ func load_scene() -> bool:
 	_loaded = true
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	stretch_mode = TextureRect.STRETCH_SCALE
+	stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	custom_minimum_size = Vector2(NATIVE_SIZE)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clip_contents = true
@@ -60,6 +62,11 @@ func load_scene() -> bool:
 		_errors.append("dedicated background missing or wrong size")
 		return false
 	texture = background
+	_art_root = Node2D.new()
+	_art_root.name = "NativeIllustration"
+	add_child(_art_root)
+	resized.connect(_fit_art)
+	_fit_art()
 	set_meta("source_path", BACKGROUND_PATH)
 	_atmosphere_layer = AtmosphereLayerScript.new()
 	_atmosphere_layer.name = "AtmosphereFore"
@@ -71,7 +78,7 @@ func load_scene() -> bool:
 	# Parent TextureRect is the sole background. Draw atmosphere above it,
 	# then published sprites/effects at z=1; do not cover them with a plate.
 	_atmosphere_layer.z_index = 0
-	add_child(_atmosphere_layer)
+	_art_root.add_child(_atmosphere_layer)
 	for item: Dictionary in PLACEMENTS:
 		var id := String(item.id)
 		var spec: Dictionary = backgrounds.get(id, {})
@@ -126,17 +133,27 @@ func _sprite(id: String, sheet: Texture2D, rect: Rect2i, feet: Vector2i, anchor:
 	node.name = id.replace(".","_")
 	node.texture = sheet
 	node.centered = false
+	if id in ["return.mira", "return.leia", "ReturnRanger"]:
+		node.material = Readability.material_for("hero" if id == "ReturnRanger" else "resident")
 	node.region_enabled = true
 	node.region_filter_clip_enabled = true
 	node.region_rect = Rect2(rect)
 	node.position = Vector2(feet-anchor)
 	node.z_index = 1
 	node.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_child(node)
+	_art_root.add_child(node)
 	return node
 
+func _fit_art() -> void:
+	if _art_root == null:
+		return
+	var factor := minf(size.x / NATIVE_SIZE.x, size.y / NATIVE_SIZE.y)
+	_art_root.scale = Vector2.ONE * factor
+	_art_root.position = ((size - Vector2(NATIVE_SIZE) * factor) * 0.5).floor()
+
+
 func _process(delta: float) -> void:
-	if not _frozen:
+	if not _frozen and is_visible_in_tree():
 		_clock = fposmod(_clock + maxf(0.0,delta),2.0)
 		_update_effects()
 

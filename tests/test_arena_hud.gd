@@ -254,7 +254,7 @@ func _run() -> void:
 			continue
 		_expect(icon.custom_minimum_size == Vector2(32.0, 32.0) and icon.size == Vector2(32.0, 32.0), "cell %s icon is not displayed at the authored 32px native size" % node_name, failures)
 		_expect(icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "cell %s icon is not nearest-neighbour" % node_name, failures)
-		_expect(icon.stretch_mode == TextureRect.STRETCH_SCALE and icon.expand_mode == TextureRect.EXPAND_IGNORE_SIZE, "cell %s icon does not scale from the native 32px cell" % node_name, failures)
+		_expect(icon.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED and icon.expand_mode == TextureRect.EXPAND_IGNORE_SIZE, "cell %s icon must preserve the native cell aspect" % node_name, failures)
 		var atlas := hud.skill_icon(node_name) as AtlasTexture
 		_expect(atlas != null, "cell %s has no approved atlas icon" % node_name, failures)
 		if atlas != null:

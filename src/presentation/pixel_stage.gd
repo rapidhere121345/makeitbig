@@ -76,6 +76,8 @@ var stage_container: SubViewportContainer = null
 
 var _ink_background: ColorRect = null
 var _applied_layout: Dictionary = {}
+var _render_quality := "native"
+var _menu_scale := 1.0
 var _presentation_policy := POLICY_FIXED_PIXEL
 
 ## Empty-area colour. Defaults to the shared ink token: the stage owns no colour of its
@@ -158,13 +160,16 @@ static func layout_for_window(window_size: Vector2i) -> Dictionary:
 ## readability scale: 1920x1080 is a 1600x900 logical page at 1.2x, while 1920x1200 is
 ## a 1600x1000 page at the same scale. This keeps wide/16:10 space useful without making
 ## body copy smaller on a larger monitor. Smaller windows keep the fixed-canvas fallback.
-static func adaptive_layout_for_window(window_size: Vector2i) -> Dictionary:
+static func adaptive_layout_for_window(window_size: Vector2i, menu_scale: float = 1.0) -> Dictionary:
 	var window := Vector2i(maxi(window_size.x, 0), maxi(window_size.y, 0))
 	if window.x >= UI_LOGIC_SIZE.x and window.y >= UI_LOGIC_SIZE.y:
 		var readability_scale := maxf(1.0, minf(
 			float(window.x) / float(ADAPTIVE_REFERENCE_SIZE.x),
 			float(window.y) / float(ADAPTIVE_REFERENCE_SIZE.y)
 		))
+		# Keep enough workspace for the two-column pages even at the largest size.
+		readability_scale = minf(readability_scale * clampf(menu_scale, 1.0, 1.25), minf(
+			float(window.x) / UI_LOGIC_SIZE.x, float(window.y) / UI_LOGIC_SIZE.y))
 		var logical_size := Vector2i(
 			maxi(1, int(roundf(float(window.x) / readability_scale))),
 			maxi(1, int(roundf(float(window.y) / readability_scale)))
@@ -176,9 +181,9 @@ static func adaptive_layout_for_window(window_size: Vector2i) -> Dictionary:
 	return fallback
 
 
-static func layout_for_policy(window_size: Vector2i, policy: String) -> Dictionary:
+static func layout_for_policy(window_size: Vector2i, policy: String, menu_scale: float = 1.0) -> Dictionary:
 	if policy == POLICY_ADAPTIVE_SHELL:
-		return adaptive_layout_for_window(window_size)
+		return adaptive_layout_for_window(window_size, menu_scale)
 	return layout_for_window(window_size)
 
 
@@ -245,6 +250,28 @@ func set_presentation_policy(policy: String) -> Dictionary:
 	return {"ok": true, "policy": _presentation_policy, "layout": layout_snapshot()}
 
 
+## Only the fixed game canvas uses an optional bounded render target. Menus
+## keep a native target for sharp text; output size and input coordinates stay
+## identical at every quality. Integer downsampling keeps source pixel shapes.
+func set_render_quality(value: String) -> void:
+	_render_quality = value if value in ["native", "balanced", "fast"] else "balanced"
+	if is_inside_tree():
+		refresh_from_window()
+
+
+static func render_shrink(stage_size: Vector2i, policy: String, quality: String) -> int:
+	if policy != POLICY_FIXED_PIXEL or quality == "native":
+		return 1
+	var reference_height := 720 if quality == "fast" else 1080
+	return maxi(1, stage_size.y / reference_height)
+
+
+func set_menu_scale(value: float) -> void:
+	_menu_scale = clampf(value, 1.0, 1.25)
+	if is_inside_tree():
+		refresh_from_window()
+
+
 func get_presentation_policy() -> String:
 	return _presentation_policy
 
@@ -254,7 +281,12 @@ func get_presentation_policy() -> String:
 ## without a second transform, so the stage never resamples what it was handed.
 func apply_window_size(window_size: Vector2i) -> Dictionary:
 	_build_children()
-	var layout := layout_for_policy(window_size, _presentation_policy)
+	var layout := layout_for_policy(window_size, _presentation_policy, _menu_scale)
+	var shrink := render_shrink(Vector2i(layout.stage_size), _presentation_policy, _render_quality)
+	stage_container.stretch_shrink = shrink
+	layout["render_quality"] = _render_quality
+	layout["render_shrink"] = shrink
+	layout["render_size"] = Vector2i(layout.stage_size) / shrink
 	var origin := Vector2(layout.origin)
 	var stage_size := Vector2(layout.stage_size)
 	# Write only what changed. The container answers a size write by resizing its target,
@@ -268,6 +300,10 @@ func apply_window_size(window_size: Vector2i) -> Dictionary:
 	var logical_size := Vector2i(layout.ui_logic_size)
 	if viewport.size_2d_override != logical_size:
 		viewport.size_2d_override = logical_size
+	_ink_background.visible = bool(layout.letterboxed)
+	# Resizing a paused/cached game surface needs one fresh frame at the new size.
+	if viewport.render_target_update_mode == SubViewport.UPDATE_DISABLED:
+		viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	_applied_layout = layout
 	return layout
 
@@ -284,7 +320,7 @@ func get_presentation_viewport() -> SubViewport:
 ## been applied yet. Always a copy: callers may diff it, not edit it.
 func layout_snapshot() -> Dictionary:
 	if _applied_layout.is_empty():
-		return layout_for_policy(Vector2i(size), _presentation_policy)
+		return layout_for_policy(Vector2i(size), _presentation_policy, _menu_scale)
 	return _applied_layout.duplicate()
 
 
@@ -309,6 +345,7 @@ func _build_children() -> void:
 	add_child(stage_container)
 
 	viewport = SubViewport.new()
+	viewport.disable_3d = true
 	viewport.name = PRESENTATION_VIEWPORT_NAME
 	# SubViewport defaults to LINEAR independently of the root project setting.
 	# World draw calls inherit this filter (UI icons set their own); without it

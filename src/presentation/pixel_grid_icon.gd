@@ -20,7 +20,7 @@ func _ready() -> void:
 	backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	backing.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	backing.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	backing.stretch_mode = TextureRect.STRETCH_SCALE
+	backing.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	add_child(backing)
 	backing.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	set_notify_transform(true)

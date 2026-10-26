@@ -18,6 +18,7 @@ var _is_open := false
 
 
 func _ready() -> void:
+	auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	_build_interface()
 	get_viewport().size_changed.connect(_fit_panel)
 

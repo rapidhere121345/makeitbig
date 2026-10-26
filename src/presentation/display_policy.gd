@@ -8,8 +8,11 @@ const MIN_WINDOW := Vector2i(1024, 576)
 const DEFAULT_WINDOW := Vector2i(1600, 900)
 const MAX_SAVED_DIMENSION := 16384
 const PRESETS: Array[Vector2i] = [
-	Vector2i(1280, 720), Vector2i(1366, 768), Vector2i(1600, 900), Vector2i(1920, 1080),
-	Vector2i(2560, 1440), Vector2i(3440, 1440), Vector2i(3840, 2160),
+	Vector2i(1024, 576), Vector2i(1280, 720), Vector2i(1280, 800),
+	Vector2i(1366, 768), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(1920, 1200),
+	Vector2i(2560, 1080), Vector2i(2560, 1440), Vector2i(2560, 1600),
+	Vector2i(3440, 1440), Vector2i(3840, 1600), Vector2i(3840, 2160),
+	Vector2i(5120, 1440), Vector2i(5120, 2880),
 ]
 const HINT_FULLSCREEN := "Desktop resolution in fullscreen"
 const HINT_ULTRAWIDE := "16:9 view; borders on ultrawide"
@@ -67,3 +70,13 @@ static func hint(resolution: Vector2i, fullscreen: bool) -> String:
 	if wide > 0:
 		return HINT_ULTRAWIDE
 	return HINT_TALL if wide < 0 else ""
+
+
+## Unknown, non-finite and hand-edited settings fall back to the standard size.
+static func parse_menu_scale(value: Variant) -> float:
+	if not (value is float or value is int) or not is_finite(float(value)):
+		return 1.0
+	for scale: float in [1.0, 1.15, 1.25]:
+		if is_equal_approx(float(value), scale):
+			return scale
+	return 1.0

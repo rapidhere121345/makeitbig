@@ -473,8 +473,8 @@ func _assert_body_icon(screen: Node, node_name: String, failures: Array[String])
 		"facility screen: %s is not displayed at 64x64 from a 32x32 cell" % node_name, failures)
 	_expect(icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST,
 		"facility screen: %s is not nearest-neighbour" % node_name, failures)
-	_expect(icon.expand_mode == TextureRect.EXPAND_IGNORE_SIZE and icon.stretch_mode == TextureRect.STRETCH_SCALE,
-		"facility screen: %s does not scale as an integer 2x cell" % node_name, failures)
+	_expect(icon.expand_mode == TextureRect.EXPAND_IGNORE_SIZE and icon.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED,
+		"facility screen: %s must preserve its aspect at the integer 2x cell size" % node_name, failures)
 	var atlas := icon.texture as AtlasTexture
 	_expect(atlas != null and atlas.region.size == Vector2(ICON_NATIVE_SIZE),
 		"facility screen: %s is not one 32x32 published cell" % node_name, failures)

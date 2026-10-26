@@ -118,6 +118,6 @@ func _check_launcher_stage_bounds() -> void:
 		_expect(is_equal_approx(button.scale.x, float(layout.ui_scale)), "pause launcher scale differs from HUD at %s" % window_size)
 		_expect(is_equal_approx(drawn_rect.position.x - stage_rect.position.x, 12.0 * float(layout.ui_scale)), "pause launcher left inset at %s" % window_size)
 		menu.set_route("base")
-		_expect(button.scale == Vector2.ONE, "leaving combat resets root-window launcher scale")
+		_expect(is_equal_approx(button.scale.x, maxf(0.75, minf(window_size.x / 1600.0, window_size.y / 900.0))), "settings launcher follows desktop readability scale")
 		viewport.free()
 		await process_frame

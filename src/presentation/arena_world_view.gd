@@ -16,6 +16,7 @@ extends RefCounted
 ## so the playfield keeps its full geometry (uniform scale, no per-axis squeeze)
 ## while the sprites are drawn at the fixed native 2x.
 
+const Readability = preload("res://src/presentation/actor_readability.gd")
 const PaletteScript = preload("res://src/presentation/combat_palette.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
 const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
@@ -1108,6 +1109,7 @@ func _draw_cell(canvas: CanvasItem, metadata: Dictionary, feet_world: Vector2, f
 	var rect: Rect2 = metadata.get("rect", Rect2())
 	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
 	var region := _region_of(metadata)
+	Readability.bind_region(canvas, texture, rect)
 	var size := region.size
 	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), size)
 	var visible := destination.intersection(visible_world_region())

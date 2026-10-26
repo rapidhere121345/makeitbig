@@ -1357,4 +1357,7 @@ func _test_hearth() -> void:
 	_expect(view._atmosphere_layer.z_index == 0, "hearth: atmosphere must stay above the parent background")
 	for layer: Dictionary in view._layers:
 		_expect(layer.node.z_index > view._atmosphere_layer.z_index, "hearth: published actor must stay above atmosphere")
-	_expect(view.get_child(0) == view._atmosphere_layer, "hearth: atmosphere was not inserted before published sprites")
+	_expect(view.get_child(0) == view._art_root, "hearth: all artwork must share the aspect-preserving root")
+	_expect(view._art_root.get_child(0) == view._atmosphere_layer, "hearth: atmosphere was not inserted before published sprites")
+	for layer: Dictionary in view._layers:
+		_expect(layer.node.get_parent() == view._art_root, "hearth: actors must use the same transform as atmosphere")

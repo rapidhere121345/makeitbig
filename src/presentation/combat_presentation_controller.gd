@@ -518,6 +518,10 @@ func _draw_room_entry_overlay(viewport_rect: Rect2) -> void:
 	var entry_hint := String(room_info.get("entry_hint", ""))
 	var objective := frame_builder.objective_label(_snapshot)
 	var exit_hint := String(room_info.get("exit_hint", ""))
+	overline = tr(overline)
+	title = tr(title)
+	concept = tr(concept)
+	entry_hint = tr(entry_hint)
 	var title_width := text_font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 30).x
 	var overline_width := text_font.get_string_size(overline, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18).x
 	var concept_width := text_font.get_string_size(concept, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 19).x
@@ -527,6 +531,7 @@ func _draw_room_entry_overlay(viewport_rect: Rect2) -> void:
 	draw_string(text_font, Vector2(center_x - concept_width * 0.5, panel.position.y + 118.0), concept, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 19, Color(PaletteScript.BONE_DIM, alpha))
 	draw_string(text_font, Vector2(center_x - hint_width * 0.5, panel.position.y + 151.0), entry_hint, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(COLOR_AMBER, alpha))
 	var footer := "%s  ·  %s  ·  %s" % [String(room_info.get("landmark", "Boundary Marker")), objective, exit_hint]
+	footer = tr(footer)
 	var footer_width := text_font.get_string_size(footer, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16).x
 	draw_string(text_font, Vector2(center_x - footer_width * 0.5, panel.position.y + 187.0), footer, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(COLOR_NEUTRAL, alpha))
 	var bar := Rect2(panel.position + Vector2(30.0, panel.size.y - 24.0), Vector2(panel.size.x - 60.0, 4.0))

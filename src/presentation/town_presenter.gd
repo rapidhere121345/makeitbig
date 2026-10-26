@@ -12,6 +12,7 @@ const PrimitiveFadeScript := preload("res://src/presentation/occlusion/primitive
 const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
 const DressingScript := preload("res://src/presentation/world_dressing.gd")
 const GroundingScript := preload("res://src/presentation/town_grounding.gd")
+const Readability = preload("res://src/presentation/actor_readability.gd")
 const HERO_ID := "town/ranger"
 const HERO_VISUAL_ID := "ranger.town.idle"
 const DESTINATION_EDGE_MARGIN := Vector2(22, 96)
@@ -646,6 +647,7 @@ func _actor_sprite(node_name: String) -> Sprite2D:
 	sprite.name = node_name
 	sprite.centered = false
 	sprite.region_enabled = true
+	sprite.material = Readability.material_for("hero" if node_name == "Ranger" else "resident")
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	return sprite
 

@@ -235,7 +235,7 @@ func _add_entry(grid: GridContainer, entry: Dictionary, node_prefix: String) -> 
 		icon.texture = icon_value as Texture2D
 		icon.custom_minimum_size = Vector2(64, 64)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_SCALE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		icon.set_meta("canonical_id", String(entry.get("canonical_id", "")))

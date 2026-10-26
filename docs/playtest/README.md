@@ -3,6 +3,7 @@
 The retained records describe historical runs, not the current checkout's test
 status. Consult logs and run fresh checks before making a new acceptance claim.
 
+- [Language, modern displays, and character contrast](LANGUAGE_DISPLAY_READABILITY_20261026.md): Simplified Chinese selection, display/menu scaling, bounded 4K rendering, and live-actor silhouettes; rendered checks and frozen full build/export/Linux smoke passed.
 - [Town responsiveness and street layout](TOWN_PERFORMANCE_LAYOUT_20261026.md): CPU optimizations, road-facing facilities, clearer bridge landings and joined east walls; 27 captures and frozen full gate passed, build `20261026-081845-5f4edd733ff5` packaged.
 - [Ground contact and local lighting](GROUNDING_LIGHT_20261025.md): final visual/full-build acceptance and published build `20261026-043825-5f4edd733ff5`; actor contact shadows, object base seams and restrained local light.
 - [World expansion and modern displays](WORLD_EXPANSION_20261025.md): winding river, two bridge orientations, perimeter scenery, varied houses, distinct combat rooms and display settings; 16 rendered captures and frozen full gate passed. Local release `20261025-190800-5f4edd733ff5` preserves all prior builds.

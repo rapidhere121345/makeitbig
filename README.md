@@ -53,14 +53,23 @@ and the eastern wall replaces the crowded pine boundary. See the
 [town performance and layout acceptance](docs/playtest/TOWN_PERFORMANCE_LAYOUT_20261026.md)
 for measured CPU improvements and validation limits.
 
+Live characters have a one-pixel silhouette outline, a light rim, and raised
+brightness: warm gold for the Ranger, teal for residents, and coral for enemies.
 Contact shadows anchor actors and scenery to the ground and bridge decks.
 Lamps and hearths cast local pools of light, with restrained illumination on
 nearby sprites and combat warnings drawn above the ground effects.
 
-F1 opens display settings. Windowed presets extend through 1440p, ultrawide and
-4K when they fit the display; fullscreen uses the desktop resolution. The game
-keeps a 16:9 field of view with borders on wider displays and nearest-neighbor
-pixel scaling.
+F1 opens settings. Choose **English** or **Simplified Chinese**, change menu scale
+(100%, 115%, 125%), or select windowed/fullscreen display settings. Language changes
+apply immediately, including during a paused battle, and preferences survive restart.
+Presets include 16:10 laptops, 1440p, ultrawide, 4K, and 5K when they fit the display.
+Fullscreen uses the desktop resolution; the game view keeps its 16:9 proportions.
+
+**Balanced** rendering is the default: at 4K the game uses a 1080p offscreen target
+with uniform integer enlargement. **Native Resolution** keeps the finest game text;
+**Performance** uses a smaller target. Reading panels always render at native
+resolution, and paused game surfaces are cached while settings are open. Menu scale
+increases reading size where the window has enough space for the two-column pages.
 
 ## Test and Export
 
@@ -103,7 +112,7 @@ For Tailscale access, validate `build/releases/` with `./deploy/tailscale/stage_
 - [Graphical validation](docs/GRAPHICAL_VALIDATION.md): windowed and headless acceptance.
 - [Release workflow](docs/RELEASE_WORKFLOW.md): release pages, retention, and exposure.
 - [Devbox readiness](docs/DEVBOX_READINESS.md): target prerequisites and actual audit status.
-- [English-only policy](docs/ENGLISH_ONLY.md): vocabulary, compatibility, and pinned authentic originals.
+- [Source language and localization](docs/ENGLISH_ONLY.md): vocabulary, compatibility, and pinned authentic originals.
 - [content/](content/) and `src/`: implemented content and runtime behavior.
 
 Save schema is 10. Production saves use Godot's `user://saves`; playtest tools use separate directories. Design documents describe targets, not promises of implemented features. Code, content, and tests determine actual behavior.

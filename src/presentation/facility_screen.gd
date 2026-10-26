@@ -1106,7 +1106,7 @@ func _icon_node(texture: Texture2D, native_size: Vector2i, scaled: bool) -> Text
 	icon.texture = texture
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_SCALE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var display_size := native_size
 	if scaled:

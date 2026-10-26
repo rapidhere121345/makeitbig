@@ -27,6 +27,7 @@ const PixelStageScript = preload("res://src/presentation/pixel_stage.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const TestConsoleScript = preload("res://src/presentation/test_console.gd")
 const SessionMenuScript = preload("res://src/presentation/session_menu.gd")
+const Locale = preload("res://src/localization/game_locale.gd")
 const DisplayPolicyScript = preload("res://src/presentation/display_policy.gd")
 
 const FACILITY_ROUTES: Array[String] = ["loadout", "forge", "training", "proxy", "immortality", "research"]
@@ -123,6 +124,9 @@ var _current_screen: Node
 var _town_travel: Dictionary = {}
 var _pixel_stage: Control
 var _test_console: CanvasLayer
+var _language_code := "en"
+var _menu_scale := 1.0
+var _render_quality := "balanced"
 var _session_menu: CanvasLayer
 var _menu_paused_screen: Node
 var _menu_previous_process_mode: int = Node.PROCESS_MODE_INHERIT
@@ -175,6 +179,7 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	Locale.acquire()
 	_ensure_pixel_stage()
 	initialize()
 	_ensure_test_console()
@@ -195,6 +200,7 @@ func _ensure_pixel_stage() -> void:
 	_acquire_stage_window()
 	_pixel_stage = PixelStageScript.new()
 	_pixel_stage.name = "PixelStage"
+	_pixel_stage.set_render_quality(_render_quality)
 	add_child(_pixel_stage)
 	_pixel_stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -234,10 +240,14 @@ func _ensure_session_menu() -> void:
 	_session_menu.abandon_requested.connect(_abandon_from_menu)
 	_session_menu.display_requested.connect(_apply_display_settings)
 	_session_menu.effects_volume_changed.connect(_set_effects_volume)
+	_session_menu.language_requested.connect(_set_language)
+	_session_menu.menu_scale_requested.connect(_set_menu_scale)
+	_session_menu.render_quality_requested.connect(_set_render_quality)
 	_load_player_settings()
 	_session_menu.set_route(current_route)
 	_session_menu.set_resolution_options(DisplayPolicyScript.menu_options(_usable_display_size(), _windowed_resolution), _windowed_resolution)
 	_session_menu.sync_settings(_windowed_resolution, get_window().mode == Window.MODE_FULLSCREEN, _effects_volume)
+	_session_menu.sync_accessibility(_language_code, _menu_scale, _render_quality)
 	_apply_route_preferences()
 
 
@@ -251,9 +261,13 @@ func _pause_current_route() -> void:
 	# This stops the fixed clock at the route boundary. Time spent paused is not
 	# added to it, and other mounted roots/test fixtures keep their own lifetime.
 	_current_screen.process_mode = Node.PROCESS_MODE_DISABLED
+	if _pixel_stage != null:
+		get_presentation_viewport().render_target_update_mode = SubViewport.UPDATE_ONCE
 
 
 func _resume_current_route() -> void:
+	if _pixel_stage != null:
+		get_presentation_viewport().render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	if is_instance_valid(_menu_paused_screen):
 		if _menu_paused_screen.has_method("release_manual_controls"):
 			_menu_paused_screen.call("release_manual_controls")
@@ -264,6 +278,33 @@ func _resume_current_route() -> void:
 func _abandon_from_menu() -> void:
 	if current_route == SceneRouterScript.ROUTE_ARENA and _current_screen != null and _current_screen.has_method("request_abandon"):
 		_current_screen.call("request_abandon")
+
+
+func _set_language(code: String) -> void:
+	_language_code = Locale.select(code)
+	if _pixel_stage != null and _session_menu != null and _session_menu.is_open():
+		get_presentation_viewport().render_target_update_mode = SubViewport.UPDATE_ONCE
+	if _session_menu != null:
+		_session_menu.sync_accessibility(_language_code, _menu_scale, _render_quality)
+	_save_player_settings()
+
+
+func _set_render_quality(value: String) -> void:
+	_render_quality = value if value in ["native", "balanced", "fast"] else "balanced"
+	if _pixel_stage != null:
+		_pixel_stage.set_render_quality(_render_quality)
+	if _session_menu != null:
+		_session_menu.sync_accessibility(_language_code, _menu_scale, _render_quality)
+	_save_player_settings()
+
+
+func _set_menu_scale(value: float) -> void:
+	_menu_scale = DisplayPolicyScript.parse_menu_scale(value)
+	if _pixel_stage != null:
+		_pixel_stage.set_menu_scale(_menu_scale)
+	if _session_menu != null:
+		_session_menu.sync_accessibility(_language_code, _menu_scale, _render_quality)
+	_save_player_settings()
 
 
 func _set_effects_volume(value: float) -> void:
@@ -314,6 +355,14 @@ func _load_player_settings() -> void:
 	if config.load(save_directory_path.path_join("display.cfg")) != OK:
 		_apply_display_settings(_windowed_resolution, false)
 		return
+	var quality: Variant = config.get_value("display", "render_quality", "balanced")
+	_render_quality = quality if quality in ["native", "balanced", "fast"] else "balanced"
+	if _pixel_stage != null:
+		_pixel_stage.set_render_quality(_render_quality)
+	_language_code = Locale.select(config.get_value("interface", "language", "en"))
+	_menu_scale = DisplayPolicyScript.parse_menu_scale(config.get_value("interface", "menu_scale", 1.0))
+	if _pixel_stage != null:
+		_pixel_stage.set_menu_scale(_menu_scale)
 	var volume: Variant = config.get_value("audio", "effects", 0.45)
 	if (volume is float or volume is int) and is_finite(float(volume)):
 		_effects_volume = clampf(float(volume), 0.0, 1.0)
@@ -327,8 +376,11 @@ func _save_player_settings(fullscreen: Variant = null) -> void:
 	if _test_session or not is_inside_tree():
 		return
 	var config := ConfigFile.new()
+	config.set_value("interface", "language", _language_code)
+	config.set_value("interface", "menu_scale", _menu_scale)
 	config.set_value("audio", "effects", _effects_volume)
 	config.set_value("display", "window", _windowed_resolution)
+	config.set_value("display", "render_quality", _render_quality)
 	config.set_value("display", "fullscreen", get_window().mode == Window.MODE_FULLSCREEN if fullscreen == null else fullscreen)
 	var directory := ProjectSettings.globalize_path(save_directory_path)
 	if DirAccess.make_dir_recursive_absolute(directory) == OK:
@@ -467,6 +519,7 @@ func _apply_presentation_policy(route: String) -> void:
 
 
 func _exit_tree() -> void:
+	Locale.release()
 	_resume_current_route()
 	_finish_playtest_logging("tree_exit")
 	_release_stage_window()

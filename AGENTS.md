@@ -4,7 +4,7 @@
 
 Make It Big is a pixel-art dark-fantasy loot demo built with Godot 4.7.2. The current deliverable is the Ranger's first chapter: tutorial, Hearthside exploration, contracts, equipment and talents, Training, Law Token forging, Manual/Auto combat, and the Threshold Colossus. Later chapters, two additional classes, and the full endgame remain design plans.
 
-Use these sources of truth in order: runtime code in `src/`, authored data in `content/`, regression tests in `tests/`, and runtime art in `art/production/p1/`. Plans are not implementations, and documentation is not test evidence. The project and in-game content use English; retain authentic upstream licenses and original provenance records.
+Use these sources of truth in order: runtime code in `src/`, authored data in `content/`, regression tests in `tests/`, and runtime art in `art/production/p1/`. Plans are not implementations, and documentation is not test evidence. Source code, authored source text, and documentation use English; the game offers English and Simplified Chinese through `content/localization/zh_CN.json`; retain authentic upstream licenses and original provenance records.
 
 ## Entry Points and Directories
 

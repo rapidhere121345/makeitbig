@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reject untranslated project text while pinning authentic source exceptions."""
+"""Keep source copy English; validate localized catalogs and pinned originals."""
 
 import argparse
 import hashlib
@@ -61,6 +61,37 @@ def json_strings(value, location="$"):
             yield from json_strings(item, f"{location}[{index}]")
 
 
+def validate_catalog(text):
+    errors = []
+    seen = set()
+
+    def unique_pairs(rows):
+        result = {}
+        for key, value in rows:
+            if key in seen:
+                errors.append(f"duplicate source message: {key!r}")
+            seen.add(key)
+            result[key] = value
+        return result
+
+    try:
+        data = json.loads(text, object_pairs_hook=unique_pairs)
+    except json.JSONDecodeError as error:
+        return [f"invalid JSON: {error}"]
+    if not isinstance(data, dict) or not data:
+        return ["catalog must be a nonempty source-to-translation object"]
+    placeholders = re.compile(r"%(?:[-+0 #]*[0-9]*(?:\.[0-9]+)?)?[sdf]|%%")
+    for source, target in data.items():
+        if not isinstance(target, str) or not target.strip():
+            errors.append(f"empty/non-string translation for {source!r}")
+            continue
+        if HAN.search(source):
+            errors.append(f"source key must remain English: {source!r}")
+        if placeholders.findall(source) != placeholders.findall(target):
+            errors.append(f"format placeholders differ for {source!r}")
+    return errors
+
+
 def inspect_files(root, files):
     errors = []
     exceptions = []
@@ -82,6 +113,9 @@ def inspect_files(root, files):
             errors.append(f"{name}: cannot read UTF-8 text: {error}")
             continue
         inspected += 1
+        if name == "content/localization/zh_CN.json":
+            errors.extend(f"{name}: {error}" for error in validate_catalog(text))
+            continue
         function = ""
         for line_no, line in enumerate(text.splitlines(), 1):
             declaration = re.match(r"^\s*(?:static\s+)?func\s+(\w+)\(", line)

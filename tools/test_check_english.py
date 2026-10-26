@@ -64,6 +64,20 @@ class EnglishCheckTests(unittest.TestCase):
             path.write_text('{"prompt":"counterfeit rewritten original"}')
             self.assertTrue(self.inspect(name)["errors"])
 
+    def test_chinese_catalog_is_allowed_but_source_stays_english(self):
+        name = "content/localization/zh_CN.json"
+        self.write(name, json.dumps({"Resume": chr(0x7ee7) + chr(0x7eed)}, ensure_ascii=False))
+        self.assertFalse(self.inspect(name)["errors"])
+        self.write(name, json.dumps({chr(0x4e2d): "value"}))
+        self.assertTrue(self.inspect(name)["errors"])
+
+    def test_catalog_preserves_placeholders_and_rejects_duplicates(self):
+        for text in ['{"HP %d":"value %s"}', '{"Resume":"one","Resume":"two"}',
+                     '{"Resume":""}', '{"Resume":42}']:
+            self.assertTrue(checker.validate_catalog(text), text)
+        self.assertFalse(checker.validate_catalog('{"p=%.2f":"value %.2f"}'))
+        self.assertTrue(checker.validate_catalog('{"p=%.2f":"value %.3f"}'))
+
     def test_invalid_json_is_reported(self):
         self.write("content/broken.json", "{invalid")
         self.assertTrue(self.inspect("content/broken.json")["errors"])

@@ -209,7 +209,7 @@ func _build_illustration(parent: Control) -> void:
 	_illustration.texture = resource as Texture2D
 	_illustration.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_illustration.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_illustration.stretch_mode = TextureRect.STRETCH_SCALE
+	_illustration.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_illustration.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_illustration.custom_minimum_size = ILLUSTRATION_SIZE
 	_illustration.set_meta("source_path", ILLUSTRATION_PATH)

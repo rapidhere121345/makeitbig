@@ -741,7 +741,7 @@ func _build_skill_cell(slot: Dictionary) -> Button:
 	icon.custom_minimum_size = Vector2(SKILL_ICON_DISPLAY, SKILL_ICON_DISPLAY)
 	icon.texture = icons.icon(String(slot["slot_id"]))
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_SCALE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(icon)
