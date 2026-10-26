@@ -10,10 +10,12 @@ const CombatInterfaceTheme := preload("res://src/presentation/combat_interface_t
 
 const ContentRegistryScript = preload("res://src/content/content_registry.gd")
 const ProxyRuntimeScript = preload("res://src/systems/proxy_runtime.gd")
+const ProxyDecisionScript = preload("res://src/systems/proxy_decision.gd")
 const ProxyIntentSystemScript = preload("res://src/systems/proxy_intent_system.gd")
 const CombatCommandProtocolScript = preload("res://src/systems/combat_command_protocol.gd")
 const ManualAimResolverScript = preload("res://src/systems/manual_aim_resolver.gd")
 const EnemyTacticsScript = preload("res://src/systems/enemy_tactics.gd")
+const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 const CombatEventStreamScript = preload("res://src/systems/combat_event_stream.gd")
 const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
 const PiercingArrowModelScript = preload("res://src/systems/piercing_arrow_model.gd")
