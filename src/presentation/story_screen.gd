@@ -9,6 +9,7 @@ signal entry_read(entry_id: String)
 const StoryProgressionScript = preload("res://src/systems/story_progression.gd")
 const ShellTheme = preload("res://src/presentation/shell_theme.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
+const SharedPalette := preload("res://src/presentation/palette.gd")
 
 const TABS: Array[String] = ["Target", "Dialogue", "Journal", "Daily Life"]
 const LIST_PAGE_SIZE := 4
@@ -473,7 +474,7 @@ func _render_town() -> void:
 		var card_column := VBoxContainer.new()
 		card_column.add_theme_constant_override("separation", 5)
 		card.add_child(card_column)
-		var title := _reading_label(String(change.get("title", "")), Color("e9ddc3"))
+		var title := _reading_label(String(change.get("title", "")), ShellTheme.BONE)
 		card_column.add_child(title)
 		card_column.add_child(_note_label(String(change.get("description", ""))))
 		grid.add_child(card)
@@ -662,7 +663,7 @@ func _entry_button(node_name: String) -> Button:
 	button.autowrap_mode = TextServer.AUTOWRAP_OFF
 	button.clip_text = true
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	button.add_theme_color_override("font_color", Color("e9ddc3"))
+	button.add_theme_color_override("font_color", ShellTheme.BONE)
 	return button
 
 
@@ -681,4 +682,4 @@ func _style_tab(button: Button, selected: bool) -> void:
 	button.add_theme_stylebox_override("disabled", ShellTheme.panel_style("disabled"))
 	if selected:
 		button.add_theme_stylebox_override("normal", ShellTheme.panel_style("selected"))
-		button.add_theme_color_override("font_color", Color("fff1ce"))
+		button.add_theme_color_override("font_color", SharedPalette.BONE_HOVER)

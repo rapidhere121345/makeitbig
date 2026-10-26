@@ -4,6 +4,7 @@ extends RefCounted
 ## Presentation only; content margins stay stable so this skin does not trade
 ## away the established readable text and compact-window layout contracts.
 
+const SharedPalette := preload("res://src/presentation/palette.gd")
 const MATERIAL_DIRECTORY := "res://art/production/p1/ui_style_r13"
 const EXPLORATION_ART := "res://art/production/p1/ui_exploration_v01"
 static var _materials: Dictionary = {}
@@ -51,15 +52,15 @@ const COMPACT_FONT_SIZE := 18
 
 ## Approved cold-slate ramp (2026-09-14 brief, plus the raised step shared with the
 ## production skin in combat_palette.gd so combat and shell agree on the greys).
-const INK := Color("111820")
-const DEEP_BLUE := Color("1d2731")
-const GROUND := Color("2d3943")
+const INK := SharedPalette.SLATE_INK
+const DEEP_BLUE := SharedPalette.SHELL_DEEP_BLUE
+const GROUND := SharedPalette.SLATE_GROUND
 ## Muted secondary copy. One readable step above the decorative slate, because the
 ## formal screens use this token for 18px body text, not for ornament.
 const NEUTRAL := Color("a7ada9")
-const BONE := Color("e9ddc3")
+const BONE := SharedPalette.BONE
 ## Old-copper accent: idle edges use the dull tone, selection uses the bright one.
-const COPPER_DULL := Color("ad7950")
+const COPPER_DULL := SharedPalette.COPPER_EDGE
 const AMBER := Color("c49364")
 ## Semantic colours. Values intentionally unchanged: danger, success/proxy and
 ## true-magic already have approved meanings that this restyle must not move.
@@ -111,7 +112,7 @@ static func create() -> Theme:
 		theme.set_font("font", kind, data_font())
 
 	theme.set_color("font_color", "Button", BONE)
-	theme.set_color("font_hover_color", "Button", Color("fff1ce"))
+	theme.set_color("font_hover_color", "Button", SharedPalette.BONE_HOVER)
 	theme.set_color("font_pressed_color", "Button", Color("ffe0a1"))
 	theme.set_color("font_disabled_color", "Button", NEUTRAL)
 	theme.set_font_size("font_size", "Button", 20)

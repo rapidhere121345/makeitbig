@@ -10,17 +10,19 @@ extends RefCounted
 ## The layer draws around feet_world, never writes gameplay state, never moves
 ## the (24,44) foot anchor and never touches the authoritative arrow socket.
 
+const SharedPalette := preload("res://src/presentation/palette.gd")
+
 ## Palette lifted from the published ranger skin pixels (ranger_actions_v01 /
 ## combat_style_r13 v03): cold slate cloth, bone cloth and hair, old copper
 ## leather and gear, plus the approved cold teal reserved for motion.
-const INK := Color("111820")
+const INK := SharedPalette.SLATE_INK
 const SLATE := Color("2a3543")
 const SLATE_LIGHT := Color("91a4b4")
-const BONE := Color("e9ddc3")
+const BONE := SharedPalette.BONE
 const BONE_SHADE := Color("d3cbb5")
 const COPPER := Color("ad734d")
 const COPPER_LIGHT := Color("eead56")
-const COLD := Color("61a6a5")
+const COLD := SharedPalette.COLD_TEAL
 
 
 static func motion_signature(action: String, facing: String, frame: int, time: float) -> Dictionary:

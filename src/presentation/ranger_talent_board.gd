@@ -8,18 +8,19 @@ extends Control
 signal talent_selected(talent_id: String)
 
 const ProgressionIconsScript = preload("res://src/presentation/progression_icons.gd")
+const SharedPalette := preload("res://src/presentation/palette.gd")
 
 const SLATE := Color("1b2630")
 const SLATE_RAISED := Color("273743")
 const SLATE_DEEP := Color("17222b")
 const PAPER := Color("c8ab78")
 const COPPER_DULL := Color("8e6743")
-const COPPER := Color("ad7950")
+const COPPER := SharedPalette.COPPER_EDGE
 const COPPER_BRIGHT := Color("d7a46b")
 const LAW := Color("8fb7b2")
-const BONE := Color("e9ddc3")
+const BONE := SharedPalette.BONE
 const NEUTRAL := Color("8a94a1")
-const INK := Color("111820")
+const INK := SharedPalette.SLATE_INK
 const NODE_SIZE := Vector2(56, 56)
 const MEDALLION_RADIUS := 32.0
 const ROW_LABEL_WIDTH := 64.0

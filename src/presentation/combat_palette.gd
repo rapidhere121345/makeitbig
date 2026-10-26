@@ -4,16 +4,17 @@ extends RefCounted
 ## telegraphs and cold teal for proxy/ally state. Presentation only: nothing here
 ## is read by simulation, damage, drops or AI.
 
-const INK: Color = Color("090c10")
-const SLATE_0: Color = Color("111820")
-const SLATE_1: Color = Color("1d2730")
-const SLATE_2: Color = Color("2d3943")
+const SharedPalette := preload("res://src/presentation/palette.gd")
+const INK: Color = SharedPalette.COMBAT_INK
+const SLATE_0: Color = SharedPalette.SLATE_INK
+const SLATE_1: Color = SharedPalette.COMBAT_SLATE_1
+const SLATE_2: Color = SharedPalette.SLATE_GROUND
 const SLATE_3: Color = Color("71808a")
-const BONE: Color = Color("e9ddc3")
+const BONE: Color = SharedPalette.BONE
 const BONE_DIM: Color = Color("b8b19f")
 const COPPER: Color = Color("bb713d")
-const COPPER_DULL: Color = Color("896043")
-const COLD: Color = Color("61a6a5")
+const COPPER_DULL: Color = SharedPalette.COMBAT_COPPER_DULL
+const COLD: Color = SharedPalette.COLD_TEAL
 const PURPLE: Color = Color("70578d")
 const DANGER: Color = Color("a83b3f")
 const DANGER_BRIGHT: Color = Color("ed7370")
