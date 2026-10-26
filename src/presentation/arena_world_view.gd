@@ -1,3 +1,4 @@
+class_name ArenaWorldProjection
 extends RefCounted
 ## R13 snowy-outpost production skin. New ground, ruins, beacon and colossus
 ## textures keep the original scene/legacy cells, layout and module anchors.
@@ -22,31 +23,30 @@ const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
 const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const SortRelation = preload("res://src/presentation/occlusion_query.gd")
-const PairedReveal := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
-## Whole-object generated world pack: each family sprite is ONE opaque texture
-## plus its baked transparent variant on the same canvas/anchor, with one
-## authored detection rect (occupied AABB grown by DETECTION_GROW) in local
-## canvas coordinates. The pack is required: a missing or incomplete pack fails
-## the load.
-const GENERATED_WORLD_PATH := "res://art/production/p1/generated_world_v02/assets.json"
-const GENERATED_GROUND_ID := "arena_ground"
-## Pack asset id -> live arena sprite id. The whole-object entries replace
-## the scene atlas cells; sections.arena.complete must be true.
-const GENERATED_SPRITE_IDS := {
-	"ruin_wall_corner": "ruin.wall_corner",
-	"ruin_gate": "ruin.gate",
-	"ruin_low_pier": "ruin.low_pier",
-	"ruin_broken_wall": "ruin.broken_wall",
-	"tower": "tower",
-}
+## Collaborators in src/presentation/arena_world/. The view keeps the frame state
+## (camera, hero cell, sprite and texture tables) and passes itself to the ones
+## that need it, so nothing holds a reference back to the view. The class_name
+## exists only so those collaborators can type that parameter without a
+## preload cycle.
+const AlphaOcclusionScript := preload("res://src/presentation/arena_world/alpha_occlusion.gd")
+const AssetLoaderScript := preload("res://src/presentation/arena_world/asset_loader.gd")
+const BossPartsScript := preload("res://src/presentation/arena_world/boss_parts.gd")
+const CutawayScript := preload("res://src/presentation/arena_world/cutaway.gd")
+const GeneratedWorldScript := preload("res://src/presentation/arena_world/generated_world.gd")
+const StructureFadesScript := preload("res://src/presentation/arena_world/structure_fades.gd")
+## Constants the owners of these tables publish; re-exported so callers keep
+## reaching them through the view.
+const GENERATED_WORLD_PATH := GeneratedWorldScript.GENERATED_WORLD_PATH
 const ATMOSPHERE_PRESET := "arena"
 
-const SCENE_ATLAS_PATH: String = "res://art/production/p1/actors_v02/scene_atlas.json"
-const SCENE_LAYOUT_PATH: String = "res://art/production/p1/combat_style_r13/v03/layout.json"
-const LEGACY_ATLAS_PATH: String = "res://art/production/p1/actors_v02/legacy_atlas.json"
-const APPROVED_GROUND_KEY: String = "approved_ground"
+const SCENE_ATLAS_PATH: String = AssetLoaderScript.SCENE_ATLAS_PATH
+const SCENE_LAYOUT_PATH: String = AssetLoaderScript.SCENE_LAYOUT_PATH
+const LEGACY_ATLAS_PATH: String = AssetLoaderScript.LEGACY_ATLAS_PATH
+const APPROVED_GROUND_KEY: String = AssetLoaderScript.APPROVED_GROUND_KEY
+const LEGACY_SPRITE_IDS: Array[String] = AssetLoaderScript.LEGACY_SPRITE_IDS
+const CELL_CONTRACTS := AssetLoaderScript.CELL_CONTRACTS
 const DISPLAY_SCALE: float = 2.0
 const GAMEPLAY_TO_WORLD: float = 0.72
 const WORLD_SIZE := Vector2(1024.0, 640.0)
@@ -56,82 +56,20 @@ const WORLD_FOCUS := Vector2(512.0, 360.0)
 ## Extra world headroom kept above the hero (native units) so a colossus head and
 ## the boss target shape stay clear of the frame and the top HUD strip.
 const CAMERA_UP_OFFSET: float = 96.0
-const FORE_FADE: float = 0.45
-## Conservative cutaway: a ruin, the tower or the colossus that really covers the
-## hero keeps its authored alpha everywhere except the hero's own overlap window,
-## where the stack is capped so the hero's real source pixels survive the 0.20
-## per-channel visibility gate instead of being washed out by a whole-cell fade.
-## The window is the hero cell grown by CUTAWAY_WINDOW_PAD, so no drawn hero
-## pixel ever sits on the window edge. The window is a rectangle on the same
-## integer grid the rest of the arena draws on.
-const CUTAWAY_TOTAL_OPACITY: float = 0.16
-const CUTAWAY_WINDOW_PAD: float = 2.0
-## Index of the window inside the five tiling pieces (four solid bands first).
-const CUTAWAY_WINDOW_INDEX: int = 4
-## Alpha bounds stay conservative by one source pixel so antialiased edge pixels
-## and the integer destination rounding cannot make an occluder too small.
-const ALPHA_VISIBLE_BOUNDS_PADDING: float = 1.0
-## A source pixel with any meaningful alpha is part of the visual occluder.  The
-## mask is used only to decide whether two drawn cells really meet; the one
-## pixel bounds padding above remains the conservative box used for diagnostics.
-const ALPHA_OCCLUSION_THRESHOLD: float = 0.0
-const GROUND_SPRITE_ID: String = "scene.ground"
-## Only these calibration_v01 sprites are reused read-only; the reworked atlas
-## owns everything else, so a missing reworked sprite stays missing instead of
-## silently falling back to an older drawing.
-const LEGACY_SPRITE_IDS: Array[String] = [
-	"tower.upper", "tower.base",
-	"enemy.melee.idle", "enemy.melee.windup", "enemy.melee.active", "enemy.melee.recover",
-	"enemy.charger.idle", "enemy.charger.windup", "enemy.charger.active", "enemy.charger.recover",
-	"enemy.ranged.idle", "enemy.ranged.windup", "enemy.ranged.active", "enemy.ranged.recover",
-]
-const CELL_CONTRACTS := {
-	"scene.ground": {"size": Vector2i(1024, 640)},
-	"ground.snow_wedge": {"size": Vector2i(128, 96), "anchor": Vector2i(64, 90)},
-	"ground.snow_strip": {"size": Vector2i(128, 96), "anchor": Vector2i(64, 90)},
-	"ground.rubble_apron": {"size": Vector2i(128, 96), "anchor": Vector2i(64, 90)},
-	"ground.foundation": {"size": Vector2i(128, 96), "anchor": Vector2i(64, 90)},
-	"ruin.wall_corner": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
-	"ruin.gate": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
-	"ruin.low_pier": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
-	"ruin.broken_wall": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
-	"ranger.south.idle": {"size": Vector2i(32, 48), "anchor": Vector2i(16, 44)},
-	"ranger.north.idle": {"size": Vector2i(32, 48), "anchor": Vector2i(16, 44)},
-	"ranger.east.idle": {"size": Vector2i(32, 48), "anchor": Vector2i(16, 44)},
-	"ranger.west.idle": {"size": Vector2i(32, 48), "anchor": Vector2i(16, 44)},
-	"boss.body_phase1": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
-	"boss.body_phase2": {"size": Vector2i(128, 128), "anchor": Vector2i(64, 120)},
-	"boss.hand_left": {"size": Vector2i(48, 64), "anchor": Vector2i(24, 56)},
-	"boss.hand_right": {"size": Vector2i(48, 64), "anchor": Vector2i(24, 56)},
-	"boss.core_phase1": {"size": Vector2i(32, 64), "anchor": Vector2i(16, 56)},
-	"boss.core_phase2": {"size": Vector2i(32, 64), "anchor": Vector2i(16, 56)},
-	"tower.upper": {"size": Vector2i(128, 192), "anchor": Vector2i(64, 184), "keep_rows": [0, 148]},
-	"tower.base": {"size": Vector2i(128, 192), "anchor": Vector2i(64, 184), "keep_rows": [148, 192]},
-	"enemy.melee.idle": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.melee.windup": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.melee.active": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.melee.recover": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.charger.idle": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.charger.windup": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.charger.active": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.charger.recover": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.ranged.idle": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.ranged.windup": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.ranged.active": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-	"enemy.ranged.recover": {"size": Vector2i(48, 48), "anchor": Vector2i(24, 44)},
-}
-const BOSS_CORE_OFFSET := Vector2(0.0, -38.0)
-const BOSS_HAND_LEFT_OFFSET := Vector2(-68.0, -18.0)
-const BOSS_HAND_RIGHT_OFFSET := Vector2(68.0, -18.0)
+const FORE_FADE: float = BossPartsScript.FORE_FADE
+const CUTAWAY_TOTAL_OPACITY: float = CutawayScript.CUTAWAY_TOTAL_OPACITY
+const CUTAWAY_WINDOW_PAD: float = CutawayScript.CUTAWAY_WINDOW_PAD
+const CUTAWAY_WINDOW_INDEX: int = CutawayScript.CUTAWAY_WINDOW_INDEX
+const ALPHA_VISIBLE_BOUNDS_PADDING: float = AlphaOcclusionScript.ALPHA_VISIBLE_BOUNDS_PADDING
+const BOSS_CORE_OFFSET := BossPartsScript.BOSS_CORE_OFFSET
+const BOSS_HAND_LEFT_OFFSET := BossPartsScript.BOSS_HAND_LEFT_OFFSET
+const BOSS_HAND_RIGHT_OFFSET := BossPartsScript.BOSS_HAND_RIGHT_OFFSET
 const TOWER_UPPER_FADE: float = 0.52
 
 var pending_reason: String = ""
 
 var _sprites: Dictionary = {}
 var _textures: Dictionary = {}
-var _texture_images: Dictionary = {}
-var _alpha_visible_bounds: Dictionary = {}
-var _alpha_masks: Dictionary = {}
 var _structures: Array[Dictionary] = []
 var _tower_feet := Vector2.ZERO
 var _clip := Rect2()
@@ -143,14 +81,6 @@ var _hero_world := Vector2.ZERO
 ## action frame may have a draw offset, so ArenaActorPresenter replaces this
 ## with the exact destination rectangle before any foreground plan is built.
 var _hero_occlusion_box := Rect2()
-## One actor-over-actor cutaway plan per hero position. Structures use their
-## own whole-object paired reveal and do not consume this local actor budget.
-var _cutaway_hero := Vector2(INF, INF)
-var _cutaway_front: Array[Dictionary] = []
-var _cutaway_window := Rect2()
-var _cutaway_share := 1.0
-var _actor_cutaway_ready := false
-var _actor_occluders: Array[Dictionary] = []
 ## The colossus is drawn by this file but its live position only exists at draw
 ## time, so the report can only speak about the colossus of the frame that was
 ## really drawn.
@@ -159,17 +89,17 @@ var _atmosphere_drawn := false
 var _grounding_counts := {"contact": 0, "base": 0, "base_ids": [], "lit": 0}
 var _grounding_lights_cache: Array = []
 var _room_catalog: RefCounted
-var _structure_fades: Dictionary = {}
 var _layout_id := "rectangle_arena"
 var _room_structure_overrides: Dictionary = {}
-## Whole-object generated sprites: sprite_id -> {texture_key, opaque, variant,
-## canvas, anchor, occupied_rect, occlusion_rect(canvas-local)}. One ShaderMaterial
-## per placed piece key carries the eased reveal weight.
-var _generated_sprites: Dictionary = {}
-var _paired_materials: Dictionary = {}
 ## Fixture seams: production always points at GENERATED_WORLD_PATH; tests may
 ## substitute a synthetic pack to exercise the whole-object branch.
 var generated_world_path := GENERATED_WORLD_PATH
+var _alpha := AlphaOcclusionScript.new()
+var _loader := AssetLoaderScript.new()
+var _generated := GeneratedWorldScript.new()
+var _fades := StructureFadesScript.new()
+var _cutaway := CutawayScript.new()
+var _boss := BossPartsScript.new()
 
 
 func _init() -> void:
@@ -260,9 +190,7 @@ func load_assets() -> bool:
 	pending_reason = ""
 	_sprites.clear()
 	_textures.clear()
-	_texture_images.clear()
-	_alpha_visible_bounds.clear()
-	_alpha_masks.clear()
+	_alpha.clear()
 	_structures.clear()
 	_room_structure_overrides.clear()
 	_ready = false
@@ -271,15 +199,15 @@ func load_assets() -> bool:
 	var layout := _read_json(SCENE_LAYOUT_PATH)
 	if scene_atlas.is_empty() or legacy_atlas.is_empty() or layout.is_empty():
 		return false
-	if not _select_union(scene_atlas, legacy_atlas):
+	if not _loader.select_union(self, scene_atlas, legacy_atlas):
 		return false
-	if not _load_textures(scene_atlas, legacy_atlas):
+	if not _loader.load_textures(self, scene_atlas, legacy_atlas):
 		return false
-	if not _validate_cells():
+	if not _loader.validate_cells(self):
 		return false
-	if not _read_layout(layout):
+	if not _loader.read_layout(self, layout):
 		return false
-	if not _load_generated_world():
+	if not _generated.load_pack(self):
 		return false
 	## The generated world pack always claims authority, so the floor pack is required.
 	if not room_floor_pack_path.is_empty():
@@ -303,10 +231,8 @@ func begin_frame(clip_rect: Rect2, focus_gameplay: Vector2, arena_rect: Rect2) -
 	_hero_world = gameplay_to_world(focus_gameplay)
 	_hero_occlusion_box = _default_hero_cell(_hero_world)
 	_origin = camera_origin_for(_hero_world)
-	_cutaway_hero = Vector2(INF, INF)
 	_atmosphere_drawn = false
-	_actor_cutaway_ready = false
-	_actor_occluders.clear()
+	_cutaway.begin_frame()
 
 
 ## Clamped follow camera: the hero keeps the 640x360 framing with world headroom
@@ -624,31 +550,19 @@ func draw_sprite(canvas: CanvasItem, sprite_id: String, feet_world: Vector2, fli
 
 
 ## ---------------------------------------------------------------- cutaway
+## Planning, budget and report live in arena_world/cutaway.gd.
+
 
 static func cutaway_window(cell: Rect2) -> Rect2:
-	## The hero cell plus its pad, kept on the integer pixel grid the arena draws
-	## on so a cut cell always lands on whole source pixels.
-	var grown := cell.grow(CUTAWAY_WINDOW_PAD)
-	return Rect2(grown.position.round(), grown.size.round())
+	return CutawayScript.cutaway_window(cell)
 
 
 static func cutaway_alpha(count: int) -> float:
-	## Even split of the local opacity budget: the source-over stack of any subset
-	## of those cells never exceeds CUTAWAY_TOTAL_OPACITY, whatever the authored
-	## fade already leaves on top of them.
-	if count <= 0:
-		return 1.0
-	return clampf(1.0 - pow(1.0 - CUTAWAY_TOTAL_OPACITY, 1.0 / float(count)), 0.0, 1.0)
+	return CutawayScript.cutaway_alpha(count)
 
 
 static func cutaway_pieces(quad: Rect2, core: Rect2) -> Array[Rect2]:
-	## Four solid bands plus the window tile the drawn cell exactly once under
-	## source-over blending, in the order they are drawn.
-	var top := Rect2(quad.position, Vector2(quad.size.x, core.position.y - quad.position.y))
-	var bottom := Rect2(Vector2(quad.position.x, core.end.y), Vector2(quad.size.x, quad.end.y - core.end.y))
-	var left := Rect2(Vector2(quad.position.x, core.position.y), Vector2(core.position.x - quad.position.x, core.size.y))
-	var right := Rect2(Vector2(core.end.x, core.position.y), Vector2(quad.end.x - core.end.x, core.size.y))
-	return [top, bottom, left, right, core]
+	return CutawayScript.cutaway_pieces(quad, core)
 
 
 ## The world rect a cell really draws into: exactly the destination _draw_cell()
@@ -663,7 +577,7 @@ func sprite_art_box(sprite_id: String, feet_world: Vector2, flip_x: bool = false
 	var rect: Rect2 = metadata.get("rect", Rect2())
 	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
 	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
-	var visible := _visible_region_bounds(_textures.get(String(metadata.get("texture", ""))) as Texture2D, region)
+	var visible := _alpha.visible_bounds(_textures.get(String(metadata.get("texture", ""))) as Texture2D, region)
 	if flip_x:
 		visible.position.x = region.size.x - (visible.position.x + visible.size.x)
 	return Rect2(destination.position + visible.position, visible.size)
@@ -678,7 +592,7 @@ func frame_art_box(texture: Texture2D, source_rect: Rect2, feet_world: Vector2, 
 	var destination := Rect2((feet_world - anchor + draw_offset).round(), source_rect.size)
 	if texture == null:
 		return destination
-	var visible := _visible_region_bounds(texture, source_rect)
+	var visible := _alpha.visible_bounds(texture, source_rect)
 	if flip_x:
 		visible.position.x = source_rect.size.x - (visible.position.x + visible.size.x)
 	return Rect2(destination.position + visible.position, visible.size)
@@ -695,7 +609,7 @@ func sprite_occlusion_descriptor(sprite_id: String, feet_world: Vector2, flip_x:
 	var rect: Rect2 = metadata.get("rect", Rect2())
 	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
 	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
-	return _occlusion_descriptor(_textures.get(String(metadata.get("texture", ""))) as Texture2D, region, destination, flip_x)
+	return _alpha.describe(_textures.get(String(metadata.get("texture", ""))) as Texture2D, region, destination, flip_x)
 
 
 ## Dynamic action frames use exactly the same descriptor contract as published
@@ -704,61 +618,17 @@ func frame_occlusion_descriptor(texture: Texture2D, source_rect: Rect2, feet_wor
 	if source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
 		return {}
 	var destination := Rect2((feet_world - anchor + draw_offset).round(), source_rect.size)
-	return _occlusion_descriptor(texture, source_rect, destination, flip_x)
+	return _alpha.describe(texture, source_rect, destination, flip_x)
 
 
-## Public read-only query used by actor and structure passes.  A missing or
-## unreadable texture deliberately falls back to its destination box, matching
-## the existing conservative art-box behavior.
+## Public read-only query used by actor and structure passes (the mask cache is
+## arena_world/alpha_occlusion.gd).
 func occlusion_descriptor_intersects(descriptor: Dictionary, query: Rect2) -> bool:
-	if descriptor.is_empty() or query.size.x <= 0.0 or query.size.y <= 0.0:
-		return false
-	var art_box: Rect2 = descriptor.get("art_box", descriptor.get("destination", Rect2()))
-	if not art_box.intersects(query):
-		return false
-	if bool(descriptor.get("conservative", true)):
-		return true
-	var destination: Rect2 = descriptor.get("destination", Rect2())
-	var source_rect: Rect2 = descriptor.get("source_rect", Rect2())
-	var mask: Dictionary = descriptor.get("mask", {})
-	var rows: Array = mask.get("rows", [])
-	if rows.is_empty() or destination.size.x <= 0.0 or destination.size.y <= 0.0:
-		return true
-	var overlap := destination.intersection(query)
-	var width := maxi(0, roundi(source_rect.size.x))
-	var height := maxi(0, roundi(source_rect.size.y))
-	if width <= 0 or height <= 0 or overlap.size.x <= 0.0 or overlap.size.y <= 0.0:
-		return false
-	var x0 := clampi(floori(overlap.position.x - destination.position.x), 0, width)
-	var x1 := clampi(ceili(overlap.end.x - destination.position.x), 0, width)
-	var y0 := clampi(floori(overlap.position.y - destination.position.y), 0, height)
-	var y1 := clampi(ceili(overlap.end.y - destination.position.y), 0, height)
-	if x0 >= x1 or y0 >= y1:
-		return false
-	var flipped := bool(descriptor.get("flip_x", false))
-	for local_y in range(y0, y1):
-		## flip_x mirrors columns only; the source row keeps its authored Y.
-		var source_y := local_y
-		if source_y < 0 or source_y >= rows.size():
-			continue
-		var runs: PackedInt32Array = rows[source_y]
-		var source_x0 := width - x1 if flipped else x0
-		var source_x1 := width - x0 if flipped else x1
-		for run_index in range(0, runs.size(), 2):
-			if int(runs[run_index]) < source_x1 and int(runs[run_index + 1]) > source_x0:
-				return true
-	return false
+	return _alpha.descriptor_intersects(descriptor, query)
 
 
 func visibility_intersects(visibility: Variant, query: Rect2) -> bool:
-	if visibility is Array:
-		for descriptor: Variant in visibility:
-			if descriptor is Dictionary and occlusion_descriptor_intersects(descriptor, query):
-				return true
-		return false
-	if visibility is Dictionary:
-		return occlusion_descriptor_intersects(visibility, query)
-	return false
+	return _alpha.visibility_intersects(visibility, query)
 
 
 ## The actor presenter calls this after resolving the frame that will actually
@@ -781,151 +651,27 @@ func _structure_stable_id(structure_index: int, sprite_id: String) -> String:
 
 ## Compatibility query for the actor cutaway budget. Structure transparency
 ## is reported separately by structure_fade_report().
-func cutaway_front(_hero_world_point: Vector2) -> Array[Dictionary]:
-	# Structures use whole upper-band transparency, never character cutouts.
-	# This list is retained as a compatibility query for the actor-only budget.
-	return []
+func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
+	return _cutaway.cutaway_front(hero_world_point)
 
 
 func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2, sort_rank: int = 1, stable_id: String = "actor", visibility: Variant = null) -> Dictionary:
-	var cell := hero_cell_world(hero_world_point)
-	var window := cutaway_window(cell)
-	var actor_sort := SortRelation.entry(feet_world.y, sort_rank, stable_id)
-	var overlaps := visibility_intersects(visibility, window) if visibility != null else art_box.intersects(window)
-	if not SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) or not overlaps:
-		return {"window": window, "local_alpha": 1.0, "in_front": false}
-	## This budget covers only actor-over-actor drawing; structures fade separately.
-	var share := float(_cutaway_plan(hero_world_point)["alpha"]) if _actor_cutaway_ready else cutaway_alpha(cutaway_front(hero_world_point).size() + 1)
-	return {"window": window, "local_alpha": share, "in_front": true}
+	return _cutaway.cutaway_for(self, art_box, feet_world, hero_world_point, sort_rank, stable_id, visibility)
 
 
 ## The actor pass supplies every live front-facing actor cell before drawing.
 ## Normal enemies and Boss parts share one local opacity budget.
 func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2) -> void:
-	_actor_occluders.clear()
-	var window := cutaway_window(hero_cell_world(hero_world_point))
-	var hero_sort := _hero_sort_entry(hero_world_point)
-	for cell: Dictionary in cells:
-		var box: Rect2 = cell["art_box"]
-		var visibility: Variant = cell.get("visibility", null)
-		var stable_id := String(cell.get("stable_id", cell.get("id", "actor")))
-		var sort_rank := int(cell.get("sort_rank", cell.get("rank", 1)))
-		var baseline_y := float(cell.get("baseline_y", (cell.get("feet_world", Vector2.ZERO) as Vector2).y))
-		var actor_sort := SortRelation.entry(baseline_y, sort_rank, stable_id)
-		var overlaps := visibility_intersects(visibility, window) if visibility != null else box.intersects(window)
-		if SortRelation.is_front(actor_sort, hero_sort) and overlaps:
-			_actor_occluders.append(cell.duplicate())
-	_actor_cutaway_ready = true
-	_cutaway_hero = Vector2(INF, INF)
+	_cutaway.prepare_actor_occlusion(self, cells, hero_world_point)
 
 
-func _tower_upper_faded(hero_world_point: Vector2) -> bool:
-	var feet := tower_feet_world()
-	if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), _hero_sort_entry(hero_world_point)):
-		return false
-	return paired_detection_rect_world("tower", feet).intersects(hero_cell_world(hero_world_point))
-
-
-func _cutaway_plan(hero_world_point: Vector2) -> Dictionary:
-	if _cutaway_hero != hero_world_point:
-		_cutaway_hero = hero_world_point
-		_cutaway_front = cutaway_front(hero_world_point)
-		_cutaway_window = cutaway_window(hero_cell_world(hero_world_point))
-		_cutaway_share = cutaway_alpha(_cutaway_front.size() + _actor_occluders.size())
-	return {"window": _cutaway_window, "alpha": _cutaway_share, "front": _cutaway_front}
-
-
-## The window and the share one placed cell of this frame's plan draws with. Empty
-## means that cell keeps its authored alpha for this frame: a ruin that stands
-## behind the hero is never cut, and only the instance that really sorts in front
-## of it shares the window, even when the arena places the same ruin twice.
-func _cutaway_for_cell(sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> Dictionary:
-	var plan := _cutaway_plan(hero_world_point)
-	for entry: Dictionary in plan["front"] as Array:
-		var entry_id := String(entry["id"])
-		## The tower is one occluder published as tower.base and tower.upper, so a
-		## band matches the occluder it belongs to.
-		if not (entry_id == sprite_id or sprite_id.begins_with(entry_id + ".")):
-			continue
-		if not (entry["feet_world"] as Vector2).is_equal_approx(feet_world):
-			continue
-		return {"window": plan["window"], "alpha": plan["alpha"]}
-	return {"window": Rect2(), "alpha": 1.0}
-
-
-## The colossus is one occluder drawn as four sprites: when it really stands in
-## front of the hero they all share a single split of the budget the ruins are not
-## already using, so body, core and both hands can never stack opaquely.
 func _boss_cutaway(sprite_ids: Array, feet_list: Array, feet_world: Vector2, hero_world_point: Vector2, sort_feet_list: Array = []) -> Dictionary:
-	var plan := _cutaway_plan(hero_world_point)
-	var window: Rect2 = plan["window"]
-	var overlapping := 0
-	var hero_sort := _hero_sort_entry(hero_world_point)
-	var part_ids := ["body", "core", "left_hand", "right_hand"]
-	for index: int in sprite_ids.size():
-		var sort_feet: Vector2 = feet_world if index < 2 else feet_list[index]
-		if index < sort_feet_list.size():
-			sort_feet = sort_feet_list[index] as Vector2
-		var sort_id := "enemy/boss/%s" % String(part_ids[index] if index < part_ids.size() else sprite_ids[index])
-		var actor_sort := SortRelation.entry(sort_feet.y, 3, sort_id)
-		var visibility := sprite_occlusion_descriptor(String(sprite_ids[index]), feet_list[index] as Vector2)
-		if SortRelation.is_front(actor_sort, hero_sort) and visibility_intersects(visibility, window):
-			overlapping += 1
-	if overlapping <= 0:
-		return {"window": Rect2(), "alpha": 1.0}
-	if _actor_cutaway_ready:
-		return {"window": window, "alpha": plan["alpha"]}
-	return {"window": window, "alpha": cutaway_alpha((plan["front"] as Array).size() + overlapping)}
+	return _cutaway.boss_cutaway(self, sprite_ids, feet_list, feet_world, hero_world_point, sort_feet_list)
 
 
-## Read-only cutaway diagnostic for the external visibility harness: how many
-## foreground cells really cover the hero, the total local opacity they compose
-## to, and the window itself. Nothing here writes or re-sorts the arena.
+## Read-only cutaway diagnostic for the external visibility harness.
 func occlusion_report(hero_world_point: Vector2) -> Dictionary:
-	var cell := hero_cell_world(hero_world_point)
-	var window := cutaway_window(cell)
-	var front := cutaway_front(hero_world_point)
-	var alpha := cutaway_alpha(front.size() + _actor_occluders.size())
-	var entries: Array[Dictionary] = []
-	var front_ids: Array[String] = []
-	var opacity := 0.0
-	for entry: Dictionary in front:
-		var local := alpha * float(entry["base_alpha"])
-		opacity = 1.0 - (1.0 - opacity) * (1.0 - local)
-		front_ids.append(String(entry["id"]))
-		entries.append({
-			"id": String(entry["id"]),
-			"sprite_id": String(entry["id"]),
-			"node": String(entry["id"]),
-			"feet_world": entry["feet_world"],
-			"art_box": entry["art_box"],
-			"local_alpha": local,
-			"overlap": entry["overlap"],
-		})
-	for actor: Dictionary in _actor_occluders:
-		var local := alpha * float(actor.get("base_alpha", 1.0))
-		opacity = 1.0 - (1.0 - opacity) * (1.0 - local)
-		var entry := actor.duplicate()
-		entry["local_alpha"] = local
-		entry["overlap"] = (entry["art_box"] as Rect2).intersection(window)
-		entries.append(entry)
-		front_ids.append(String(entry["id"]))
-
-	return {
-		"hero_world": hero_world_point,
-		"hero_cell_world": cell,
-		"window_world": window,
-		"window_pad": CUTAWAY_WINDOW_PAD,
-		"occluder_count": entries.size(),
-		"local_alpha_each": alpha,
-		"local_opacity_total": opacity,
-		"occluders": entries,
-		"front_ids": front_ids,
-		"front_nodes": front_ids.duplicate(),
-		"unchanged": entries.is_empty(),
-		"primitive_fade": structure_fade_report(),
-		"local_opacity_scope": "actor-over-actor cutaway only; structure bands reported separately",
-	}
+	return _cutaway.occlusion_report(self, hero_world_point)
 
 
 ## Static ruins in front of the hero fade out instead of hiding it, the same
@@ -967,22 +713,7 @@ func sprite_screen_rect(sprite_id: String, feet_world: Vector2) -> Rect2:
 ## Upper-band report. Solid-base clearance belongs to the authored movement
 ## contract and rendered acceptance, not this presentation-only overlap query.
 func hero_cover_report(hero_world_point: Vector2) -> Dictionary:
-	var in_front: Array[String] = []
-	var faded: Array[String] = []
-	var full_covers: Array[String] = []
-	var box := hero_cell_world(hero_world_point)
-	for state: Dictionary in _structure_fades.values():
-		if not SortRelation.is_front(state.part, _hero_sort_entry(hero_world_point)) or not (state.volume as Rect2).intersects(box):
-			continue
-		var id := String(state.sprite_id)
-		in_front.append(id)
-		if float(state.alpha) < 1.0:
-			faded.append(id)
-		elif (state.volume as Rect2).encloses(box):
-			full_covers.append(id)
-	return {"hero_cell": box, "in_front": in_front, "faded": faded,
-		"unfaded_full_covers": full_covers, "hero_visible": full_covers.is_empty(),
-		"scope": "upper structure bands and whole-object paired rects; solid-base clearance is a movement contract"}
+	return _fades.hero_cover_report(self, hero_world_point)
 
 
 func draw_structure(canvas: CanvasItem, sprite_id: String, feet_world: Vector2, _hero_world_point: Vector2) -> void:
@@ -998,50 +729,22 @@ func draw_tower(canvas: CanvasItem, _hero_world_point: Vector2) -> void:
 	for band: Dictionary in structure_geometry("tower", tower_feet_world()):
 		_draw_cell_piece(canvas, _textures[band.texture], band.source, band.dest, band.dest, _lit(Color(1, 1, 1, band.alpha), tower_feet_world()))
 
+## ------------------------------------------------------------------- boss
+## Part layout, per-part cutaway and footprints live in arena_world/boss_parts.gd.
+
 
 func boss_draw_parts(feet_world: Vector2, phase: int, left_hand_delta_gameplay: Vector2, right_hand_delta_gameplay: Vector2, pose_frame: Dictionary = {}) -> Array[Dictionary]:
-	var phase_id := 2 if phase >= 2 else 1
-	var left_anchor := feet_world + BOSS_HAND_LEFT_OFFSET + left_hand_delta_gameplay * GAMEPLAY_TO_WORLD
-	var right_anchor := feet_world + BOSS_HAND_RIGHT_OFFSET + right_hand_delta_gameplay * GAMEPLAY_TO_WORLD
-	# Body/core share the actor's ground baseline. Hand baselines follow the
-	# gameplay pose; cosmetic lift/recoil changes the sprite, never its ground.
-	return [
-		{"part_id": "body", "sprite_id": "boss.body_phase%d" % phase_id, "sort_feet": feet_world, "feet": feet_world + Vector2(pose_frame.get("body_offset_px", Vector2i.ZERO)), "tint": Color.WHITE},
-		{"part_id": "core", "sprite_id": "boss.core_phase%d" % phase_id, "sort_feet": feet_world, "feet": feet_world + BOSS_CORE_OFFSET + Vector2(pose_frame.get("core_offset_px", Vector2i.ZERO)), "tint": Color(pose_frame.get("core_tint", Color.WHITE))},
-		{"part_id": "left_hand", "sprite_id": "boss.hand_left", "sort_feet": left_anchor, "feet": left_anchor + Vector2(pose_frame.get("left_hand_offset_px", Vector2i.ZERO)), "tint": Color.WHITE},
-		{"part_id": "right_hand", "sprite_id": "boss.hand_right", "sort_feet": right_anchor, "feet": right_anchor + Vector2(pose_frame.get("right_hand_offset_px", Vector2i.ZERO)), "tint": Color.WHITE},
-	]
+	return _boss.boss_draw_parts(self, feet_world, phase, left_hand_delta_gameplay, right_hand_delta_gameplay, pose_frame)
 
 
-## One independently sorted authored cell. The sort anchor, rather than the
-## logical Boss's root, decides whether this part is in front of the player.
 func draw_boss_part(canvas: CanvasItem, part: Dictionary, hero_world_point: Vector2, sort_rank: int = 3, stable_id: String = "enemy/boss/part") -> void:
-	var feet: Vector2 = part.feet
-	var anchor: Vector2 = part.sort_feet
-	var visibility := sprite_occlusion_descriptor(String(part.sprite_id), feet)
-	var box: Rect2 = visibility.get("art_box", Rect2())
-	var cut := cutaway_for(box, anchor, hero_world_point, sort_rank, stable_id, visibility)
-	## Boss parts use the same local window as ruins.  Keeping the rest of the
-	## part opaque preserves its mass and silhouette while the player remains
-	## readable at the actual overlap.
-	var alpha := 1.0
-	var tint: Color = part.get("tint", Color.WHITE)
-	tint.a *= alpha
-	draw_sprite(canvas, String(part.sprite_id), feet, false, tint, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
+	_boss.draw_boss_part(self, canvas, part, hero_world_point, sort_rank, stable_id)
 
 
-## Body, core and both hands in world units, in the order they are drawn.
 func boss_parts_world(feet_world: Vector2) -> Array[Rect2]:
-	var parts: Array[Rect2] = []
-	for part: Dictionary in boss_draw_parts(feet_world, 2, Vector2.ZERO, Vector2.ZERO):
-		var box := sprite_art_box(String(part.get("sprite_id", "")), part.get("feet", feet_world))
-		if box.size.x > 0.0 and box.size.y > 0.0:
-			parts.append(box)
-	return parts
+	return _boss.boss_parts_world(self, feet_world)
 
 
-## 1.0 when the colossus cannot hide the hero, FORE_FADE when it is in front of
-## and overlapping the hero's real cells.
 func boss_fade_alpha(
 	feet_world: Vector2,
 	hero_world_point: Vector2,
@@ -1050,28 +753,15 @@ func boss_fade_alpha(
 	right_hand_delta_gameplay: Vector2 = Vector2.ZERO,
 	pose_frame: Dictionary = {}
 ) -> float:
-	var hero_cell := hero_cell_world(hero_world_point)
-	for part: Dictionary in boss_draw_parts(feet_world, phase, left_hand_delta_gameplay, right_hand_delta_gameplay, pose_frame):
-		var part_id := String(part.get("part_id", "part"))
-		var sort_feet: Vector2 = part.get("sort_feet", feet_world)
-		var visibility := sprite_occlusion_descriptor(String(part.get("sprite_id", "")), part.get("feet", feet_world))
-		var art_box: Rect2 = visibility.get("art_box", Rect2())
-		var actor_sort := SortRelation.entry(sort_feet.y, 3, "enemy/boss/%s" % part_id)
-		if SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) and visibility_intersects(visibility, hero_cell):
-			return FORE_FADE
-	return 1.0
+	return _boss.boss_fade_alpha(self, feet_world, hero_world_point, phase, left_hand_delta_gameplay, right_hand_delta_gameplay, pose_frame)
 
 
-## Colossus footprint in world units, used by the visibility checks so a boss
-## head that leaves the frame or slips under the HUD can never pass as "fine".
 func boss_body_rect_world(feet_world: Vector2) -> Rect2:
-	return sprite_art_box("boss.body_phase2", feet_world)
+	return _boss.boss_body_rect_world(self, feet_world)
 
 
 func boss_hand_rect_world(feet_world: Vector2, left: bool) -> Rect2:
-	var sprite_id := "boss.hand_left" if left else "boss.hand_right"
-	var offset := BOSS_HAND_LEFT_OFFSET if left else BOSS_HAND_RIGHT_OFFSET
-	return sprite_art_box(sprite_id, feet_world + offset)
+	return _boss.boss_hand_rect_world(self, feet_world, left)
 
 
 func sprite(sprite_id: String) -> Dictionary:
@@ -1127,132 +817,10 @@ static func _region_of(metadata: Dictionary) -> Rect2:
 	return Rect2(rect.position.x, rect.position.y + float(rows[0]), rect.size.x, float(rows[1]) - float(rows[0]))
 
 
-func _texture_cache_key(texture: Texture2D, source_rect: Rect2) -> String:
-	if texture == null:
-		return "<null>|%s" % str(source_rect)
-	var identity := texture.resource_path
-	if identity.is_empty():
-		identity = "instance:%d" % texture.get_instance_id()
-	return "%s|%d,%d,%d,%d" % [identity, roundi(source_rect.position.x), roundi(source_rect.position.y), roundi(source_rect.size.x), roundi(source_rect.size.y)]
-
-
-func _texture_image(texture: Texture2D) -> Image:
-	if texture == null:
-		return null
-	var identity := texture.resource_path
-	if identity.is_empty():
-		identity = "instance:%d" % texture.get_instance_id()
-	if not _texture_images.has(identity):
-		_texture_images[identity] = texture.get_image()
-	return _texture_images.get(identity) as Image
-
-
-func _occlusion_descriptor(texture: Texture2D, source_rect: Rect2, destination: Rect2, flip_x: bool) -> Dictionary:
-	var fallback := {
-		"texture": texture,
-		"source_rect": source_rect,
-		"destination": destination,
-		"flip_x": flip_x,
-		"art_box": destination,
-		"conservative": true,
-	}
-	if texture == null or source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
-		return fallback
-	var mask := _alpha_mask(texture, source_rect)
-	## Keep the public art box identical to sprite_art_box/frame_art_box.  The
-	## descriptor's mask remains unpadded and decides exact pixel intersection.
-	var visible := _visible_region_bounds(texture, source_rect)
-	if flip_x:
-		visible.position.x = source_rect.size.x - (visible.position.x + visible.size.x)
-	fallback["art_box"] = Rect2(destination.position + visible.position, visible.size)
-	fallback["mask"] = mask
-	fallback["conservative"] = bool(mask.get("conservative", true))
-	return fallback
-
-
-## Cache each source region as horizontal visible runs.  This keeps exact alpha
-## intersection cheap enough for the per-frame actor/structure prepass while
-## preserving holes in gates, hands, cores and broken walls.
-func _alpha_mask(texture: Texture2D, source_rect: Rect2) -> Dictionary:
-	var fallback := {
-		"bounds": Rect2(Vector2.ZERO, source_rect.size),
-		"rows": [],
-		"conservative": true,
-	}
-	if texture == null or source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
-		return fallback
-	var key := _texture_cache_key(texture, source_rect)
-	if _alpha_masks.has(key):
-		return _alpha_masks[key] as Dictionary
-	var image := _texture_image(texture)
-	if image == null or image.is_empty():
-		_alpha_masks[key] = fallback
-		return fallback
-	var source := Rect2i(source_rect.position.round(), source_rect.size.round())
-	var width := maxi(0, source.size.x)
-	var height := maxi(0, source.size.y)
-	var rows: Array = []
-	var min_x := width
-	var min_y := height
-	var max_x := 0
-	var max_y := 0
-	var found := false
-	var image_size := image.get_size()
-	for local_y in range(height):
-		var runs := PackedInt32Array()
-		var run_start := -1
-		for local_x in range(width):
-			var image_x := source.position.x + local_x
-			var image_y := source.position.y + local_y
-			var visible := image_x >= 0 and image_y >= 0 and image_x < image_size.x and image_y < image_size.y and image.get_pixel(image_x, image_y).a > ALPHA_OCCLUSION_THRESHOLD
-			if visible and run_start < 0:
-				run_start = local_x
-			if not visible and run_start >= 0:
-				runs.append(run_start)
-				runs.append(local_x)
-				run_start = -1
-		if run_start >= 0:
-			runs.append(run_start)
-			runs.append(width)
-		if runs.size() > 0:
-			found = true
-			min_x = mini(min_x, int(runs[0]))
-			max_x = maxi(max_x, int(runs[runs.size() - 1]))
-			min_y = mini(min_y, local_y)
-			max_y = local_y + 1
-		rows.append(runs)
-	var result := fallback.duplicate(true)
-	result["rows"] = rows
-	if found:
-		result["bounds"] = Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
-		result["conservative"] = false
-	_alpha_masks[key] = result
-	return result
-
-
-func _visible_region_bounds(texture: Texture2D, source_rect: Rect2) -> Rect2:
-	var fallback := Rect2(Vector2.ZERO, source_rect.size)
-	if texture == null or source_rect.size.x <= 0.0 or source_rect.size.y <= 0.0:
-		return fallback
-	var key := _texture_cache_key(texture, source_rect)
-	if _alpha_visible_bounds.has(key):
-		return _alpha_visible_bounds[key] as Rect2
-	var mask := _alpha_mask(texture, source_rect)
-	var local: Rect2 = mask.get("bounds", fallback)
-	if bool(mask.get("conservative", true)):
-		_alpha_visible_bounds[key] = fallback
-		return fallback
-	local = local.grow(ALPHA_VISIBLE_BOUNDS_PADDING).intersection(fallback)
-	if local.size.x <= 0.0 or local.size.y <= 0.0:
-		local = fallback
-	_alpha_visible_bounds[key] = local
-	return local
-
-
 func _prime_alpha_visible_bounds() -> void:
 	for sprite_id: String in _sprites.keys():
 		var metadata: Dictionary = _sprites[sprite_id]
-		_visible_region_bounds(_textures.get(String(metadata.get("texture", ""))) as Texture2D, _region_of(metadata))
+		_alpha.visible_bounds(_textures.get(String(metadata.get("texture", ""))) as Texture2D, _region_of(metadata))
 
 
 func _cutaway_core(destination: Rect2, cut: Rect2, cut_alpha: float) -> Rect2:
@@ -1301,18 +869,7 @@ func cut_pieces(destination: Rect2, region: Rect2, core: Rect2, base_alpha: floa
 ## which source pixels and with which alpha. An empty list means the cell keeps its
 ## authored single-rectangle drawing.
 func cutaway_geometry(sprite_id: String, feet_world: Vector2, hero_world_point: Vector2, base_alpha: float = 1.0) -> Array[Dictionary]:
-	var metadata := sprite(sprite_id)
-	if metadata.is_empty():
-		return []
-	var rect: Rect2 = metadata.get("rect", Rect2())
-	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
-	var region := _region_of(metadata)
-	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
-	var cut := _cutaway_for_cell(sprite_id, feet_world, hero_world_point)
-	var core := _cutaway_core(destination, cut["window"] as Rect2, float(cut["alpha"]))
-	if core.size.x <= 0.0 or core.size.y <= 0.0:
-		return []
-	return cut_pieces(destination, region, core, base_alpha, float(cut["alpha"]))
+	return _cutaway.cutaway_geometry(self, sprite_id, feet_world, hero_world_point, base_alpha)
 
 
 func _draw_cell_piece(canvas: CanvasItem, texture: Texture2D, region: Rect2, destination: Rect2, piece: Rect2, modulate: Color) -> void:
@@ -1329,143 +886,6 @@ func _draw_cell_piece(canvas: CanvasItem, texture: Texture2D, region: Rect2, des
 func _cell_size(metadata: Dictionary) -> Vector2:
 	var rect: Rect2 = metadata.get("rect", Rect2())
 	return rect.size
-
-
-func _select_union(scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
-	var scene_sprites := scene_atlas.get("sprites", {}) as Dictionary
-	var legacy_sprites := legacy_atlas.get("sprites", {}) as Dictionary
-	for sprite_id in scene_sprites.keys():
-		if LEGACY_SPRITE_IDS.has(String(sprite_id)):
-			pending_reason = "ASSETS PENDING: reworked atlas must not override %s" % sprite_id
-			return false
-		var normalized := _normalize_sprite(scene_sprites[sprite_id] as Dictionary)
-		if normalized.is_empty():
-			return false
-		_sprites[String(sprite_id)] = normalized
-	for sprite_id in LEGACY_SPRITE_IDS:
-		var raw: Variant = legacy_sprites.get(sprite_id, {})
-		if not raw is Dictionary:
-			pending_reason = "ASSETS PENDING: calibration atlas lacks %s" % sprite_id
-			return false
-		var normalized := _normalize_sprite(raw as Dictionary)
-		if normalized.is_empty():
-			return false
-		_sprites[sprite_id] = normalized
-	return true
-
-
-func _normalize_sprite(raw: Dictionary) -> Dictionary:
-	var rect: Array = raw.get("rect", [])
-	var anchor: Array = raw.get("anchor", [])
-	if rect.size() != 4 or anchor.size() != 2:
-		pending_reason = "ASSETS PENDING: malformed rect/anchor for %s" % String(raw.get("texture", ""))
-		return {}
-	var normalized := {
-		"texture": String(raw.get("texture", "")),
-		"rect": Rect2(float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3])),
-		"anchor": Vector2(float(anchor[0]), float(anchor[1])),
-	}
-	if raw.has("keep_rows"):
-		normalized["keep_rows"] = (raw.get("keep_rows") as Array).duplicate()
-	return normalized
-
-
-func _load_textures(scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
-	var sources: Dictionary = (scene_atlas.get("textures", {}) as Dictionary).duplicate(true)
-	var legacy_sources: Dictionary = legacy_atlas.get("textures", {})
-	for sprite_id: String in LEGACY_SPRITE_IDS:
-		var key := String(_sprites[sprite_id].get("texture", ""))
-		if not legacy_sources.has(key):
-			pending_reason = "ASSETS PENDING: reused sprite %s has no texture metadata" % sprite_id
-			return false
-		if sources.has(key) and sources[key] != legacy_sources[key]:
-			pending_reason = "ASSETS PENDING: conflicting texture key %s in composed atlas" % key
-			return false
-		sources[key] = legacy_sources[key]
-	for texture_key in sources.keys():
-		var metadata := sources[texture_key] as Dictionary
-		var path := String(metadata.get("path", ""))
-		var texture := _load_texture(path)
-		if texture == null:
-			return false
-		if texture.get_width() != int(metadata.get("width", 0)) or texture.get_height() != int(metadata.get("height", 0)):
-			pending_reason = "ASSETS PENDING: %s size does not match its atlas entry" % path
-			return false
-		_textures[String(texture_key)] = texture
-	_prime_alpha_visible_bounds()
-	return true
-
-
-func _validate_cells() -> bool:
-	for sprite_id in CELL_CONTRACTS.keys():
-		var metadata := sprite(String(sprite_id))
-		if metadata.is_empty():
-			pending_reason = "ASSETS PENDING: missing sprite %s" % sprite_id
-			return false
-		var contract: Dictionary = CELL_CONTRACTS[sprite_id]
-		var rect: Rect2 = metadata.get("rect", Rect2())
-		var expected_size: Vector2i = contract.get("size", Vector2i.ZERO)
-		if Vector2i(rect.size) != expected_size:
-			pending_reason = "ASSETS PENDING: %s violates its cell size contract" % sprite_id
-			return false
-		if contract.has("anchor"):
-			var expected_anchor: Vector2i = contract.get("anchor", Vector2i.ZERO)
-			if Vector2i(metadata.get("anchor", Vector2.ZERO)) != expected_anchor:
-				pending_reason = "ASSETS PENDING: %s violates its anchor contract" % sprite_id
-				return false
-	if _sprites.get(GROUND_SPRITE_ID, {}).get("texture", "") != "ground":
-		pending_reason = "ASSETS PENDING: scene.ground must come from the ground texture"
-		return false
-	return true
-
-
-func _read_layout(layout: Dictionary) -> bool:
-	var world := _point(layout.get("world_size", []))
-	if world != WORLD_SIZE:
-		pending_reason = "ASSETS PENDING: layout world_size must be 1024x640"
-		return false
-	_tower_feet = _point(layout.get("tower_feet", []))
-	var overrides: Variant = layout.get("room_structure_overrides", {})
-	if not overrides is Dictionary:
-		pending_reason = "ASSETS PENDING: invalid room structure overrides"
-		return false
-	_room_structure_overrides = (overrides as Dictionary).duplicate(true)
-	for value in layout.get("structures", []) as Array:
-		_structures.append((value as Dictionary).duplicate(true))
-	var valid_ids := {"tower": true}
-	var occurrences := {}
-	for placement: Dictionary in _structures:
-		var id := String(placement.id)
-		var ordinal := int(occurrences.get(id, 0))
-		occurrences[id] = ordinal + 1
-		valid_ids[id + "#" + str(ordinal)] = true
-	for room: Variant in _room_structure_overrides:
-		var values: Variant = _room_structure_overrides[room]
-		if room not in ["rectangle_arena", "corridor", "ring"] or not values is Dictionary:
-			pending_reason = "ASSETS PENDING: unknown room structure override"
-			return false
-		for id: Variant in values:
-			var point: Variant = values[id]
-			if not valid_ids.has(id) or not point is Array or (point as Array).size() != 2:
-				pending_reason = "ASSETS PENDING: invalid structure override identity or point"
-				return false
-			for coordinate: Variant in point:
-				if not (coordinate is float or coordinate is int) or not is_finite(float(coordinate)):
-					pending_reason = "ASSETS PENDING: nonfinite structure override"
-					return false
-	if _structures.is_empty():
-		pending_reason = "ASSETS PENDING: layout must place structures"
-		return false
-	for placement in _structures:
-		var metadata := sprite(String(placement.get("id", "")))
-		if metadata.is_empty():
-			pending_reason = "ASSETS PENDING: layout places %s without an atlas sprite" % String(placement.get("id", ""))
-			return false
-		var cell := Rect2(WORLD_FOCUS + (_point(placement.get("feet", [])) - Vector2(640, 434)) * GAMEPLAY_TO_WORLD - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
-		if not Rect2(Vector2.ZERO, WORLD_SIZE).encloses(cell):
-			pending_reason = "ASSETS PENDING: %s leaves the world" % String(placement.get("id", ""))
-			return false
-	return true
 
 
 func _read_json(path: String) -> Dictionary:
@@ -1503,12 +923,12 @@ func _canvas_world_transform(canvas: CanvasItem) -> Transform2D:
 	return canvas.get_meta("actor_world_transform", world_transform()) as Transform2D
 
 
-## Immediate-mode structure bands share the town controller's state machine.
-## Collision remains authored in room scenes; these boxes only affect drawing.
+## ----------------------------------------------------- structure fades
+## Immediate-mode structure bands share the town controller's state machine; the
+## eased state and materials live in arena_world/structure_fades.gd and the
+## generated pack records in arena_world/generated_world.gd.
 func reset_structure_fades() -> void:
-	_structure_fades.clear()
-	for material: ShaderMaterial in _paired_materials.values():
-		material.set_shader_parameter("reveal_weight", 0.0)
+	_fades.reset_structure_fades()
 
 
 func set_layout_id(layout_id: String) -> void:
@@ -1517,172 +937,29 @@ func set_layout_id(layout_id: String) -> void:
 		reset_structure_fades()
 
 
-func _structure_key(sprite_id: String, feet: Vector2) -> String:
-	return sprite_id + "@" + str(feet)
-
-
 func structure_fade_state(sprite_id: String, feet: Vector2) -> Dictionary:
-	return (_structure_fades.get(_structure_key(sprite_id, feet), {}) as Dictionary).duplicate(true)
+	return _fades.structure_fade_state(sprite_id, feet)
 
 
 func structure_fade_report() -> Dictionary:
-	return _structure_fades.duplicate(true)
+	return _fades.structure_fade_report()
 
 
-## The world-space detection rect of one whole-object generated piece: its
-## authored canvas-local rect translated by the same feet-anchor mapping the
-## draw pass uses, so detection matches the sort domain exactly.
+## The world-space detection rect of one whole-object generated piece, on the
+## same feet-anchor mapping the draw pass uses.
 func paired_detection_rect_world(sprite_id: String, feet: Vector2) -> Rect2:
-	var record: Variant = _generated_sprites.get(sprite_id, null)
-	if record == null:
-		return Rect2()
-	var local: Rect2 = record.occlusion_rect
-	return Rect2(feet - (record.anchor as Vector2) + local.position, local.size)
+	return _generated.detection_rect_world(sprite_id, feet)
 
 
 ## The material one placed whole-object piece draws through, or null before
-## advance_structure_fades has created it. The presenter attaches it to that
-## drawable's own sort view.
+## advance_structure_fades has created it.
 func paired_reveal_material(sprite_id: String, feet: Vector2) -> Material:
-	return _paired_materials.get(_structure_key(sprite_id, feet), null)
-
-
-func _paired_material(key: String, sprite_id: String) -> ShaderMaterial:
-	var existing: Variant = _paired_materials.get(key, null)
-	if existing is ShaderMaterial:
-		return existing
-	var record: Dictionary = _generated_sprites.get(sprite_id, {})
-	var material := ShaderMaterial.new()
-	material.shader = PairedReveal.RevealShader
-	material.set_shader_parameter("revealed_texture", record.get("variant", null))
-	material.set_shader_parameter("reveal_weight", 0.0)
-	_paired_materials[key] = material
-	return material
-
-
-## Generated world pack: whole-object opaque/transparent pairs. The pack is
-## required — a missing file, an incomplete arena section, or any family
-## sprite that is not "packed" and valid fails the whole load closed (never a
-## silent half-new scene and never a silent fallback).
-func _load_generated_world() -> bool:
-	_generated_sprites.clear()
-	_paired_materials.clear()
-	var pack := _read_json(generated_world_path)
-	if pack.is_empty():
-		return false
-	var grounds: Variant = pack.get("grounds", null)
-	var ground_entry: Variant = (grounds as Dictionary).get(GENERATED_GROUND_ID, null) if grounds is Dictionary else null
-	if not ground_entry is Dictionary or String((ground_entry as Dictionary).get("status", "")) != "packed":
-		pending_reason = "ASSETS PENDING: generated arena ground is not packed"
-		return false
-	if ground_entry is Dictionary and String((ground_entry as Dictionary).get("status", "")) == "packed":
-		var ground := _load_texture(String((ground_entry as Dictionary).get("opaque_path", "")))
-		if ground == null:
-			return false
-		if ground.get_size() != WORLD_SIZE:
-			pending_reason = "ASSETS PENDING: generated ground must be %dx%d" % [int(WORLD_SIZE.x), int(WORLD_SIZE.y)]
-			return false
-		_textures[APPROVED_GROUND_KEY] = ground
-	var sections: Variant = pack.get("sections", null)
-	var arena_section: Variant = (sections as Dictionary).get("arena", {}) if sections is Dictionary else {}
-	if not arena_section is Dictionary or not bool((arena_section as Dictionary).get("complete", false)):
-		pending_reason = "ASSETS PENDING: generated pack present but arena section is not complete"
-		return false
-	var assets: Variant = pack.get("assets", null)
-	if not assets is Dictionary:
-		pending_reason = "ASSETS PENDING: generated pack lacks assets"
-		return false
-	for asset_id: String in GENERATED_SPRITE_IDS.keys():
-		var raw: Variant = (assets as Dictionary).get(asset_id, null)
-		if not raw is Dictionary or String((raw as Dictionary).get("status", "")) != "packed":
-			pending_reason = "ASSETS PENDING: generated asset %s is not packed" % asset_id
-			return false
-		var sprite_id := String(GENERATED_SPRITE_IDS[asset_id])
-		var record := _normalize_generated_sprite(sprite_id, raw as Dictionary)
-		if record.is_empty():
-			return false
-		_generated_sprites[sprite_id] = record
-		_textures[record.texture_key] = record.opaque
-		_sprites[sprite_id] = {"texture": record.texture_key,
-			"rect": Rect2(Vector2.ZERO, record.canvas), "anchor": record.anchor}
-	return true
-
-
-## One generated sprite entry: canvas/anchor/rects plus the opaque and
-## transparent texture pair. The detection rect must contain the opaque
-## texture's MEASURED occupied bounds grown by DETECTION_GROW — the pack's
-## own declared occupied_rect is metadata; the texture is the truth.
-func _normalize_generated_sprite(sprite_id: String, raw: Dictionary) -> Dictionary:
-	var canvas := _point(raw.get("canvas", []))
-	var anchor := _point(raw.get("anchor", []))
-	var occupied := _rect_of(raw.get("occupied_rect", []))
-	var occlusion := _rect_of(raw.get("occlusion_rect", []))
-	if canvas.x <= 0.0 or canvas.y <= 0.0 or not anchor.is_finite():
-		pending_reason = "ASSETS PENDING: %s malformed canvas or anchor" % sprite_id
-		return {}
-	var opaque := _load_texture(String(raw.get("opaque_path", "")))
-	var variant := _load_texture(String(raw.get("transparent_path", "")))
-	if opaque == null or variant == null:
-		return {}
-	if opaque.get_size() != canvas or variant.get_size() != canvas:
-		pending_reason = "ASSETS PENDING: %s pair must share the authored canvas" % sprite_id
-		return {}
-	if PairedReveal.detection_rect_error(occlusion, opaque.get_image()) != "":
-		pending_reason = "ASSETS PENDING: %s detection rect must contain occupied.grow(%d)" % [sprite_id, int(PairedReveal.DETECTION_GROW)]
-		return {}
-	var variant_image := variant.get_image()
-	var variant_max_alpha := 0.0
-	for y: int in variant_image.get_height():
-		for x: int in variant_image.get_width():
-			variant_max_alpha = maxf(variant_max_alpha, variant_image.get_pixel(x, y).a)
-	return {"texture_key": "generated/" + sprite_id, "opaque": opaque, "variant": variant,
-		"canvas": canvas, "anchor": anchor, "occupied_rect": occupied, "occlusion_rect": occlusion,
-		"variant_max_alpha": variant_max_alpha}
-
-
-func _rect_of(value: Variant) -> Rect2:
-	if value is Rect2:
-		return value
-	if not value is Array or (value as Array).size() != 4:
-		return Rect2()
-	var array: Array = value
-	for component: Variant in array:
-		if not (component is float or component is int) or not is_finite(float(component)):
-			return Rect2()
-	return Rect2(float(array[0]), float(array[1]), float(array[2]), float(array[3]))
+	return _fades.paired_reveal_material(sprite_id, feet)
 
 
 func structure_geometry(sprite_id: String, feet: Vector2) -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
-	if _generated_sprites.has(sprite_id):
-		var record: Dictionary = _generated_sprites[sprite_id]
-		result.append({"part": "whole", "source": Rect2(Vector2.ZERO, record.canvas),
-			"dest": Rect2((feet - (record.anchor as Vector2)).round(), record.canvas),
-			"alpha": 1.0, "texture": String(record.texture_key)})
-	return result
+	return _generated.geometry(sprite_id, feet)
 
 
 func advance_structure_fades(drawables: Array, subjects: Array, delta: float) -> void:
-	var next: Dictionary = {}
-	for drawable: Dictionary in drawables:
-		if drawable.kind not in ["structure", "tower"]:
-			continue
-		var id := "tower" if drawable.kind == "tower" else String(drawable.sprite)
-		var feet: Vector2 = drawable.world
-		var key := _structure_key(id, feet)
-		if not _generated_sprites.has(id):
-			continue
-		## Whole-object pair: one authored detection rect, one eased
-		## reveal weight, no band split. The rect stays report-only
-		## geometry; collision remains authored in the room scene.
-		var rect := paired_detection_rect_world(id, feet)
-		var state := PairedReveal.advance_state(rect, drawable, subjects, _structure_fades.get(key, {}), delta)
-		var material := _paired_material(key, id)
-		material.set_shader_parameter("reveal_weight", state.weight)
-		state.merge({"policy": PairedReveal.POLICY, "sprite_id": id, "feet_world": feet,
-			"part": drawable.duplicate(), "volume": rect, "material": material,
-			"alpha": lerpf(1.0, float(_generated_sprites[id].variant_max_alpha), float(state.weight)),
-			"variant_max_alpha": float(_generated_sprites[id].variant_max_alpha),
-			"transition_seconds": PairedReveal.TRANSITION_SECONDS})
-		next[key] = state
-	_structure_fades = next
+	_fades.advance_structure_fades(self, drawables, subjects, delta)
