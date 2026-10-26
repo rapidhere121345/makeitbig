@@ -425,4 +425,3 @@ func _actor_id_for_key(entity_key: String) -> String:
 		if _target_key_for_snapshot(snapshot) == entity_key:
 			return actor_id
 	return ""
-

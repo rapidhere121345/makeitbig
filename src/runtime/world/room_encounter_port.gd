@@ -510,4 +510,3 @@ func _reject(tick: int, reason: String) -> void:
 		"room_instance_id": _room_instance_id,
 		"world_revision": _world_revision,
 	})
-

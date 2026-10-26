@@ -259,4 +259,3 @@ static func portrait_for_line(entry: Dictionary, line: String) -> Texture2D:
 	if id.is_empty(): return null
 	var path := PORTRAIT_ROOT.path_join(id + ".png")
 	return load(path) as Texture2D if FileAccess.file_exists(path + ".import") and ResourceLoader.exists(path) else null
-

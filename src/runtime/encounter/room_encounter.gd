@@ -426,4 +426,3 @@ func _sorted_spawn_keys() -> Array[String]:
 
 func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
-

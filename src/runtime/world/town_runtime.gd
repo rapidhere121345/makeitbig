@@ -305,4 +305,3 @@ func snapshot() -> Dictionary:
 
 static func _point(pair: Array) -> Vector2:
 	return Vector2(float(pair[0]), float(pair[1])) if pair.size() == 2 else Vector2.ZERO
-

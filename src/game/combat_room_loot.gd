@@ -120,4 +120,3 @@ func snapshot() -> Dictionary:
 	var result: Dictionary = _authority.snapshot()
 	result["enabled"] = true
 	return result
-

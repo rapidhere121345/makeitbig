@@ -220,4 +220,3 @@ func _validate_request(tick: int, target_key: String, effect_id: String, source_
 
 func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
-

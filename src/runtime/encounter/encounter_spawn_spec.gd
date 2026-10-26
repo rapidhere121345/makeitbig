@@ -83,4 +83,3 @@ static func _valid_id(value: String) -> bool:
 		if character in [" ", "\t", "\n", "\r"]:
 			return false
 	return true
-

@@ -343,4 +343,3 @@ func _is_opaque_static(contact: SpatialContact) -> bool:
 
 static func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
-

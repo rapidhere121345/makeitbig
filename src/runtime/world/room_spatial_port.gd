@@ -444,4 +444,3 @@ func _actor_id_for_handle(handle: SimEntityHandle) -> String:
 		if actors.actor_handle(actor_id) == handle:
 			return actor_id
 	return ""
-

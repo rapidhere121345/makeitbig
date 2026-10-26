@@ -229,4 +229,3 @@ func _resolve_big_damage(current: BigValue, requested: BigValue) -> Dictionary:
 
 func _valid_big(value: Variant) -> bool:
 	return value is BigValueScript and value.layer >= 0 and is_finite(value.magnitude) and (value.layer > 0 or value.magnitude >= 0.0)
-

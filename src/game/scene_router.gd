@@ -128,4 +128,3 @@ func reset(initial_route: String = ROUTE_BOOT) -> Dictionary:
 	_pending_payload = {}
 	_history.clear()
 	return {"ok": true, "route": current_route}
-

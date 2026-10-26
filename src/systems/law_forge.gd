@@ -207,4 +207,3 @@ func _same_candidate(left: Dictionary, right: Dictionary) -> bool:
 		if left.get(key) != right.get(key):
 			return false
 	return left.get("result_item") == right.get("result_item")
-

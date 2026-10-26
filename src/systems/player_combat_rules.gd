@@ -465,4 +465,3 @@ static func _accepted() -> Dictionary:
 
 static func _rejected(reason: String) -> Dictionary:
 	return {"accepted": false, "status": "rejected", "reason": reason}
-

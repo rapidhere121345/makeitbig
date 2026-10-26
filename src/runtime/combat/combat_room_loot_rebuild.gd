@@ -314,4 +314,3 @@ static func _source_entity_id(source_entity_key: String) -> int:
 	if not value.is_valid_int():
 		return 0
 	return maxi(0, int(value))
-

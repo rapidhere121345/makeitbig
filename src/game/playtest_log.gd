@@ -114,4 +114,3 @@ func _valid_token(value: String) -> bool:
 		if not is_ascii_letter and not is_digit and character not in ["_", "-", "."]:
 			return false
 	return true
-

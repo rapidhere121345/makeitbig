@@ -61,4 +61,3 @@ func snapshot() -> Dictionary:
 	for hit: BossHitRecord in HitScript.ordered(_hits):
 		values.append(hit.snapshot())
 	return {"tick": tick, "hits": values}
-

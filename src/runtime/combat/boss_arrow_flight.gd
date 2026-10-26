@@ -179,4 +179,3 @@ func _frozen_damage(attack_key: String, projectile, flight_port: CombatSystemRoo
 	}
 	_arrow_damage[attack_key] = frozen
 	return frozen
-

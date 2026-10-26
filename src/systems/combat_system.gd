@@ -770,4 +770,3 @@ func _reject_player_rule_action(action_instance_id: int = 0, target_entity_id: i
 		"reason": reason,
 	}
 	battle_report = "Piercing Arrow rejected: invalid combat dependencies (%s)." % reason
-
