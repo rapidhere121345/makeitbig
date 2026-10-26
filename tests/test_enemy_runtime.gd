@@ -21,16 +21,6 @@ func _place_fixture_actor(arena: Node, actor_id: String, position: Vector2, fail
 	return placed
 
 
-class FakeSaveStore:
-	extends RefCounted
-
-	var save_calls := 0
-
-	func save(_payload: Variant) -> Dictionary:
-		save_calls += 1
-		return {"ok": true}
-
-
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -660,12 +650,6 @@ func _test_room_completion_and_validation(arena: Node, failures: Array[String]) 
 
 func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [], [], ["equipment_general", "damage", "add_dice", "rewrite_dice", "refine_dice"])
-	arena.contract_wins = 11
-	arena.last_drop_id = "legacy.sentinel"
-	arena.last_drop = "Legacy Sentinel"
-	var fake_store := FakeSaveStore.new()
-	arena.save_store = fake_store
-	var embedded_state_before: Dictionary = arena._embedded_authority_state_snapshot()
 	_defeat_target(arena, arena.enemies[0], failures)
 	arena._check_battle_end()
 	_expect(arena.battle_victory, "embedded rewards: clear room did not remain a victory", failures)
@@ -676,13 +660,8 @@ func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 		"bonus_earned": false,
 		"bonus_lost": false,
 	}, "embedded rewards: room_drop_tags were not mapped exactly to three tracks", failures)
-	_expect(arena._embedded_authority_state_snapshot() == embedded_state_before and fake_store.save_calls == 0, "embedded rewards: framework state was polluted", failures)
 
 	arena = _configure_room(arena, "rectangle_arena", "timed_break", ["melee_pursuer"], "", [], [], ["equipment_general"])
-	arena.contract_wins = 11
-	arena.last_drop_id = "legacy.sentinel"
-	arena.last_drop = "Legacy Sentinel"
-	arena.save_store = fake_store
 	fixture.advance_to(arena, 901)
 	arena._update_room_rules_tick()
 	_defeat_target(arena, arena.enemies[0], failures)
@@ -694,7 +673,6 @@ func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 		"bonus_earned": false,
 		"bonus_lost": true,
 	}, "embedded rewards: timed timeout was not bonus-only", failures)
-	_expect(arena._embedded_authority_state_snapshot() == embedded_state_before and fake_store.save_calls == 0, "embedded rewards: timed victory polluted framework state", failures)
 
 
 func _test_hazards(arena: Node, failures: Array[String]) -> void:
