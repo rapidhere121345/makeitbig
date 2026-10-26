@@ -22,17 +22,16 @@ const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
 const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const SortRelation = preload("res://src/presentation/occlusion_query.gd")
-const PrimitiveFade := preload("res://src/presentation/occlusion/primitive_fade_controller.gd")
 const PairedReveal := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
 ## Whole-object generated world pack: each family sprite is ONE opaque texture
 ## plus its baked transparent variant on the same canvas/anchor, with one
 ## authored detection rect (occupied AABB grown by DETECTION_GROW) in local
-## canvas coordinates. Absent the pack, the approved atlas keeps drawing the
-## historical fixtures unchanged.
+## canvas coordinates. The pack is required: a missing or incomplete pack fails
+## the load.
 const GENERATED_WORLD_PATH := "res://art/production/p1/generated_world_v02/assets.json"
 const GENERATED_GROUND_ID := "arena_ground"
 ## Pack asset id -> live arena sprite id. The whole-object entries replace
-## the legacy cells atomically once sections.arena.complete is true.
+## the scene atlas cells; sections.arena.complete must be true.
 const GENERATED_SPRITE_IDS := {
 	"ruin_wall_corner": "ruin.wall_corner",
 	"ruin_gate": "ruin.gate",
@@ -40,16 +39,11 @@ const GENERATED_SPRITE_IDS := {
 	"ruin_broken_wall": "ruin.broken_wall",
 	"tower": "tower",
 }
-## Existing 128px ruin cells share an anchor at row 120. Keep their lower
-## 36px of visible structure solid; source pixels are neither repainted nor moved.
-const STRUCTURE_BASE_ROW := 84.0
-const STRUCTURE_VOLUME_PAD := 4.0
 const ATMOSPHERE_PRESET := "arena"
 
 const SCENE_ATLAS_PATH: String = "res://art/production/p1/actors_v02/scene_atlas.json"
 const SCENE_LAYOUT_PATH: String = "res://art/production/p1/combat_style_r13/v03/layout.json"
 const LEGACY_ATLAS_PATH: String = "res://art/production/p1/actors_v02/legacy_atlas.json"
-const APPROVED_GROUND_PATH: String = "res://art/production/p1/combat_style_r13/v03/ground.png"
 const APPROVED_GROUND_KEY: String = "approved_ground"
 const DISPLAY_SCALE: float = 2.0
 const GAMEPLAY_TO_WORLD: float = 0.72
@@ -136,7 +130,6 @@ var _textures: Dictionary = {}
 var _texture_images: Dictionary = {}
 var _alpha_visible_bounds: Dictionary = {}
 var _alpha_masks: Dictionary = {}
-var _decals: Array[Dictionary] = []
 var _structures: Array[Dictionary] = []
 var _tower_feet := Vector2.ZERO
 var _clip := Rect2()
@@ -149,7 +142,7 @@ var _hero_world := Vector2.ZERO
 ## with the exact destination rectangle before any foreground plan is built.
 var _hero_occlusion_box := Rect2()
 ## One actor-over-actor cutaway plan per hero position. Structures use their
-## own upper-band primitive fade and do not consume this local actor budget.
+## own whole-object paired reveal and do not consume this local actor budget.
 var _cutaway_hero := Vector2(INF, INF)
 var _cutaway_front: Array[Dictionary] = []
 var _cutaway_window := Rect2()
@@ -217,12 +210,6 @@ func hero_world() -> Vector2:
 	return _hero_world
 
 
-func decal_placements() -> Array[Dictionary]:
-	if not _generated_sprites.is_empty():
-		return []
-	return _decals.duplicate(true)
-
-
 func structure_placements() -> Array[Dictionary]:
 	var result: Array[Dictionary] = _structures.duplicate(true)
 	var occurrences := {}
@@ -274,7 +261,6 @@ func load_assets() -> bool:
 	_texture_images.clear()
 	_alpha_visible_bounds.clear()
 	_alpha_masks.clear()
-	_decals.clear()
 	_structures.clear()
 	_room_structure_overrides.clear()
 	_ready = false
@@ -293,11 +279,10 @@ func load_assets() -> bool:
 		return false
 	if not _load_generated_world():
 		return false
-	## The floor pack is required whenever the generated world pack claims
-	## authority; an absent generated pack is the historical-fixture flag.
+	## The generated world pack always claims authority, so the floor pack is required.
 	if not room_floor_pack_path.is_empty():
 		_room_scene.pack_path = room_floor_pack_path
-	if not _room_scene.load_assets(FileAccess.file_exists(generated_world_path), WORLD_FOCUS, GAMEPLAY_TO_WORLD):
+	if not _room_scene.load_assets(true, WORLD_FOCUS, GAMEPLAY_TO_WORLD):
 		pending_reason = _room_scene.pending_reason
 		return false
 	if not _dressing.load_assets():
@@ -444,8 +429,8 @@ func visible_world_region() -> Rect2:
 
 
 func draw_ground(canvas: CanvasItem) -> void:
-	## A loaded room floor pack owns every layout's plate; the shared approved
-	## ground only draws on the explicit historical-fixture seam.
+	## A loaded room floor pack owns every layout's plate; the generated arena
+	## ground is the fallback when no room grounds are loaded.
 	var texture: Texture2D = _room_scene.ground_texture(_layout_id) if _room_scene.has_grounds() else _textures.get(APPROVED_GROUND_KEY)
 	if texture == null:
 		return
@@ -497,10 +482,6 @@ func draw_decals(canvas: CanvasItem) -> void:
 		_room_scene.draw_dressing(canvas, _layout_id, visible_world_region())
 	else:
 		_dressing.draw_floor(canvas, "arena", visible_world_region())
-	## The generated plate already contains its terrain detail. Legacy snow and
-	## foundation stamps belong only to the historical atlas composition.
-	for placement in decal_placements():
-		draw_sprite(canvas, String(placement.get("id", "")), gameplay_to_world(_point(placement.get("feet", []))))
 
 
 ## Cold edge atmosphere stays in the same world matrix as the arena art, after
@@ -548,14 +529,12 @@ func draw_structure_shadows(canvas: CanvasItem) -> void:
 	_draw_base_shadow(canvas, "tower", tower_feet_world())
 
 
-## Shadow from the structure's actual lowest opaque contour (its base band, or the whole
-## generated object) at the geometry the draw path really uses; source art is untouched.
+## Shadow from the generated structure's whole-object opaque contour at the
+## geometry the draw path really uses; source art is untouched.
 func _draw_base_shadow(canvas: CanvasItem, sprite_id: String, feet_world: Vector2) -> void:
 	var bands := structure_geometry(sprite_id, feet_world)
 	for index in range(bands.size() - 1, -1, -1):
 		var band: Dictionary = bands[index]
-		if String(band.part) == "upper":
-			continue
 		var texture: Texture2D = _textures.get(String(band.texture))
 		if texture == null:
 			break
@@ -840,13 +819,9 @@ func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2
 
 func _tower_upper_faded(hero_world_point: Vector2) -> bool:
 	var feet := tower_feet_world()
-	if _generated_sprites.has("tower"):
-		if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), _hero_sort_entry(hero_world_point)):
-			return false
-		return paired_detection_rect_world("tower", feet).intersects(hero_cell_world(hero_world_point))
 	if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), _hero_sort_entry(hero_world_point)):
 		return false
-	return visibility_intersects(sprite_occlusion_descriptor("tower.upper", feet), hero_cell_world(hero_world_point))
+	return paired_detection_rect_world("tower", feet).intersects(hero_cell_world(hero_world_point))
 
 
 func _cutaway_plan(hero_world_point: Vector2) -> Dictionary:
@@ -1407,7 +1382,7 @@ func _load_textures(scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
 		sources[key] = legacy_sources[key]
 	for texture_key in sources.keys():
 		var metadata := sources[texture_key] as Dictionary
-		var path := _scoped_texture_path(String(texture_key), String(metadata.get("path", "")))
+		var path := String(metadata.get("path", ""))
 		var texture := _load_texture(path)
 		if texture == null:
 			return false
@@ -1415,23 +1390,8 @@ func _load_textures(scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
 			pending_reason = "ASSETS PENDING: %s size does not match its atlas entry" % path
 			return false
 		_textures[String(texture_key)] = texture
-	var ground := _load_texture(APPROVED_GROUND_PATH)
-	if ground == null:
-		return false
-	if ground.get_width() != int(WORLD_SIZE.x) or ground.get_height() != int(WORLD_SIZE.y):
-		pending_reason = "ASSETS PENDING: approved ground must be 1024x640"
-		return false
-	_textures[APPROVED_GROUND_KEY] = ground
 	_prime_alpha_visible_bounds()
 	return true
-
-
-## The reworked atlas ships its own ground; the approved ground_refine_v01 land
-## texture replaces it for every arena use, including any legacy lookup.
-func _scoped_texture_path(texture_key: String, path: String) -> String:
-	if texture_key == "ground" and String(_sprites.get(GROUND_SPRITE_ID, {}).get("texture", "")) == "ground":
-		return APPROVED_GROUND_PATH
-	return path
 
 
 func _validate_cells() -> bool:
@@ -1468,8 +1428,6 @@ func _read_layout(layout: Dictionary) -> bool:
 		pending_reason = "ASSETS PENDING: invalid room structure overrides"
 		return false
 	_room_structure_overrides = (overrides as Dictionary).duplicate(true)
-	for value in layout.get("decals", []) as Array:
-		_decals.append((value as Dictionary).duplicate(true))
 	for value in layout.get("structures", []) as Array:
 		_structures.append((value as Dictionary).duplicate(true))
 	var valid_ids := {"tower": true}
@@ -1493,10 +1451,10 @@ func _read_layout(layout: Dictionary) -> bool:
 				if not (coordinate is float or coordinate is int) or not is_finite(float(coordinate)):
 					pending_reason = "ASSETS PENDING: nonfinite structure override"
 					return false
-	if _decals.is_empty() or _structures.is_empty():
-		pending_reason = "ASSETS PENDING: layout must place decals and structures"
+	if _structures.is_empty():
+		pending_reason = "ASSETS PENDING: layout must place structures"
 		return false
-	for placement in _decals + _structures:
+	for placement in _structures:
 		var metadata := sprite(String(placement.get("id", "")))
 		if metadata.is_empty():
 			pending_reason = "ASSETS PENDING: layout places %s without an atlas sprite" % String(placement.get("id", ""))
@@ -1592,9 +1550,9 @@ func paired_detection_rect_world(sprite_id: String, feet: Vector2) -> Rect2:
 	return Rect2(feet - (record.anchor as Vector2) + local.position, local.size)
 
 
-## The material one placed whole-object piece draws through, or null for
-## legacy banded structures. Created during advance_structure_fades; the
-## presenter attaches it to that drawable's own sort view.
+## The material one placed whole-object piece draws through, or null before
+## advance_structure_fades has created it. The presenter attaches it to that
+## drawable's own sort view.
 func paired_reveal_material(sprite_id: String, feet: Vector2) -> Material:
 	return _paired_materials.get(_structure_key(sprite_id, feet), null)
 
@@ -1612,17 +1570,13 @@ func _paired_material(key: String, sprite_id: String) -> ShaderMaterial:
 	return material
 
 
-## Generated world pack: optional whole-object opaque/transparent pairs.
-## An ABSENT pack file is the historical-fixture flag: the legacy atlas draws
-## exactly as before. A PRESENT pack claims the authority — the arena section
-## must be complete and every family sprite must carry status "packed" and
-## validate, or the whole load fails closed (never a silent half-new scene
-## and never a silent fallback while the pack is still assembling).
+## Generated world pack: whole-object opaque/transparent pairs. The pack is
+## required — a missing file, an incomplete arena section, or any family
+## sprite that is not "packed" and valid fails the whole load closed (never a
+## silent half-new scene and never a silent fallback).
 func _load_generated_world() -> bool:
 	_generated_sprites.clear()
 	_paired_materials.clear()
-	if not FileAccess.file_exists(generated_world_path):
-		return true
 	var pack := _read_json(generated_world_path)
 	if pack.is_empty():
 		return false
@@ -1715,34 +1669,7 @@ func structure_geometry(sprite_id: String, feet: Vector2) -> Array[Dictionary]:
 		result.append({"part": "whole", "source": Rect2(Vector2.ZERO, record.canvas),
 			"dest": Rect2((feet - (record.anchor as Vector2)).round(), record.canvas),
 			"alpha": 1.0, "texture": String(record.texture_key)})
-		return result
-	var alpha := float(structure_fade_state(sprite_id, feet).get("alpha", 1.0))
-	var ids: Array = ["tower.upper", "tower.base"] if sprite_id == "tower" else [sprite_id]
-	for id: String in ids:
-		var meta := sprite(id)
-		if meta.is_empty():
-			continue
-		var rect: Rect2 = meta.rect
-		var regions: Array[Rect2] = []
-		if sprite_id == "tower":
-			regions.append(_region_of(meta))
-		else:
-			regions.append(Rect2(rect.position, Vector2(rect.size.x, STRUCTURE_BASE_ROW)))
-			regions.append(Rect2(rect.position + Vector2(0, STRUCTURE_BASE_ROW), Vector2(rect.size.x, rect.size.y - STRUCTURE_BASE_ROW)))
-		for index in regions.size():
-			var upper := id == "tower.upper" if sprite_id == "tower" else index == 0
-			var region: Rect2 = regions[index]
-			var dest := Rect2((feet - Vector2(meta.anchor) + region.position - rect.position).round(), region.size)
-			result.append({"part": "upper" if upper else "base", "source": region, "dest": dest,
-				"alpha": alpha if upper else 1.0, "texture": String(meta.texture)})
 	return result
-
-
-func structure_upper_volume(sprite_id: String, feet: Vector2) -> Rect2:
-	for band: Dictionary in structure_geometry(sprite_id, feet):
-		if band.part == "upper":
-			return (band.dest as Rect2).grow(STRUCTURE_VOLUME_PAD)
-	return Rect2()
 
 
 func advance_structure_fades(drawables: Array, subjects: Array, delta: float) -> void:
@@ -1753,29 +1680,19 @@ func advance_structure_fades(drawables: Array, subjects: Array, delta: float) ->
 		var id := "tower" if drawable.kind == "tower" else String(drawable.sprite)
 		var feet: Vector2 = drawable.world
 		var key := _structure_key(id, feet)
-		if _generated_sprites.has(id):
-			## Whole-object pair: one authored detection rect, one eased
-			## reveal weight, no band split. The rect stays report-only
-			## geometry; collision remains authored in the room scene.
-			var rect := paired_detection_rect_world(id, feet)
-			var state := PairedReveal.advance_state(rect, drawable, subjects, _structure_fades.get(key, {}), delta)
-			var material := _paired_material(key, id)
-			material.set_shader_parameter("reveal_weight", state.weight)
-			state.merge({"policy": PairedReveal.POLICY, "sprite_id": id, "feet_world": feet,
-				"part": drawable.duplicate(), "volume": rect, "material": material,
-				"alpha": lerpf(1.0, float(_generated_sprites[id].variant_max_alpha), float(state.weight)),
-				"variant_max_alpha": float(_generated_sprites[id].variant_max_alpha),
-				"transition_seconds": PairedReveal.TRANSITION_SECONDS})
-			next[key] = state
+		if not _generated_sprites.has(id):
 			continue
-		var box := structure_upper_volume(id, feet)
-		if not box.has_area():
-			continue
-		var volume := {"type": "polygon", "points": PackedVector2Array([box.position,
-			Vector2(box.end.x, box.position.y), box.end, Vector2(box.position.x, box.end.y)])}
-		var state := PrimitiveFade.advance_state([volume], drawable, subjects, _structure_fades.get(key, {}), delta)
-		state.merge({"policy": PrimitiveFade.POLICY, "sprite_id": id, "feet_world": feet,
-			"part": drawable.duplicate(), "volume": box, "base_alpha": 1.0,
-			"faded_alpha": PrimitiveFade.FADED_ALPHA, "transition_seconds": PrimitiveFade.TRANSITION_SECONDS})
+		## Whole-object pair: one authored detection rect, one eased
+		## reveal weight, no band split. The rect stays report-only
+		## geometry; collision remains authored in the room scene.
+		var rect := paired_detection_rect_world(id, feet)
+		var state := PairedReveal.advance_state(rect, drawable, subjects, _structure_fades.get(key, {}), delta)
+		var material := _paired_material(key, id)
+		material.set_shader_parameter("reveal_weight", state.weight)
+		state.merge({"policy": PairedReveal.POLICY, "sprite_id": id, "feet_world": feet,
+			"part": drawable.duplicate(), "volume": rect, "material": material,
+			"alpha": lerpf(1.0, float(_generated_sprites[id].variant_max_alpha), float(state.weight)),
+			"variant_max_alpha": float(_generated_sprites[id].variant_max_alpha),
+			"transition_seconds": PairedReveal.TRANSITION_SECONDS})
 		next[key] = state
 	_structure_fades = next

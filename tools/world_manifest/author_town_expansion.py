@@ -21,7 +21,7 @@ cool-grey stone mask. The hero radius is added by the motor, never here.
 --write: rewrite content/rooms/town/hearthside.tscn (requires status ready).
 --output PATH: write a preview scene elsewhere; --report writes a JSON report
 and a preview PNG to build/current/world-expansion-v01/town-layout/.
-Run tools/town_layers/bake_spatial.gd after --write.
+Run tools/world_manifest/bake_spatial.gd after --write.
 """
 from __future__ import annotations
 

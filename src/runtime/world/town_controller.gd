@@ -9,7 +9,6 @@ const TownRuntimeScript := preload("res://src/runtime/world/town_runtime.gd")
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const SCENE_PATH := "res://content/rooms/town/hearthside.tscn"
 const MANIFEST_PATH := "res://content/rooms/town/hearthside.spatial.json"
-const LAYER_PATH := "res://content/rooms/town/layers/manifest.json"
 
 var scene_runtime
 var town = TownRuntimeScript.new()

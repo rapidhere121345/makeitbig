@@ -10,6 +10,10 @@ const ApplicationStateScript = preload("res://src/game/application_state.gd")
 ## The layout's five interaction routes. Immortality keeps its legacy API but has
 ## no placement, so it must never appear as an invisible hotspot.
 const FEATURE_IDS: Array[String] = ["contract", "loadout", "forge", "training", "proxy"]
+## Authored in hearthside.tscn: the Sockets/Spawn position and the camera's
+## hero_screen_anchor.
+const TOWN_SPAWN := Vector2(576.0, 595.3125)
+const TOWN_HERO_SCREEN_ANCHOR := Vector2(320, 222)
 
 
 class MenuProbe extends Node:
@@ -120,12 +124,12 @@ func _test_initial_position(hub, failures: Array[String]) -> void:
 	var view = _view_of(hub)
 	var world_start: Vector2 = view.hero_world_position()
 	_expect(hub.get_hero_position().is_equal_approx(world_start / 0.5), "base hub: hero position is not the live world position", failures)
-	_expect(world_start.distance_to(_uv_world(_town_layout().hero_start_uv, view.world_size())) <= 0.01, "base hub: hero start drifted far away from the contract start", failures)
+	_expect(world_start.distance_to(TOWN_SPAWN) <= 0.01, "base hub: hero start drifted far away from the contract start", failures)
 	_expect(hub.get_nearby_feature_id().is_empty(), "base hub: hero must start away from every station", failures)
 
 
 func _test_delta_movement(hub, failures: Array[String]) -> void:
-	var origin := _uv_world(_town_layout().hero_start_uv, _view_of(hub).world_size()) * 2.0
+	var origin := TOWN_SPAWN * 2.0
 	hub.set_hero_position(origin)
 	hub.move_hero(Vector2.RIGHT, 0.1)
 	var short_move: Vector2 = hub.get_hero_position() - origin
@@ -138,10 +142,9 @@ func _test_delta_movement(hub, failures: Array[String]) -> void:
 
 func _test_concept_framing(hub, failures: Array[String]) -> void:
 	var view = _view_of(hub)
-	var layout := _town_layout()
 	var audit: Dictionary = view.render_audit()
 	_expect(audit.view_size == Vector2(640, 360) and view.world_viewport.size == Vector2i(640, 360), "base hub: close follow camera is wrong", failures)
-	_expect(view.hero_screen_anchor() == Vector2(layout.hero_screen_anchor[0], layout.hero_screen_anchor[1]), "base hub: formal camera anchor differs from the published layout", failures)
+	_expect(view.hero_screen_anchor() == TOWN_HERO_SCREEN_ANCHOR, "base hub: formal camera anchor differs from the authored town scene", failures)
 	_expect(view.world_size() == Vector2(1536, 960), "base hub: expanded town dimensions changed", failures)
 	_expect(audit.view_size.x < view.world_size().x * 0.5 and audit.view_size.y < view.world_size().y * 0.5, "base hub: the whole town is visible without walking", failures)
 	_expect(_town_of(hub).hero_position_is_clear(view.hero_world_position()), "base hub: published spawn intersects a footprint", failures)
@@ -149,7 +152,7 @@ func _test_concept_framing(hub, failures: Array[String]) -> void:
 
 
 func _test_diagonal_normalization(hub, failures: Array[String]) -> void:
-	var origin := _uv_world(_town_layout().hero_start_uv, _view_of(hub).world_size()) * 2.0
+	var origin := TOWN_SPAWN * 2.0
 	var delta := 0.1
 	hub.set_hero_position(origin)
 	hub.move_hero(Vector2.RIGHT, delta)
@@ -162,7 +165,7 @@ func _test_diagonal_normalization(hub, failures: Array[String]) -> void:
 
 
 func _test_configured_input_actions(hub, failures: Array[String]) -> void:
-	var origin := _uv_world(_town_layout().hero_start_uv, _view_of(hub).world_size()) * 2.0
+	var origin := TOWN_SPAWN * 2.0
 	hub.set_hero_position(origin)
 	Input.action_press("move_right")
 	hub._process(0.1)
@@ -567,8 +570,7 @@ func _test_hub_information_copy_and_details(hub, failures: Array[String]) -> voi
 
 
 func _test_landmarks_follow_world(hub, failures: Array[String]) -> void:
-	_expect(hub.get_navigation_bar() == null
-		and hub.find_child("TownToolbar", true, false) == null
+	_expect(hub.find_child("TownToolbar", true, false) == null
 		and hub.find_child("BaseNavigation", true, false) == null
 		and hub.find_child("TownWayfinder", true, false) == null,
 		"base hub: an old bottom bar or global wayfinder remained in the tree", failures)
@@ -1005,14 +1007,6 @@ func _post_boss_profile() -> Dictionary:
 func _expect(condition: bool, message: String, failures: Array[String]) -> void:
 	if not condition:
 		failures.append(message)
-
-
-func _town_layout() -> Dictionary:
-	return JSON.parse_string(FileAccess.get_file_as_string("res://art/production/p1/hamlet_town/layout.json"))
-
-
-func _uv_world(uv: Array, world: Vector2) -> Vector2:
-	return Vector2(float(uv[0]), float(uv[1])) * world
 
 
 func _visible_landmark_count(hub) -> int:

@@ -66,7 +66,6 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_hazard_domain.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_presenter.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_actor_presenter.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_arena_primitive_fade.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_combat_presenter.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_actor_motor.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_player_motion_system.gd

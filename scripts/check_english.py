@@ -24,8 +24,6 @@ ORIGINAL_SHA256 = {
         "849f4ea9c214fa4ac3593b770c699f387534b11ce671264c1b10d85bdcb5997b",
     "art/fonts/PROVENANCE.md":
         "0869d6a7d75bc5f980985e74c0a8c641a69661781b2ede22ad18e1e7085c17e3",
-    "art/production/p1/hamlet_town/SOURCE.json":
-        "063cb1c4503830446de46a01249d5b4b68c16eda8a5d2b086fa193066f205faf",
     "docs/art-production/p1-icon-expansion-v01/EXECUTED_PROMPTS.json":
         "60ade747a5f8f0198ce27d205102b33be8ac2f24d014afbed662c959eb2d5a04",
 }

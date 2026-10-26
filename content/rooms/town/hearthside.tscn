@@ -12,8 +12,6 @@ view_size = Vector2(640, 360)
 
 hero_screen_anchor = Vector2(320, 222)
 
-modular_environment_objects = true
-
 modular_underplate_path = "res://art/production/p1/world_expansion_v01/town_ground.png"
 
 [node name="Ground" type="Node2D" parent="."]

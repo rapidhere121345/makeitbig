@@ -17,7 +17,7 @@ const TownSceneRootScript := preload("res://src/runtime/world/town_scene_root.gd
 
 const RING_SCENE := "res://content/rooms/combat/ring.tscn"
 const RING_MANIFEST := "res://content/rooms/combat/ring.spatial.json"
-const LOADOUT_DEFINITION := "res://content/environment_objects/town_loadout_v01.tres"
+const SYNTHETIC_CANVAS := Vector2i(256, 224)
 
 var _fade_created_files: Array[String] = []
 
@@ -378,8 +378,9 @@ func _test_no_art_box_fails_closed() -> void:
 	_expect(_contains((OcclusionPlanScript.build(unknown_field) as Dictionary).get("errors", []), "unknown_entry_field:channels"), "plan: gameplay channel data leaked into the presentation plan")
 
 
-## Primitive-fade authoring metadata on the real shipped loadout format, the
-## .tres interface the art owner uses: common opts into an explicit solid
+## Primitive-fade authoring metadata on a synthetic loadout-shaped definition
+## (same canvas, anchors and parts as the retired shipped sample, with PNGs
+## written under build/current): common opts into an explicit solid
 ## "none", upper swaps its variant pair for "primitive_fade" plus authored
 ## local-canvas volumes. Validation fails closed on unknown policies, absent,
 ## malformed, non-finite or degenerate volumes and on any part carrying two
@@ -389,9 +390,9 @@ func _test_no_art_box_fails_closed() -> void:
 ## the presentation fingerprint moves with the volumes while the gameplay
 ## digest does not.
 func _test_primitive_fade_metadata() -> void:
-	var loadout := load(LOADOUT_DEFINITION) as EnvironmentDefinitionScript
-	_expect(loadout != null and loadout.validate().is_empty(), "primitive fade: the shipped loadout definition is not valid")
-	if loadout == null:
+	var loadout := _loadout_definition()
+	_expect(loadout.validate().is_empty(), "primitive fade: the synthetic loadout definition is not valid: " + str(loadout.validate()))
+	if not loadout.validate().is_empty():
 		return
 	var common_index := -1
 	var upper_index := -1
@@ -527,7 +528,7 @@ func _test_primitive_fade_metadata() -> void:
 	scanned.free()
 	scanned = _fade_town(faded)
 	_expect(EnvironmentBakerScript.expand(scanned).ok, "primitive fade: the scan fixture failed to expand")
-	_fade_binding(scanned, "fade.loadout/upper").set_meta("reveal_variant_path", "res://art/production/p1/town_modular_v01/loadout_upper_revealed.png")
+	_fade_binding(scanned, "fade.loadout/upper").set_meta("reveal_variant_path", _synthetic_path("revealed"))
 	_expect(_contains(scanned.validate_contract().get("errors", []), "primitive_fade_policy_conflict"),
 		"primitive fade: a fade piece carrying variant material passed the contract")
 	scanned.free()
@@ -553,74 +554,53 @@ func _test_primitive_fade_metadata() -> void:
 		"primitive fade: an edited definition was silently rebuilt")
 	tampered.free()
 
-	## Native regional opt-in (d19 blocker): an explicitly opted-in native
-	## piece carries policy + canonical WORLD volumes in its presentation
-	## fingerprint while an unconfigured legacy binding stays byte-identical;
-	## a volume edit moves the presentation digest only; a malformed volume
-	## fails closed before any payload exists, in both the contract scan and
-	## the serializer.
-	var native := _native_fade_town()
-	var native_manifest: Dictionary = native.derive_spatial_manifest()
-	var native_baseline := SpatialManifestScript.new(native_manifest)
-	_expect(native_baseline.is_valid(), "primitive fade: the native opt-in derivative is invalid")
-	var legacy_binding: Dictionary = {}
-	var roof_binding: Dictionary = {}
-	for binding: Dictionary in native_manifest.stable_bindings:
-		legacy_binding = binding if binding.binding_id == "town/native/legacy_tree" else legacy_binding
-		roof_binding = binding if binding.binding_id == "town/native/roof" else roof_binding
-	_expect(legacy_binding.keys().size() == 3 and not legacy_binding.has("source"),
-		"primitive fade: an unconfigured legacy native binding changed shape")
-	_expect(String(roof_binding.get("source", "")).begins_with("town.native.fade.v1:"),
-		"primitive fade: the opted-in native piece carries no policy/volume fingerprint")
-	var native_roof: Node = native.get_node("SortRoot/NativeRoof")
-	native_roof.set_meta("occlusion_volumes", [
-		{"type": "circle", "center": Vector2(128, 90), "radius": 44.0},
-		{"type": "polygon", "points": PackedVector2Array([Vector2(64, 30), Vector2(192, 30), Vector2(192, 96), Vector2(64, 96)])},
-	])
-	var native_changed := SpatialManifestScript.new(native.derive_spatial_manifest())
-	_expect(native_changed.presentation_digest_sha256() != native_baseline.presentation_digest_sha256(),
-		"primitive fade: a native volume edit did not change the presentation digest")
-	_expect(native_changed.gameplay_digest_sha256() == native_baseline.gameplay_digest_sha256(),
-		"primitive fade: a native volume edit changed the gameplay digest")
-	native_roof.set_meta("occlusion_volumes", [{"type": "circle", "center": Vector2(128, 90), "radius": 0.0}])
-	var invalid_scan: Dictionary = native.validate_contract()
-	_expect(_contains(invalid_scan.get("errors", []), "primitive_fade_invalid_volume_radius"),
-		"primitive fade: a malformed native volume passed the contract scan")
-	var invalid_manifest: Dictionary = native.derive_spatial_manifest()
-	_expect(not bool(invalid_manifest.get("ok", true)) and not (invalid_manifest.get("value", {}) as Dictionary).has("stable_bindings"),
-		"primitive fade: a malformed native volume was serialized anyway")
-	native.free()
 	town.free()
 	for path: String in _fade_created_files:
 		DirAccess.remove_absolute(path)
 	_fade_created_files.clear()
 
 
-## A native-mode (non-modular) author root with one explicit primitive_fade
-## piece and one unconfigured legacy piece: the regional opt-in contract.
-func _native_fade_town() -> TownSceneRootScript:
-	var town := TownSceneRootScript.new()
-	town.name = "NativeFadeFixtureTown"
-	for path: String in ["Ground", "GroundEffects", "SortRoot", "Foreground", "GeometrySources", "GeometrySources/MovementBoundary", "GeometrySources/Static", "GeometrySources/Routes", "Sockets"]:
-		var node := Node2D.new()
-		node.name = path.get_file()
-		var parent := town if path.get_base_dir().is_empty() else town.get_node(path.get_base_dir())
-		parent.add_child(node)
-	town.get_node("GeometrySources/MovementBoundary").set_meta("rect", Rect2(0, 0, 320, 288))
-	var legacy := Sprite2D.new()
-	legacy.name = "LegacyTree"
-	legacy.set_meta("binding_id", "town/native/legacy_tree")
-	town.get_node("SortRoot").add_child(legacy)
-	var roof := Sprite2D.new()
-	roof.name = "NativeRoof"
-	roof.set_meta("binding_id", "town/native/roof")
-	roof.set_meta("reveal_policy", "primitive_fade")
-	roof.set_meta("occlusion_volumes", [
-		{"type": "circle", "center": Vector2(128, 90), "radius": 40.0},
-		{"type": "polygon", "points": PackedVector2Array([Vector2(64, 30), Vector2(192, 30), Vector2(192, 96), Vector2(64, 96)])},
-	])
-	town.get_node("SortRoot").add_child(roof)
-	return town
+func _synthetic_path(name: String) -> String:
+	return "res://build/current/world_asset_pipeline_loadout_%s_%d.png" % [name, OS.get_process_id()]
+
+
+func _write_synthetic(name: String, size: Vector2i, color: Color) -> void:
+	var path := _synthetic_path(name)
+	var image := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
+	image.fill(color)
+	_expect(image.save_png(path) == OK, "primitive fade: the synthetic %s image write failed" % name)
+	if path not in _fade_created_files:
+		_fade_created_files.append(path)
+
+
+## Loadout-shaped definition: 256x224 canvas, a solid common part, an upper
+## part with a revealed/mask pair, one shadow ground part, one footprint, one
+## movement envelope and one interaction socket.
+func _loadout_definition() -> EnvironmentDefinitionScript:
+	_write_synthetic("common", SYNTHETIC_CANVAS, Color.SADDLE_BROWN)
+	_write_synthetic("upper", SYNTHETIC_CANVAS, Color.FOREST_GREEN)
+	_write_synthetic("revealed", SYNTHETIC_CANVAS, Color(0.3, 0.5, 0.7, 0.5))
+	_write_synthetic("shadow", SYNTHETIC_CANVAS, Color(0.0, 0.0, 0.0, 0.4))
+	var definition := EnvironmentDefinitionScript.new()
+	definition.asset_id = "town.loadout.synthetic"
+	definition.canvas_size = SYNTHETIC_CANVAS
+	definition.visual_parts = [
+		{"part_id": "common", "full_path": _synthetic_path("common"), "canvas_offset": Vector2.ZERO,
+			"sort_anchor": Vector2(128, 178), "sort_rank": 0},
+		{"part_id": "upper", "full_path": _synthetic_path("upper"), "mask_path": _synthetic_path("upper"),
+			"revealed_path": _synthetic_path("revealed"), "canvas_offset": Vector2.ZERO,
+			"sort_anchor": Vector2(128, 142), "sort_rank": 1},
+	]
+	definition.ground_parts = [
+		{"part_id": "shadow.contact", "full_path": _synthetic_path("shadow"), "canvas_offset": Vector2.ZERO, "layer": "GroundEffects"},
+	]
+	definition.footprints = [{"part_id": "footprint.body", "type": "polygon",
+		"points": PackedVector2Array([Vector2(64, 134), Vector2(192, 134), Vector2(192, 178), Vector2(64, 178)])}]
+	definition.movement_envelopes = [{"part_id": "envelope.body", "type": "polygon",
+		"points": PackedVector2Array([Vector2(58, 128), Vector2(198, 128), Vector2(198, 184), Vector2(58, 184)])}]
+	definition.sockets = [{"part_id": "door.service", "id": "loadout", "kind": "interaction", "label": "Loadout",
+		"landmark_offset_y": -112.0, "locked": false, "order": 1.0, "position": Vector2(128, 196), "radius": 48.0}]
+	return definition
 
 
 ## A detached modular author root for one opted-in loadout placement, in the
@@ -635,7 +615,6 @@ func _fade_town(definition: EnvironmentDefinitionScript) -> TownSceneRootScript:
 	var town := TownSceneRootScript.new()
 	town.name = "FadeFixtureTown"
 	town.world_size = Vector2(320, 288)
-	town.modular_environment_objects = true
 	town.modular_underplate_path = underplate
 	for path: String in ["Ground", "GroundEffects", "SortRoot", "Foreground", "GeometrySources", "GeometrySources/MovementBoundary", "GeometrySources/Static", "GeometrySources/Routes", "Sockets", "EnvironmentObjects"]:
 		var node := Node2D.new()

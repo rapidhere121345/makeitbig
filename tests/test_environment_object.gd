@@ -58,7 +58,6 @@ func _town(definition: Definition = null, reverse := false) -> Town:
 	var town := Town.new()
 	town.name = "FixtureTown"
 	town.world_size = Vector2(64, 48)
-	town.modular_environment_objects = true
 	town.modular_underplate_path = _path("ground")
 	for path: String in ["Ground", "GroundEffects", "SortRoot", "Foreground", "GeometrySources", "GeometrySources/MovementBoundary", "GeometrySources/Static", "GeometrySources/Routes", "Sockets", "EnvironmentObjects"]:
 		var node := Node2D.new()

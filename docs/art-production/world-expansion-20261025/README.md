@@ -46,7 +46,7 @@ the mounted runtime tests separately exercise continuous movement and contact.
 ```bash
 python3 tools/world_manifest/author_town_expansion.py --check
 python3 tools/world_manifest/author_town_expansion.py --write --report
-"$GODOT_BIN" --headless --path . --script res://tools/town_layers/bake_spatial.gd
+"$GODOT_BIN" --headless --path . --script res://tools/world_manifest/bake_spatial.gd
 ```
 
 After changing a placement or shoreline, rebake the scene derivative and rerun

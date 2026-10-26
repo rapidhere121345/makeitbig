@@ -818,7 +818,7 @@ func _test_arena_paired_pack() -> void:
 	file.close()
 	incomplete_view.generated_world_path = prefix + "incomplete.json"
 	_expect(not incomplete_view.load_assets() and not String(incomplete_view.pending_reason).is_empty(),
-		"paired pack: present-but-incomplete pack silently fell back to legacy")
+		"paired pack: present-but-incomplete pack loaded anyway")
 	## A complete section still requires the packed ground — never a silent
 	## legacy ground under generated whole objects.
 	var no_ground := {"schema_version": 1,
@@ -830,12 +830,11 @@ func _test_arena_paired_pack() -> void:
 	file.close()
 	no_ground_view.generated_world_path = prefix + "no_ground.json"
 	_expect(not no_ground_view.load_assets(), "paired pack: complete section without packed ground loaded anyway")
-	## An absent pack keeps the legacy banded path for historical fixtures.
-	var legacy = ArenaWorldViewScript.new()
-	legacy.generated_world_path = prefix + "missing.json"
-	_expect(legacy.load_assets(), "paired pack: absent pack broke the legacy load")
-	_expect(legacy.structure_geometry("tower", feet).size() == 2, "paired pack: absent pack lost legacy tower bands")
-	_expect(legacy.paired_reveal_material("ruin.wall_corner", feet) == null, "paired pack: legacy path leaked a reveal material")
+	## The pack is required: an absent file fails the load closed.
+	var missing = ArenaWorldViewScript.new()
+	missing.generated_world_path = prefix + "missing.json"
+	_expect(not missing.load_assets() and not String(missing.pending_reason).is_empty(),
+		"paired pack: an absent pack still loaded")
 	for name: String in ["opaque.png", "transparent.png", "ground.png", "assets.json", "incomplete.json", "no_ground.json"]:
 		DirAccess.remove_absolute(prefix + name)
 

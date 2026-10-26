@@ -25,7 +25,7 @@ Transform contract (integer arithmetic only, no resampling library calls):
   whole occupied source extent is always covered by the sampling window;
 - nearest-neighbour sampling uses one rational step ``num/den = 1/s`` for
   both axes: ``src_i = ((2*i + 1) * num) // (2 * den)`` clamped to the source
-  extent (centre-of-pixel sampling, same formula as p1_town_modular_v01);
+  extent (centre-of-pixel sampling, the same formula the retired town modular pipeline used);
 - placement ``dx = anchor_x - dw // 2``, ``dy = anchor_y - dh``: the occupied
   bottom bound (exclusive) sits at ``anchor_y`` and the window is centred on
   ``anchor_x`` (half-pixel left bias for odd widths).

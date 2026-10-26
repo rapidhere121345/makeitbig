@@ -57,13 +57,11 @@ inputs, not localization resources.
 ## Authentic Originals
 
 Do not counterfeit translated historical source records or alter legal
-attribution. The guard pins four byte-identical originals by SHA256:
+attribution. The guard pins three byte-identical originals by SHA256:
 
 - `art/fonts/LICENSE-noto-cjk.txt`: upstream font license/attribution.
 - `art/fonts/PROVENANCE.md`: original font sourcing record; English companion
   is `art/fonts/PROVENANCE.en.md`.
-- `art/production/p1/hamlet_town/SOURCE.json`: original source-generation record;
-  English companion is `SOURCE.en.md` in that directory.
 - `docs/art-production/p1-icon-expansion-v01/EXECUTED_PROMPTS.json`: actual
   historical bilingual image-generation prompts, explained in its English README.
 
@@ -72,7 +70,7 @@ sources. Do not broaden the provenance allowlist to bypass catalog validation.
 Historical screenshots also remain authentic evidence; translating their
 report does not retroactively make their pixels English.
 
-`.gitattributes` disables text conversion only for those four originals, so
+`.gitattributes` disables text conversion only for those three originals, so
 Windows checkouts retain their authentic byte streams rather than changing
 the pinned hashes through automatic CRLF conversion.
 

@@ -62,9 +62,6 @@ const PROMPT_FONT_SIZE := 22
 const HELP_COPY_TEXT := "WASD / Arrows Move · Follow the objective arrow · E Interact nearby\nTab Select visible landmark · C Progression · J Journal · Esc Leave landmark · F1 Settings"
 const DETAIL_TITLE_TEXT := "Town News"
 const DETAIL_STATUS_EMPTY_TEXT := "No new status updates on this screen."
-## Legacy design-space anchors of the pre-hamlet hub, kept for the hub entries
-## whose placement the layout has not published yet.
-
 ## Short player-facing names of the authored mainline nodes. Shared by the next
 ## objective line and the contract marker so the two can never disagree.
 const _SHORT_NODE_LABELS := {
@@ -543,9 +540,8 @@ func get_hub_view() -> TownPresenterScript:
 
 
 func get_world_feature_position(feature_id: String) -> Vector2:
-	## Legacy hub API: hub positions stay in the 1280x720 design space, which is
-	## twice the 640x360 logical world. The legacy table already holds those
-	## design-space anchors, and a published placement's world feet are doubled
+	## Hub positions stay in the 1280x720 design space, which is twice the
+	## 640x360 logical world. A published placement's world feet are doubled
 	## back into it here.
 	var entry := _feature_entry(feature_id)
 	if entry.is_empty():
@@ -1225,11 +1221,6 @@ func get_navigation_state(feature_id: String) -> Dictionary:
 		if String(state.get("id", "")) == feature_id:
 			return state
 	return {}
-
-
-func get_navigation_bar():
-	## Legacy query method: the bottom bar was removed rather than hidden.
-	return null
 
 
 func navigation_card_activated(feature_id: String) -> bool:
