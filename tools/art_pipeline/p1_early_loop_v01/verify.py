@@ -83,7 +83,7 @@ def verify_output(output: Path) -> list[str]:
             if not isinstance(record, dict) or set(record) != {"path", "sha256"}:
                 errors.append(f"manifest input {key} is invalid")
                 continue
-            path = Path(record["path"])
+            path = build.common.rebase_legacy_path(record["path"])
             if not path.is_file():
                 errors.append(f"manifest input {key} is missing: {path}")
                 continue
@@ -101,7 +101,7 @@ def verify_output(output: Path) -> list[str]:
                 errors.append(f"catalog contract: {exc}")
         if catalog is not None and recipe is not None:
             try:
-                normalized = build.validate_recipe(recipe, Path(inputs["recipe"]["path"]), catalog)
+                normalized = build.validate_recipe(recipe, build.common.rebase_legacy_path(inputs["recipe"]["path"]), catalog)
             except (build.ContractError, KeyError) as exc:
                 errors.append(f"recipe contract: {exc}")
         sources = inputs.get("sources")
@@ -114,7 +114,7 @@ def verify_output(output: Path) -> list[str]:
                     continue
                 if record["group"] != group_id:
                     errors.append(f"manifest source group mismatch: expected {group_id}")
-                path = Path(record["path"])
+                path = build.common.rebase_legacy_path(record["path"])
                 if not path.is_file():
                     errors.append(f"source is missing: {path}")
                     continue
@@ -162,7 +162,7 @@ def verify_output(output: Path) -> list[str]:
                             errors.append(f"artifact dimensions mismatch: {name}")
                 except OSError as exc:
                     errors.append(f"cannot open artifact {name}: {exc}")
-    actual_entries = {path.name for path in output.iterdir()}
+    actual_entries = {path.name for path in output.iterdir() if not path.name.endswith(".import")}
     if actual_entries != set(expected_artifacts) | {"manifest.json"}:
         errors.append("output directory contains missing or unmanaged files")
 

@@ -32,7 +32,7 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 
 def _safe_output_path(output: Path, value: str) -> Path:
-    path = Path(value)
+    path = common.rebase_legacy_path(value)
     if not path.is_absolute():
         path = output / path
     resolved = path.resolve()
@@ -149,7 +149,7 @@ def verify_output(output: Path, config_path: Path | None = None) -> tuple[list[s
         recorded = manifest.get("config_path")
         if not isinstance(recorded, str):
             return ["manifest config_path is missing"], manifest
-        config_path = Path(recorded)
+        config_path = common.rebase_legacy_path(recorded)
     try:
         config = _load_json(config_path.resolve())
         build.validate_config(config)
@@ -158,7 +158,7 @@ def verify_output(output: Path, config_path: Path | None = None) -> tuple[list[s
 
     if manifest.get("schema_version") != 1:
         errors.append("manifest schema_version must be 1")
-    if manifest.get("config_sha256") != _sha256_file(config_path.resolve()):
+    if not common.config_hash_matches(manifest.get("config_sha256"), config_path.resolve()):
         errors.append("config hash does not match manifest")
     if atlas.get("schema_version") != 1:
         errors.append("atlas schema_version must be 1")
@@ -173,8 +173,8 @@ def verify_output(output: Path, config_path: Path | None = None) -> tuple[list[s
         recorded = recorded_sources.get(key)
         if not isinstance(recorded, dict):
             continue
-        source_path = Path(raw["path"])
-        if recorded.get("path") != str(source_path):
+        source_path = common.rebase_legacy_path(raw["path"])
+        if common.rebase_legacy_path(recorded.get("path")) != source_path:
             errors.append(f"source {key} path provenance mismatch")
         if not source_path.is_file():
             errors.append(f"source {key} PNG is missing: {source_path}")

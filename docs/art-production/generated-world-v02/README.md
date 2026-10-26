@@ -61,7 +61,7 @@ From the repository root in the approved portable environment:
 python3 tools/art_pipeline/generated_world_v02/pack.py --available
 python3 tools/art_pipeline/generated_world_v02/pack.py --verify
 python3 -m unittest discover -s tools/art_pipeline/generated_world_v02/tests
-python3 tools/art_pipeline/generated_world_v02/npc_pack.py
+python3 tools/art_pipeline/actors_v02/build.py --verify
 python3 tools/world_manifest/author_ground_footprints.py --check
 ```
 
@@ -74,9 +74,9 @@ contact are both acceptance requirements, along with the existing route tests.
 Environment canvas/anchor/source pins live in
 `tools/art_pipeline/generated_world_v02/packing_config.json`. The runtime manifest
 is `art/production/p1/generated_world_v02/assets.json`. The packer verifies exact
-output bytes and pair geometry. The resident compiler verifies source pins,
-four distinct frames per resident, shared per-resident scale and aligned feet;
-its output hashes and source-cell mappings are in `residents/IMPORT.json`.
+output bytes and pair geometry. Residents are built from the `npc_*_raw.png` sources by
+`tools/art_pipeline/actors_v02/build.py` (the former `npc_pack.py` compiler and its
+`residents/` output under this directory were retired).
 
 Resident IDs, clip names, work cadence and cell layout are retained as metadata
 from the previous animation package. All 20 resident frame images are new.

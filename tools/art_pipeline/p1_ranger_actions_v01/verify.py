@@ -101,12 +101,12 @@ def verify_output(
         if not isinstance(recorded, str):
             errors.append("manifest config_path is missing; pass --config")
             return errors, infos, summary
-        config_path = Path(recorded)
+        config_path = build.common.rebase_legacy_path(recorded)
     config_path = config_path.resolve()
     config = _read(config_path, f"recipe {config_path}", errors)
     if config is None:
         return errors, infos, summary
-    if manifest.get("config_sha256") != build.sha256_file(config_path):
+    if not build.common.config_hash_matches(manifest.get("config_sha256"), config_path):
         errors.append("recipe file changed since the build (config_sha256 mismatch)")
 
     try:
@@ -222,7 +222,7 @@ def verify_output(
             if not isinstance(item, dict) or not isinstance(item.get("path"), str):
                 errors.append("manifest artifact entry has no path")
                 continue
-            path = Path(item["path"])
+            path = build.common.rebase_legacy_path(item["path"])
             if not path.is_absolute():
                 path = output / path
             if not path.is_file():
@@ -462,7 +462,7 @@ def verify_output(
         refreshed = dict(manifest)
         artifacts_now = []
         for item in manifest.get("artifacts", []):
-            path = Path(item["path"])
+            path = build.common.rebase_legacy_path(item["path"])
             if not path.is_absolute():
                 path = output / path
             refreshed_item = dict(item)

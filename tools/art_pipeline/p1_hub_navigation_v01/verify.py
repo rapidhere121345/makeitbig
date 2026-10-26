@@ -161,7 +161,7 @@ def verify_recipe_record(record: Any, errors: list[str]) -> None:
     if not isinstance(directory, str) or not isinstance(name, str):
         errors.append("manifest input recipe is missing its recorded location")
         return
-    check_record(record, Path(directory) / name, "recipe", errors)
+    check_record(record, build.common.rebase_legacy_path(directory) / name, "recipe", errors)
 
 
 def verify_review(
@@ -180,7 +180,7 @@ def verify_review(
     if not isinstance(directory_raw, str) or not isinstance(derivatives, dict):
         errors.append("manifest review record is incomplete")
         return
-    directory = Path(directory_raw)
+    directory = build.common.rebase_legacy_path(directory_raw)
     if not directory.is_dir() or directory.is_symlink():
         errors.append(f"review directory is missing: {directory}")
         return
@@ -225,7 +225,7 @@ def verify_output(output: Path) -> list[str]:
         if not isinstance(source_record, dict) or not isinstance(source_record.get("path"), str):
             errors.append("manifest input source is invalid")
         else:
-            source_path = Path(source_record["path"])
+            source_path = build.common.rebase_legacy_path(source_record["path"])
             recorded_dimensions = source_record.get("dimensions")
             check_record(
                 source_record,

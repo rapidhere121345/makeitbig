@@ -421,7 +421,7 @@ def _background_rule(config: dict[str, Any], key: str) -> dict[str, Any]:
 def load_sources(config: dict[str, Any]) -> dict[str, SourceSpec]:
     result: dict[str, SourceSpec] = {}
     for key, path_text in config["sources"].items():
-        path = Path(path_text)
+        path = common.rebase_legacy_path(path_text)
         if not path.is_file():
             raise ConfigError(f"source PNG does not exist: {path}")
         rule = _background_rule(config, key)

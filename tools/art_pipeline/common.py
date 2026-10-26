@@ -88,3 +88,43 @@ def guard_generated_output(
             raise error(f"refusing to replace unmanaged output entry: {item}")
         if item.is_symlink():
             raise error(f"refusing to replace symlinked output entry: {item}")
+
+
+# Checkout roots that earlier host layouts baked into recipes and manifests as
+# absolute paths. The first entry is the root those files were last rewritten to;
+# the later ones are roots that appear only in recorded hashes.
+LEGACY_ROOTS = ("/data/paseo-makeitbig/project", "/data/repo/makeitbig")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def rebase_legacy_path(value: Any) -> Path:
+    """Map a path recorded under a retired checkout root onto this checkout.
+
+    Paths outside the legacy roots (including relative ones) are returned
+    unchanged, so a recipe written for the current checkout keeps working.
+    """
+    text = str(value)
+    for legacy in LEGACY_ROOTS:
+        if text == legacy or text.startswith(legacy + "/"):
+            return REPO_ROOT / text[len(legacy):].lstrip("/")
+    return Path(text)
+
+
+def config_hash_matches(recorded: Any, config_path: Path) -> bool:
+    """True when ``recorded`` is the SHA-256 of the recipe as it was built.
+
+    A recipe whose absolute paths were later rewritten from one legacy root to
+    another no longer hashes to the recorded value. Reversing exactly that
+    textual rewrite reproduces the original bytes, so the match stays an exact
+    byte-for-byte proof rather than a relaxed comparison.
+    """
+    if not isinstance(recorded, str):
+        return False
+    if sha256_file(config_path) == recorded:
+        return True
+    data = Path(config_path).read_bytes()
+    current = LEGACY_ROOTS[0].encode()
+    for legacy in LEGACY_ROOTS[1:]:
+        if hashlib.sha256(data.replace(current, legacy.encode())).hexdigest() == recorded:
+            return True
+    return False

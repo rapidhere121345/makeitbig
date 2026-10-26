@@ -266,7 +266,7 @@ def validate_config(config: dict[str, Any]) -> None:
 def _load_sources(config: dict[str, Any]) -> dict[str, SourceSpec]:
     result: dict[str, SourceSpec] = {}
     for key, raw in config["sources"].items():
-        path = Path(raw["path"])
+        path = common.rebase_legacy_path(raw["path"])
         if not path.is_file():
             raise ConfigError(f"source PNG does not exist: {path}")
         try:

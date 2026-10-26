@@ -275,7 +275,7 @@ def _validate_ground_not_obvious_tile(ground: Image.Image, errors: list[str]) ->
 def _safe_artifact_path(output: Path, value: Any) -> Path | None:
     if not isinstance(value, str) or not value:
         return None
-    path = Path(value)
+    path = common.rebase_legacy_path(value)
     resolved = path.resolve() if path.is_absolute() else (output / path).resolve()
     if resolved.parent != output.resolve():
         raise ValueError(f"artifact escapes output directory: {value}")
@@ -289,13 +289,13 @@ def _validate_provenance(manifest: dict[str, Any], errors: list[str]) -> None:
         errors.append("manifest config_path is missing")
         config_path = None
     else:
-        config_path = Path(config_path_value)
+        config_path = common.rebase_legacy_path(config_path_value)
         if not config_path.is_absolute():
             errors.append("manifest config_path must be absolute")
             config_path = None
         elif not config_path.is_file():
             errors.append(f"manifest config is missing: {config_path}")
-        elif manifest.get("config_sha256") != _sha256(config_path):
+        elif not common.config_hash_matches(manifest.get("config_sha256"), config_path):
             errors.append("manifest config hash mismatch")
 
     sources = manifest.get("sources")
@@ -311,7 +311,7 @@ def _validate_provenance(manifest: dict[str, Any], errors: list[str]) -> None:
         if not isinstance(path_value, str) or not path_value:
             errors.append(f"manifest {label} path is missing")
             continue
-        source_path = Path(path_value)
+        source_path = common.rebase_legacy_path(path_value)
         if not source_path.is_absolute():
             errors.append(f"manifest {label} path must be absolute")
             continue

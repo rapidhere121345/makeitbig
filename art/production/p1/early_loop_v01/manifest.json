@@ -106,7 +106,7 @@
   "inputs": {
     "catalog": {
       "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/catalog.json",
-      "sha256": "99c0ff97af2dc7c168441730280f3d23c53e29cc65b3725b1da417fbbb9dceb8"
+      "sha256": "7196105f614907def8467e04dbf0810c11db694ea76c444d2b879ece15eff186"
     },
     "recipe": {
       "path": "/data/paseo-makeitbig/project/docs/art-production/p1-early-loop-v01/recipe.json",
