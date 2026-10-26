@@ -1,71 +1,132 @@
 name: desktop-build
 
+# The Linux job runs the same delivery gate as the devbox (scripts/build.sh:
+# check, test, export, smoke) with the same pinned engine. The Windows job
+# boots the Windows export and compares its replay hash with Linux. The project
+# builds on Linux only; Windows is a smoke target, not a build host.
+
 on:
   push:
   pull_request:
 
 env:
   GODOT_VERSION: "4.7.2"
+  # Matches the --replay-geometry-profile used by scripts/test.sh; the pinned
+  # golden hash is only defined for this profile.
+  REPLAY_GEOMETRY_PROFILE: historical_circle_v1
 
 jobs:
-  test-and-export:
+  build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python test dependencies
+        run: python3 -m pip install --disable-pip-version-check pillow
 
       - name: Install Godot and export templates
         shell: bash
         run: |
           set -euo pipefail
           base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
-          curl -fL "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o /tmp/godot.zip
-          unzip -q /tmp/godot.zip -d /tmp/godot
-          sudo install -m 0755 "/tmp/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
-          curl -fL "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o /tmp/templates.tpz
-          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
-          unzip -q /tmp/templates.tpz -d /tmp/templates
-          cp -R /tmp/templates/templates/. "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
+          engine_dir="$RUNNER_TEMP/godot"
+          mkdir -p "$engine_dir"
+          curl -fL "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$engine_dir"
+          chmod 0755 "$engine_dir/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          echo "GODOT_BIN=$engine_dir/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> "$GITHUB_ENV"
 
-      - name: Headless checks
-        run: ./scripts/test.sh
+          # scripts/project_env.sh defaults XDG_DATA_HOME to build/host-xdg/data
+          # and looks for templates there, so install them exactly there.
+          template_dir="$GITHUB_WORKSPACE/build/host-xdg/data/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$template_dir" "$RUNNER_TEMP/templates"
+          curl -fL "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o "$RUNNER_TEMP/templates.tpz"
+          unzip -q "$RUNNER_TEMP/templates.tpz" -d "$RUNNER_TEMP/templates"
+          cp -R "$RUNNER_TEMP/templates/templates/." "$template_dir/"
 
-      - name: Export Linux and Windows
-        run: ./scripts/export_all.sh
+      - name: Check the Godot binary against the project pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          pinned="$(grep -oE 'MIB_GODOT_BINARY_SHA256:-[0-9a-f]{64}' scripts/project_env.sh | cut -d- -f2)"
+          actual="$(sha256sum "$GODOT_BIN" | awk '{print $1}')"
+          echo "pinned: $pinned"
+          echo "actual: $actual"
+          if [[ "$pinned" != "$actual" ]]; then
+            echo "::error::The official Godot ${GODOT_VERSION} Linux binary does not match MIB_GODOT_BINARY_SHA256 in scripts/project_env.sh"
+            exit 1
+          fi
 
-      - name: Linux smoke boot
-        run: ./build/current/linux/make-it-big.x86_64 --headless -- --smoke
+      - name: Delivery gate (check, test, export, smoke)
+        run: ./scripts/build.sh
 
       - name: Linux golden automation replay
-        run: ./build/current/linux/make-it-big.x86_64 --headless -- --auto-smoke --state-hash-out="$GITHUB_WORKSPACE/build/golden-state.sha256"
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$(grep -oE '^EXPECTED_HASH="[0-9a-f]{64}"' scripts/test.sh | cut -d'"' -f2)"
+          mkdir -p build/golden
+          ./build/current/linux/make-it-big.x86_64 --headless -- --auto-smoke \
+            "--replay-geometry-profile=${REPLAY_GEOMETRY_PROFILE}" \
+            "--state-hash-out=$GITHUB_WORKSPACE/build/golden/golden-state.sha256"
+          actual="$(tr -d '\r\n' < build/golden/golden-state.sha256)"
+          echo "expected: $expected"
+          echo "linux:    $actual"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error::Linux export replay hash differs from the pinned EXPECTED_HASH in scripts/test.sh"
+            exit 1
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: make-it-big-desktop
-          path: build/
+          # Exports and the golden hash only; the rest of build/ is local state.
+          path: |
+            build/current/linux/
+            build/current/windows/
+            build/golden/golden-state.sha256
+          if-no-files-found: error
 
   windows-smoke:
-    needs: test-and-export
+    needs: build
     runs-on: windows-2022
+    timeout-minutes: 20
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: make-it-big-desktop
-          path: build
+          path: artifact
+
+      - name: Locate the exports
+        shell: pwsh
+        run: |
+          # The artifact keeps the layout below the common ancestor of the
+          # uploaded paths; find the Windows export and the golden hash by name.
+          $exe = Get-ChildItem -Path artifact -Recurse -Filter "make-it-big.exe" | Select-Object -First 1
+          $hash = Get-ChildItem -Path artifact -Recurse -Filter "golden-state.sha256" | Select-Object -First 1
+          if (-not $exe -or -not $hash) { throw "Windows export or golden hash is missing from the artifact" }
+          "WINDOWS_EXE=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "GOLDEN_HASH=$($hash.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Windows smoke boot
         shell: pwsh
         run: |
-          & "build/current/windows/make-it-big.exe" --headless -- --smoke
+          & "$env:WINDOWS_EXE" --headless -- --smoke
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Windows golden automation replay
         shell: pwsh
         run: |
-          $windowsHashPath = Join-Path $env:GITHUB_WORKSPACE "build/current/windows-state.sha256"
-          & "build/current/windows/make-it-big.exe" --headless -- --auto-smoke "--state-hash-out=$windowsHashPath"
+          $windowsHashPath = Join-Path $env:RUNNER_TEMP "windows-state.sha256"
+          & "$env:WINDOWS_EXE" --headless -- --auto-smoke "--replay-geometry-profile=$env:REPLAY_GEOMETRY_PROFILE" "--state-hash-out=$windowsHashPath"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $linuxHash = (Get-Content "build/golden-state.sha256" -Raw).Trim()
-          $windowsHash = (Get-Content "build/current/windows-state.sha256" -Raw).Trim()
+          $linuxHash = (Get-Content $env:GOLDEN_HASH -Raw).Trim()
+          $windowsHash = (Get-Content $windowsHashPath -Raw).Trim()
           if ($linuxHash -ne $windowsHash) {
             throw "Replay hash mismatch: Linux=$linuxHash Windows=$windowsHash"
           }
