@@ -33,8 +33,9 @@ hygiene) and
   world-expansion and town-order art, and the
   [world expansion](WORLD_EXPANSION_20261025.md) and
   [town performance and layout](TOWN_PERFORMANCE_LAYOUT_20261026.md) records.
-  The preview tool and object definitions remain in the repository as test
-  harnesses only.
+  The preview tool, the town_modular_v01 sample art and its object definitions
+  were deleted on 2026-10-26; the EnvironmentObject system is tested with
+  synthetic fixtures.
 
 ### TOWN_MODULAR_CALIBRATION_20261022
 
