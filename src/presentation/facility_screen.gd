@@ -25,20 +25,6 @@ const EarlyInterfaceVocabularyScript = preload("res://src/content/early_interfac
 ## public contract only to stop offering a reveal the authority will reject.
 const LawForgeScript = preload("res://src/systems/law_forge.gd")
 
-## Legacy header art of the previous prototype. It is only a last resort for a
-## page the production batch does not mark (immortality, research, unknown ids);
-## every page the hamlet package covers draws its published cell instead.
-const LEGACY_FACILITY_TEXTURES: Dictionary = {
-	"loadout": "res://art/production/p1/legacy_facility_stations/equipment_rune_desk.png",
-	"forge": "res://art/production/p1/legacy_facility_stations/destiny_forge.png",
-	"training": "res://art/production/p1/legacy_facility_stations/training_report.png",
-}
-
-const FACILITY_TEXTURES: Dictionary = {
-	"loadout": "res://art/production/p1/legacy_facility_stations/equipment_rune_desk.png",
-	"forge": "res://art/production/p1/legacy_facility_stations/destiny_forge.png",
-	"training": "res://art/production/p1/legacy_facility_stations/training_report.png",
-}
 const FACILITY_TITLES: Dictionary = {
 	"loadout": "Loadout · Equipment and Runes",
 	"forge": "Tempering Anvil · Law Token Forge",
@@ -922,28 +908,12 @@ func _add_facility_mark(parent: Container, compact_size: Vector2i = Vector2i.ZER
 		_facility_icon.name = "FacilityMark"
 		_facility_icon.set_meta("canonical_id", "facility.%s" % _art.facility_key(_facility_id))
 		parent.add_child(_facility_icon)
-		return
-	var legacy_path := String(LEGACY_FACILITY_TEXTURES.get(_facility_id, ""))
-	if legacy_path.is_empty() or not ResourceLoader.exists(legacy_path):
-		return
-	var resource := ResourceLoader.load(legacy_path)
-	if not resource is Texture2D:
-		return
-	_facility_icon = TextureRect.new()
-	_facility_icon.name = "FacilityMark"
-	_facility_icon.custom_minimum_size = Vector2(compact_size if compact_size.x > 0 and compact_size.y > 0 else Vector2i(128, 128))
-	_facility_icon.texture = resource as Texture2D
-	_facility_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_facility_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_facility_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_facility_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(_facility_icon)
 
 
 ## Overview cell holding the mark at its published size. A mark is wider than the
 ## text column, so it gets its own column instead of pushing the title row down.
-## Returns null when this page has no published cell and no legacy station art,
-## so the caller never reserves an empty column.
+## Returns null when this page has no published cell, so the caller never
+## reserves an empty column.
 func _mark_cell(caption: String) -> VBoxContainer:
 	var cell := VBoxContainer.new()
 	cell.name = "FacilityMarkCell"
@@ -958,13 +928,10 @@ func _mark_cell(caption: String) -> VBoxContainer:
 	return cell
 
 
-## True when this route has a published mark or the legacy station art the
-## previous prototype used. Pages without one keep their text-only header.
+## True when this route has a published mark. Pages without one keep their
+## text-only header.
 func _has_page_mark() -> bool:
-	if _art.is_ready() and _art.mark(_facility_id) != null:
-		return true
-	var legacy_path := String(LEGACY_FACILITY_TEXTURES.get(_facility_id, ""))
-	return not legacy_path.is_empty() and ResourceLoader.exists(legacy_path)
+	return _art.is_ready() and _art.mark(_facility_id) != null
 
 
 ## The lead row, created on first use inside the current page. Every facility page

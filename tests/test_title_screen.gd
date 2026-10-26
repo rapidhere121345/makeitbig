@@ -3,10 +3,9 @@ extends SceneTree
 ## names, the class list, the save-state behaviour of present(), the English copy
 ## band, and the backdrop contract.
 ##
-## The backdrop is checked in whichever mode the repository is actually in: the
-## produced plate when it is published, otherwise the provisional layered crop.
-## Both modes must draw real production pixels at nearest integer 2x, must never
-## read the early placeholder art, and must never animate a still image.
+## The backdrop is the produced plate: real production pixels at nearest
+## integer 2x, never the early placeholder art, and never an animated still image.
+## With no plate it is a flat slate field that reports why.
 
 const TitleScreenScript = preload("res://src/presentation/title_screen.gd")
 const TitleArtHelperScript = preload("res://src/presentation/title_art_helper.gd")
@@ -17,7 +16,6 @@ const BACKDROP_SOURCE_PATH := "res://src/presentation/title_art_helper.gd"
 ## history; the title must not read from it again.
 const EARLY_PLACEHOLDER_MARKER := "art/early/"
 const EXPECTED_PLATE_SUFFIX := "art/production/p1/title_concept_v02/background.png"
-const EXPECTED_TOWER_RECT := Rect2(320.0, 88.0, 320.0, 224.0)
 ## The approved English UI band, plus the one approved wordmark exception.
 const CHINESE_BODY_MIN := 18
 const CHINESE_BODY_MAX := 22
@@ -157,17 +155,11 @@ func _test_backdrop(screen, failures: Array[String]) -> void:
 	_expect(backdrop.pending_reasons().is_empty(), "title: the active backdrop contract reported problems: %s" % str(backdrop.pending_reasons()), failures)
 	_expect(String(TitleArtHelperScript.TITLE_PLATE_PATH).ends_with(EXPECTED_PLATE_SUFFIX), "title: the produced plate moved away from the agreed path", failures)
 	_expect(TitleArtHelperScript.TITLE_PLATE_SIZE == Vector2i(640, 360), "title: the produced plate contract stopped being 640x360", failures)
-	var source := String(backdrop.backdrop_source())
-	if source == TitleArtHelperScript.BACKDROP_PLATE:
-		_test_plate_backdrop(backdrop, failures)
-	elif source == TitleArtHelperScript.BACKDROP_LAYERS:
-		_test_layered_backdrop(backdrop, failures)
-	else:
-		_expect(false, "title: the backdrop fell through to no source at all", failures)
+	_expect(String(backdrop.backdrop_source()) == TitleArtHelperScript.BACKDROP_PLATE, "title: the backdrop is not the produced plate, got %s" % String(backdrop.backdrop_source()), failures)
+	_test_plate_backdrop(backdrop, failures)
 	_test_static_and_integral(backdrop, failures)
 	_test_life_overlay(backdrop, failures)
 	_test_no_placeholder_art(failures)
-	_test_provisional_fallback(backdrop, failures)
 
 
 func _test_plate_backdrop(backdrop, failures: Array[String]) -> void:
@@ -190,45 +182,15 @@ func _test_plate_backdrop(backdrop, failures: Array[String]) -> void:
 	var audit: Dictionary = backdrop.render_audit()
 	var layers := audit.get("layers", {}) as Dictionary
 	_expect(int(layers.get("field", 0)) == 1, "title: the plate is not drawn exactly once", failures)
-	_expect(int(layers.get("ground", 0)) == 0 and int(layers.get("object_lower", 0)) == 0 and int(layers.get("actors", 0)) == 0, "title: layer sprites were drawn on top of the produced plate: %s" % str(layers), failures)
-	_expect(String(audit.get("wanderer", "")).is_empty(), "title: the provisional wanderer survived into plate mode", failures)
-
-
-func _test_layered_backdrop(backdrop, failures: Array[String]) -> void:
-	## Provisional mode: the plate is unpublished and the view says so, while the
-	## crop still comes from the published hamlet pair.
-	_expect(backdrop.plate_status() == TitleArtHelperScript.PLATE_STATUS_PENDING, "title: the provisional crop claims a produced plate", failures)
-	var reason := String(backdrop.plate_reason())
-	_expect(reason.is_empty() or reason.contains("title_concept_v02/background.png"), "title: the pending plate reason does not name the agreed path: %s" % reason, failures)
-	var frame: Dictionary = backdrop.frame_report()
-	_expect(String(frame.focus_placement) == "hearth", "title: the crop is not pinned to the tower placement", failures)
-	_expect(bool(frame.focus_from_layout), "title: the crop fell back instead of reading the published tower placement", failures)
-	_expect(bool(frame.integer_offset), "title: the crop offset is not on the integer pixel grid", failures)
-	_expect(bool(frame.crop_inside_field), "title: the crop left the published ground field", failures)
-	_expect(bool(frame.tower_available) and bool(frame.tower_inside_view), "title: the tower is not fully inside the 640x360 frame", failures)
-	_expect((frame.tower_rect_in_view as Rect2).is_equal_approx(EXPECTED_TOWER_RECT), "title: the tower cell moved to %s" % str(frame.tower_rect_in_view), failures)
-	_expect((frame.focus_world_feet as Vector2).is_equal_approx(Vector2(584.0, 402.0)), "title: the tower feet are no longer the published ones", failures)
-	_expect((frame.tower_rect_in_view as Rect2).position.x >= float(TitleArtHelperScript.NATIVE_VIEW.x) * 0.5, "title: the tower drifted out of the right half of the frame", failures)
-	_expect((frame.wanderer_view_point as Vector2).x < (frame.tower_rect_in_view as Rect2).position.x, "title: the wanderer stands inside the tower cell", failures)
-	var audit: Dictionary = backdrop.render_audit()
-	var layers := audit.get("layers", {}) as Dictionary
-	_expect(int(layers.get("field", 0)) == 1, "title: the ground field is not drawn exactly once", failures)
-	_expect(int(layers.get("actors", 0)) >= 3, "title: the tower bands and the wanderer are not in the feet-sorted layer: %s" % str(audit), failures)
-	var nodes := audit.get("sprite_nodes", []) as Array
-	_expect("Upper_hearth" in nodes and "Lower_hearth" in nodes, "title: the tower lost its split banding: %s" % str(nodes), failures)
-	_expect(String(audit.get("wanderer", "")) == "Wanderer", "title: the approved wanderer is not drawn", failures)
-	_expect(String(frame.wanderer_sprite_id).ends_with(".idle"), "title: the wanderer is not a published static frame: %s" % String(frame.wanderer_sprite_id), failures)
-	_expect(String(backdrop._sprites[String(frame.wanderer_sprite_id)].get("source", "")) == "scene", "title: the wanderer is not the approved scene_rework ranger", failures)
 
 
 func _test_static_and_integral(backdrop, failures: Array[String]) -> void:
 	## Every drawn pixel stays a cut of a production texture on the native grid:
 	## no atlas frame stepping, no fractional placement, no smoothing.
 	var sprites: Array[Sprite2D] = []
-	for layer in [backdrop.field_layer, backdrop.ground_layer, backdrop.object_lower_layer, backdrop.actor_layer]:
-		for child in layer.get_children():
-			if child is Sprite2D:
-				sprites.append(child)
+	for child in backdrop.field_layer.get_children():
+		if child is Sprite2D:
+			sprites.append(child)
 	_expect(not sprites.is_empty(), "title: the backdrop drew no sprite at all", failures)
 	for sprite in sprites:
 		_expect(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "title: %s lost nearest filtering" % sprite.name, failures)
@@ -247,11 +209,6 @@ func _test_life_overlay(backdrop, failures: Array[String]) -> void:
 	## wall time, and the two loops only meet again on the 2s common period.
 	var life: Dictionary = backdrop.life_contract()
 	_expect(String(life.get("atlas_path", "")).ends_with("title_life_v01/atlas.json"), "title: the life overlay moved away from the published atlas", failures)
-	if backdrop.backdrop_source() != TitleArtHelperScript.BACKDROP_PLATE:
-		## The overlay is authored against the plate's own pixels: on any other
-		## backdrop it must stay off rather than land on anchors that do not apply.
-		_expect(not bool(life.get("drawn", false)), "title: the life overlay was placed on a backdrop it was not authored for", failures)
-		return
 	_expect(backdrop.life_ready(), "title: the published life frames did not load: %s" % backdrop.life_reason(), failures)
 	_expect(String(life.get("status", "")) == TitleArtHelperScript.LOOP_STATUS_READY, "title: the life overlay does not report its produced frames", failures)
 	_expect(String(backdrop.life_reason()).is_empty(), "title: an accepted life package still carries a rejection reason: %s" % backdrop.life_reason(), failures)
@@ -318,34 +275,6 @@ func _test_life_stepping(backdrop, failures: Array[String]) -> void:
 	backdrop.set_life_time(0.0)
 
 
-func _test_provisional_fallback(backdrop, failures: Array[String]) -> void:
-	## The fallback has to stay alive as a real, tested path: the published hamlet
-	## pair still renders a faithful crop if the plate is ever withdrawn, and the
-	## view has to report that it is the provisional one.
-	var atlas := _read_json("res://art/production/p1/hamlet_concept_v02/atlas.json")
-	var layout := _read_json("res://art/production/p1/hamlet_concept_v02/layout.json")
-	_expect(not atlas.is_empty() and not layout.is_empty(), "title: the hamlet pair is not readable for the fallback check", failures)
-	if atlas.is_empty() or layout.is_empty():
-		return
-	var scene_atlas := _read_json("res://art/production/p1/scene_rework_v01/atlas.json")
-	_expect(not scene_atlas.is_empty(), "title: the approved ranger atlas is not readable for the fallback check", failures)
-	backdrop.configure_sources({"hamlet": atlas, "scene": scene_atlas}, layout)
-	_expect(backdrop.backdrop_source() == TitleArtHelperScript.BACKDROP_LAYERS, "title: the fallback pair did not produce a layered crop, got %s" % backdrop.backdrop_source(), failures)
-	_test_layered_backdrop(backdrop, failures)
-	backdrop.load_default_assets()
-	_expect(backdrop.backdrop_source() != TitleArtHelperScript.BACKDROP_NONE, "title: restoring the published assets left no backdrop source", failures)
-	_expect(backdrop.is_ready(), "title: restoring the published assets left the backdrop pending: %s" % str(backdrop.pending_reasons()), failures)
-
-
-func _read_json(path: String) -> Dictionary:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	file.close()
-	return parsed if parsed is Dictionary else {}
-
-
 func _test_no_placeholder_art(failures: Array[String]) -> void:
 	## Source level: the title no longer references the early placeholder images,
 	## and the font stays the shared ShellTheme's business rather than this screen's.
@@ -364,18 +293,17 @@ func _test_no_placeholder_art(failures: Array[String]) -> void:
 
 func _test_unpublished_assets(screen, failures: Array[String]) -> void:
 	## While nothing is published the title stays a plain slate field: no sprite, no
-	## stand-in building, and the two actions keep working.
+	## stand-in drawing, and the two actions keep working.
 	var backdrop = screen.get_backdrop()
 	if backdrop == null:
 		return
-	backdrop.configure({}, {})
+	backdrop.withdraw_assets_for_test()
 	_expect(not backdrop.is_ready(), "title: an empty atlas must not report ready assets", failures)
 	_expect(backdrop.backdrop_source() == TitleArtHelperScript.BACKDROP_NONE, "title: an empty atlas still claimed a backdrop source", failures)
 	_expect(not backdrop.pending_reasons().is_empty(), "title: missing assets were not reported as pending", failures)
 	var audit: Dictionary = backdrop.render_audit()
 	var layers := audit.get("layers", {}) as Dictionary
-	_expect(int(layers.get("field", 0)) == 0 and int(layers.get("actors", 0)) == 0, "title: pending assets drew sprites anyway", failures)
-	_expect(String(audit.get("wanderer", "")).is_empty(), "title: pending assets still drew the wanderer", failures)
+	_expect(int(layers.get("field", 0)) == 0, "title: pending assets drew sprites anyway", failures)
 	_expect(String(audit.get("life_status", "")) == TitleArtHelperScript.LOOP_STATUS_UNPRODUCED, "title: a fixture backdrop still claimed produced life frames", failures)
 	_expect(not bool(audit.get("life_drawn", false)), "title: a fixture backdrop drew the life overlay", failures)
 	_expect((audit.get("life_nodes", []) as Array).is_empty(), "title: a fixture backdrop left life nodes behind", failures)
