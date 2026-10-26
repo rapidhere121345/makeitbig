@@ -697,7 +697,7 @@ func _test_hazards(arena: Node, failures: Array[String]) -> void:
 		state = arena.hazard_states[0]
 		hit_position = state.origin + Vector2(0.0, state.length * 0.5) if hazard_id == "moving_fireline" else state.origin + Vector2(0, -45)
 		_expect(bool(arena.teleport_actor("ranger", hit_position).get("ok", false)), "%s hit pose is blocked" % hazard_id, failures)
-		arena._update_hazards_tick()
+		arena._hazards._update_hazards_tick()
 		_expect(is_equal_approx(arena.player_health, before_dodge), "%s ignored dodge immunity" % hazard_id, failures)
 
 

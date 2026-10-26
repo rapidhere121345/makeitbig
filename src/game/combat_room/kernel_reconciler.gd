@@ -506,9 +506,9 @@ func _reconcile_kernel_hit(projectile, record: Variant, hit: Dictionary, outcome
 func _finalize_kernel_enemy_death(enemy: CombatEnemyState) -> void:
 	_main.enemies.erase(enemy)
 	_main.combat_system.note_kernel_death(enemy)
-	var canceled_request_id: int = _main._cancel_buffered_target(enemy.entity_id)
+	var canceled_request_id: int = _main._arrows._cancel_buffered_target(enemy.entity_id)
 	if canceled_request_id > 0:
-		_main._erase_attack_request(canceled_request_id)
+		_main._arrows._erase_attack_request(canceled_request_id)
 	_main._refresh_player_mark()
 
 

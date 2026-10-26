@@ -44,11 +44,11 @@ func maybe_summon(target: CombatEnemyState) -> void:
 
 
 func remove_target(target: CombatEnemyState) -> void:
-	_owner._remove_combat_target(target)
+	_owner._arrows._remove_combat_target(target)
 
 
 func cancel_buffered_target(entity_id: int) -> int:
-	return _owner._cancel_buffered_target(entity_id)
+	return _owner._arrows._cancel_buffered_target(entity_id)
 
 
 func update_mark() -> void:
@@ -64,7 +64,7 @@ func reset_sequence() -> void:
 
 
 func erase_attack_request(request_id: int) -> void:
-	_owner._erase_attack_request(request_id)
+	_owner._arrows._erase_attack_request(request_id)
 
 
 func consume_first_critical_bonus() -> int:

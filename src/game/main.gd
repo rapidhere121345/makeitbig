@@ -70,6 +70,8 @@ const RoomPhaseDomainScript := preload("res://src/game/ports/room_phase_domain.g
 const MainEncounterRoomPortScript := preload("res://src/game/ports/main_encounter_room_port.gd")
 const MainEncounterSpawnPortScript := preload("res://src/game/ports/main_encounter_spawn_port.gd")
 const KernelReconcilerScript := preload("res://src/game/combat_room/kernel_reconciler.gd")
+const RoomHazardsScript := preload("res://src/game/combat_room/room_hazards.gd")
+const PiercingArrowsScript := preload("res://src/game/combat_room/piercing_arrows.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -344,6 +346,10 @@ var manual_pointer_target_entity_id: int:
 
 ## KernelReconciler lives in src/game/combat_room/kernel_reconciler.gd.
 var _kernel_reconciler := KernelReconcilerScript.new(self)
+## RoomHazards lives in src/game/combat_room/room_hazards.gd.
+var _hazards := RoomHazardsScript.new(self)
+## PiercingArrows lives in src/game/combat_room/piercing_arrows.gd.
+var _arrows := PiercingArrowsScript.new(self)
 
 
 func _init() -> void:
@@ -745,7 +751,7 @@ func _spawn_wave() -> bool:
 		last_save_message = "Deployment blocked: %s" % String(spawned.get("error", "room_spawn_failed"))
 		in_arena = false
 		return false
-	var hazard_configured: Dictionary = _configure_hazard_domain(spawn_room.get("hazard_ids", []), origin)
+	var hazard_configured: Dictionary = _hazards._configure_hazard_domain(spawn_room.get("hazard_ids", []), origin)
 	if not bool(hazard_configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(hazard_configured.get("error", "hazard_domain_failed"))
 		in_arena = false
@@ -781,25 +787,6 @@ func _configure_room_loot(room: Dictionary) -> Dictionary:
 		_room_loot.reset()
 		return placement_bound
 	return _room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry, placement_port)
-
-
-func _configure_hazard_domain(hazard_ids: Variant, center: Vector2) -> Dictionary:
-	if encounter_director == null or encounter_director.room_port == null:
-		return {"ok": false, "error": "hazard_room_port_unavailable"}
-	if not hazard_ids is Array:
-		return {"ok": false, "error": "invalid_hazard_ids"}
-	var domain: RefCounted = CombatHazardDomainScript.new()
-	var configured: Dictionary = domain.configure_ids(encounter_director.room_port, _arena_rect(), hazard_ids, center)
-	if not bool(configured.get("ok", false)):
-		return configured
-	_hazard_domain = domain
-	var read_bound: Dictionary = encounter_director.set_hazard_read_port(domain)
-	if not bool(read_bound.get("ok", false)):
-		return read_bound
-	# The director's tactics snapshot consumes the same detached view objects;
-	# it no longer advances or resolves them in production.
-	encounter_director.hazard_states = _hazard_domain.snapshots()
-	return {"ok": true, "error": "", "count": _hazard_domain.hazards.size()}
 
 
 func _spawn_room_loot_for_source(source: String, source_entity_id: int, position: Vector2) -> Dictionary:
@@ -1621,7 +1608,7 @@ func _process_player_action_events(events: Array, action_player: Dictionary) -> 
 			"buffered_started", "action_started":
 				presentation.feedback.bind_action_request(action_id, int(event.get("request_id", 0)))
 			"action_impact":
-				_resolve_piercing_arrow(event, action_player)
+				_arrows._resolve_piercing_arrow(event, action_player)
 			"action_ended", "action_interrupted":
 				presentation.feedback.forget_action(action_id)
 
@@ -1636,7 +1623,7 @@ func _combat_context(player: Dictionary = {}) -> void:
 		player["player_facing"],
 		locked_payload,
 		locked_targeting_distance,
-		_current_projectile_speed(),
+		_arrows._current_projectile_speed(),
 		player["marked_entity_id"],
 		player["talent_capabilities"],
 		combat_event_stream,
@@ -1656,90 +1643,6 @@ func _combat_report(previous_report: String, previous_event_id: int) -> void:
 			fresh = true
 	if fresh:
 		battle_report = report
-
-
-func _resolve_piercing_arrow(action_event: Dictionary, action_player: Dictionary) -> void:
-	_combat_context(action_player)
-	var previous_report := String(combat_system.battle_report)
-	var previous_event_id: int = combat_event_stream.latest_event_id()
-	combat_system.resolve_piercing_arrow(action_event)
-	_combat_report(previous_report, previous_event_id)
-
-func _current_projectile_speed() -> float:
-	var speed := 0.0
-	if not locked_build.is_empty():
-		speed = float((locked_build.get("final_parameters", {}) as Dictionary).get("v", 0.0))
-	elif content_registry != null:
-		speed = float(content_registry.preset_equipped_parameters.get("speed", 0.0))
-	if not is_finite(speed) or speed <= 0.0:
-		return 1.0
-	return speed
-
-
-func _advance_piercing_projectiles_tick() -> void:
-	_combat_context()
-	var previous_report := String(combat_system.battle_report)
-	var previous_event_id: int = combat_event_stream.latest_event_id()
-	# Every production ranger arrow flies through the mounted kernel. Normal
-	# targets use PathQuery/SimHit; Boss targets use BossAttackQuery and the
-	# multipart BossHitBuffer. Both paths resolve in the fixed
-	# CONTINUOUS_QUERIES/DAMAGE_STATUS phases; neither may settle here.
-	if room_spatial_port != null and room_combat_port != null and _kernel_arrow_flight.is_configured():
-		var ranger_handle = actor_registry.actor_handle("ranger") if actor_registry != null else null
-		_kernel_arrow_flight.submit_tick(
-			combat_system.projectiles,
-			ranger_handle,
-			sim_tick,
-			combat_system.room_port
-		)
-	if room_spatial_port != null and room_combat_port != null and _kernel_boss_flight.is_configured() and _kernel_reconciler._boss_domain_room_is_current():
-		var ranger_handle = actor_registry.actor_handle("ranger") if actor_registry != null else null
-		_kernel_boss_flight.submit_tick(
-			combat_system.projectiles,
-			ranger_handle,
-			sim_tick,
-			combat_system.room_port
-		)
-	_combat_report(previous_report, previous_event_id)
-
-func _resolve_piercing_arrow_contact(projectile: CombatArrowProjectile, target: CombatEnemyState, contact_point: Vector2) -> void:
-	_combat_context()
-	var previous_report := String(combat_system.battle_report)
-	var previous_event_id: int = combat_event_stream.latest_event_id()
-	combat_system.resolve_projectile_contact(projectile, target, contact_point)
-	_combat_report(previous_report, previous_event_id)
-
-func _resolve_piercing_arrow_miss(projectile: CombatArrowProjectile) -> void:
-	_combat_context()
-	var previous_report := String(combat_system.battle_report)
-	var previous_event_id: int = combat_event_stream.latest_event_id()
-	combat_system.resolve_projectile_miss(projectile)
-	_combat_report(previous_report, previous_event_id)
-
-func _piercing_arrow_swept_contact(start: Vector2, finish: Vector2, target: CombatEnemyState) -> Variant:
-	_combat_context()
-	return combat_system.swept_contact(start, finish, target)
-
-
-func _remove_combat_target(target: CombatEnemyState) -> void:
-	enemies.erase(target)
-	if target == null or target.health > 0.0:
-		return
-	var actor_id := "enemy/%d" % target.entity_id
-	if actor_registry != null and actor_registry.has_actor(actor_id):
-		var unregistered: Dictionary = actor_registry.unregister_actor(actor_id)
-		if not bool(unregistered.get("ok", false)):
-			push_error("enemy_actor_unregister_failed:%d:%s" % [target.entity_id, String(unregistered.get("error", "unknown"))])
-	_spawn_room_loot_for_source("enemy_death", target.entity_id, target.position)
-
-
-func _cancel_buffered_target(entity_id: int) -> int:
-	return player_combat_rules.cancel_buffered_target(entity_id)
-
-
-func _erase_attack_request(request_id: int) -> void:
-	if request_id > 0:
-		presentation.feedback.forget_request(request_id)
 
 
 func _encounter_context() -> void:
@@ -1817,131 +1720,6 @@ func _update_room_rules_tick() -> void:
 	_kernel_reconciler._consume_kernel_room_combat()
 	_encounter_context()
 	encounter_director.update_room_rules_tick()
-
-
-func _update_hazards_tick() -> void:
-	_refresh_hazard_states_tick()
-	_resolve_hazard_hits_tick()
-
-
-func _refresh_hazard_states_tick() -> void:
-	if _hazard_domain != null and _hazard_domain.is_configured():
-		var refreshed: Dictionary = _hazard_domain.refresh(sim_tick)
-		if not bool(refreshed.get("ok", false)):
-			battle_report = "hazard_refresh_failed:%s" % String(refreshed.get("error", "unknown"))
-		encounter_director.hazard_states = _hazard_domain.snapshots()
-		return
-	_encounter_context()
-	encounter_director.refresh_hazard_states_tick()
-
-
-func _resolve_hazard_hits_tick() -> void:
-	if _hazard_domain != null and _hazard_domain.is_configured():
-		var resolved: Dictionary = _hazard_domain.resolve(sim_tick, player_position)
-		if not bool(resolved.get("ok", false)):
-			battle_report = "hazard_resolve_failed:%s" % String(resolved.get("error", "unknown"))
-		else:
-			for contact: Dictionary in resolved.get("contacts", []):
-				combat_event_stream.emit(sim_tick, "attack_resolved", {
-					"action_instance_id": 0,
-					"source_id": String(contact.get("source_id", "")),
-					"target_id": "ranger",
-					"outcome": "queued",
-					"contact_point": contact.get("contact_point", player_position),
-				})
-		# Player contacts are consumed after staging and after the kernel has
-		# published this tick, preserving the existing fixed-tick boundary.
-		if room_combat_port != null:
-			var receipts: Array[Dictionary] = room_combat_port.commit_player_contacts(sim_tick)
-			for receipt: Dictionary in receipts:
-				if String(receipt.get("contact_kind", "")) != "hostile_attack":
-					continue
-				combat_event_stream.emit(sim_tick, "attack_resolved", {
-					"action_instance_id": int(String(receipt.get("attack_instance_id", "0"))),
-					"source_id": String(receipt.get("source_id", "")),
-					"target_id": "ranger",
-					"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
-					"contact_point": player_position,
-				})
-		return
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director.resolve_hazard_hits_tick()
-	if room_combat_port != null:
-		var receipts: Array[Dictionary] = room_combat_port.commit_player_contacts(sim_tick)
-		for receipt: Dictionary in receipts:
-			if String(receipt.get("contact_kind", "")) != "hostile_attack":
-				continue
-			combat_event_stream.emit(sim_tick, "attack_resolved", {
-				"action_instance_id": int(String(receipt.get("attack_instance_id", "0"))),
-				"source_id": String(receipt.get("source_id", "")),
-				"target_id": "ranger",
-				"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
-				"contact_point": player_position,
-			})
-	_encounter_report(previous_report)
-
-
-func _queue_kernel_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
-	return _queue_kernel_player_hit(tick, amount, source_id, source_position)
-
-
-## Stages one room-owned player contact for the next kernel tick. Hazard
-## amounts stay integer-valued; enemy impacts use milli units so the existing
-## 1.2/1.8 damage values cross SimHit without rounding.
-func _queue_kernel_player_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
-	if room_spatial_port == null or actor_registry == null:
-		return {"ok": false, "error": "kernel_player_contact_port_unavailable"}
-	if tick != sim_tick or not is_finite(amount) or amount <= 0.0 or not source_position.is_finite():
-		return {"ok": false, "error": "invalid_kernel_player_contact_context"}
-	var contact_kind: StringName
-	var encoded_amount: int
-	var attack_instance_id := ""
-	if source_id.begins_with("hazard/"):
-		contact_kind = &"hazard"
-		encoded_amount = maxi(1, roundi(amount))
-		attack_instance_id = "hazard/%s/%d" % [source_id, tick]
-	elif source_id.begins_with("enemy/") or source_id.begins_with("boss/"):
-		contact_kind = &"hostile_attack"
-		encoded_amount = maxi(1, roundi(amount * 1000.0))
-		var action_instance_id := _hostile_action_instance_id(source_id)
-		attack_instance_id = str(action_instance_id) if action_instance_id > 0 else "hostile/%s/%d" % [source_id, tick]
-	else:
-		return {"ok": false, "error": "invalid_kernel_player_contact_source"}
-	var target: Variant = actor_registry.actor_handle("ranger")
-	if target == null:
-		return {"ok": false, "error": "player_actor_unavailable"}
-	return room_spatial_port.queue_player_hit(
-		target,
-		encoded_amount,
-		source_id,
-		source_position,
-		attack_instance_id,
-		contact_kind
-	)
-
-
-func _hostile_action_instance_id(source_id: String) -> int:
-	if encounter_director == null:
-		return 0
-	if source_id.begins_with("enemy/"):
-		var parts := source_id.split("/")
-		if parts.size() >= 2:
-			var enemy: CombatEnemyState = encounter_director._enemy_by_entity_id(int(parts[1]))
-			return int(enemy.action_instance_id) if enemy != null else 0
-	if source_id.begins_with("boss/") and encounter_director.boss != null:
-		return int(encounter_director.boss.action_instance_id)
-	return 0
-
-
-func _new_hazard_state(id: String, center: Vector2) -> Dictionary:
-	_encounter_context()
-	return encounter_director.new_hazard_state(id, center)
-
-
-func _hazard_contains(state: Dictionary, point: Vector2) -> bool:
-	_encounter_context()
-	return encounter_director.hazard_contains(state, point)
 
 
 func _enemy_by_entity_id(id: int) -> CombatEnemyState:

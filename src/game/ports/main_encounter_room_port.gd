@@ -70,7 +70,7 @@ func quantize_position(value: Vector2) -> Vector2:
 func queue_player_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
 	if not _ready():
 		return {"ok": false, "error": "encounter_room_owner_unavailable"}
-	return _owner._queue_kernel_player_hit(tick, amount, source_id, source_position)
+	return _owner._hazards._queue_kernel_player_hit(tick, amount, source_id, source_position)
 
 
 func _ready() -> bool:
