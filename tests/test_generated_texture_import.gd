@@ -11,7 +11,6 @@ func _initialize() -> void:
 		paths.append(String(entry.transparent_path))
 	for entry: Dictionary in manifest.grounds.values():
 		paths.append(String(entry.opaque_path))
-	paths.append("res://art/production/p1/generated_world_v02/residents/residents.png")
 	# Keep the previous world pack covered, and verify every new actor sheet
 	# through Godot's imported texture path before accepting the replacement.
 	for filename: String in ["ranger.png", "enemies.png", "residents/residents.png", "boss_body.png", "boss_core.png", "boss_hands.png", "ranger_idle.png", "legacy_enemies.png"]:
@@ -48,13 +47,13 @@ func _initialize() -> void:
 	for path: String in paths:
 		if _check_texture(path, failures):
 			completed += 1
-	if paths.size() != 77 or completed != 77:
-		failures.append("expected 77 complete imported texture checks, got %d/%d" % [completed, paths.size()])
+	if paths.size() != 75 or completed != 75:
+		failures.append("expected 75 complete imported texture checks, got %d/%d" % [completed, paths.size()])
 	if not failures.is_empty():
 		printerr("GENERATED_TEXTURE_IMPORT_FAIL ", failures)
 		quit(1)
 		return
-	print("GENERATED_TEXTURE_IMPORT_PASS 77 exact RGBA8 images")
+	print("GENERATED_TEXTURE_IMPORT_PASS 75 exact RGBA8 images")
 	quit(0)
 
 

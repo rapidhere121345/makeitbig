@@ -3,7 +3,7 @@ extends RefCounted
 ## Published hamlet life package reader for the base hub: the resident work
 ## cycles and the two socket effects the approved concept asks for.
 ##
-## Contract (res://art/production/p1/generated_world_v02/residents/):
+## Contract (res://art/production/p1/actors_v02/residents/):
 ##   atlas.json -> schema_version 1, textures {key: {path, width, height}},
 ##                 sprites {id: {rect [x,y,w,h], anchor [ax,ay], texture}},
 ##                 animations {"<resident>.south.work": {frames, fps, loop}},

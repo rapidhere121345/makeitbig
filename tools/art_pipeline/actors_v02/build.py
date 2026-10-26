@@ -463,7 +463,9 @@ def enemy_cells(role, report):
 
 NPC_NAMES = ["mira", "iven", "taren", "leia", "oren"]
 NPC_BODY_H = 32
-OLD_RESIDENTS = ROOT / "art/production/p1/generated_world_v02/residents"
+# Layout and clip template: the published residents atlas/life files under OUT
+# keep every sprite id, cell rect and placement; only pixels are rebuilt.
+OLD_RESIDENTS = OUT / "residents"
 
 
 def build_residents(report):

@@ -889,7 +889,7 @@
     }
   },
   "complete": true,
-  "config_sha256": "80c09b2e2b3ef9264fc4435c5335e03f25d50e9e4b2866627adb078fa39dbdec",
+  "config_sha256": "22363cbbb95dadfd47a2f071b87001b2795750f06ac7a4d5cc55b43207b03157",
   "generator": "tools/art_pipeline/generated_world_v02/pack.py",
   "ground": {
     "anchor": [
@@ -897,49 +897,49 @@
       0
     ],
     "canvas": [
-      1536,
-      960
+      1024,
+      640
     ],
     "kind": "ground",
     "occlusion_rect": null,
     "occupied_rect": [
       0,
       0,
-      1536,
-      960
+      1024,
+      640
     ],
-    "opaque_path": "res://art/production/p1/generated_world_v02/town_ground_opaque.png",
-    "opaque_sha256": "f5f736d34b80334021b8a34c53c8f9247d68c04470a3d53c3f84f9d2c9bd6847",
-    "raw_sha256": "779d343ed32f6f6e85969cc3435eca94212ff54d0543e142aca6c84721206748",
-    "section": "town",
+    "opaque_path": "res://art/production/p1/generated_world_v02/arena_ground_opaque.png",
+    "opaque_sha256": "04bab9e99ac9f585c18975c5db30e42ff7c6d8f8601b57c84688c195dfa4b1dd",
+    "raw_sha256": "f9ded049173dbc7d9025f2c1361443ffa1dd6a85d93d3e1b4891f86a38a7c547",
+    "section": "arena",
     "status": "packed",
     "transform": {
       "crop_origin": [
         0,
-        32
+        21
       ],
       "dst_rect": [
         0,
         0,
-        1536,
-        960
+        1024,
+        640
       ],
       "kind": "ground",
       "mode": "fit_width_crop_height",
-      "residue_px": 64,
-      "scale": "1/1",
+      "residue_px": 43,
+      "scale": "2/3",
       "scaled_size": [
-        1536,
-        1024
+        1024,
+        683
       ],
-      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/town_ground_raw.png",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/arena_ground_raw.png",
       "src_rect": [
         0,
         0,
         1536,
         1024
       ],
-      "step": "1/1"
+      "step": "3/2"
     },
     "transparent_path": null,
     "transparent_sha256": null
@@ -997,59 +997,6 @@
       },
       "transparent_path": null,
       "transparent_sha256": null
-    },
-    "town_ground": {
-      "anchor": [
-        0,
-        0
-      ],
-      "canvas": [
-        1536,
-        960
-      ],
-      "kind": "ground",
-      "occlusion_rect": null,
-      "occupied_rect": [
-        0,
-        0,
-        1536,
-        960
-      ],
-      "opaque_path": "res://art/production/p1/generated_world_v02/town_ground_opaque.png",
-      "opaque_sha256": "f5f736d34b80334021b8a34c53c8f9247d68c04470a3d53c3f84f9d2c9bd6847",
-      "raw_sha256": "779d343ed32f6f6e85969cc3435eca94212ff54d0543e142aca6c84721206748",
-      "section": "town",
-      "status": "packed",
-      "transform": {
-        "crop_origin": [
-          0,
-          32
-        ],
-        "dst_rect": [
-          0,
-          0,
-          1536,
-          960
-        ],
-        "kind": "ground",
-        "mode": "fit_width_crop_height",
-        "residue_px": 64,
-        "scale": "1/1",
-        "scaled_size": [
-          1536,
-          1024
-        ],
-        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/town_ground_raw.png",
-        "src_rect": [
-          0,
-          0,
-          1536,
-          1024
-        ],
-        "step": "1/1"
-      },
-      "transparent_path": null,
-      "transparent_sha256": null
     }
   },
   "package": "generated_world_v02",
@@ -1087,9 +1034,7 @@
         "cart"
       ],
       "complete": true,
-      "grounds": [
-        "town_ground"
-      ],
+      "grounds": [],
       "pending": [],
       "stale": []
     }

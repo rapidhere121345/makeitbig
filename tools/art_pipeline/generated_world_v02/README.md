@@ -58,8 +58,8 @@ empty object fails closed rather than producing an empty canvas.
 The ground plates are separate paths per `grounds.<id>`: mode `crop` uses a
 fixed `src_rect` with no resize; mode `fit_width_crop_height` applies
 one uniform rational scale `s = fit_width / raw_w` to both axes, then cuts a
-centre band of `canvas[1]` rows out of the scaled plate. The active town and
-arena grounds both use this fit mode; exact scale and crop are recorded in the manifest.
+centre band of `canvas[1]` rows out of the scaled plate. The active arena
+ground uses this fit mode; exact scale and crop are recorded in the manifest.
 Every ground output asserts full opacity.
 
 ## assets.json
@@ -82,7 +82,7 @@ provenance check (changed raw or outputs) is reported `stale` with
 
 `grounds.<id>` entries use the same field shape with `kind: ground`,
 `transparent_path: null`, and `occlusion_rect: null`. `ground` mirrors
-`grounds[primary_ground]` (town) so the original single-ground contract is
+`grounds[primary_ground]` (arena) so the original single-ground contract is
 unchanged. `sections.<name>` groups asset/ground ids per configured
 `section` (`town`, `arena`) with an independent `complete` flag plus its own
 `pending`/`stale` lists, so a consumer is never blocked by an unfinished
@@ -100,7 +100,7 @@ invisible RGB pixels and therefore invalidate the strict native scene fingerprin
 after import/export. For additional texture paths, set the same import options
 before baking spatial manifests. The full gate runs
 `tests/test_generated_texture_import.gd` immediately after import and requires
-all 37 imported textures (including the resident sheet) to equal raw RGBA8 bytes.
+all 75 imported textures (this package plus the actor, polish, expansion and town-order packs) to equal raw RGBA8 bytes.
 The image compilers preserve these sidecars when rebuilding PNGs.
 
 The proxy and woodpile use 11 px detection padding so its full visual detection still

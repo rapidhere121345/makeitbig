@@ -8,23 +8,8 @@
   "margin": 8,
   "occlusion_grow": 8,
   "transparent_alpha": 128,
-  "primary_ground": "town_ground",
+  "primary_ground": "arena_ground",
   "grounds": {
-    "town_ground": {
-      "source": "town_ground_raw.png",
-      "source_sha256": "779d343ed32f6f6e85969cc3435eca94212ff54d0543e142aca6c84721206748",
-      "mode": "fit_width_crop_height",
-      "canvas": [
-        1536,
-        960
-      ],
-      "anchor": [
-        0,
-        0
-      ],
-      "section": "town",
-      "fit_width": 1536
-    },
     "arena_ground": {
       "source": "arena_ground_raw.png",
       "source_sha256": "f9ded049173dbc7d9025f2c1361443ffa1dd6a85d93d3e1b4891f86a38a7c547",
@@ -253,7 +238,5 @@
       "section": "arena"
     }
   },
-  "preserved_subdirs": [
-    "residents"
-  ]
+  "preserved_subdirs": []
 }
