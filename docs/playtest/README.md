@@ -3,7 +3,7 @@
 The retained records describe historical runs, not the current checkout's test
 status. Consult logs and run fresh checks before making a new acceptance claim.
 
-- [Refactor acceptance](REFACTOR_ACCEPTANCE_20261026.md): frozen full gate (214/0) and exported-binary replay hash passed on `e4d1b49`; windowed Xvfb/llvmpipe play-through from title to forge, training, loadout, Chinese UI and a boss defeat reached no regression, with Auto and the unlocked Proxy Bay not reachable.
+- [Refactor acceptance](REFACTOR_ACCEPTANCE_20261026.md): frozen full gate (214/0) and exported-binary replay hash passed on `e4d1b49`; windowed Xvfb/llvmpipe play-through from title to forge, training, loadout, Chinese UI and a boss defeat found no refactor regression; Auto and the unlocked Proxy Bay were not reached (locked behind the first Colossus kill).
 - [Language, modern displays, and character contrast](LANGUAGE_DISPLAY_READABILITY_20261026.md): Simplified Chinese selection, display/menu scaling, bounded 4K rendering, and live-actor silhouettes; rendered checks and frozen full build/export/Linux smoke passed.
 - [Town responsiveness and street layout](TOWN_PERFORMANCE_LAYOUT_20261026.md): CPU optimizations, road-facing facilities, clearer bridge landings and joined east walls; 27 captures and frozen full gate passed, build `20261026-081845-5f4edd733ff5` packaged.
 - [Ground contact and local lighting](GROUNDING_LIGHT_20261025.md): final visual/full-build acceptance and published build `20261026-043825-5f4edd733ff5`; actor contact shadows, object base seams and restrained local light.
