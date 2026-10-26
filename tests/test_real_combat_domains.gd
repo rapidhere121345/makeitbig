@@ -1,7 +1,7 @@
 extends SceneTree
 
 const StatsScript := preload("res://src/game/combat_stats_snapshot.gd")
-const WaveScript := preload("res://src/game/combat_wave_definition.gd")
+const WaveScript := preload("res://src/runtime/encounter/wave_definition.gd")
 const LootScript := preload("res://src/runtime/combat/combat_room_loot_rebuild.gd")
 const ItemRegistryScript := preload("res://src/content/early_item_registry.gd")
 const GeneratorScript := preload("res://src/systems/equipment_drop_generator.gd")
@@ -52,23 +52,25 @@ func _test_stats(failures: Array[String]) -> void:
 func _test_waves(failures: Array[String]) -> void:
 	var wave_data := {
 		"wave_id": "wave_01",
-		"spawn_tick": 30,
-		"enemies": [{"spawn_id": "enemy_a", "kind_id": "melee_pursuer", "socket": "spawn.a", "stats_id": "ranger_room_normal", "action_profile_id": "melee_basic"}],
-		"clear_when": "all_dead",
+		"start_delay_ticks": 30,
+		"spawns": [{"spawn_id": "enemy_a", "archetype_id": "melee_pursuer", "socket_id": "spawn.a", "count": 2}],
+		"clear_policy": "all_dead",
 		"next_wave_delay_ticks": 15,
 	}
-	var normalized := WaveScript.normalize_data(wave_data)
+	var normalized := WaveScript.from_data(wave_data)
 	_expect(bool(normalized.ok), "waves: valid authored wave was rejected", failures)
 	if bool(normalized.ok):
 		var wave: RefCounted = normalized.value
+		_expect(wave.total_spawn_count() == 2, "waves: spawn count was not preserved", failures)
 		var copy: Dictionary = wave.snapshot()
-		(copy.enemies as Array)[0]["kind_id"] = "tampered"
-		_expect(String(wave.enemies[0].kind_id) == "melee_pursuer", "waves: snapshot leaked enemy definition", failures)
-	var duplicate := WaveScript.normalize_waves([wave_data, wave_data.duplicate(true)])
-	_expect(not bool(duplicate.ok) and String(duplicate.error).contains("duplicate_wave_id"), "waves: duplicate wave identity was accepted", failures)
+		(copy.spawns as Array)[0]["archetype_id"] = "tampered"
+		_expect(String(wave.spawn_specs[0].archetype_id) == "melee_pursuer", "waves: snapshot leaked spawn definition", failures)
+	var duplicate := wave_data.duplicate(true)
+	duplicate["spawns"] = [wave_data.spawns[0].duplicate(true), wave_data.spawns[0].duplicate(true)]
+	_expect(not bool(WaveScript.from_data(duplicate).ok) and String(WaveScript.from_data(duplicate).error).contains("duplicate_spawn_id"), "waves: duplicate spawn identity was accepted", failures)
 	var unknown := wave_data.duplicate(true)
 	unknown["unexpected"] = true
-	_expect(not bool(WaveScript.normalize_data(unknown).ok), "waves: unknown field was accepted", failures)
+	_expect(not bool(WaveScript.from_data(unknown).ok), "waves: unknown field was accepted", failures)
 
 
 func _test_loot(failures: Array[String]) -> void:

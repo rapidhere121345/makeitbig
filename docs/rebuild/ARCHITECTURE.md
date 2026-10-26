@@ -86,8 +86,8 @@ The public query surface is semantic, never a generic `is_blocked` call:
 Chapter-1 delivery status (2026-10-19 audit): `movement`, `projectile`,
 `attack` and `hurtbox` are live production channels (authored combat static
 blockers publish `movement` plus `projectile`). The `navigation` graph API,
-`VisionResolver` integration and runtime `SpatialOverlay` producers are
-intentionally deferred for chapter 1: no encounter consumes them yet, and they
+a vision resolver (the unused first draft was removed) and runtime
+`SpatialOverlay` producers are intentionally deferred for chapter 1: no encounter consumes them yet, and they
 must not be wired without a gameplay slice that does. The presentation-side
 occlusion channel stays art-box driven and never enters this spatial index as
 a gameplay surface.

@@ -104,19 +104,6 @@ static func pillar_world() -> Dictionary:
 	}
 
 
-static func vision_world() -> Dictionary:
-	return {
-		"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION,
-		"asset_id": "fixture/vision_room",
-		"surfaces": [
-			surface("sight_wall", Rect2(95.0, 10.0, 6.0, 40.0), [Channels.VISION]),
-			surface("foreground_panel", Rect2(95.0, 70.0, 6.0, 40.0), [Channels.OCCLUSION], {"occlusion_rank": 7}),
-			surface("bush", Rect2(95.0, 108.0, 6.0, 12.0), [Channels.VISION], {"vision_mode": "attenuate", "attenuation": 0.5}),
-			surface("crate", Rect2(150.0, 0.0, 8.0, 8.0), [Channels.MOVEMENT]),
-		],
-	}
-
-
 static func tie_world() -> Dictionary:
 	return {
 		"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION,

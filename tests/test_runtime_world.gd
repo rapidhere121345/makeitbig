@@ -1,6 +1,5 @@
 extends SceneTree
 
-const EntityDefinitionScript = preload("res://src/runtime/world/entity_definition.gd")
 const ActorStateScript = preload("res://src/runtime/world/actor_state.gd")
 const ActorRegistryScript = preload("res://src/runtime/world/actor_registry.gd")
 const SimulationWorldScript = preload("res://src/runtime/world/simulation_world.gd")
@@ -40,7 +39,6 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	_test_entity_definition_is_static()
 	_test_actor_state_is_versioned_instance_state()
 	_test_actor_commit_rejects_stale_room_references()
 	_test_actor_access_is_the_movement_commit_boundary()
@@ -92,27 +90,6 @@ func _fixture_ready(fixture: Dictionary, label: String) -> bool:
 		return true
 	failures.append("%s: fixture failed: %s" % [label, String(fixture.get("error", ""))])
 	return false
-
-
-func _test_entity_definition_is_static() -> void:
-	var raw := {
-		"schema_version": 1,
-		"entity_id": "hero",
-		"feet_anchor": Vector2(3.5, 7.0),
-		"footprint": {"kind": "circle", "radius": 6.0},
-		"sort_baseline": 7.0,
-		"parts": [{"part_id": "body", "visual_id": "hero.body"}],
-		"prefab_path": "res://test/hero.tscn",
-	}
-	var parsed: Dictionary = EntityDefinitionScript.from_dict(raw)
-	_expect(bool(parsed.ok), "entity: valid definition rejected")
-	var entity = parsed.value
-	var snapshot: Dictionary = entity.snapshot()
-	_expect(snapshot.entity_id == "hero" and snapshot.feet_anchor == Vector2(3.5, 7.0), "entity: snapshot lost static bindings")
-	var invalid := raw.duplicate(true)
-	invalid["runtime_position"] = Vector2.ZERO
-	var invalid_result: Dictionary = EntityDefinitionScript.from_dict(invalid)
-	_expect(not bool(invalid_result.ok), "entity: runtime state was accepted into definition")
 
 
 func _test_actor_state_is_versioned_instance_state() -> void:

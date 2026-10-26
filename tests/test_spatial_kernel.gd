@@ -8,8 +8,6 @@ const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay
 const BodyCollisionPolicyScript := preload("res://src/runtime/spatial/body_collision_policy.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
 const ContinuousHitResolverScript := preload("res://src/runtime/spatial/continuous_hit_resolver.gd")
-const VisionResolverScript := preload("res://src/runtime/spatial/vision_resolver.gd")
-const OcclusionResolverScript := preload("res://src/runtime/spatial/occlusion_resolver.gd")
 const SpatialSweepScript := preload("res://src/runtime/geometry/spatial_sweep.gd")
 const ShapeScript := preload("res://src/runtime/geometry/spatial_shape.gd")
 const Fixtures := preload("res://tests/spatial/spatial_fixtures.gd")
@@ -30,7 +28,6 @@ func _initialize() -> void:
 	_test_channel_independence()
 	_test_projectile_static_dynamic_tie_break()
 	_test_separating_circle_does_not_fabricate_contact()
-	_test_vision_vs_occlusion_separation()
 	_test_overlay_revision()
 	_test_byte_stable_snapshots_and_ordering()
 	_test_request_validation()
@@ -383,46 +380,6 @@ func _test_projectile_static_dynamic_tie_break() -> void:
 		_expect((pierce_contacts[1] as Contact).kind == Contact.KIND_STATIC_SURFACE, "tie: piercing wall contact lost")
 
 
-func _test_vision_vs_occlusion_separation() -> void:
-	var index: StaticSpatialIndex = StaticSpatialIndexScript.build(Fixtures.vision_world())["value"]
-	var vision: VisionResolver = VisionResolverScript.make(index)["value"]
-	var occlusion: OcclusionResolver = OcclusionResolverScript.make(index)["value"]
-
-	var sight_blocked: Dictionary = vision.line_of_sight({"from": Vector2(10.0, 30.0), "to": Vector2(190.0, 30.0)})
-	_expect(not bool(sight_blocked["visible"]), "vision: sight wall did not block line of sight")
-	_expect((sight_blocked["blockers"] as Array).size() == 1, "vision: blocker count changed")
-	var sight_clear_of_occluder: Dictionary = vision.line_of_sight({"from": Vector2(10.0, 90.0), "to": Vector2(190.0, 90.0)})
-	_expect(bool(sight_clear_of_occluder["visible"]), "vision: occlusion-only panel blocked line of sight")
-
-	var view_blocked: Dictionary = occlusion.segment({"from": Vector2(10.0, 90.0), "to": Vector2(190.0, 90.0)})
-	_expect(bool(view_blocked["occluded"]), "occlusion: foreground panel did not occlude the view ray")
-	_expect(int(view_blocked["contact"]["response"]["rank"]) == 7, "occlusion: authored rank was lost")
-	var view_clear_of_sight_wall: Dictionary = occlusion.segment({"from": Vector2(10.0, 30.0), "to": Vector2(190.0, 30.0)})
-	_expect(not bool(view_clear_of_sight_wall["occluded"]), "occlusion: vision-only wall occluded the view ray")
-
-	var through_bush: Dictionary = vision.line_of_sight({"from": Vector2(10.0, 114.0), "to": Vector2(190.0, 114.0)})
-	_expect(bool(through_bush["visible"]), "vision: attenuating bush fully blocked sight")
-	_expect(_near(float(through_bush["transparency"]), 0.5), "vision: bush attenuation factor changed")
-
-	var dynamic := DynamicSpatialIndexScript.new()
-	dynamic.register_body(Fixtures.body("zeta", Vector2(190.0, 30.0), 8.0, [Channels.HURTBOX], &"soft"))
-	dynamic.register_body(Fixtures.body("alpha", Vector2(60.0, 80.0), 8.0, [Channels.HURTBOX], &"soft"))
-	dynamic.register_body(Fixtures.body("far", Vector2(30.0, 120.0), 8.0, [Channels.HURTBOX], &"soft"))
-	var targets: Dictionary = vision.visible_targets({
-		"from": Vector2(10.0, 30.0),
-		"range": 300.0,
-		"half_angle": PI * 0.5,
-		"facing": Vector2(0, 1),
-		"dynamic_index": dynamic,
-	})
-	_expect(bool(targets["ok"]), "vision: target query failed")
-	var listed: Array = targets["targets"]
-	_expect(listed.size() == 2, "vision: hidden target was visible or visible targets were lost")
-	if listed.size() == 2:
-		_expect(String(listed[0]["entity_id"]) == "alpha", "vision: target ordering ignored distance")
-		_expect(String(listed[1]["entity_id"]) == "far", "vision: target ordering ignored distance for the far target")
-
-
 func _test_overlay_revision() -> void:
 	var index: StaticSpatialIndex = StaticSpatialIndexScript.build(Fixtures.doorway_world(50.0, 70.0))["value"]
 	var static_snapshot := JSON.stringify(index.snapshot())
@@ -543,16 +500,6 @@ func _test_byte_stable_snapshots_and_ordering() -> void:
 	var second_shot: Dictionary = second_hits.resolve_path(shot_request)
 	_expect(JSON.stringify(Contact.encode(first_shot["contacts"])) == JSON.stringify(Contact.encode(second_shot["contacts"])), "bytes: projectile contacts depended on registration order")
 	_expect(JSON.stringify(Contact.encode(first_hits.resolve_path(shot_request)["contacts"])) == JSON.stringify(Contact.encode(first_shot["contacts"])), "bytes: repeated projectile query changed bytes")
-
-	var first_vision: VisionResolver = VisionResolverScript.make(first)["value"]
-	var second_vision: VisionResolver = VisionResolverScript.make(second)["value"]
-	var sight_request := {"from": Vector2(0.0, 20.0), "to": Vector2(150.0, 20.0)}
-	var first_sight: Dictionary = first_vision.line_of_sight(sight_request)
-	var second_sight: Dictionary = second_vision.line_of_sight(sight_request)
-	var first_blockers := Contact.encode(first_sight["blockers"])
-	var second_blockers := Contact.encode(second_sight["blockers"])
-	_expect(JSON.stringify(first_blockers) == JSON.stringify(second_blockers), "bytes: vision blockers depended on registration order")
-	_expect(JSON.stringify(Contact.encode(first_vision.line_of_sight(sight_request)["blockers"])) == JSON.stringify(first_blockers), "bytes: repeated vision query changed bytes")
 
 
 func _contact_signature(contacts: Array) -> Array:

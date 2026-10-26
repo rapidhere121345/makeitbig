@@ -3,7 +3,6 @@ extends SceneTree
 const TownExpectations = preload("res://tests/helpers/town_scene_expectations.gd")
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 const ActorStateScript := preload("res://src/runtime/world/actor_state.gd")
-const EntityDefinitionScript := preload("res://src/runtime/world/entity_definition.gd")
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const WorldPresenterScript := preload("res://src/runtime/world/world_presenter.gd")
 
@@ -42,12 +41,6 @@ func _test_town_building_channels_and_sort_anchor() -> void:
 	geometry_ids.sort()
 	_expect(geometry_ids == authored.static_ids and int(authored.triangle_count) + int(authored.circle_count) == geometry_ids.size(),
 		"town: manifest static geometry must equal the scene's triangulation (%d triangles, %d circles)" % [authored.triangle_count, authored.circle_count])
-	var definition_result: Dictionary = EntityDefinitionScript.from_dict({
-		"entity_id": "ranger", "feet_anchor": Vector2(12.0, 18.0),
-		"footprint": {"kind": "circle", "radius": 6.0}, "sort_baseline": 18.0,
-		"parts": [{"part_id": "body", "visual_id": "ranger.body"}],
-	})
-	_expect(bool(definition_result.ok), "town: feet anchored entity rejected")
 
 
 func _test_corridor_opening_and_wall_slide() -> void:
@@ -77,18 +70,6 @@ func _test_concave_room_preserves_hole() -> void:
 
 
 func _test_multipart_boss_keeps_one_logical_identity() -> void:
-	var definition_result: Dictionary = EntityDefinitionScript.from_dict({
-		"entity_id": "threshold_colossus",
-		"feet_anchor": Vector2(80.0, 80.0),
-		"footprint": {"kind": "circle", "radius": 18.0},
-		"sort_baseline": 80.0,
-		"parts": [
-			{"part_id": "left_hand", "visual_id": "boss.left_hand", "damage_group_id": "hands"},
-			{"part_id": "right_hand", "visual_id": "boss.right_hand", "damage_group_id": "hands"},
-			{"part_id": "core", "visual_id": "boss.core", "damage_group_id": "core"},
-		],
-	})
-	_expect(bool(definition_result.ok), "boss: multipart definition was rejected")
 	var state: ActorState = ActorStateScript.create(Vector2(80.0, 80.0), 18.0, "room/boss", 2)
 	_expect(state != null, "boss: runtime state was rejected")
 	state.part_ids = ["core", "right_hand", "left_hand"]

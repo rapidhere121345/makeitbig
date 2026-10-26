@@ -2,7 +2,6 @@ extends SceneTree
 
 const Game = preload("res://src/game/game_root.gd")
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
-const LayoutBlockerLoaderScript := preload("res://src/runtime/geometry/layout_blocker_loader.gd")
 var errors: Array[String] = []
 
 func _initialize() -> void: call_deferred("_run")
