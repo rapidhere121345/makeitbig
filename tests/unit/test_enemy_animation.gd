@@ -462,7 +462,7 @@ func _test_arena_integration() -> void:
 	_expect(_authoritative_fingerprint(arena) == before_redraw, "arena: a detached no-tick observation changed authority")
 	_expect(not bool(arena.presentation.animations.enemy_state(arena.gameplay_snapshot(), walker)["moving"]), "arena: a render frame that ran no tick was read as motion")
 	fixture.drive(arena, {"enemy_step": func() -> void:
-		_expect(bool(arena._move_enemy_actor(walker, Vector2(16.0, 0.0)).get("ok", false)),
+		_expect(bool(arena._actor_setup._move_enemy_actor(walker, Vector2(16.0, 0.0)).get("ok", false)),
 			"arena: the real enemy motor rejected the walking tick")
 	})
 	fixture.step(arena)
@@ -520,7 +520,7 @@ func _test_arena_integration() -> void:
 	## Capture the held state mid-walk: one real authority tick through the
 	## motor re-establishes the inferred motion the redraws must preserve.
 	fixture.drive(arena, {"enemy_step": func() -> void:
-		_expect(bool(arena._move_enemy_actor(redraw_enemy, Vector2(4.0, 0.0)).get("ok", false)),
+		_expect(bool(arena._actor_setup._move_enemy_actor(redraw_enemy, Vector2(4.0, 0.0)).get("ok", false)),
 			"rate: the redraw drive rejected the walking tick")
 	})
 	fixture.step(arena)
@@ -743,7 +743,7 @@ func _drive_render_rate(arena: Node, enemy, rate: int, seconds: float) -> Dictio
 	var states := {}
 	var delta := 1.0 / float(rate)
 	fixture.drive(arena, {"enemy_step": func() -> void:
-		_expect(bool(arena._move_enemy_actor(enemy, Vector2(4.0, 0.0)).get("ok", false)),
+		_expect(bool(arena._actor_setup._move_enemy_actor(enemy, Vector2(4.0, 0.0)).get("ok", false)),
 			"rate: the real enemy motor rejected the walking tick")
 	})
 	for frame in int(round(float(rate) * seconds)):

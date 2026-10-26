@@ -23,17 +23,17 @@ func bind(owner: MainArena, rules: RefCounted, outcome: RefCounted) -> Dictionar
 func move_enemy(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
 	if not _ready():
 		return {"ok": false, "error": "encounter_room_owner_unavailable"}
-	return _owner._move_enemy_actor(enemy, displacement)
+	return _owner._actor_setup._move_enemy_actor(enemy, displacement)
 
 
 func set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
-	return _ready() and _owner._set_enemy_collision_class(enemy, collision_class)
+	return _ready() and _owner._actor_setup._set_enemy_collision_class(enemy, collision_class)
 
 
 func register_enemy(enemy: CombatEnemyState) -> Dictionary:
 	if not _ready():
 		return {"ok": false, "error": "encounter_room_owner_unavailable"}
-	var accepted: bool = _owner._register_enemy_actor(enemy)
+	var accepted: bool = _owner._actor_setup._register_enemy_actor(enemy)
 	return {"ok": accepted, "error": "" if accepted else "register_enemy_rejected"}
 
 

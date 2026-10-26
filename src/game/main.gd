@@ -5,7 +5,6 @@ signal return_requested
 
 const PresentationController := preload("res://src/presentation/combat_presentation_controller.gd")
 const PresentationSnapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
-const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.gd")
 const InputAdapter := preload("res://src/presentation/combat_input_adapter.gd")
 const CombatInterfaceTheme := preload("res://src/presentation/combat_interface_theme.gd")
 
@@ -17,23 +16,12 @@ const CombatCommandProtocolScript = preload("res://src/systems/combat_command_pr
 const ManualAimResolverScript = preload("res://src/systems/manual_aim_resolver.gd")
 const EnemyTacticsScript = preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
-const CombatQueryScript = preload("res://src/runtime/geometry/combat_query.gd")
 const CombatEventStreamScript = preload("res://src/systems/combat_event_stream.gd")
 const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
 const PiercingArrowModelScript = preload("res://src/systems/piercing_arrow_model.gd")
 const ActorRegistryScript = preload("res://src/runtime/world/actor_registry.gd")
 const SimulationWorldScript = preload("res://src/runtime/world/simulation_world.gd")
 const SimOutcomeScript = preload("res://src/runtime/simulation/sim_outcome.gd")
-const StaticSpatialIndexScript = preload("res://src/runtime/spatial/static_spatial_index.gd")
-const DynamicSpatialIndexScript = preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
-const SpatialOverlayScript = preload("res://src/runtime/spatial/spatial_overlay.gd")
-const MovementResolverScript = preload("res://src/runtime/spatial/movement_resolver.gd")
-const BodyCollisionPolicyScript = preload("res://src/runtime/spatial/body_collision_policy.gd")
-const RoomActorAccessScript = preload("res://src/runtime/world/room_actor_access.gd")
-const RoomSpatialPortScript = preload("res://src/runtime/world/room_spatial_port.gd")
-const RoomCombatPortScript = preload("res://src/runtime/world/room_combat_port.gd")
-const RoomEncounterPortScript = preload("res://src/runtime/world/room_encounter_port.gd")
-const RoomPresentationPortScript = preload("res://src/runtime/world/room_presentation_port.gd")
 const CombatStateSnapshotBuilderScript = preload("res://src/game/combat_state_snapshot_builder.gd")
 const CombatEnemyStateScript = preload("res://src/runtime/world/combat_enemy_state.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
@@ -50,22 +38,13 @@ const CombatCommandSourceScript = preload("res://src/systems/combat_command_sour
 const MainCombatCommandSourcePortScript: Script = preload("res://src/game/main_combat_command_source_port.gd")
 const CombatSimulationScript = preload("res://src/systems/combat_simulation.gd")
 const RangerArrowFlightScript := preload("res://src/runtime/combat/ranger_arrow_flight.gd")
-const BossCombatDomainScript := preload("res://src/runtime/combat/boss_combat_domain.gd")
-const BossTargetViewScript := preload("res://src/runtime/combat/boss_target_view.gd")
-const BossHurtboxScript := preload("res://src/runtime/combat/boss_hurtbox.gd")
 const BossArrowFlightScript := preload("res://src/runtime/combat/boss_arrow_flight.gd")
-const CombatHazardDomainScript := preload("res://src/runtime/combat/combat_hazard_domain.gd")
-const DeathSettlementNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
-const RoomEncounterScript := preload("res://src/runtime/encounter/room_encounter.gd")
-const SimTickContextScript := preload("res://src/runtime/simulation/sim_tick_context.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
 const CombatLootPickupProtocolScript := preload("res://src/systems/combat_loot_pickup_protocol.gd")
 const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const MainCombatRoomPortScript := preload("res://src/game/ports/main_combat_room_port.gd")
-const MainHitAdmissionPortScript := preload("res://src/game/ports/main_hit_admission_port.gd")
-const MainMovementPolicyPortScript := preload("res://src/game/ports/main_movement_policy_port.gd")
 const RoomPhaseDomainScript := preload("res://src/game/ports/room_phase_domain.gd")
 const MainEncounterRoomPortScript := preload("res://src/game/ports/main_encounter_room_port.gd")
 const MainEncounterSpawnPortScript := preload("res://src/game/ports/main_encounter_spawn_port.gd")
@@ -73,6 +52,7 @@ const KernelReconcilerScript := preload("res://src/game/combat_room/kernel_recon
 const RoomHazardsScript := preload("res://src/game/combat_room/room_hazards.gd")
 const PiercingArrowsScript := preload("res://src/game/combat_room/piercing_arrows.gd")
 const EnemyAiTicksScript := preload("res://src/game/combat_room/enemy_ai_ticks.gd")
+const RoomActorSetupScript := preload("res://src/game/combat_room/actor_setup.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -353,6 +333,8 @@ var _hazards := RoomHazardsScript.new(self)
 var _arrows := PiercingArrowsScript.new(self)
 ## EnemyAiTicks lives in src/game/combat_room/enemy_ai_ticks.gd.
 var _enemy_ai := EnemyAiTicksScript.new(self)
+## RoomActorSetup lives in src/game/combat_room/actor_setup.gd.
+var _actor_setup := RoomActorSetupScript.new(self)
 
 
 func _init() -> void:
@@ -675,7 +657,7 @@ func start_room() -> void:
 		return
 	if not _spawn_wave():
 		return
-	if not _configure_actor_registry():
+	if not _actor_setup._configure_actor_registry():
 		if not last_save_message.begins_with("Deployment blocked:"):
 			last_save_message = "Deployment blocked: actor_registry_configuration_failed"
 		in_arena = false
@@ -688,7 +670,7 @@ func start_room() -> void:
 		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
 		in_arena = false
 		return
-	if not _start_mounted_encounter():
+	if not _actor_setup._start_mounted_encounter():
 		in_arena = false
 		return
 	refresh_presentation()
@@ -828,164 +810,6 @@ func _load_test_room_fixture() -> Dictionary:
 	return JsonIO.read_object(FIXTURE_PATH)
 
 
-func _configure_actor_registry() -> bool:
-	var room_key := room_id.strip_edges()
-	if room_key.is_empty():
-		push_error("actor_registry_configuration_failed:missing_room_id")
-		return false
-	if scene_runtime != null and not scene_runtime.is_ready():
-		push_error("actor_registry_configuration_failed:scene_runtime_not_ready")
-		return false
-	var injected_runtime: bool = scene_runtime != null
-	if injected_runtime:
-		# SceneRuntime is the only authority for a mounted room: its actor
-		# access, SimulationWorld, and the world's bound ports are adopted
-		# as-is. Main must never rebuild or replace them here, including when
-		# presentation is disabled.
-		actor_registry = scene_runtime.get("actor_registry")
-		simulation_world = scene_runtime.get("simulation")
-		actor_registry_instance_id = String(scene_runtime.get("room_instance_id"))
-		actor_registry_revision = int(scene_runtime.get("world_revision"))
-		if actor_registry == null or simulation_world == null or actor_registry_instance_id.is_empty():
-			push_error("actor_registry_configuration_failed:injected_access_missing")
-			return false
-		room_spatial_port = scene_runtime.get("spatial_port")
-		room_combat_port = scene_runtime.get("combat_port")
-		room_encounter_port = scene_runtime.get("encounter_port")
-		if presentation_enabled:
-			scene_runtime.clear_actor_presentation_bindings()
-			var presentation_ready: Dictionary = scene_runtime.prepare_presentation()
-			if not bool(presentation_ready.get("ok", false)):
-				push_error("presentation_projector_configuration_failed:%s" % String(presentation_ready.get("error", "unknown")))
-				return false
-	else:
-		if not _configure_standalone_room_access(room_key):
-			push_error("actor_registry_configuration_failed:standalone_access_failed")
-			return false
-	if not _kernel_reconciler._bind_kernel_room_ports():
-		actor_registry_instance_id = ""
-		return false
-	var movement_policy_port := MainMovementPolicyPortScript.new()
-	var movement_policy_bound: Dictionary = movement_policy_port.bind(self)
-	if not bool(movement_policy_bound.get("ok", false)):
-		push_error("actor_registry_configuration_failed:movement_policy_port:%s" % String(movement_policy_bound.get("error", "unknown")))
-		actor_registry_instance_id = ""
-		return false
-	actor_registry.set_movement_policy_port(movement_policy_port)
-	var preserved_sim_tick := sim_tick
-	if actor_registry.has_method("reset_actors"):
-		var reset_result: Dictionary = actor_registry.reset_actors()
-		if not bool(reset_result.get("ok", false)):
-			push_error("actor_registry_configuration_failed:actor_reset:%s" % str(reset_result))
-			actor_registry_instance_id = ""
-			return false
-	if not actor_registry.has_method("has_movement_boundary") or not bool(actor_registry.has_movement_boundary()):
-		push_error("manifest_movement_boundary_missing:%s" % layout_id)
-		push_error("actor_registry_configuration_failed:movement_boundary_missing")
-		actor_registry_instance_id = ""
-		return false
-	var spawn_position: Vector2
-	if injected_runtime:
-		var authored_spawn: Variant = _room_socket("combat/spawn")
-		if not authored_spawn is Vector2 or not actor_registry.is_position_clear(authored_spawn, 14.0):
-			push_error("actor_registry_configuration_failed:invalid_player_spawn:%s" % str(authored_spawn))
-			return false
-		spawn_position = authored_spawn
-	else:
-		var projected: Dictionary = _project_actor_spawn_position(_arena_rect().get_center() + Vector2(-220.0, 100.0), 14.0)
-		if not bool(projected.get("ok", false)):
-			return false
-		spawn_position = _quantize_position(projected["position"])
-	var player_result: Dictionary = actor_registry.register_actor("ranger", spawn_position, 14.0, 1, &"soft", [&"movement", &"hurtbox"])
-	if not bool(player_result.get("ok", false)):
-		push_error("actor_registry_configuration_failed:player_registration:%s" % str(player_result))
-		actor_registry_instance_id = ""
-		return false
-	if injected_runtime and presentation_enabled and not _bind_runtime_actor_presentation("ranger", "ranger.south.idle", 2):
-		return false
-	for enemy: CombatEnemyState in enemies:
-		if not _register_enemy_actor(enemy):
-			push_error("actor_registry_configuration_failed:enemy_registration:%d" % enemy.entity_id)
-			actor_registry_instance_id = ""
-			return false
-	# Standalone Main fixtures do not own a SceneRuntime/RoomEncounter port.
-	# Mounted production rooms do, and must bind the Boss domain to that typed
-	# encounter authority. Keep the standalone authority self-contained so
-	# geometry and combat tests can exercise a Boss without inventing a second
-	# encounter runtime.
-	if scene_runtime != null and not _bind_boss_production_encounter():
-		actor_registry_instance_id = ""
-		return false
-	# The mounted SimulationWorld starts at tick zero.  A live room never
-	# rewinds or fabricates its authority tick during actor registration.
-	if not _configure_player_domain(preserved_sim_tick):
-		push_error("actor_registry_configuration_failed:player_domain:%s" % last_save_message)
-		actor_registry_instance_id = ""
-		return false
-	return true
-
-
-func _configure_standalone_room_access(room_key: String) -> bool:
-	actor_registry_revision += 1
-	actor_registry_instance_id = "combat/%s/%d" % [room_key, actor_registry_revision]
-	var boundary := ArenaGeometryScript.movement_boundary(layout_id, _arena_rect())
-	if boundary.is_empty():
-		return false
-	var static_build: Dictionary = StaticSpatialIndexScript.build({
-		"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION,
-		"asset_id": "runtime/%s" % layout_id,
-		"surfaces": [],
-		"movement_boundary": _boundary_for_static_index(boundary),
-	})
-	if not bool(static_build.get("ok", false)):
-		return false
-	var static_index = static_build.get("value")
-	var dynamic_index = DynamicSpatialIndexScript.new()
-	var overlay = SpatialOverlayScript.new()
-	var movement_build: Dictionary = MovementResolverScript.make(static_index, overlay, dynamic_index)
-	if not bool(movement_build.get("ok", false)):
-		return false
-	var spatial_port = RoomSpatialPortScript.new()
-	var combat_port = RoomCombatPortScript.new()
-	var encounter_port = RoomEncounterPortScript.new()
-	var presentation_port = RoomPresentationPortScript.new()
-	var raw_registry = ActorRegistryScript.new()
-	simulation_world = SimulationWorldScript.new(spatial_port, combat_port, encounter_port, presentation_port, raw_registry)
-	var configured = simulation_world.configure(actor_registry_instance_id, actor_registry_revision, SIM_TICKS_PER_SECOND)
-	if not configured.ok:
-		return false
-	var access = RoomActorAccessScript.new()
-	var access_result: Dictionary = access.configure(simulation_world, raw_registry, static_index, dynamic_index, movement_build.get("value"), overlay)
-	if not bool(access_result.get("ok", false)):
-		return false
-	actor_registry = access
-	spatial_port.bind(access)
-	combat_port.bind(access)
-	room_spatial_port = spatial_port
-	room_combat_port = combat_port
-	room_encounter_port = encounter_port
-	return true
-
-
-func _boundary_for_static_index(boundary: Dictionary) -> Dictionary:
-	var kind := String(boundary.get("type", boundary.get("kind", "")))
-	match kind:
-		"rect", "corridor":
-			var rect: Variant = boundary.get("rect", null)
-			var value := {"kind": kind, "rect": rect}
-			if kind == "corridor":
-				value["half_height"] = float(boundary.get("half_height", 0.0))
-			return value
-		"ring":
-			return {
-				"kind": "ring",
-				"center": boundary.get("center", Vector2.ZERO),
-				"inner_radius": float(boundary.get("inner_radius", 0.0)),
-				"outer_radius": float(boundary.get("outer_radius", 0.0)),
-			}
-	return {}
-
-
 ## Production encounter materialization for the mounted room. RoomEncounter
 ## owns when and how many actors appear; EncounterDirector only creates the
 ## room-local state object requested by that typed deployment fact.
@@ -1009,7 +833,7 @@ func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 	if not bool(created.get("ok", false)):
 		return EncounterSpawnResultScript.failed(request, String(created.get("error", "encounter_enemy_create_failed")))
 	var enemy: CombatEnemyState = created.get("enemy", null)
-	if enemy == null or not _register_enemy_actor(enemy):
+	if enemy == null or not _actor_setup._register_enemy_actor(enemy):
 		encounter_director.discard_encounter_enemy(enemy)
 		return EncounterSpawnResultScript.failed(request, "encounter_actor_registration_failed")
 	var actor_id := "enemy/%d" % enemy.entity_id
@@ -1034,197 +858,6 @@ func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 	)
 
 
-func _start_mounted_encounter() -> bool:
-	if scene_runtime == null or not scene_runtime.is_ready():
-		return true
-	var encounter_domain: Variant = scene_runtime.get("encounter_domain")
-	if encounter_domain == null:
-		return true
-	var phase := String(encounter_domain.snapshot().get("phase", "")) if encounter_domain.has_method("snapshot") else ""
-	if phase != "idle" and sim_tick == 0 and encounter_domain.has_method("restart"):
-		var restarted: Dictionary = encounter_domain.restart(sim_tick)
-		if not bool(restarted.get("ok", false)):
-			last_save_message = "Deployment blocked: %s" % String(restarted.get("error", "encounter_restart_failed"))
-			return false
-		phase = "idle"
-	if phase == "idle":
-		var started: Dictionary = scene_runtime.start_encounter(sim_tick)
-		if not bool(started.get("ok", false)):
-			last_save_message = "Deployment blocked: %s" % String(started.get("error", "encounter_start_failed"))
-			return false
-	var encounter_port = scene_runtime.get("encounter_port")
-	if encounter_port != null and encounter_port.has_method("prime_spawn_requests"):
-		encounter_port.prime_spawn_requests(sim_tick)
-	var materialized: Array[Dictionary] = scene_runtime.materialize_encounter_spawns()
-	for result: Dictionary in materialized:
-		if String(result.get("kind", "")) == "failed":
-			last_save_message = "Deployment blocked: encounter_spawn_failed:%s" % String(result.get("error", "unknown"))
-			return false
-	return true
-
-
-
-func _register_enemy_actor(enemy: CombatEnemyState) -> bool:
-	if actor_registry == null or enemy == null:
-		push_error("enemy_actor_registration_failed:missing_dependency")
-		return false
-	var projected: Dictionary = _project_actor_spawn_position(enemy.position, 16.0)
-	if not bool(projected.get("ok", false)):
-		push_error("enemy_actor_registration_failed:projection:%d:%s" % [enemy.entity_id, str(projected)])
-		return false
-	var position: Vector2 = projected["position"]
-	if not actor_registry.is_position_clear(position, 16.0):
-		push_error("enemy_actor_registration_failed:blocked:%d:%s" % [enemy.entity_id, str(position)])
-		return false
-	var drop_tags: Array[String] = []
-	for tag: Variant in room_drop_tags:
-		drop_tags.append(String(tag))
-	var registered: Dictionary = actor_registry.register_actor(
-		"enemy/%d" % enemy.entity_id, position, 16.0, maxi(1, roundi(enemy.health)), &"soft",
-		[&"movement", &"hurtbox"], PackedStringArray(), maxf(1.0, enemy.maximum_health), {},
-		enemy.kind_id, "enemy/%d" % enemy.entity_id, drop_tags
-	)
-	if not bool(registered.get("ok", false)):
-		push_error("enemy_actor_registration_failed:register:%d:%s" % [enemy.entity_id, str(registered)])
-	if bool(registered.get("ok", false)):
-		enemy.position = position
-		_enemy_stable_keys["actor/%d" % int(registered.stable_key)] = enemy.entity_id
-		if enemy.is_boss and not _register_boss_kernel_target(enemy, int(registered.stable_key), enemies.find(enemy)):
-			return false
-		if scene_runtime != null and presentation_enabled:
-			var role := "melee"
-			match enemy.kind_id:
-				"charging_raider": role = "charger"
-				"fan_ranged": role = "ranged"
-			if not _bind_runtime_actor_presentation("enemy/%d" % enemy.entity_id, "enemy.%s.idle" % role, 1):
-				return false
-	return bool(registered.get("ok", false))
-
-
-func _register_boss_kernel_target(enemy: CombatEnemyState, stable_key: int, ordinal: int) -> bool:
-	if not _kernel_reconciler._boss_domain_room_is_current():
-		push_error("boss_domain_registration_room_mismatch")
-		return false
-	if stable_key < 1 or ordinal < 0:
-		push_error("boss_domain_registration_identity_invalid:%d:%d" % [enemy.entity_id, stable_key])
-		return false
-	var maximum: BigValue = combat_system.outcome_snapshot().boss_maximum
-	if maximum == null or maximum.is_zero():
-		push_error("boss_domain_maximum_unavailable:%d" % enemy.entity_id)
-		return false
-	var target_key := "actor/%d" % stable_key
-	var drop_tags: Array[String] = []
-	for tag: Variant in room_drop_tags:
-		drop_tags.append(String(tag))
-	var target := BossTargetViewScript.make(
-		target_key,
-		maximum,
-		enemy.position,
-		enemy.kind_id,
-		_production_boss_spawn_key(enemy, ordinal),
-		drop_tags
-	)
-	for part: Dictionary in enemy.hurtbox_parts():
-		var hurtbox: Variant = (part.get("hurtbox", {}) as Dictionary).get("radius", null)
-		var boss_part := BossHurtboxScript.make(
-			String(part.get("part_id", "")),
-			String(part.get("damage_group_id", "body")),
-			part.get("pose", Vector2.ZERO),
-			float(hurtbox),
-			bool(part.get("active", true)),
-			bool(part.get("broken", false))
-		)
-		var added: Dictionary = target.add_part(boss_part)
-		if not bool(added.get("ok", false)):
-			push_error("boss_domain_part_registration_failed:%s" % String(added.get("error", "unknown")))
-			return false
-	var registered: Dictionary = _boss_combat_domain.register_target(target)
-	if not bool(registered.get("ok", false)):
-		push_error("boss_domain_target_registration_failed:%s" % String(registered.get("error", "unknown")))
-		return false
-	_boss_domain_targets[int(enemy.entity_id)] = target
-	return true
-
-
-func _production_boss_spawn_key(enemy: CombatEnemyState, ordinal: int) -> String:
-	return "wave.production/%s.%d/0" % [enemy.kind_id, ordinal]
-
-
-func _bind_boss_production_encounter() -> bool:
-	if boss == null:
-		return true
-	if scene_runtime == null or not scene_runtime.is_ready():
-		push_error("boss_encounter_runtime_unavailable")
-		return false
-	# CombatRoomRuntime owns the single mixed-room encounter composition.  Its
-	# production wave includes both ordinary roster actors and this Boss, so a
-	# second Boss-only bind here would replace the shared domain and split
-	# terminal/death authority.  Boss-only Main construction still uses this
-	# fallback binding.
-	var mounted_room_roster: Variant = framework_room.get("enemy_ids", [])
-	if mounted_room_roster is Array and not (mounted_room_roster as Array).is_empty():
-		return true
-	var spawns: Array = []
-	for index: int in enemies.size():
-		var enemy: CombatEnemyState = enemies[index]
-		spawns.append({
-			"spawn_id": "%s.%d" % [enemy.kind_id, index],
-			"archetype_id": enemy.kind_id,
-			"socket_id": "combat/encounter-origin",
-			"count": 1,
-		})
-	var encounter := RoomEncounterScript.new()
-	var configured: Dictionary = encounter.configure(room_id, [{
-		"wave_id": "wave.production",
-		"clear_policy": "all_dead",
-		"spawns": spawns,
-	}])
-	if not bool(configured.get("ok", false)):
-		push_error("boss_encounter_configure_failed:%s" % String(configured.get("error", "unknown")))
-		return false
-	var bound: Dictionary = scene_runtime.bind_encounter(encounter, encounter_spawn_port)
-	if not bool(bound.get("ok", false)):
-		push_error("boss_encounter_bind_failed:%s" % String(bound.get("error", "unknown")))
-		return false
-	var started: Dictionary = scene_runtime.start_encounter(sim_tick)
-	if not bool(started.get("ok", false)):
-		push_error("boss_encounter_start_failed:%s" % String(started.get("error", "unknown")))
-		return false
-	room_encounter_port = scene_runtime.get("encounter_port")
-	_boss_encounter_authority = true
-	return true
-
-
-func _bind_runtime_actor_presentation(actor_id: String, visual_id: String, rank: int) -> bool:
-	if scene_runtime == null or not presentation_enabled:
-		return true
-	var world_view: Variant = presentation.world_view if presentation != null else null
-	if world_view == null or not world_view.has_method("sprite_art_box"):
-		push_error("presentation_art_box_unavailable:%s" % visual_id)
-		return false
-	var world_box: Rect2 = world_view.sprite_art_box(visual_id, Vector2.ZERO)
-	if world_box.size.x <= 0.0 or world_box.size.y <= 0.0:
-		push_error("presentation_art_box_missing:%s" % visual_id)
-		return false
-	# Simulation actors use authored gameplay pixels while the skin draws at its
-	# fixed world scale. Convert the real art box once into the projector's
-	# detached gameplay coordinate domain; never substitute the hurtbox radius.
-	var scale := ArenaWorldViewScript.GAMEPLAY_TO_WORLD
-	var gameplay_box := Rect2(world_box.position / scale, world_box.size / scale)
-	var bound: Dictionary = scene_runtime.bind_actor_presentation(actor_id, visual_id, rank, gameplay_box)
-	if not bool(bound.get("ok", false)):
-		push_error("presentation_binding_failed:%s:%s" % [actor_id, String(bound.get("error", "unknown"))])
-		return false
-	return true
-
-
-func _ensure_actor_registry_ready() -> bool:
-	if actor_registry_instance_id.is_empty():
-		if not _configure_actor_registry():
-			return false
-	return actor_registry != null and actor_registry.has_actor("ranger")
-
-
 func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 	var normalized_id := actor_id.strip_edges()
 	if normalized_id != "ranger" and not normalized_id.begins_with("enemy/"):
@@ -1235,7 +868,7 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 		enemy = _enemy_by_entity_id(entity_id)
 		if enemy == null:
 			return {"ok": false, "error": "enemy_mirror_not_found"}
-	if not _ensure_actor_registry_ready() or not position.is_finite():
+	if not _actor_setup._ensure_actor_registry_ready() or not position.is_finite():
 		return {"ok": false, "error": "actor_registry_not_ready_or_invalid_position"}
 	var result: Dictionary = actor_registry.teleport_actor(normalized_id, position)
 	if not bool(result.get("ok", false)):
@@ -1243,80 +876,6 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 	if normalized_id == "ranger":
 		return result
 	enemy.position = position
-	return result
-
-
-func _commit_actor_move(actor_id: String, displacement: Vector2, movement_policy: Variant = null) -> Dictionary:
-	if not _ensure_actor_registry_ready():
-		return {"ok": false, "error": "actor_registry_not_ready", "position": Vector2.ZERO, "displacement": Vector2.ZERO}
-	var state = actor_registry.actor(actor_id)
-	if state == null:
-		return {"ok": false, "error": "actor_not_registered", "position": Vector2.ZERO, "displacement": Vector2.ZERO}
-	if movement_policy == null and actor_id == "ranger" and _has_active_charge():
-		movement_policy = _charge_movement_policy_value()
-	var result: Dictionary = actor_registry.move_actor(actor_id, displacement, sim_tick, movement_policy)
-	if not bool(result.get("ok", false)):
-		if String(result.get("error", "")) in ["non_monotonic_motor_tick", "non_monotonic_movement_tick"]:
-			return result
-		push_error("actor_move_failed:%s:%s" % [actor_id, String(result.get("error", "unknown"))])
-		return result
-	return result
-
-
-func _charge_movement_policy_value() -> Variant:
-	if _charge_movement_policy != null:
-		return _charge_movement_policy
-	var built: Dictionary = BodyCollisionPolicyScript.make({
-		"solid": {"response": BodyCollisionPolicyScript.RESPONSE_BLOCK, "record": true},
-		"soft": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
-		"ghost": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
-	})
-	if bool(built.get("ok", false)):
-		_charge_movement_policy = built.get("value")
-	return _charge_movement_policy
-
-
-## Main-owned mobility policy seam: an active dash/dodge crosses enemy soft
-## bodies instead of being separated away, while contacts stay recorded for
-## presentation. Normal movement keeps the default soft separation policy.
-func _resolve_ranger_movement_policy(actor_id: String) -> Variant:
-	if actor_id != "ranger" or player_combat_state == null:
-		return null
-	var player: Dictionary = player_combat_state.snapshot(sim_tick)
-	if int(player.get("dash_remaining_ticks", 0)) <= 0 and int(player.get("dodge_remaining_ticks", 0)) <= 0:
-		return null
-	return _mobility_policy_value()
-
-
-func _mobility_policy_value() -> Variant:
-	if _mobility_movement_policy != null:
-		return _mobility_movement_policy
-	var built: Dictionary = BodyCollisionPolicyScript.make({
-		"solid": {"response": BodyCollisionPolicyScript.RESPONSE_BLOCK, "record": true},
-		"soft": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
-		"ghost": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
-	})
-	if bool(built.get("ok", false)):
-		_mobility_movement_policy = built.get("value")
-	return _mobility_movement_policy
-
-
-func _has_active_charge() -> bool:
-	for enemy: CombatEnemyState in enemies:
-		if enemy != null and enemy.action_state == "active" and enemy.action_id == "charge":
-			return true
-	return false
-
-
-func _move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
-	var before := enemy.position
-	var movement_policy: Variant = null
-	if enemy.action_state == "active" and enemy.action_id == "charge":
-		movement_policy = _charge_movement_policy_value()
-	var result := _commit_actor_move("enemy/%d" % enemy.entity_id, displacement, movement_policy)
-	if bool(result.get("ok", false)):
-		enemy.position = result.get("position", before)
-		enemy.facing = result.get("facing", enemy.facing)
 	return result
 
 
@@ -1707,16 +1266,6 @@ func _enemy_by_entity_id(id: int) -> CombatEnemyState:
 func _allocate_entity_id() -> int:
 	_encounter_context()
 	return encounter_director._allocate_entity_id()
-
-
-func _set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
-	if enemy == null or actor_registry == null or not actor_registry.has_method("set_collision_class"):
-		return false
-	var result: Dictionary = actor_registry.set_collision_class("enemy/%d" % enemy.entity_id, collision_class)
-	if not bool(result.get("ok", false)):
-		push_error("enemy_collision_class_update_failed:%d:%s" % [enemy.entity_id, String(result.get("error", "unknown"))])
-		return false
-	return true
 
 
 func _quantize_position(value: Vector2) -> Vector2:

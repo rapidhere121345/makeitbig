@@ -100,12 +100,12 @@ func _run() -> void:
 	var before_tick: int = visible.sim_tick
 	var before_position: Vector2 = visible.actor_registry.actor("ranger").feet_position
 	var before_hash: String = visible._semantic_state_hash("boundary")
-	var duplicate: Dictionary = visible._commit_actor_move("ranger", Vector2(40.0, 0.0))
+	var duplicate: Dictionary = visible._actor_setup._commit_actor_move("ranger", Vector2(40.0, 0.0))
 	_expect(not bool(duplicate.get("ok", true)) and duplicate.get("error") == "non_monotonic_movement_tick", "same-tick movement was accepted through Main")
 	_expect(visible.sim_tick == before_tick and visible.actor_registry.actor("ranger").feet_position == before_position and visible._semantic_state_hash("boundary") == before_hash, "rejected movement changed a tick, actor or replay state")
 	var advanced: SimOutcome = visible.simulation_world.step_tick()
 	_expect(advanced.ok, "real SimulationWorld advancement failed")
-	var next: Dictionary = visible._commit_actor_move("ranger", Vector2(4.0, 0.0))
+	var next: Dictionary = visible._actor_setup._commit_actor_move("ranger", Vector2(4.0, 0.0))
 	_expect(bool(next.get("ok", false)) and int(visible.actor_registry.actor("ranger").last_movement_tick) == visible.sim_tick, "real SimulationWorld advancement did not permit the next movement")
 
 	# Exercise the mounted snapshot -> controller -> world-frame boundary. Defeat

@@ -13,4 +13,4 @@ func bind(owner: MainArena) -> Dictionary:
 func resolve(actor_id: String) -> Variant:
 	if _owner == null or not is_instance_valid(_owner):
 		return null
-	return _owner._resolve_ranger_movement_policy(actor_id)
+	return _owner._actor_setup._resolve_ranger_movement_policy(actor_id)
