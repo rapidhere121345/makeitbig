@@ -28,6 +28,7 @@ extends RefCounted
 ## anchor, frame count and cadence are pinned by tests/unit/test_hamlet_life_animation.gd.
 
 const LIFE_DIR := "res://art/production/p1/actors_v02/residents/"
+const JsonIO := preload("res://src/core/json_io.gd")
 const LIFE_ATLAS_PATH := LIFE_DIR + "atlas.json"
 const LIFE_MANIFEST_PATH := LIFE_DIR + "life.json"
 const SCHEMA_VERSION := 1
@@ -75,7 +76,7 @@ func load_default_assets() -> bool:
 func load_assets_at(directory: String) -> bool:
 	## Reads the published life pair and the approved socket sheet. A missing or
 	## half-authored file leaves the reader empty and the hub on its static art.
-	configure(_read_json_object(directory.path_join("atlas.json")), _read_json_object(directory.path_join("life.json")), _read_json_object(EFFECT_ATLAS_PATH))
+	configure(JsonIO.read_object(directory.path_join("atlas.json")), JsonIO.read_object(directory.path_join("life.json")), JsonIO.read_object(EFFECT_ATLAS_PATH))
 	return has_real_art()
 
 
@@ -315,15 +316,6 @@ func load_texture_at(path: String, declared_size: Vector2i) -> Texture2D:
 	if decoded == null or Vector2i(decoded.get_width(), decoded.get_height()) != declared_size:
 		return null
 	return ImageTexture.create_from_image(decoded)
-
-
-func _read_json_object(path: String) -> Dictionary:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	file.close()
-	return parsed as Dictionary if parsed is Dictionary else {}
 
 
 func _decode_png_path(path: String) -> Image:

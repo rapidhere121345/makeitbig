@@ -62,6 +62,7 @@ const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
 const CombatLootPickupProtocolScript := preload("res://src/systems/combat_loot_pickup_protocol.gd")
 const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
+const JsonIO := preload("res://src/core/json_io.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -824,13 +825,7 @@ func settle_room_loot(outcome: String) -> Dictionary:
 
 func _load_test_room_fixture() -> Dictionary:
 	const FIXTURE_PATH := "res://content/rooms/combat/test_fixture.json"
-	if not FileAccess.file_exists(FIXTURE_PATH):
-		return {}
-	var file := FileAccess.open(FIXTURE_PATH, FileAccess.READ)
-	if file == null:
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	return parsed as Dictionary if parsed is Dictionary else {}
+	return JsonIO.read_object(FIXTURE_PATH)
 
 
 func _configure_actor_registry() -> bool:

@@ -2,6 +2,7 @@ class_name TalentRegistry
 extends RefCounted
 
 const CONTENT_PATH := "res://content/character_talents.json"
+const JsonIO := preload("res://src/core/json_io.gd")
 const EXPECTED_SCHEMA_VERSION := 1
 const FORBIDDEN_DATA_KEYS: Array[String] = ["script", "script_path", "code", "source_code", "callable", "method"]
 
@@ -16,7 +17,7 @@ func _init(path: String = CONTENT_PATH) -> void:
 
 
 func load_catalog(path: String = CONTENT_PATH) -> Array[String]:
-	var data := _read_json(path)
+	var data := JsonIO.read_object(path)
 	load_errors = validate_content(data)
 	if load_errors.is_empty():
 		_ingest(data)
@@ -242,17 +243,6 @@ func _ingest(data: Dictionary) -> void:
 		tree["node_order"] = node_order
 		trees[String(tree.id)] = tree
 		tree_order.append(String(tree.id))
-
-
-func _read_json(path: String) -> Dictionary:
-	if not ResourceLoader.exists(path) and not FileAccess.file_exists(path):
-		return {}
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	file.close()
-	return parsed if parsed is Dictionary else {}
 
 
 func _check_exact_keys(value: Dictionary, required: Array, optional: Array = [], context: String = "", failures: Array[String] = []) -> void:

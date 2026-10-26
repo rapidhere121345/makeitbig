@@ -6,6 +6,7 @@ extends RefCounted
 ## selects an asset by layout and an optional room-specific spawn profile.
 
 const CONTENT_PATH := "res://content/rooms/combat/room_catalog.json"
+const JsonIO := preload("res://src/core/json_io.gd")
 const SCHEMA_VERSION := 1
 const TOP_LEVEL_FIELDS: Array[String] = ["schema_version", "rooms"]
 const ASSET_FIELDS: Array[String] = [
@@ -29,7 +30,7 @@ func _init(path: String = CONTENT_PATH) -> void:
 
 
 func load_catalog(path: String = CONTENT_PATH) -> Array[String]:
-	var read_result := _read_json(path)
+	var read_result := JsonIO.read_result(path, "room_catalog")
 	if not bool(read_result.get("ok", false)):
 		load_errors = [String(read_result.get("error", "room catalog: unable to read catalog"))]
 		_data.clear()
@@ -340,19 +341,6 @@ func _room_layout_id(room: Dictionary) -> String:
 	if layout_id.is_empty():
 		layout_id = String(room.get("layout", "")).strip_edges()
 	return layout_id
-
-
-func _read_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {"ok": false, "error": "room_catalog: content file not found: %s" % path}
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {"ok": false, "error": "room_catalog: cannot open content file: %s" % path}
-	var parser := JSON.new()
-	var parse_error := parser.parse(file.get_as_text())
-	if parse_error != OK:
-		return {"ok": false, "error": "room_catalog: invalid JSON at line %d: %s" % [parser.get_error_line(), parser.get_error_message()]}
-	return {"ok": true, "data": parser.data}
 
 
 func _check_exact_fields(data: Dictionary, required: Array[String], context: String, failures: Array[String], optional: Array[String] = []) -> void:

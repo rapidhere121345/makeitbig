@@ -5,6 +5,7 @@ extends RefCounted
 ## The JSON remains inert data: no script, callable, or method fields are accepted.
 
 const CONTENT_PATH := "res://content/early_items.json"
+const JsonIO := preload("res://src/core/json_io.gd")
 const EXPECTED_SCHEMA_VERSION := 1
 const EQUIPMENT_SLOTS: Array[String] = [
 	"head", "chest", "pants", "leg_armor", "gloves", "bracers",
@@ -31,7 +32,7 @@ var calibration_fixture_ids: Array[String] = []
 
 
 func load_all(path: String = CONTENT_PATH) -> Array[String]:
-	var read_result: Dictionary = _read_json(path)
+	var read_result: Dictionary = JsonIO.read_result(path, "registry", true)
 	if not bool(read_result.get("ok", false)):
 		return [String(read_result.get("error", "registry: unknown read error"))]
 	var data: Dictionary = read_result.data
@@ -424,21 +425,6 @@ func _clear() -> void:
 	build_fixtures.clear()
 	fixed_starting_loadout_id = ""
 	calibration_fixture_ids.clear()
-
-
-func _read_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {"ok": false, "error": "registry: content file not found: %s" % path}
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {"ok": false, "error": "registry: cannot open content file: %s" % path}
-	var json := JSON.new()
-	var parse_error := json.parse(file.get_as_text())
-	if parse_error != OK:
-		return {"ok": false, "error": "registry: invalid JSON at line %d: %s" % [json.get_error_line(), json.get_error_message()]}
-	if not json.data is Dictionary:
-		return {"ok": false, "error": "registry: JSON root must be an object"}
-	return {"ok": true, "data": json.data}
 
 
 func _definition_id(entry: Dictionary, kind: String, seen: Dictionary, failures: Array[String], field: String = "id") -> String:

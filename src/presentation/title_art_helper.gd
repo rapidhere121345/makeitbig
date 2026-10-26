@@ -15,6 +15,7 @@ extends Control
 ## frames never stand in for a complete walk cycle.
 
 const NATIVE_VIEW := Vector2i(640, 360)
+const JsonIO := preload("res://src/core/json_io.gd")
 const DISPLAY_SCALE := 2
 const DISPLAY_SIZE := Vector2i(1280, 720)
 
@@ -243,15 +244,6 @@ func _reset() -> void:
 	set_process(false)
 
 
-func _read_json_object(path: String) -> Dictionary:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	file.close()
-	return parsed if parsed is Dictionary else {}
-
-
 func _configure() -> void:
 	if world_root == null:
 		_build_layers()
@@ -273,7 +265,7 @@ func _load_title_plate() -> bool:
 	## sprite cut from one texture. It demands the published native size and a cell
 	## that covers the 640x360 frame: a plate that does neither would have to be
 	## resampled, and this view never resamples pixel art.
-	var atlas := _read_json_object(TITLE_PLATE_ATLAS_PATH)
+	var atlas := JsonIO.read_object(TITLE_PLATE_ATLAS_PATH)
 	if atlas.is_empty():
 		_plate_reason = "atlas %s is missing or not a JSON object" % TITLE_PLATE_ATLAS_PATH
 		return false
@@ -351,7 +343,7 @@ func _load_life_overlay() -> bool:
 	## texture. A missing or malformed frame set leaves the overlay unproduced and
 	## reported; no substitute flame is ever drawn in its place.
 	_life_reason = ""
-	var atlas := _read_json_object(TITLE_LIFE_ATLAS_PATH)
+	var atlas := JsonIO.read_object(TITLE_LIFE_ATLAS_PATH)
 	if atlas.is_empty():
 		_life_reason = "life atlas is not published at %s" % TITLE_LIFE_ATLAS_PATH
 		return false

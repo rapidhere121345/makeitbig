@@ -17,6 +17,7 @@ extends RefCounted
 const PaletteScript = preload("res://src/presentation/combat_palette.gd")
 const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
 const Definition := preload("res://src/runtime/world/environment_object_definition.gd")
+const JsonIO := preload("res://src/core/json_io.gd")
 
 const PACK_PATH := "res://art/production/p1/world_expansion_v01/assets.json"
 const SCENES_PATH := "res://content/presentation/combat_room_scenes.json"
@@ -137,14 +138,13 @@ func _fail(reason: String) -> bool:
 
 
 func _read_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		_fail("missing " + path)
-		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if not parsed is Dictionary:
-		_fail("invalid JSON " + path)
-		return {}
-	return parsed as Dictionary
+	var read := JsonIO.read_object_status(path)
+	match String(read.status):
+		JsonIO.STATUS_MISSING:
+			_fail("missing " + path)
+		JsonIO.STATUS_UNREADABLE, JsonIO.STATUS_INVALID:
+			_fail("invalid JSON " + path)
+	return read.data
 
 
 func _load_grounds() -> bool:

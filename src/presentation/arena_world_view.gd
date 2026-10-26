@@ -23,6 +23,7 @@ const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const SortRelation = preload("res://src/presentation/occlusion_query.gd")
 const PairedReveal := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
+const JsonIO := preload("res://src/core/json_io.gd")
 ## Whole-object generated world pack: each family sprite is ONE opaque texture
 ## plus its baked transparent variant on the same canvas/anchor, with one
 ## authored detection rect (occupied AABB grown by DETECTION_GROW) in local
@@ -1467,18 +1468,15 @@ func _read_layout(layout: Dictionary) -> bool:
 
 
 func _read_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		pending_reason = "ASSETS PENDING: %s" % path
-		return {}
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		pending_reason = "ASSETS PENDING: cannot open %s" % path
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	if not parsed is Dictionary:
-		pending_reason = "ASSETS PENDING: invalid JSON in %s" % path
-		return {}
-	return parsed as Dictionary
+	var read := JsonIO.read_object_status(path)
+	match String(read.status):
+		JsonIO.STATUS_MISSING:
+			pending_reason = "ASSETS PENDING: %s" % path
+		JsonIO.STATUS_UNREADABLE:
+			pending_reason = "ASSETS PENDING: cannot open %s" % path
+		JsonIO.STATUS_INVALID:
+			pending_reason = "ASSETS PENDING: invalid JSON in %s" % path
+	return read.data
 
 
 func _load_texture(path: String) -> Texture2D:

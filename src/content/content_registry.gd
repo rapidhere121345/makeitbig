@@ -12,6 +12,7 @@ const EarlyCampaignRegistryScript = preload("res://src/content/early_campaign_re
 const EarlyEnemyProfileRegistryScript = preload("res://src/content/early_enemy_profile_registry.gd")
 const EarlyItemRegistryScript = preload("res://src/content/early_item_registry.gd")
 const EarlySkillRegistryScript = preload("res://src/content/early_skill_registry.gd")
+const JsonIO := preload("res://src/core/json_io.gd")
 
 const CORE_SLOTS: Array[String] = ["perception", "movement", "execution", "memory"]
 const ATTACHMENT_CATEGORIES: Array[String] = ["scavenging", "navigation", "tactics", "cycle_tempo", "stability"]
@@ -68,14 +69,14 @@ func load_all() -> Array[String]:
 		failures.append_array(early_enemy_profile_registry.validate_campaign_roles(early_campaign_registry.normal_enemy_role_map()))
 	failures.append_array(early_item_registry.load_all())
 	failures.append_array(early_skill_registry.load_all())
-	var proxy_data := _read_json(PROXY_PATH)
+	var proxy_data := JsonIO.read_object(PROXY_PATH)
 	if proxy_data.is_empty():
 		failures.append("registry: cannot read/parse %s" % PROXY_PATH)
 	else:
 		failures.append_array(validate_proxy_components(proxy_data))
 		if failures.is_empty():
 			_ingest_proxy(proxy_data)
-	var preset_data := _read_json(PRESET_PATH)
+	var preset_data := JsonIO.read_object(PRESET_PATH)
 	if preset_data.is_empty():
 		failures.append("registry: cannot read/parse %s" % PRESET_PATH)
 	else:
@@ -316,18 +317,6 @@ func attachment_ids() -> Array:
 
 func firmware_ids() -> Array:
 	return firmwares.keys()
-
-
-func _read_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	if parsed is Dictionary:
-		return parsed
-	return {}
 
 
 func _ingest_proxy(data: Dictionary) -> void:

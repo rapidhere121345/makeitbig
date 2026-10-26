@@ -7,6 +7,7 @@ extends RefCounted
 const CONTENT_PATH := "res://content/early_skills.json"
 const EXPECTED_SCHEMA_VERSION := 1
 const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
+const JsonIO := preload("res://src/core/json_io.gd")
 const EXPECTED_TICKS_PER_SECOND := RangerSkillRulesScript.TICKS_PER_SECOND
 const SKILL_IDS: Array[String] = ["piercing_arrow", "hunter_mark", "dash", "basic_dodge"]
 const SKILL_FIELDS: Array[String] = [
@@ -24,7 +25,7 @@ var skills: Dictionary = {}
 
 
 func load_all(path: String = CONTENT_PATH) -> Array[String]:
-	var read_result := _read_json(path)
+	var read_result := JsonIO.read_result(path, "skill registry")
 	if not bool(read_result.get("ok", false)):
 		return [String(read_result.get("error", "skill registry: unknown read error"))]
 	var value: Variant = read_result.get("data", null)
@@ -110,19 +111,6 @@ func _validate_skill(value: Variant, seen: Dictionary, failures: Array[String]) 
 		for field in (REQUIRED_FACTS[skill_id] as Dictionary):
 			if skill.get(field, null) != (REQUIRED_FACTS[skill_id] as Dictionary)[field]:
 				failures.append("skill %s: authoritative fact '%s' changed" % [skill_id, field])
-
-
-func _read_json(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {"ok": false, "error": "skill registry: content file not found: %s" % path}
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {"ok": false, "error": "skill registry: cannot open content file: %s" % path}
-	var json := JSON.new()
-	var error := json.parse(file.get_as_text())
-	if error != OK:
-		return {"ok": false, "error": "skill registry: invalid JSON at line %d: %s" % [json.get_error_line(), json.get_error_message()]}
-	return {"ok": true, "data": json.data}
 
 
 func _required_id(entry: Dictionary, field: String, context: String, failures: Array[String]) -> String:
