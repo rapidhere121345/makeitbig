@@ -16,6 +16,7 @@ const CombatArrowProjectileScript := preload("res://src/runtime/world/combat_arr
 const PiercingArrowModelScript := preload("res://src/systems/piercing_arrow_model.gd")
 const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
 const CombatSystemRoomPortScript := preload("res://src/runtime/combat/combat_system_room_port.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 const SIM_STEP_SECONDS: float = 1.0 / 30.0
 const HUNTER_MARK_DAMAGE_MULTIPLIER: float = RangerSkillRulesScript.HUNTER_MARK_DAMAGE_MULTIPLIER
@@ -72,12 +73,12 @@ func bind_room(port: Variant, requested_query_profile: String = QUERY_PROFILE_MU
 	_configuration_error = "combat_room_port_unavailable"
 	query_profile = QUERY_PROFILE_MULTIPART_V2
 	if not port is CombatSystemRoomPortScript or not is_instance_valid(port):
-		return _failure(_configuration_error)
+		return CoreResult.failure(_configuration_error)
 	if requested_query_profile not in [QUERY_PROFILE_MULTIPART_V2, QUERY_PROFILE_HISTORICAL_CIRCLE_V1]:
-		return _failure("invalid_query_profile")
+		return CoreResult.failure("invalid_query_profile")
 	var typed_port = port
 	if not typed_port.is_ready():
-		return _failure(_configuration_error)
+		return CoreResult.failure(_configuration_error)
 	room_port = typed_port
 	query_profile = requested_query_profile
 	_configured = true
@@ -99,7 +100,7 @@ func set_context(
 	new_enemies: Array[CombatEnemyState]
 ) -> Dictionary:
 	if not _combat_ports_ready():
-		return _failure(_configuration_error if not _configuration_error.is_empty() else "player_rule_port_unavailable")
+		return CoreResult.failure(_configuration_error if not _configuration_error.is_empty() else "player_rule_port_unavailable")
 	tick = maxi(0, new_tick)
 	player_position = new_player_position
 	player_facing = new_player_facing
@@ -172,9 +173,9 @@ func _reset_sequence() -> void:
 ## Explicit room boundary. Context updates never write the outcome ledger.
 func reset_room(new_boss_maximum: BigValue) -> Dictionary:
 	if new_boss_maximum == null or new_boss_maximum.layer < 0 or not is_finite(new_boss_maximum.magnitude) or new_boss_maximum.magnitude < 0.0:
-		return _failure("invalid_boss_maximum")
+		return CoreResult.failure("invalid_boss_maximum")
 	if _advancing_projectiles or _contact_submission_depth > 0:
-		return _failure("combat_commit_in_progress")
+		return CoreResult.failure("combat_commit_in_progress")
 	_boss_maximum = new_boss_maximum.duplicate_value()
 	_boss_damage = BigValue.from_float(0.0)
 	_defeated = 0
@@ -402,9 +403,9 @@ func apply_kernel_blocked(
 ## derived from DamageResolution output and never feeds back into resolution.
 func sync_boss_domain_resolution(maximum: BigValue, applied: BigValue, remaining: BigValue) -> Dictionary:
 	if maximum == null or applied == null or remaining == null:
-		return _failure("invalid_boss_domain_resolution_mirror")
+		return CoreResult.failure("invalid_boss_domain_resolution_mirror")
 	if maximum.compare(remaining) < 0 or remaining.layer < 0 or not is_finite(remaining.magnitude):
-		return _failure("invalid_boss_domain_resolution_mirror")
+		return CoreResult.failure("invalid_boss_domain_resolution_mirror")
 	if _boss_maximum.compare(maximum) != 0:
 		_boss_maximum = maximum.duplicate_value()
 		_boss_damage = BigValue.from_float(0.0)
@@ -508,14 +509,14 @@ func resolve_projectile_contact(projectile: CombatArrowProjectile, target: Comba
 ## Deduplication lasts for this fixed tick, across repeated sweep submissions.
 func resolve_projectile_sweep(projectile: CombatArrowProjectile, target: CombatEnemyState, start: Vector2, finish: Vector2) -> Dictionary:
 	if not _combat_ports_ready():
-		return _failure(_configuration_error)
+		return CoreResult.failure(_configuration_error)
 	if projectile == null or projectile.action_instance_id <= 0 or (target != null and projectile.target_entity_id != target.entity_id):
-		return _failure("invalid_projectile_target")
+		return CoreResult.failure("invalid_projectile_target")
 	# Deleted legacy Boss branch: multipart BigValue targets resolve only in
 	# BossCombatDomain through the kernel flight drivers. A Boss target on this
 	# seam fails closed before any query, damage or ledger write can happen.
 	if target != null and target.is_boss:
-		return _failure("boss_target_requires_boss_domain")
+		return CoreResult.failure("boss_target_requires_boss_domain")
 	var query := query_swept_hits(start, finish, target)
 	if not bool(query.ok):
 		return query
@@ -536,7 +537,7 @@ func resolve_projectile_sweep(projectile: CombatArrowProjectile, target: CombatE
 		_contact_submission_depth -= 1
 		if not applied:
 			_settled_groups.erase(key)
-			return _failure(_configuration_error)
+			return CoreResult.failure(_configuration_error)
 		consumed_retained = true
 		settled.append(hit.duplicate(true))
 	return {"ok": true, "error": "", "candidates": query.candidates, "settled": settled}
@@ -657,15 +658,15 @@ func resolve_projectile_miss(projectile: CombatArrowProjectile) -> void:
 ## Read-only encounter port. A malformed answer is a rejection, never damage.
 func target_is_currently_blocked(target: CombatEnemyState) -> Dictionary:
 	if not _configured or room_port == null:
-		return _failure("combat_room_port_unavailable")
+		return CoreResult.failure("combat_room_port_unavailable")
 	var value: Variant = room_port.target_blocked(target)
 	if not value is Dictionary:
-		return _failure("target_blocked_port_invalid_result")
+		return CoreResult.failure("target_blocked_port_invalid_result")
 	var verdict: Dictionary = value
 	if not bool(verdict.get("ok", false)):
-		return _failure(String(verdict.get("error", "target_blocked_port_unavailable")))
+		return CoreResult.failure(String(verdict.get("error", "target_blocked_port_unavailable")))
 	if typeof(verdict.get("blocked", null)) != TYPE_BOOL:
-		return _failure("target_blocked_port_invalid_result")
+		return CoreResult.failure("target_blocked_port_invalid_result")
 	return {"ok": true, "error": "", "blocked": bool(verdict.get("blocked", false))}
 
 
@@ -679,7 +680,7 @@ func query_swept_hits(start: Vector2, finish: Vector2, target: CombatEnemyState)
 	if target.is_boss or not target.parts.is_empty():
 		return CombatQueryScript.swept_parts(start, finish, target.entity_id, target.position, target.hurtbox_parts())
 	if manual_aim_resolver == null:
-		return _failure("aim_resolver_unavailable")
+		return CoreResult.failure("aim_resolver_unavailable")
 	var candidate := _aim_candidate(target)
 	var anchor: Vector2 = manual_aim_resolver.target_anchor(candidate)
 	var radius: float = manual_aim_resolver.target_radius(candidate)
@@ -694,7 +695,7 @@ func query_swept_hits(start: Vector2, finish: Vector2, target: CombatEnemyState)
 ## command line contract, never by a missing or malformed multipart snapshot.
 func _query_historical_boss_circle(start: Vector2, finish: Vector2, target: CombatEnemyState) -> Dictionary:
 	if manual_aim_resolver == null:
-		return _failure("aim_resolver_unavailable")
+		return CoreResult.failure("aim_resolver_unavailable")
 	var candidate := _aim_candidate(target)
 	var anchor: Vector2 = manual_aim_resolver.target_anchor(candidate)
 	var radius: float = manual_aim_resolver.target_radius(candidate)
@@ -770,6 +771,3 @@ func _reject_player_rule_action(action_instance_id: int = 0, target_entity_id: i
 	}
 	battle_report = "Piercing Arrow rejected: invalid combat dependencies (%s)." % reason
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

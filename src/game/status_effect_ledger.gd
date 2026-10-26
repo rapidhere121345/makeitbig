@@ -8,6 +8,7 @@ extends RefCounted
 ## and detached observation. It deliberately does not evaluate modifiers.
 
 const STACK_POLICIES: Array[String] = ["replace", "refresh", "stack", "ignore"]
+const CoreResult := preload("res://src/core/result.gd")
 const MODIFIER_OPERATIONS: Array[String] = ["add", "multiply", "multiply_bonus", "reduce_percent"]
 const MODIFIER_FIELDS: Array[String] = ["parameter", "operation", "value"]
 
@@ -18,7 +19,7 @@ var _last_tick := -1
 
 func reset(initial_tick: int = -1) -> Dictionary:
 	if initial_tick < -1:
-		return _failure("invalid_initial_tick")
+		return CoreResult.failure("invalid_initial_tick")
 	_effects.clear()
 	_next_sequence = 1
 	_last_tick = initial_tick
@@ -82,7 +83,7 @@ func apply(
 
 func advance(tick: int) -> Dictionary:
 	if tick < 0 or tick < _last_tick:
-		return _failure("stale_status_tick")
+		return CoreResult.failure("stale_status_tick")
 	_prepare_tick(tick)
 	var expired := _expire_at(tick)
 	return {"ok": true, "error": "", "expired": expired, "snapshot": snapshot(tick)}
@@ -90,9 +91,9 @@ func advance(tick: int) -> Dictionary:
 
 func remove(tick: int, effect_id: String) -> Dictionary:
 	if tick < 0 or tick < _last_tick:
-		return _failure("stale_status_tick")
+		return CoreResult.failure("stale_status_tick")
 	if not _valid_id(effect_id):
-		return _failure("invalid_effect_id")
+		return CoreResult.failure("invalid_effect_id")
 	_prepare_tick(tick)
 	_expire_at(tick)
 	var normalized_id := effect_id.strip_edges()
@@ -112,7 +113,7 @@ func has_active(tick: int, effect_id: String) -> bool:
 func snapshot(tick: int = -1) -> Dictionary:
 	var read_tick := _last_tick if tick < 0 else tick
 	if read_tick < -1 or read_tick < _last_tick:
-		return _failure("stale_status_tick")
+		return CoreResult.failure("stale_status_tick")
 	var effects: Array[Dictionary] = []
 	var ids: Array[String] = []
 	for value: Variant in _effects.keys():
@@ -139,22 +140,22 @@ func _validate_request(
 	modifier: Dictionary
 ) -> Dictionary:
 	if tick < 0 or tick < _last_tick:
-		return _failure("stale_status_tick")
+		return CoreResult.failure("stale_status_tick")
 	if not _valid_id(effect_id):
-		return _failure("invalid_effect_id")
+		return CoreResult.failure("invalid_effect_id")
 	if not _valid_id(source_id):
-		return _failure("invalid_source_id")
+		return CoreResult.failure("invalid_source_id")
 	if duration_ticks <= 0:
-		return _failure("invalid_duration_ticks")
+		return CoreResult.failure("invalid_duration_ticks")
 	if not is_finite(magnitude):
-		return _failure("invalid_magnitude")
+		return CoreResult.failure("invalid_magnitude")
 	if stack_policy not in STACK_POLICIES:
-		return _failure("invalid_stack_policy")
+		return CoreResult.failure("invalid_stack_policy")
 	if max_stacks <= 0:
-		return _failure("invalid_max_stacks")
+		return CoreResult.failure("invalid_max_stacks")
 	var modifier_error := _validate_modifier(modifier)
 	if not modifier_error.is_empty():
-		return _failure(modifier_error)
+		return CoreResult.failure(modifier_error)
 	return {"ok": true, "error": ""}
 
 
@@ -252,6 +253,3 @@ static func _valid_id(value: String) -> bool:
 			return false
 	return true
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

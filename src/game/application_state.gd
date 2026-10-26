@@ -14,6 +14,8 @@ const BuildResolverScript = preload("res://src/systems/build_resolver.gd")
 const TrainingReportBuilderScript = preload("res://src/systems/training_report_builder.gd")
 const ProxyBuildScript = preload("res://src/systems/proxy_build.gd")
 const EquipmentDropGeneratorScript = preload("res://src/systems/equipment_drop_generator.gd")
+const CoreResult := preload("res://src/core/result.gd")
+const Collections := preload("res://src/core/collections.gd")
 
 const SCHEMA_VERSION := 10
 const PROFILE_SCHEMA_VERSION := SCHEMA_VERSION
@@ -132,10 +134,10 @@ func has_profile() -> bool:
 func start_new_profile(initial_class: String = "ranger") -> Dictionary:
 	var normalized_class := initial_class.strip_edges().to_lower()
 	if normalized_class not in SUPPORTED_CLASSES:
-		return _failure("invalid_class")
+		return CoreResult.failure("invalid_class")
 	var initial := _fixture_state(DEFAULT_RANGER_PRESET)
 	if initial.is_empty():
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	_profile = {
 		"schema_version": PROFILE_SCHEMA_VERSION,
 		"profile_id": "local",
@@ -183,7 +185,7 @@ func start_new_profile(initial_class: String = "ranger") -> Dictionary:
 
 func complete_tutorial() -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var first := not bool(_profile.get("tutorial_complete", false))
 	_profile["tutorial_complete"] = true
 	_record_completed_campaign_node("tutorial_ranger_basics")
@@ -238,19 +240,19 @@ func growth_snapshot() -> Dictionary:
 
 
 func change_talent(action: String, value: String = "") -> Dictionary:
-	if not has_profile(): return _failure("profile_required")
-	if not _active_session.is_empty() or not _pending_contract.is_empty(): return _failure("talents_locked")
+	if not has_profile(): return CoreResult.failure("profile_required")
+	if not _active_session.is_empty() or not _pending_contract.is_empty(): return CoreResult.failure("talents_locked")
 	var candidate: Dictionary = _profile.talents.duplicate(true)
 	match action:
 		"allocate":
-			if value in candidate.allocated_ids: return _failure("talent_already_allocated")
+			if value in candidate.allocated_ids: return CoreResult.failure("talent_already_allocated")
 			candidate.allocated_ids.append(value)
 		"refund":
-			if value not in candidate.allocated_ids: return _failure("talent_not_allocated")
+			if value not in candidate.allocated_ids: return CoreResult.failure("talent_not_allocated")
 			candidate.allocated_ids.erase(value)
 		"reset": candidate = {"allocated_ids":[],"stance":"mid"}
 		"stance": candidate.stance = value
-		_: return _failure("unknown_talent_action")
+		_: return CoreResult.failure("unknown_talent_action")
 	var compiler := TalentBuildScript.new()
 	var validated := compiler.validate(candidate, int(character_snapshot().points_earned), _profile.unlocked_classes)
 	if not validated.ok: return {"ok":false,"error":"invalid_talent_allocation","details":validated.errors}
@@ -283,13 +285,13 @@ func story_snapshot() -> Dictionary:
 
 
 func mark_story_read(entry_id: String) -> Dictionary:
-	if not has_profile(): return _failure("profile_required")
-	if not _active_session.is_empty(): return _failure("story_locked")
+	if not has_profile(): return CoreResult.failure("profile_required")
+	if not _active_session.is_empty(): return CoreResult.failure("story_locked")
 	var available := false
 	var story_state := story_snapshot()
 	for entry in story_state.get("journal_entries",[]) + story_state.get("available_conversations",[]):
 		if String(entry.id) == entry_id: available = true
-	if not available: return _failure("story_entry_unavailable")
+	if not available: return CoreResult.failure("story_entry_unavailable")
 	_profile.story = StoryProgressionScript.new().mark_entry_read(story_progress_snapshot(), _profile.story, entry_id)
 	return {"ok":true}
 
@@ -320,13 +322,13 @@ func _apply_experience(amount: int) -> Dictionary:
 
 func select_ranger_build(preset_id: String) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var fixture_id := _fixture_id_for_legacy_name(preset_id)
 	if fixture_id.is_empty() or fixture_id == "fixed_start":
-		return _failure("unknown_preset")
+		return CoreResult.failure("unknown_preset")
 	var selected := _fixture_state(fixture_id)
 	if selected.is_empty():
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	_merge_equipment_inventory(selected.equipment)
 	_profile["active_build"] = selected.active_build
 	return active_build_snapshot()
@@ -334,7 +336,7 @@ func select_ranger_build(preset_id: String) -> Dictionary:
 
 func active_build_snapshot() -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var snapshot: Dictionary = (_profile.active_build as Dictionary).duplicate(true)
 	var preset_id := _legacy_preset_for_active_build(snapshot)
 	snapshot["preset_id"] = preset_id
@@ -351,23 +353,23 @@ func active_build_snapshot() -> Dictionary:
 
 func resolved_build_snapshot() -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	return _resolve_active_build((_profile.active_build as Dictionary).duplicate(true))
 
 
 func resolved_proxy_build_snapshot() -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var registry: Variant = _loaded_content_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var raw_result := _raw_proxy_build_snapshot()
 	if not bool(raw_result.get("ok", false)):
-		return _failure("invalid_proxy_build")
+		return CoreResult.failure("invalid_proxy_build")
 	var raw_build: Dictionary = raw_result.value
 	var compiled: Dictionary = ProxyBuildScript.compile(_proxy_compile_input(raw_build), registry.cores)
 	if not bool(compiled.get("ok", false)):
-		return _failure("proxy_build_%s" % String(compiled.get("error", "invalid")))
+		return CoreResult.failure("proxy_build_%s" % String(compiled.get("error", "invalid")))
 	return {
 		"ok": true,
 		"proxy_build": raw_build.duplicate(true),
@@ -377,27 +379,27 @@ func resolved_proxy_build_snapshot() -> Dictionary:
 
 func equip_proxy_core(core_id: String) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	if not bool((_profile.progression as Dictionary).get("proxy_unlocked", false)):
-		return _failure("proxy_locked")
+		return CoreResult.failure("proxy_locked")
 	var normalized_id := core_id.strip_edges()
 	if normalized_id.is_empty():
-		return _failure("invalid_core_id")
+		return CoreResult.failure("invalid_core_id")
 	var registry: Variant = _loaded_content_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	if normalized_id not in PROXY_CORE_CATALOG_IDS or not registry.cores.has(normalized_id):
-		return _failure("unsupported_proxy_core")
+		return CoreResult.failure("unsupported_proxy_core")
 	if not _owns_proxy_core(normalized_id):
-		return _failure("proxy_core_not_owned")
+		return CoreResult.failure("proxy_core_not_owned")
 	var raw_result := _raw_proxy_build_snapshot()
 	if not bool(raw_result.get("ok", false)):
-		return _failure("invalid_proxy_build")
+		return CoreResult.failure("invalid_proxy_build")
 	var candidate: Dictionary = raw_result.value
 	var core: Dictionary = registry.cores[normalized_id]
 	var slot_index := ProxyBuildScript.SLOT_ORDER.find(String(core.slot))
 	if slot_index < 0:
-		return _failure("unsupported_proxy_core")
+		return CoreResult.failure("unsupported_proxy_core")
 	(candidate.cores as Array)[slot_index] = normalized_id
 	var retained_settings := {}
 	for selected_id_value in (candidate.cores as Array):
@@ -410,45 +412,45 @@ func equip_proxy_core(core_id: String) -> Dictionary:
 
 func configure_proxy_core(core_id: String, settings: Dictionary) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var normalized_id := core_id.strip_edges()
 	var raw_result := _raw_proxy_build_snapshot()
 	if not bool(raw_result.get("ok", false)):
-		return _failure("invalid_proxy_build")
+		return CoreResult.failure("invalid_proxy_build")
 	var candidate: Dictionary = raw_result.value
 	if normalized_id.is_empty() or normalized_id not in (candidate.cores as Array):
-		return _failure("proxy_core_not_equipped")
+		return CoreResult.failure("proxy_core_not_equipped")
 	var registry: Variant = _loaded_content_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	(candidate.settings as Dictionary)[normalized_id] = settings.duplicate(true)
 	return _commit_proxy_build_candidate(candidate, registry.cores)
 
 
 func equip_item(instance_id: String) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var normalized_id := instance_id.strip_edges()
 	if normalized_id.is_empty():
-		return _failure("invalid_instance_id")
+		return CoreResult.failure("invalid_instance_id")
 	var item := _owned_equipment(normalized_id)
 	if item.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null or not registry.validate_item_instance(item).is_empty():
-		return _failure("invalid_item_instance")
+		return CoreResult.failure("invalid_item_instance")
 	var slot := String(item.slot)
 	if slot not in EarlyItemRegistryScript.PROTOTYPE_OPEN_SLOTS:
-		return _failure("slot_not_prototype_open")
+		return CoreResult.failure("slot_not_prototype_open")
 	var active: Dictionary = (_profile.active_build as Dictionary).duplicate(true)
 	var equipped: Dictionary = active.equipped_item_ids
 	for equipped_slot in EarlyItemRegistryScript.EQUIPMENT_SLOTS:
 		if String(equipped.get(equipped_slot, "")) == normalized_id:
-			return _failure("item_already_equipped")
+			return CoreResult.failure("item_already_equipped")
 	equipped[slot] = normalized_id
 	var resolved := _resolve_active_build(active)
 	if not bool(resolved.get("ok", false)):
-		return _failure("build_resolution_failed")
+		return CoreResult.failure("build_resolution_failed")
 	_profile["active_build"] = active
 	return {"ok": true, "active_build": active.duplicate(true), "resolved_build": resolved.duplicate(true)}
 
@@ -461,31 +463,31 @@ func equip_item(instance_id: String) -> Dictionary:
 ## exposes no authoritative tag set (never inferred from item affixes).
 func preview_equip_item(instance_id: String) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var normalized_id := instance_id.strip_edges()
 	if normalized_id.is_empty():
-		return _failure("invalid_instance_id")
+		return CoreResult.failure("invalid_instance_id")
 	var item := _owned_equipment(normalized_id)
 	if item.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null or not registry.validate_item_instance(item).is_empty():
-		return _failure("invalid_item_instance")
+		return CoreResult.failure("invalid_item_instance")
 	var slot := String(item.slot)
 	if slot not in EarlyItemRegistryScript.PROTOTYPE_OPEN_SLOTS:
-		return _failure("slot_not_prototype_open")
+		return CoreResult.failure("slot_not_prototype_open")
 	var active: Dictionary = (_profile.active_build as Dictionary).duplicate(true)
 	var equipped: Dictionary = active.equipped_item_ids
 	for equipped_slot in EarlyItemRegistryScript.EQUIPMENT_SLOTS:
 		if String(equipped.get(equipped_slot, "")) == normalized_id:
-			return _failure("item_already_equipped")
+			return CoreResult.failure("item_already_equipped")
 	var current_resolved := _resolve_active_build(active)
 	if not bool(current_resolved.get("ok", false)):
-		return _failure("build_resolution_failed")
+		return CoreResult.failure("build_resolution_failed")
 	equipped[slot] = normalized_id
 	var next_resolved := _resolve_active_build(active)
 	if not bool(next_resolved.get("ok", false)):
-		return _failure("build_resolution_failed")
+		return CoreResult.failure("build_resolution_failed")
 	var current_connected := _resolved_connected_interfaces(current_resolved)
 	var next_connected := _resolved_connected_interfaces(next_resolved)
 	var current_tags := _resolved_tag_ids(current_resolved)
@@ -497,10 +499,10 @@ func preview_equip_item(instance_id: String) -> Dictionary:
 		"final_parameters": (next_resolved.final_parameters as Dictionary).duplicate(true),
 		"growth_classification": String(next_resolved.growth_classification),
 		"build_fingerprint": String(next_resolved.build_fingerprint),
-		"interfaces_gained": _string_array_difference(next_connected, current_connected),
-		"interfaces_lost": _string_array_difference(current_connected, next_connected),
-		"tags_gained": _string_array_difference(next_tags, current_tags),
-		"tags_lost": _string_array_difference(current_tags, next_tags),
+		"interfaces_gained": Collections.string_array_difference(next_connected, current_connected),
+		"interfaces_lost": Collections.string_array_difference(current_connected, next_connected),
+		"tags_gained": Collections.string_array_difference(next_tags, current_tags),
+		"tags_lost": Collections.string_array_difference(current_tags, next_tags),
 		"current_resolved": current_resolved.duplicate(true),
 		"resolved_build": next_resolved.duplicate(true),
 	}
@@ -515,10 +517,10 @@ func preview_equip_item(instance_id: String) -> Dictionary:
 ## domain remains authoritative for the Law Tally refund.
 func salvage_item_preview(instance_id: String) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var normalized_id := instance_id.strip_edges()
 	if normalized_id.is_empty():
-		return _failure("invalid_instance_id")
+		return CoreResult.failure("invalid_instance_id")
 	var assessment := _salvage_assessment(normalized_id)
 	if not bool(assessment.get("ok", false)):
 		return assessment
@@ -534,10 +536,10 @@ func salvage_item_preview(instance_id: String) -> Dictionary:
 
 func salvage_item(instance_id: String) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var normalized_id := instance_id.strip_edges()
 	if normalized_id.is_empty():
-		return _failure("invalid_instance_id")
+		return CoreResult.failure("invalid_instance_id")
 	var assessment := _salvage_assessment(normalized_id)
 	if not bool(assessment.get("ok", false)):
 		return assessment
@@ -548,7 +550,7 @@ func salvage_item(instance_id: String) -> Dictionary:
 			inventory_index = index
 			break
 	if inventory_index < 0:
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var salvaged: Dictionary = (equipment[inventory_index] as Dictionary).duplicate(true)
 	var next_active: Dictionary = (assessment.next_active_build as Dictionary).duplicate(true)
 	equipment.remove_at(inventory_index)
@@ -573,10 +575,10 @@ func salvage_item(instance_id: String) -> Dictionary:
 func _salvage_assessment(normalized_id: String) -> Dictionary:
 	var item := _owned_equipment(normalized_id)
 	if item.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null or not registry.validate_item_instance(item).is_empty():
-		return _failure("invalid_item_instance")
+		return CoreResult.failure("invalid_item_instance")
 	var active: Dictionary = (_profile.active_build as Dictionary).duplicate(true)
 	var equipped: Dictionary = active.equipped_item_ids
 	var equipped_slot := ""
@@ -588,7 +590,7 @@ func _salvage_assessment(normalized_id: String) -> Dictionary:
 		equipped[equipped_slot] = ""
 		var resolved := _resolve_active_build(active)
 		if not bool(resolved.get("ok", false)):
-			return _failure("build_resolution_failed")
+			return CoreResult.failure("build_resolution_failed")
 	return {
 		"ok": true,
 		"item": item,
@@ -609,26 +611,26 @@ func _salvage_operation(item: Dictionary) -> String:
 
 func unequip_item(slot: String) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var normalized_slot := slot.strip_edges().to_lower()
 	if normalized_slot not in EarlyItemRegistryScript.PROTOTYPE_OPEN_SLOTS:
-		return _failure("slot_not_prototype_open")
+		return CoreResult.failure("slot_not_prototype_open")
 	var active: Dictionary = (_profile.active_build as Dictionary).duplicate(true)
 	(active.equipped_item_ids as Dictionary)[normalized_slot] = ""
 	var resolved := _resolve_active_build(active)
 	if not bool(resolved.get("ok", false)):
-		return _failure("build_resolution_failed")
+		return CoreResult.failure("build_resolution_failed")
 	_profile["active_build"] = active
 	return {"ok": true, "active_build": active.duplicate(true), "resolved_build": resolved.duplicate(true)}
 
 
 func early_game_snapshot() -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var registry: Variant = _loaded_content_registry()
 	var item_registry: Variant = _loaded_item_registry()
 	if registry == null or item_registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var available: Array = []
 	var selected_id := _legacy_preset_for_active_build(_profile.active_build)
 	var reports_by_fingerprint: Dictionary = (_profile.training as Dictionary).reports_by_fingerprint
@@ -682,10 +684,10 @@ func early_game_snapshot() -> Dictionary:
 
 func campaign_progress_snapshot() -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var registry: Variant = _loaded_early_campaign_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var completed: Array = ((_profile.progression as Dictionary).completed_node_ids as Array).duplicate()
 	var completed_lookup := {}
 	for node_id_value in completed:
@@ -727,10 +729,10 @@ func campaign_progress_snapshot() -> Dictionary:
 
 func run_training_trial() -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var resolved := resolved_build_snapshot()
 	if not bool(resolved.get("ok", false)):
-		return _failure("invalid_active_build")
+		return CoreResult.failure("invalid_active_build")
 	var preset_id := _legacy_preset_for_active_build(_profile.active_build)
 	var fingerprint := String(resolved.build_fingerprint)
 	var report: Dictionary = TrainingReportBuilderScript.build_report(resolved, preset_id)
@@ -748,16 +750,16 @@ func is_auto_mode_unlocked() -> bool:
 
 func forge_ensure_context() -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var inventory_items: Array = []
 	for raw_item in ((_profile.inventory as Dictionary).equipment as Array):
 		if raw_item is Dictionary and registry.validate_item_instance(raw_item).is_empty():
 			inventory_items.append(_forge_item_view(raw_item as Dictionary, registry))
 	if inventory_items.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var target_id := String(_forge_context.get("target_instance_id", "")).strip_edges()
 	if target_id.is_empty() or _owned_equipment(target_id).is_empty():
 		target_id = _default_forge_target_id(inventory_items)
@@ -769,34 +771,34 @@ func forge_ensure_context() -> Dictionary:
 
 func forge_select_target(instance_id: String, expected_revision: int = -1) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var target_id := instance_id.strip_edges()
 	if target_id.is_empty():
-		return _failure("invalid_instance_id")
+		return CoreResult.failure("invalid_instance_id")
 	var item := _owned_equipment(target_id)
 	if item.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	if not registry.validate_item_instance(item).is_empty():
-		return _failure("invalid_item")
+		return CoreResult.failure("invalid_item")
 	var ensured := forge_ensure_context()
 	if not bool(ensured.get("ok", false)):
 		return ensured
 	if expected_revision >= 0 and expected_revision != int(_forge_context.revision):
-		return _failure("stale_forge_context")
+		return CoreResult.failure("stale_forge_context")
 	return _set_forge_context(target_id, String(_forge_context.operation))
 
 
 func forge_select_operation(operation: String, expected_revision: int = -1) -> Dictionary:
 	if operation not in FORGE_OPERATIONS:
-		return _failure("unknown_operation")
+		return CoreResult.failure("unknown_operation")
 	var ensured := forge_ensure_context()
 	if not bool(ensured.get("ok", false)):
 		return ensured
 	if expected_revision >= 0 and expected_revision != int(_forge_context.revision):
-		return _failure("stale_forge_context")
+		return CoreResult.failure("stale_forge_context")
 	return _set_forge_context(String(_forge_context.target_instance_id), operation)
 
 
@@ -806,7 +808,7 @@ func forge_snapshot() -> Dictionary:
 		return ensured
 	var registry: Variant = _loaded_item_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var inventory_items: Array = []
 	for raw_item in ((_profile.inventory as Dictionary).equipment as Array):
 		if raw_item is Dictionary and registry.validate_item_instance(raw_item).is_empty():
@@ -814,9 +816,9 @@ func forge_snapshot() -> Dictionary:
 	var target_id := String(_forge_context.target_instance_id)
 	var target := _owned_equipment(target_id)
 	if target.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	if not registry.validate_item_instance(target).is_empty():
-		return _failure("invalid_item")
+		return CoreResult.failure("invalid_item")
 	return {
 		"ok": true,
 		"unlocked": _is_law_forge_unlocked(),
@@ -838,29 +840,29 @@ func forge_snapshot() -> Dictionary:
 
 func forge_reveal(limit: int = 8, expected_revision: int = -1) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	if not _is_law_forge_unlocked():
-		return _failure("forge_locked")
+		return CoreResult.failure("forge_locked")
 	if limit < 1:
-		return _failure("invalid_page")
+		return CoreResult.failure("invalid_page")
 	var ensured := forge_ensure_context()
 	if not bool(ensured.get("ok", false)):
 		return ensured
 	if expected_revision >= 0 and expected_revision != int(_forge_context.revision):
-		return _failure("stale_forge_context")
+		return CoreResult.failure("stale_forge_context")
 	if bool(_forge_context.get("blocked", false)):
-		return _failure(String(_forge_context.get("blocked_reason", "invalid_forge_context")))
+		return CoreResult.failure(String(_forge_context.get("blocked_reason", "invalid_forge_context")))
 	var target_id := String(_forge_context.target_instance_id)
 	var operation := String(_forge_context.operation)
 	var item := _owned_equipment(target_id)
 	if item.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var balance := int(((_profile.resources as Dictionary).law_tallies as Dictionary).get(operation, 0))
 	if balance <= 0:
-		return _failure("insufficient_law_tallies")
+		return CoreResult.failure("insufficient_law_tallies")
 	_forge_session_serial += 1
 	var session_id := "%s|%s|%d" % [target_id, operation, _forge_session_serial]
 	session_id = session_id.sha256_text()
@@ -887,20 +889,20 @@ func forge_reveal(limit: int = 8, expected_revision: int = -1) -> Dictionary:
 
 func forge_reveal_more(session_id: String, limit: int = 8) -> Dictionary:
 	if _forge_session.is_empty():
-		return _failure("forge_session_required")
+		return CoreResult.failure("forge_session_required")
 	if session_id.strip_edges().is_empty() or session_id != String(_forge_session.get("session_id", "")):
-		return _failure("stale_forge_session")
+		return CoreResult.failure("stale_forge_session")
 	if String(_forge_session.get("state", "")) == "prepared":
-		return _failure("commit_pending")
+		return CoreResult.failure("commit_pending")
 	if limit < 1:
-		return _failure("invalid_page")
+		return CoreResult.failure("invalid_page")
 	var current := _owned_equipment(String(_forge_session.target_instance_id))
 	if current.is_empty() or current != _forge_session.target_item:
 		_invalidate_forge_session()
-		return _failure("stale_target")
+		return CoreResult.failure("stale_target")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var offset := (_forge_session.candidates as Array).size()
 	var operation := String(_forge_session.operation)
 	var balance := int(((_profile.resources as Dictionary).law_tallies as Dictionary).get(operation, 0))
@@ -921,11 +923,11 @@ func forge_reveal_more(session_id: String, limit: int = 8) -> Dictionary:
 
 func forge_select_candidate(session_id: String, candidate_id: String) -> Dictionary:
 	if _forge_session.is_empty():
-		return _failure("forge_session_required")
+		return CoreResult.failure("forge_session_required")
 	if session_id.strip_edges().is_empty() or session_id != String(_forge_session.get("session_id", "")):
-		return _failure("stale_forge_session")
+		return CoreResult.failure("stale_forge_session")
 	if String(_forge_session.get("state", "")) == "prepared":
-		return _failure("commit_pending")
+		return CoreResult.failure("commit_pending")
 	var normalized_id := candidate_id.strip_edges()
 	for candidate_value in (_forge_session.candidates as Array):
 		var candidate: Dictionary = candidate_value
@@ -933,12 +935,12 @@ func forge_select_candidate(session_id: String, candidate_id: String) -> Diction
 			_forge_session["state"] = "selected"
 			_forge_session["selected_candidate_id"] = normalized_id
 			return {"ok": true, "session": _forge_session_view()}
-	return _failure("candidate_not_revealed")
+	return CoreResult.failure("candidate_not_revealed")
 
 
 func forge_cancel(session_id: String = "") -> Dictionary:
 	if not session_id.strip_edges().is_empty() and ( _forge_session.is_empty() or session_id != String(_forge_session.get("session_id", "")) ):
-		return _failure("stale_forge_session")
+		return CoreResult.failure("stale_forge_session")
 	_pending_forge_commit.clear()
 	_forge_session.clear()
 	return {"ok": true, "session": _forge_session_view()}
@@ -946,22 +948,22 @@ func forge_cancel(session_id: String = "") -> Dictionary:
 
 func forge_prepare_commit(session_id: String) -> Dictionary:
 	if _forge_session.is_empty() or String(_forge_session.get("state", "")) != "selected":
-		return _failure("candidate_not_selected")
+		return CoreResult.failure("candidate_not_selected")
 	if session_id.strip_edges().is_empty() or session_id != String(_forge_session.get("session_id", "")):
-		return _failure("stale_forge_session")
+		return CoreResult.failure("stale_forge_session")
 	if not _pending_forge_commit.is_empty():
-		return _failure("commit_pending")
+		return CoreResult.failure("commit_pending")
 	var target_id := String(_forge_session.target_instance_id)
 	var current := _owned_equipment(target_id)
 	if current.is_empty() or current != _forge_session.target_item:
 		_invalidate_forge_session()
-		return _failure("stale_target")
+		return CoreResult.failure("stale_target")
 	var selected := _selected_forge_candidate()
 	if selected.is_empty():
-		return _failure("candidate_not_selected")
+		return CoreResult.failure("candidate_not_selected")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var verified: Dictionary = LawForgeScript.new(registry).validate_candidate(
 		current, String(_forge_session.operation), selected, String(_forge_session.session_id)
 	)
@@ -972,13 +974,13 @@ func forge_prepare_commit(session_id: String) -> Dictionary:
 	var cost := int(selected.cost)
 	var tallies: Dictionary = (_profile.resources as Dictionary).law_tallies
 	if int(tallies.get(operation, 0)) < cost:
-		return _failure("insufficient_law_tallies")
+		return CoreResult.failure("insufficient_law_tallies")
 	var next_profile := _profile.duplicate(true)
 	var equipment: Array = (next_profile.inventory as Dictionary).equipment
 	var inventory_index := _equipment_index(equipment, target_id)
 	if inventory_index < 0:
 		_invalidate_forge_session()
-		return _failure("stale_target")
+		return CoreResult.failure("stale_target")
 	equipment[inventory_index] = (selected.result_item as Dictionary).duplicate(true)
 	var next_tallies: Dictionary = (next_profile.resources as Dictionary).law_tallies
 	next_tallies[operation] = int(next_tallies[operation]) - cost
@@ -1003,7 +1005,7 @@ func forge_prepare_commit(session_id: String) -> Dictionary:
 
 func forge_finalize_commit(commit_token: String) -> Dictionary:
 	if _pending_forge_commit.is_empty() or String(_pending_forge_commit.commit_token) != commit_token:
-		return _failure("invalid_commit_token")
+		return CoreResult.failure("invalid_commit_token")
 	var candidate: Dictionary = (_pending_forge_commit.candidate as Dictionary).duplicate(true)
 	_profile = (_pending_forge_commit.next_profile as Dictionary).duplicate(true)
 	_pending_forge_commit.clear()
@@ -1020,7 +1022,7 @@ func forge_finalize_commit(commit_token: String) -> Dictionary:
 
 func forge_abort_commit(commit_token: String) -> Dictionary:
 	if _pending_forge_commit.is_empty() or String(_pending_forge_commit.commit_token) != commit_token:
-		return _failure("invalid_commit_token")
+		return CoreResult.failure("invalid_commit_token")
 	_pending_forge_commit.clear()
 	_forge_session["state"] = "selected"
 	return {"ok": true, "session": _forge_session_view()}
@@ -1028,27 +1030,27 @@ func forge_abort_commit(commit_token: String) -> Dictionary:
 
 func prepare_contract(config: Dictionary) -> Dictionary:
 	if not has_profile():
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	if not _active_session.is_empty():
-		return _failure("active_session_exists")
+		return CoreResult.failure("active_session_exists")
 	var contract_id_value: Variant = config.get("contract_id", "")
 	if not _is_text(contract_id_value):
-		return _failure("invalid_contract_id")
+		return CoreResult.failure("invalid_contract_id")
 	var contract_id := String(contract_id_value).strip_edges()
 	if contract_id.is_empty():
-		return _failure("invalid_contract_id")
+		return CoreResult.failure("invalid_contract_id")
 	var mode_value: Variant = config.get("mode", "")
 	if not _is_text(mode_value):
-		return _failure("invalid_mode")
+		return CoreResult.failure("invalid_mode")
 	var mode := _normalize_mode(String(mode_value))
 	if mode.is_empty():
-		return _failure("invalid_mode")
+		return CoreResult.failure("invalid_mode")
 	var seed: Variant = config.get("seed", null)
 	if typeof(seed) != TYPE_INT or int(seed) < -MAX_SAFE_JSON_INTEGER or int(seed) > MAX_SAFE_JSON_INTEGER:
-		return _failure("invalid_seed")
+		return CoreResult.failure("invalid_seed")
 	var room_count: Variant = config.get("room_count", null)
 	if typeof(room_count) != TYPE_INT or int(room_count) < 1:
-		return _failure("invalid_room_count")
+		return CoreResult.failure("invalid_room_count")
 	var normalized := config.duplicate(true)
 	normalized["contract_id"] = contract_id
 	normalized["mode"] = mode
@@ -1060,9 +1062,9 @@ func prepare_contract(config: Dictionary) -> Dictionary:
 
 func begin_session() -> Dictionary:
 	if not _active_session.is_empty():
-		return _failure("active_session_exists")
+		return CoreResult.failure("active_session_exists")
 	if _pending_contract.is_empty():
-		return _failure("pending_contract_required")
+		return CoreResult.failure("pending_contract_required")
 	_active_session = _pending_contract.duplicate(true)
 	_active_session["room_index"] = 0
 	_active_session["ticks"] = 0
@@ -1072,29 +1074,29 @@ func begin_session() -> Dictionary:
 
 func commit_room_victory_and_resolve_next_build(room_index: int, room_result: Dictionary) -> Dictionary:
 	if _active_session.is_empty():
-		return _failure("active_session_required")
+		return CoreResult.failure("active_session_required")
 	if int(room_index) != int(_active_session.get("room_index", -1)):
-		return _failure("room_index_mismatch")
+		return CoreResult.failure("room_index_mismatch")
 	if String(room_result.get("outcome", "")).to_lower() != "victory":
-		return _failure("room_victory_required")
+		return CoreResult.failure("room_victory_required")
 	var settlement_value: Variant = room_result.get("room_loot_settlement", {})
 	if not settlement_value is Dictionary:
-		return _failure("invalid_room_loot_settlement")
+		return CoreResult.failure("invalid_room_loot_settlement")
 	var settlement: Dictionary = settlement_value
 	var items_value: Variant = settlement.get("items", [])
 	if not settlement.is_empty():
 		if not bool(settlement.get("ok", false)) or String(settlement.get("outcome", "")) != "victory":
-			return _failure("invalid_room_loot_settlement")
+			return CoreResult.failure("invalid_room_loot_settlement")
 		if not items_value is Array:
-			return _failure("invalid_room_loot_settlement")
+			return CoreResult.failure("invalid_room_loot_settlement")
 	var registry: Variant = _loaded_item_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var candidates: Array[Dictionary] = []
 	var seen_ids: Dictionary = {}
 	for item_value: Variant in items_value:
 		if not item_value is Dictionary or not registry.validate_item_instance(item_value).is_empty():
-			return _failure("invalid_room_loot_item")
+			return CoreResult.failure("invalid_room_loot_item")
 		var item: Dictionary = item_value
 		var instance_id := String(item.get("instance_id", ""))
 		if instance_id.is_empty() or seen_ids.has(instance_id):
@@ -1113,7 +1115,7 @@ func commit_room_victory_and_resolve_next_build(room_index: int, room_result: Di
 		next_profile.active_build, (next_profile.inventory as Dictionary).equipment, next_profile
 	)
 	if not bool(resolved.get("ok", false)):
-		return _failure("invalid_next_build")
+		return CoreResult.failure("invalid_next_build")
 	_profile = next_profile
 	_active_session["room_index"] = int(room_index) + 1
 	_active_session["resolved_build"] = (resolved as Dictionary).duplicate(true)
@@ -1128,7 +1130,7 @@ func commit_room_victory_and_resolve_next_build(room_index: int, room_result: Di
 
 func complete_session(result: Dictionary) -> Dictionary:
 	if _active_session.is_empty():
-		return _failure("active_session_required")
+		return CoreResult.failure("active_session_required")
 	_last_result = result.duplicate(true)
 	if _is_auto_certification_graduation(_last_result):
 		_last_result["outcome"] = "final_victory"
@@ -1187,25 +1189,25 @@ func _persistent_payload_for_profile(profile_value: Dictionary, safe_route: Stri
 
 func restore_persistent_payload(payload: Variant) -> Dictionary:
 	if not (payload is Dictionary):
-		return _failure("invalid_payload")
+		return CoreResult.failure("invalid_payload")
 	var candidate: Dictionary = payload
 	var schema: Variant = candidate.get("schema_version", null)
 	if not _is_exact_integer(schema) or int(schema) != PROFILE_SCHEMA_VERSION:
-		return _failure("unsupported_schema_version")
+		return CoreResult.failure("unsupported_schema_version")
 	var candidate_profile: Variant = candidate.get("profile", null)
 	if not (candidate_profile is Dictionary):
-		return _failure("invalid_profile")
+		return CoreResult.failure("invalid_profile")
 	var restored_profile: Dictionary = (candidate_profile as Dictionary).duplicate(true)
 	if not restored_profile.is_empty() and not _is_valid_profile(restored_profile):
-		return _failure("invalid_profile")
+		return CoreResult.failure("invalid_profile")
 	if not restored_profile.is_empty():
 		_normalize_current_profile_numbers(restored_profile)
 	var candidate_result: Variant = candidate.get("last_result", {})
 	if not (candidate_result is Dictionary):
-		return _failure("invalid_last_result")
+		return CoreResult.failure("invalid_last_result")
 	var route_value: Variant = candidate.get("safe_route", "title")
 	if not _is_text(route_value) or String(route_value) not in SAFE_ROUTES:
-		return _failure("invalid_safe_route")
+		return CoreResult.failure("invalid_safe_route")
 	var route := String(route_value)
 	if restored_profile.is_empty():
 		route = "title"
@@ -1361,22 +1363,22 @@ func _loaded_content_registry() -> Variant:
 func _raw_proxy_build_snapshot() -> Dictionary:
 	var stored_value: Variant = _profile.get("proxy_build", null)
 	if not stored_value is Dictionary:
-		return _failure("invalid_proxy_build")
+		return CoreResult.failure("invalid_proxy_build")
 	var stored: Dictionary = stored_value
 	if not _has_exact_keys(stored, ["cores", "settings", "attachments"]):
-		return _failure("invalid_proxy_build")
+		return CoreResult.failure("invalid_proxy_build")
 	if not stored.cores is Array or (stored.cores as Array).size() != ProxyBuildScript.SLOT_ORDER.size():
-		return _failure("invalid_proxy_build")
+		return CoreResult.failure("invalid_proxy_build")
 	if not stored.settings is Dictionary:
-		return _failure("invalid_proxy_build")
+		return CoreResult.failure("invalid_proxy_build")
 	if not stored.attachments is Array or (stored.attachments as Array).size() != 3:
-		return _failure("invalid_proxy_build")
+		return CoreResult.failure("invalid_proxy_build")
 	for core_id in (stored.cores as Array):
 		if not _is_text(core_id):
-			return _failure("invalid_proxy_build")
+			return CoreResult.failure("invalid_proxy_build")
 	for attachment_id in (stored.attachments as Array):
 		if not _is_text(attachment_id) or not String(attachment_id).is_empty():
-			return _failure("invalid_proxy_build")
+			return CoreResult.failure("invalid_proxy_build")
 	return {"ok": true, "value": stored.duplicate(true)}
 
 
@@ -1390,7 +1392,7 @@ func _proxy_compile_input(raw_build: Dictionary) -> Dictionary:
 func _commit_proxy_build_candidate(candidate: Dictionary, core_catalog: Dictionary) -> Dictionary:
 	var compiled: Dictionary = ProxyBuildScript.compile(_proxy_compile_input(candidate), core_catalog)
 	if not bool(compiled.get("ok", false)):
-		return _failure("proxy_build_%s" % String(compiled.get("error", "invalid")))
+		return CoreResult.failure("proxy_build_%s" % String(compiled.get("error", "invalid")))
 	_profile["proxy_build"] = candidate.duplicate(true)
 	return {
 		"ok": true,
@@ -1630,10 +1632,10 @@ func _resolve_active_build(build: Dictionary) -> Dictionary:
 func _resolve_build_with_inventory(build: Dictionary, equipment_inventory: Array, character_profile: Dictionary = {}) -> Dictionary:
 	var registry: Variant = _loaded_item_registry()
 	if registry == null:
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var equipped_value: Variant = build.get("equipped_item_ids", {})
 	if not equipped_value is Dictionary:
-		return _failure("invalid_active_build")
+		return CoreResult.failure("invalid_active_build")
 	var equipped_items := {}
 	for slot in EarlyItemRegistryScript.PROTOTYPE_OPEN_SLOTS:
 		var instance_id := String((equipped_value as Dictionary).get(slot, ""))
@@ -1641,10 +1643,10 @@ func _resolve_build_with_inventory(build: Dictionary, equipment_inventory: Array
 			continue
 		var item := _owned_equipment_from(equipment_inventory, instance_id)
 		if item.is_empty() or String(item.get("slot", "")) != slot:
-			return _failure("equipped_item_not_owned")
+			return CoreResult.failure("equipped_item_not_owned")
 		equipped_items[slot] = item
 	if not registry.build_fixtures.has("fixed_start"):
-		return _failure("content_unavailable")
+		return CoreResult.failure("content_unavailable")
 	var fixture: Dictionary = registry.build_fixtures.fixed_start
 	var skills: Array = build.get("skills", [])
 	var skill_id := String(skills[0]) if not skills.is_empty() else ""
@@ -1678,21 +1680,6 @@ func _resolved_tag_ids(resolved: Dictionary) -> Array[String]:
 				tags.append(String(entry))
 	tags.sort()
 	return tags
-
-
-func _string_array_difference(values: Array, excluded: Array) -> Array[String]:
-	var excluded_set := {}
-	for entry in excluded:
-		excluded_set[String(entry)] = true
-	var difference: Array[String] = []
-	var seen := {}
-	for entry in values:
-		var text := String(entry)
-		if excluded_set.has(text) or seen.has(text):
-			continue
-		seen[text] = true
-		difference.append(text)
-	return difference
 
 
 func _owned_equipment(instance_id: String) -> Dictionary:
@@ -2320,7 +2307,7 @@ func _default_forge_target_id(inventory_items: Array) -> String:
 func _set_forge_context(target_id: String, operation: String) -> Dictionary:
 	var item := _owned_equipment(target_id)
 	if item.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var affixes: Array = item.get("affixes", [])
 	var affix_count := affixes.size()
 	var blocked_reason := ""
@@ -2343,7 +2330,7 @@ func _set_forge_context(target_id: String, operation: String) -> Dictionary:
 			if not has_eligible_affix:
 				blocked_reason = "max_tier"
 	else:
-		return _failure("unknown_operation")
+		return CoreResult.failure("unknown_operation")
 	var previous_revision := int(_forge_context.get("revision", 0))
 	var changed := _forge_context.is_empty() \
 		or String(_forge_context.get("target_instance_id", "")) != target_id \
@@ -2464,8 +2451,8 @@ func _enrich_forge_candidates(target_item: Dictionary, candidates: Array, regist
 		candidate["build_comparison"] = {
 			"current_parameters": current_parameters.duplicate(true),
 			"result_parameters": result_parameters.duplicate(true),
-			"interfaces_gained": _string_array_difference(result_interfaces, current_interfaces),
-			"interfaces_lost": _string_array_difference(current_interfaces, result_interfaces),
+			"interfaces_gained": Collections.string_array_difference(result_interfaces, current_interfaces),
+			"interfaces_lost": Collections.string_array_difference(current_interfaces, result_interfaces),
 		}
 		result[index] = candidate
 	return result
@@ -2491,6 +2478,3 @@ func _has_exact_keys(value: Dictionary, expected: Array) -> bool:
 			return false
 	return true
 
-
-func _failure(code: String) -> Dictionary:
-	return {"ok": false, "error": code}

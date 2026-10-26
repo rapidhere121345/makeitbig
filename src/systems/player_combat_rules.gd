@@ -9,6 +9,7 @@ const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const ArrowOrigin := preload("res://src/game/ranger_arrow_origin.gd")
 const AimResolver := preload("res://src/systems/manual_aim_resolver.gd")
 const Big := preload("res://src/core/big_value.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 var _state: State
 var _world
@@ -20,11 +21,11 @@ var _targets: Array[Dictionary] = []
 
 func configure(state: State, world, event_stream) -> Dictionary:
 	if state == null or world == null or event_stream == null or state.actor_snapshot().is_empty():
-		return _failure("player_rules_dependencies_unavailable")
+		return CoreResult.failure("player_rules_dependencies_unavailable")
 	if int(world.tick_rate) != Skill.TICKS_PER_SECOND:
-		return _failure("invalid_player_tick_rate")
+		return CoreResult.failure("invalid_player_tick_rate")
 	if world.room_instance_id != state._room_instance_id or world.world_revision != state._world_revision or int(world.tick) != state._last_tick:
-		return _failure("stale_player_room")
+		return CoreResult.failure("stale_player_room")
 	_state = state
 	_world = world
 	_stream = event_stream
@@ -38,9 +39,9 @@ func configure(state: State, world, event_stream) -> Dictionary:
 func begin_tick(tick: int, read_only_targets: Array[Dictionary]) -> Dictionary:
 	var error := _tick_error(tick, true)
 	if not error.is_empty():
-		return _failure(error)
+		return CoreResult.failure(error)
 	if tick == _prepared_tick:
-		return _failure("duplicate_player_tick")
+		return CoreResult.failure("duplicate_player_tick")
 	_prepared_tick = tick
 	_targets = read_only_targets.duplicate(true)
 	var values := _state._values
@@ -64,10 +65,10 @@ func begin_tick(tick: int, read_only_targets: Array[Dictionary]) -> Dictionary:
 func advance_tick(tick: int, routed_intent: Dictionary, read_only_targets: Array[Dictionary]) -> Dictionary:
 	var error := _tick_error(tick, true)
 	if not error.is_empty():
-		return _failure(error)
+		return CoreResult.failure(error)
 	var requested_movement: Variant = routed_intent.get("movement", Vector2.ZERO)
 	if not requested_movement is Vector2 or not (requested_movement as Vector2).is_finite() or not is_finite(float(routed_intent.get("speed_scale", 1.0))):
-		return _failure("invalid_motion")
+		return CoreResult.failure("invalid_motion")
 	var action_events: Array[Dictionary] = []
 	var action_batches: Array[Dictionary] = []
 	if _prepared_tick != tick:
@@ -125,7 +126,7 @@ func advance_tick(tick: int, routed_intent: Dictionary, read_only_targets: Array
 	action_batches.append({"player": action_player, "events": action_events.slice(pre_action_count)})
 	var motion := _motor.advance_player(_state, _world, tick, movement, speed_scale)
 	if not bool(motion.get("ok", false)):
-		return _failure(String(motion.get("error", "player_motion_failed")))
+		return CoreResult.failure(String(motion.get("error", "player_motion_failed")))
 	_state._last_tick = tick
 	_prepared_tick = -1
 	return {"ok": true, "error": "", "tick": tick, "player": _state.snapshot(tick), "receipts": receipts, "protocol_receipts": protocol_receipts, "action_events": action_events, "action_player": action_player, "action_batches": action_batches, "motion": motion}
@@ -465,6 +466,3 @@ static func _accepted() -> Dictionary:
 static func _rejected(reason: String) -> Dictionary:
 	return {"accepted": false, "status": "rejected", "reason": reason}
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

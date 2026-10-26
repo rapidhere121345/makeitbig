@@ -3,6 +3,7 @@ extends RefCounted
 
 const SCHEMA_VERSION := 1
 const SelfScript := preload("res://src/runtime/combat/combat_hit_record.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 var tick := -1
 var attack_instance_id := ""
@@ -22,7 +23,7 @@ var allow_repeat_target := false
 
 static func from_data(value: Variant) -> Dictionary:
 	if not value is Dictionary:
-		return _failure("hit_not_dictionary")
+		return CoreResult.failure("hit_not_dictionary")
 	var source: Dictionary = value
 	var result: Variant = SelfScript.new()
 	result.tick = int(source.get("tick", -1))
@@ -41,7 +42,7 @@ static func from_data(value: Variant) -> Dictionary:
 	result.allow_repeat_target = bool(source.get("allow_repeat_target", false))
 	var error: String = result.validate()
 	if not error.is_empty():
-		return _failure(error)
+		return CoreResult.failure(error)
 	return {"ok": true, "error": "", "value": result}
 
 
@@ -99,6 +100,3 @@ static func ordered(values: Array) -> Array:
 static func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

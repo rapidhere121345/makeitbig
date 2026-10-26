@@ -11,6 +11,7 @@ const BossOutcomeScript := preload("res://src/runtime/combat/boss_damage_outcome
 const BossBatchScript := preload("res://src/runtime/combat/boss_damage_batch_result.gd")
 const BossDamageValueScript := preload("res://src/runtime/combat/boss_damage_value.gd")
 const BigValueScript := preload("res://src/core/big_value.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 var _boss_window_tick := -1
 var _boss_settled_groups: Dictionary = {}
@@ -96,7 +97,7 @@ func resolve(tick: int, raw_hits: Array, raw_targets: Array) -> Variant:
 ## fresh attack window; a stale tick is rejected before any state changes.
 func begin_boss_tick(tick: int) -> Dictionary:
 	if tick < 0 or (_boss_window_tick >= 0 and tick < _boss_window_tick):
-		return _failure("stale_boss_damage_tick")
+		return CoreResult.failure("stale_boss_damage_tick")
 	if tick > _boss_window_tick:
 		_boss_window_tick = tick
 		_boss_settled_groups.clear()
@@ -198,7 +199,7 @@ func resolve_boss(tick: int, raw_hits: Array, raw_targets: Array) -> Variant:
 
 func _resolve_big_damage(current: BigValue, requested: BigValue) -> Dictionary:
 	if not _valid_big(current) or not _valid_big(requested):
-		return _failure("invalid_boss_health_or_damage")
+		return CoreResult.failure("invalid_boss_health_or_damage")
 	var comparison := current.compare(requested)
 	if comparison <= 0:
 		return {
@@ -229,6 +230,3 @@ func _resolve_big_damage(current: BigValue, requested: BigValue) -> Dictionary:
 func _valid_big(value: Variant) -> bool:
 	return value is BigValueScript and value.layer >= 0 and is_finite(value.magnitude) and (value.layer > 0 or value.magnitude >= 0.0)
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

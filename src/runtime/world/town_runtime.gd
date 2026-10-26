@@ -4,6 +4,7 @@ extends RefCounted
 ## Town gameplay consumes the room's one clock and one actor registry. No
 ## presentation node owns a second position, route cursor, or movement clock.
 const SimCommandScript := preload("res://src/runtime/simulation/sim_command.gd")
+const CoreResult := preload("res://src/core/result.gd")
 signal state_changed(snapshot: Dictionary)
 
 const HERO_ID := "town/ranger"
@@ -25,12 +26,12 @@ var _ready := false
 
 func configure(world: Variant, actors: Variant, content: Dictionary) -> Dictionary:
 	if world == null or actors == null or world.room_instance_id != actors.room_instance_id or world.world_revision != actors.world_revision:
-		return _failure("town_dependencies_mismatch")
+		return CoreResult.failure("town_dependencies_mismatch")
 	if actors.actor(HERO_ID) == null or not actors.has_movement_boundary():
-		return _failure("town_actor_or_boundary_missing")
+		return CoreResult.failure("town_actor_or_boundary_missing")
 	var gateway_error := _gateway_error(content, actors)
 	if not gateway_error.is_empty():
-		return _failure(gateway_error)
+		return CoreResult.failure(gateway_error)
 	simulation = world
 	registry = actors
 	_content = content.duplicate(true)
@@ -53,14 +54,14 @@ func is_ready() -> bool:
 
 func submit_move(direction: Vector2) -> Dictionary:
 	if not is_ready() or not direction.is_finite():
-		return _failure("town_not_ready_or_invalid_intent")
+		return CoreResult.failure("town_not_ready_or_invalid_intent")
 	_input_direction = direction.limit_length(1.0) if not direction.is_zero_approx() else Vector2.ZERO
 	return {"ok": true, "error": ""}
 
 
 func advance_frame(display_delta: float) -> Dictionary:
 	if not is_ready():
-		return _failure("town_not_ready")
+		return CoreResult.failure("town_not_ready")
 	var count: int = simulation.ticks_for_frame(display_delta)
 	for index: int in count:
 		var result := step_tick()
@@ -71,14 +72,14 @@ func advance_frame(display_delta: float) -> Dictionary:
 
 func step_tick() -> Dictionary:
 	if not is_ready():
-		return _failure("town_not_ready")
+		return CoreResult.failure("town_not_ready")
 	var displacement := _input_direction * HERO_SPEED / float(simulation.tick_rate)
 	var queued: SimOutcome = simulation.queue_command(SimCommandScript.control(registry.actor_handle(HERO_ID), displacement, false))
 	if not queued.ok:
-		return _failure(String(queued.error))
+		return CoreResult.failure(String(queued.error))
 	var committed: SimOutcome = simulation.step_tick()
 	if not committed.ok:
-		return _failure(String(committed.error))
+		return CoreResult.failure(String(committed.error))
 	_update_route_progress()
 	state_changed.emit(snapshot())
 	return {"ok": true, "error": "", "tick": simulation.tick, "position": hero_world_position(), "displacement": registry.actor(HERO_ID).velocity}
@@ -103,7 +104,7 @@ func hero_position_is_clear(point: Vector2) -> bool:
 
 func place_hero(point: Vector2) -> Dictionary:
 	if not hero_position_is_clear(point):
-		return _failure("town_placement_blocked")
+		return CoreResult.failure("town_placement_blocked")
 	var result: Dictionary = registry.teleport_actor(HERO_ID, point)
 	if bool(result.get("ok", false)):
 		_input_direction = Vector2.ZERO
@@ -279,7 +280,7 @@ func restore_travel(travel: Dictionary) -> Dictionary:
 	var facing := String(travel.get("facing", "south"))
 	var destination := String(travel.get("destination", "contract"))
 	if not point is Vector2 or not hero_position_is_clear(point) or facing not in ["south", "north", "east", "west"] or entry_for(destination).is_empty():
-		return _failure("invalid_town_travel")
+		return CoreResult.failure("invalid_town_travel")
 	registry.teleport_actor(HERO_ID, point)
 	registry.actor(HERO_ID).facing = {"south": Vector2.DOWN, "north": Vector2.UP, "east": Vector2.RIGHT, "west": Vector2.LEFT}[facing]
 	_input_direction = Vector2.ZERO
@@ -305,6 +306,3 @@ func snapshot() -> Dictionary:
 static func _point(pair: Array) -> Vector2:
 	return Vector2(float(pair[0]), float(pair[1])) if pair.size() == 2 else Vector2.ZERO
 
-
-func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

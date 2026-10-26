@@ -2,6 +2,7 @@ class_name DeathSettlementRequest
 extends RefCounted
 
 const SelfScript := preload("res://src/runtime/combat/death_settlement_request.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 const LOOT_SOURCES := ["enemy_death", "wave_clear"]
 
@@ -22,20 +23,20 @@ var can_drop := true
 static func from_data(value: Variant) -> Dictionary:
 	var raw: Variant = value.snapshot() if value is Object and value.has_method("snapshot") else value
 	if not raw is Dictionary:
-		return _failure("death_request_not_dictionary")
+		return CoreResult.failure("death_request_not_dictionary")
 	var source: Dictionary = raw
 	for key: Variant in source.keys():
 		if String(key) not in ["tick", "room_id", "world_revision", "entity_key", "source_key", "spawn_key", "archetype_id", "position", "death_reason", "loot_source", "loot_tags", "can_drop"]:
-			return _failure("unknown_death_request_field:%s" % String(key))
+			return CoreResult.failure("unknown_death_request_field:%s" % String(key))
 	var result: Variant = SelfScript.new()
 	var raw_tick: Variant = source.get("tick", -1)
 	if not raw_tick is int:
-		return _failure("invalid_death_request_tick")
+		return CoreResult.failure("invalid_death_request_tick")
 	result.tick = int(raw_tick)
 	result.room_id = String(source.get("room_id", ""))
 	var raw_revision: Variant = source.get("world_revision", -1)
 	if not raw_revision is int:
-		return _failure("invalid_death_request_revision")
+		return CoreResult.failure("invalid_death_request_revision")
 	result.world_revision = int(raw_revision)
 	result.entity_key = String(source.get("entity_key", ""))
 	result.source_key = String(source.get("source_key", ""))
@@ -47,19 +48,19 @@ static func from_data(value: Variant) -> Dictionary:
 	result.loot_source = String(source.get("loot_source", "enemy_death"))
 	var raw_can_drop: Variant = source.get("can_drop", true)
 	if not raw_can_drop is bool:
-		return _failure("invalid_death_request_drop_flag")
+		return CoreResult.failure("invalid_death_request_drop_flag")
 	result.can_drop = bool(raw_can_drop)
 	var raw_tags: Variant = source.get("loot_tags", [])
 	if not raw_tags is Array:
-		return _failure("invalid_death_request_tags")
+		return CoreResult.failure("invalid_death_request_tags")
 	for raw_tag: Variant in raw_tags as Array:
 		if not raw_tag is String or not _valid_id(String(raw_tag)):
-			return _failure("invalid_death_request_tag")
+			return CoreResult.failure("invalid_death_request_tag")
 		result.loot_tags.append(String(raw_tag))
 	result.loot_tags.sort()
 	var error: String = result.validate()
 	if not error.is_empty():
-		return _failure(error)
+		return CoreResult.failure(error)
 	return {"ok": true, "error": "", "value": result}
 
 
@@ -99,6 +100,3 @@ func snapshot() -> Dictionary:
 static func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

@@ -16,6 +16,7 @@ const DamageBatchScript := preload("res://src/runtime/combat/boss_damage_batch_r
 const DeathSettlementScript := preload("res://src/runtime/combat/death_settlement.gd")
 const DeathSettlementResultScript := preload("res://src/runtime/combat/death_settlement_result.gd")
 const DeathSettlementNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 ## Room-scoped Boss multipart domain.
 ##
@@ -42,7 +43,7 @@ var _last_source_by_target: Dictionary = {}
 
 func configure(identifier: String, revision: int) -> Dictionary:
 	if not _valid_id(identifier) or revision < 0:
-		return _failure("invalid_boss_domain_configuration")
+		return CoreResult.failure("invalid_boss_domain_configuration")
 	room_id = identifier
 	world_revision = revision
 	active_tick = -1
@@ -51,7 +52,7 @@ func configure(identifier: String, revision: int) -> Dictionary:
 	death_settlement = DeathSettlementScript.new()
 	var settlement_configured := death_settlement.configure(room_id, world_revision)
 	if not bool(settlement_configured.get("ok", false)):
-		return _failure("boss_death_settlement_unavailable")
+		return CoreResult.failure("boss_death_settlement_unavailable")
 	last_batch = {}
 	last_settlements.clear()
 	last_settlement_notifications.clear()
@@ -68,17 +69,17 @@ func is_configured() -> bool:
 
 func register_target(target: Variant) -> Dictionary:
 	if not is_configured():
-		return _failure("boss_domain_not_configured")
+		return CoreResult.failure("boss_domain_not_configured")
 	if not target is TargetScript:
-		return _failure("invalid_boss_target_type")
+		return CoreResult.failure("invalid_boss_target_type")
 	var typed: BossTargetView = target
 	var error := typed.validate()
 	if not error.is_empty():
-		return _failure(error)
+		return CoreResult.failure(error)
 	if typed.parts.is_empty():
-		return _failure("missing_boss_hurtbox_parts")
+		return CoreResult.failure("missing_boss_hurtbox_parts")
 	if _targets.has(typed.target_key):
-		return _failure("duplicate_boss_target")
+		return CoreResult.failure("duplicate_boss_target")
 	_targets[typed.target_key] = typed
 	return {"ok": true, "error": ""}
 
@@ -99,9 +100,9 @@ func target_keys() -> Array[String]:
 ## Opens the shared hit buffer and the DamageResolution idempotence window.
 func begin_tick(tick: int) -> Dictionary:
 	if not is_configured():
-		return _failure("boss_domain_not_configured")
+		return CoreResult.failure("boss_domain_not_configured")
 	if tick < 0 or (active_tick >= 0 and tick < active_tick):
-		return _failure("stale_boss_domain_tick")
+		return CoreResult.failure("stale_boss_domain_tick")
 	var buffer_result := hit_buffer.begin_tick(tick)
 	if not bool(buffer_result.get("ok", false)):
 		return buffer_result
@@ -254,15 +255,15 @@ func resolve(tick: int) -> Dictionary:
 		admitted_hits.append(hit)
 	var batch: Variant = damage_resolution.resolve_boss(tick, admitted_hits, targets)
 	if not batch is DamageBatchScript:
-		return _failure("boss_damage_resolution_invalid_result")
+		return CoreResult.failure("boss_damage_resolution_invalid_result")
 	batch.suppressed.append_array(suppressed)
 	for outcome: BossDamageOutcome in batch.outcomes:
 		var target: BossTargetView = _targets.get(outcome.target_key, null)
 		if target == null:
-			return _failure("boss_damage_target_disappeared")
+			return CoreResult.failure("boss_damage_target_disappeared")
 		var committed := target.commit_health(outcome.remaining_health)
 		if not bool(committed.get("ok", false)):
-			return _failure("boss_damage_commit_failed")
+			return CoreResult.failure("boss_damage_commit_failed")
 		_last_source_by_target[outcome.target_key] = outcome.source_key
 		if outcome.lethal and not _pending_deaths.has(outcome.target_key) and not _settlement_receipts.has(outcome.target_key):
 			_pending_deaths[outcome.target_key] = _death_request(target, tick)
@@ -274,7 +275,7 @@ func resolve(tick: int) -> Dictionary:
 ## returns no new request and cannot create another loot/encounter receipt.
 func settle_deaths(tick: int) -> Dictionary:
 	if not is_configured() or tick != active_tick:
-		return _failure("boss_settlement_tick_mismatch")
+		return CoreResult.failure("boss_settlement_tick_mismatch")
 	var new_settlements: Array[Dictionary] = []
 	var keys: Array[String] = []
 	for key: Variant in _pending_deaths.keys():
@@ -343,6 +344,3 @@ func _is_opaque_static(contact: SpatialContact) -> bool:
 static func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

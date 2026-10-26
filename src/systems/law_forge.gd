@@ -4,6 +4,7 @@ extends RefCounted
 ## Pure deterministic forging authority over real ItemInstance snapshots.
 
 const OPERATIONS: Array[String] = ["inscribe", "rewrite", "refine"]
+const CoreResult := preload("res://src/core/result.gd")
 const MAX_AFFIXES := 4
 const MAX_TIER := 4
 
@@ -19,7 +20,7 @@ func reveal(item: Variant, operation: String, offset: int = 0, limit: int = 3, q
 	if not bool(validation.get("ok", false)):
 		return validation
 	if offset < 0 or limit < 0:
-		return _failure("invalid_page")
+		return CoreResult.failure("invalid_page")
 	var unique_results := _ordered_unique_results(item as Dictionary, operation)
 	var candidates: Array[Dictionary] = []
 	for result_index in range(offset, mini(offset + limit, unique_results.size())):
@@ -40,44 +41,44 @@ func validate_candidate(item: Variant, operation: String, candidate: Variant, qu
 	if not bool(request_validation.get("ok", false)):
 		return request_validation
 	if not candidate is Dictionary:
-		return _failure("invalid_candidate")
+		return CoreResult.failure("invalid_candidate")
 	var choice_number := int((candidate as Dictionary).get("choice_number", 0))
 	if choice_number < 1:
-		return _failure("invalid_candidate")
+		return CoreResult.failure("invalid_candidate")
 	var unique_results := _ordered_unique_results(item as Dictionary, operation)
 	if choice_number > unique_results.size():
-		return _failure("stale_candidate")
+		return CoreResult.failure("stale_candidate")
 	var future: Dictionary = unique_results[choice_number - 1]
 	var expected := _candidate(item as Dictionary, operation, int(future.affected_affix_index), choice_number, quote_nonce, future.result_item)
 	if expected.is_empty() or not _same_candidate(expected, candidate as Dictionary):
-		return _failure("stale_candidate")
+		return CoreResult.failure("stale_candidate")
 	return {"ok": true, "candidate": expected.duplicate(true)}
 
 
 func validate_request(item: Variant, operation: String) -> Dictionary:
 	if registry == null or not registry.has_method("validate_item_instance"):
-		return _failure("invalid_item")
+		return CoreResult.failure("invalid_item")
 	if not item is Dictionary or not registry.validate_item_instance(item).is_empty():
-		return _failure("invalid_item")
+		return CoreResult.failure("invalid_item")
 	if operation not in OPERATIONS:
-		return _failure("unknown_operation")
+		return CoreResult.failure("unknown_operation")
 	var affixes: Array = (item as Dictionary).affixes
 	if operation == "inscribe":
 		if affixes.size() >= MAX_AFFIXES or _legal_families(item as Dictionary, -1).is_empty():
-			return _failure("inscribe_not_legal")
+			return CoreResult.failure("inscribe_not_legal")
 		return {"ok": true}
 	if affixes.is_empty():
-		return _failure("affix_required")
+		return CoreResult.failure("affix_required")
 	if operation == "rewrite":
 		for affix_index in affixes.size():
 			if not _legal_rewrite_families(item as Dictionary, affix_index).is_empty():
 				return {"ok": true}
-		return _failure("rewrite_not_legal")
+		return CoreResult.failure("rewrite_not_legal")
 	if operation == "refine":
 		for affix in affixes:
 			if int((affix as Dictionary).tier) < MAX_TIER:
 				return {"ok": true}
-		return _failure("refine_not_legal")
+		return CoreResult.failure("refine_not_legal")
 	return {"ok": true}
 
 
@@ -207,6 +208,3 @@ func _same_candidate(left: Dictionary, right: Dictionary) -> bool:
 			return false
 	return left.get("result_item") == right.get("result_item")
 
-
-func _failure(code: String) -> Dictionary:
-	return {"ok": false, "error": code}

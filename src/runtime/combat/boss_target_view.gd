@@ -10,6 +10,7 @@ class AdmissionState:
 
 const BigValueScript := preload("res://src/core/big_value.gd")
 const HurtboxScript := preload("res://src/runtime/combat/boss_hurtbox.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 ## Detached Boss target state consumed by the BigValue DamageResolution path.
 
@@ -85,11 +86,11 @@ func validate() -> String:
 func set_admission(next_blocked: bool, next_reason: String = "") -> Dictionary:
 	if next_blocked:
 		if next_reason.is_empty() or not _valid_id(next_reason):
-			return _failure("invalid_boss_target_admission")
+			return CoreResult.failure("invalid_boss_target_admission")
 	elif not next_reason.is_empty():
-		return _failure("invalid_boss_target_admission")
+		return CoreResult.failure("invalid_boss_target_admission")
 	if admission == null:
-		return _failure("invalid_boss_target_admission")
+		return CoreResult.failure("invalid_boss_target_admission")
 	admission.blocked = next_blocked
 	admission.reason = next_reason
 	return {"ok": true, "error": ""}
@@ -97,18 +98,18 @@ func set_admission(next_blocked: bool, next_reason: String = "") -> Dictionary:
 
 func add_part(part: Variant) -> Dictionary:
 	if not part is HurtboxScript:
-		return _failure("invalid_boss_hurtbox_type")
+		return CoreResult.failure("invalid_boss_hurtbox_type")
 	var typed: BossHurtbox = part
 	var error := typed.validate()
 	if not error.is_empty():
-		return _failure(error)
+		return CoreResult.failure(error)
 	if typed.target_key.is_empty():
 		typed.target_key = target_key
 	elif typed.target_key != target_key:
-		return _failure("boss_hurtbox_target_mismatch")
+		return CoreResult.failure("boss_hurtbox_target_mismatch")
 	for existing: BossHurtbox in parts:
 		if existing.part_id == typed.part_id:
-			return _failure("duplicate_boss_hurtbox_part")
+			return CoreResult.failure("duplicate_boss_hurtbox_part")
 	parts.append(typed)
 	parts.sort_custom(func(left: BossHurtbox, right: BossHurtbox) -> bool:
 		return left.sort_key() < right.sort_key()
@@ -125,7 +126,7 @@ func parts_snapshot() -> Array[BossHurtbox]:
 
 func commit_health(value: BigValue) -> Dictionary:
 	if not _valid_big(value) or value.compare(maximum_health) > 0:
-		return _failure("invalid_boss_resolved_health")
+		return CoreResult.failure("invalid_boss_resolved_health")
 	health = value.duplicate_value()
 	alive = not health.is_zero()
 	return {"ok": true, "error": ""}
@@ -138,7 +139,7 @@ func set_part_state(part_id_value: String, next_active: bool, next_broken: bool)
 		part.active = next_active
 		part.broken = next_broken
 		return {"ok": true, "error": ""}
-	return _failure("unknown_boss_hurtbox_part")
+	return CoreResult.failure("unknown_boss_hurtbox_part")
 
 
 func snapshot() -> Dictionary:
@@ -172,6 +173,3 @@ static func _big_snapshot(value: BigValue) -> Dictionary:
 static func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

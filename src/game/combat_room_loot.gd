@@ -11,6 +11,7 @@ extends RefCounted
 const AuthorityScript := preload("res://src/runtime/combat/combat_room_loot_rebuild.gd")
 const GeneratorScript := preload("res://src/systems/equipment_drop_generator.gd")
 const PlacementPortScript := preload("res://src/runtime/world/room_loot_placement_port.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 var _authority: TargetCombatRoomLoot = null
 
@@ -31,13 +32,13 @@ func configure(
 		return {"ok": true, "error": "", "enabled": false}
 	var slots_value: Variant = room.get("loot_slots")
 	if not slots_value is Array:
-		return _failure("invalid_loot_slots")
+		return CoreResult.failure("invalid_loot_slots")
 	if (slots_value as Array).is_empty():
 		return {"ok": true, "error": "", "enabled": false}
 	if item_registry == null:
-		return _failure("loot_item_registry_unavailable")
+		return CoreResult.failure("loot_item_registry_unavailable")
 	if not placement_port is PlacementPortScript:
-		return _failure("loot_placement_port_required")
+		return CoreResult.failure("loot_placement_port_required")
 	var generator := GeneratorScript.new(item_registry)
 	var authority := AuthorityScript.new()
 	var configured: Dictionary = authority.configure(room_id, root_seed, slots_value, generator, placement_port)
@@ -62,9 +63,9 @@ func has_unsettled_entities() -> bool:
 
 func spawn_for_source(tick: int, source: String, source_entity_id: int, position: Vector2) -> Dictionary:
 	if _authority == null or not position.is_finite():
-		return _failure("room_loot_disabled")
+		return CoreResult.failure("room_loot_disabled")
 	if source not in ["enemy_death", "wave_clear"]:
-		return _failure("invalid_loot_source")
+		return CoreResult.failure("invalid_loot_source")
 	var source_key := "wave_clear" if source_entity_id <= 0 else "enemy/%d" % source_entity_id
 	var result: Dictionary = _authority.spawn(tick, {
 		"tick": tick,
@@ -78,11 +79,11 @@ func spawn_for_source(tick: int, source: String, source_entity_id: int, position
 
 func request_pickup(tick: int, active: bool, battle_over: bool, battle_victory: bool, loot_entity_id: String) -> Dictionary:
 	if _authority == null:
-		return _failure("room_loot_disabled")
+		return CoreResult.failure("room_loot_disabled")
 	# A victory ends combat but leaves the room open for an explicit loot window.
 	# Defeat closes the room immediately and never permits a queued pickup.
 	if not active or (battle_over and not battle_victory):
-		return _failure("loot_pickup_room_inactive")
+		return CoreResult.failure("loot_pickup_room_inactive")
 	var result: Dictionary = _authority.request_pickup(tick, "ranger", loot_entity_id.strip_edges())
 	if bool(result.get("ok", false)):
 		result["accepted"] = true
@@ -103,7 +104,7 @@ func settle(outcome: String) -> Dictionary:
 		return {"ok": true, "error": "", "enabled": false, "settlement": {}}
 	var settled: Dictionary = _authority.settle(outcome)
 	if not bool(settled.get("ok", false)):
-		return _failure("loot_settlement_failed:%s" % String(settled.get("error", "invalid_receipt")))
+		return CoreResult.failure("loot_settlement_failed:%s" % String(settled.get("error", "invalid_receipt")))
 	return {"ok": true, "error": "", "enabled": true, "settlement": settled.duplicate(true)}
 
 
@@ -120,6 +121,3 @@ func snapshot() -> Dictionary:
 	result["enabled"] = true
 	return result
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

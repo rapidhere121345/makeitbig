@@ -17,6 +17,7 @@ const BossDomainScript := preload("res://src/runtime/combat/boss_combat_domain.g
 const HitAdmissionPortScript := preload("res://src/runtime/combat/room_hit_admission_port.gd")
 const DeathSettlementResultScript := preload("res://src/runtime/combat/death_settlement_result.gd")
 const DeathSettlementNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 ## Typed contact kinds whose integer SimHit amount carries milli-damage.
 ## SimHit transports whole units only; production ranger arrows freeze their
@@ -92,7 +93,7 @@ func bind(actor_access: Variant) -> void:
 
 func bind_player_rule_port(port: Variant) -> Dictionary:
 	if port == null or not port.has_method("apply_damage"):
-		return _failure("invalid_player_rule_port")
+		return CoreResult.failure("invalid_player_rule_port")
 	player_rule_port = port
 	return {"ok": true, "error": ""}
 
@@ -101,10 +102,10 @@ func bind_player_rule_port(port: Variant) -> Dictionary:
 ## domain instance so multipart queries and DAMAGE_STATUS share one HitBuffer.
 func bind_boss_domain(domain: Variant) -> Dictionary:
 	if not domain is BossDomainScript:
-		return _failure("invalid_boss_domain")
+		return CoreResult.failure("invalid_boss_domain")
 	var typed: BossCombatDomain = domain
 	if not typed.is_configured():
-		return _failure("boss_domain_not_configured")
+		return CoreResult.failure("boss_domain_not_configured")
 	boss_domain = typed
 	last_boss_batch = {}
 	last_boss_settlements.clear()
@@ -117,7 +118,7 @@ func bind_boss_domain(domain: Variant) -> Dictionary:
 ## from resolve() so Boss death cannot be settled during the query phase.
 func settle_boss_deaths(tick: int) -> Dictionary:
 	if boss_domain == null:
-		return _failure("boss_domain_unbound")
+		return CoreResult.failure("boss_domain_unbound")
 	var settled := boss_domain.settle_deaths(tick)
 	if bool(settled.get("ok", false)):
 		for receipt: Dictionary in settled.get("settlements", []):
@@ -138,26 +139,26 @@ func bind_domains(
 ) -> Dictionary:
 	if new_damage_resolution != null:
 		if not new_damage_resolution.has_method("resolve"):
-			return _failure("invalid_damage_resolution")
+			return CoreResult.failure("invalid_damage_resolution")
 		damage_resolution = new_damage_resolution
 	if new_status_ledger != null:
 		if not new_status_ledger.has_method("apply") or not new_status_ledger.has_method("collect_periodic_hits"):
-			return _failure("invalid_status_ledger")
+			return CoreResult.failure("invalid_status_ledger")
 		status_ledger = new_status_ledger
 	if new_death_settlement != null:
 		if not new_death_settlement.has_method("settle"):
-			return _failure("invalid_death_settlement")
+			return CoreResult.failure("invalid_death_settlement")
 		death_settlement = new_death_settlement
 	if new_room_loot != null:
 		if not new_room_loot.has_method("spawn"):
-			return _failure("invalid_room_loot")
+			return CoreResult.failure("invalid_room_loot")
 		room_loot = new_room_loot
 	return {"ok": true, "error": ""}
 
 
 func bind_hit_admission_port(port: RoomHitAdmissionPort) -> Dictionary:
 	if port == null:
-		return _failure("invalid_hit_admission_port")
+		return CoreResult.failure("invalid_hit_admission_port")
 	hit_admission_port = port
 	return {"ok": true, "error": ""}
 
@@ -425,6 +426,3 @@ func _actor_id_for_key(entity_key: String) -> String:
 			return actor_id
 	return ""
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

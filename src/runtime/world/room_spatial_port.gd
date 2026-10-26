@@ -4,6 +4,7 @@ extends SimSpatialPort
 const BossDomainScript := preload("res://src/runtime/combat/boss_combat_domain.gd")
 const BossQueryScript := preload("res://src/runtime/combat/boss_attack_query.gd")
 const BossPathResultScript := preload("res://src/runtime/combat/boss_path_result.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 ## SimulationKernel spatial port for one mounted room.
 ##
@@ -151,10 +152,10 @@ func bind(actor_access: Variant) -> void:
 ## facts.  A missing domain is a hard error at queue time.
 func bind_boss_domain(domain: Variant) -> Dictionary:
 	if not domain is BossDomainScript:
-		return _failure("invalid_boss_domain")
+		return CoreResult.failure("invalid_boss_domain")
 	var typed: BossCombatDomain = domain
 	if not typed.is_configured():
-		return _failure("boss_domain_not_configured")
+		return CoreResult.failure("boss_domain_not_configured")
 	boss_domain = typed
 	_boss_queries.clear()
 	_boss_path_results.clear()
@@ -165,13 +166,13 @@ func bind_boss_domain(domain: Variant) -> Dictionary:
 ## phase.  It is never inferred from actor overlap.
 func queue_boss_path_query(query: Variant) -> Dictionary:
 	if boss_domain == null:
-		return _failure("boss_domain_unbound")
+		return CoreResult.failure("boss_domain_unbound")
 	if not query is BossQueryScript:
-		return _failure("invalid_boss_path_query_type")
+		return CoreResult.failure("invalid_boss_path_query_type")
 	var typed: BossAttackQuery = query
 	var error := typed.validate()
 	if not error.is_empty():
-		return _failure(error)
+		return CoreResult.failure(error)
 	_boss_queries.append(typed)
 	return {"ok": true, "error": "", "pending": _boss_queries.size()}
 
@@ -444,6 +445,3 @@ func _actor_id_for_handle(handle: SimEntityHandle) -> String:
 			return actor_id
 	return ""
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

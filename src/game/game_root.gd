@@ -29,6 +29,8 @@ const TestConsoleScript = preload("res://src/presentation/test_console.gd")
 const SessionMenuScript = preload("res://src/presentation/session_menu.gd")
 const Locale = preload("res://src/localization/game_locale.gd")
 const DisplayPolicyScript = preload("res://src/presentation/display_policy.gd")
+const CoreResult := preload("res://src/core/result.gd")
+const Collections := preload("res://src/core/collections.gd")
 
 const FACILITY_ROUTES: Array[String] = ["loadout", "forge", "training", "proxy", "immortality", "research"]
 const ADAPTIVE_SHELL_ROUTES: Array[String] = [
@@ -594,7 +596,7 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 
 func start_new_game(initial_class: String = "ranger") -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_TITLE:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	var created: Dictionary = application_state.start_new_profile(initial_class)
 	if not bool(created.get("ok", false)):
 		_present_title(String(created.get("error", "profile_creation_failed")))
@@ -608,17 +610,17 @@ func start_new_game(initial_class: String = "ranger") -> Dictionary:
 
 func continue_game() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_TITLE:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	if not application_state.has_profile():
 		_present_title("No valid profile is available.")
-		return _failure("profile_required")
+		return CoreResult.failure("profile_required")
 	var profile: Dictionary = application_state.profile
 	return _transition(SceneRouterScript.ROUTE_BASE if bool(profile.get("tutorial_complete", false)) else SceneRouterScript.ROUTE_TUTORIAL)
 
 
 func complete_tutorial() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_TUTORIAL:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	var completed: Dictionary = application_state.complete_tutorial()
 	if not bool(completed.get("ok", false)):
 		return completed
@@ -629,29 +631,29 @@ func complete_tutorial() -> Dictionary:
 
 func open_contract() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_BASE:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	_status_message = ""
 	return _transition(SceneRouterScript.ROUTE_CONTRACT)
 
 
 func open_story() -> Dictionary:
-	if current_route != SceneRouterScript.ROUTE_BASE: return _failure("wrong_route")
+	if current_route != SceneRouterScript.ROUTE_BASE: return CoreResult.failure("wrong_route")
 	return _transition(SceneRouterScript.ROUTE_STORY)
 
 
 func read_story_entry(entry_id: String) -> Dictionary:
-	if current_route != SceneRouterScript.ROUTE_STORY: return _failure("wrong_route")
+	if current_route != SceneRouterScript.ROUTE_STORY: return CoreResult.failure("wrong_route")
 	var result: Dictionary = application_state.mark_story_read(entry_id)
 	if bool(result.get("ok",false)): _persist("Observation recorded.", SceneRouterScript.ROUTE_BASE)
 	return result
 
 
 func read_town_conversation(entry_id: String) -> Dictionary:
-	if current_route != SceneRouterScript.ROUTE_BASE: return _failure("wrong_route")
+	if current_route != SceneRouterScript.ROUTE_BASE: return CoreResult.failure("wrong_route")
 	var available := false
 	for conversation: Dictionary in application_state.story_snapshot().get("available_conversations", []):
 		if String(conversation.id) == entry_id: available = true
-	if not available: return _failure("story_entry_unavailable")
+	if not available: return CoreResult.failure("story_entry_unavailable")
 	var result: Dictionary = application_state.mark_story_read(entry_id)
 	if bool(result.get("ok", false)):
 		_persist("", SceneRouterScript.ROUTE_BASE)
@@ -661,17 +663,17 @@ func read_town_conversation(entry_id: String) -> Dictionary:
 
 
 func open_character() -> Dictionary:
-	if current_route != SceneRouterScript.ROUTE_BASE: return _failure("wrong_route")
+	if current_route != SceneRouterScript.ROUTE_BASE: return CoreResult.failure("wrong_route")
 	return _transition(SceneRouterScript.ROUTE_CHARACTER)
 
 
 func close_adventure_page() -> Dictionary:
-	if current_route not in [SceneRouterScript.ROUTE_CHARACTER, SceneRouterScript.ROUTE_STORY]: return _failure("wrong_route")
+	if current_route not in [SceneRouterScript.ROUTE_CHARACTER, SceneRouterScript.ROUTE_STORY]: return CoreResult.failure("wrong_route")
 	return _transition(SceneRouterScript.ROUTE_BASE)
 
 
 func change_character_talent(action: String, value: String = "") -> Dictionary:
-	if current_route != SceneRouterScript.ROUTE_CHARACTER: return _failure("wrong_route")
+	if current_route != SceneRouterScript.ROUTE_CHARACTER: return CoreResult.failure("wrong_route")
 	var result: Dictionary = application_state.change_talent(action, value)
 	var message := ""
 	if not bool(result.get("ok",false)):
@@ -685,9 +687,9 @@ func change_character_talent(action: String, value: String = "") -> Dictionary:
 
 func open_facility(route: String) -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_BASE:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	if route not in FACILITY_ROUTES or route == SceneRouterScript.ROUTE_RESEARCH:
-		return _failure("unknown_facility")
+		return CoreResult.failure("unknown_facility")
 	if route == SceneRouterScript.ROUTE_FORGE:
 		var forge_context: Dictionary = application_state.forge_ensure_context()
 		if not bool(forge_context.get("ok", false)):
@@ -698,16 +700,16 @@ func open_facility(route: String) -> Dictionary:
 
 func leave_facility() -> Dictionary:
 	if current_route not in FACILITY_ROUTES:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	return _transition(SceneRouterScript.ROUTE_BASE)
 
 
 func request_facility_action(facility_id: String, action_id: String, payload: Dictionary = {}) -> Dictionary:
 	var normalized_facility := facility_id.strip_edges().to_lower()
 	if normalized_facility not in FACILITY_ROUTES:
-		return _failure("unknown_facility")
+		return CoreResult.failure("unknown_facility")
 	if current_route != normalized_facility:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	if normalized_facility == SceneRouterScript.ROUTE_LOADOUT and action_id in ["equip_item", "unequip_item", "salvage_item"]:
 		var before: Dictionary = _loadout_telemetry_snapshot() if action_id in ["equip_item", "unequip_item"] else {}
 		var subject := String(payload.get("instance_id", payload.get("slot", "")))
@@ -833,7 +835,7 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 	if normalized_facility != SceneRouterScript.ROUTE_FORGE or action_id != "forge_commit":
 		_status_message = PlayerFacingStatusScript.failure("This facility action", "action_unavailable")
 		_present_facility(normalized_facility, _status_message)
-		return _failure("action_unavailable")
+		return CoreResult.failure("action_unavailable")
 	var prepared: Dictionary = application_state.forge_prepare_commit(String(payload.get("session_id", "")))
 	if not bool(prepared.get("ok", false)):
 		return _finish_forge_action(normalized_facility, prepared, "")
@@ -879,7 +881,7 @@ func _finish_forge_action(facility_id: String, result: Dictionary, success_messa
 
 
 func _forge_action_failure(facility_id: String, error: String, detail: String = "") -> Dictionary:
-	var result := _failure(error)
+	var result := CoreResult.failure(error)
 	if not detail.is_empty():
 		result["detail"] = detail
 	return _finish_forge_action(facility_id, result, "")
@@ -976,8 +978,8 @@ func _build_loadout_telemetry(action_id: String, subject: String, before: Dictio
 		"new_build_fingerprint": String(after.get("build_fingerprint", "")),
 		"growth_before": String(before.get("growth", "")),
 		"growth_after": String(after.get("growth", "")),
-		"interfaces_gained": _string_array_difference(after.get("interfaces", []), before.get("interfaces", [])),
-		"interfaces_lost": _string_array_difference(before.get("interfaces", []), after.get("interfaces", [])),
+		"interfaces_gained": Collections.sorted_string_array_difference(after.get("interfaces", []), before.get("interfaces", [])),
+		"interfaces_lost": Collections.sorted_string_array_difference(before.get("interfaces", []), after.get("interfaces", [])),
 		"parameter_deltas": _build_parameter_deltas(before.get("parameters", {}), after.get("parameters", {})),
 	}
 
@@ -1010,31 +1012,16 @@ func _build_parameter_deltas(before: Dictionary, after: Dictionary) -> Dictionar
 	return result
 
 
-func _string_array_difference(values: Variant, excluded: Variant) -> Array[String]:
-	var result: Array[String] = []
-	var excluded_strings: Array[String] = []
-	if excluded is Array:
-		for value in excluded:
-			excluded_strings.append(String(value))
-	if values is Array:
-		for value in values:
-			var candidate := String(value)
-			if candidate not in excluded_strings and candidate not in result:
-				result.append(candidate)
-	result.sort()
-	return result
-
-
 func return_to_title() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_BASE:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	_status_message = _persist("Profile saved", SceneRouterScript.ROUTE_TITLE)
 	return _transition(SceneRouterScript.ROUTE_TITLE)
 
 
 func cancel_contract() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_CONTRACT:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	application_state.abandon_session()
 	_status_message = "Contract preparation cancelled."
 	return _transition(SceneRouterScript.ROUTE_BASE)
@@ -1042,13 +1029,13 @@ func cancel_contract() -> Dictionary:
 
 func launch_contract(config: Dictionary) -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_CONTRACT:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	var active_snapshot: Dictionary = application_state.active_build_snapshot()
 	var active_build := _active_build_from_snapshot(active_snapshot)
 	var resolved_build: Dictionary = application_state.resolved_build_snapshot()
 	if not bool(resolved_build.get("ok", false)) or String(resolved_build.get("build_fingerprint", "")).length() != 64:
 		_present_contract("active_build_invalid")
-		return _failure("active_build_invalid")
+		return CoreResult.failure("active_build_invalid")
 	# preset_id remains a compatibility/display hint for the legacy arena. The
 	# frozen resolver output below is the sole combat-parameter authority.
 	var preset_id := String(resolved_build.get("growth_classification", "convergent"))
@@ -1071,7 +1058,7 @@ func launch_contract(config: Dictionary) -> Dictionary:
 			"reason": "proxy_locked",
 		})
 		_present_contract("proxy_locked")
-		return _failure("proxy_locked")
+		return CoreResult.failure("proxy_locked")
 	var resolved_proxy_build: Dictionary = {}
 	if String(planned_config.get("mode", "")).strip_edges().to_lower() == "auto":
 		var proxy_resolution: Dictionary = application_state.resolved_proxy_build_snapshot()
@@ -1123,11 +1110,11 @@ func launch_contract(config: Dictionary) -> Dictionary:
 
 func finish_contract(result: Dictionary) -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_ARENA:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	if not _pending_visual_route.is_empty():
 		## This defeat already settled and its result screen is still waiting for the
 		## clip: a duplicate signal must not settle again or rewrite last_result.
-		return _failure("result_pending")
+		return CoreResult.failure("result_pending")
 	var normalized := result.duplicate(true)
 	if String(normalized.get("outcome", "")).is_empty():
 		normalized["outcome"] = "error"
@@ -1255,7 +1242,7 @@ func _defeat_window_holds_screen(completed_result: Dictionary) -> bool:
 ## here: a second call after the route moved is refused by the router itself.
 func _release_pending_visual_route(reason: String) -> Dictionary:
 	if _pending_visual_route.is_empty():
-		return _failure("no_pending_route")
+		return CoreResult.failure("no_pending_route")
 	_pending_route_release_reason = reason
 	var payload: Dictionary = _pending_visual_route.get("payload", {})
 	_pending_visual_route = {}
@@ -1282,7 +1269,7 @@ func defeat_route_report() -> Dictionary:
 
 func leave_result() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_RESULT:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	return _transition(SceneRouterScript.ROUTE_BASE)
 
 
@@ -1299,19 +1286,19 @@ func _open_next_contract_from_result() -> void:
 ## carries a one-shot focus hint to the loadout screen, and never equips the item.
 func review_result_drop(instance_id: String, slot: String) -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_RESULT:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	var normalized_id := instance_id.strip_edges()
 	var normalized_slot := slot.strip_edges()
 	var item := _owned_equipment_for_telemetry(normalized_id)
 	if item.is_empty():
-		return _failure("item_not_owned")
+		return CoreResult.failure("item_not_owned")
 	var settled_drop := _settled_result_equipment(normalized_id)
 	if settled_drop.is_empty():
-		return _failure("drop_not_in_result")
+		return CoreResult.failure("drop_not_in_result")
 	if normalized_slot.is_empty() or String(item.get("slot", "")) != normalized_slot or String(settled_drop.get("slot", "")) != normalized_slot:
-		return _failure("slot_mismatch")
+		return CoreResult.failure("slot_mismatch")
 	if normalized_slot not in EarlyItemRegistryScript.PROTOTYPE_OPEN_SLOTS:
-		return _failure("slot_locked")
+		return CoreResult.failure("slot_locked")
 	var active := application_state.active_build_snapshot().get("active_build", {}) as Dictionary
 	var equipped := active.get("equipped_item_ids", {}) as Dictionary
 	_status_message = "Drop located; it is equipped. Inspect or unequip it." if String(equipped.get(normalized_slot, "")) == normalized_id else "Drop located; compare it and decide whether to equip it."
@@ -1343,21 +1330,21 @@ func _settled_result_equipment(instance_id: String) -> Dictionary:
 
 func open_ending() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_RESULT:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	if String(application_state.last_result.get("outcome", "")) != "final_victory":
-		return _failure("ending_locked")
+		return CoreResult.failure("ending_locked")
 	return _transition(SceneRouterScript.ROUTE_ENDING)
 
 
 func leave_ending_to_base() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_ENDING:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	return _transition(SceneRouterScript.ROUTE_BASE)
 
 
 func leave_ending_to_title() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_ENDING:
-		return _failure("wrong_route")
+		return CoreResult.failure("wrong_route")
 	_status_message = _persist("Epilogue checkpoint saved", SceneRouterScript.ROUTE_TITLE)
 	return _transition(SceneRouterScript.ROUTE_TITLE)
 
@@ -2643,10 +2630,6 @@ func _profile_elapsed_msec() -> int:
 	if _playtest_profile_started_msec <= 0:
 		return 0
 	return maxi(0, Time.get_ticks_msec() - _playtest_profile_started_msec)
-
-
-func _failure(error_code: String) -> Dictionary:
-	return {"ok": false, "error": error_code}
 
 
 ## Typed bridge from the route composition root to ApplicationState. The

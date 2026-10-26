@@ -3,6 +3,7 @@ extends RefCounted
 
 const InstanceScript := preload("res://src/runtime/combat/status_effect_instance.gd")
 const HitScript := preload("res://src/runtime/combat/combat_hit_record.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 const STACK_POLICIES := ["replace", "refresh", "ignore", "stack"]
 
@@ -13,7 +14,7 @@ var _last_tick := -1
 
 func reset(initial_tick: int = -1) -> Dictionary:
 	if initial_tick < -1:
-		return _failure("invalid_initial_tick")
+		return CoreResult.failure("invalid_initial_tick")
 	_effects.clear()
 	_next_sequence = 1
 	_last_tick = initial_tick
@@ -34,7 +35,7 @@ func apply(
 ) -> Dictionary:
 	var error := _validate_request(tick, target_key, effect_id, source_key, duration_ticks, period_ticks, magnitude, damage_type, stack_policy, max_stacks)
 	if not error.is_empty():
-		return _failure(error)
+		return CoreResult.failure(error)
 	_prepare_tick(tick)
 	_expire_at(tick)
 	var current: Array = _active_for(target_key, effect_id, tick)
@@ -72,7 +73,7 @@ func apply(
 
 func advance(tick: int) -> Dictionary:
 	if tick < 0 or tick < _last_tick:
-		return _failure("stale_status_tick")
+		return CoreResult.failure("stale_status_tick")
 	_prepare_tick(tick)
 	return {"ok": true, "error": "", "expired": _expire_at(tick), "snapshot": snapshot(tick)}
 
@@ -107,9 +108,9 @@ func collect_periodic_hits(tick: int) -> Array:
 
 func remove(tick: int, target_key: String, effect_id: String) -> Dictionary:
 	if tick < 0 or tick < _last_tick:
-		return _failure("stale_status_tick")
+		return CoreResult.failure("stale_status_tick")
 	if not _valid_id(target_key) or not _valid_id(effect_id):
-		return _failure("invalid_status_identity")
+		return CoreResult.failure("invalid_status_identity")
 	_prepare_tick(tick)
 	_expire_at(tick)
 	var removed: Array[Dictionary] = []
@@ -220,6 +221,3 @@ func _validate_request(tick: int, target_key: String, effect_id: String, source_
 func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

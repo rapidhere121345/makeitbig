@@ -12,6 +12,7 @@ const SpawnResultScript := preload("res://src/runtime/encounter/encounter_spawn_
 const SpawnPortScript := preload("res://src/runtime/world/room_encounter_spawn_port.gd")
 const TerminalObservationScript := preload("res://src/runtime/encounter/room_terminal_observation.gd")
 const TerminalResultScript := preload("res://src/runtime/encounter/room_terminal_result.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 var encounter: Variant = null
 var _room_instance_id := ""
@@ -42,7 +43,7 @@ var last_terminal_result: RoomTerminalResult = null
 
 func bind(domain: Variant, room_instance: String = "", revision: int = -1) -> Dictionary:
 	if domain == null or not domain.has_method("step") or not domain.has_method("notify_death"):
-		return _failure("invalid_room_encounter_domain")
+		return CoreResult.failure("invalid_room_encounter_domain")
 	encounter = domain
 	_room_instance_id = room_instance.strip_edges()
 	_world_revision = revision
@@ -70,7 +71,7 @@ func bind_spawn_binding(binding: RoomEncounterSpawnPort) -> Dictionary:
 		_spawn_binding = null
 		return {"ok": true, "error": ""}
 	if not binding is SpawnPortScript:
-		return _failure("invalid_encounter_spawn_binding")
+		return CoreResult.failure("invalid_encounter_spawn_binding")
 	_spawn_binding = binding as RoomEncounterSpawnPort
 	return {"ok": true, "error": ""}
 
@@ -81,9 +82,9 @@ func clear_spawn_binding() -> void:
 
 func configure_context(room_instance: String, revision: int) -> Dictionary:
 	if not _bound or _shutdown:
-		return _failure("encounter_port_unavailable")
+		return CoreResult.failure("encounter_port_unavailable")
 	if room_instance.strip_edges().is_empty() or revision < 0:
-		return _failure("invalid_room_context")
+		return CoreResult.failure("invalid_room_context")
 	_room_instance_id = room_instance.strip_edges()
 	_world_revision = revision
 	_last_tick = -1
@@ -212,17 +213,17 @@ func on_spawned(
 	revision: int = -1
 ) -> Dictionary:
 	if not _accept_event_context(tick, room_instance, revision):
-		return _failure("stale_spawn_ack_context")
+		return CoreResult.failure("stale_spawn_ack_context")
 	var normalized_entity := entity_key.strip_edges()
 	if normalized_entity.is_empty() or stable_key < 1 or generation < 1:
-		return _failure("invalid_spawn_ack_identity")
+		return CoreResult.failure("invalid_spawn_ack_identity")
 	if handle != null:
 		if not handle.is_valid() or handle.generation != generation:
-			return _failure("spawn_ack_generation_mismatch")
+			return CoreResult.failure("spawn_ack_generation_mismatch")
 		if _handle_to_entity.has(handle) and String(_handle_to_entity[handle]) != normalized_entity:
-			return _failure("entity_handle_already_registered")
+			return CoreResult.failure("entity_handle_already_registered")
 	if _entity_to_binding.has(normalized_entity):
-		return _failure("entity_key_already_registered")
+		return CoreResult.failure("entity_key_already_registered")
 	var domain_result: Variant = encounter.notify_spawned(spawn_key, normalized_entity, tick) if encounter != null and encounter.has_method("notify_spawned") else null
 	if domain_result is Dictionary and not bool(domain_result.get("ok", false)):
 		return domain_result
@@ -255,10 +256,10 @@ func on_spawned(
 
 func on_spawn_failed(spawn_key: String, tick: int, reason: String, room_instance: String = "", revision: int = -1) -> Dictionary:
 	if not _accept_event_context(tick, room_instance, revision):
-		return _failure("stale_spawn_failure_context")
+		return CoreResult.failure("stale_spawn_failure_context")
 	var normalized_reason := reason.strip_edges()
 	if normalized_reason.is_empty():
-		return _failure("invalid_spawn_failure_reason")
+		return CoreResult.failure("invalid_spawn_failure_reason")
 	var domain_result: Variant = encounter.notify_spawn_failed(spawn_key, tick, normalized_reason) if encounter != null and encounter.has_method("notify_spawn_failed") else null
 	if domain_result is Dictionary and not bool(domain_result.get("ok", false)):
 		return domain_result
@@ -372,16 +373,16 @@ func snapshot() -> Dictionary:
 func _record_death(entity_key: String, tick: int, spawn_key: String, room_instance: String, revision: int) -> Dictionary:
 	if tick < 0 or tick < _last_tick:
 		_reject(tick, "stale_death_notification_tick")
-		return _failure("stale_death_notification_tick")
+		return CoreResult.failure("stale_death_notification_tick")
 	if room_instance != _room_instance_id or revision != _world_revision:
 		_reject(tick, "stale_death_notification_context")
-		return _failure("stale_death_notification_context")
+		return CoreResult.failure("stale_death_notification_context")
 	if not _entity_to_binding.has(entity_key):
 		# A legacy actor may still exist in EncounterDirector while its wave has
 		# not been adopted.  Such a death is a protocol violation, not an
 		# implicit domain transition; preserve the rejection as typed telemetry.
 		_reject(tick, "unknown_entity_key")
-		return _failure("unknown_entity_key")
+		return CoreResult.failure("unknown_entity_key")
 	if _dead_entities.has(entity_key):
 		return {"ok": true, "error": "", "changed": false, "duplicate": true}
 	var domain_result: Variant = encounter.notify_death(entity_key, tick) if encounter != null else null
@@ -510,6 +511,3 @@ func _reject(tick: int, reason: String) -> void:
 		"world_revision": _world_revision,
 	})
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

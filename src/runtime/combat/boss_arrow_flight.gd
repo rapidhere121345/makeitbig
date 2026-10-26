@@ -13,6 +13,7 @@ const CombatSystemRoomPortScript := preload("res://src/runtime/combat/combat_sys
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const QueryScript := preload("res://src/runtime/combat/boss_attack_query.gd")
 const DamageValueScript := preload("res://src/runtime/combat/boss_damage_value.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 const TICK_RATE := 30
 const SIM_STEP_SECONDS := 1.0 / float(TICK_RATE)
@@ -52,7 +53,7 @@ class FlightRecord:
 
 func configure(port: Variant) -> Dictionary:
 	if port == null or not port.has_method("queue_boss_path_query") or not port.has_method("take_boss_path_results"):
-		return _failure("boss_flight_spatial_port_unavailable")
+		return CoreResult.failure("boss_flight_spatial_port_unavailable")
 	spatial_port = port
 	reset()
 	return {"ok": true, "error": ""}
@@ -81,7 +82,7 @@ func submit_tick(
 	flight_port: CombatSystemRoomPort
 ) -> Dictionary:
 	if not is_configured() or flight_port == null:
-		return _failure("boss_flight_not_configured")
+		return CoreResult.failure("boss_flight_not_configured")
 	last_submitted_attack_ids.clear()
 	last_queue_rejections.clear()
 	if source_handle == null:
@@ -179,6 +180,3 @@ func _frozen_damage(attack_key: String, projectile, flight_port: CombatSystemRoo
 	_arrow_damage[attack_key] = frozen
 	return frozen
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

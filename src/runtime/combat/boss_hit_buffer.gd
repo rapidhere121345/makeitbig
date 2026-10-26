@@ -2,6 +2,7 @@ class_name BossHitBuffer
 extends RefCounted
 
 const HitScript := preload("res://src/runtime/combat/boss_hit_record.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 ## Room-scoped typed hit buffer for multipart Boss contacts.  It is opened at
 ## the continuous-query phase and consumed once by DAMAGE_STATUS.
@@ -12,7 +13,7 @@ var _hits: Array[BossHitRecord] = []
 
 func begin_tick(next_tick: int) -> Dictionary:
 	if next_tick < 0 or (tick >= 0 and next_tick < tick):
-		return _failure("stale_boss_hit_tick")
+		return CoreResult.failure("stale_boss_hit_tick")
 	if next_tick > tick:
 		_hits.clear()
 		tick = next_tick
@@ -21,17 +22,17 @@ func begin_tick(next_tick: int) -> Dictionary:
 
 func append_batch(values: Array) -> Dictionary:
 	if tick < 0:
-		return _failure("boss_hit_buffer_not_open")
+		return CoreResult.failure("boss_hit_buffer_not_open")
 	var validated: Array[BossHitRecord] = []
 	for value: Variant in values:
 		if not value is HitScript:
-			return _failure("invalid_boss_hit_type")
+			return CoreResult.failure("invalid_boss_hit_type")
 		var hit: BossHitRecord = value
 		if hit.tick != tick:
-			return _failure("boss_hit_tick_mismatch")
+			return CoreResult.failure("boss_hit_tick_mismatch")
 		var error := hit.validate()
 		if not error.is_empty():
-			return _failure(error)
+			return CoreResult.failure(error)
 		validated.append(hit)
 	_hits.append_array(validated)
 	return {"ok": true, "error": "", "count": validated.size()}
@@ -61,6 +62,3 @@ func snapshot() -> Dictionary:
 		values.append(hit.snapshot())
 	return {"tick": tick, "hits": values}
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

@@ -6,6 +6,7 @@ const SpawnRequestScript := preload("res://src/runtime/encounter/encounter_spawn
 const StepResultScript := preload("res://src/runtime/encounter/encounter_step_result.gd")
 const TerminalObservationScript := preload("res://src/runtime/encounter/room_terminal_observation.gd")
 const TerminalResultScript := preload("res://src/runtime/encounter/room_terminal_result.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 const PHASE_IDLE := "idle"
 const PHASE_SPAWNING := "spawning"
@@ -30,7 +31,7 @@ var _current_wave_keys: Array[String] = []
 
 func configure(identifier: String, definitions: Array, initial_tick: int = -1) -> Dictionary:
 	if not _valid_id(identifier) or initial_tick < -1:
-		return _failure("invalid_encounter_configuration")
+		return CoreResult.failure("invalid_encounter_configuration")
 	var parsed: Array = []
 	var seen: Dictionary = {}
 	for raw: Variant in definitions:
@@ -39,11 +40,11 @@ func configure(identifier: String, definitions: Array, initial_tick: int = -1) -
 			return result
 		var wave: Variant = result["value"]
 		if seen.has(wave.wave_id):
-			return _failure("duplicate_wave_id:%s" % wave.wave_id)
+			return CoreResult.failure("duplicate_wave_id:%s" % wave.wave_id)
 		seen[wave.wave_id] = true
 		parsed.append(wave)
 	if parsed.is_empty():
-		return _failure("missing_waves")
+		return CoreResult.failure("missing_waves")
 	room_id = identifier
 	_waves = parsed
 	last_tick = initial_tick
@@ -64,7 +65,7 @@ func configure(identifier: String, definitions: Array, initial_tick: int = -1) -
 ## fixed-tick encounter state.
 func restart(initial_tick: int = -1) -> Dictionary:
 	if _waves.is_empty() or initial_tick < -1:
-		return _failure("encounter_not_configured")
+		return CoreResult.failure("encounter_not_configured")
 	last_tick = initial_tick
 	phase = PHASE_IDLE
 	current_wave_index = -1
@@ -79,11 +80,11 @@ func restart(initial_tick: int = -1) -> Dictionary:
 
 func start(tick: int) -> Dictionary:
 	if _waves.is_empty():
-		return _failure("encounter_not_configured")
+		return CoreResult.failure("encounter_not_configured")
 	if tick < 0 or tick < last_tick:
-		return _failure("stale_encounter_tick")
+		return CoreResult.failure("stale_encounter_tick")
 	if phase != PHASE_IDLE:
-		return _failure("encounter_already_started")
+		return CoreResult.failure("encounter_already_started")
 	last_tick = tick
 	current_wave_index = 0
 	_wave_start_tick = tick + _waves[0].start_delay_ticks
@@ -151,16 +152,16 @@ func step(tick: int) -> Variant:
 
 func notify_spawned(spawn_key: String, entity_key: String, tick: int) -> Dictionary:
 	if tick < 0 or tick < last_tick:
-		return _failure("stale_encounter_tick")
+		return CoreResult.failure("stale_encounter_tick")
 	var record: Dictionary = _spawn_records.get(spawn_key, {})
 	if record.is_empty():
-		return _failure("unknown_spawn_key")
+		return CoreResult.failure("unknown_spawn_key")
 	if String(record.get("state", "")) != "requested":
-		return _failure("spawn_not_requested")
+		return CoreResult.failure("spawn_not_requested")
 	if not _valid_id(entity_key):
-		return _failure("invalid_entity_key")
+		return CoreResult.failure("invalid_entity_key")
 	if _entity_to_spawn.has(entity_key):
-		return _failure("entity_key_already_registered")
+		return CoreResult.failure("entity_key_already_registered")
 	record["state"] = "alive"
 	record["entity_key"] = entity_key
 	record["spawned_tick"] = tick
@@ -172,14 +173,14 @@ func notify_spawned(spawn_key: String, entity_key: String, tick: int) -> Diction
 
 func notify_spawn_failed(spawn_key: String, tick: int, reason: String) -> Dictionary:
 	if tick < 0 or tick < last_tick:
-		return _failure("stale_encounter_tick")
+		return CoreResult.failure("stale_encounter_tick")
 	if reason.strip_edges().is_empty():
-		return _failure("invalid_spawn_failure_reason")
+		return CoreResult.failure("invalid_spawn_failure_reason")
 	var record: Dictionary = _spawn_records.get(spawn_key, {})
 	if record.is_empty():
-		return _failure("unknown_spawn_key")
+		return CoreResult.failure("unknown_spawn_key")
 	if String(record.get("state", "")) != "requested":
-		return _failure("spawn_not_requested")
+		return CoreResult.failure("spawn_not_requested")
 	record["state"] = "failed"
 	record["failure_reason"] = reason
 	_spawn_records[spawn_key] = record
@@ -189,19 +190,19 @@ func notify_spawn_failed(spawn_key: String, tick: int, reason: String) -> Dictio
 
 func notify_death(entity_key: String, tick: int) -> Dictionary:
 	if tick < 0 or tick < last_tick:
-		return _failure("stale_encounter_tick")
+		return CoreResult.failure("stale_encounter_tick")
 	for spawn_key: String in _sorted_spawn_keys():
 		var record: Dictionary = _spawn_records[spawn_key]
 		if String(record.get("entity_key", "")) != entity_key:
 			continue
 		if String(record.get("state", "")) != "alive":
-			return _failure("entity_not_alive_in_encounter")
+			return CoreResult.failure("entity_not_alive_in_encounter")
 		record["state"] = "dead"
 		record["dead_tick"] = tick
 		_spawn_records[spawn_key] = record
 		last_tick = maxi(last_tick, tick)
 		return {"ok": true, "error": "", "snapshot": snapshot()}
-	return _failure("unknown_entity_key")
+	return CoreResult.failure("unknown_entity_key")
 
 
 ## Sole terminal decision boundary for a mounted room.  The observation is
@@ -240,9 +241,9 @@ func observe_terminal(observation: RoomTerminalObservation) -> RoomTerminalResul
 
 func request_defeat(tick: int, reason: String) -> Dictionary:
 	if tick < 0 or tick < last_tick:
-		return _failure("stale_encounter_tick")
+		return CoreResult.failure("stale_encounter_tick")
 	if reason.strip_edges().is_empty():
-		return _failure("invalid_defeat_reason")
+		return CoreResult.failure("invalid_defeat_reason")
 	last_tick = tick
 	if phase == PHASE_VICTORY:
 		return {"ok": true, "error": "", "changed": false, "snapshot": snapshot()}
@@ -258,14 +259,14 @@ func request_defeat(tick: int, reason: String) -> Dictionary:
 ## typed domain method so a death receipt alone can never fabricate a clear.
 func request_wave_clear(tick: int) -> Dictionary:
 	if tick < 0 or tick < last_tick:
-		return _failure("stale_encounter_tick")
+		return CoreResult.failure("stale_encounter_tick")
 	if phase in [PHASE_VICTORY, PHASE_DEFEAT]:
 		return {"ok": true, "error": "", "changed": false, "snapshot": snapshot()}
 	if phase != PHASE_ACTIVE or current_wave_index < 0 or current_wave_index >= _waves.size():
-		return _failure("wave_not_active")
+		return CoreResult.failure("wave_not_active")
 	var wave: Variant = _waves[current_wave_index]
 	if wave.clear_policy != "manual":
-		return _failure("wave_clear_policy_not_manual")
+		return CoreResult.failure("wave_clear_policy_not_manual")
 	last_tick = tick
 	return _advance_after_wave_clear(tick, wave)
 
@@ -426,6 +427,3 @@ func _sorted_spawn_keys() -> Array[String]:
 func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

@@ -4,6 +4,7 @@ extends RefCounted
 const RequestScript := preload("res://src/runtime/combat/death_settlement_request.gd")
 const ResultScript := preload("res://src/runtime/combat/death_settlement_result.gd")
 const NotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 var room_id := ""
 var world_revision := -1
@@ -13,7 +14,7 @@ var _settled: Dictionary = {}
 
 func configure(identifier: String, revision: int = 0, initial_tick: int = -1) -> Dictionary:
 	if not _valid_id(identifier) or revision < 0 or initial_tick < -1:
-		return _failure("invalid_death_settlement_configuration")
+		return CoreResult.failure("invalid_death_settlement_configuration")
 	room_id = identifier
 	world_revision = revision
 	last_tick = initial_tick
@@ -33,21 +34,21 @@ func reset() -> void:
 ## encounter notification, or loot spawn.
 func settle(raw_request: Variant) -> Dictionary:
 	if room_id.is_empty():
-		return _failure("death_settlement_not_configured")
+		return CoreResult.failure("death_settlement_not_configured")
 	var parsed: Dictionary = RequestScript.from_data(raw_request)
 	if not bool(parsed.get("ok", false)):
 		return parsed
 	var request: Variant = parsed["value"]
 	if request.room_id != room_id:
-		return _failure("death_request_room_mismatch")
+		return CoreResult.failure("death_request_room_mismatch")
 	if request.world_revision != world_revision:
-		return _failure("death_request_revision_mismatch")
+		return CoreResult.failure("death_request_revision_mismatch")
 	if _settled.has(request.entity_key):
 		var duplicate_snapshot: Dictionary = _settled[request.entity_key].duplicate(true)
 		duplicate_snapshot["duplicate"] = true
 		return {"ok": true, "error": "", "changed": false, "duplicate": true, "snapshot": duplicate_snapshot}
 	if request.tick < last_tick:
-		return _failure("stale_death_settlement_tick")
+		return CoreResult.failure("stale_death_settlement_tick")
 
 	last_tick = maxi(last_tick, request.tick)
 	var result: Variant = ResultScript.new()
@@ -89,7 +90,7 @@ func settle(raw_request: Variant) -> Dictionary:
 
 func settle_batch(tick: int, raw_requests: Array) -> Dictionary:
 	if tick < 0 or tick < last_tick:
-		return _failure("stale_death_settlement_tick")
+		return CoreResult.failure("stale_death_settlement_tick")
 	var normalized: Array[Dictionary] = []
 	for raw_request: Variant in raw_requests:
 		var parsed: Dictionary = RequestScript.from_data(raw_request)
@@ -97,7 +98,7 @@ func settle_batch(tick: int, raw_requests: Array) -> Dictionary:
 			return parsed
 		var request: Variant = parsed["value"]
 		if request.tick != tick:
-			return _failure("death_batch_tick_mismatch")
+			return CoreResult.failure("death_batch_tick_mismatch")
 		normalized.append(request.snapshot())
 	normalized.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 		return String(left.get("entity_key", "")) < String(right.get("entity_key", ""))
@@ -131,6 +132,3 @@ func snapshot() -> Dictionary:
 func _valid_id(value: String) -> bool:
 	return not value.is_empty() and value == value.strip_edges() and not value.contains(" ")
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

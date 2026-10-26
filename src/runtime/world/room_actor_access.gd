@@ -17,6 +17,7 @@ const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spat
 const SpatialChannelsScript := preload("res://src/runtime/spatial/spatial_channels.gd")
 const SimEntityHandleScript := preload("res://src/runtime/simulation/sim_entity_handle.gd")
 const RoomMovementPolicyPortScript := preload("res://src/runtime/world/room_movement_policy_port.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 var simulation: SimulationWorld = null
 var registry: ActorRegistry = null
@@ -45,11 +46,11 @@ func configure(
 	overlay_value: SpatialOverlay = null
 ) -> Dictionary:
 	if world == null or actors == null or static_value == null or dynamic_value == null or movement_value == null:
-		return _failure("room_actor_access_dependencies_unavailable")
+		return CoreResult.failure("room_actor_access_dependencies_unavailable")
 	if not static_value.is_valid():
-		return _failure("room_actor_access_static_index_invalid")
+		return CoreResult.failure("room_actor_access_static_index_invalid")
 	if world.kernel == null or not world.kernel.is_configured() or world.actor_registry != actors:
-		return _failure("room_actor_access_world_registry_mismatch")
+		return CoreResult.failure("room_actor_access_world_registry_mismatch")
 	simulation = world
 	registry = actors
 	static_index = static_value
@@ -171,11 +172,11 @@ func register_actor(
 ) -> Dictionary:
 	var normalized_id := actor_id.strip_edges()
 	if normalized_id.is_empty() or _handles.has(normalized_id):
-		return _failure("invalid_or_duplicate_actor_id")
+		return CoreResult.failure("invalid_or_duplicate_actor_id")
 	if not position.is_finite() or not is_finite(radius) or radius <= 0.0:
-		return _failure("invalid_actor_geometry")
+		return CoreResult.failure("invalid_actor_geometry")
 	if not _is_clear(position, radius):
-		return _failure("actor_spawn_blocked")
+		return CoreResult.failure("actor_spawn_blocked")
 	var spawned: SimOutcome = registry.spawn_actor(
 		position,
 		radius,
@@ -191,7 +192,7 @@ func register_actor(
 		loot_tags
 	)
 	if not spawned.ok:
-		return _failure(String(spawned.error))
+		return CoreResult.failure(String(spawned.error))
 	var handle: SimEntityHandle = spawned.handle
 	_handles[normalized_id] = handle
 	_body_generations[normalized_id] = handle.generation
@@ -211,7 +212,7 @@ func register_actor(
 		_body_channels.erase(normalized_id)
 		# Setup-time failure is fatal to this registration.  The store has no
 		# public rollback because structural mutation is otherwise kernel-owned.
-		return _failure("dynamic_body_registration_failed:%s" % String((body_result.get("errors", []) as Array).front() if not (body_result.get("errors", []) as Array).is_empty() else "unknown"))
+		return CoreResult.failure("dynamic_body_registration_failed:%s" % String((body_result.get("errors", []) as Array).front() if not (body_result.get("errors", []) as Array).is_empty() else "unknown"))
 	return {
 		"ok": true,
 		"error": "",
@@ -227,10 +228,10 @@ func unregister_actor(actor_id: String) -> Dictionary:
 	var normalized_id := actor_id.strip_edges()
 	var handle: SimEntityHandle = _handles.get(normalized_id, null)
 	if handle == null:
-		return _failure("unknown_actor")
+		return CoreResult.failure("unknown_actor")
 	var body_result := dynamic_index.unregister_body(normalized_id)
 	if not bool(body_result.get("ok", false)):
-		return _failure("dynamic_body_unregister_failed")
+		return CoreResult.failure("dynamic_body_unregister_failed")
 	var removed := registry.resolve(handle)
 	if removed.ok:
 		var record: ActorState = removed.value
@@ -244,11 +245,11 @@ func unregister_actor(actor_id: String) -> Dictionary:
 
 func set_collision_class(actor_id: String, collision_class: StringName) -> Dictionary:
 	if not _handles.has(actor_id) or dynamic_index == null:
-		return _failure("unknown_actor")
+		return CoreResult.failure("unknown_actor")
 	var result: Dictionary = dynamic_index.set_collision_class(actor_id, collision_class)
 	if not bool(result.get("ok", false)):
 		var errors: Array = result.get("errors", [])
-		return _failure(String(errors.front() if not errors.is_empty() else "collision_class_update_failed"))
+		return CoreResult.failure(String(errors.front() if not errors.is_empty() else "collision_class_update_failed"))
 	return {"ok": true, "error": ""}
 
 
@@ -258,14 +259,14 @@ func set_collision_class(actor_id: String, collision_class: StringName) -> Dicti
 ## at the between-tick structural boundary by DynamicSpatialIndex.
 func set_actor_active(actor_id: String, active: bool) -> Dictionary:
 	if not _handles.has(actor_id) or dynamic_index == null or registry == null:
-		return _failure("unknown_actor")
+		return CoreResult.failure("unknown_actor")
 	var handle: SimEntityHandle = _handles[actor_id]
 	if not registry.is_live(handle):
-		return _failure("actor_not_live")
+		return CoreResult.failure("actor_not_live")
 	var result := dynamic_index.set_active(actor_id, active)
 	if not bool(result.get("ok", false)):
 		var errors: Array = result.get("errors", [])
-		return _failure(String(errors.front() if not errors.is_empty() else "actor_activation_failed"))
+		return CoreResult.failure(String(errors.front() if not errors.is_empty() else "actor_activation_failed"))
 	return {"ok": true, "error": "", "active": active}
 
 
@@ -286,7 +287,7 @@ func reset_actors() -> Dictionary:
 	for actor_id: String in removed:
 		var result := unregister_actor(actor_id)
 		if not bool(result.get("ok", false)):
-			return _failure("actor_reset_failed:%s:%s" % [actor_id, String(result.get("error", "unknown"))])
+			return CoreResult.failure("actor_reset_failed:%s:%s" % [actor_id, String(result.get("error", "unknown"))])
 	return {"ok": true, "error": "", "removed": removed}
 
 
@@ -295,7 +296,7 @@ func reset_actors() -> Dictionary:
 ## structural commit, but no later query in this room may see its hurtbox.
 func detach_dead_actor(handle: SimEntityHandle) -> Dictionary:
 	if handle == null:
-		return _failure("invalid_entity_handle")
+		return CoreResult.failure("invalid_entity_handle")
 	for actor_id: String in _handles.keys():
 		if _handles[actor_id] != handle:
 			continue
@@ -305,7 +306,7 @@ func detach_dead_actor(handle: SimEntityHandle) -> Dictionary:
 		_body_generations.erase(actor_id)
 		_body_channels.erase(actor_id)
 		return {"ok": true, "error": "", "actor_id": actor_id}
-	return _failure("unknown_actor_handle")
+	return CoreResult.failure("unknown_actor_handle")
 
 
 func move_actor(actor_id: String, displacement: Vector2, committed_tick: int, movement_policy: Variant = null) -> Dictionary:
@@ -459,10 +460,6 @@ func _is_clear(position: Vector2, radius: float) -> bool:
 		if (contact as SpatialContact).penetrating:
 			return false
 	return true
-
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}
 
 
 static func _move_failure(position: Vector2, error: String) -> Dictionary:

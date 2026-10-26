@@ -3,6 +3,7 @@ extends RefCounted
 
 const SCHEMA_VERSION := 1
 const SelfScript := preload("res://src/runtime/encounter/encounter_spawn_spec.gd")
+const CoreResult := preload("res://src/core/result.gd")
 
 var spawn_id := ""
 var archetype_id := ""
@@ -15,11 +16,11 @@ var tags: Array[String] = []
 
 static func from_data(value: Variant) -> Dictionary:
 	if not value is Dictionary:
-		return _failure("spawn_spec_not_dictionary")
+		return CoreResult.failure("spawn_spec_not_dictionary")
 	var source: Dictionary = value
 	for key: Variant in source.keys():
 		if String(key) not in ["spawn_id", "archetype_id", "socket_id", "count", "first_tick", "interval_ticks", "tags"]:
-			return _failure("unknown_spawn_spec_field:%s" % String(key))
+			return CoreResult.failure("unknown_spawn_spec_field:%s" % String(key))
 	var normalized_id := String(source.get("spawn_id", ""))
 	var archetype := String(source.get("archetype_id", ""))
 	var socket := String(source.get("socket_id", ""))
@@ -27,20 +28,20 @@ static func from_data(value: Variant) -> Dictionary:
 	var first_tick_value: Variant = source.get("first_tick", 0)
 	var interval_value: Variant = source.get("interval_ticks", 0)
 	if not _valid_id(normalized_id) or not _valid_id(archetype) or not _valid_id(socket):
-		return _failure("invalid_spawn_spec_identity")
+		return CoreResult.failure("invalid_spawn_spec_identity")
 	if not count_value is int or int(count_value) <= 0:
-		return _failure("invalid_spawn_spec_count")
+		return CoreResult.failure("invalid_spawn_spec_count")
 	if not first_tick_value is int or int(first_tick_value) < 0:
-		return _failure("invalid_spawn_spec_first_tick")
+		return CoreResult.failure("invalid_spawn_spec_first_tick")
 	if not interval_value is int or int(interval_value) < 0:
-		return _failure("invalid_spawn_spec_interval")
+		return CoreResult.failure("invalid_spawn_spec_interval")
 	var tags: Array[String] = []
 	var raw_tags: Variant = source.get("tags", [])
 	if not raw_tags is Array:
-		return _failure("invalid_spawn_spec_tags")
+		return CoreResult.failure("invalid_spawn_spec_tags")
 	for raw_tag: Variant in raw_tags as Array:
 		if not raw_tag is String or not _valid_id(String(raw_tag)):
-			return _failure("invalid_spawn_spec_tag")
+			return CoreResult.failure("invalid_spawn_spec_tag")
 		tags.append(String(raw_tag))
 	tags.sort()
 	var result: Variant = SelfScript.new()
@@ -83,6 +84,3 @@ static func _valid_id(value: String) -> bool:
 			return false
 	return true
 
-
-static func _failure(error: String) -> Dictionary:
-	return {"ok": false, "error": error}

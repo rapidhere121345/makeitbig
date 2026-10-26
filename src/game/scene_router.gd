@@ -4,6 +4,7 @@ extends RefCounted
 signal route_changed(previous_route, current_route, payload)
 
 const ROUTE_BOOT: String = "boot"
+const CoreResult := preload("res://src/core/result.gd")
 const ROUTE_TITLE: String = "title"
 const ROUTE_TUTORIAL: String = "tutorial"
 const ROUTE_BASE: String = "base"
@@ -72,13 +73,13 @@ func can_transition(from_route: String, to_route: String = "") -> bool:
 
 func request(route: String, payload: Dictionary = {}) -> Dictionary:
 	if not is_known_route(route):
-		return _failure(ERROR_UNKNOWN_ROUTE)
+		return CoreResult.failure(ERROR_UNKNOWN_ROUTE)
 	if has_pending():
-		return _failure(ERROR_REQUEST_PENDING)
+		return CoreResult.failure(ERROR_REQUEST_PENDING)
 	if route == current_route:
 		return {"ok": true, "noop": true, "route": current_route}
 	if not can_transition(current_route, route):
-		return _failure(ERROR_TRANSITION_NOT_ALLOWED)
+		return CoreResult.failure(ERROR_TRANSITION_NOT_ALLOWED)
 	pending_route = route
 	_pending_payload = payload.duplicate(true)
 	return {"ok": true, "noop": false, "route": route}
@@ -90,7 +91,7 @@ func has_pending() -> bool:
 
 func commit() -> Dictionary:
 	if not has_pending():
-		return _failure(ERROR_NO_PENDING)
+		return CoreResult.failure(ERROR_NO_PENDING)
 
 	var previous_route := current_route
 	var next_route := pending_route
@@ -121,13 +122,10 @@ func cancel() -> void:
 
 func reset(initial_route: String = ROUTE_BOOT) -> Dictionary:
 	if not is_known_route(initial_route):
-		return _failure(ERROR_UNKNOWN_ROUTE)
+		return CoreResult.failure(ERROR_UNKNOWN_ROUTE)
 	current_route = initial_route
 	pending_route = ""
 	_pending_payload = {}
 	_history.clear()
 	return {"ok": true, "route": current_route}
 
-
-func _failure(error_code: String) -> Dictionary:
-	return {"ok": false, "error": error_code}
