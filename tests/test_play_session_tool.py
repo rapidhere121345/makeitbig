@@ -15,6 +15,16 @@ from pathlib import Path
 PROJECT = Path(__file__).resolve().parents[1]
 DRIVER = PROJECT / "tools" / "play_session.py"
 
+# scripts/check.sh exports the launcher it used so spawned drivers re-enter
+# Python the same way: under the portable toolchain, python3 is a wrapper and
+# its raw sys.executable binary cannot start under the host loader. Without
+# the variable, re-exec this interpreter directly.
+CHILD_PYTHON = os.environ.get("MIB_TEST_PYTHON") or sys.executable
+if CHILD_PYTHON != sys.executable and not (
+    os.path.isfile(CHILD_PYTHON) and os.access(CHILD_PYTHON, os.X_OK)
+):
+    raise RuntimeError(f"MIB_TEST_PYTHON is not an executable launcher: {CHILD_PYTHON}")
+
 
 def _state(root: Path, state_id: int = 0) -> None:
     (root / "state.json").write_text(
@@ -38,7 +48,7 @@ class PlaySessionToolTests(unittest.TestCase):
         env.update(extra_env)
         started = time.monotonic()
         result = subprocess.run(
-            [sys.executable, str(DRIVER), json.dumps(payload)],
+            [CHILD_PYTHON, str(DRIVER), json.dumps(payload)],
             cwd=PROJECT,
             env=env,
             capture_output=True,

@@ -9,6 +9,14 @@ cd "$MIB_PROJECT_ROOT"
 python3 -B scripts/check_english.py
 python3 -B tools/test_check_english.py
 python3 -B tools/test_devbox_preflight.py
+python3 -B -m unittest discover -s tools/art_pipeline/generated_world_v02/tests
+python3 -B tools/art_pipeline/generated_world_v02/pack.py --verify
+python3 -B tools/art_pipeline/actors_v02/tests/test_pack.py
+python3 -B tools/art_pipeline/actors_v02/build.py --verify
+python3 -B tools/art_pipeline/world_polish_v01/build.py --verify
+python3 -B -m unittest discover -s tools/art_pipeline/world_expansion_v01/tests
+python3 -B tools/art_pipeline/world_expansion_v01/pack.py --verify
+python3 -B tools/art_pipeline/world_expansion_v01/pack.py --config tools/art_pipeline/town_order_v01/packing_config.json --verify
 
 RUNTIME_RESOURCE_VIOLATIONS="$(grep -R -n -E --include='*.gd' --include='*.tscn' 'preload\([[:space:]]*"res://(tools|build)/|load\([[:space:]]*"res://build/' src || true)"
 if [[ -n "$RUNTIME_RESOURCE_VIOLATIONS" ]] || grep -q -E 'res://(tools|build)/' project.godot; then
@@ -26,6 +34,9 @@ if [[ "$PRESET_COUNT" -lt 1 || "$TOOLS_EXCLUSION_COUNT" -ne "$PRESET_COUNT" || "
 fi
 
 "$GODOT_BIN" --headless --path . --import
+"$GODOT_BIN" --headless --path . --script res://tests/test_generated_texture_import.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_world_dressing.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_grounding.gd
 "$GODOT_BIN" --headless --path . --script res://tests/run_all.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_runtime_world.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_simulation.gd
@@ -37,6 +48,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_presentation_occlusion_boundary.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_world_asset_pipeline.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_structure_blockers.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_spawn_projection_whole_blockers.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_room_combat_port.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_spatial_room_port.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_presentation_room_port.gd
@@ -50,6 +62,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_hazard_domain.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_presenter.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_actor_presenter.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_arena_primitive_fade.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_arena_combat_presenter.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_actor_motor.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_player_motion_system.gd
@@ -58,17 +71,21 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_combat_stats_runtime.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_room_definition.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_room_catalog.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_scenes.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_rebuild_samples.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_native_concave_sample.gd
 "$GODOT_BIN" --headless --path . --script res://tests/run_training_report_builder.gd
 "$GODOT_BIN" --headless --path . --script res://tests/run_combat_state_codec.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_pixel_stage.gd
+"$GODOT_BIN" --headless --path . --script res://tests/unit/test_display_policy.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_game_root_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_exploration.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_geometry_rebuild.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_environment_object.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_native_contract.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_runtime.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_town_gateways.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_generated_town_layout.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_playtest_comfort.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_session_menu.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_character_progression.gd
@@ -144,6 +161,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/test_tutorial_screen.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_tutorial_pointer_cast.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_facility_screen.gd
+"$GODOT_BIN" --headless --path . --script res://tests/test_facility_entry_focus.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_inventory_flow.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_equipment_backpack_paging.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_equipment_presentation_model.gd

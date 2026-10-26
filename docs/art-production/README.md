@@ -4,9 +4,11 @@ The authoritative production resources are those read by runtime code in `art/pr
 
 | Current resource | Retained source |
 | --- | --- |
-| Town environment | Original generated bitmap `art/production/p1/hamlet_town/town.png`; adjacent `SOURCE.json` retains the complete prompt and reference paths |
-| Residents, legacy-town compatibility assets, hearth, lanterns | `p1-hamlet-style-r13/`; template sources `p1-hamlet-concept-v02/`, `p1-hamlet-life-v01/` |
-| Battlefield v03 and legacy-scene compatibility assets | `p1-combat-style-r13/`; `p1-scene-rework-v01/`, `p1-calibration-v01/` |
+| Road-facing forge/equipment shop and alternate wall runs | [Town order provenance and prompts](town-order-20261026/provenance.json); deterministic recipe in `tools/art_pipeline/town_order_v01/packing_config.json` uses the shared world-expansion packer |
+| Winding town terrain, bridges, perimeter and residential variants; distinct combat floors | [World expansion](world-expansion-20261025/README.md): original sources, prompts, pinned hashes and deterministic packing |
+| Town and battlefield ground, whole-object scenery, five resident animations | [Generated world v02](generated-world-v02/README.md): 24 retained new image-generation sources, exact prompts/hashes, deterministic packing and aligned opaque/transparent pairs |
+| Historical town illustration and compatibility assets | `art/production/p1/hamlet_town/town.png` and adjacent `SOURCE.json`; `p1-hamlet-style-r13/`, `p1-hamlet-concept-v02/`, `p1-hamlet-life-v01/` |
+| Retained battlefield actors and historical scene compatibility assets | `p1-combat-style-r13/`; `p1-scene-rework-v01/`, `p1-calibration-v01/` |
 | Ranger and enemy actions | `p1-ranger-actions-v01/recipe.final.json`, `p1-enemy-actions-v01/recipe.final.json`, and corresponding sources |
 | Equipment, skills, navigation, talents, Law Tokens | `p1-early-loop-v01/`, `p1-equipment-readability-v02/`, `p1-hub-navigation-v01/`, `p1-icon-expansion-v01/` |
 | UI materials | Original images, prompts, and packing maps in `p1-ui-style-r13/` |

@@ -13,6 +13,14 @@ foreach ($Check in @("scripts/check_english.py", "tools/test_check_english.py", 
 }
 
 $RuntimeFiles = Get-ChildItem -Path src -Recurse -File -Include *.gd,*.tscn
+& $PythonBin -B -m unittest discover -s tools/art_pipeline/world_expansion_v01/tests
+if ($LASTEXITCODE -ne 0) { throw "World expansion pack tests failed with exit code $LASTEXITCODE" }
+& $PythonBin -B tools/art_pipeline/world_expansion_v01/pack.py --verify
+if ($LASTEXITCODE -ne 0) { throw "World expansion pack verification failed with exit code $LASTEXITCODE" }
+& $PythonBin -B tools/art_pipeline/world_expansion_v01/pack.py --config tools/art_pipeline/town_order_v01/packing_config.json --verify
+if ($LASTEXITCODE -ne 0) { throw "Town order pack verification failed with exit code $LASTEXITCODE" }
+& $PythonBin -B tools/world_manifest/author_town_expansion.py --check
+if ($LASTEXITCODE -ne 0) { throw "Town expansion scene verification failed with exit code $LASTEXITCODE" }
 if ($RuntimeFiles | Select-String -Pattern 'preload\(\s*"res://(tools|build)/|load\(\s*"res://build/' -Quiet) {
     throw "Runtime code must not compile-link excluded tools/ or build/ resources."
 }
@@ -34,6 +42,8 @@ foreach ($FilterMatch in $ExportFilters) {
 
 & $GodotBin --headless --path . --import
 if ($LASTEXITCODE -ne 0) { throw "Godot import failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_generated_texture_import.gd
+if ($LASTEXITCODE -ne 0) { throw "Generated texture import tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_all.gd
 if ($LASTEXITCODE -ne 0) { throw "Godot tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_runtime_world.gd
@@ -109,12 +119,20 @@ if ($LASTEXITCODE -ne 0) { throw "Environment object tests failed with exit code
 if ($LASTEXITCODE -ne 0) { throw "test_town_native_contract failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_town_runtime.gd
 if ($LASTEXITCODE -ne 0) { throw "test_town_runtime failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_generated_town_layout.gd
+if ($LASTEXITCODE -ne 0) { throw "test_generated_town_layout failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_town_gateways.gd
+if ($LASTEXITCODE -ne 0) { throw "Town gateway tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_training_report_builder.gd
 if ($LASTEXITCODE -ne 0) { throw "Training report builder tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/run_combat_state_codec.gd
 if ($LASTEXITCODE -ne 0) { throw "Combat state codec tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_pixel_stage.gd
 if ($LASTEXITCODE -ne 0) { throw "Pixel stage tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/unit/test_display_policy.gd
+if ($LASTEXITCODE -ne 0) { throw "Display policy tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_combat_room_scenes.gd
+if ($LASTEXITCODE -ne 0) { throw "Combat room scene tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/unit/test_game_root_stage.gd
 if ($LASTEXITCODE -ne 0) { throw "GameRoot stage tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_town_exploration.gd
@@ -247,6 +265,8 @@ if ($LASTEXITCODE -ne 0) { throw "Ranger motion overlay tests failed with exit c
 if ($LASTEXITCODE -ne 0) { throw "World occlusion tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_scene_atmosphere.gd
 if ($LASTEXITCODE -ne 0) { throw "Scene atmosphere tests failed with exit code $LASTEXITCODE" }
+& $GodotBin --headless --path . --script res://tests/test_grounding.gd
+if ($LASTEXITCODE -ne 0) { throw "Grounding tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_defeat_presentation.gd
 if ($LASTEXITCODE -ne 0) { throw "Defeat presentation tests failed with exit code $LASTEXITCODE" }
 & $GodotBin --headless --path . --script res://tests/test_title_screen.gd

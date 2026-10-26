@@ -1,0 +1,1107 @@
+{
+  "assets": {
+    "board": {
+      "anchor": [
+        112,
+        160
+      ],
+      "canvas": [
+        224,
+        176
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        23,
+        0,
+        179,
+        168
+      ],
+      "occupied_rect": [
+        31,
+        8,
+        163,
+        152
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/board_opaque.png",
+      "opaque_sha256": "421b9b824eeb8d1aa1b0530f7a662950b9d7faf35b4e7069a85c8722ac01fdb6",
+      "raw_sha256": "bdca618618d53a45075e2192161334d3689d174c4d73a0680a9333829e5ddac2",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          31,
+          8,
+          163,
+          152
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "76/495",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/board_raw.png",
+        "src_rect": [
+          182,
+          76,
+          1057,
+          990
+        ],
+        "step": "495/76"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/board_transparent.png",
+      "transparent_sha256": "1a0f770a535773a86844885bf8dae23d46d3f1a938b16e458144919b185d3492"
+    },
+    "cart": {
+      "anchor": [
+        72,
+        104
+      ],
+      "canvas": [
+        144,
+        112
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        4,
+        0,
+        137,
+        112
+      ],
+      "occupied_rect": [
+        12,
+        8,
+        121,
+        96
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/cart_opaque.png",
+      "opaque_sha256": "7b43d77c376027746887c4b137c4bdab84a51bcd8e9c1425b6a526969b4ad2d8",
+      "raw_sha256": "728a7bdaccb7641d494431c833333a4164317a1ec066a12afab12b173c4ee918",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          12,
+          8,
+          121,
+          96
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "96/731",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/cart_raw.png",
+        "src_rect": [
+          267,
+          166,
+          914,
+          731
+        ],
+        "step": "731/96"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/cart_transparent.png",
+      "transparent_sha256": "2b75c33046e1e9bf0ee490f1a4aef2e878536714b8a3836154750e51f7b89935"
+    },
+    "fence_long": {
+      "anchor": [
+        96,
+        72
+      ],
+      "canvas": [
+        192,
+        80
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        29,
+        0,
+        135,
+        80
+      ],
+      "occupied_rect": [
+        37,
+        8,
+        119,
+        64
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/fence_long_opaque.png",
+      "opaque_sha256": "bc5f5691ceae075b0465ba7a4239b1e79803e509acb911b9d42188a067c8078d",
+      "raw_sha256": "36062591843254741896c23277622b5ec80aea2876474a456b88314f449e6e8a",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          37,
+          8,
+          119,
+          64
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "16/157",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/fence_long_raw.png",
+        "src_rect": [
+          440,
+          98,
+          1166,
+          628
+        ],
+        "step": "157/16"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/fence_long_transparent.png",
+      "transparent_sha256": "c34279e0c084ccbfb186df1c33290b76aea57b88124f6765fd86f7578d7448cc"
+    },
+    "fence_short": {
+      "anchor": [
+        48,
+        88
+      ],
+      "canvas": [
+        96,
+        96
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        3,
+        0,
+        91,
+        96
+      ],
+      "occupied_rect": [
+        11,
+        8,
+        75,
+        80
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/fence_short_opaque.png",
+      "opaque_sha256": "a03f21eb24171c57428a5e0537b56456dfeb3ed288937cc78f3e5171a86865be",
+      "raw_sha256": "853a3649f5eb8fcc29c302eeb63c5511c95ee86a88d1bcff3e65634c0d56d184",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          11,
+          8,
+          75,
+          80
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "40/339",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/fence_short_raw.png",
+        "src_rect": [
+          335,
+          319,
+          630,
+          678
+        ],
+        "step": "339/40"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/fence_short_transparent.png",
+      "transparent_sha256": "849e98bfc4fdf271663c597e0dd9449f1adb55717c8797a5b05e7ae838f2b387"
+    },
+    "forge": {
+      "anchor": [
+        160,
+        264
+      ],
+      "canvas": [
+        320,
+        288
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        5,
+        0,
+        311,
+        272
+      ],
+      "occupied_rect": [
+        13,
+        8,
+        295,
+        256
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/forge_opaque.png",
+      "opaque_sha256": "f12922bda8990a75bc3323699c3252296faa7e3fa31732f927dedce6c36a6b5c",
+      "raw_sha256": "cc5c35bbf830c85c79842506e60cec76a92c090e91aa4558d4abe7154452edfc",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          13,
+          8,
+          295,
+          256
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "256/1061",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/forge_raw.png",
+        "src_rect": [
+          54,
+          47,
+          1222,
+          1061
+        ],
+        "step": "1061/256"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/forge_transparent.png",
+      "transparent_sha256": "a7ba7cb3f48e1dd2834de865df680d85fdd93735e25c0f9f7f7da07243e2cf9d"
+    },
+    "hearth": {
+      "anchor": [
+        80,
+        160
+      ],
+      "canvas": [
+        160,
+        176
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        0,
+        35,
+        160,
+        133
+      ],
+      "occupied_rect": [
+        8,
+        43,
+        144,
+        117
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/hearth_opaque.png",
+      "opaque_sha256": "e6d161a0f34ebf57685a9886fb9d23fa6a4e86b015b9aa4a043f62691d9383f9",
+      "raw_sha256": "2c63682c023bd2305a662832742825e616fc86cc436333daa930df05280be9f5",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          8,
+          43,
+          144,
+          117
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "144/755",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/hearth_raw.png",
+        "src_rect": [
+          223,
+          404,
+          755,
+          609
+        ],
+        "step": "755/144"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/hearth_transparent.png",
+      "transparent_sha256": "bd70770257c08bf8734425d26f064b83c6a91602c13d2cf83a6bbf4b0ff49230"
+    },
+    "lamp": {
+      "anchor": [
+        32,
+        104
+      ],
+      "canvas": [
+        64,
+        112
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        4,
+        0,
+        57,
+        112
+      ],
+      "occupied_rect": [
+        12,
+        8,
+        41,
+        96
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/lamp_opaque.png",
+      "opaque_sha256": "add26d2dad18d13c3e86ddc635899bafb44eb748f80500abfc10418629a7951a",
+      "raw_sha256": "5fbcc4ea8a83637c7fb821afc948798af6ea2c3cc057c70b224f322c548faf28",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          12,
+          8,
+          41,
+          96
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "96/1169",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/lamp_raw.png",
+        "src_rect": [
+          218,
+          255,
+          496,
+          1169
+        ],
+        "step": "1169/96"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/lamp_transparent.png",
+      "transparent_sha256": "f201f4dca4785d2d9aea2e85d9aa5bfcadf194b95ea2bf3afa154915a3096dfc"
+    },
+    "loadout": {
+      "anchor": [
+        144,
+        220
+      ],
+      "canvas": [
+        288,
+        240
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        7,
+        1,
+        274,
+        227
+      ],
+      "occupied_rect": [
+        15,
+        9,
+        258,
+        211
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/loadout_opaque.png",
+      "opaque_sha256": "68bedbb53da33e1d059e4ac2280de4474ea1aea7f60e183342d2b26d420086e9",
+      "raw_sha256": "daedf6a19f74b929c1296c3cf1d1bc4c2b333ef12e2928df876043a2bf6bdaaf",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          15,
+          8,
+          258,
+          212
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "106/429",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/loadout_raw.png",
+        "src_rect": [
+          170,
+          139,
+          1041,
+          858
+        ],
+        "step": "429/106"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/loadout_transparent.png",
+      "transparent_sha256": "fef4e0cde5dc752e4ff0e35b37882cd4581569e7eb3399a574cb87c57d6f7440"
+    },
+    "pine": {
+      "anchor": [
+        48,
+        132
+      ],
+      "canvas": [
+        96,
+        144
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        0,
+        2,
+        96,
+        137
+      ],
+      "occupied_rect": [
+        8,
+        10,
+        80,
+        121
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/pine_opaque.png",
+      "opaque_sha256": "ee8afe438db0295481a3af32d262d957038cfb82df569f3d4056a1aeb2435690",
+      "raw_sha256": "695c22669c4b419424927fe56d2a5989fe794fc0c714308e27dea883755b367a",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          8,
+          10,
+          80,
+          122
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "16/171",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/pine_raw.png",
+        "src_rect": [
+          108,
+          114,
+          855,
+          1299
+        ],
+        "step": "171/16"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/pine_transparent.png",
+      "transparent_sha256": "9d7ede1965365b2f41b9b34f39abf749c89b73c447f3d7933774b0ab8eccb31d"
+    },
+    "proxy": {
+      "anchor": [
+        112,
+        296
+      ],
+      "canvas": [
+        224,
+        320
+      ],
+      "kind": "object",
+      "occlusion_overflow": true,
+      "occlusion_rect": [
+        16,
+        -3,
+        193,
+        310
+      ],
+      "occupied_rect": [
+        27,
+        8,
+        171,
+        288
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/proxy_opaque.png",
+      "opaque_sha256": "c6fc79e36438dc52069a7a7681afec3ca9ad75eadc7d761e6a78ce32ec24e87d",
+      "raw_sha256": "a7862d3dfb4d464a675f6c8bc3ea8f0c730e5e7d6f26a654ec9420655f0164f3",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          27,
+          8,
+          171,
+          288
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "36/181",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/proxy_raw.png",
+        "src_rect": [
+          127,
+          15,
+          855,
+          1448
+        ],
+        "step": "181/36"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/proxy_transparent.png",
+      "transparent_sha256": "d24750df1df4b69c6c86810498183554cd10c45e07b97349b2a64d8faad49f67"
+    },
+    "ruin_broken_wall": {
+      "anchor": [
+        64,
+        120
+      ],
+      "canvas": [
+        128,
+        128
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        8,
+        0,
+        112,
+        128
+      ],
+      "occupied_rect": [
+        16,
+        8,
+        96,
+        112
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/ruin_broken_wall_opaque.png",
+      "opaque_sha256": "58a711f41a957b4ac797bba7667f8d807b0ca9b79e7b1a27b2d18515fa8fe656",
+      "raw_sha256": "3361f3a3d6255df798b855576a836be3995965061d75db5008afa7c9cc919e64",
+      "section": "arena",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          16,
+          8,
+          96,
+          112
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "56/541",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/ruin_broken_wall_raw.png",
+        "src_rect": [
+          180,
+          87,
+          919,
+          1082
+        ],
+        "step": "541/56"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/ruin_broken_wall_transparent.png",
+      "transparent_sha256": "9dc3ce24eda6393ccfb0f7a1a7759902628ae14239b03444d1622ae1dfeaefc7"
+    },
+    "ruin_gate": {
+      "anchor": [
+        64,
+        120
+      ],
+      "canvas": [
+        128,
+        128
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        1,
+        0,
+        126,
+        128
+      ],
+      "occupied_rect": [
+        9,
+        8,
+        110,
+        112
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/ruin_gate_opaque.png",
+      "opaque_sha256": "d8504b89098114aa6bca9d55aeccbaaa9c1bdc1637e4038a5bcc43332770b066",
+      "raw_sha256": "75a2f7c9d20379c311e2d4e55cc9bc2365d8981d53f2f60202dfe9142d0f03ef",
+      "section": "arena",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          9,
+          8,
+          110,
+          112
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "56/513",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/ruin_gate_raw.png",
+        "src_rect": [
+          162,
+          113,
+          1002,
+          1026
+        ],
+        "step": "513/56"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/ruin_gate_transparent.png",
+      "transparent_sha256": "e04e06e138bb345ad0a78780127e5dbd7bd1f1f4b732630f1930946002d57659"
+    },
+    "ruin_low_pier": {
+      "anchor": [
+        64,
+        120
+      ],
+      "canvas": [
+        128,
+        128
+      ],
+      "kind": "object",
+      "occlusion_overflow": true,
+      "occlusion_rect": [
+        -4,
+        17,
+        136,
+        115
+      ],
+      "occupied_rect": [
+        8,
+        29,
+        112,
+        91
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/ruin_low_pier_opaque.png",
+      "opaque_sha256": "1b4feb15cb960d8797bdce0c354d054dbcd228c21e06a2a878aae1b61d1bece4",
+      "raw_sha256": "6572aa4561aca33ea0f8468fac038a498712e43dd0714cbf7a4b930c9e6f8426",
+      "section": "arena",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          8,
+          29,
+          112,
+          91
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "112/895",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/ruin_low_pier_raw.png",
+        "src_rect": [
+          295,
+          246,
+          895,
+          726
+        ],
+        "step": "895/112"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/ruin_low_pier_transparent.png",
+      "transparent_sha256": "a649d47be9d1d10dafbae87138821b7270b4f13bb9237df4e2034b0a90ada88b"
+    },
+    "ruin_wall_corner": {
+      "anchor": [
+        64,
+        120
+      ],
+      "canvas": [
+        128,
+        128
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        0,
+        35,
+        128,
+        93
+      ],
+      "occupied_rect": [
+        8,
+        43,
+        112,
+        77
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/ruin_wall_corner_opaque.png",
+      "opaque_sha256": "2ada0887a719c26dde7c82a557dd2ee6c1bf938877e5f8a405a74e88fc2b20f6",
+      "raw_sha256": "89abd55133d192a6115ccb6fb28f3fdbc4a788bb55ccac69cc463e6c254db54e",
+      "section": "arena",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          8,
+          43,
+          112,
+          77
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "112/1033",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/ruin_wall_corner_raw.png",
+        "src_rect": [
+          200,
+          282,
+          1033,
+          710
+        ],
+        "step": "1033/112"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/ruin_wall_corner_transparent.png",
+      "transparent_sha256": "f9bfb9820163c115f6040477f6346d9b2b58acb2b269ceb85962e1f784ad2070"
+    },
+    "tower": {
+      "anchor": [
+        64,
+        184
+      ],
+      "canvas": [
+        128,
+        192
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        3,
+        1,
+        122,
+        191
+      ],
+      "occupied_rect": [
+        11,
+        9,
+        106,
+        175
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/tower_opaque.png",
+      "opaque_sha256": "600a2d21f0c1ea5c183e798ff4e5d1491ba9f9476ac9304e1b9d1d651e7e61bb",
+      "raw_sha256": "574c07f221c99804c23d444f6d40a9e6b4ed7dc94f2eced4e5e80ba9572285a8",
+      "section": "arena",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          11,
+          8,
+          106,
+          176
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "11/85",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/tower_raw.png",
+        "src_rect": [
+          107,
+          82,
+          819,
+          1360
+        ],
+        "step": "85/11"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/tower_transparent.png",
+      "transparent_sha256": "dca4332b23976054b23eefe53fdb98613e30f8a96f0c4d687cbe2b5d79caf1dd"
+    },
+    "training_dummy": {
+      "anchor": [
+        32,
+        88
+      ],
+      "canvas": [
+        64,
+        96
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        5,
+        0,
+        55,
+        96
+      ],
+      "occupied_rect": [
+        13,
+        8,
+        39,
+        80
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/training_dummy_opaque.png",
+      "opaque_sha256": "66543b74a1e33f7144b66fa4ef5aa6ccb870ce66f1d78e996d6a9bbd236b71f0",
+      "raw_sha256": "ebc831f1309b025e3f4b5c315eeb6244e0d323bedab3434ee172529a1d0c9b46",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          13,
+          8,
+          39,
+          80
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "80/1007",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/training_dummy_raw.png",
+        "src_rect": [
+          287,
+          327,
+          490,
+          1007
+        ],
+        "step": "1007/80"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/training_dummy_transparent.png",
+      "transparent_sha256": "20cf53c92f10aaf3e820e65fb42941512900b97dbd029e71744f41cffdf20687"
+    },
+    "woodpile": {
+      "anchor": [
+        64,
+        72
+      ],
+      "canvas": [
+        128,
+        80
+      ],
+      "kind": "object",
+      "occlusion_overflow": true,
+      "occlusion_rect": [
+        17,
+        -3,
+        95,
+        86
+      ],
+      "occupied_rect": [
+        28,
+        8,
+        73,
+        64
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/woodpile_opaque.png",
+      "opaque_sha256": "cb5850b141c7b33ca98234800a0327261569f35591ab863ff7c582b3c6bfed41",
+      "raw_sha256": "be796df2d3c44371c7aab5ebccbfb0e50b20ac140f5fe68e3ce4879f279ce5f9",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          28,
+          8,
+          73,
+          64
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "64/669",
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/woodpile_raw.png",
+        "src_rect": [
+          455,
+          165,
+          760,
+          669
+        ],
+        "step": "669/64"
+      },
+      "transparent_path": "res://art/production/p1/generated_world_v02/woodpile_transparent.png",
+      "transparent_sha256": "8829d933858e46deb1442896c67a4ff22d70c79d864fb7a89ff2842b29238918"
+    }
+  },
+  "complete": true,
+  "config_sha256": "80c09b2e2b3ef9264fc4435c5335e03f25d50e9e4b2866627adb078fa39dbdec",
+  "generator": "tools/art_pipeline/generated_world_v02/pack.py",
+  "ground": {
+    "anchor": [
+      0,
+      0
+    ],
+    "canvas": [
+      1536,
+      960
+    ],
+    "kind": "ground",
+    "occlusion_rect": null,
+    "occupied_rect": [
+      0,
+      0,
+      1536,
+      960
+    ],
+    "opaque_path": "res://art/production/p1/generated_world_v02/town_ground_opaque.png",
+    "opaque_sha256": "f5f736d34b80334021b8a34c53c8f9247d68c04470a3d53c3f84f9d2c9bd6847",
+    "raw_sha256": "779d343ed32f6f6e85969cc3435eca94212ff54d0543e142aca6c84721206748",
+    "section": "town",
+    "status": "packed",
+    "transform": {
+      "crop_origin": [
+        0,
+        32
+      ],
+      "dst_rect": [
+        0,
+        0,
+        1536,
+        960
+      ],
+      "kind": "ground",
+      "mode": "fit_width_crop_height",
+      "residue_px": 64,
+      "scale": "1/1",
+      "scaled_size": [
+        1536,
+        1024
+      ],
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/town_ground_raw.png",
+      "src_rect": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "step": "1/1"
+    },
+    "transparent_path": null,
+    "transparent_sha256": null
+  },
+  "grounds": {
+    "arena_ground": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1024,
+        640
+      ],
+      "kind": "ground",
+      "occlusion_rect": null,
+      "occupied_rect": [
+        0,
+        0,
+        1024,
+        640
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/arena_ground_opaque.png",
+      "opaque_sha256": "04bab9e99ac9f585c18975c5db30e42ff7c6d8f8601b57c84688c195dfa4b1dd",
+      "raw_sha256": "f9ded049173dbc7d9025f2c1361443ffa1dd6a85d93d3e1b4891f86a38a7c547",
+      "section": "arena",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          21
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1024,
+          640
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 43,
+        "scale": "2/3",
+        "scaled_size": [
+          1024,
+          683
+        ],
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/arena_ground_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "step": "3/2"
+      },
+      "transparent_path": null,
+      "transparent_sha256": null
+    },
+    "town_ground": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1536,
+        960
+      ],
+      "kind": "ground",
+      "occlusion_rect": null,
+      "occupied_rect": [
+        0,
+        0,
+        1536,
+        960
+      ],
+      "opaque_path": "res://art/production/p1/generated_world_v02/town_ground_opaque.png",
+      "opaque_sha256": "f5f736d34b80334021b8a34c53c8f9247d68c04470a3d53c3f84f9d2c9bd6847",
+      "raw_sha256": "779d343ed32f6f6e85969cc3435eca94212ff54d0543e142aca6c84721206748",
+      "section": "town",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          32
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1536,
+          960
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 64,
+        "scale": "1/1",
+        "scaled_size": [
+          1536,
+          1024
+        ],
+        "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/town_ground_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "step": "1/1"
+      },
+      "transparent_path": null,
+      "transparent_sha256": null
+    }
+  },
+  "package": "generated_world_v02",
+  "pending": [],
+  "schema_version": 1,
+  "sections": {
+    "arena": {
+      "assets": [
+        "ruin_wall_corner",
+        "ruin_gate",
+        "ruin_low_pier",
+        "ruin_broken_wall",
+        "tower"
+      ],
+      "complete": true,
+      "grounds": [
+        "arena_ground"
+      ],
+      "pending": [],
+      "stale": []
+    },
+    "town": {
+      "assets": [
+        "board",
+        "loadout",
+        "forge",
+        "proxy",
+        "pine",
+        "hearth",
+        "fence_long",
+        "fence_short",
+        "training_dummy",
+        "lamp",
+        "woodpile",
+        "cart"
+      ],
+      "complete": true,
+      "grounds": [
+        "town_ground"
+      ],
+      "pending": [],
+      "stale": []
+    }
+  },
+  "semantics": {
+    "alpha": "opaque states use binary alpha 0/255; transparent states binary 0/128 on identical RGB, canvas and occupied geometry",
+    "anchor": "object anchor: the mapped object window's bottom bound (exclusive) sits at anchor[1]; the window is centred on anchor[0] (half-pixel left bias on odd widths); ground anchor is the canvas origin",
+    "canvas": "full configured canvas always preserved; occupied content never enters the 8 px margin",
+    "occlusion_rect": "occupied_rect grown by occlusion_grow px on every side, never clipped (margin contract keeps it inside the canvas; occlusion_overflow flags any violation); null for grounds",
+    "paths": "res:// paths relative to the Godot project root",
+    "rect_format": "[x, y, width, height] in canvas pixels",
+    "sections": "independent completeness per section; 'ground' mirrors grounds[primary_ground] for the original town contract"
+  },
+  "stale": []
+}

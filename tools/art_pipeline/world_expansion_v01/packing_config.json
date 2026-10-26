@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "package": "world_expansion_v01",
+  "source_dir": "docs/art-production/world-expansion-20261025/sources",
+  "output_dir": "art/production/p1/world_expansion_v01",
+  "report_dir": "build/current/world-expansion-v01/packing",
+  "default_alpha_threshold": 240,
+  "margin": 8,
+  "occlusion_grow": 8,
+  "transparent_alpha": 128,
+  "rejected_sources": [
+    "town_ground_raw.png"
+  ],
+  "grounds": {
+    "court_ground": {
+      "source": "court_ground_raw.png",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "a3d77550d53ae2ecac11a962382c328d4c86fa9594f4058699e55d704ab31e88"
+    },
+    "causeway_ground": {
+      "source": "causeway_ground_raw.png",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "b8290f142de94dbe182283fc1b26efe2ccfcec4c2a7ec237dd5bcac4608e2e92"
+    },
+    "ritual_ground": {
+      "source": "ritual_ground_raw.png",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "486cca4237b34ae169597d4bf000968fb47535fec957c535c19670892d78bad8"
+    },
+    "town_ground": {
+      "source": "town_ground_winding_raw.png",
+      "mode": "crop",
+      "src_rect": [
+        0,
+        0,
+        1536,
+        960
+      ],
+      "raw_width": 1536,
+      "canvas": [
+        1536,
+        960
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "town",
+      "source_sha256": "0a9579415efb9114bfad7fcc2818c2d19317f8324112cae2a35e3e304ca40f07"
+    }
+  },
+  "assets": {
+    "bridge": {
+      "canvas": [
+        240,
+        220
+      ],
+      "anchor": [
+        120,
+        200
+      ],
+      "section": "town",
+      "reveal": false,
+      "source_sha256": "c63ac4874310e7aa569e7778a82f9a9f01bd6e6fb265b664cf4570b5469b41b1"
+    },
+    "gateway": {
+      "canvas": [
+        192,
+        224
+      ],
+      "anchor": [
+        96,
+        208
+      ],
+      "section": "town",
+      "reveal": true,
+      "source_sha256": "560b0ae6bc434917065483bbdfe4887654684449d53545f60f249719e384463d"
+    },
+    "house_east": {
+      "canvas": [
+        224,
+        208
+      ],
+      "anchor": [
+        112,
+        192
+      ],
+      "section": "town",
+      "reveal": true,
+      "source_sha256": "8d3e384bae0814ea5e567993281b8a60346c50fe4c402b8b58800e6bb118f939"
+    },
+    "house_west": {
+      "canvas": [
+        224,
+        208
+      ],
+      "anchor": [
+        112,
+        192
+      ],
+      "section": "town",
+      "reveal": true,
+      "source_sha256": "9d83d6bc539d072174a87c3c308404bd8d8b3dc2b1f71738cb40cdcf21260ce4"
+    },
+    "wall": {
+      "canvas": [
+        192,
+        112
+      ],
+      "anchor": [
+        96,
+        104
+      ],
+      "section": "town",
+      "reveal": true,
+      "source_sha256": "dc9a455dc5ebf9761d5caf64da6e89ea7447ecaccc5ce8baf03c62d6ca5008da"
+    },
+    "bridge_ne": {
+      "canvas": [
+        240,
+        220
+      ],
+      "anchor": [
+        120,
+        200
+      ],
+      "section": "town",
+      "reveal": false,
+      "source_sha256": "fda246211972b7d9c75a5c29b377b28e04369905e8ddaf40c2421aad4e59489b"
+    }
+  }
+}

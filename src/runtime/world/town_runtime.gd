@@ -10,6 +10,9 @@ const HERO_ID := "town/ranger"
 const HERO_SPEED := 96.0
 const FACILITY_IDS: Array[String] = ["contract", "loadout", "forge", "training", "proxy"]
 const WAYPOINT_REACH := 12.0
+const GATEWAY_ACTIONS: Array[String] = ["contract"]
+const GATEWAY_RADIUS_MIN := 8.0
+const GATEWAY_RADIUS_MAX := 96.0
 
 var simulation
 var registry
@@ -25,6 +28,9 @@ func configure(world: Variant, actors: Variant, content: Dictionary) -> Dictiona
 		return _failure("town_dependencies_mismatch")
 	if actors.actor(HERO_ID) == null or not actors.has_movement_boundary():
 		return _failure("town_actor_or_boundary_missing")
+	var gateway_error := _gateway_error(content, actors)
+	if not gateway_error.is_empty():
+		return _failure(gateway_error)
 	simulation = world
 	registry = actors
 	_content = content.duplicate(true)
@@ -144,6 +150,65 @@ func nearby_feature_id() -> String:
 	return nearest
 
 
+## Scene-authored exit gates. They are not facilities: they never join
+## FACILITY_IDS, feature_entries() or the wayfinding destinations.
+func gateway_entries() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for source: Dictionary in _content.get("gateways", []):
+		result.append({"id": String(source.id), "label": String(source.get("label", source.id)), "feet": _point(source.get("position", [])),
+			"radius": float(source.radius), "action": String(source.action)})
+	return result
+
+
+func entry_for_gateway(id: String) -> Dictionary:
+	for entry: Dictionary in gateway_entries():
+		if String(entry.id) == id:
+			return entry
+	return {}
+
+
+func nearby_gateway_id() -> String:
+	if not is_ready():
+		return ""
+	var nearest := ""
+	var distance := INF
+	for entry: Dictionary in gateway_entries():
+		var gap := hero_world_position().distance_squared_to(entry.feet)
+		if gap <= pow(float(entry.radius), 2.0) and gap < distance:
+			nearest = String(entry.id)
+			distance = gap
+	return nearest
+
+
+func _gateway_error(content: Dictionary, actors: Variant) -> String:
+	var gateways: Variant = content.get("gateways", [])
+	if not gateways is Array:
+		return "town_gateway_invalid:gateways"
+	var seen := {}
+	var taken: Array = FACILITY_IDS.duplicate()
+	for resident: Dictionary in content.get("residents", []):
+		taken.append(String(resident.get("id", "")))
+	for index: int in (gateways as Array).size():
+		var gate: Variant = (gateways as Array)[index]
+		var id: String = String(gate.get("id", "")) if gate is Dictionary else ""
+		var label := "town_gateway_invalid:" + (id if not id.is_empty() else str(index))
+		if id.is_empty() or id in taken or seen.has(id):
+			return label
+		seen[id] = true
+		var pair: Variant = gate.get("position", null)
+		var radius: Variant = gate.get("radius", null)
+		if not pair is Array or (pair as Array).size() != 2 or not ((pair as Array)[0] is float or (pair as Array)[0] is int) or not ((pair as Array)[1] is float or (pair as Array)[1] is int):
+			return label
+		if not (radius is float or radius is int) or not is_finite(float(radius)) or float(radius) < GATEWAY_RADIUS_MIN or float(radius) > GATEWAY_RADIUS_MAX:
+			return label
+		if String(gate.get("action", "")) not in GATEWAY_ACTIONS:
+			return label
+		var point := _point(pair)
+		if not point.is_finite() or not actors.is_position_clear(point, Rect2(), actors.actor(HERO_ID).footprint_radius):
+			return label
+	return ""
+
+
 func resident_positions() -> Dictionary:
 	var result := {}
 	if not is_ready():
@@ -230,7 +295,7 @@ func snapshot() -> Dictionary:
 		"tick_rate": int(simulation.tick_rate) if simulation != null else 30,
 		"hero_position": hero_world_position(), "hero_facing": hero_facing(),
 		"hero_moving": not registry.actor(HERO_ID).velocity.is_zero_approx() if is_ready() else false,
-		"world_size": world_size(), "world_bounds": world_bounds(), "facilities": feature_entries(),
+		"world_size": world_size(), "world_bounds": world_bounds(), "facilities": feature_entries(), "gateways": gateway_entries(),
 		"residents": resident_positions(), "resident_definitions": _content.get("residents", []).duplicate(true),
 		"view_size": _point(_content.get("view_size", [640, 360])),
 		"hero_screen_anchor": _point(_content.get("hero_screen_anchor", [320, 222])),

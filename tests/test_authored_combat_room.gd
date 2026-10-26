@@ -1,6 +1,8 @@
 extends SceneTree
 
 const ContractPlan := preload("res://src/game/contract_plan.gd")
+const AimResolver := preload("res://src/systems/manual_aim_resolver.gd")
+const ArrowOrigin := preload("res://src/game/ranger_arrow_origin.gd")
 const Items := preload("res://src/content/early_item_registry.gd")
 const Resolver := preload("res://src/systems/build_resolver.gd")
 const RoomRuntime := preload("res://src/game/combat_room_runtime.gd")
@@ -72,7 +74,7 @@ func _run() -> void:
 	var enemy = enemies[0]
 	var enemy_position: Vector2 = enemy.position
 	_expect(arena.actor_registry.is_position_clear(enemy_position, arena._arena_rect(), 16.0), "authored room: authored enemy spawn is not clear")
-	var player_placement := _find_valid_attack_position(arena, enemy_position)
+	var player_placement := _find_valid_attack_position(arena, enemy_position, enemy)
 	_expect(bool(player_placement.get("ok", false)), "authored room: no valid player position near authored enemy spawn")
 	if not bool(player_placement.get("ok", false)):
 		runtime.free()
@@ -81,7 +83,17 @@ func _run() -> void:
 	_expect(bool(arena.teleport_actor("ranger", player_placement.position).get("ok", false)), "authored room: player placement failed")
 	enemy.health = 1.0
 	enemy.maximum_health = 1.0
-	var cast: Dictionary = arena.request_player_cast("piercing_arrow", enemy.entity_id, enemy_position - player_placement.position)
+	## The elite is a charger: from this range it first strafes into its launch
+	## band. A piercing arrow locks a frozen trajectory at cast, so the legal
+	## attack window is the elite's own settled launch band — the same window a
+	## player would use — not mid-strafe and not the uncommitted spawn idle.
+	## Wait for a real settled tick, then cast.
+	var settled := _advance_until(arena, func() -> bool:
+		var live = arena._enemy_by_entity_id(enemy.entity_id)
+		return live != null and String(live.motion_state) == "idle" and String(live.tactic_reason) not in ["", "spawned"]
+	, 120)
+	_expect(settled, "authored room: elite never settled into its launch band")
+	var cast: Dictionary = arena.request_player_cast("piercing_arrow", enemy.entity_id, enemy.position - player_placement.position)
 	_expect(bool(cast.get("accepted", false)), "authored room: real arrow request was rejected")
 	var first_removed := _advance_until(arena, func() -> bool:
 		return arena._enemy_by_entity_id(enemy.entity_id) == null and not arena.enemies.is_empty()
@@ -108,7 +120,7 @@ func _run() -> void:
 		_finish()
 		return
 	var reinforcement_position: Vector2 = reinforcement.position
-	var reinforcement_player := _find_valid_attack_position(arena, reinforcement_position)
+	var reinforcement_player := _find_valid_attack_position(arena, reinforcement_position, reinforcement)
 	_expect(bool(reinforcement_player.get("ok", false)), "authored room: no valid player position near summoned enemy")
 	if not bool(reinforcement_player.get("ok", false)):
 		runtime.free()
@@ -147,9 +159,23 @@ func _advance_until(arena: Node, predicate: Callable, limit: int) -> bool:
 	return bool(predicate.call())
 
 
-func _find_valid_attack_position(arena: Node, target_position: Vector2) -> Dictionary:
+## Mirrors ranger_arrow_flight: arrows resolve the first contact of an
+## 18px path disc, and hurtbox contact lands once that disc touches the 16px
+## hurtbox — 34px out from the aim anchor. Static geometry beyond that point
+## cannot pre-empt the hit, so the lane only needs to be clear to it.
+const ARROW_PATH_REACH := 18.0
+const AIM_CONTACT_DISTANCE := 34.0
+
+func _find_valid_attack_position(arena: Node, target_position: Vector2, target: Variant = null) -> Dictionary:
 	var targeting_distance := float(arena.player_combat_state.targeting_distance())
 	var index: Variant = arena.actor_registry.static_index
+	## A piercing arrow is released above the feet (release offset) and locks
+	## direction at the target's aim anchor (~22px above its position), so the
+	## lane the arrow really flies is origin->anchor — not feet->feet. Sweep
+	## exactly that lane or the fixture validates the wrong line.
+	var anchor := target_position
+	if target != null:
+		anchor = AimResolver.new().target_anchor({"entity_id": int(target.entity_id), "kind_id": String(target.kind_id), "position": target.position, "health": float(target.health)})
 	var distances: Array[float] = [80.0, 100.0, 120.0, 140.0, 160.0, 180.0, 200.0]
 	for distance: float in distances:
 		if distance >= targeting_distance:
@@ -158,9 +184,11 @@ func _find_valid_attack_position(arena: Node, target_position: Vector2) -> Dicti
 			var candidate := target_position + Vector2.RIGHT.rotated(TAU * float(angle_index) / 32.0) * distance
 			if not arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), 14.0):
 				continue
-			## Authored ruins stop arrows now, so the fixture also needs a clear
-			## projectile lane to its target.
-			if index != null and not (index.sweep(&"projectile", candidate, target_position - candidate, 12.0) as Array).is_empty():
+			var facing := (target_position - candidate).normalized()
+			var origin := candidate + ArrowOrigin.release_offset(facing)
+			var flight := anchor - origin
+			var clear_span := flight.normalized() * maxf(0.0, flight.length() - AIM_CONTACT_DISTANCE)
+			if index != null and not (index.sweep(&"projectile", origin, clear_span, ARROW_PATH_REACH) as Array).is_empty():
 				continue
 			return {"ok": true, "position": candidate}
 	return {"ok": false, "position": Vector2.ZERO}

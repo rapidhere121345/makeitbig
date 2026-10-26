@@ -39,22 +39,28 @@ func _test_current_scene() -> void:
 	scene.free()
 
 
+## Under modular baking the environment baker owns the transform contract
+## for its own expansion containers and reports them with its own error;
+## every other source keeps the native spatial error. Verified against the
+## live bake log: exactly these four paths take the baker error.
+const MODULAR_BAKER_CONTAINERS: Array[String] = [".", "GeometrySources", "GeometrySources/Static", "Sockets"]
+
+
 func _test_transform_rejections() -> void:
 	var sample := NativeScene.instantiate()
 	var containers: Array[String] = [".", "GeometrySources", "GeometrySources/MovementBoundary", "GeometrySources/Static", "GeometrySources/Routes", "Sockets"]
 	for route: Node in sample.get_node("GeometrySources/Routes").get_children():
 		containers.append(String(sample.get_path_to(route)))
 	var leaves: Array[String] = []
-	# Both circle metadata sources and polygon sources use the same transform contract.
-	var circle := ""
+	# The whole-object scene authors every envelope as a polygon; a synthetic
+	# circle leaf is injected below so BOTH authored kinds still exercise the
+	# same transform contract without demanding one in production data.
 	var polygon := ""
 	for shape: Node in sample.get_node("GeometrySources/Static").get_children():
-		if shape.has_meta("radius") and circle.is_empty():
-			circle = String(sample.get_path_to(shape))
-		elif not shape.has_meta("radius") and polygon.is_empty():
+		if not shape.has_meta("radius") and polygon.is_empty():
 			polygon = String(sample.get_path_to(shape))
-	_expect(not circle.is_empty() and not polygon.is_empty(), "fixture needs both static source kinds")
-	leaves.append_array([circle, polygon])
+	_expect(not polygon.is_empty(), "fixture needs a static source leaf")
+	leaves.append(polygon)
 	for socket: Node in sample.get_node("Sockets").get_children():
 		leaves.append(String(sample.get_path_to(socket)))
 	for route: Node in sample.get_node("GeometrySources/Routes").get_children():
@@ -64,6 +70,7 @@ func _test_transform_rejections() -> void:
 		var mutations: Array[String] = ["rotation", "scale", "reflection", "collapse", "skew", "top_level"]
 		if path in containers:
 			mutations.append("position")
+		var expected := ("unsupported_environment_container_transform:" if path in MODULAR_BAKER_CONTAINERS else "unsupported_native_transform:") + path
 		for property: String in mutations:
 			var scene := NativeScene.instantiate()
 			var node := scene.get_node(path) as Node2D
@@ -75,8 +82,25 @@ func _test_transform_rejections() -> void:
 				"skew": node.skew = 0.2
 				"top_level": node.set_as_top_level(true)
 				"position": node.position += Vector2(8, 4)
-			_expect_rejected(scene, "unsupported_native_transform:" + path, path + "/" + property)
+			_expect_rejected(scene, expected, path + "/" + property)
 			scene.free()
+	# The synthetic circle leaf carries the same authored transform contract
+	# as a polygon leaf: a radius meta on a Polygon2D static source.
+	for property: String in ["rotation", "scale", "reflection", "collapse", "skew", "top_level"]:
+		var scene := NativeScene.instantiate()
+		var circle := Polygon2D.new()
+		circle.name = "InjectedCircleEnvelope"
+		circle.set_meta("radius", 4.0)
+		scene.get_node("GeometrySources/Static").add_child(circle)
+		match property:
+			"rotation": circle.rotation = 0.25
+			"scale": circle.scale = Vector2(2, 1)
+			"reflection": circle.scale = Vector2(-1, 1)
+			"collapse": circle.scale = Vector2.ZERO
+			"skew": circle.skew = 0.2
+			"top_level": circle.set_as_top_level(true)
+		_expect_rejected(scene, "unsupported_native_transform:GeometrySources/Static/InjectedCircleEnvelope", "circle/" + property)
+		scene.free()
 	var scene := NativeScene.instantiate()
 	(scene.get_node(polygon) as Polygon2D).offset = Vector2(4, 0)
 	_expect_rejected(scene, "unsupported_native_polygon_offset:" + polygon, "polygon offset")

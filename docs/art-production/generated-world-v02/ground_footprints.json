@@ -1,0 +1,161 @@
+{
+	"arena": {
+		"ruin_broken_wall": {
+			"reason": "Reviewed angled sprite ground contacts, including receding base/post feet; excludes projected roof/crown/wall height. Five-pixel padding applied separately.",
+			"rect": [
+				16,
+				75,
+				96,
+				45
+			]
+		},
+		"ruin_gate": {
+			"reason": "Ground span beneath the gate supports; arch and upper bars project above this footprint.",
+			"rect": [
+				10,
+				93,
+				108,
+				27
+			]
+		},
+		"ruin_low_pier": {
+			"reason": "Broad low masonry foundation; retain depth while removing projected upper face.",
+			"rect": [
+				8,
+				94,
+				112,
+				26
+			]
+		},
+		"ruin_wall_corner": {
+			"reason": "Reviewed angled sprite ground contacts, including receding base/post feet; excludes projected roof/crown/wall height. Five-pixel padding applied separately.",
+			"rect": [
+				8,
+				86,
+				112,
+				34
+			]
+		},
+		"tower": {
+			"reason": "Wide stone plinth on the ground; upper lantern, roof and tower walls remain traversable behind.",
+			"rect": [
+				12,
+				154,
+				104,
+				30
+			]
+		}
+	},
+	"padding_native_px": 5,
+	"schema_version": 1,
+	"town": {
+		"board": {
+			"reason": "Reviewed angled sprite ground contacts, including receding base/post feet; excludes projected roof/crown/wall height. Five-pixel padding applied separately.",
+			"rect": [
+				40,
+				103,
+				145,
+				57
+			]
+		},
+		"cart": {
+			"reason": "Reviewed angled sprite ground contacts, including receding base/post feet; excludes projected roof/crown/wall height. Five-pixel padding applied separately.",
+			"rect": [
+				13,
+				78,
+				119,
+				26
+			]
+		},
+		"fence_long": {
+			"reason": "Reviewed angled sprite ground contacts, including receding base/post feet; excludes projected roof/crown/wall height. Five-pixel padding applied separately.",
+			"rect": [
+				37,
+				38,
+				119,
+				34
+			]
+		},
+		"fence_short": {
+			"reason": "Reviewed angled sprite ground contacts, including receding base/post feet; excludes projected roof/crown/wall height. Five-pixel padding applied separately.",
+			"rect": [
+				11,
+				47,
+				75,
+				41
+			]
+		},
+		"forge": {
+			"reason": "Reviewed angled sprite ground contacts, including receding base/post feet; excludes projected roof/crown/wall height. Five-pixel padding applied separately.",
+			"rect": [
+				40,
+				190,
+				264,
+				74
+			]
+		},
+		"hearth": {
+			"reason": "Commons hearth stone ring floor extent; the fire and spit are projected height.",
+			"rect": [
+				14,
+				126,
+				132,
+				34
+			]
+		},
+		"lamp": {
+			"reason": "Lamp post base and feet; pole and lantern are projected height.",
+			"rect": [
+				18,
+				91,
+				28,
+				13
+			]
+		},
+		"loadout": {
+			"reason": "Reviewed angled sprite ground contacts, including receding base/post feet; excludes projected roof/crown/wall height. Five-pixel padding applied separately.",
+			"rect": [
+				40,
+				165,
+				232,
+				55
+			]
+		},
+		"pine": {
+			"reason": "Trunk base only; the whole crown is projected height the hero walks behind.",
+			"rect": [
+				40,
+				118,
+				16,
+				14
+			]
+		},
+		"proxy": {
+			"reason": "Proxy bay floor plinth; the shell above is projected height.",
+			"rect": [
+				42,
+				250,
+				140,
+				46
+			]
+		},
+		"training_dummy": {
+			"reason": "Practice dummy stand base; the straw body is projected height.",
+			"rect": [
+				22,
+				78,
+				20,
+				10
+			]
+		},
+		"woodpile": {
+			"reason": "Stacked logs ground contact band; the pile crown is projected height.",
+			"rect": [
+				22,
+				52,
+				84,
+				20
+			]
+		}
+	}
+}

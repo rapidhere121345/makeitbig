@@ -118,7 +118,7 @@ func player(arena) -> Dictionary:
 func configure_target(arena, offset: Vector2 = Vector2(120.0, 0.0)):
 	# Only the actors are positioned by this fixture. The room already reset
 	# State/Rules; no player counters, timeline ids or world ticks are rewritten.
-	assert(bool(arena.teleport_actor("ranger", arena._arena_rect().get_center()).get("ok", false)))
+	assert(bool(arena.teleport_actor("ranger", arena._arena_rect().get_center() + Vector2(0, -36)).get("ok", false)))
 	var target = arena.enemies[0]
 	assert(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + offset).get("ok", false)))
 	target.health = 1000000000.0

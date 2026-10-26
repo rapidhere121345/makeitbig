@@ -38,10 +38,29 @@ devbox's network and visibility restrictions.
 | Shoot | Space for assisted aim; left-click to target an enemy |
 | Dodge | Shift / Ctrl / right mouse button |
 | Skills | Q: Hunter's Mark; E: Dash (requires unlock) |
-| Hearthside | E / Space near a facility to enter; E near a resident to talk; C: character; J: journal |
+| Hearthside | E / Space near a facility or the Expedition Gate to enter; E near a resident to talk; C: character; J: journal |
 | Reading and menus | E / Enter: advance; Esc: back; F1: settings; Tab in combat: report |
 
 Choose Manual or Auto when departing; the mode stays fixed for that contract. Loot enters the backpack before you compare and equip it. Forge previews are free; only confirming the forge spends Law Tokens.
+
+Hearthside's river is crossed at its two bridges; water, mountain edges and
+scenery bases block movement. The Expedition Gate opens Contracts. In combat,
+cleared wards are visual feedback: room settlement and the Leave action control
+departure.
+
+Hearthside’s Forge and Loadout face their roads, bridge landings are kept clear,
+and the eastern wall replaces the crowded pine boundary. See the
+[town performance and layout acceptance](docs/playtest/TOWN_PERFORMANCE_LAYOUT_20261026.md)
+for measured CPU improvements and validation limits.
+
+Contact shadows anchor actors and scenery to the ground and bridge decks.
+Lamps and hearths cast local pools of light, with restrained illumination on
+nearby sprites and combat warnings drawn above the ground effects.
+
+F1 opens display settings. Windowed presets extend through 1440p, ultrawide and
+4K when they fit the display; fullscreen uses the desktop resolution. The game
+keeps a 16:9 field of view with borders on wider displays and nearest-neighbor
+pixel scaling.
 
 ## Test and Export
 
@@ -73,7 +92,7 @@ After a passing build, generate and validate the static release page:
 
 The ignored `build/releases/` directory can be served as a static site. Each build includes Windows/Linux downloads, `build.json`, and `SHA256SUMS`. `all` retains the latest 20 valid builds and can delete older ones; review and approve retention before running it against existing release history. See [the release workflow](docs/RELEASE_WORKFLOW.md) for templates and naming.
 
-The existing host's tailnet-only page is <https://example-runtime.tail99c4e8.ts.net:8448>. This is not a devbox publication endpoint or a guarantee of current availability.
+The current publish URL, supplied by the operator, is <http://192.0.2.10:18080/>.
 
 For Tailscale access, validate `build/releases/` with `./deploy/tailscale/stage_release_page.sh`, then have the host operator configure exposure as described in the [Tailscale guide](deploy/tailscale/README.md).
 

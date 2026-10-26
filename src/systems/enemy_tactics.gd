@@ -91,7 +91,7 @@ const GEOMETRY_STEP_LOSS_PENALTY := 20000.0
 const GEOMETRY_BLOCKED_PENALTY := 1000000.0
 const GEOMETRY_BLOCKED_DISPLACEMENT := 0.01
 ## Authored static blockers (ruins, gates, the tower) steer candidates the
-## same way hazards do: overlapping the blocker's padded circle is expensive,
+## same way hazards do: approaching the blocker's padded shape is expensive,
 ## glancing contact stays affordable so crowded rooms keep moving.
 const STATIC_BLOCKER_PENALTY := 2600.0
 const STATIC_BLOCKER_MARGIN := 26.0
@@ -192,6 +192,16 @@ func score_candidate_direction(snapshot: Dictionary, enemy: Dictionary, desired_
 			continue
 		var clearance := float(blocker.get("radius", 0.0)) + STATIC_BLOCKER_MARGIN
 		var blocker_distance := raw_candidate.distance_to(blocker_center)
+		var points: Variant = blocker.get("points", null)
+		if points is PackedVector2Array and points.size() >= 3:
+			clearance = STATIC_BLOCKER_MARGIN
+			blocker_distance = INF
+			if Geometry2D.is_point_in_polygon(raw_candidate, points):
+				blocker_distance = 0.0
+			else:
+				for edge: int in points.size():
+					var nearest := Geometry2D.get_closest_point_to_segment(raw_candidate, points[edge], points[(edge + 1) % points.size()])
+					blocker_distance = minf(blocker_distance, raw_candidate.distance_to(nearest))
 		if blocker_distance < clearance:
 			score += STATIC_BLOCKER_PENALTY * (1.0 - blocker_distance / clearance)
 

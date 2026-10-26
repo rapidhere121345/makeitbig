@@ -182,6 +182,8 @@ func _set_native_visible(value: bool) -> void:
 
 func _clear_render_state(reason: String = "") -> void:
 	_render_active = false
+	if world_view != null:
+		world_view.reset_structure_fades()
 	actor_presenter.release_sort_views()
 	actor_presenter.apply_occlusion_alpha({})
 	_occlusion_report = {"available": false, "reason": "presentation_session_closed"}
@@ -330,10 +332,11 @@ func commit(snapshot: Dictionary, input_view: Dictionary, display_delta: float =
 	_actor_frame = frame_builder.actor_frame(snapshot, visual)
 	# Camera preparation precedes occlusion and node submission. Draw callbacks
 	# reuse this committed camera; they never reset the per-part cutaway plan.
+	world_view.set_layout_id(String(snapshot.get("layout_id", "rectangle_arena")))
 	world_view.begin_frame(viewport, snapshot["player_position"], snapshot["arena_rect"])
 	_world_frame["camera_prepared"] = true
 	_domain.global_transform = world_view.gameplay_transform()
-	var submitted := actor_presenter.sync_sort_views(_domain, _actor_frame, world_view)
+	var submitted := actor_presenter.sync_sort_views(_domain, _actor_frame, world_view, display_delta)
 	if not bool(submitted.ok):
 		_clear_render_state(String(submitted.error))
 		return submitted
@@ -390,12 +393,23 @@ func _apply_detached_occlusion(display_delta: float) -> void:
 		alphas[stable_id] = alpha
 		if alpha < 0.999:
 			occluded_ids.append(stable_id)
-	actor_presenter.apply_occlusion_alpha(alphas)
+	# Covered actors remain opaque. The covering structure owns transparency;
+	# actor-over-actor readability still uses the local cutaway drawing path.
+	actor_presenter.apply_occlusion_alpha({})
 	_record_occlusion(true, "", [], {
 		"plan_size": entries.size(),
 		"occluded_ids": occluded_ids,
-		"alphas": alphas.duplicate(),
+		"plan_alphas": alphas.duplicate(),
+		"alphas": _opaque_actor_alphas(alphas),
+		"primitive_fade": world_view.structure_fade_report(),
 	})
+
+
+func _opaque_actor_alphas(plan_alphas: Dictionary) -> Dictionary:
+	var result := {}
+	for id: String in plan_alphas:
+		result[id] = 1.0
+	return result
 
 
 func _record_occlusion(available: bool, reason: String = "", errors: Array = [], detail: Dictionary = {}) -> void:

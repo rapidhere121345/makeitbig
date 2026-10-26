@@ -75,7 +75,8 @@ func _run() -> void:
 	_expect(registry != null and registry.has_actor(actor_id), "death deregistration: enemy actor was not registered before death")
 	var entity_handle = registry.actor_handle(actor_id) if registry != null else null
 
-	var center: Vector2 = arena._arena_rect().get_center()
+	# Keep the 120-pixel projectile lane north of the whole scenery blockers.
+	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "death deregistration: ranger fixture placement failed")
 	_expect(bool(arena.teleport_actor(actor_id, center + Vector2.RIGHT * 120.0).get("ok", false)), "death deregistration: target placement failed")
 	enemy.health = 1.0

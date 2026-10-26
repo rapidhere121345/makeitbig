@@ -8,5 +8,6 @@ Long-lived references for systems, narrative, host workflows, and art production
 - [SYSTEMS_DESIGN.md](SYSTEMS_DESIGN.md): full-game systems model and long-term plans.
 - [narrative/](narrative/README.md): world, story, and experience units.
 - [art-production/](art-production/README.md): reproducible art recipes, provenance, and import checks.
+- [playtest/](playtest/README.md): retained acceptance records and historical gaps to recheck.
 
 Design conventions are incorporated into implementation and acceptance records. Original visual references live in [art-production/concepts/](art-production/concepts/); technical documentation remains here.

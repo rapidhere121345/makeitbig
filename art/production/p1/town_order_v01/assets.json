@@ -1,0 +1,238 @@
+{
+  "assets": {
+    "forge_west": {
+      "anchor": [
+        160,
+        264
+      ],
+      "canvas": [
+        320,
+        288
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        0,
+        17,
+        320,
+        255
+      ],
+      "occupied_rect": [
+        8,
+        25,
+        304,
+        239
+      ],
+      "path": "res://art/production/p1/town_order_v01/forge_west_opaque.png",
+      "raw_sha256": "1f3811b668a12eadcaf0b2dffaea5349e467ee8c434dc31fb5210e6af6f7a4f5",
+      "raw_size": [
+        1322,
+        1190
+      ],
+      "reveal": true,
+      "section": "town",
+      "sha256": "64cb605da78b54eda6b50adc61604696c4455666a11f08ca757d6f9ea84df339",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          8,
+          24,
+          304,
+          240
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "304/1185",
+        "source": "docs/art-production/town-order-20261026/sources/forge_west_raw.png",
+        "src_rect": [
+          76,
+          158,
+          1185,
+          933
+        ],
+        "step": "1185/304"
+      },
+      "transparent_path": "res://art/production/p1/town_order_v01/forge_west_transparent.png",
+      "transparent_sha256": "bf2096f76e3d2ef01b7b79edbea8966d1fa2efdc73a944e175f2ec6ca9c6b1ab"
+    },
+    "loadout_east": {
+      "anchor": [
+        144,
+        220
+      ],
+      "canvas": [
+        288,
+        240
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        30,
+        0,
+        220,
+        228
+      ],
+      "occupied_rect": [
+        46,
+        8,
+        196,
+        212
+      ],
+      "path": "res://art/production/p1/town_order_v01/loadout_east_opaque.png",
+      "raw_sha256": "ff339dd8ae8e3ddea63c3d6306d10c7756882d560e46c1dd7832372063ca692a",
+      "raw_size": [
+        1374,
+        1145
+      ],
+      "reveal": true,
+      "section": "town",
+      "sha256": "97b4d49c1fa18181b8a8b8d0e54afef6b7f2a6448ac84c41638afb2136262df6",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          46,
+          8,
+          196,
+          212
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "212/1069",
+        "source": "docs/art-production/town-order-20261026/sources/loadout_east_raw.png",
+        "src_rect": [
+          264,
+          38,
+          985,
+          1069
+        ],
+        "step": "1069/212"
+      },
+      "transparent_path": "res://art/production/p1/town_order_v01/loadout_east_transparent.png",
+      "transparent_sha256": "d21837ddf7d53503cefcc5038722d84771d5e1ea1a783bb08cf12af82eaef474"
+    },
+    "wall_ne": {
+      "anchor": [
+        96,
+        104
+      ],
+      "canvas": [
+        192,
+        112
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        0,
+        8,
+        192,
+        104
+      ],
+      "occupied_rect": [
+        8,
+        16,
+        176,
+        88
+      ],
+      "path": "res://art/production/p1/town_order_v01/wall_ne_opaque.png",
+      "raw_sha256": "d0d0b488695cec9d9f64956ddfa06994df63ecb57eaa150e9861eb270f86b332",
+      "raw_size": [
+        1642,
+        958
+      ],
+      "reveal": true,
+      "section": "town",
+      "sha256": "8859dd72725343f3242445ecea781cc3786892f8efa29cbfe26324964edd06eb",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          8,
+          16,
+          176,
+          88
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "11/93",
+        "source": "docs/art-production/town-order-20261026/sources/wall_ne_raw.png",
+        "src_rect": [
+          89,
+          124,
+          1488,
+          744
+        ],
+        "step": "93/11"
+      },
+      "transparent_path": "res://art/production/p1/town_order_v01/wall_ne_transparent.png",
+      "transparent_sha256": "049f2ec52ec4908db2888484d096d7943adcdd78c73c58113087c2ad4cc30367"
+    },
+    "wall_north_south": {
+      "anchor": [
+        64,
+        240
+      ],
+      "canvas": [
+        128,
+        256
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        47,
+        0,
+        35,
+        248
+      ],
+      "occupied_rect": [
+        55,
+        8,
+        19,
+        232
+      ],
+      "path": "res://art/production/p1/town_order_v01/wall_north_south_opaque.png",
+      "raw_sha256": "5fcf11cb5fe179a26eab892f15b50deab407bd4d8be8400c5511494572a4b0ec",
+      "raw_size": [
+        887,
+        1774
+      ],
+      "reveal": true,
+      "section": "town",
+      "sha256": "0bf646b960725094f3c376742825d5a9cf6f89f1a43ef0f513641a09ee0dc0be",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          55,
+          8,
+          19,
+          232
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "232/1655",
+        "source": "docs/art-production/town-order-20261026/sources/wall_north_south_v2_raw.png",
+        "src_rect": [
+          379,
+          62,
+          130,
+          1655
+        ],
+        "step": "1655/232"
+      },
+      "transparent_path": "res://art/production/p1/town_order_v01/wall_north_south_transparent.png",
+      "transparent_sha256": "3cdadf3122ca74034b13322df1e0af80dc32a0a62603ea80a43485e232b8572e"
+    }
+  },
+  "occlusion_grow": 8,
+  "output_dir": "art/production/p1/town_order_v01",
+  "package": "town_order_v01",
+  "pending": [],
+  "schema_version": 1,
+  "transparent_alpha": 128
+}

@@ -67,11 +67,13 @@ const SUMMARY_MEASURE_SNAPSHOT := {
 	"feedback": "Piercing Arrow Hit · Boss Damage 4.495e10 · Defeated 0",
 	"resource_state": "Arrows 12 / 24",
 }
+## world_polish_v01 ships each icon as its own authored 32x32 PNG, so every
+## cell's atlas region is the whole texture.
 const SKILL_ICON_CELLS := {
 	"Skill1Button": Rect2(0.0, 0.0, 32.0, 32.0),
-	"Skill2Button": Rect2(32.0, 0.0, 32.0, 32.0),
-	"Skill3Button": Rect2(64.0, 0.0, 32.0, 32.0),
-	"DodgeButton": Rect2(96.0, 0.0, 32.0, 32.0),
+	"Skill2Button": Rect2(0.0, 0.0, 32.0, 32.0),
+	"Skill3Button": Rect2(0.0, 0.0, 32.0, 32.0),
+	"DodgeButton": Rect2(0.0, 0.0, 32.0, 32.0),
 }
 const SKILL_NAMES := {
 	"Skill1Button": "Piercing",
@@ -227,6 +229,15 @@ func _run() -> void:
 	for utility_name in ["ReturnButton", "SummaryToggleButton"]:
 		var utility_button := hud.find_child(utility_name, true, false) as Button
 		_expect(utility_button != null and utility_button.get_theme_font_size("font_size") >= 18, "%s text fell below the 18px floor" % utility_name, failures)
+		if utility_button == null:
+			continue
+		## Collapsed-state containment: the theme-padded minimum must fit the
+		## declared cell, and the global rect must stay inside UtilityFrame.
+		var minimum := utility_button.get_combined_minimum_size()
+		_expect(minimum.x <= utility_button.size.x + 0.5,
+			"%s needs %s but only has %s wide" % [utility_name, str(minimum), str(utility_button.size)], failures)
+		_expect(utility_frame != null and utility_frame.get_global_rect().encloses(utility_button.get_global_rect()),
+			"%s escapes the utility frame at %s" % [utility_name, str(utility_button.get_global_rect())], failures)
 
 	_expect(String(hud.icon_pending_reason).is_empty(), "approved skill icons did not load: %s" % hud.icon_pending_reason, failures)
 	for node_name in SKILL_CELLS:
@@ -241,14 +252,14 @@ func _run() -> void:
 		_expect(icon != null and state_label != null and name_label != null and key_label != null, "cell %s lost its icon/key/state/name labels" % node_name, failures)
 		if icon == null or state_label == null or name_label == null:
 			continue
-		_expect(icon.custom_minimum_size == Vector2(40.0, 40.0) and icon.size == Vector2(40.0, 40.0), "cell %s icon is not displayed at 40px" % node_name, failures)
+		_expect(icon.custom_minimum_size == Vector2(32.0, 32.0) and icon.size == Vector2(32.0, 32.0), "cell %s icon is not displayed at the authored 32px native size" % node_name, failures)
 		_expect(icon.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "cell %s icon is not nearest-neighbour" % node_name, failures)
 		_expect(icon.stretch_mode == TextureRect.STRETCH_SCALE and icon.expand_mode == TextureRect.EXPAND_IGNORE_SIZE, "cell %s icon does not scale from the native 32px cell" % node_name, failures)
 		var atlas := hud.skill_icon(node_name) as AtlasTexture
 		_expect(atlas != null, "cell %s has no approved atlas icon" % node_name, failures)
 		if atlas != null:
 			_expect(atlas.region == SKILL_ICON_CELLS[node_name], "cell %s uses atlas region %s instead of its approved 32x32 cell" % [node_name, str(atlas.region)], failures)
-			_expect(atlas.atlas != null and atlas.atlas.get_width() == 128 and atlas.atlas.get_height() == 32, "cell %s atlas is not the 128x32 skills_actions sheet" % node_name, failures)
+			_expect(atlas.atlas != null and atlas.atlas.get_width() == 32 and atlas.atlas.get_height() == 32, "cell %s atlas is not the authored 32x32 world_polish_v01 icon" % node_name, failures)
 		_expect(name_label.text == SKILL_NAMES[node_name], "cell %s name copy is wrong" % node_name, failures)
 		_expect(name_label.get_theme_font_size("font_size") >= 18, "cell %s name fell below the 18px readability floor" % node_name, failures)
 		_expect(state_label.get_theme_font_size("font_size") >= 18, "cell %s state fell below the 18px readability floor" % node_name, failures)
@@ -338,7 +349,18 @@ func _run() -> void:
 	for layout_frame in range(4): await process_frame
 	_expect(summary.visible, "summary toggle did not reveal panel", failures)
 	_expect(summary_toggle.text.contains("▲"), "expanded summary toggle must show the open state", failures)
-	_expect(summary_toggle.text.contains("Report") and summary_toggle.text.contains("TAB"), "summary toggle must present the Battle Report TAB entry", failures)
+	_expect(summary_toggle.text.contains("Report"), "summary toggle lost its Report face", failures)
+	_expect(summary_toggle.tooltip_text.contains("Battle Report") and summary_toggle.tooltip_text.contains("Tab"),
+		"summary toggle lost the Battle Report Tab wording", failures)
+	## Expanded-state containment: the toggle must stay inside UtilityFrame and
+	## the window at both compact 1280 and 1600 frames.
+	var expanded_minimum := summary_toggle.get_combined_minimum_size()
+	_expect(expanded_minimum.x <= summary_toggle.size.x + 0.5,
+		"expanded toggle needs %s but only has %s wide" % [str(expanded_minimum), str(summary_toggle.size)], failures)
+	_expect((hud.find_child("UtilityFrame", true, false) as PanelContainer).get_global_rect().encloses(summary_toggle.get_global_rect()),
+		"expanded toggle escapes the utility frame", failures)
+	_expect(summary_toggle.get_global_rect().end.x <= hud.size.x + 0.5,
+		"expanded toggle escapes the window right edge", failures)
 	_check_expanded_panel(hud, summary, top_bar, frame, failures)
 	var expanded_copy := _visible_copy(summary)
 	for expected in ["Threshold Colossus", "250K / 1.00M", "Actual Same-Layer Ratio", "Boss Damage", "750K", "Hazard", "Elite", "Unverified", "Manual Mode"]:
@@ -1004,6 +1026,18 @@ func _test_room_progress(hud: Control, failures: Array[String]) -> void:
 		and not heading.get_global_rect().intersects(cue.get_global_rect())
 		and not (hud.find_child("BossStateLabel", true, false) as Control).visible,
 		"room HUD: progress or entry cue clipped or overlapped another strip row", failures)
+	# Measure the actual shipped guidance, not a short synthetic placeholder.
+	var catalog: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://content/rooms/combat/room_catalog.json"))
+	var campaign: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://content/early_campaign.json"))
+	for room in catalog["rooms"]:
+		var hint := String(room["presentation"]["entry_hint"])
+		snapshot["room_entry_hint"] = hint
+		hud.present(snapshot)
+		var text_width := cue.get_theme_font("font").get_string_size(cue.text, HORIZONTAL_ALIGNMENT_LEFT, -1, cue.get_theme_font_size("font_size")).x
+		_expect(cue.visible and text_width <= cue.size.x, "room HUD: authored entry hint clips for %s (%.1f > %.1f)" % [room["layout_id"], text_width, cue.size.x], failures)
+		for layout in campaign["layouts"]:
+			if layout["id"] == room["layout_id"]:
+				_expect(layout["entry_hint"] == hint, "room HUD: campaign and catalog entry guidance differ", failures)
 	snapshot["room_elapsed_seconds"] = 2.0
 	hud.present(snapshot)
 	_expect(not cue.visible and heading.text.contains("Room 1 / 2"),

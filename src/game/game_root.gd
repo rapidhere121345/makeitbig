@@ -27,6 +27,7 @@ const PixelStageScript = preload("res://src/presentation/pixel_stage.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const TestConsoleScript = preload("res://src/presentation/test_console.gd")
 const SessionMenuScript = preload("res://src/presentation/session_menu.gd")
+const DisplayPolicyScript = preload("res://src/presentation/display_policy.gd")
 
 const FACILITY_ROUTES: Array[String] = ["loadout", "forge", "training", "proxy", "immortality", "research"]
 const ADAPTIVE_SHELL_ROUTES: Array[String] = [
@@ -127,6 +128,8 @@ var _menu_paused_screen: Node
 var _menu_previous_process_mode: int = Node.PROCESS_MODE_INHERIT
 var _effects_volume := 0.45
 var _windowed_resolution := Vector2i(1600, 900)
+## Test hook: pretends the screen has this usable size. ZERO means ask the OS.
+var usable_display_override := Vector2i.ZERO
 var _settings_loaded := false
 var _stage_window: Window
 ## Multiple mounted roots occur in tests and tooling. Share the window lease so
@@ -233,6 +236,7 @@ func _ensure_session_menu() -> void:
 	_session_menu.effects_volume_changed.connect(_set_effects_volume)
 	_load_player_settings()
 	_session_menu.set_route(current_route)
+	_session_menu.set_resolution_options(DisplayPolicyScript.menu_options(_usable_display_size(), _windowed_resolution), _windowed_resolution)
 	_session_menu.sync_settings(_windowed_resolution, get_window().mode == Window.MODE_FULLSCREEN, _effects_volume)
 	_apply_route_preferences()
 
@@ -273,19 +277,32 @@ func _apply_route_preferences() -> void:
 		_current_screen.call("set_effects_volume", _effects_volume)
 
 
+## Usable size of the current screen, or ZERO (no upper bound) when it is unknown.
+func _usable_display_size() -> Vector2i:
+	if usable_display_override != Vector2i.ZERO:
+		return usable_display_override
+	if DisplayServer.get_name().to_lower().contains("headless"):
+		return Vector2i.ZERO
+	return DisplayServer.screen_get_usable_rect(get_window().current_screen).size
+
+
 func _apply_display_settings(resolution: Vector2i, fullscreen: bool) -> void:
-	if resolution not in SessionMenuScript.RESOLUTIONS:
+	var usable := _usable_display_size()
+	if resolution.x <= 0 or resolution.y <= 0:
 		return
+	resolution = DisplayPolicyScript.fit_window(resolution, usable)
 	_windowed_resolution = resolution
 	var window := get_window()
 	if not DisplayServer.get_name().to_lower().contains("headless"):
-		window.min_size = Vector2i(1024, 576)
+		window.min_size = DisplayPolicyScript.MIN_WINDOW
 		window.mode = Window.MODE_FULLSCREEN if fullscreen else Window.MODE_WINDOWED
 		if not fullscreen:
-			var usable := DisplayServer.screen_get_usable_rect(window.current_screen)
-			var fitted := Vector2i(mini(resolution.x, usable.size.x), mini(resolution.y, usable.size.y))
-			window.size = fitted
-			window.position = usable.position + (usable.size - fitted) / 2
+			var origin := DisplayServer.screen_get_usable_rect(window.current_screen).position
+			window.size = resolution
+			window.position = origin + (usable - resolution) / 2
+	if _session_menu != null:
+		_session_menu.set_resolution_options(DisplayPolicyScript.menu_options(usable, resolution), resolution)
+		_session_menu.sync_settings(resolution, fullscreen, _effects_volume)
 	_save_player_settings(fullscreen)
 
 
@@ -300,9 +317,8 @@ func _load_player_settings() -> void:
 	var volume: Variant = config.get_value("audio", "effects", 0.45)
 	if (volume is float or volume is int) and is_finite(float(volume)):
 		_effects_volume = clampf(float(volume), 0.0, 1.0)
-	var resolution: Variant = config.get_value("display", "window", Vector2i(1600, 900))
-	if resolution is Vector2i and resolution in SessionMenuScript.RESOLUTIONS:
-		_windowed_resolution = resolution
+	_windowed_resolution = DisplayPolicyScript.parse_saved(
+		config.get_value("display", "window", _windowed_resolution), _usable_display_size(), _windowed_resolution)
 	var fullscreen: Variant = config.get_value("display", "fullscreen", false)
 	_apply_display_settings(_windowed_resolution, fullscreen == true)
 

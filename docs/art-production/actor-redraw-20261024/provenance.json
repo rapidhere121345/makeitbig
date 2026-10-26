@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "purpose": "Original actor redraw; images are generated from design briefs and project style references, not cut from game references. Technical packing only after generation.",
+  "records": [
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/boss_body_raw.png",
+      "sha256": "e0cf4ca9a2a24e759bb90268fa9b42ca0263102e11c8bc8ec4bdbf147c5626fc",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-11a336b1-f18d-4192-a9d6-75921429696c.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/boss_body.txt",
+      "prompt_sha256": "1dd47afb7254014ddf0b302328387f234a814282e32538e92107111aa31b5ad6",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/boss_core_raw.png",
+      "sha256": "76eb586a64768ea537d9201dc431659ca8f846c7cd2cf332fccbd787452e5e49",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-af2cdd30-3b7b-47f5-8c25-d21697e6b4a7.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/boss_core.txt",
+      "prompt_sha256": "4cdd816fc674fedccdda3b57d0d4430df301088da80ab856c2337d3047adc658",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/boss_body_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/boss_body_raw.png",
+          "sha256": "e0cf4ca9a2a24e759bb90268fa9b42ca0263102e11c8bc8ec4bdbf147c5626fc"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/boss_hands_raw.png",
+      "sha256": "1ed2664616c0af17d94b52010b9a7d2aed109afb05f026d38c30512bb1f8a751",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-c15f9248-ae6e-4c87-a250-f0b5c576af7a.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/boss_hands.txt",
+      "prompt_sha256": "818c099c30eab45d633ebbde72e0e123fdf580a4cb6938a04e1790fefa56fb2f",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/boss_body_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/boss_body_raw.png",
+          "sha256": "e0cf4ca9a2a24e759bb90268fa9b42ca0263102e11c8bc8ec4bdbf147c5626fc"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/enemy_charger_raw.png",
+      "sha256": "978f00a3beb561b4a41aa86653fdd9347c0790a41f933d1f79851914a0bbff83",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-eae33ef7-de7b-4dea-bdf6-1b58a97f115f.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/enemy_charger.txt",
+      "prompt_sha256": "17b04ea438e8868df5df7257ef93f44ad17a17f979c76db371d100faf49dd164",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "sha256": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a"
+        },
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/enemy_melee_raw.png",
+      "sha256": "be52a0071d311b614a431fd1d27dfc5f48e102218816719f34c84389ca2db796",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-52c1c5c7-c779-4a05-943b-e73ebe84c725.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/enemy_melee.txt",
+      "prompt_sha256": "8f76184d0b603bc635d8d08a371aa80c7f2094d8c35f5e45acdd7099ed0dc8c9",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "sha256": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a"
+        },
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/enemy_ranged_raw.png",
+      "sha256": "b3608c237b7112895f240fc7794d8402be20851239151aae42bf3a645b923e77",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-3b263dc5-dee7-4a1a-a868-275ccab6f705.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/enemy_ranged.txt",
+      "prompt_sha256": "1e28db0b733dd36562312b2385a6a53021a0a1eb255bc69086650d8af49fdf90",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "sha256": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a"
+        },
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/npc_iven_raw.png",
+      "sha256": "e1d56092598bd6513daff44e64391c2277f5327dfd205b73863ce22346f86478",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-abbb1985-ddc3-469c-9912-d53d5bcdde29.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/npc_iven.txt",
+      "prompt_sha256": "76ce61b34c77cf1c61b13d4fca430a97319eea3fa811ccefe875343929e55aa0",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/npc_leia_raw.png",
+      "sha256": "ef248b97c7928b92a62d4cbe3f60213402da067a920f29437f8c1ce3d6325c8e",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-e768e9a6-bb04-4a2c-925c-e0b3d765c5ae.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/npc_leia.txt",
+      "prompt_sha256": "aec040339c572088450f9e6a37223dde4f6cf928f32e08bcab5d38ff8f1b56df",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/npc_mira_raw.png",
+      "sha256": "743f0ab67747b1202b5c3dfe8e84b53aee358d114ad9f9aec41df35d5007d4d9",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-be57bad2-ea16-4727-b80e-adf493b8aa61.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/npc_mira.txt",
+      "prompt_sha256": "3bf3b86b0c77ef7f6e4c3bd6473e3988d8865f2ca14ae66c6889d527be74a283",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/npc_mira_rejected_ranger_costume.png",
+      "sha256": "1ab33ee900125646a346f5bb5eec1e1f797e75d3933d2a7d16f667c76281b447",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-3354c3bf-0d34-4931-b77a-7014db726e09.png",
+      "prompt": null,
+      "prompt_sha256": null,
+      "selected": false,
+      "references": [
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/npc_oren_raw.png",
+      "sha256": "e391bd6b7579801430d0b5d8ef67c6d43a2a7902a54e4eb987e85ad79a0366ba",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-ef999ab1-f963-4c31-b88a-19beac430edd.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/npc_oren.txt",
+      "prompt_sha256": "d5a06f0478221183366c6eab057f17d78367c90d99008916250272bf3ce78795",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/npc_taren_raw.png",
+      "sha256": "aaa55472bfd94a2a85f4a973ab7857ce895e56f2c84aac09440a3a97fb1a5513",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-56b78318-dd97-4cc2-889e-646acd7be8b3.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/npc_taren.txt",
+      "prompt_sha256": "0240f5d4a87595fd6aba290f74c6a0efffb05b7f2de51167ae332b887e011dfe",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/ranger_east_raw.png",
+      "sha256": "96288b8b127233903ef1bc8ccfb75de48e9bc0e39888b2d3c5c09fa924899217",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-9005b62c-5c90-4233-8f27-1f8a02916f6c.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/ranger_east.txt",
+      "prompt_sha256": "88b8d9eed157d1684e757a0006e7d90dbe3e322c3389b9d6ebbc134835e9b41f",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "sha256": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a"
+        },
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+      "sha256": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-f6882162-62a2-4915-b461-3d15e92abf0f.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/ranger_identity.txt",
+      "prompt_sha256": "73c9ad313a586ecd10fff38acbf75a01f2e64354df4111f9b5d7261d6ca9b07e",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/ranger_north_raw.png",
+      "sha256": "f2b8829771519d2839954280a841bf3869bf5c47090b48cfdb80d948438278c3",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-01e66208-3fd7-4c26-8700-15698d571b93.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/ranger_north.txt",
+      "prompt_sha256": "980199beb5901fbb95f0d0bf48cf2cc4b67eadbf5b33cbc4d7b5140976b6a301",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "sha256": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a"
+        },
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/ranger_south_raw.png",
+      "sha256": "5ec76a1c516806dc0241bd86b8028ea5882aac66ec61cfc072fe0e6257190193",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-7f35e974-b364-4c31-b88d-9e9e03758b30.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/ranger_south.txt",
+      "prompt_sha256": "74d0853a840e10052b2ce1b339327f637a6d39c16137900f212bbd8f9cbbd955",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "sha256": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a"
+        },
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    },
+    {
+      "source": "docs/art-production/actor-redraw-20261024/sources/ranger_west_raw.png",
+      "sha256": "d46f3631d7939bb0038f77494ffe453365185e50b64d9040c04059621e75988f",
+      "generator": "built-in image_gen",
+      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-5b39668c-1c7b-4c48-88d6-f710ec4b6baa.png",
+      "prompt": "docs/art-production/actor-redraw-20261024/prompts/ranger_west.txt",
+      "prompt_sha256": "17486c3db9f8e20b279316747d1ff5423913bc1c3c30317ef80ad377045f51d1",
+      "selected": true,
+      "references": [
+        {
+          "tool_input": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/sources/ranger_identity_raw.png",
+          "sha256": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a"
+        },
+        {
+          "tool_input": "build/current/perspective-pass-20261024/calibration.png",
+          "retained_path": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+          "sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5"
+        }
+      ]
+    }
+  ]
+}

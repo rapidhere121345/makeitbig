@@ -39,6 +39,7 @@ func world_frame(snapshot: Dictionary, viewport: Rect2, pending_reason: String) 
 		"walkable_geometry": snapshot["walkable_geometry"].duplicate(true),
 		"presentation_geometry": presentation_geometry,
 		"sim_tick": snapshot["sim_tick"], "pending_reason": pending_reason,
+		"room_cleared": bool(snapshot.get("battle_over", false)) and bool(snapshot.get("battle_victory", false)),
 	}
 
 

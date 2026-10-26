@@ -70,20 +70,8 @@ static func draw_back(
 		return
 	var signature := motion_signature(action, facing, frame, time)
 	var facing_name := String(signature["facing"])
-	var bob := roundi(float(signature["bob"]))
-	var kick := int(signature["kick"])
-	## The cloth hem lags the body on purpose, so it ignores the pass-frame bob.
-	_draw_pixels(canvas, feet_world, _hem_seat_pixels(facing_name), INK, 0.5)
-	_draw_pixels(canvas, feet_world, _hem_tip_pixels(facing_name, kick), BONE, 0.95)
-	_draw_pixels(canvas, feet_world, _quiver_pixels(facing_name), BONE, 0.9, bob)
-	_draw_pixels(canvas, feet_world, _quiver_strap_pixels(facing_name), COPPER, 0.8, bob)
-	for rect: Rect2i in _pauldron_rects(facing_name):
-		canvas.draw_rect(
-			Rect2(Vector2(feet_world) + Vector2(rect.position) + Vector2(0.0, float(bob)), Vector2(rect.size)),
-			Color(INK, 0.7),
-			true
-		)
-	_draw_pixels(canvas, feet_world, _pauldron_edge_pixels(facing_name), COPPER, 0.8, bob)
+	# actors_v02 already contains the complete cloak, quiver and armor.
+	# Only transient motion accents belong outside the authored sprite.
 	if action in ["dodge", "dash"]:
 		var count := clampi(int(round(float(signature["trail"]) * 4.0)), 0, 6)
 		_draw_pixels(canvas, feet_world, _trail_pixels(facing_name, count), COLD, 0.5)
@@ -101,30 +89,11 @@ static func draw_front(
 		return
 	var signature := motion_signature(action, facing, frame, time)
 	var facing_name := String(signature["facing"])
-	var bob := roundi(float(signature["bob"]))
 	var f := clampi(frame, 0, 3)
-	## The diagonal harness stays one hard pixel wide so it reads as a strap,
-	## not as a vector decal.
-	var strap := _strap_points(facing_name)
-	canvas.draw_line(
-		Vector2(feet_world) + Vector2(strap[0]) + Vector2(0.0, float(bob)),
-		Vector2(feet_world) + Vector2(strap[1]) + Vector2(0.0, float(bob)),
-		Color(INK, 0.7),
-		1.0,
-		false
-	)
-	_draw_pixels(canvas, feet_world, _buckle_pixels(facing_name), COPPER, 0.75, bob)
-	_draw_pixels(canvas, feet_world, _hood_tick_pixels(facing_name), COLD, 0.55, bob)
-	if action == "walk":
-		if f == 0 or f == 2:
-			_draw_pixels(canvas, feet_world, [_foot_dust_pixel(facing_name, f)], SLATE_LIGHT, 0.55)
-		_draw_pixels(canvas, feet_world, [_grip_pixel(facing_name, f)], COPPER_LIGHT, 0.8)
-	elif action == "shoot":
-		if f == 2:
-			_draw_pixels(canvas, feet_world, _release_pixels(facing_name), BONE, 0.6)
-		_draw_pixels(canvas, feet_world, [_grip_pixel(facing_name, f)], COPPER_LIGHT, 0.7)
-	elif action != "death":
-		_draw_pixels(canvas, feet_world, _buckle_pixels(facing_name), COPPER_LIGHT, 0.8, bob)
+	if action == "walk" and (f == 0 or f == 2):
+		_draw_pixels(canvas, feet_world, [_foot_dust_pixel(facing_name, f)], SLATE_LIGHT, 0.45)
+	elif action == "shoot" and f == 2:
+		_draw_pixels(canvas, feet_world, _release_pixels(facing_name), BONE, 0.8)
 
 
 static func _draw_pixels(

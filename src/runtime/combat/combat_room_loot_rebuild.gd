@@ -129,7 +129,10 @@ func spawn(tick: int, raw_request: Variant) -> Dictionary:
 	if slot.is_empty():
 		return _failure("no_matching_loot_slot")
 	var slot_id := String(slot["slot_id"])
-	if _placement_port == null or not _placement_port.is_position_clear(position, float(slot["pickup_radius"])):
+	if _placement_port == null:
+		return _failure("loot_spawn_position_blocked")
+	position = _placement_port.resolve_drop_position(position, float(slot["pickup_radius"]))
+	if not position is Vector2 or not _placement_port.is_position_clear(position, float(slot["pickup_radius"])):
 		return _failure("loot_spawn_position_blocked")
 	var item: Variant = _materializer.call("generate_drop", root_seed, "%s/%s" % [room_id, slot_id], _drop_index, tags if not tags.is_empty() else slot["tags"], String(slot["guarantee_family"]))
 	if not item is Dictionary or (item as Dictionary).is_empty():

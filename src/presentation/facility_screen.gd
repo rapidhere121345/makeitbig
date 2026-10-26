@@ -273,10 +273,20 @@ func _ready() -> void:
 	_progression_icons.load_icons()
 	_build_ui()
 	_apply_presentation()
+	call_deferred("_seed_entry_focus")
 	# A page laid out for the frame it was built in re-freezes when that frame changes:
 	# a resized host or a resized window re-runs the composition once instead of leaving
 	# every cell sized for a frame that is gone.
 	resized.connect(_on_frame_resized)
+
+
+func _seed_entry_focus() -> void:
+	# Start keyboard navigation on a safe, persistent action. Rebuilds use the
+	# existing semantic focus restoration; this runs only when the screen enters.
+	if not is_inside_tree() or not is_visible_in_tree():
+		return
+	if get_viewport().gui_get_focus_owner() == null and _pending_focus_restore.is_empty():
+		_back_button.grab_focus()
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -465,7 +475,8 @@ func _build_ui() -> void:
 	_cards_scroll.name = "FacilityCardsScroll"
 	_cards_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_cards_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	ShellThemeScript.hide_passive_scrollbar_chrome(_cards_scroll)
+	# Keep the normal scroll thumb visible: long inventories and protocols must
+	# advertise that their clipped lower content can be reached.
 	page.add_child(_cards_scroll)
 	_cards_width_row = HBoxContainer.new()
 	_cards_width_row.name = "FacilityBodyWidthRow"

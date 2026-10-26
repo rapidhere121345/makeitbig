@@ -3,6 +3,7 @@ extends RefCounted
 ## activation, landmark routing and marker copy plus the visual contract of the
 ## live renderer (feet-anchored sprite layers, split-row fade, snapped camera).
 
+const TownExpectations = preload("res://tests/helpers/town_scene_expectations.gd")
 const BaseHubScreenScript = preload("res://src/presentation/base_hub_screen.gd")
 const ApplicationStateScript = preload("res://src/game/application_state.gd")
 
@@ -40,7 +41,7 @@ func run() -> Array[String]:
 
 	_test_entry_table(hub, failures)
 	var render_audit: Dictionary = hub.get_hub_view().render_audit()
-	_expect(String(render_audit.get("ground_source_path", "")) == "res://content/rooms/town/layers/ground.png", "base hub: live ground did not use the R13 environmental town surface", failures)
+	_expect(String(render_audit.get("ground_source_path", "")) == TownExpectations.EXPANSION_GROUND and TownExpectations.load_expectations().base_ground_paths == [TownExpectations.EXPANSION_GROUND], "base hub: live ground did not use the world_expansion_v01 whole-town surface", failures)
 	_expect(bool(render_audit.get("ready", false)) and bool(render_audit.get("shared_sort_root", false))
 		and int(render_audit.get("runtime_background_patches", -1)) == 0,
 		"base hub: strict native scene did not become ready: " + str(hub.town_load_report), failures)
@@ -60,6 +61,7 @@ func run() -> Array[String]:
 	_test_dynamic_progression(hub, failures)
 	_test_next_objective(hub, failures)
 	_test_landmarks_follow_world(hub, failures)
+	_test_landmark_opacity_settles(hub, failures)
 	_test_nav_state_matches_cards(hub, failures)
 	_test_nav_activation_routing(hub, failures)
 	_test_goal_and_road_guide(hub, failures)
@@ -445,7 +447,7 @@ func _test_hub_info_keeps_world_visible(hub, failures: Array[String]) -> void:
 		"base hub: the persistent header grew back into a narrative row", failures)
 	_expect(hub._header.is_ancestor_of(hub._objective_label) and hub._objective_label.is_visible_in_tree(),
 		"base hub: the current objective left the top band", failures)
-	_expect(hub._objective_label.get_theme_font_size("font_size") == 22
+	_expect(hub._objective_label.get_theme_font_size("font_size") == 20
 		and hub._profile_label.get_theme_font_size("font_size") >= 18,
 		"base hub: the compact header shrank its text", failures)
 	for button_name: String in ["OpenCharacter", "OpenStory", "HubInformationToggle"]:
@@ -556,8 +558,10 @@ func _test_hub_information_copy_and_details(hub, failures: Array[String]) -> voi
 		hub.present(_pre_boss_profile(), {"outcome": "mysterious_fate"}, pair[0], {})
 		_expect(hub._detail_status_label.text == pair[1], "base hub: optional status changed canonical/unknown copy", failures)
 		_expect(hub._detail_result_label.text.contains("mysterious_fate"), "base hub: optional receipt renamed an unknown outcome", failures)
-	for label: Label in [hub._objective_label, hub._detail_status_label, hub._detail_result_label, hub._nearby_label]:
+	for label: Label in [hub._detail_status_label, hub._detail_result_label, hub._nearby_label]:
 		_expect(label.get_theme_font_size("font_size") >= 22, "base hub: compact UI shrank body copy", failures)
+	_expect(hub._objective_label.get_theme_font_size("font_size") >= 20,
+		"base hub: compact UI shrank the header objective", failures)
 	for label: Label in [hub._profile_label, hub._progress_label, hub._detail_help_label]:
 		_expect(label.get_theme_font_size("font_size") >= 18, "base hub: compact UI shrank annotation copy", failures)
 
@@ -1016,3 +1020,25 @@ func _visible_landmark_count(hub) -> int:
 	for id: String in FEATURE_IDS:
 		if hub.get_landmark(id).visible: count += 1
 	return count
+
+
+func _test_landmark_opacity_settles(hub, failures: Array[String]) -> void:
+	var landmark: Control = hub.get_landmark("loadout")
+	var saved_position := landmark.position
+	var saved_visible := landmark.visible
+	var saved_modulate := landmark.modulate
+	landmark.visible = true
+	landmark.position = hub._hero_cell_design_rect().position
+	landmark.modulate.a = 1.0
+	for index in range(20):
+		hub._update_landmark_windows(0.018)
+	_expect(is_equal_approx(landmark.modulate.a, 0.35), "base hub: covering landmark did not settle at reveal opacity", failures)
+	landmark.position = Vector2(-10000, -10000)
+	for index in range(20):
+		hub._update_landmark_windows(0.018)
+	_expect(is_equal_approx(landmark.modulate.a, 1.0), "base hub: uncovered landmark did not restore opacity", failures)
+	hub._update_landmark_windows(0.018)
+	_expect(is_equal_approx(landmark.modulate.a, 1.0), "base hub: settled landmark opacity oscillated", failures)
+	landmark.position = saved_position
+	landmark.visible = saved_visible
+	landmark.modulate = saved_modulate

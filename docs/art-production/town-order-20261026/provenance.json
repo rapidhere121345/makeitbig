@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "purpose": "Road-facing facility variants and coherent perimeter wall sections",
+  "generation": "Original generated variants; retained reference art unchanged",
+  "packing_config": "tools/art_pipeline/town_order_v01/packing_config.json",
+  "assets": [
+    {
+      "id": "forge_west",
+      "source": "docs/art-production/town-order-20261026/sources/forge_west_raw.png",
+      "sha256": "1f3811b668a12eadcaf0b2dffaea5349e467ee8c434dc31fb5210e6af6f7a4f5",
+      "reference": "art/production/p1/generated_world_v02/forge_opaque.png",
+      "prompt": "Create one new game sprite using reference image ONLY as palette/material/pixel-art style reference. Dark fantasy stone and timber blacksmith forge, three-quarter overhead orthographic game view. Crucial change: rotate the BUILDING footprint 90 degrees from reference: long roof ridge runs from LOWER LEFT toward UPPER RIGHT; the broad active forge facade faces LOWER LEFT, with orange furnace and working canopy along that left-facing wall. Right-facing end is a short stone gable with chimney. Clearly distinct silhouette: squat L-shaped forge with stone chimney at back right, no repetitive front dormer house design. Match reference crisp pixel clusters, slate blue roofs, restrained amber windows, copper-brown timber, chunky grey stone plinth; no smooth 3D render. Single complete freestanding building centered, all corners and plinth fully visible, generous transparent margin, actual alpha transparent background. No surrounding scenery, characters, ground tile, lettering, labels or cast shadow beyond plinth. Intended reduction to approximately 300x270 game pixels.",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true
+    },
+    {
+      "id": "loadout_east",
+      "source": "docs/art-production/town-order-20261026/sources/loadout_east_raw.png",
+      "sha256": "ff339dd8ae8e3ddea63c3d6306d10c7756882d560e46c1dd7832372063ca692a",
+      "reference": "art/production/p1/generated_world_v02/loadout_opaque.png",
+      "prompt": "Use reference for palette and pixel-art materials only. Generate ONE complete equipment-shop building sprite for dark fantasy overhead three-quarter orthographic RPG. Radically change architecture to a compact tall GABLE-END shop facing lower right: short narrow entrance facade at the RIGHT with triangular roof gable above door, broad LEFT wall is plain timber/stone side wall receding toward upper left. Roof ridge runs upper left to lower right ending directly ABOVE the doorway on the right. Main entry centered in right gable end, short steps, small copper shield-shaped hanging sign and equipment rack beside the entry. One tall steep slate roof with no dormers, rear corner square watchtower-like turret creates distinctive silhouette; no forge chimney, no large front veranda, no repeated reference house outline. Same restrained blue-black shingles grey stone amber window copper-brown beams and crisp pixel clusters as reference; readable at 288x256 pixels. Isolated single building with fully visible plinth and generous transparent margins, actual transparent alpha background, no ground tile, surrounding props, text, people, or cast shadow outside base.",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true
+    },
+    {
+      "id": "wall_north_south",
+      "source": "docs/art-production/town-order-20261026/sources/wall_north_south_raw.png",
+      "sha256": "44fa57d2d5e324aad9404a3b1d90ad7b8df169b97d8396f64cdfb05d11a96128",
+      "reference": "art/production/p1/world_expansion_v01/wall_opaque.png",
+      "prompt": "Generate one modular dark fantasy town perimeter stone wall sprite, palette/style matching reference grey blue stone moss copper tiny details crisp pixel art. CRUCIAL orientation: wall runs NORTH TO SOUTH on the game map, its length projects almost VERTICALLY down the image (from upper centre to lower centre), NOT diagonally across horizontally as reference. Camera elevated three-quarter orthographic, see broad WEST-facing wall surface at left and narrow top crenellations, sufficient 3D thickness. Long straight continuous wall section, about 3 times as long on ground as thick, modest height; squared end buttress at each end, flat foundation both ends suitable joining additional same sections. One isolated wall only centered in narrow tall composition, entirely visible with transparent padding. True alpha transparent background, no ground plate, trees, lamps, gates, lettering, no external cast shadow. This is a game-map east boundary running down the screen, not a horizontal wall.",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "selection": "Retained superseded slanted variant; not used for the east run."
+    },
+    {
+      "id": "wall_ne",
+      "source": "docs/art-production/town-order-20261026/sources/wall_ne_raw.png",
+      "sha256": "d0d0b488695cec9d9f64956ddfa06994df63ecb57eaa150e9861eb270f86b332",
+      "reference": "art/production/p1/world_expansion_v01/wall_opaque.png",
+      "prompt": "Generate ONE modular stone wall section for same dark fantasy pixel-art game as reference. Keep grey-blue rough masonry, restrained moss, square stone endposts and low wall height. Change orientation: long wall axis runs from LOWER LEFT to UPPER RIGHT across the image (opposite the reference slope), viewed elevated three-quarter orthographic. Long broad SOUTH-EAST-facing masonry surface visible; narrow coping top. A clean continuous straight wall run between two simple squared posts, no crenellated castle tower, no roof, no door. Roughly 3:1 wide short sprite composition, complete footprint and both end plinths fully visible. Crisp pixel clusters at final 192x112 pixels. Truly transparent background with generous clear margin; no scenery, ground tile, diffuse backdrop, people, lettering, or external shadow. This wall will join a town gateway and needs a plain uncluttered silhouette.",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true
+    },
+    {
+      "id": "wall_north_south",
+      "revision": 2,
+      "source": "docs/art-production/town-order-20261026/sources/wall_north_south_v2_raw.png",
+      "sha256": "5fcf11cb5fe179a26eab892f15b50deab407bd4d8be8400c5511494572a4b0ec",
+      "reference": "art/production/p1/town_order_v01/wall_north_south_opaque.png (revision 1)",
+      "tool": "built-in image_gen.imagegen",
+      "transparent_background": true,
+      "prompt": "Edit this modular pixel-art wall asset. Correct the perspective footprint so it can tile in an EXACTLY VERTICAL straight line on a 2D game map. The upper endpoint and lower endpoint stone foundations MUST have the SAME horizontal centre coordinate, within 2% of image width. Wall extends straight down the image; ZERO diagonal drift left or right. Show a west-facing masonry side by giving every cross-section the same horizontal thickness, like a long vertical rectangular prism seen from elevated left. Keep wall modest height, same dark blue-grey rough stone, sparse moss, crisp pixel-art texture and simple squared endpoint buttresses. Entire wall isolated and fully visible, no ground texture. Transparent background. Do not preserve the reference diagonal silhouette: redraw the full wall as a vertical column whose top and bottom plinths are perfectly aligned on x. Long wall game footprint intended210pixels vertical, under12pixels horizontal drift. No text, labels, decorative objects, soft glow, detached shadow, perspective convergence, or camera tilt."
+    }
+  ]
+}

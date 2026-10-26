@@ -10,6 +10,8 @@ const ENTRY_FIELDS: Array[String] = ["stable_id", "visual_id", "feet_anchor", "b
 var tick := -1
 var world_revision := -1
 var entries: Array[Dictionary] = []
+var _plan_key: Array = []
+var _plan_cache: Dictionary = {}
 
 
 static func build(authoritative_tick: int, revision: int, raw_entries: Variant) -> Dictionary:
@@ -60,7 +62,28 @@ static func build(authoritative_tick: int, revision: int, raw_entries: Variant) 
 	return {"ok": true, "error": "", "value": result}
 
 
+## `entries` is public and mutable, so the cached plan is reused only while the
+## occlusion-relevant values are exactly equal to those it was built from.
+## Plans are immutable and hand out detached copies, so sharing one is safe.
 func occlusion_plan() -> Dictionary:
+	var key: Array = []
+	for entry: Dictionary in entries:
+		key.append([entry.get("stable_id"), entry.get("baseline_y"), entry.get("rank"), entry.get("feet_anchor"), entry.get("art_box")])
+	if not _plan_cache.is_empty() and key == _plan_key:
+		return _plan_cache.duplicate()
+	var result := _build_occlusion_plan()
+	if bool(result.get("ok", false)):
+		# Public entries may be replaced with the plan's accepted Array-form
+		# coordinates. Snapshot nested containers so in-place edits invalidate.
+		_plan_key = key.duplicate(true)
+		_plan_cache = result.duplicate()
+	else:
+		_plan_key = []
+		_plan_cache = {}
+	return result
+
+
+func _build_occlusion_plan() -> Dictionary:
 	var occlusion_entries: Array[Dictionary] = []
 	for entry: Dictionary in entries:
 		occlusion_entries.append({

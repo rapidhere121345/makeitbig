@@ -49,7 +49,9 @@ const COLOR_ANOMALY: Color = PaletteScript.PURPLE
 const HUD_TEXT_OUTLINE: Color = Color("10161c")
 const HUD_TEXT_OUTLINE_SIZE := 1
 
-const SKILL_ICON_DISPLAY: float = 40.0
+## Icons render at the authored 32px native size: crisp nearest-neighbour, and
+## it leaves the cell room for the key/name/state rows to breathe.
+const SKILL_ICON_DISPLAY: float = 32.0
 const SKILL_CELL_MINIMUM := Vector2(104.0, 100.0)
 const SKILL_STATE_SIZE := Vector2(96.0, 24.0)
 const SKILL_STATE_FONT_SIZE: int = 18
@@ -217,7 +219,10 @@ func present(snapshot: Dictionary) -> void:
 		else:
 			_encounter_heading.text = "Room %d / %d · %s · %s" % [room_number, room_count, room_title, room_objective]
 	_encounter_heading.tooltip_text = _encounter_heading.text
+	## Full boss-layout width for both cases; then measured-fit so the authored
+	## name is never clipped at the render width.
 	_encounter_heading.size.x = 342.0 if has_boss else 456.0
+	_fit_heading(_encounter_heading)
 	if has_room_progress and has_room_display_name and not has_boss:
 		var compact_objective := String({
 			"Clear All Targets": "Clear foes",
@@ -228,6 +233,7 @@ func present(snapshot: Dictionary) -> void:
 		if heading_font.get_string_size(_encounter_heading.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
 			_encounter_heading.get_theme_font_size("font_size")).x > _encounter_heading.size.x:
 			_encounter_heading.text = "Room %d/%d · %s" % [room_number, room_count, compact_objective]
+		_fit_heading(_encounter_heading)
 	# A read-only entry cue uses the room's existing elapsed time and never delays input.
 	_room_start_label.visible = has_room_progress and not has_boss and not battle_over and float(snapshot.get("room_elapsed_seconds", 99.0)) < 1.8
 	_room_start_label.text = "Entering Room %d · %s" % [room_number, room_entry_hint]
@@ -322,7 +328,9 @@ func update_state(snapshot: Dictionary) -> void:
 
 func set_summary_visible(value: bool) -> void:
 	_summary_panel.visible = value
-	_summary_toggle_button.text = "Report TAB ▲" if value else "Report TAB ▼"
+	## Compact face: mouse users read the report purpose without hover; the
+	## keyboard shortcut lives in the tooltip. ~95px min fits the 116px cell.
+	_summary_toggle_button.text = "Report ▲" if value else "Report ▼"
 	_summary_stack_note.text = "Combat Details"
 
 
@@ -633,6 +641,7 @@ func _build_interface() -> void:
 	_summary_toggle_button.flat = true
 	_summary_toggle_button.focus_mode = Control.FOCUS_NONE
 	_summary_toggle_button.add_theme_font_size_override("font_size", 18)
+	_summary_toggle_button.tooltip_text = "Battle Report · Tab"
 	_summary_toggle_button.pressed.connect(toggle_summary)
 	_place(utility_layout, _summary_toggle_button, Rect2(108.0, 29.0, 116.0, 36.0), true)
 
@@ -727,7 +736,7 @@ func _build_skill_cell(slot: Dictionary) -> Button:
 
 	var icon := TextureRect.new()
 	icon.name = "SkillIcon"
-	icon.position = Vector2(6.0, 6.0)
+	icon.position = Vector2(8.0, 8.0)
 	icon.size = Vector2(SKILL_ICON_DISPLAY, SKILL_ICON_DISPLAY)
 	icon.custom_minimum_size = Vector2(SKILL_ICON_DISPLAY, SKILL_ICON_DISPLAY)
 	icon.texture = icons.icon(String(slot["slot_id"]))
@@ -741,7 +750,7 @@ func _build_skill_cell(slot: Dictionary) -> Button:
 	var key_label := _named_label("PrimaryKey")
 	key_label.text = String(SLOT_PRIMARY_KEYS[node_name])
 	key_label.position = Vector2(52.0, 8.0)
-	key_label.size = Vector2(46.0, 34.0)
+	key_label.size = Vector2(46.0, 30.0)
 	key_label.add_theme_font_size_override("font_size", SKILL_KEY_FONT_SIZE)
 	key_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	key_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1315,6 +1324,19 @@ func _heading(text: String) -> Label:
 	label.add_theme_font_size_override("font_size", 18)
 	_apply_text_style(label, COLOR_BONE)
 	return label
+
+
+## Measured fit: step the heading font down until the authored text fits its
+## allotted width, so names never clip into unreadable fragments. 14px is the
+## floor; clip_text stays as the last resort below that.
+func _fit_heading(label: Label) -> void:
+	var font := label.get_theme_font("font")
+	var width := label.size.x
+	var size := 18
+	while size > 14 and font.get_string_size(label.text,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > width:
+		size -= 2
+	label.add_theme_font_size_override("font_size", size)
 
 
 func _muted_label(text: String) -> Label:

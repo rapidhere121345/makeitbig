@@ -26,6 +26,7 @@ func _initialize() -> void:
 	_test_locked_action()
 	_test_boss_cycle()
 	_test_arena_and_hazard_scoring()
+	_test_polygon_steering_lane()
 	_test_ring_inner_antipode_planning()
 	_test_rectangle_geometry_straight_controls()
 	_test_quantization()
@@ -527,3 +528,22 @@ func _intent_for(result: Dictionary, entity_id: int) -> Dictionary:
 		if int(intent.get("entity_id", -1)) == entity_id:
 			return intent
 	return {}
+
+
+func _test_polygon_steering_lane() -> void:
+	var enemy := _enemy(1, "charging_raider", Vector2(300, 240))
+	var snapshot := _base_snapshot([enemy])
+	var plain: float = tactics.score_candidate_direction(snapshot, enemy, Vector2.RIGHT, Vector2.RIGHT)
+	# Two long wall rectangles leave a 60px lane. Their bounding circles cover
+	# that lane, but their actual edges leave a radius-16 actor room to pass.
+	snapshot["static_blockers"] = [
+		{"center": Vector2(320, 155), "radius": 220.0,
+		 "points": PackedVector2Array([Vector2(100, 100), Vector2(540, 100), Vector2(540, 210), Vector2(100, 210)])},
+		{"center": Vector2(320, 325), "radius": 220.0,
+		 "points": PackedVector2Array([Vector2(100, 270), Vector2(540, 270), Vector2(540, 380), Vector2(100, 380)])},
+	]
+	var along: float = tactics.score_candidate_direction(snapshot, enemy, Vector2.RIGHT, Vector2.RIGHT)
+	var into_wall: float = tactics.score_candidate_direction(snapshot, enemy, Vector2.RIGHT, Vector2.UP)
+	_expect(is_equal_approx(along, plain), "polygon steering: legal lane inherited the enclosing-circle penalty")
+	_expect(into_wall > along + 100.0, "polygon steering: entering the actual wall was not penalized")
+	_expect(tactics.choose_candidate_direction(snapshot, enemy, Vector2.RIGHT).is_equal_approx(Vector2.RIGHT), "polygon steering: clear lane detoured")

@@ -109,7 +109,8 @@ func _run_kernel_kill_scenario(arena) -> void:
 			stable_key = String(key)
 	_expect(not stable_key.is_empty(), "kernel combat: enemy stable key mapping missing at registration")
 
-	var center: Vector2 = arena._arena_rect().get_center()
+	# Preserve the attack distance on the clear lane above the whole wall.
+	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "kernel combat: ranger placement failed")
 	_expect(bool(arena.teleport_actor(actor_id, center + Vector2.RIGHT * 110.0).get("ok", false)), "kernel combat: enemy placement failed")
 	enemy.health = 1.0

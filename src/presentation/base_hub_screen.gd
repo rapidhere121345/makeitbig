@@ -42,7 +42,7 @@ const HERO_SPEED := 96.0
 ## 640x360 viewport, which is (640, 520) on the 1280x720 canvas. The navigation
 ## band below it must never cover this point.
 const HERO_ENTRY_FOOT_ANCHOR := Vector2(640.0, 520.0)
-const HEADER_RECT := Rect2(16.0, 12.0, 1248.0, 72.0)
+const HEADER_RECT := Rect2(16.0, 12.0, 1248.0, 80.0)
 const INFO_DETAIL_RECT := Rect2(24.0, 96.0, 740.0, 420.0)
 const LANDMARK_FEATURE_IDS: Array[String] = ["contract", "loadout", "forge", "training", "proxy"]
 const LANDMARK_SIZE := Vector2(280.0, 72.0)
@@ -184,7 +184,7 @@ func _update_landmark_windows(delta: float) -> void:
 		var target := LANDMARK_WINDOW_ALPHA if plate.intersects(hero_cell) else 1.0
 		var current := float(landmark.modulate.a)
 		var step: float = LANDMARK_WINDOW_RATE * maxf(delta, 0.0)
-		landmark.modulate.a = clampf(current + (step if target > current else -step), LANDMARK_WINDOW_ALPHA, 1.0)
+		landmark.modulate.a = move_toward(current, target, step)
 
 
 func _navigation_has_focus() -> bool:
@@ -363,7 +363,25 @@ func activate_nearby_feature() -> bool:
 func activate_nearby_interaction() -> bool:
 	var resident_id := nearby_resident_id()
 	if not resident_id.is_empty(): return talk_to_resident(resident_id)
-	return activate_nearby_feature()
+	if not _town.nearby_feature_id().is_empty(): return activate_nearby_feature()
+	return activate_nearby_gateway()
+
+
+func nearby_gateway_id() -> String:
+	if _view == null or is_dialogue_open() or _details_expanded: return ""
+	return _town.nearby_gateway_id()
+
+
+## Exit gates open the same screens their facility counterpart does; they never
+## start combat themselves. A far press, open dialogue or details does nothing.
+func activate_nearby_gateway() -> bool:
+	var gateway_id := nearby_gateway_id()
+	if gateway_id.is_empty(): return false
+	match String(_town.entry_for_gateway(gateway_id).get("action", "")):
+		"contract":
+			contract_requested.emit()
+			return true
+	return false
 
 
 func is_dialogue_open() -> bool:
@@ -599,9 +617,11 @@ func _build_header() -> void:
 	_header = PanelContainer.new()
 	_header.name = "HubHeader"
 	_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var header_style := ShellThemeScript.crafted_panel()
-	header_style.content_margin_top = 6
-	header_style.content_margin_bottom = 6
+	## Quiet slate strip with a copper bottom rule: the ornate frame was reading
+	## as the loudest element on a strip that is supposed to stay chrome.
+	var header_style := ShellThemeScript.slate_header()
+	header_style.content_margin_top = 8
+	header_style.content_margin_bottom = 8
 	_header.add_theme_stylebox_override("panel", header_style)
 	_place_control(_header, HEADER_RECT)
 	_design_canvas.add_child(_header)
@@ -622,12 +642,15 @@ func _build_header() -> void:
 	objective.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	objective.add_theme_constant_override("separation", 0)
 	row.add_child(objective)
-	_objective_label = _copy_label("", "HubObjective", 22)
+	## The objective stays fully readable in place: a compact two-line wrap at the
+	## section step, never a clipped pointer that hides guidance in a tooltip.
+	_objective_label = _copy_label("", "HubObjective", ShellThemeScript.SECTION_FONT_SIZE)
 	_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_objective_label.add_theme_constant_override("line_spacing", -6)
-	# Seed a real wrap width before the first synchronous container sort.
-	_objective_label.size = Vector2(400, 60)
-	_objective_label.custom_minimum_size.y = 60
+	_objective_label.max_lines_visible = 2
+	_objective_label.clip_text = true
+	## Compressed spacing keeps a full two-line objective inside the 72px strip.
+	_objective_label.add_theme_constant_override("line_spacing", -8)
+	_objective_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_objective_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	objective.add_child(_objective_label)
 	_character_button = _compact_button("Talents C", "OpenCharacter")
@@ -668,7 +691,7 @@ func _build_feedback() -> void:
 	_detail_panel = PanelContainer.new()
 	_detail_panel.name = "HubInformationDetail"
 	_detail_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	_detail_panel.add_theme_stylebox_override("panel", _hotspot_style(Color("111820f2"), OLD_COPPER, 1))
+	_detail_panel.add_theme_stylebox_override("panel", _hotspot_style(Color("1d2731f6"), OLD_COPPER, 1))
 	_place_control(_detail_panel, INFO_DETAIL_RECT)
 	_design_canvas.add_child(_detail_panel)
 	var column := VBoxContainer.new()
@@ -676,7 +699,8 @@ func _build_feedback() -> void:
 	_detail_panel.add_child(column)
 	var heading := HBoxContainer.new()
 	column.add_child(heading)
-	var title := _copy_label(DETAIL_TITLE_TEXT, "Title", 22)
+	var title := _copy_label(DETAIL_TITLE_TEXT, "Title", ShellThemeScript.SECTION_FONT_SIZE)
+	title.add_theme_color_override("font_color", ShellThemeScript.AMBER)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_child(title)
 	var close := _compact_button("Collapse", "HubInformationClose")
@@ -1043,7 +1067,8 @@ func _update_nearby_feature() -> void:
 	var feature_id := _town.nearby_feature_id()
 	_update_resident_markers()
 	var resident_id := nearby_resident_id()
-	if feature_id.is_empty() and resident_id.is_empty():
+	var gateway := _town.entry_for_gateway(nearby_gateway_id()) if feature_id.is_empty() and resident_id.is_empty() else {}
+	if feature_id.is_empty() and resident_id.is_empty() and gateway.is_empty():
 		_view.set_interaction_focus(false)
 		_nearby_panel.visible = false
 		_prompt_rect = Rect2()
@@ -1051,7 +1076,7 @@ func _update_nearby_feature() -> void:
 	## The badge names the stand, so the hint is what activate_nearby_interaction()
 	## actually opens. A resident in range still wins, exactly like the E priority:
 	## nearby_resident_id() only yields a resident who is closer than the stand.
-	_nearby_label.text = _facility_prompt_text(feature_id)
+	_nearby_label.text = _facility_prompt_text(feature_id) if gateway.is_empty() else "[E / Space] Enter %s" % String(gateway.label)
 	if not resident_id.is_empty():
 		_nearby_label.text = "[E] Talk to %s" % String(_resident_conversations[resident_id].get("npc_name", ""))
 	_view.set_interaction_focus(true, resident_id if not resident_id.is_empty() else feature_id)

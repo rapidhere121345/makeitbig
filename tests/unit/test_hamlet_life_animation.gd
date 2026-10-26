@@ -13,6 +13,7 @@ extends SceneTree
 ## palette - are pinned here on purpose: this file is the gate that catches a
 ## drifted sheet before the hub draws it.
 
+const TownExpectations = preload("res://tests/helpers/town_scene_expectations.gd")
 const HamletLifeAnimationScript = preload("res://src/presentation/hamlet_life_animation.gd")
 const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
 
@@ -116,7 +117,10 @@ func _test_formal_town_residents() -> void:
 		if resident.frame != frames[resident.id]: changed += 1
 	_expect(changed == 5, "town life: every resident must advance its actual cycle")
 	var audit := view.render_audit()
-	_expect(audit.native_count == 35 and audit.runtime_background_patches == 0, "town life: runtime background patch survived")
+	_expect(audit.native_count == (TownExpectations.load_expectations().sort_ids as Array).size() and audit.runtime_background_patches == 0, "town life: whole-object count must equal the scene-authored SortRoot visuals, or backing changed")
+	for person: String in RESIDENT_PLACEMENTS:
+		var generated_clip := person + ".south.work"
+		_expect(view.life_animation.clip_unique_frames(generated_clip) == 4, "generated town resident needs four distinct work poses: " + person)
 	_shutdown_hub(hub)
 
 

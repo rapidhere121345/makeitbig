@@ -11,3 +11,7 @@ extends RefCounted
 func is_position_clear(_position: Vector2, _radius: float) -> bool:
 	# The base port fails closed.  A mounted room must bind a concrete adapter.
 	return false
+
+
+func resolve_drop_position(position: Vector2, radius: float) -> Variant:
+	return position if is_position_clear(position, radius) else null

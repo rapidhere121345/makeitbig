@@ -107,10 +107,12 @@ func _run_boss_kill(arena) -> void:
 	if not _failures.is_empty():
 		return
 
-	var center: Vector2 = arena._arena_rect().get_center()
+	var center := Vector2(500, 340)
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "kernel boss: ranger placement failed")
 	var boss_actor_id := "enemy/%d" % int(boss.entity_id)
 	_expect(bool(arena.teleport_actor(boss_actor_id, center + Vector2(110.0, 54.0)).get("ok", false)), "kernel boss: Boss placement failed")
+	if not _failures.is_empty():
+		return
 	_expect(arena.locked_build.get("total_events", {}) == {"layer": 1, "magnitude": 12.0}, "kernel boss: frozen build payload changed: %s" % str(arena.locked_build.get("total_events", {})))
 	var cast_model: Dictionary = arena._current_model()
 	_expect(cast_model.get("total_events", null) != null and (cast_model["total_events"] as BigValue).compare(BigValue.from_power10(12.0)) == 0, "kernel boss: cast model did not read frozen BigValue events: %s" % str(cast_model.get("total_events", {})))
@@ -209,6 +211,10 @@ func _run_boss_kill(arena) -> void:
 	_expect(not arena.actor_registry.has_actor(boss_actor_id), "kernel boss: dead Boss actor stayed registered")
 	_expect(bool(arena.battle_over) and bool(arena.battle_victory), "kernel boss: room did not reach terminal victory")
 	_expect(not (arena.room_loot_snapshot.get("entities", []) as Array).is_empty(), "kernel boss: Boss settlement produced no room loot")
+	for drop: Dictionary in arena.room_loot_snapshot.get("entities", []):
+		var drop_position: Vector2 = drop["position"]
+		_expect(arena.actor_registry.is_position_clear(drop_position, float(drop["pickup_radius"])), "kernel boss: drop lacks pickup clearance")
+		_expect(drop_position.distance_to(boss.position) <= 64.0, "kernel boss: drop moved too far from the Boss")
 	var encounter_snapshot: Dictionary = arena.scene_runtime.encounter_domain.snapshot()
 	var records: Array = encounter_snapshot.get("spawn_records", [])
 	_expect(records.size() == 1, "kernel boss: real RoomEncounter lost the Boss spawn record")

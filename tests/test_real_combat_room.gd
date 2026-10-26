@@ -66,7 +66,8 @@ func _run() -> void:
 		_finish()
 		return
 
-	var center: Vector2 = arena._arena_rect().get_center()
+	# Keep the first projectile lane clear of the whole wall without changing range.
+	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
 	var first = enemies[0]
 	var second = enemies[1]
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "real room: ranger fixture placement failed")

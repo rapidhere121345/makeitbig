@@ -1,0 +1,486 @@
+{
+  "generator": "image_gen.imagegen",
+  "outputs": {
+    "atlas.json": "00632c01f60e9ba476bc4e230cbc83e8048b7ad0c558043c3c2807bc47aa863d",
+    "life.json": "6df1f127749bd85c3cb27227dd9b70d0cfef2f32380a9ef4e730e41866c5dd63",
+    "residents.png": "c607e1fddea0ed9cdf0fa3974bff854f6f5fe7cf84a8bfe3eafafd1480a4962c"
+  },
+  "residents": {
+    "iven": {
+      "frames": [
+        {
+          "foot_x": "346",
+          "native_bbox": [
+            16,
+            16,
+            32,
+            44
+          ],
+          "occupied_bbox": [
+            193,
+            67,
+            506,
+            596
+          ],
+          "sha256_pixels": "34e5527ae7a8befe21105aba9817323a1eef49a9b1f8432c41f4077563f794b3",
+          "source_cell": [
+            0,
+            0,
+            627,
+            627
+          ]
+        },
+        {
+          "foot_x": "292",
+          "native_bbox": [
+            16,
+            16,
+            32,
+            44
+          ],
+          "occupied_bbox": [
+            142,
+            67,
+            460,
+            599
+          ],
+          "sha256_pixels": "a3b56a4a7f3364a45cdc6c0c31220797b139254a756eb2673040ae83e7b12258",
+          "source_cell": [
+            627,
+            0,
+            1254,
+            627
+          ]
+        },
+        {
+          "foot_x": "693/2",
+          "native_bbox": [
+            16,
+            16,
+            34,
+            44
+          ],
+          "occupied_bbox": [
+            194,
+            40,
+            543,
+            573
+          ],
+          "sha256_pixels": "6a4a769fcdd49ffdce5b3c00c59827f31ede97d8ea73174558366b99ad36a403",
+          "source_cell": [
+            0,
+            627,
+            627,
+            1254
+          ]
+        },
+        {
+          "foot_x": "583/2",
+          "native_bbox": [
+            16,
+            16,
+            33,
+            44
+          ],
+          "occupied_bbox": [
+            140,
+            35,
+            457,
+            573
+          ],
+          "sha256_pixels": "a70cb2c4892268453ddf7ec12bc3ea3d44ec7c9abcd2a2d504216d124cb346c0",
+          "source_cell": [
+            627,
+            627,
+            1254,
+            1254
+          ]
+        }
+      ],
+      "raw_sha256": "5345c9e24c32c4c27402982e13f92172d55c761b0749e689128f7bfb211d4c20",
+      "scale": "14/269",
+      "source": "docs/art-production/generated-world-v02/sources/npc_iven_raw.png"
+    },
+    "leia": {
+      "frames": [
+        {
+          "foot_x": "359",
+          "native_bbox": [
+            13,
+            16,
+            29,
+            44
+          ],
+          "occupied_bbox": [
+            165,
+            77,
+            450,
+            559
+          ],
+          "sha256_pixels": "2c2fb29a893e58d40f2df6131fd340e1806f800e991baaff29095fffb3a4f0c7",
+          "source_cell": [
+            0,
+            0,
+            627,
+            627
+          ]
+        },
+        {
+          "foot_x": "309",
+          "native_bbox": [
+            14,
+            16,
+            30,
+            44
+          ],
+          "occupied_bbox": [
+            138,
+            80,
+            414,
+            559
+          ],
+          "sha256_pixels": "896ce0ad706b102cfb61af19248f157fc257749ec3da15e8282a76ab302c23f2",
+          "source_cell": [
+            627,
+            0,
+            1254,
+            627
+          ]
+        },
+        {
+          "foot_x": "733/2",
+          "native_bbox": [
+            11,
+            16,
+            30,
+            44
+          ],
+          "occupied_bbox": [
+            138,
+            58,
+            471,
+            532
+          ],
+          "sha256_pixels": "9f26225a75894d1fb999afdb0c348a3fa0fae3bafa929a2e7ff68b80b0b26dba",
+          "source_cell": [
+            0,
+            627,
+            627,
+            1254
+          ]
+        },
+        {
+          "foot_x": "331",
+          "native_bbox": [
+            13,
+            16,
+            29,
+            44
+          ],
+          "occupied_bbox": [
+            138,
+            58,
+            423,
+            540
+          ],
+          "sha256_pixels": "974ad2f65ad5a85099ddd388d24a950ff7baef22f2e8d19c735e698508aa4778",
+          "source_cell": [
+            627,
+            627,
+            1254,
+            1254
+          ]
+        }
+      ],
+      "raw_sha256": "b665193dcfa6fc299a8a78abdd2a6a0ea44fb0f060c1b735dc414fd739c8f7c0",
+      "scale": "14/241",
+      "source": "docs/art-production/generated-world-v02/sources/npc_leia_raw.png"
+    },
+    "mira": {
+      "frames": [
+        {
+          "foot_x": "681/2",
+          "native_bbox": [
+            16,
+            16,
+            31,
+            44
+          ],
+          "occupied_bbox": [
+            188,
+            56,
+            475,
+            585
+          ],
+          "sha256_pixels": "f8ea6e273c69235ecd40143f9143b92ec14f8353f93f97eae220ba160e0cc9b1",
+          "source_cell": [
+            0,
+            0,
+            627,
+            627
+          ]
+        },
+        {
+          "foot_x": "303",
+          "native_bbox": [
+            16,
+            16,
+            32,
+            44
+          ],
+          "occupied_bbox": [
+            143,
+            58,
+            459,
+            590
+          ],
+          "sha256_pixels": "947ef44db4f8fe47f1ff7f4ebc5bab0df5c955d66d47cec3a46fe9c5914c6ae5",
+          "source_cell": [
+            627,
+            0,
+            1254,
+            627
+          ]
+        },
+        {
+          "foot_x": "347",
+          "native_bbox": [
+            17,
+            16,
+            32,
+            44
+          ],
+          "occupied_bbox": [
+            218,
+            43,
+            495,
+            571
+          ],
+          "sha256_pixels": "cecf1b06b288551a5d5f265d30820fe68aec1e0dda712ab1ba4aae9f4a979efa",
+          "source_cell": [
+            0,
+            627,
+            627,
+            1254
+          ]
+        },
+        {
+          "foot_x": "619/2",
+          "native_bbox": [
+            16,
+            16,
+            31,
+            44
+          ],
+          "occupied_bbox": [
+            156,
+            42,
+            440,
+            567
+          ],
+          "sha256_pixels": "b18d8e1c73a4ff1312818077b610ec31bf02619b2b03555ceec524e5448b04f2",
+          "source_cell": [
+            627,
+            627,
+            1254,
+            1254
+          ]
+        }
+      ],
+      "raw_sha256": "06309436aeedd9c898fe32fa536592b753c909617ab49510cf136f2d7dcc3865",
+      "scale": "1/19",
+      "source": "docs/art-production/generated-world-v02/sources/npc_mira_raw.png"
+    },
+    "oren": {
+      "frames": [
+        {
+          "foot_x": "353",
+          "native_bbox": [
+            16,
+            20,
+            31,
+            44
+          ],
+          "occupied_bbox": [
+            208,
+            146,
+            475,
+            590
+          ],
+          "sha256_pixels": "e1eb0ece40c782b13f49f538cc8c87e9e532e7f02fce76ee4a2917fc6770ea53",
+          "source_cell": [
+            0,
+            0,
+            627,
+            627
+          ]
+        },
+        {
+          "foot_x": "643/2",
+          "native_bbox": [
+            15,
+            16,
+            32,
+            44
+          ],
+          "occupied_bbox": [
+            156,
+            83,
+            466,
+            594
+          ],
+          "sha256_pixels": "fa11ca294c6d07084ae96d52b4de38fbed82105d1b7c6a2b5519923bd24c6816",
+          "source_cell": [
+            627,
+            0,
+            1254,
+            627
+          ]
+        },
+        {
+          "foot_x": "679/2",
+          "native_bbox": [
+            17,
+            21,
+            32,
+            44
+          ],
+          "occupied_bbox": [
+            212,
+            95,
+            490,
+            515
+          ],
+          "sha256_pixels": "1b205f94832a766472a25cf86536a6d275d6e4f3c73b91d5512428f092c9bdc2",
+          "source_cell": [
+            0,
+            627,
+            627,
+            1254
+          ]
+        },
+        {
+          "foot_x": "673/2",
+          "native_bbox": [
+            16,
+            20,
+            33,
+            44
+          ],
+          "occupied_bbox": [
+            187,
+            79,
+            511,
+            520
+          ],
+          "sha256_pixels": "9d6956054edb9e668dd049bb88eaa0727101d35ca174acdb950f608f31802d8b",
+          "source_cell": [
+            627,
+            627,
+            1254,
+            1254
+          ]
+        }
+      ],
+      "raw_sha256": "7c109dc3cd5e3d909feaeaf065402ba8e1721997e00fe9cedb545e0f9de45237",
+      "scale": "4/73",
+      "source": "docs/art-production/generated-world-v02/sources/npc_oren_raw.png"
+    },
+    "taren": {
+      "frames": [
+        {
+          "foot_x": "643/2",
+          "native_bbox": [
+            16,
+            16,
+            31,
+            44
+          ],
+          "occupied_bbox": [
+            172,
+            48,
+            459,
+            590
+          ],
+          "sha256_pixels": "b8fd9eab56c4595438a9395996324685df52c782b6080156e578d88b04c3d30c",
+          "source_cell": [
+            0,
+            0,
+            627,
+            627
+          ]
+        },
+        {
+          "foot_x": "311",
+          "native_bbox": [
+            17,
+            16,
+            34,
+            44
+          ],
+          "occupied_bbox": [
+            169,
+            56,
+            510,
+            590
+          ],
+          "sha256_pixels": "082b7122e8927be85b6bf869e78a00bc28a83caf8c9f00f7d43432b121717bda",
+          "source_cell": [
+            627,
+            0,
+            1254,
+            627
+          ]
+        },
+        {
+          "foot_x": "323",
+          "native_bbox": [
+            18,
+            17,
+            33,
+            44
+          ],
+          "occupied_bbox": [
+            201,
+            43,
+            488,
+            574
+          ],
+          "sha256_pixels": "454ab9289967a54700b05812e134e3d5ce0c39e79e24e9f1d6140cd8a502e3c4",
+          "source_cell": [
+            0,
+            627,
+            627,
+            1254
+          ]
+        },
+        {
+          "foot_x": "625/2",
+          "native_bbox": [
+            16,
+            17,
+            33,
+            44
+          ],
+          "occupied_bbox": [
+            161,
+            46,
+            478,
+            574
+          ],
+          "sha256_pixels": "96b9b8d5d3bd1ecba2aae5af0456f488e0133cd510c7e5e628f5866abd76e816",
+          "source_cell": [
+            627,
+            627,
+            1254,
+            1254
+          ]
+        }
+      ],
+      "raw_sha256": "dc3be88142a366377516509c5642e34f3efd96f09c48d3be847ee037055e0267",
+      "scale": "14/271",
+      "source": "docs/art-production/generated-world-v02/sources/npc_taren_raw.png"
+    }
+  },
+  "threshold": 240
+}

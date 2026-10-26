@@ -1,282 +1,298 @@
 {
-  "schema_version": 1,
-  "world_size": [
-    1024,
-    640
+ "boss_feet": [
+  625,
+  360
+ ],
+ "decals": [
+  {
+   "feet": [
+    290,
+    222
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    225,
+    246
+   ],
+   "id": "ground.snow_wedge"
+  },
+  {
+   "feet": [
+    340,
+    246
+   ],
+   "id": "ground.rubble_apron"
+  },
+  {
+   "feet": [
+    692,
+    258
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    738,
+    285
+   ],
+   "id": "ground.snow_wedge"
+  },
+  {
+   "feet": [
+    690,
+    381
+   ],
+   "id": "ground.rubble_apron"
+  },
+  {
+   "feet": [
+    757,
+    408
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    162,
+    446
+   ],
+   "id": "ground.snow_wedge"
+  },
+  {
+   "feet": [
+    182,
+    431
+   ],
+   "id": "ground.foundation"
+  },
+  {
+   "feet": [
+    242,
+    427
+   ],
+   "id": "ground.rubble_apron"
+  },
+  {
+   "feet": [
+    305,
+    549
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    361,
+    579
+   ],
+   "id": "ground.snow_wedge"
+  },
+  {
+   "feet": [
+    312,
+    551
+   ],
+   "id": "ground.rubble_apron"
+  },
+  {
+   "feet": [
+    623,
+    562
+   ],
+   "id": "ground.snow_wedge"
+  },
+  {
+   "feet": [
+    735,
+    580
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    902,
+    188
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    825,
+    225
+   ],
+   "id": "ground.snow_wedge"
+  },
+  {
+   "feet": [
+    91,
+    146
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    105,
+    190
+   ],
+   "id": "ground.snow_wedge"
+  },
+  {
+   "feet": [
+    927,
+    557
+   ],
+   "id": "ground.rubble_apron"
+  },
+  {
+   "feet": [
+    910,
+    585
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    523,
+    104
+   ],
+   "id": "ground.snow_strip"
+  },
+  {
+   "feet": [
+    583,
+    133
+   ],
+   "id": "ground.rubble_apron"
+  }
+ ],
+ "enemy_positions": [
+  [
+   300,
+   290
   ],
-  "hero_start": [
-    430,
-    360
+  [
+   480,
+   470
   ],
-  "boss_feet": [
-    625,
-    360
-  ],
-  "tower_feet": [
-    175,
-    405
-  ],
-  "enemy_positions": [
-    [
-      300,
-      290
-    ],
-    [
-      480,
-      470
-    ],
-    [
-      570,
-      235
-    ]
-  ],
-  "decals": [
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        290,
-        222
-      ]
-    },
-    {
-      "id": "ground.snow_wedge",
-      "feet": [
-        225,
-        246
-      ]
-    },
-    {
-      "id": "ground.rubble_apron",
-      "feet": [
-        340,
-        246
-      ]
-    },
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        692,
-        258
-      ]
-    },
-    {
-      "id": "ground.snow_wedge",
-      "feet": [
-        738,
-        285
-      ]
-    },
-    {
-      "id": "ground.rubble_apron",
-      "feet": [
-        690,
-        381
-      ]
-    },
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        757,
-        408
-      ]
-    },
-    {
-      "id": "ground.snow_wedge",
-      "feet": [
-        162,
-        446
-      ]
-    },
-    {
-      "id": "ground.foundation",
-      "feet": [
-        182,
-        431
-      ]
-    },
-    {
-      "id": "ground.rubble_apron",
-      "feet": [
-        242,
-        427
-      ]
-    },
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        305,
-        549
-      ]
-    },
-    {
-      "id": "ground.snow_wedge",
-      "feet": [
-        361,
-        579
-      ]
-    },
-    {
-      "id": "ground.rubble_apron",
-      "feet": [
-        312,
-        551
-      ]
-    },
-    {
-      "id": "ground.snow_wedge",
-      "feet": [
-        623,
-        562
-      ]
-    },
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        735,
-        580
-      ]
-    },
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        902,
-        188
-      ]
-    },
-    {
-      "id": "ground.snow_wedge",
-      "feet": [
-        825,
-        225
-      ]
-    },
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        91,
-        146
-      ]
-    },
-    {
-      "id": "ground.snow_wedge",
-      "feet": [
-        105,
-        190
-      ]
-    },
-    {
-      "id": "ground.rubble_apron",
-      "feet": [
-        927,
-        557
-      ]
-    },
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        910,
-        585
-      ]
-    },
-    {
-      "id": "ground.snow_strip",
-      "feet": [
-        523,
-        104
-      ]
-    },
-    {
-      "id": "ground.rubble_apron",
-      "feet": [
-        583,
-        133
-      ]
-    }
-  ],
-  "structures": [
-    {
-      "id": "ruin.wall_corner",
-      "feet": [
-        271,
-        224
-      ]
-    },
-    {
-      "id": "ruin.low_pier",
-      "feet": [
-        354,
-        237
-      ]
-    },
-    {
-      "id": "ruin.gate",
-      "feet": [
-        760,
-        229
-      ]
-    },
-    {
-      "id": "ruin.broken_wall",
-      "feet": [
-        699,
-        227
-      ]
-    },
-    {
-      "id": "ruin.low_pier",
-      "feet": [
-        762,
-        365
-      ]
-    },
-    {
-      "id": "ruin.broken_wall",
-      "feet": [
-        286,
-        539
-      ]
-    },
-    {
-      "id": "ruin.wall_corner",
-      "feet": [
-        733,
-        557
-      ]
-    },
-    {
-      "id": "ruin.low_pier",
-      "feet": [
-        601,
-        552
-      ]
-    },
-    {
-      "id": "ruin.gate",
-      "feet": [
-        532,
-        126
-      ]
-    },
-    {
-      "id": "ruin.wall_corner",
-      "feet": [
-        921,
-        549
-      ]
-    },
-    {
-      "id": "ruin.broken_wall",
-      "feet": [
-        97,
-        174
-      ]
-    },
-    {
-      "id": "ruin.low_pier",
-      "feet": [
-        872,
-        182
-      ]
-    }
+  [
+   570,
+   235
   ]
+ ],
+ "hero_start": [
+  430,
+  360
+ ],
+ "room_structure_overrides": {
+  "ring": {
+   "ruin.low_pier#1": [
+    832,
+    326
+   ],
+   "ruin.low_pier#2": [
+    563.8,
+    666.1
+   ],
+   "ruin.wall_corner#1": [
+    814.1,
+    663.2
+   ]
+  }
+ },
+ "schema_version": 1,
+ "structures": [
+  {
+   "feet": [
+    271,
+    224
+   ],
+   "id": "ruin.wall_corner"
+  },
+  {
+   "feet": [
+    354,
+    237
+   ],
+   "id": "ruin.low_pier"
+  },
+  {
+   "feet": [
+    760,
+    229
+   ],
+   "id": "ruin.gate"
+  },
+  {
+   "feet": [
+    699,
+    227
+   ],
+   "id": "ruin.broken_wall"
+  },
+  {
+   "feet": [
+    762,
+    365
+   ],
+   "id": "ruin.low_pier"
+  },
+  {
+   "feet": [
+    286,
+    539
+   ],
+   "id": "ruin.broken_wall"
+  },
+  {
+   "feet": [
+    738,
+    557
+   ],
+   "id": "ruin.wall_corner"
+  },
+  {
+   "feet": [
+    601,
+    552
+   ],
+   "id": "ruin.low_pier"
+  },
+  {
+   "feet": [
+    532,
+    126
+   ],
+   "id": "ruin.gate"
+  },
+  {
+   "feet": [
+    921,
+    549
+   ],
+   "id": "ruin.wall_corner"
+  },
+  {
+   "feet": [
+    97,
+    174
+   ],
+   "id": "ruin.broken_wall"
+  },
+  {
+   "feet": [
+    872,
+    182
+   ],
+   "id": "ruin.low_pier"
+  }
+ ],
+ "tower_feet": [
+  175,
+  405
+ ],
+ "world_size": [
+  1024,
+  640
+ ]
 }

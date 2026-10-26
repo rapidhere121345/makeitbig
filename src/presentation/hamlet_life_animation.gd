@@ -3,7 +3,7 @@ extends RefCounted
 ## Published hamlet life package reader for the base hub: the resident work
 ## cycles and the two socket effects the approved concept asks for.
 ##
-## Contract (res://art/production/p1/hamlet_life_r13/):
+## Contract (res://art/production/p1/generated_world_v02/residents/):
 ##   atlas.json -> schema_version 1, textures {key: {path, width, height}},
 ##                 sprites {id: {rect [x,y,w,h], anchor [ax,ay], texture}},
 ##                 animations {"<resident>.south.work": {frames, fps, loop}},
@@ -27,7 +27,7 @@ extends RefCounted
 ## bands) and publishes every approved number in life_report(); the exact cell,
 ## anchor, frame count and cadence are pinned by tests/unit/test_hamlet_life_animation.gd.
 
-const LIFE_DIR := "res://art/production/p1/hamlet_life_r13/"
+const LIFE_DIR := "res://art/production/p1/actors_v02/residents/"
 const LIFE_ATLAS_PATH := LIFE_DIR + "atlas.json"
 const LIFE_MANIFEST_PATH := LIFE_DIR + "life.json"
 const SCHEMA_VERSION := 1
@@ -69,9 +69,13 @@ var _effects_ready := false
 ## ------------------------------------------------------------------- loading
 
 func load_default_assets() -> bool:
+	return load_assets_at(LIFE_DIR)
+
+
+func load_assets_at(directory: String) -> bool:
 	## Reads the published life pair and the approved socket sheet. A missing or
 	## half-authored file leaves the reader empty and the hub on its static art.
-	configure(_read_json_object(LIFE_ATLAS_PATH), _read_json_object(LIFE_MANIFEST_PATH), _read_json_object(EFFECT_ATLAS_PATH))
+	configure(_read_json_object(directory.path_join("atlas.json")), _read_json_object(directory.path_join("life.json")), _read_json_object(EFFECT_ATLAS_PATH))
 	return has_real_art()
 
 

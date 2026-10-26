@@ -1,0 +1,21 @@
+# measure_candidates.py output
+# command: python3 -I docs/art-production/p1-town-modular-v01/measure_candidates.py (run from repo root, approved portable environment)
+# date: 2026-10-22  candidate sha256: c01 2e7dd83a010e0be94ec17b504de075b69c71ca13050c0b14ae2ad2a504ed758a  c02 22c590aa46ba6238b1b390f76008201b1dcb7e606bc3c0a7c1ae5cf455872a1a
+== sources/loadout_common_candidate_01.png  1340x1174  logical scale sx=5.2344 sy=5.2411
+  alpha a=0       1272610    80.8951%
+  alpha 1..127      21335     1.3562%
+  alpha 128..249    10570     0.6719%
+  alpha 250..254   268617    17.0750%
+  alpha a=255          28     0.0018%
+  bbox a>=128 px=(227,715,1113,1036) logical x 43.37..212.63 y 136.42..197.67 (w 169.46 h 61.44)
+  bbox a>0    px=(0,31,1293,1157)
+  uniform-fit ratios from a>=128: width 0.7554 height 0.7813 relative spread 3.4% (|h-w|/w)
+== sources/loadout_common_candidate_02.png  1340x1174  logical scale sx=5.2344 sy=5.2411
+  alpha a=0       1141222    72.5433%
+  alpha 1..127      13958     0.8873%
+  alpha 128..249     7565     0.4809%
+  alpha 250..254   410138    26.0710%
+  alpha a=255         277     0.0176%
+  bbox a>=128 px=(122,710,1217,1098) logical x 23.31..232.50 y 135.47..209.50 (w 209.39 h 74.22)
+  bbox a>0    px=(0,51,1270,1169)
+  uniform-fit ratios from a>=128: width 0.6113 height 0.6467 relative spread 5.8% (|h-w|/w)

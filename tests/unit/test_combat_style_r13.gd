@@ -20,8 +20,14 @@ func _initialize() -> void:
 	_expect(enemy.render_texture_path() == Enemy.STYLE_TEXTURE_PATH, "enemy reader silently used the old sheet")
 	_contract("ranger", Ranger.ATLAS_PATH, Ranger.STYLE_ATLAS_PATH)
 	_contract("enemy", Enemy.ATLAS_PATH, Enemy.STYLE_ATLAS_PATH)
-	_pixels("ranger", Ranger.TEXTURE_PATH, Ranger.STYLE_TEXTURE_PATH)
-	_pixels("enemy", Enemy.TEXTURE_PATH, Enemy.STYLE_TEXTURE_PATH)
+	## The R13 recolor check stays pinned to the retained v03 sheets — it
+	## proves the historical material-skin claim, nothing about actors_v02.
+	_pixels("ranger", Ranger.TEXTURE_PATH, PACK + "ranger.png")
+	_pixels("enemy", Enemy.TEXTURE_PATH, PACK + "enemies.png")
+	## The live pack is a full redraw, so different pixels are required:
+	## changed silhouette, binarized alpha, and nonempty distinct cells.
+	_pack_pixels("ranger", Ranger.TEXTURE_PATH, Ranger.STYLE_TEXTURE_PATH)
+	_pack_pixels("enemy", Enemy.TEXTURE_PATH, Enemy.STYLE_TEXTURE_PATH)
 	_matrix(ranger, ranger.clip_ids(), 68, "ranger")
 	_matrix(enemy, enemy.declared_clip_ids(), 39, "enemy")
 	for role: String in Enemy.ROLES:
@@ -108,6 +114,33 @@ func _pixels(name: String, source: String, skin: String) -> void:
 	_expect(opaque_changes > 100, "material skin does not change rendered pixels: " + name)
 	facts[name + "_pixels"] = {"size": [original.get_width(), original.get_height()], "alpha_changes": alpha_changes, "hostile_red_changes": danger_changes, "material_pixel_changes": opaque_changes, "player_light_pixels_preserved": player_light_pixels, "player_light_changes": player_light_changes}
 
+func _pack_pixels(name: String, source: String, skin: String) -> void:
+	var original := Image.load_from_file(ProjectSettings.globalize_path(source))
+	var styled := Image.load_from_file(ProjectSettings.globalize_path(skin))
+	if original == null or styled == null:
+		_expect(false, "missing pixels: " + name)
+		return
+	original.convert(Image.FORMAT_RGBA8)
+	styled.convert(Image.FORMAT_RGBA8)
+	var data := styled.get_data()
+	var alpha_changes := 0
+	var opaque_changes := 0
+	var nonbinary_alpha := 0
+	var left := original.get_data()
+	var limit := mini(left.size(), data.size())
+	for offset in range(0, limit, 4):
+		if left[offset + 3] != data[offset + 3]:
+			alpha_changes += 1
+		if left[offset + 3] > 0 and left.slice(offset, offset + 3) != data.slice(offset, offset + 3):
+			opaque_changes += 1
+		if data[offset + 3] != 0 and data[offset + 3] != 255:
+			nonbinary_alpha += 1
+	_expect(alpha_changes > 0, name + ": actors_v02 must redraw the silhouette, not just recolour")
+	_expect(opaque_changes > 1000, name + ": actors_v02 material barely differs from the old sheet")
+	_expect(nonbinary_alpha == 0, name + ": actors_v02 alpha is not threshold-binarized")
+	facts[name + "_v02_pixels"] = {"alpha_changes": alpha_changes,
+		"opaque_changes": opaque_changes, "nonbinary_alpha": nonbinary_alpha}
+
 func _matrix(reader, clips: Array, sprite_count: int, name: String) -> void:
 	var total := 0
 	_expect(reader.sprite_ids().size() == sprite_count, "sprite matrix incomplete: " + name)
@@ -142,7 +175,14 @@ func _world() -> void:
 	var source_scene := _json("res://art/production/p1/scene_rework_v01/atlas.json")
 	var style_scene := _json(World.SCENE_ATLAS_PATH)
 	_expect(source_scene.sprites == style_scene.sprites, "environment cell/anchor contract changed")
-	_expect(FileAccess.get_sha256(World.SCENE_LAYOUT_PATH) == FileAccess.get_sha256("res://art/production/p1/scene_rework_v01/layout.json"), "world placements moved")
+	var base_layout := _json("res://art/production/p1/scene_rework_v01/layout.json")
+	_expect(base_layout.structures[6].id == "ruin.wall_corner" and base_layout.structures[6].feet == [733.0, 557.0], "historical shared wall source changed")
+	# The one shared five-pixel move clears the enlarged whole-object socket.
+	base_layout.structures[6].feet = [738.0, 557.0]
+	var styled_layout := _json(World.SCENE_LAYOUT_PATH)
+	_expect(styled_layout.get("room_structure_overrides", {}) == _json("res://docs/art-production/p1-combat-style-r13/room_structure_overrides.json"), "runtime room overrides differ from their authored packing source")
+	styled_layout.erase("room_structure_overrides")
+	_expect(styled_layout == base_layout, "default world placements changed outside explicit room overrides")
 	var old_legacy := _json("res://art/production/p1/calibration_v01/atlas.json")
 	var new_legacy := _json(World.LEGACY_ATLAS_PATH)
 	for id: String in World.LEGACY_SPRITE_IDS:
@@ -166,6 +206,23 @@ func _world() -> void:
 	old_core.convert(Image.FORMAT_RGBA8)
 	new_core.convert(Image.FORMAT_RGBA8)
 	_expect(old_core.get_data() == new_core.get_data(), "retained phase/core colours changed")
+	## The live boss parts now come from actors_v02: they must exist as real
+	## new art, not the retained sheets again.
+	for part: String in ["boss_body", "boss_core", "boss_hands"]:
+		var v02 := Image.load_from_file(ProjectSettings.globalize_path("res://art/production/p1/actors_v02/%s.png" % part))
+		_expect(v02 != null, "actors_v02 %s.png missing" % part)
+		if v02 != null:
+			v02.convert(Image.FORMAT_RGBA8)
+			var d: PackedByteArray = v02.get_data()
+			var opaque := 0
+			for i in range(3, d.size(), 4):
+				if d[i] > 0:
+					opaque += 1
+			_expect(opaque > 200, "actors_v02 %s has almost no visible art" % part)
+			var old_part := Image.load_from_file(ProjectSettings.globalize_path(PACK + "%s.png" % part))
+			if old_part != null:
+				old_part.convert(Image.FORMAT_RGBA8)
+				_expect(old_part.get_data() != v02.get_data(), "actors_v02 %s is byte-identical to the old sheet" % part)
 	var record := _json(PACK + "IMPORT.json")
 	_expect(record.get("status") == "pass", "production import report contains failures")
 	facts["world"] = {"textures": all_sheets, "cells": World.CELL_CONTRACTS.size(), "layout_sha256": FileAccess.get_sha256(World.SCENE_LAYOUT_PATH), "core_retained": true}

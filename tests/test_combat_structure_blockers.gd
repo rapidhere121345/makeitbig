@@ -18,7 +18,18 @@ const ROOMS: Array[String] = ["rectangle_arena", "corridor", "ring"]
 const LAYOUT_PATH := "res://art/production/p1/combat_style_r13/v03/layout.json"
 const CATALOG_PATH := "res://content/rooms/combat/room_catalog.json"
 
+## Ground footprints are authored in canvas-local pixels. Tall projected art
+## and its reveal rectangle are deliberately not movement geometry.
+const FOOTPRINT_PATH := "res://docs/art-production/generated-world-v02/ground_footprints.json"
+const ASSET_PATH := "res://art/production/p1/generated_world_v02/assets.json"
+var _band_rects: Dictionary = {}
+var _tower_octagon: Array = [] # Historical variable name; current ground shape is a rectangle.
+
 var failures: Array[String] = []
+
+
+static func _snap16(v: Vector2) -> Vector2:
+	return Vector2(roundf(v.x * 16.0) / 16.0, roundf(v.y * 16.0) / 16.0)
 
 
 func _initialize() -> void:
@@ -26,6 +37,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	_load_ground_contract()
 	_test_authoring_matches_layout()
 	_test_manifest_and_catalog_digests()
 	_test_mounted_collision_channels()
@@ -39,21 +51,58 @@ func _run() -> void:
 	quit(1)
 
 
+func _load_ground_contract() -> void:
+	var recipe: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FOOTPRINT_PATH))
+	var pack: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(ASSET_PATH))
+	for family: String in recipe.arena:
+		var r: Array = recipe.arena[family].rect
+		var anchor := _point(pack.assets[family].anchor)
+		var pad := float(recipe.padding_native_px)
+		var ground := Rect2(Vector2(float(r[0]), float(r[1])), Vector2(float(r[2]), float(r[3]))).grow(pad)
+		var corners: Array = []
+		for point: Vector2 in [ground.position, Vector2(ground.end.x, ground.position.y), ground.end, Vector2(ground.position.x, ground.end.y)]:
+			corners.append((point-anchor)/0.72)
+		_expect(ground.size.y < float(pack.assets[family].occupied_rect[3]), family + ": ground footprint accidentally became full-height artwork")
+		if family == "tower":
+			_tower_octagon = corners
+		else:
+			_band_rects[family.replace("ruin_", "ruin.")] = corners
+	_expect(_band_rects.size() == 4 and _tower_octagon.size() == 4, "all five combat families need ground footprints")
+
+
 ## Every combat scene authors one blocker per layout structure plus the tower,
-## in layout order, at the exact authored feet. This pins the gameplay
-## collision against the same production art layout the presenter draws.
+## in layout order, at the exact authored feet. Feet come from the production
+## art layout JSON the presenter draws, then the shared per-room
+## `room_structure_overrides` map (keyed "id#occurrence" in layout order)
+## relocates pieces whose blocker and artwork move together. Each blocker also
+## pins its collision shape: the reviewed ground rectangles for ruins and the tower. This keeps gameplay collision and visible
+## art on the same data.
 func _test_authoring_matches_layout() -> void:
 	var layout: Variant = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT_PATH))
 	if not layout is Dictionary:
 		_expect(false, "layout: combat layout JSON missing")
 		return
+	var catalog: Variant = JSON.parse_string(FileAccess.get_file_as_string(CATALOG_PATH))
+	var layout_ids: Dictionary = {}
+	if catalog is Dictionary:
+		for entry: Variant in (catalog as Dictionary).get("rooms", []):
+			var data: Dictionary = entry
+			layout_ids[String(data.get("world_scene_path", ""))] = String(data.get("layout_id", ""))
+	var overrides: Dictionary = (layout as Dictionary).get("room_structure_overrides", {})
 	var expected: Array = []
+	var occurrences: Dictionary = {}
 	for entry: Variant in (layout as Dictionary).get("structures", []):
-		expected.append({"id": String((entry as Dictionary)["id"]), "feet": _point((entry as Dictionary)["feet"])})
+		var sprite_id := String((entry as Dictionary)["id"])
+		var occurrence := int(occurrences.get(sprite_id, 0))
+		occurrences[sprite_id] = occurrence + 1
+		expected.append({"id": sprite_id, "key": "%s#%d" % [sprite_id, occurrence], "feet": _point((entry as Dictionary)["feet"])})
 	var tower_feet := _point((layout as Dictionary).get("tower_feet", []))
-	expected.append({"id": "tower", "feet": tower_feet})
+	expected.append({"id": "tower", "key": "tower", "feet": tower_feet})
 	for room: String in ROOMS:
-		var packed := load("res://content/rooms/combat/%s.tscn" % room) as PackedScene
+		var scene_path := "res://content/rooms/combat/%s.tscn" % room
+		var layout_id := String(layout_ids.get(scene_path, room))
+		var room_overrides: Dictionary = overrides.get(layout_id, {}) if overrides is Dictionary else {}
+		var packed := load(scene_path) as PackedScene
 		if packed == null:
 			_expect(false, "%s: scene failed to load" % room)
 			continue
@@ -77,11 +126,27 @@ func _test_authoring_matches_layout() -> void:
 			var binding_id := String(blocker.get_meta("binding_id", ""))
 			var sprite_id := String(expected[index]["id"])
 			var feet: Vector2 = expected[index]["feet"]
+			if room_overrides.has(String(expected[index]["key"])):
+				feet = _point(room_overrides[String(expected[index]["key"])])
 			var node := blocker as Node2D
-			_expect(binding_id == "combat/structure/tower" if sprite_id == "tower" else binding_id.begins_with("combat/structure/%s#" % sprite_id), "%s: blocker %d id %s does not match layout sprite %s" % [room, index, binding_id, sprite_id])
+			_expect(binding_id == "combat/structure/tower" if sprite_id == "tower" else binding_id == "combat/structure/%s" % String(expected[index]["key"]), "%s: blocker %d id %s does not match layout sprite %s" % [room, index, binding_id, sprite_id])
 			if node != null:
 				_expect(node.position.is_equal_approx(feet), "%s: blocker %d (%s) feet %s moved from layout %s" % [room, index, sprite_id, str(node.position), str(feet)])
 				_expect(not node.visible, "%s: blocker %d (%s) renders as a visible debug shape" % [room, index, sprite_id])
+				var polygon: Variant = blocker.get("polygon")
+				if polygon is PackedVector2Array:
+					var rels: Array = _tower_octagon if sprite_id == "tower" else _band_rects.get(sprite_id, [])
+					if (polygon as PackedVector2Array).size() != rels.size():
+						_expect(false, "%s: blocker %d (%s) collision polygon has %d points, expected %d" % [room, index, sprite_id, (polygon as PackedVector2Array).size(), rels.size()])
+					else:
+						for corner: int in rels.size():
+							var target: Vector2 = _snap16(node.position + rels[corner])
+							var actual: Vector2 = node.position + polygon[corner]
+							if (actual - target).length() > 0.001:
+								_expect(false, "%s: blocker %d (%s) corner %d at %s, expected snapped %s" % [room, index, sprite_id, corner, str(actual), str(target)])
+								break
+				else:
+					_expect(false, "%s: blocker %d (%s) lost its collision polygon" % [room, index, sprite_id])
 		scene.free()
 
 
@@ -173,6 +238,14 @@ func _test_mounted_collision_channels() -> void:
 	_expect(projectile_ids.has("combat/structure/ruin.wall_corner#0"), "mount: wall_corner#0 missing from projectile surfaces")
 	_expect(projectile_ids.has("combat/structure/tower"), "mount: tower missing from projectile surfaces")
 	_expect(not projectile_ids.has("combat/structure/ruin.low_pier#0"), "mount: low_pier#0 must not stop projectiles")
+	# Traverse below the tower's projected roof but north of its physical base.
+	# The previous full-image blocker covered this entire horizontal leg.
+	var behind_start := Vector2(80, 340)
+	var behind_end := Vector2(270, 340)
+	_expect(index.is_position_clear(Channels.MOVEMENT, Vector2(175, 340), 14.0), "2.5D: tower roof still blocks the ground behind it")
+	_expect(index.sweep(Channels.MOVEMENT, behind_start, behind_end-behind_start, 14.0).is_empty(), "2.5D: continuous tower-back crossing is blocked")
+	_expect(not index.is_position_clear(Channels.MOVEMENT, Vector2(175, 390), 14.0), "2.5D: tower foundation became walkable")
+	_expect(not index.sweep(Channels.MOVEMENT, Vector2(175, 340), Vector2(0, 70), 14.0).is_empty(), "2.5D: rear approach penetrates tower foundation")
 	var wall_center := Vector2(271.0, 224.0)
 	var pier_center := Vector2(354.0, 237.0)
 	_expect(not index.is_position_clear(Channels.MOVEMENT, wall_center, 6.0), "mount: wall_corner center is walkable")
@@ -180,7 +253,11 @@ func _test_mounted_collision_channels() -> void:
 	_expect(index.is_position_clear(Channels.MOVEMENT, wall_center + Vector2(0.0, 120.0), 14.0), "mount: open approach to the wall is blocked")
 	var arrow: Array = index.sweep(Channels.PROJECTILE, wall_center + Vector2(0.0, -100.0), Vector2(0.0, 200.0), 0.0)
 	_expect(not arrow.is_empty(), "mount: projectile sweep passed through the wall_corner blocker")
-	var over_pier: Array = index.sweep(Channels.PROJECTILE, pier_center + Vector2(0.0, -80.0), Vector2(0.0, 160.0), 0.0)
+	# pier_center's column threads a former sub-pixel gap beside wall_corner0;
+	# at 5px footing padding the continuous ruin footprints abut, so a projectile
+	# would legitimately hit the wall there. Sweep over the neighbor-free pier.
+	var free_pier_center := Vector2(601.0, 552.0)
+	var over_pier: Array = index.sweep(Channels.PROJECTILE, free_pier_center + Vector2(0.0, -80.0), Vector2(0.0, 160.0), 0.0)
 	_expect(over_pier.is_empty(), "mount: projectile sweep was clipped by the low pier")
 	runtime.shutdown()
 	runtime.free()

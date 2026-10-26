@@ -215,8 +215,8 @@ func _test_training_art(screen, failures: Array[String]) -> void:
 		return
 	_expect(art.has_real_art(), "tutorial: the published tutorial art did not load: %s" % str(screen.art_pending_reasons()), failures)
 	_expect(screen.art_pending_reasons().is_empty(), "tutorial: healthy art still reported problems: %s" % str(screen.art_pending_reasons()), failures)
-	_expect(String(TutorialArtScript.RANGER_ATLAS_PATH).ends_with("scene_rework_v01/atlas.json"), "tutorial: the ranger moved away from the agreed atlas", failures)
-	_expect(String(TutorialArtScript.TARGET_ATLAS_PATH).ends_with("calibration_v01/atlas.json"), "tutorial: the target moved away from the agreed atlas", failures)
+	_expect(String(TutorialArtScript.RANGER_ATLAS_PATH).ends_with("actors_v02/scene_atlas.json"), "tutorial: the ranger moved away from the agreed atlas", failures)
+	_expect(String(TutorialArtScript.TARGET_ATLAS_PATH).ends_with("actors_v02/legacy_atlas.json"), "tutorial: the target moved away from the agreed atlas", failures)
 	_expect(String(TutorialArtScript.GROUND_ATLAS_PATH).ends_with("ground_refine_v01/atlas.json"), "tutorial: the floor moved away from the approved ground", failures)
 	_expect(TutorialArtScript.SCALE == 2, "tutorial: the arena art is no longer shown at integer 2x", failures)
 

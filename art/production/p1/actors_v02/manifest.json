@@ -1,0 +1,4628 @@
+{
+  "anchor": [
+    24,
+    44
+  ],
+  "body_height_native": 38,
+  "boss_body": {
+    "frames": 2
+  },
+  "boss_core": {
+    "frames": 2,
+    "visible_h_target": 30
+  },
+  "boss_hands": {
+    "frames": 2
+  },
+  "cell": 48,
+  "cell_diagnostics": [
+    {
+      "clipped": false,
+      "edge": {
+        "left": 684,
+        "right": 963
+      },
+      "foot_x_src": 21.53,
+      "placed": [
+        6,
+        17
+      ],
+      "scaled": [
+        42,
+        27
+      ],
+      "sprite": "ranger.east.dash.0",
+      "src_bbox": [
+        684,
+        731,
+        963,
+        912
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 1005,
+        "right": 1222
+      },
+      "foot_x_src": 84.8,
+      "placed": [
+        11,
+        8
+      ],
+      "scaled": [
+        33,
+        36
+      ],
+      "sprite": "ranger.east.dash.1",
+      "src_bbox": [
+        1005,
+        679,
+        1222,
+        917
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 388,
+        "right": 609
+      },
+      "foot_x_src": 64.0,
+      "placed": [
+        14,
+        16
+      ],
+      "scaled": [
+        33,
+        28
+      ],
+      "sprite": "ranger.east.death.0",
+      "src_bbox": [
+        388,
+        1003,
+        609,
+        1189
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 651,
+        "right": 914
+      },
+      "foot_x_src": 154.97,
+      "placed": [
+        1,
+        23
+      ],
+      "scaled": [
+        39,
+        21
+      ],
+      "sprite": "ranger.east.death.1",
+      "src_bbox": [
+        651,
+        1062,
+        914,
+        1199
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 943,
+        "right": 1237
+      },
+      "foot_x_src": 77.06,
+      "placed": [
+        4,
+        32
+      ],
+      "scaled": [
+        44,
+        12
+      ],
+      "sprite": "ranger.east.death.2",
+      "src_bbox": [
+        943,
+        1113,
+        1237,
+        1193
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 90,
+        "right": 328
+      },
+      "foot_x_src": 65.97,
+      "placed": [
+        12,
+        15
+      ],
+      "scaled": [
+        36,
+        29
+      ],
+      "sprite": "ranger.east.dodge.0",
+      "src_bbox": [
+        90,
+        724,
+        328,
+        915
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 395,
+        "right": 624
+      },
+      "foot_x_src": 132.2,
+      "placed": [
+        4,
+        13
+      ],
+      "scaled": [
+        34,
+        31
+      ],
+      "sprite": "ranger.east.dodge.1",
+      "src_bbox": [
+        395,
+        697,
+        624,
+        904
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 104,
+        "right": 303
+      },
+      "foot_x_src": 66.5,
+      "placed": [
+        14,
+        7
+      ],
+      "scaled": [
+        30,
+        37
+      ],
+      "sprite": "ranger.east.hit.0",
+      "src_bbox": [
+        104,
+        956,
+        303,
+        1204
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 252,
+        "right": 534
+      },
+      "foot_x_src": 112.72,
+      "placed": [
+        15,
+        6
+      ],
+      "scaled": [
+        23,
+        38
+      ],
+      "sprite": "ranger.east.idle.0",
+      "src_bbox": [
+        252,
+        670,
+        534,
+        1146
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 82,
+        "right": 334
+      },
+      "foot_x_src": 62.44,
+      "placed": [
+        10,
+        1
+      ],
+      "scaled": [
+        38,
+        43
+      ],
+      "sprite": "ranger.east.shoot.0",
+      "src_bbox": [
+        82,
+        346,
+        334,
+        631
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 336,
+        "right": 628
+      },
+      "foot_x_src": 95.8,
+      "placed": [
+        4,
+        0
+      ],
+      "scaled": [
+        44,
+        44
+      ],
+      "sprite": "ranger.east.shoot.1",
+      "src_bbox": [
+        336,
+        344,
+        628,
+        637
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 691,
+        "right": 921
+      },
+      "foot_x_src": 43.34,
+      "placed": [
+        13,
+        2
+      ],
+      "scaled": [
+        35,
+        42
+      ],
+      "sprite": "ranger.east.shoot.2",
+      "src_bbox": [
+        691,
+        344,
+        921,
+        625
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 1000,
+        "right": 1210
+      },
+      "foot_x_src": 76.47,
+      "placed": [
+        13,
+        7
+      ],
+      "scaled": [
+        32,
+        37
+      ],
+      "sprite": "ranger.east.shoot.3",
+      "src_bbox": [
+        1000,
+        387,
+        1210,
+        634
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 100,
+        "right": 310
+      },
+      "foot_x_src": 103.27,
+      "placed": [
+        8,
+        6
+      ],
+      "scaled": [
+        32,
+        38
+      ],
+      "sprite": "ranger.east.walk.0",
+      "src_bbox": [
+        100,
+        63,
+        310,
+        313
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 400,
+        "right": 605
+      },
+      "foot_x_src": 127.26,
+      "placed": [
+        5,
+        8
+      ],
+      "scaled": [
+        31,
+        36
+      ],
+      "sprite": "ranger.east.walk.1",
+      "src_bbox": [
+        400,
+        69,
+        605,
+        312
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 712,
+        "right": 909
+      },
+      "foot_x_src": 135.68,
+      "placed": [
+        4,
+        7
+      ],
+      "scaled": [
+        30,
+        37
+      ],
+      "sprite": "ranger.east.walk.2",
+      "src_bbox": [
+        712,
+        68,
+        909,
+        313
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 995,
+        "right": 1154
+      },
+      "foot_x_src": 101.17,
+      "placed": [
+        9,
+        6
+      ],
+      "scaled": [
+        24,
+        38
+      ],
+      "sprite": "ranger.east.walk.3",
+      "src_bbox": [
+        995,
+        67,
+        1154,
+        318
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 692,
+        "right": 904
+      },
+      "foot_x_src": 98.75,
+      "placed": [
+        10,
+        10
+      ],
+      "scaled": [
+        31,
+        34
+      ],
+      "sprite": "ranger.north.dash.0",
+      "src_bbox": [
+        692,
+        687,
+        904,
+        920
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 993,
+        "right": 1206
+      },
+      "foot_x_src": 112.71,
+      "placed": [
+        8,
+        14
+      ],
+      "scaled": [
+        31,
+        30
+      ],
+      "sprite": "ranger.north.dash.1",
+      "src_bbox": [
+        993,
+        701,
+        1206,
+        904
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 385,
+        "right": 576
+      },
+      "foot_x_src": 94.0,
+      "placed": [
+        10,
+        15
+      ],
+      "scaled": [
+        28,
+        29
+      ],
+      "sprite": "ranger.north.death.0",
+      "src_bbox": [
+        385,
+        981,
+        576,
+        1178
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 654,
+        "right": 910
+      },
+      "foot_x_src": 164.0,
+      "placed": [
+        0,
+        20
+      ],
+      "scaled": [
+        37,
+        24
+      ],
+      "sprite": "ranger.north.death.1",
+      "src_bbox": [
+        654,
+        1025,
+        910,
+        1188
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 939,
+        "right": 1204
+      },
+      "foot_x_src": 153.68,
+      "placed": [
+        2,
+        22
+      ],
+      "scaled": [
+        39,
+        22
+      ],
+      "sprite": "ranger.north.death.2",
+      "src_bbox": [
+        939,
+        1030,
+        1204,
+        1180
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 80,
+        "right": 298
+      },
+      "foot_x_src": 80.03,
+      "placed": [
+        12,
+        18
+      ],
+      "scaled": [
+        32,
+        26
+      ],
+      "sprite": "ranger.north.dodge.0",
+      "src_bbox": [
+        80,
+        707,
+        298,
+        887
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 364,
+        "right": 593
+      },
+      "foot_x_src": 100.83,
+      "placed": [
+        9,
+        15
+      ],
+      "scaled": [
+        33,
+        29
+      ],
+      "sprite": "ranger.north.dodge.1",
+      "src_bbox": [
+        364,
+        699,
+        593,
+        897
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 74,
+        "right": 281
+      },
+      "foot_x_src": 140.16,
+      "placed": [
+        4,
+        6
+      ],
+      "scaled": [
+        30,
+        38
+      ],
+      "sprite": "ranger.north.hit.0",
+      "src_bbox": [
+        74,
+        944,
+        281,
+        1202
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 759,
+        "right": 1019
+      },
+      "foot_x_src": 168.37,
+      "placed": [
+        10,
+        6
+      ],
+      "scaled": [
+        21,
+        38
+      ],
+      "sprite": "ranger.north.idle.0",
+      "src_bbox": [
+        759,
+        110,
+        1019,
+        579
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 111,
+        "right": 273
+      },
+      "foot_x_src": 87.0,
+      "placed": [
+        11,
+        5
+      ],
+      "scaled": [
+        24,
+        39
+      ],
+      "sprite": "ranger.north.shoot.0",
+      "src_bbox": [
+        111,
+        358,
+        273,
+        627
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 378,
+        "right": 577
+      },
+      "foot_x_src": 86.3,
+      "placed": [
+        11,
+        2
+      ],
+      "scaled": [
+        29,
+        42
+      ],
+      "sprite": "ranger.north.shoot.1",
+      "src_bbox": [
+        378,
+        357,
+        577,
+        643
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 680,
+        "right": 879
+      },
+      "foot_x_src": 94.06,
+      "placed": [
+        10,
+        2
+      ],
+      "scaled": [
+        29,
+        42
+      ],
+      "sprite": "ranger.north.shoot.2",
+      "src_bbox": [
+        680,
+        361,
+        879,
+        645
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 989,
+        "right": 1148
+      },
+      "foot_x_src": 93.72,
+      "placed": [
+        10,
+        8
+      ],
+      "scaled": [
+        23,
+        36
+      ],
+      "sprite": "ranger.north.shoot.3",
+      "src_bbox": [
+        989,
+        398,
+        1148,
+        643
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 108,
+        "right": 270
+      },
+      "foot_x_src": 77.25,
+      "placed": [
+        13,
+        6
+      ],
+      "scaled": [
+        24,
+        38
+      ],
+      "sprite": "ranger.north.walk.0",
+      "src_bbox": [
+        108,
+        73,
+        270,
+        333
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 409,
+        "right": 552
+      },
+      "foot_x_src": 69.03,
+      "placed": [
+        14,
+        6
+      ],
+      "scaled": [
+        21,
+        38
+      ],
+      "sprite": "ranger.north.walk.1",
+      "src_bbox": [
+        409,
+        73,
+        552,
+        336
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 687,
+        "right": 852
+      },
+      "foot_x_src": 76.37,
+      "placed": [
+        13,
+        6
+      ],
+      "scaled": [
+        24,
+        38
+      ],
+      "sprite": "ranger.north.walk.2",
+      "src_bbox": [
+        687,
+        78,
+        852,
+        336
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 1008,
+        "right": 1152
+      },
+      "foot_x_src": 52.98,
+      "placed": [
+        16,
+        6
+      ],
+      "scaled": [
+        21,
+        38
+      ],
+      "sprite": "ranger.north.walk.3",
+      "src_bbox": [
+        1008,
+        76,
+        1152,
+        333
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 682,
+        "right": 878
+      },
+      "foot_x_src": 65.97,
+      "placed": [
+        15,
+        10
+      ],
+      "scaled": [
+        28,
+        34
+      ],
+      "sprite": "ranger.south.dash.0",
+      "src_bbox": [
+        682,
+        663,
+        878,
+        901
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 971,
+        "right": 1157
+      },
+      "foot_x_src": 101.69,
+      "placed": [
+        9,
+        10
+      ],
+      "scaled": [
+        27,
+        34
+      ],
+      "sprite": "ranger.south.dash.1",
+      "src_bbox": [
+        971,
+        663,
+        1157,
+        901
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 387,
+        "right": 584
+      },
+      "foot_x_src": 140.33,
+      "placed": [
+        4,
+        13
+      ],
+      "scaled": [
+        28,
+        31
+      ],
+      "sprite": "ranger.south.death.0",
+      "src_bbox": [
+        387,
+        982,
+        584,
+        1199
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 645,
+        "right": 899
+      },
+      "foot_x_src": 153.38,
+      "placed": [
+        2,
+        20
+      ],
+      "scaled": [
+        36,
+        24
+      ],
+      "sprite": "ranger.south.death.1",
+      "src_bbox": [
+        645,
+        1021,
+        899,
+        1191
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 958,
+        "right": 1202
+      },
+      "foot_x_src": 239.64,
+      "placed": [
+        0,
+        12
+      ],
+      "scaled": [
+        35,
+        32
+      ],
+      "sprite": "ranger.south.death.2",
+      "src_bbox": [
+        958,
+        975,
+        1202,
+        1201
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 92,
+        "right": 293
+      },
+      "foot_x_src": 81.0,
+      "placed": [
+        12,
+        18
+      ],
+      "scaled": [
+        29,
+        26
+      ],
+      "sprite": "ranger.south.dodge.0",
+      "src_bbox": [
+        92,
+        691,
+        293,
+        876
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 411,
+        "right": 576
+      },
+      "foot_x_src": 101.92,
+      "placed": [
+        9,
+        12
+      ],
+      "scaled": [
+        24,
+        32
+      ],
+      "sprite": "ranger.south.dodge.1",
+      "src_bbox": [
+        411,
+        666,
+        576,
+        893
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 96,
+        "right": 284
+      },
+      "foot_x_src": 45.66,
+      "placed": [
+        17,
+        6
+      ],
+      "scaled": [
+        27,
+        38
+      ],
+      "sprite": "ranger.south.hit.0",
+      "src_bbox": [
+        96,
+        934,
+        284,
+        1197
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 229,
+        "right": 525
+      },
+      "foot_x_src": 82.81,
+      "placed": [
+        17,
+        6
+      ],
+      "scaled": [
+        24,
+        38
+      ],
+      "sprite": "ranger.south.idle.0",
+      "src_bbox": [
+        229,
+        110,
+        525,
+        575
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 100,
+        "right": 289
+      },
+      "foot_x_src": 101.41,
+      "placed": [
+        10,
+        7
+      ],
+      "scaled": [
+        27,
+        37
+      ],
+      "sprite": "ranger.south.shoot.0",
+      "src_bbox": [
+        100,
+        361,
+        289,
+        622
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 402,
+        "right": 568
+      },
+      "foot_x_src": 102.34,
+      "placed": [
+        9,
+        5
+      ],
+      "scaled": [
+        24,
+        39
+      ],
+      "sprite": "ranger.south.shoot.1",
+      "src_bbox": [
+        402,
+        351,
+        568,
+        625
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 683,
+        "right": 862
+      },
+      "foot_x_src": 112.81,
+      "placed": [
+        8,
+        7
+      ],
+      "scaled": [
+        26,
+        37
+      ],
+      "sprite": "ranger.south.shoot.2",
+      "src_bbox": [
+        683,
+        367,
+        862,
+        625
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 977,
+        "right": 1165
+      },
+      "foot_x_src": 73.02,
+      "placed": [
+        14,
+        6
+      ],
+      "scaled": [
+        27,
+        38
+      ],
+      "sprite": "ranger.south.shoot.3",
+      "src_bbox": [
+        977,
+        357,
+        1165,
+        621
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 100,
+        "right": 273
+      },
+      "foot_x_src": 97.35,
+      "placed": [
+        10,
+        6
+      ],
+      "scaled": [
+        25,
+        38
+      ],
+      "sprite": "ranger.south.walk.0",
+      "src_bbox": [
+        100,
+        56,
+        273,
+        322
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 406,
+        "right": 572
+      },
+      "foot_x_src": 65.07,
+      "placed": [
+        15,
+        6
+      ],
+      "scaled": [
+        24,
+        38
+      ],
+      "sprite": "ranger.south.walk.1",
+      "src_bbox": [
+        406,
+        58,
+        572,
+        322
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 688,
+        "right": 852
+      },
+      "foot_x_src": 92.98,
+      "placed": [
+        11,
+        6
+      ],
+      "scaled": [
+        23,
+        38
+      ],
+      "sprite": "ranger.south.walk.2",
+      "src_bbox": [
+        688,
+        56,
+        852,
+        324
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 972,
+        "right": 1148
+      },
+      "foot_x_src": 100.88,
+      "placed": [
+        10,
+        7
+      ],
+      "scaled": [
+        25,
+        37
+      ],
+      "sprite": "ranger.south.walk.3",
+      "src_bbox": [
+        972,
+        56,
+        1148,
+        316
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 642,
+        "right": 914
+      },
+      "foot_x_src": 257.92,
+      "placed": [
+        0,
+        14
+      ],
+      "scaled": [
+        38,
+        30
+      ],
+      "sprite": "ranger.west.dash.0",
+      "src_bbox": [
+        642,
+        715,
+        914,
+        924
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 989,
+        "right": 1202
+      },
+      "foot_x_src": 70.95,
+      "placed": [
+        14,
+        10
+      ],
+      "scaled": [
+        30,
+        34
+      ],
+      "sprite": "ranger.west.dash.1",
+      "src_bbox": [
+        989,
+        699,
+        1202,
+        937
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 347,
+        "right": 578
+      },
+      "foot_x_src": 169.6,
+      "placed": [
+        0,
+        17
+      ],
+      "scaled": [
+        33,
+        27
+      ],
+      "sprite": "ranger.west.death.0",
+      "src_bbox": [
+        347,
+        1006,
+        578,
+        1195
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 610,
+        "right": 935
+      },
+      "foot_x_src": 115.33,
+      "placed": [
+        2,
+        23
+      ],
+      "scaled": [
+        46,
+        21
+      ],
+      "sprite": "ranger.west.death.1",
+      "src_bbox": [
+        610,
+        1054,
+        935,
+        1202
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 936,
+        "right": 1226
+      },
+      "foot_x_src": 122.08,
+      "placed": [
+        7,
+        30
+      ],
+      "scaled": [
+        41,
+        14
+      ],
+      "sprite": "ranger.west.death.2",
+      "src_bbox": [
+        936,
+        1102,
+        1226,
+        1202
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 55,
+        "right": 301
+      },
+      "foot_x_src": 135.68,
+      "placed": [
+        5,
+        18
+      ],
+      "scaled": [
+        35,
+        26
+      ],
+      "sprite": "ranger.west.dodge.0",
+      "src_bbox": [
+        55,
+        727,
+        301,
+        908
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 344,
+        "right": 594
+      },
+      "foot_x_src": 122.38,
+      "placed": [
+        7,
+        14
+      ],
+      "scaled": [
+        35,
+        30
+      ],
+      "sprite": "ranger.west.dodge.1",
+      "src_bbox": [
+        344,
+        700,
+        594,
+        915
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 86,
+        "right": 294
+      },
+      "foot_x_src": 140.76,
+      "placed": [
+        4,
+        9
+      ],
+      "scaled": [
+        29,
+        35
+      ],
+      "sprite": "ranger.west.hit.0",
+      "src_bbox": [
+        86,
+        961,
+        294,
+        1212
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 744,
+        "right": 1012
+      },
+      "foot_x_src": 148.59,
+      "placed": [
+        12,
+        6
+      ],
+      "scaled": [
+        22,
+        38
+      ],
+      "sprite": "ranger.west.idle.0",
+      "src_bbox": [
+        744,
+        668,
+        1012,
+        1138
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 55,
+        "right": 291
+      },
+      "foot_x_src": 63.87,
+      "placed": [
+        15,
+        5
+      ],
+      "scaled": [
+        33,
+        39
+      ],
+      "sprite": "ranger.west.shoot.0",
+      "src_bbox": [
+        55,
+        363,
+        291,
+        642
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 328,
+        "right": 599
+      },
+      "foot_x_src": 86.7,
+      "placed": [
+        10,
+        3
+      ],
+      "scaled": [
+        38,
+        41
+      ],
+      "sprite": "ranger.west.shoot.1",
+      "src_bbox": [
+        328,
+        352,
+        599,
+        640
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 673,
+        "right": 940
+      },
+      "foot_x_src": 62.41,
+      "placed": [
+        10,
+        5
+      ],
+      "scaled": [
+        38,
+        39
+      ],
+      "sprite": "ranger.west.shoot.2",
+      "src_bbox": [
+        673,
+        363,
+        940,
+        642
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 989,
+        "right": 1208
+      },
+      "foot_x_src": 153.28,
+      "placed": [
+        2,
+        5
+      ],
+      "scaled": [
+        31,
+        39
+      ],
+      "sprite": "ranger.west.shoot.3",
+      "src_bbox": [
+        989,
+        376,
+        1208,
+        652
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 65,
+        "right": 288
+      },
+      "foot_x_src": 58.07,
+      "placed": [
+        16,
+        6
+      ],
+      "scaled": [
+        32,
+        38
+      ],
+      "sprite": "ranger.west.walk.0",
+      "src_bbox": [
+        65,
+        55,
+        288,
+        324
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 367,
+        "right": 584
+      },
+      "foot_x_src": 89.91,
+      "placed": [
+        11,
+        7
+      ],
+      "scaled": [
+        31,
+        37
+      ],
+      "sprite": "ranger.west.walk.1",
+      "src_bbox": [
+        367,
+        58,
+        584,
+        321
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 665,
+        "right": 881
+      },
+      "foot_x_src": 53.29,
+      "placed": [
+        16,
+        7
+      ],
+      "scaled": [
+        31,
+        37
+      ],
+      "sprite": "ranger.west.walk.2",
+      "src_bbox": [
+        665,
+        58,
+        881,
+        321
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 997,
+        "right": 1198
+      },
+      "foot_x_src": 105.57,
+      "placed": [
+        9,
+        6
+      ],
+      "scaled": [
+        28,
+        38
+      ],
+      "sprite": "ranger.west.walk.3",
+      "src_bbox": [
+        997,
+        58,
+        1198,
+        324
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 66,
+        "right": 261
+      },
+      "foot_x_src": 39.24,
+      "placed": [
+        18,
+        7
+      ],
+      "scaled": [
+        29,
+        37
+      ],
+      "sprite": "melee.idle.0",
+      "src_bbox": [
+        66,
+        85,
+        261,
+        332
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 375,
+        "right": 586
+      },
+      "foot_x_src": 36.36,
+      "placed": [
+        17,
+        7
+      ],
+      "scaled": [
+        31,
+        37
+      ],
+      "sprite": "melee.walk.0",
+      "src_bbox": [
+        375,
+        83,
+        586,
+        330
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 691,
+        "right": 874
+      },
+      "foot_x_src": 108.23,
+      "placed": [
+        8,
+        8
+      ],
+      "scaled": [
+        27,
+        36
+      ],
+      "sprite": "melee.walk.1",
+      "src_bbox": [
+        691,
+        90,
+        874,
+        330
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 984,
+        "right": 1185
+      },
+      "foot_x_src": 151.89,
+      "placed": [
+        1,
+        8
+      ],
+      "scaled": [
+        30,
+        36
+      ],
+      "sprite": "melee.walk.2",
+      "src_bbox": [
+        984,
+        90,
+        1185,
+        336
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 59,
+        "right": 256
+      },
+      "foot_x_src": 51.07,
+      "placed": [
+        16,
+        8
+      ],
+      "scaled": [
+        29,
+        36
+      ],
+      "sprite": "melee.walk.3",
+      "src_bbox": [
+        59,
+        391,
+        256,
+        631
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 385,
+        "right": 592
+      },
+      "foot_x_src": 42.18,
+      "placed": [
+        17,
+        11
+      ],
+      "scaled": [
+        31,
+        33
+      ],
+      "sprite": "melee.windup.0",
+      "src_bbox": [
+        385,
+        411,
+        592,
+        631
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 675,
+        "right": 913
+      },
+      "foot_x_src": 177.99,
+      "placed": [
+        0,
+        10
+      ],
+      "scaled": [
+        35,
+        34
+      ],
+      "sprite": "melee.windup.1",
+      "src_bbox": [
+        675,
+        405,
+        913,
+        636
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 963,
+        "right": 1240
+      },
+      "foot_x_src": 29.61,
+      "placed": [
+        7,
+        13
+      ],
+      "scaled": [
+        41,
+        31
+      ],
+      "sprite": "melee.active.0",
+      "src_bbox": [
+        963,
+        425,
+        1240,
+        632
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 64,
+        "right": 266
+      },
+      "foot_x_src": 35.94,
+      "placed": [
+        18,
+        9
+      ],
+      "scaled": [
+        30,
+        35
+      ],
+      "sprite": "melee.recover.0",
+      "src_bbox": [
+        64,
+        702,
+        266,
+        938
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 369,
+        "right": 547
+      },
+      "foot_x_src": 137.18,
+      "placed": [
+        4,
+        11
+      ],
+      "scaled": [
+        26,
+        33
+      ],
+      "sprite": "melee.hit.0",
+      "src_bbox": [
+        369,
+        709,
+        547,
+        930
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 649,
+        "right": 896
+      },
+      "foot_x_src": 160.67,
+      "placed": [
+        0,
+        19
+      ],
+      "scaled": [
+        37,
+        25
+      ],
+      "sprite": "melee.death.0",
+      "src_bbox": [
+        649,
+        772,
+        896,
+        938
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 948,
+        "right": 1226
+      },
+      "foot_x_src": 201.55,
+      "placed": [
+        0,
+        22
+      ],
+      "scaled": [
+        41,
+        22
+      ],
+      "sprite": "melee.death.1",
+      "src_bbox": [
+        948,
+        788,
+        1226,
+        934
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 24,
+        "right": 348
+      },
+      "foot_x_src": 241.85,
+      "placed": [
+        0,
+        29
+      ],
+      "scaled": [
+        48,
+        15
+      ],
+      "sprite": "melee.death.2",
+      "src_bbox": [
+        24,
+        1099,
+        348,
+        1203
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 43,
+        "right": 302
+      },
+      "foot_x_src": 134.71,
+      "placed": [
+        5,
+        13
+      ],
+      "scaled": [
+        37,
+        31
+      ],
+      "sprite": "charger.idle.0",
+      "src_bbox": [
+        43,
+        79,
+        302,
+        292
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 353,
+        "right": 611
+      },
+      "foot_x_src": 174.23,
+      "placed": [
+        0,
+        14
+      ],
+      "scaled": [
+        37,
+        30
+      ],
+      "sprite": "charger.walk.0",
+      "src_bbox": [
+        353,
+        82,
+        611,
+        292
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 672,
+        "right": 927
+      },
+      "foot_x_src": 145.65,
+      "placed": [
+        3,
+        15
+      ],
+      "scaled": [
+        37,
+        29
+      ],
+      "sprite": "charger.walk.1",
+      "src_bbox": [
+        672,
+        90,
+        927,
+        292
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 972,
+        "right": 1226
+      },
+      "foot_x_src": 188.92,
+      "placed": [
+        0,
+        15
+      ],
+      "scaled": [
+        37,
+        29
+      ],
+      "sprite": "charger.walk.2",
+      "src_bbox": [
+        972,
+        88,
+        1226,
+        291
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 43,
+        "right": 300
+      },
+      "foot_x_src": 169.48,
+      "placed": [
+        0,
+        15
+      ],
+      "scaled": [
+        37,
+        29
+      ],
+      "sprite": "charger.walk.3",
+      "src_bbox": [
+        43,
+        393,
+        300,
+        597
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 354,
+        "right": 617
+      },
+      "foot_x_src": 133.62,
+      "placed": [
+        5,
+        17
+      ],
+      "scaled": [
+        38,
+        27
+      ],
+      "sprite": "charger.windup.0",
+      "src_bbox": [
+        354,
+        406,
+        617,
+        596
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 639,
+        "right": 919
+      },
+      "foot_x_src": 176.41,
+      "placed": [
+        0,
+        19
+      ],
+      "scaled": [
+        40,
+        25
+      ],
+      "sprite": "charger.windup.1",
+      "src_bbox": [
+        639,
+        426,
+        919,
+        596
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 948,
+        "right": 1240
+      },
+      "foot_x_src": 262.34,
+      "placed": [
+        0,
+        21
+      ],
+      "scaled": [
+        42,
+        23
+      ],
+      "sprite": "charger.active.0",
+      "src_bbox": [
+        948,
+        408,
+        1240,
+        564
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 42,
+        "right": 302
+      },
+      "foot_x_src": 165.5,
+      "placed": [
+        0,
+        16
+      ],
+      "scaled": [
+        38,
+        28
+      ],
+      "sprite": "charger.recover.0",
+      "src_bbox": [
+        42,
+        709,
+        302,
+        901
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 360,
+        "right": 584
+      },
+      "foot_x_src": 53.45,
+      "placed": [
+        16,
+        10
+      ],
+      "scaled": [
+        32,
+        34
+      ],
+      "sprite": "charger.hit.0",
+      "src_bbox": [
+        360,
+        661,
+        584,
+        898
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 650,
+        "right": 912
+      },
+      "foot_x_src": 171.88,
+      "placed": [
+        0,
+        19
+      ],
+      "scaled": [
+        38,
+        25
+      ],
+      "sprite": "charger.death.0",
+      "src_bbox": [
+        650,
+        728,
+        912,
+        901
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 940,
+        "right": 1235
+      },
+      "foot_x_src": 180.85,
+      "placed": [
+        0,
+        28
+      ],
+      "scaled": [
+        43,
+        16
+      ],
+      "sprite": "charger.death.1",
+      "src_bbox": [
+        940,
+        790,
+        1235,
+        902
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 16,
+        "right": 348
+      },
+      "foot_x_src": 229.12,
+      "placed": [
+        0,
+        28
+      ],
+      "scaled": [
+        48,
+        16
+      ],
+      "sprite": "charger.death.2",
+      "src_bbox": [
+        16,
+        1078,
+        348,
+        1189
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 88,
+        "right": 282
+      },
+      "foot_x_src": 59.42,
+      "placed": [
+        16,
+        7
+      ],
+      "scaled": [
+        26,
+        37
+      ],
+      "sprite": "ranged.idle.0",
+      "src_bbox": [
+        88,
+        61,
+        282,
+        340
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 377,
+        "right": 580
+      },
+      "foot_x_src": 127.57,
+      "placed": [
+        7,
+        9
+      ],
+      "scaled": [
+        27,
+        35
+      ],
+      "sprite": "ranged.walk.0",
+      "src_bbox": [
+        377,
+        76,
+        580,
+        339
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 680,
+        "right": 903
+      },
+      "foot_x_src": 74.38,
+      "placed": [
+        14,
+        8
+      ],
+      "scaled": [
+        30,
+        36
+      ],
+      "sprite": "ranged.walk.1",
+      "src_bbox": [
+        680,
+        78,
+        903,
+        345
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 988,
+        "right": 1182
+      },
+      "foot_x_src": 46.15,
+      "placed": [
+        18,
+        8
+      ],
+      "scaled": [
+        26,
+        36
+      ],
+      "sprite": "ranged.walk.2",
+      "src_bbox": [
+        988,
+        79,
+        1182,
+        349
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 58,
+        "right": 268
+      },
+      "foot_x_src": 58.77,
+      "placed": [
+        16,
+        7
+      ],
+      "scaled": [
+        28,
+        37
+      ],
+      "sprite": "ranged.walk.3",
+      "src_bbox": [
+        58,
+        383,
+        268,
+        660
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 340,
+        "right": 587
+      },
+      "foot_x_src": 62.68,
+      "placed": [
+        15,
+        3
+      ],
+      "scaled": [
+        33,
+        41
+      ],
+      "sprite": "ranged.windup.0",
+      "src_bbox": [
+        340,
+        361,
+        587,
+        666
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 644,
+        "right": 906
+      },
+      "foot_x_src": 45.78,
+      "placed": [
+        13,
+        3
+      ],
+      "scaled": [
+        35,
+        41
+      ],
+      "sprite": "ranged.windup.1",
+      "src_bbox": [
+        644,
+        361,
+        906,
+        666
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 908,
+        "right": 1237
+      },
+      "foot_x_src": 41.1,
+      "placed": [
+        4,
+        9
+      ],
+      "scaled": [
+        44,
+        35
+      ],
+      "sprite": "ranged.active.0",
+      "src_bbox": [
+        908,
+        404,
+        1237,
+        662
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 51,
+        "right": 296
+      },
+      "foot_x_src": 105.8,
+      "placed": [
+        10,
+        10
+      ],
+      "scaled": [
+        33,
+        34
+      ],
+      "sprite": "ranged.recover.0",
+      "src_bbox": [
+        51,
+        689,
+        296,
+        946
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 371,
+        "right": 573
+      },
+      "foot_x_src": 65.26,
+      "placed": [
+        15,
+        14
+      ],
+      "scaled": [
+        27,
+        30
+      ],
+      "sprite": "ranged.hit.0",
+      "src_bbox": [
+        371,
+        715,
+        573,
+        936
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 642,
+        "right": 917
+      },
+      "foot_x_src": 245.16,
+      "placed": [
+        0,
+        20
+      ],
+      "scaled": [
+        37,
+        24
+      ],
+      "sprite": "ranged.death.0",
+      "src_bbox": [
+        642,
+        745,
+        917,
+        925
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 944,
+        "right": 1241
+      },
+      "foot_x_src": 166.92,
+      "placed": [
+        2,
+        27
+      ],
+      "scaled": [
+        40,
+        17
+      ],
+      "sprite": "ranged.death.1",
+      "src_bbox": [
+        944,
+        798,
+        1241,
+        926
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 31,
+        "right": 389
+      },
+      "foot_x_src": 258.23,
+      "placed": [
+        0,
+        31
+      ],
+      "scaled": [
+        48,
+        13
+      ],
+      "sprite": "ranged.death.2",
+      "src_bbox": [
+        31,
+        1093,
+        389,
+        1187
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 275,
+        "right": 508
+      },
+      "foot_x_src": 44.0,
+      "placed": [
+        21,
+        12
+      ],
+      "scaled": [
+        15,
+        32
+      ],
+      "sprite": "mira.south.work.0",
+      "src_bbox": [
+        275,
+        67,
+        508,
+        576
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 802,
+        "right": 1030
+      },
+      "foot_x_src": 45.17,
+      "placed": [
+        21,
+        12
+      ],
+      "scaled": [
+        14,
+        32
+      ],
+      "sprite": "mira.south.work.1",
+      "src_bbox": [
+        802,
+        64,
+        1030,
+        576
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 269,
+        "right": 514
+      },
+      "foot_x_src": 49.33,
+      "placed": [
+        21,
+        12
+      ],
+      "scaled": [
+        15,
+        32
+      ],
+      "sprite": "mira.south.work.2",
+      "src_bbox": [
+        269,
+        641,
+        514,
+        1151
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 807,
+        "right": 1043
+      },
+      "foot_x_src": 42.39,
+      "placed": [
+        21,
+        12
+      ],
+      "scaled": [
+        15,
+        32
+      ],
+      "sprite": "mira.south.work.3",
+      "src_bbox": [
+        807,
+        641,
+        1043,
+        1154
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 303,
+        "right": 560
+      },
+      "foot_x_src": 83.5,
+      "placed": [
+        18,
+        12
+      ],
+      "scaled": [
+        18,
+        32
+      ],
+      "sprite": "iven.south.work.0",
+      "src_bbox": [
+        303,
+        89,
+        560,
+        558
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 759,
+        "right": 1012
+      },
+      "foot_x_src": 90.35,
+      "placed": [
+        18,
+        12
+      ],
+      "scaled": [
+        17,
+        32
+      ],
+      "sprite": "iven.south.work.1",
+      "src_bbox": [
+        759,
+        94,
+        1012,
+        561
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 300,
+        "right": 571
+      },
+      "foot_x_src": 92.98,
+      "placed": [
+        18,
+        12
+      ],
+      "scaled": [
+        18,
+        32
+      ],
+      "sprite": "iven.south.work.2",
+      "src_bbox": [
+        300,
+        688,
+        571,
+        1156
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 764,
+        "right": 1032
+      },
+      "foot_x_src": 85.03,
+      "placed": [
+        18,
+        12
+      ],
+      "scaled": [
+        18,
+        32
+      ],
+      "sprite": "iven.south.work.3",
+      "src_bbox": [
+        764,
+        688,
+        1032,
+        1157
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 210,
+        "right": 506
+      },
+      "foot_x_src": 117.64,
+      "placed": [
+        16,
+        12
+      ],
+      "scaled": [
+        21,
+        32
+      ],
+      "sprite": "taren.south.work.0",
+      "src_bbox": [
+        210,
+        135,
+        506,
+        589
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 759,
+        "right": 1066
+      },
+      "foot_x_src": 117.18,
+      "placed": [
+        16,
+        12
+      ],
+      "scaled": [
+        22,
+        32
+      ],
+      "sprite": "taren.south.work.1",
+      "src_bbox": [
+        759,
+        132,
+        1066,
+        589
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 220,
+        "right": 523
+      },
+      "foot_x_src": 107.71,
+      "placed": [
+        16,
+        12
+      ],
+      "scaled": [
+        21,
+        32
+      ],
+      "sprite": "taren.south.work.2",
+      "src_bbox": [
+        220,
+        697,
+        523,
+        1153
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 767,
+        "right": 1066
+      },
+      "foot_x_src": 108.81,
+      "placed": [
+        16,
+        12
+      ],
+      "scaled": [
+        21,
+        32
+      ],
+      "sprite": "taren.south.work.3",
+      "src_bbox": [
+        767,
+        701,
+        1066,
+        1153
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 270,
+        "right": 528
+      },
+      "foot_x_src": 37.3,
+      "placed": [
+        21,
+        12
+      ],
+      "scaled": [
+        18,
+        32
+      ],
+      "sprite": "leia.south.work.0",
+      "src_bbox": [
+        270,
+        94,
+        528,
+        547
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 836,
+        "right": 1068
+      },
+      "foot_x_src": 18.49,
+      "placed": [
+        23,
+        13
+      ],
+      "scaled": [
+        16,
+        31
+      ],
+      "sprite": "leia.south.work.1",
+      "src_bbox": [
+        836,
+        114,
+        1068,
+        548
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 284,
+        "right": 638
+      },
+      "foot_x_src": 22.17,
+      "placed": [
+        22,
+        13
+      ],
+      "scaled": [
+        25,
+        31
+      ],
+      "sprite": "leia.south.work.2",
+      "src_bbox": [
+        284,
+        665,
+        638,
+        1110
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 824,
+        "right": 1088
+      },
+      "foot_x_src": 40.74,
+      "placed": [
+        21,
+        12
+      ],
+      "scaled": [
+        19,
+        32
+      ],
+      "sprite": "leia.south.work.3",
+      "src_bbox": [
+        824,
+        668,
+        1088,
+        1114
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 231,
+        "right": 495
+      },
+      "foot_x_src": 58.3,
+      "placed": [
+        20,
+        12
+      ],
+      "scaled": [
+        20,
+        32
+      ],
+      "sprite": "oren.south.work.0",
+      "src_bbox": [
+        231,
+        168,
+        495,
+        588
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 713,
+        "right": 1023
+      },
+      "foot_x_src": 106.48,
+      "placed": [
+        16,
+        5
+      ],
+      "scaled": [
+        24,
+        39
+      ],
+      "sprite": "oren.south.work.1",
+      "src_bbox": [
+        713,
+        88,
+        1023,
+        600
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 237,
+        "right": 517
+      },
+      "foot_x_src": 77.21,
+      "placed": [
+        18,
+        12
+      ],
+      "scaled": [
+        21,
+        32
+      ],
+      "sprite": "oren.south.work.2",
+      "src_bbox": [
+        237,
+        717,
+        517,
+        1133
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 755,
+        "right": 1029
+      },
+      "foot_x_src": 69.5,
+      "placed": [
+        19,
+        12
+      ],
+      "scaled": [
+        21,
+        32
+      ],
+      "sprite": "oren.south.work.3",
+      "src_bbox": [
+        755,
+        712,
+        1029,
+        1138
+      ]
+    },
+    {
+      "clipped": false,
+      "placed": [
+        19,
+        10
+      ],
+      "scaled": [
+        90,
+        110
+      ],
+      "sprite": "boss.body_phase1",
+      "src_bbox": [
+        146,
+        26,
+        819,
+        852
+      ]
+    },
+    {
+      "clipped": false,
+      "placed": [
+        20,
+        10
+      ],
+      "scaled": [
+        89,
+        110
+      ],
+      "sprite": "boss.body_phase2",
+      "src_bbox": [
+        957,
+        27,
+        1627,
+        851
+      ]
+    },
+    {
+      "clipped": false,
+      "placed": [
+        8,
+        26
+      ],
+      "scaled": [
+        17,
+        30
+      ],
+      "sprite": "boss.core_phase1",
+      "src_bbox": [
+        317,
+        72,
+        741,
+        802
+      ]
+    },
+    {
+      "clipped": false,
+      "placed": [
+        8,
+        26
+      ],
+      "scaled": [
+        17,
+        30
+      ],
+      "sprite": "boss.core_phase2",
+      "src_bbox": [
+        1033,
+        72,
+        1457,
+        802
+      ]
+    },
+    {
+      "clipped": false,
+      "placed": [
+        2,
+        1
+      ],
+      "scaled": [
+        44,
+        55
+      ],
+      "sprite": "boss.hand_left",
+      "src_bbox": [
+        71,
+        113,
+        726,
+        925
+      ]
+    },
+    {
+      "clipped": false,
+      "placed": [
+        2,
+        1
+      ],
+      "scaled": [
+        44,
+        55
+      ],
+      "sprite": "boss.hand_right",
+      "src_bbox": [
+        816,
+        114,
+        1468,
+        926
+      ]
+    },
+    {
+      "mode": "centered_crop",
+      "opaque_w": 24,
+      "sprite": "ranger_idle.south"
+    },
+    {
+      "mode": "centered_crop",
+      "opaque_w": 21,
+      "sprite": "ranger_idle.north"
+    },
+    {
+      "mode": "centered_crop",
+      "opaque_w": 23,
+      "sprite": "ranger_idle.east"
+    },
+    {
+      "mode": "centered_crop",
+      "opaque_w": 22,
+      "sprite": "ranger_idle.west"
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 66,
+        "right": 261
+      },
+      "foot_x_src": 39.24,
+      "placed": [
+        18,
+        7
+      ],
+      "scaled": [
+        29,
+        37
+      ],
+      "sprite": "melee.idle.0",
+      "src_bbox": [
+        66,
+        85,
+        261,
+        332
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 375,
+        "right": 586
+      },
+      "foot_x_src": 36.36,
+      "placed": [
+        17,
+        7
+      ],
+      "scaled": [
+        31,
+        37
+      ],
+      "sprite": "melee.walk.0",
+      "src_bbox": [
+        375,
+        83,
+        586,
+        330
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 691,
+        "right": 874
+      },
+      "foot_x_src": 108.23,
+      "placed": [
+        8,
+        8
+      ],
+      "scaled": [
+        27,
+        36
+      ],
+      "sprite": "melee.walk.1",
+      "src_bbox": [
+        691,
+        90,
+        874,
+        330
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 984,
+        "right": 1185
+      },
+      "foot_x_src": 151.89,
+      "placed": [
+        1,
+        8
+      ],
+      "scaled": [
+        30,
+        36
+      ],
+      "sprite": "melee.walk.2",
+      "src_bbox": [
+        984,
+        90,
+        1185,
+        336
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 59,
+        "right": 256
+      },
+      "foot_x_src": 51.07,
+      "placed": [
+        16,
+        8
+      ],
+      "scaled": [
+        29,
+        36
+      ],
+      "sprite": "melee.walk.3",
+      "src_bbox": [
+        59,
+        391,
+        256,
+        631
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 385,
+        "right": 592
+      },
+      "foot_x_src": 42.18,
+      "placed": [
+        17,
+        11
+      ],
+      "scaled": [
+        31,
+        33
+      ],
+      "sprite": "melee.windup.0",
+      "src_bbox": [
+        385,
+        411,
+        592,
+        631
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 675,
+        "right": 913
+      },
+      "foot_x_src": 177.99,
+      "placed": [
+        0,
+        10
+      ],
+      "scaled": [
+        35,
+        34
+      ],
+      "sprite": "melee.windup.1",
+      "src_bbox": [
+        675,
+        405,
+        913,
+        636
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 963,
+        "right": 1240
+      },
+      "foot_x_src": 29.61,
+      "placed": [
+        7,
+        13
+      ],
+      "scaled": [
+        41,
+        31
+      ],
+      "sprite": "melee.active.0",
+      "src_bbox": [
+        963,
+        425,
+        1240,
+        632
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 64,
+        "right": 266
+      },
+      "foot_x_src": 35.94,
+      "placed": [
+        18,
+        9
+      ],
+      "scaled": [
+        30,
+        35
+      ],
+      "sprite": "melee.recover.0",
+      "src_bbox": [
+        64,
+        702,
+        266,
+        938
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 369,
+        "right": 547
+      },
+      "foot_x_src": 137.18,
+      "placed": [
+        4,
+        11
+      ],
+      "scaled": [
+        26,
+        33
+      ],
+      "sprite": "melee.hit.0",
+      "src_bbox": [
+        369,
+        709,
+        547,
+        930
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 649,
+        "right": 896
+      },
+      "foot_x_src": 160.67,
+      "placed": [
+        0,
+        19
+      ],
+      "scaled": [
+        37,
+        25
+      ],
+      "sprite": "melee.death.0",
+      "src_bbox": [
+        649,
+        772,
+        896,
+        938
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 948,
+        "right": 1226
+      },
+      "foot_x_src": 201.55,
+      "placed": [
+        0,
+        22
+      ],
+      "scaled": [
+        41,
+        22
+      ],
+      "sprite": "melee.death.1",
+      "src_bbox": [
+        948,
+        788,
+        1226,
+        934
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 24,
+        "right": 348
+      },
+      "foot_x_src": 241.85,
+      "placed": [
+        0,
+        29
+      ],
+      "scaled": [
+        48,
+        15
+      ],
+      "sprite": "melee.death.2",
+      "src_bbox": [
+        24,
+        1099,
+        348,
+        1203
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 43,
+        "right": 302
+      },
+      "foot_x_src": 134.71,
+      "placed": [
+        5,
+        13
+      ],
+      "scaled": [
+        37,
+        31
+      ],
+      "sprite": "charger.idle.0",
+      "src_bbox": [
+        43,
+        79,
+        302,
+        292
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 353,
+        "right": 611
+      },
+      "foot_x_src": 174.23,
+      "placed": [
+        0,
+        14
+      ],
+      "scaled": [
+        37,
+        30
+      ],
+      "sprite": "charger.walk.0",
+      "src_bbox": [
+        353,
+        82,
+        611,
+        292
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 672,
+        "right": 927
+      },
+      "foot_x_src": 145.65,
+      "placed": [
+        3,
+        15
+      ],
+      "scaled": [
+        37,
+        29
+      ],
+      "sprite": "charger.walk.1",
+      "src_bbox": [
+        672,
+        90,
+        927,
+        292
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 972,
+        "right": 1226
+      },
+      "foot_x_src": 188.92,
+      "placed": [
+        0,
+        15
+      ],
+      "scaled": [
+        37,
+        29
+      ],
+      "sprite": "charger.walk.2",
+      "src_bbox": [
+        972,
+        88,
+        1226,
+        291
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 43,
+        "right": 300
+      },
+      "foot_x_src": 169.48,
+      "placed": [
+        0,
+        15
+      ],
+      "scaled": [
+        37,
+        29
+      ],
+      "sprite": "charger.walk.3",
+      "src_bbox": [
+        43,
+        393,
+        300,
+        597
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 354,
+        "right": 617
+      },
+      "foot_x_src": 133.62,
+      "placed": [
+        5,
+        17
+      ],
+      "scaled": [
+        38,
+        27
+      ],
+      "sprite": "charger.windup.0",
+      "src_bbox": [
+        354,
+        406,
+        617,
+        596
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 639,
+        "right": 919
+      },
+      "foot_x_src": 176.41,
+      "placed": [
+        0,
+        19
+      ],
+      "scaled": [
+        40,
+        25
+      ],
+      "sprite": "charger.windup.1",
+      "src_bbox": [
+        639,
+        426,
+        919,
+        596
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 948,
+        "right": 1240
+      },
+      "foot_x_src": 262.34,
+      "placed": [
+        0,
+        21
+      ],
+      "scaled": [
+        42,
+        23
+      ],
+      "sprite": "charger.active.0",
+      "src_bbox": [
+        948,
+        408,
+        1240,
+        564
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 42,
+        "right": 302
+      },
+      "foot_x_src": 165.5,
+      "placed": [
+        0,
+        16
+      ],
+      "scaled": [
+        38,
+        28
+      ],
+      "sprite": "charger.recover.0",
+      "src_bbox": [
+        42,
+        709,
+        302,
+        901
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 360,
+        "right": 584
+      },
+      "foot_x_src": 53.45,
+      "placed": [
+        16,
+        10
+      ],
+      "scaled": [
+        32,
+        34
+      ],
+      "sprite": "charger.hit.0",
+      "src_bbox": [
+        360,
+        661,
+        584,
+        898
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 650,
+        "right": 912
+      },
+      "foot_x_src": 171.88,
+      "placed": [
+        0,
+        19
+      ],
+      "scaled": [
+        38,
+        25
+      ],
+      "sprite": "charger.death.0",
+      "src_bbox": [
+        650,
+        728,
+        912,
+        901
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 940,
+        "right": 1235
+      },
+      "foot_x_src": 180.85,
+      "placed": [
+        0,
+        28
+      ],
+      "scaled": [
+        43,
+        16
+      ],
+      "sprite": "charger.death.1",
+      "src_bbox": [
+        940,
+        790,
+        1235,
+        902
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 16,
+        "right": 348
+      },
+      "foot_x_src": 229.12,
+      "placed": [
+        0,
+        28
+      ],
+      "scaled": [
+        48,
+        16
+      ],
+      "sprite": "charger.death.2",
+      "src_bbox": [
+        16,
+        1078,
+        348,
+        1189
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 88,
+        "right": 282
+      },
+      "foot_x_src": 59.42,
+      "placed": [
+        16,
+        7
+      ],
+      "scaled": [
+        26,
+        37
+      ],
+      "sprite": "ranged.idle.0",
+      "src_bbox": [
+        88,
+        61,
+        282,
+        340
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 377,
+        "right": 580
+      },
+      "foot_x_src": 127.57,
+      "placed": [
+        7,
+        9
+      ],
+      "scaled": [
+        27,
+        35
+      ],
+      "sprite": "ranged.walk.0",
+      "src_bbox": [
+        377,
+        76,
+        580,
+        339
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 680,
+        "right": 903
+      },
+      "foot_x_src": 74.38,
+      "placed": [
+        14,
+        8
+      ],
+      "scaled": [
+        30,
+        36
+      ],
+      "sprite": "ranged.walk.1",
+      "src_bbox": [
+        680,
+        78,
+        903,
+        345
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 988,
+        "right": 1182
+      },
+      "foot_x_src": 46.15,
+      "placed": [
+        18,
+        8
+      ],
+      "scaled": [
+        26,
+        36
+      ],
+      "sprite": "ranged.walk.2",
+      "src_bbox": [
+        988,
+        79,
+        1182,
+        349
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 58,
+        "right": 268
+      },
+      "foot_x_src": 58.77,
+      "placed": [
+        16,
+        7
+      ],
+      "scaled": [
+        28,
+        37
+      ],
+      "sprite": "ranged.walk.3",
+      "src_bbox": [
+        58,
+        383,
+        268,
+        660
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 340,
+        "right": 587
+      },
+      "foot_x_src": 62.68,
+      "placed": [
+        15,
+        3
+      ],
+      "scaled": [
+        33,
+        41
+      ],
+      "sprite": "ranged.windup.0",
+      "src_bbox": [
+        340,
+        361,
+        587,
+        666
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 644,
+        "right": 906
+      },
+      "foot_x_src": 45.78,
+      "placed": [
+        13,
+        3
+      ],
+      "scaled": [
+        35,
+        41
+      ],
+      "sprite": "ranged.windup.1",
+      "src_bbox": [
+        644,
+        361,
+        906,
+        666
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 908,
+        "right": 1237
+      },
+      "foot_x_src": 41.1,
+      "placed": [
+        4,
+        9
+      ],
+      "scaled": [
+        44,
+        35
+      ],
+      "sprite": "ranged.active.0",
+      "src_bbox": [
+        908,
+        404,
+        1237,
+        662
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 51,
+        "right": 296
+      },
+      "foot_x_src": 105.8,
+      "placed": [
+        10,
+        10
+      ],
+      "scaled": [
+        33,
+        34
+      ],
+      "sprite": "ranged.recover.0",
+      "src_bbox": [
+        51,
+        689,
+        296,
+        946
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 371,
+        "right": 573
+      },
+      "foot_x_src": 65.26,
+      "placed": [
+        15,
+        14
+      ],
+      "scaled": [
+        27,
+        30
+      ],
+      "sprite": "ranged.hit.0",
+      "src_bbox": [
+        371,
+        715,
+        573,
+        936
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 642,
+        "right": 917
+      },
+      "foot_x_src": 245.16,
+      "placed": [
+        0,
+        20
+      ],
+      "scaled": [
+        37,
+        24
+      ],
+      "sprite": "ranged.death.0",
+      "src_bbox": [
+        642,
+        745,
+        917,
+        925
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 944,
+        "right": 1241
+      },
+      "foot_x_src": 166.92,
+      "placed": [
+        2,
+        27
+      ],
+      "scaled": [
+        40,
+        17
+      ],
+      "sprite": "ranged.death.1",
+      "src_bbox": [
+        944,
+        798,
+        1241,
+        926
+      ]
+    },
+    {
+      "clipped": false,
+      "edge": {
+        "left": 31,
+        "right": 389
+      },
+      "foot_x_src": 258.23,
+      "placed": [
+        0,
+        31
+      ],
+      "scaled": [
+        48,
+        13
+      ],
+      "sprite": "ranged.death.2",
+      "src_bbox": [
+        31,
+        1093,
+        389,
+        1187
+      ]
+    }
+  ],
+  "compiler": "tools/art_pipeline/actors_v02/build.py",
+  "enemies": {
+    "aliases": {
+      "note": "idle.0 reuses recover.0 drawing per hand-off",
+      "pairs": [
+        "melee.east.idle.0->melee.east.recover.0",
+        "charger.east.idle.0->charger.east.recover.0",
+        "ranged.east.idle.0->ranged.east.recover.0"
+      ]
+    },
+    "clips": 21,
+    "distinct": 36,
+    "frames": 39,
+    "sprite_ids": 39
+  },
+  "errors": [],
+  "legacy_atlas": {
+    "sprites": 14
+  },
+  "pending": [],
+  "ranger": {
+    "clips": 28,
+    "distinct": 68,
+    "frames": 68
+  },
+  "ranger_idle": {
+    "frames": 4
+  },
+  "residents": {
+    "clips": 5,
+    "distinct": 20,
+    "frames": 20
+  },
+  "scale_diagnostics": [
+    {
+      "scale": [
+        1,
+        7
+      ],
+      "scaled_walk_h": 38.0,
+      "tallest_src": 274,
+      "unit": "ranger.south",
+      "walk0_height_src": 266,
+      "widest_src": 254
+    },
+    {
+      "scale": [
+        19,
+        130
+      ],
+      "scaled_walk_h": 38.0,
+      "tallest_src": 286,
+      "unit": "ranger.north",
+      "walk0_height_src": 260,
+      "widest_src": 265
+    },
+    {
+      "scale": [
+        44,
+        293
+      ],
+      "scaled_walk_h": 37.54,
+      "tallest_src": 293,
+      "unit": "ranger.east",
+      "walk0_height_src": 250,
+      "widest_src": 294
+    },
+    {
+      "scale": [
+        38,
+        269
+      ],
+      "scaled_walk_h": 38.0,
+      "tallest_src": 288,
+      "unit": "ranger.west",
+      "walk0_height_src": 269,
+      "widest_src": 325
+    },
+    {
+      "scale": [
+        4,
+        27
+      ],
+      "scaled_walk_h": 36.59,
+      "tallest_src": 247,
+      "unit": "enemy.melee",
+      "walk0_height_src": 247,
+      "widest_src": 324
+    },
+    {
+      "scale": [
+        12,
+        83
+      ],
+      "scaled_walk_h": 30.36,
+      "tallest_src": 237,
+      "unit": "enemy.charger",
+      "walk0_height_src": 210,
+      "widest_src": 332
+    },
+    {
+      "scale": [
+        24,
+        179
+      ],
+      "scaled_walk_h": 35.26,
+      "tallest_src": 305,
+      "unit": "enemy.ranged",
+      "walk0_height_src": 263,
+      "widest_src": 358
+    },
+    {
+      "body_height_src": 509,
+      "scale": [
+        32,
+        509
+      ],
+      "scaled_body_h": 32.0,
+      "unit": "npc.mira"
+    },
+    {
+      "body_height_src": 469,
+      "scale": [
+        32,
+        469
+      ],
+      "scaled_body_h": 32.0,
+      "unit": "npc.iven"
+    },
+    {
+      "body_height_src": 454,
+      "scale": [
+        16,
+        227
+      ],
+      "scaled_body_h": 32.0,
+      "unit": "npc.taren"
+    },
+    {
+      "body_height_src": 453,
+      "scale": [
+        32,
+        453
+      ],
+      "scaled_body_h": 32.0,
+      "unit": "npc.leia"
+    },
+    {
+      "body_height_src": 420,
+      "scale": [
+        8,
+        105
+      ],
+      "scaled_body_h": 32.0,
+      "unit": "npc.oren"
+    },
+    {
+      "max_w": 116,
+      "scale": [
+        55,
+        413
+      ],
+      "target_h": 110,
+      "unit": "boss.body"
+    },
+    {
+      "scale": [
+        4,
+        27
+      ],
+      "scaled_walk_h": 36.59,
+      "tallest_src": 247,
+      "unit": "enemy.melee",
+      "walk0_height_src": 247,
+      "widest_src": 324
+    },
+    {
+      "scale": [
+        12,
+        83
+      ],
+      "scaled_walk_h": 30.36,
+      "tallest_src": 237,
+      "unit": "enemy.charger",
+      "walk0_height_src": 210,
+      "widest_src": 332
+    },
+    {
+      "scale": [
+        24,
+        179
+      ],
+      "scaled_walk_h": 35.26,
+      "tallest_src": 305,
+      "unit": "enemy.ranged",
+      "walk0_height_src": 263,
+      "widest_src": 358
+    }
+  ],
+  "scene_atlas": {
+    "sprites": 19
+  },
+  "segmentation": {
+    "boss_body": {
+      "col_cuts": {
+        "row0": [
+          0,
+          887,
+          1774
+        ]
+      },
+      "row_cuts": [
+        0,
+        887
+      ]
+    },
+    "boss_core": {
+      "col_cuts": {
+        "row0": [
+          0,
+          887,
+          1774
+        ]
+      },
+      "row_cuts": [
+        0,
+        887
+      ]
+    },
+    "boss_hands": {
+      "col_cuts": {
+        "row0": [
+          0,
+          768,
+          1536
+        ]
+      },
+      "row_cuts": [
+        0,
+        1024
+      ]
+    },
+    "enemy_charger": {
+      "col_cuts": {
+        "row0": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row1": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row2": [
+          0,
+          314,
+          627,
+          939,
+          1254
+        ],
+        "row3": [
+          0,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        314,
+        627,
+        940,
+        1254
+      ]
+    },
+    "enemy_melee": {
+      "col_cuts": {
+        "row0": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row1": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row2": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row3": [
+          0,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        336,
+        636,
+        940,
+        1254
+      ]
+    },
+    "enemy_ranged": {
+      "col_cuts": {
+        "row0": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row1": [
+          0,
+          314,
+          627,
+          907,
+          1254
+        ],
+        "row2": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row3": [
+          0,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        349,
+        666,
+        946,
+        1254
+      ]
+    },
+    "npc_iven": {
+      "col_cuts": {
+        "row0": [
+          0,
+          627,
+          1254
+        ],
+        "row1": [
+          0,
+          627,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        627,
+        1254
+      ]
+    },
+    "npc_leia": {
+      "col_cuts": {
+        "row0": [
+          0,
+          644,
+          1289
+        ],
+        "row1": [
+          0,
+          644,
+          1289
+        ]
+      },
+      "row_cuts": [
+        0,
+        610,
+        1220
+      ]
+    },
+    "npc_mira": {
+      "col_cuts": {
+        "row0": [
+          0,
+          639,
+          1278
+        ],
+        "row1": [
+          0,
+          639,
+          1278
+        ]
+      },
+      "row_cuts": [
+        0,
+        615,
+        1230
+      ]
+    },
+    "npc_oren": {
+      "col_cuts": {
+        "row0": [
+          0,
+          627,
+          1254
+        ],
+        "row1": [
+          0,
+          627,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        627,
+        1254
+      ]
+    },
+    "npc_taren": {
+      "col_cuts": {
+        "row0": [
+          0,
+          627,
+          1254
+        ],
+        "row1": [
+          0,
+          627,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        627,
+        1254
+      ]
+    },
+    "ranger_east": {
+      "col_cuts": {
+        "row0": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row1": [
+          0,
+          334,
+          628,
+          940,
+          1254
+        ],
+        "row2": [
+          0,
+          328,
+          627,
+          963,
+          1254
+        ],
+        "row3": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        318,
+        637,
+        940,
+        1254
+      ]
+    },
+    "ranger_identity": {
+      "col_cuts": {
+        "row0": [
+          0,
+          632,
+          1263
+        ],
+        "row1": [
+          0,
+          632,
+          1263
+        ]
+      },
+      "row_cuts": [
+        0,
+        622,
+        1245
+      ]
+    },
+    "ranger_north": {
+      "col_cuts": {
+        "row0": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row1": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row2": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row3": [
+          0,
+          314,
+          627,
+          938,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        336,
+        645,
+        940,
+        1254
+      ]
+    },
+    "ranger_south": {
+      "col_cuts": {
+        "row0": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row1": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row2": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row3": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        324,
+        627,
+        933,
+        1254
+      ]
+    },
+    "ranger_west": {
+      "col_cuts": {
+        "row0": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row1": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row2": [
+          0,
+          314,
+          627,
+          940,
+          1254
+        ],
+        "row3": [
+          0,
+          314,
+          609,
+          935,
+          1254
+        ]
+      },
+      "row_cuts": [
+        0,
+        324,
+        652,
+        940,
+        1254
+      ]
+    }
+  },
+  "sources": {
+    "boss_body_raw.png": "e0cf4ca9a2a24e759bb90268fa9b42ca0263102e11c8bc8ec4bdbf147c5626fc",
+    "boss_core_raw.png": "76eb586a64768ea537d9201dc431659ca8f846c7cd2cf332fccbd787452e5e49",
+    "boss_hands_raw.png": "1ed2664616c0af17d94b52010b9a7d2aed109afb05f026d38c30512bb1f8a751",
+    "enemy_charger_raw.png": "978f00a3beb561b4a41aa86653fdd9347c0790a41f933d1f79851914a0bbff83",
+    "enemy_melee_raw.png": "be52a0071d311b614a431fd1d27dfc5f48e102218816719f34c84389ca2db796",
+    "enemy_ranged_raw.png": "b3608c237b7112895f240fc7794d8402be20851239151aae42bf3a645b923e77",
+    "npc_iven_raw.png": "e1d56092598bd6513daff44e64391c2277f5327dfd205b73863ce22346f86478",
+    "npc_leia_raw.png": "ef248b97c7928b92a62d4cbe3f60213402da067a920f29437f8c1ce3d6325c8e",
+    "npc_mira_raw.png": "743f0ab67747b1202b5c3dfe8e84b53aee358d114ad9f9aec41df35d5007d4d9",
+    "npc_oren_raw.png": "e391bd6b7579801430d0b5d8ef67c6d43a2a7902a54e4eb987e85ad79a0366ba",
+    "npc_taren_raw.png": "aaa55472bfd94a2a85f4a973ab7857ce895e56f2c84aac09440a3a97fb1a5513",
+    "ranger_east_raw.png": "96288b8b127233903ef1bc8ccfb75de48e9bc0e39888b2d3c5c09fa924899217",
+    "ranger_identity_raw.png": "5a59e844f5f582b488ffd15a862a2ff9533dbd6242c214c68b7187213ec0295a",
+    "ranger_north_raw.png": "f2b8829771519d2839954280a841bf3869bf5c47090b48cfdb80d948438278c3",
+    "ranger_south_raw.png": "5ec76a1c516806dc0241bd86b8028ea5882aac66ec61cfc072fe0e6257190193",
+    "ranger_west_raw.png": "d46f3631d7939bb0038f77494ffe453365185e50b64d9040c04059621e75988f"
+  },
+  "threshold": 240,
+  "warnings": [
+    "east: shared scale capped to 0.150",
+    "melee.walk2: opaque reaches cell cut ['bottom']",
+    "melee.windup1: opaque reaches cell cut ['bottom']",
+    "enemy_melee: shared scale capped to 0.148",
+    "enemy_charger: shared scale capped to 0.145",
+    "ranged.walk2: opaque reaches cell cut ['bottom']",
+    "ranged.windup0: opaque reaches cell cut ['bottom']",
+    "ranged.windup1: opaque reaches cell cut ['bottom']",
+    "ranged.recover0: opaque reaches cell cut ['bottom']",
+    "enemy_ranged: shared scale capped to 0.134",
+    "enemies: 3 aliased drawings (agreed idle=recover)",
+    "melee.walk2: opaque reaches cell cut ['bottom']",
+    "melee.windup1: opaque reaches cell cut ['bottom']",
+    "enemy_melee: shared scale capped to 0.148",
+    "enemy_charger: shared scale capped to 0.145",
+    "ranged.walk2: opaque reaches cell cut ['bottom']",
+    "ranged.windup0: opaque reaches cell cut ['bottom']",
+    "ranged.windup1: opaque reaches cell cut ['bottom']",
+    "ranged.recover0: opaque reaches cell cut ['bottom']",
+    "enemy_ranged: shared scale capped to 0.134"
+  ]
+}

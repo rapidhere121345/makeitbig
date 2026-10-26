@@ -2,7 +2,7 @@
 
 This is the **host-operator** workflow. The operator controls Tailscale; project scripts only generate and validate a release root. These host exposure commands are not instructions to change the devbox's network or visibility policy.
 
-**Active endpoint (2026-10-22):** `https://example-runtime.tail99c4e8.ts.net:8448/` serves the filesystem directory `/data/claude/workspace/makeitbig/release-online` directly (tailnet-only; funnel off). The operator repointed it from the old host `build/releases/` proxy. The 20 prior releases were preserved — moved atomically to `build/releases-archive-20261023T042838Z-98b8bde4` under the original checkout, deep-verified, not deleted. To publish a validated build, copy its `builds/<id>/` directory into `release-online/builds/`, then run `MIB_RELEASE_ROOT=<abs path>/release-online ./scripts/release.sh index`, `site`, and `verify --deep` against that root.
+**Current publish URL (operator update, 2026-10-23):** `http://192.0.2.10:18080/`. This replaces the former HTTPS URL; the operator reported access fixed and explicitly requested no endpoint check. The local publication root remains `/data/claude/workspace/makeitbig/release-online`. The 20 prior releases were preserved — moved atomically to `build/releases-archive-20261023T042838Z-98b8bde4` under the original checkout, deep-verified, not deleted. To publish a validated build, copy its `builds/<id>/` directory into `release-online/builds/`, then run `MIB_RELEASE_ROOT=<abs path>/release-online ./scripts/release.sh index`, `site`, and `verify --deep` against that root.
 
 ## Prepare on the Host
 
@@ -53,10 +53,9 @@ Use tailnet-only `serve` by default. Tailscale ACLs govern access. Never serve t
 
 ## Existing Endpoint
 
-Existing host tailnet-only URL: <https://example-runtime.tail99c4e8.ts.net:8448>.
-Since 2026-10-22 it maps to `release-online/` under the devbox checkout (see the
-header note). Availability must be checked separately when publication is
-requested. Project scripts never run `tailscaled`.
+Current operator-supplied publish URL: <http://192.0.2.10:18080/>.
+Use this address going forward. No endpoint check was performed, as requested
+by the operator. Project scripts never run `tailscaled`.
 
 For a sandbox-managed service, use the sanctioned AF Infra control plane and
 an operator-approved contract. Do not reuse another project's exposure, publish

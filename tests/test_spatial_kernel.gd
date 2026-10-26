@@ -11,6 +11,7 @@ const ContinuousHitResolverScript := preload("res://src/runtime/spatial/continuo
 const VisionResolverScript := preload("res://src/runtime/spatial/vision_resolver.gd")
 const OcclusionResolverScript := preload("res://src/runtime/spatial/occlusion_resolver.gd")
 const SpatialSweepScript := preload("res://src/runtime/geometry/spatial_sweep.gd")
+const ShapeScript := preload("res://src/runtime/geometry/spatial_shape.gd")
 const Fixtures := preload("res://tests/spatial/spatial_fixtures.gd")
 
 var failures: Array[String] = []
@@ -33,6 +34,8 @@ func _initialize() -> void:
 	_test_overlay_revision()
 	_test_byte_stable_snapshots_and_ordering()
 	_test_request_validation()
+	_test_zero_displacement_contract()
+	_test_broadphase_differential()
 	if failures.is_empty():
 		print("PASS  test_spatial_kernel.gd")
 		quit(0)
@@ -550,6 +553,119 @@ func _test_byte_stable_snapshots_and_ordering() -> void:
 	var second_blockers := Contact.encode(second_sight["blockers"])
 	_expect(JSON.stringify(first_blockers) == JSON.stringify(second_blockers), "bytes: vision blockers depended on registration order")
 	_expect(JSON.stringify(Contact.encode(first_vision.line_of_sight(sight_request)["blockers"])) == JSON.stringify(first_blockers), "bytes: repeated vision query changed bytes")
+
+
+func _contact_signature(contacts: Array) -> Array:
+	var rows: Array = []
+	for entry: Variant in contacts:
+		var contact := entry as Contact
+		rows.append("%s|%s|%s|%s|%s|%s" % [contact.source_id, contact.feature, contact.toi, contact.point, contact.normal, contact.penetrating])
+	return rows
+
+
+func _test_broadphase_differential() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261026
+	var channel_sets: Array = [[Channels.MOVEMENT], [Channels.MOVEMENT, Channels.PROJECTILE], [Channels.PROJECTILE], [Channels.VISION, Channels.MOVEMENT]]
+	var surfaces: Array = []
+	for number in 90:
+		var origin := Vector2(rng.randf_range(-300.0, 900.0), rng.randf_range(-300.0, 700.0))
+		var shape: Dictionary
+		match number % 3:
+			0: shape = {"kind": "rect", "rect": Rect2(origin, Vector2(rng.randf_range(2.0, 90.0), rng.randf_range(2.0, 90.0)))}
+			1: shape = {"kind": "circle", "center": origin, "radius": rng.randf_range(1.0, 40.0)}
+			_: shape = {"kind": "polygon", "points": PackedVector2Array([origin, origin + Vector2(rng.randf_range(20.0, 80.0), rng.randf_range(0.0, 10.0)), origin + Vector2(rng.randf_range(10.0, 60.0), rng.randf_range(30.0, 70.0))])}
+		surfaces.append({"id": "s%03d" % number, "shape": shape, "channels": channel_sets[number % channel_sets.size()]})
+	var built: Dictionary = StaticSpatialIndexScript.build({"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION, "asset_id": "fixture/broadphase", "surfaces": surfaces})
+	_expect(bool(built["ok"]), "broadphase: fixture index failed to build")
+	if not bool(built["ok"]):
+		return
+	var index: StaticSpatialIndex = built["value"]
+	var checked := 0
+	var hit_queries := 0
+	for iteration in 700:
+		var position := Vector2(rng.randf_range(-350.0, 950.0), rng.randf_range(-350.0, 750.0))
+		var radius := rng.randf_range(0.0, 30.0)
+		if iteration % 7 == 0:
+			var target: Dictionary = index.surface("s%03d" % rng.randi_range(0, 89))
+			var shape: Dictionary = target["shape"]
+			if shape["kind"] != "circle":
+				var points: PackedVector2Array = shape["points"]
+				var anchor: Vector2 = points[0]
+				position = anchor + Vector2(-radius + [-0.0001, 0.0, 0.0001][iteration % 3], 0.0)
+		var channel: StringName = [Channels.MOVEMENT, Channels.PROJECTILE, Channels.VISION, Channels.ATTACK][iteration % 4]
+		var expected: Array = []
+		var swept_expected: Array = []
+		var displacement := Vector2(rng.randf_range(-120.0, 120.0), rng.randf_range(-120.0, 120.0))
+		if iteration % 5 == 0:
+			displacement = Vector2.ZERO
+		for id: String in index.surface_ids(channel):
+			var stored: Dictionary = index.surface(id)
+			var overlap: Dictionary = ShapeScript.circle_shape_overlap(position, radius, stored["shape"])
+			if bool(overlap["overlaps"]):
+				expected.append(Contact.from_raw({"toi": 0.0, "point": overlap["point"], "normal": overlap["normal"], "feature": overlap["feature"], "penetrating": true, "initial": true}, channel, Contact.KIND_STATIC_SURFACE, id, 0))
+			var raw: Dictionary = StaticSpatialIndexScript._sweep_shape(stored["shape"], position, displacement, radius)
+			if not raw.is_empty():
+				swept_expected.append(Contact.from_raw(raw, channel, Contact.KIND_STATIC_SURFACE, id, 0))
+		expected = Contact.sort_contacts(expected)
+		swept_expected = Contact.sort_contacts(swept_expected)
+		if not expected.is_empty() or not swept_expected.is_empty():
+			hit_queries += 1
+		_expect(_contact_signature(index.overlaps(channel, position, radius)) == _contact_signature(expected), "broadphase: overlaps differ from brute force at iteration %d" % iteration)
+		_expect(_contact_signature(index.sweep(channel, position, displacement, radius)) == _contact_signature(swept_expected), "broadphase: sweep differs from brute force at iteration %d" % iteration)
+		checked += 1
+	_expect(checked == 700 and hit_queries > 100, "broadphase: differential run did not exercise enough contacts (%d)" % hit_queries)
+	_expect(index.overlaps(Channels.MOVEMENT, Vector2(NAN, 0.0), 4.0).is_empty() and index.overlaps(Channels.MOVEMENT, Vector2.ZERO, -1.0).is_empty(), "broadphase: invalid overlap input was not empty")
+	_expect(index.sweep(Channels.MOVEMENT, Vector2.ZERO, Vector2(INF, 0.0), 4.0).is_empty() and index.overlaps(&"bogus", Vector2.ZERO, 4.0).is_empty(), "broadphase: invalid sweep input was not empty")
+	_expect(var_to_str(index.snapshot()) == var_to_str(StaticSpatialIndexScript.build({"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION, "asset_id": "fixture/broadphase", "surfaces": surfaces})["value"].snapshot()), "broadphase: snapshot is not rebuild-stable")
+
+
+func _test_zero_displacement_contract() -> void:
+	var wall_index: StaticSpatialIndex = StaticSpatialIndexScript.build(Fixtures.wall_world())["value"]
+	var wall: MovementResolver = MovementResolverScript.make(wall_index)["value"]
+	var idle: Dictionary = wall.move({"start": Vector2(20.0, 60.0), "displacement": Vector2.ZERO, "radius": 6.0})
+	_expect(bool(idle["ok"]) and not bool(idle["blocked"]) and String(idle["mode"]) == "completed", "zero: idle move was not a clean completion")
+	_expect(idle["position"] == Vector2(20.0, 60.0) and (idle["contacts"] as Array).is_empty() and int(idle["iterations"]) == 0, "zero: idle move changed state or reported contacts")
+	var overlapping: Dictionary = wall.move({"start": Vector2(102.0, 60.0), "displacement": Vector2.ZERO, "radius": 6.0})
+	_expect(String(overlapping["mode"]) == "start_penetrating" and bool(overlapping["blocked"]) and not (overlapping["contacts"] as Array).is_empty(), "zero: overlapping start was not reported")
+	_expect(overlapping["position"] == Vector2(102.0, 60.0), "zero: overlapping start moved")
+	var recovery: Dictionary = wall.move({"start": Vector2(102.0, 60.0), "displacement": Vector2(-8.0, 0.0), "radius": 6.0})
+	_expect(String(recovery["mode"]) == "start_penetrating", "zero: nonzero move from an overlapping start changed contract")
+	var ring: MovementResolver = MovementResolverScript.make(StaticSpatialIndexScript.build(Fixtures.ring_world())["value"])["value"]
+	var outside: Dictionary = ring.move({"start": Vector2(100.0, 190.0), "displacement": Vector2.ZERO, "radius": 6.0})
+	_expect(String(outside["mode"]) == "start_penetrating" and bool(outside["blocked"]), "zero: boundary overlap at an unmoved start was not reported")
+	var inside: Dictionary = ring.move({"start": Vector2(100.0, 170.0), "displacement": Vector2.ZERO, "radius": 6.0})
+	_expect(not bool(inside["blocked"]) and inside["position"] == Vector2(100.0, 170.0), "zero: legal boundary position changed")
+	var open_index: StaticSpatialIndex = StaticSpatialIndexScript.build(Fixtures.open_world())["value"]
+	var dynamic := DynamicSpatialIndexScript.new()
+	var open: MovementResolver = MovementResolverScript.make(open_index, null, dynamic)["value"]
+	dynamic.register_body(Fixtures.body("self", Vector2(80.0, 60.0), 6.0, [Channels.MOVEMENT], &"solid"))
+	var own: Dictionary = open.move({"start": Vector2(80.0, 60.0), "displacement": Vector2.ZERO, "radius": 6.0, "source_id": "self"})
+	_expect(not bool(own["blocked"]) and (own["contacts"] as Array).is_empty(), "zero: own body filtered incorrectly")
+	dynamic.register_body(Fixtures.body("guard", Vector2(84.0, 60.0), 6.0, [Channels.MOVEMENT], &"solid"))
+	var solid: Dictionary = open.move({"start": Vector2(80.0, 60.0), "displacement": Vector2.ZERO, "radius": 6.0, "source_id": "self"})
+	_expect(String(solid["mode"]) == "start_penetrating" and bool(solid["blocked"]), "zero: overlapping solid body not reported")
+	dynamic.unregister_body("guard")
+	dynamic.register_body(Fixtures.body("crowd", Vector2(84.0, 60.0), 6.0, [Channels.MOVEMENT], &"soft"))
+	var soft: Dictionary = open.move({"start": Vector2(80.0, 60.0), "displacement": Vector2.ZERO, "radius": 6.0, "source_id": "self"})
+	_expect(soft["position"] != Vector2(80.0, 60.0), "zero: soft separation was skipped for an unmoved start")
+	var repeat: Dictionary = wall.move({"start": Vector2(20.0, 60.0), "displacement": Vector2.ZERO, "radius": 6.0})
+	_expect(var_to_str(repeat) == var_to_str(idle), "zero: repeated idle result is not deterministic")
+	# At this coordinate the contact skin rounds back to the exact float32
+	# starting point. A real blocked move therefore exercises the endpoint
+	# reuse branch, rather than only testing an empty movement command.
+	var far_asset: Dictionary = Fixtures.wall_world()
+	far_asset.erase("movement_boundary")
+	far_asset["surfaces"][0]["shape"] = {"kind": "rect", "rect": Rect2(50000.0, 0.0, 20.0, 120.0)}
+	var far_index: StaticSpatialIndex = StaticSpatialIndexScript.build(far_asset)["value"]
+	var far_resolver: MovementResolver = MovementResolverScript.make(far_index)["value"]
+	var stopped: Dictionary = far_resolver.move({"start": Vector2(49994.0, 60.0), "displacement": Vector2(20.0, 0.0), "radius": 6.0})
+	_expect(stopped.position == Vector2(49994.0, 60.0) and stopped.blocked and stopped.mode == "blocked", "zero-net: blocked contact must retain its mode and exact start")
+	_expect(stopped.remaining == Vector2.ZERO and stopped.iterations == 1 and stopped.contacts.size() == 1, "zero-net: blocked report lost its contact or residual contract")
+	if stopped.contacts.size() == 1:
+		var stopped_contact := stopped.contacts[0] as Contact
+		_expect(stopped_contact.source_id == "wall" and stopped_contact.toi == 0.0 and _near_vector(stopped_contact.normal, Vector2.LEFT), "zero-net: blocking contact changed")
+	_expect(far_index.overlaps(Channels.MOVEMENT, stopped.position, 6.0).is_empty(), "zero-net: skipped endpoint query must be empty")
 
 
 func _test_request_validation() -> void:

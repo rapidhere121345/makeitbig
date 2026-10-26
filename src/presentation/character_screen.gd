@@ -335,6 +335,21 @@ func _render_tree() -> void:
 	# A valid selection survives an authoritative update, but its allocation,
 	# tier gates and request-pending state still need to reach the board.
 	_talent_board.present(nodes_by_tier, _selected_talent_id, available and not _action_pending)
+	_seed_initial_focus()
+
+
+## Keyboard entry: the selected talent owns focus when nothing else does.
+## Authoritative refreshes never steal focus from a control the player already
+## reached — seeding only happens while no control owns focus at all.
+func _seed_initial_focus() -> void:
+	if not is_inside_tree():
+		return
+	var owner := get_viewport().gui_get_focus_owner()
+	if owner != null:
+		return
+	var button: Button = _talent_board.node_button(_selected_talent_id)
+	if button != null and button.focus_mode != Control.FOCUS_NONE and button.is_visible_in_tree():
+		button.grab_focus()
 
 
 func set_talent_icons_for_test(reader: RefCounted) -> void:

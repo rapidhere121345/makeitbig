@@ -1,0 +1,950 @@
+{
+	"schema_version": 1,
+	"status": "ready",
+	"status_reason": "Terrain traced from the packed winding ground; objects placed against the packed 240x220 bridges, gateway, houses and wall.",
+	"package": "world_expansion_v01",
+	"assets_manifest": "art/production/p1/world_expansion_v01/assets.json",
+	"ground": {
+		"asset": "town_ground",
+		"source": "town_ground_winding_raw.png",
+		"raw_sha256": "0a9579415efb9114bfad7fcc2818c2d19317f8324112cae2a35e3e304ca40f07",
+		"rejected_sources": [
+			"town_ground_raw.png"
+		]
+	},
+	"hero_radius": 6,
+	"padding_native_px": 5,
+	"footprints": {
+		"bridge": {
+			"deck": [
+				[
+					70,
+					64
+				],
+				[
+					114,
+					44
+				],
+				[
+					184,
+					134
+				],
+				[
+					196,
+					156
+				],
+				[
+					126,
+					182
+				],
+				[
+					116,
+					160
+				]
+			],
+			"deck_west_side": [
+				[
+					70,
+					64
+				],
+				[
+					116,
+					160
+				],
+				[
+					126,
+					182
+				]
+			],
+			"deck_east_side": [
+				[
+					114,
+					44
+				],
+				[
+					184,
+					134
+				],
+				[
+					196,
+					156
+				]
+			],
+			"rects": [],
+			"reason": "Measured NW-SE plank deck inside both rails plus the south-east stone landing; the whole deck is floor and is cut out of the water exactly along its rail lines."
+		},
+		"bridge_ne": {
+			"deck": [
+				[
+					114,
+					52
+				],
+				[
+					172,
+					58
+				],
+				[
+					126,
+					146
+				],
+				[
+					120,
+					180
+				],
+				[
+					40,
+					160
+				],
+				[
+					58,
+					128
+				]
+			],
+			"deck_west_side": [
+				[
+					114,
+					52
+				],
+				[
+					58,
+					128
+				],
+				[
+					40,
+					160
+				]
+			],
+			"deck_east_side": [
+				[
+					172,
+					58
+				],
+				[
+					126,
+					146
+				],
+				[
+					120,
+					180
+				]
+			],
+			"rects": [],
+			"reason": "Separately measured NE-SW plank deck inside both rails plus the south-west stone landing (not a mirror of bridge)."
+		},
+		"gateway": {
+			"rects": [
+				[
+					12,
+					150,
+					60,
+					28
+				],
+				[
+					116,
+					178,
+					66,
+					28
+				]
+			],
+			"reason": "Back-left and front-right tower plinth floor contacts; the arch opening between them stays passable. Rects receive the shared 5px pad."
+		},
+		"house_east": {
+			"polygons": [
+				[
+					[
+						26,
+						130
+					],
+					[
+						88,
+						104
+					],
+					[
+						200,
+						158
+					],
+					[
+						140,
+						186
+					]
+				]
+			],
+			"reason": "Stone plinth floor diamond including the porch; walls, roof and chimney are projected height. Raw outline; authored with the shared 5px outset."
+		},
+		"house_west": {
+			"polygons": [
+				[
+					[
+						16,
+						148
+					],
+					[
+						100,
+						124
+					],
+					[
+						208,
+						152
+					],
+					[
+						124,
+						174
+					]
+				]
+			],
+			"reason": "Stone plinth floor diamond including the door step; walls, roof and chimney are projected height. Raw outline; authored with the shared 5px outset."
+		},
+		"wall": {
+			"polygons": [
+				[
+					[
+						8,
+						58
+					],
+					[
+						182,
+						88
+					],
+					[
+						182,
+						104
+					],
+					[
+						8,
+						72
+					]
+				]
+			],
+			"reason": "Oblique wall base band from the left post to the right tower foot; the parapet is projected height. Raw outline; authored with the shared 5px outset."
+		},
+		"town_order_v01/forge_west": {
+			"polygons": [
+				[
+					[
+						22,
+						196
+					],
+					[
+						144,
+						146
+					],
+					[
+						302,
+						212
+					],
+					[
+						180,
+						262
+					]
+				]
+			],
+			"reason": "Raw stone plinth floor diamond measured on the packed art (open forge apron included); walls, roof and chimney are projected height. Authored with the shared 5px outset."
+		},
+		"town_order_v01/loadout_east": {
+			"polygons": [
+				[
+					[
+						46,
+						146
+					],
+					[
+						96,
+						122
+					],
+					[
+						236,
+						186
+					],
+					[
+						186,
+						212
+					]
+				]
+			],
+			"reason": "Raw plinth floor diamond of the long hall including the east entry steps; turret and roof are projected height. Authored with the shared 5px outset."
+		},
+		"town_order_v01/wall_ne": {
+			"polygons": [
+				[
+					[
+						10,
+						86
+					],
+					[
+						168,
+						46
+					],
+					[
+						172,
+						62
+					],
+					[
+						14,
+						102
+					]
+				]
+			],
+			"reason": "Raw base band from the lower-left post foot to the upper-right post foot; parapet is projected height. Authored with the shared 5px outset."
+		},
+		"town_order_v01/wall_north_south": {
+			"polygons": [
+				[
+					[
+						56,
+						24
+					],
+					[
+						72,
+						24
+					],
+					[
+						72,
+						238
+					],
+					[
+						56,
+						238
+					]
+				]
+			],
+			"reason": "Vertical wall run floor strip measured on the packed v2 art (x56-72), from below the projected top cap to the foot; authored with the shared 5px outset. Sections chain at a 210px stride."
+		}
+	},
+	"placements": [
+		{
+			"name": "bridge_west",
+			"family": "bridge_ne",
+			"feet": [
+				755,
+				907
+			],
+			"reason": "West painted path crossing; NE-SW deck centred on the measured 84-90px water span with ~20px dry landing at both ends."
+		},
+		{
+			"name": "bridge_east",
+			"family": "bridge",
+			"feet": [
+				1344,
+				834
+			],
+			"reason": "East painted path crossing; NW-SE deck centred on the measured ~83px water span with ~22px dry landing at both ends."
+		},
+		{
+			"name": "gate_arrival",
+			"family": "gateway",
+			"feet": [
+				745,
+				952
+			],
+			"reason": "Arrival entrance at the south map edge where the west bridge path leaves; visual only."
+		},
+		{
+			"name": "gate_expedition",
+			"family": "gateway",
+			"feet": [
+				1365,
+				940
+			],
+			"reason": "Expedition Gate where the east bridge path leaves south; hosts the expedition exit socket."
+		},
+		{
+			"name": "wall_arrival_west",
+			"family": "wall",
+			"feet": [
+				575,
+				917
+			],
+			"reason": "Wall run joining the arrival gate back-left tower on the dry south bank."
+		},
+		{
+			"name": "wall_expedition_west",
+			"family": "wall",
+			"feet": [
+				1195,
+				905
+			],
+			"reason": "Wall run joining the expedition gate back-left tower on the dry south bank."
+		},
+		{
+			"name": "house_north_west",
+			"family": "house_east",
+			"feet": [
+				440,
+				190
+			],
+			"reason": "Open northern slot below the mountains, facing east."
+		},
+		{
+			"name": "house_north_east",
+			"family": "house_west",
+			"feet": [
+				1340,
+				250
+			],
+			"reason": "North-east slot above the Proxy Bay; door faces west onto the north-east road."
+		},
+		{
+			"name": "house_south_west",
+			"family": "house_east",
+			"feet": [
+				150,
+				905
+			],
+			"reason": "South-bank house; door faces east toward the arrival road and west bridge."
+		},
+		{
+			"name": "wall_pass_north",
+			"family": "wall",
+			"feet": [
+				727,
+				120
+			],
+			"reason": "Closes the painted north mountain path above Loadout."
+		},
+		{
+			"name": "wall_pass_north_east",
+			"family": "wall",
+			"feet": [
+				1268,
+				160
+			],
+			"reason": "Closes the painted north-east mountain path."
+		},
+		{
+			"name": "pine_bank_west",
+			"family": "generated_world_v02/pine",
+			"feet": [
+				395,
+				625
+			],
+			"reason": "North-bank pine framing the west river view."
+		},
+		{
+			"name": "pine_bank_mid",
+			"family": "generated_world_v02/pine",
+			"feet": [
+				1050,
+				735
+			],
+			"reason": "North-bank pine at the middle river bend."
+		},
+		{
+			"name": "pine_bank_south",
+			"family": "generated_world_v02/pine",
+			"feet": [
+				1180,
+				860
+			],
+			"reason": "South-bank pine between the gates."
+		},
+		{
+			"name": "lamp_bank_west",
+			"family": "generated_world_v02/lamp",
+			"feet": [
+				735,
+				752
+			],
+			"reason": "West side of the symmetric lamp pair at the west bridge north entry."
+		},
+		{
+			"name": "wood_hamlet",
+			"family": "generated_world_v02/woodpile",
+			"feet": [
+				360,
+				895
+			],
+			"reason": "Woodpile beside the south-bank house."
+		},
+		{
+			"name": "wall_pass_north_east_rise",
+			"family": "town_order_v01/wall_ne",
+			"feet": [
+				1434,
+				162
+			],
+			"reason": "Rising wall run continuing wall_pass_north_east up to the north-east mountain foot (replaces the rail fence stub)."
+		},
+		{
+			"name": "wall_east_0",
+			"family": "town_order_v01/wall_north_south",
+			"feet": [
+				1488,
+				315
+			],
+			"reason": "East boundary wall run from the north-east mountain foot to the north river bank; overlapping section footprints form one continuous barrier."
+		},
+		{
+			"name": "wall_east_1",
+			"family": "town_order_v01/wall_north_south",
+			"feet": [
+				1488,
+				525
+			],
+			"reason": "East boundary wall run from the north-east mountain foot to the north river bank; overlapping section footprints form one continuous barrier."
+		},
+		{
+			"name": "wall_east_2",
+			"family": "town_order_v01/wall_north_south",
+			"feet": [
+				1488,
+				650
+			],
+			"reason": "East boundary wall run from the north-east mountain foot to the north river bank; overlapping section footprints form one continuous barrier."
+		},
+		{
+			"name": "pine_east_a",
+			"family": "generated_world_v02/pine",
+			"feet": [
+				1452,
+				560
+			],
+			"reason": "Inner tree pair softening the east wall above the river bank."
+		},
+		{
+			"name": "pine_east_b",
+			"family": "generated_world_v02/pine",
+			"feet": [
+				1428,
+				590
+			],
+			"reason": "Inner tree pair softening the east wall above the river bank."
+		}
+	],
+	"terrain": [],
+	"moves": {
+		"lamp_9": {
+			"from": [
+				1358,
+				774
+			],
+			"to": [
+				1420,
+				815
+			],
+			"reason": "Old feet are inside the traced river; now lights the east bridge south landing."
+		},
+		"lamp_8": {
+			"from": [
+				1228,
+				702
+			],
+			"to": [
+				1362,
+				668
+			],
+			"reason": "Old footprint touched the traced north bank; now flanks the east bridge north entry."
+		},
+		"tree_southwest": {
+			"from": [
+				250,
+				759
+			],
+			"to": [
+				248,
+				812
+			],
+			"reason": "Old trunk is inside the traced river; grouped with tree_arrival on the dry south bank, clear of the south-west house.",
+			"previous": [
+				[
+					190,
+					830
+				]
+			]
+		},
+		"wood_south": {
+			"from": [
+				622,
+				683
+			],
+			"to": [
+				622,
+				662
+			],
+			"reason": "Old woodpile footprint overlapped the traced north bank."
+		},
+		"tree_south": {
+			"from": [
+				805,
+				772
+			],
+			"to": [
+				985,
+				738
+			],
+			"reason": "Old pine stood on the west bridge north landing; regrouped with pine_bank_mid at the mid river bend, clear of both bridge routes."
+		},
+		"lamp_7": {
+			"from": [
+				902,
+				780
+			],
+			"to": [
+				822,
+				760
+			],
+			"reason": "Pairs with lamp_bank_west as one symmetric lamp pair flanking the west bridge north entry."
+		}
+	},
+	"routes": {
+		"arrival": [
+			[
+				576,
+				595.3125
+			],
+			[
+				700,
+				620
+			],
+			[
+				778,
+				700
+			],
+			[
+				778,
+				762
+			],
+			[
+				715,
+				877
+			],
+			[
+				738,
+				880
+			],
+			[
+				743,
+				912
+			]
+		],
+		"bridge": [
+			[
+				576,
+				595.3125
+			],
+			[
+				636,
+				603
+			],
+			[
+				1013,
+				603
+			],
+			[
+				1060,
+				655
+			],
+			[
+				1180,
+				640
+			],
+			[
+				1316,
+				688
+			],
+			[
+				1385,
+				803
+			],
+			[
+				1364,
+				905
+			]
+		]
+	},
+	"probes": {
+		"clear": [
+			[
+				746.5,
+				819
+			],
+			[
+				1350.5,
+				745.5
+			],
+			[
+				560,
+				166
+			],
+			[
+				862,
+				166
+			],
+			[
+				700,
+				135
+			],
+			[
+				1400,
+				560
+			],
+			[
+				711,
+				140
+			],
+			[
+				1091,
+				175
+			],
+			[
+				985,
+				700
+			],
+			[
+				778,
+				740
+			],
+			[
+				1455,
+				470
+			],
+			[
+				1364,
+				880
+			]
+		],
+		"blocked": [
+			[
+				300,
+				700
+			],
+			[
+				900,
+				860
+			],
+			[
+				1200,
+				760
+			],
+			[
+				600,
+				760
+			],
+			[
+				1440,
+				712
+			],
+			[
+				1490,
+				400
+			],
+			[
+				730,
+				90
+			],
+			[
+				1290,
+				100
+			]
+		],
+		"crossings": [
+			{
+				"id": "bridge_west",
+				"path": [
+					[
+						778,
+						762
+					],
+					[
+						715,
+						877
+					]
+				]
+			},
+			{
+				"id": "bridge_east",
+				"path": [
+					[
+						1316,
+						688
+					],
+					[
+						1385,
+						803
+					]
+				]
+			}
+		],
+		"south_bank": [
+			[
+				600,
+				850
+			],
+			[
+				1380,
+				860
+			],
+			[
+				450,
+				860
+			],
+			[
+				300,
+				830
+			]
+		]
+	},
+	"trace": {
+		"water": {
+			"b_over_r": 18,
+			"g_over_r": 12,
+			"min_y": 450,
+			"close": [
+				7
+			],
+			"open": [
+				3
+			],
+			"tolerance": 2,
+			"reason": "Cold teal water pixels; 7px close fills glints/rocks, 3px open drops stray specks, largest component is the river. Column spans are simplified with a 2px vertical tolerance then pushed 2px outward so collision covers every traced column."
+		},
+		"stone": {
+			"b_floor": 4,
+			"rg_spread": 14,
+			"close": [
+				9
+			],
+			"reason": "Cool low-saturation slate/snow mountain pixels, 9px close."
+		},
+		"cliffs": [
+			{
+				"id": "cliff_north",
+				"axis": "columns",
+				"from": 0,
+				"to": 1536,
+				"limit": 300,
+				"tolerance": 3,
+				"reason": "Contiguous mountain stone from the top edge in every column. A 41px running median keeps isolated boulders at the mountain foot walkable.",
+				"median": 41
+			},
+			{
+				"id": "cliff_west",
+				"axis": "rows",
+				"from": 0,
+				"to": 640,
+				"limit": 300,
+				"tolerance": 3,
+				"reason": "Contiguous mountain stone from the left edge in every row above the river banks. A 41px running median keeps isolated boulders at the mountain foot walkable.",
+				"median": 41
+			}
+		]
+	},
+	"sockets": [
+		{
+			"name": "expedition",
+			"kind": "exit",
+			"id": "expedition",
+			"binding_id": "town/exit/expedition",
+			"label": "Expedition Gate",
+			"radius": 48.0,
+			"gateway_action": "contract",
+			"position": [
+				1364,
+				905
+			]
+		}
+	],
+	"footprint_padding_rule": "padding_native_px applies to every expansion footprint: rects grow by the pad on each side; polygons are raw convex plinth outlines measured on the packed art and are miter-outset by the pad when authored. Bridge decks and traced terrain are never padded.",
+	"bridge_relocation_review": "bridge_west shift searched over feet x700-755/y860-945 with deck-side band crossing and >=15px dry landings: every passing candidate moves the south landing off the south road by as much as it moves the north landing onto the north road (88px total offset unchanged), so the measured placement is retained.",
+	"packs": {
+		"town_order_v01": "art/production/p1/town_order_v01/assets.json"
+	},
+	"facility_overrides": {
+		"forge": {
+			"original": "forge",
+			"family": "town_order_v01/forge_west",
+			"reason": "Rotated roof axis with the open forge on the broad west face, so the forge no longer repeats the Loadout/Proxy facing."
+		},
+		"loadout": {
+			"original": "loadout",
+			"family": "town_order_v01/loadout_east",
+			"reason": "Gable-end entry on the east end with a rear turret, facing the commons road."
+		}
+	},
+	"removed_placements": {
+		"house_north": "Overlapped the re-oriented forge and Loadout in the north row; the row now reads as Loadout - forge - north-east house with open gaps.",
+		"wall_pass_north_west": "No road ends there; the traced north-west cliff already closes the corner.",
+		"fence_pass_north_east": "Replaced by the wall_ne rising run.",
+		"treeline_east_00..12": "Replaced by the vertical wall_north_south run.",
+		"palisade_east_top/palisade_east_bank": "Replaced by the vertical wall_north_south run."
+	},
+	"capture_stands": {
+		"loadout_behind": {
+			"stand": [
+				711,
+				140
+			],
+			"sweep": [
+				[
+					650,
+					124
+				],
+				[
+					770,
+					124
+				]
+			]
+		},
+		"forge_behind": {
+			"stand": [
+				1091,
+				175
+			],
+			"sweep": [
+				[
+					1000,
+					178
+				],
+				[
+					1200,
+					178
+				]
+			]
+		},
+		"tree_south_behind": {
+			"stand": [
+				985,
+				700
+			],
+			"sweep": [
+				[
+					950,
+					700
+				],
+				[
+					1020,
+					700
+				]
+			]
+		},
+		"west_bridge_deck": {
+			"stand": [
+				746.5,
+				819
+			]
+		},
+		"east_bridge_deck": {
+			"stand": [
+				1350.5,
+				745.5
+			]
+		},
+		"west_bridge_north_landing": {
+			"stand": [
+				778,
+				740
+			]
+		},
+		"east_wall_inside": {
+			"stand": [
+				1455,
+				470
+			]
+		},
+		"expedition_gate": {
+			"stand": [
+				1364,
+				880
+			]
+		}
+	}
+}

@@ -1,0 +1,410 @@
+{
+  "schema_version": 1,
+  "purpose": "Low walkable ground dressing; presentation only, beneath actors and telegraphs. Native ground pixels, no gameplay footprints.",
+  "scenes": {
+    "town": [
+      {
+        "id": "town/fern/0",
+        "family": "fern",
+        "feet": [
+          193,
+          257
+        ]
+      },
+      {
+        "id": "town/fern/1",
+        "family": "fern",
+        "feet": [
+          514,
+          390
+        ]
+      },
+      {
+        "id": "town/fern/2",
+        "family": "fern",
+        "feet": [
+          864,
+          270
+        ]
+      },
+      {
+        "id": "town/fern/3",
+        "family": "fern",
+        "feet": [
+          1198,
+          360
+        ]
+      },
+      {
+        "id": "town/fern/4",
+        "family": "fern",
+        "feet": [
+          1207,
+          452
+        ]
+      },
+      {
+        "id": "town/fern/5",
+        "family": "fern",
+        "feet": [
+          835,
+          741
+        ]
+      },
+      {
+        "id": "town/fern/6",
+        "family": "fern",
+        "feet": [
+          287,
+          795
+        ]
+      },
+      {
+        "id": "town/fern/7",
+        "family": "fern",
+        "feet": [
+          321,
+          875
+        ]
+      },
+      {
+        "id": "town/fern/8",
+        "family": "fern",
+        "feet": [
+          507,
+          650
+        ]
+      },
+      {
+        "id": "town/fern/9",
+        "family": "fern",
+        "feet": [
+          1116,
+          688
+        ]
+      },
+      {
+        "id": "town/fern/10",
+        "family": "fern",
+        "feet": [
+          1428,
+          810
+        ]
+      },
+      {
+        "id": "town/fern/11",
+        "family": "fern",
+        "feet": [
+          108,
+          636
+        ]
+      },
+      {
+        "id": "town/mushrooms/0",
+        "family": "mushrooms",
+        "feet": [
+          176,
+          249
+        ]
+      },
+      {
+        "id": "town/mushrooms/1",
+        "family": "mushrooms",
+        "feet": [
+          537,
+          402
+        ]
+      },
+      {
+        "id": "town/mushrooms/2",
+        "family": "mushrooms",
+        "feet": [
+          842,
+          800
+        ]
+      },
+      {
+        "id": "town/mushrooms/3",
+        "family": "mushrooms",
+        "feet": [
+          266,
+          788
+        ]
+      },
+      {
+        "id": "town/mushrooms/4",
+        "family": "mushrooms",
+        "feet": [
+          1242,
+          467
+        ]
+      },
+      {
+        "id": "town/mushrooms/5",
+        "family": "mushrooms",
+        "feet": [
+          1365,
+          809
+        ]
+      },
+      {
+        "id": "town/mushrooms/6",
+        "family": "mushrooms",
+        "feet": [
+          537,
+          650
+        ]
+      },
+      {
+        "id": "town/mushrooms/7",
+        "family": "mushrooms",
+        "feet": [
+          123,
+          650
+        ]
+      },
+      {
+        "id": "town/votives/0",
+        "family": "votives",
+        "feet": [
+          329,
+          307
+        ]
+      },
+      {
+        "id": "town/votives/1",
+        "family": "votives",
+        "feet": [
+          589,
+          264
+        ]
+      },
+      {
+        "id": "town/votives/2",
+        "family": "votives",
+        "feet": [
+          856,
+          255
+        ]
+      },
+      {
+        "id": "town/votives/3",
+        "family": "votives",
+        "feet": [
+          1002,
+          346
+        ]
+      },
+      {
+        "id": "town/votives/4",
+        "family": "votives",
+        "feet": [
+          1356,
+          488
+        ]
+      },
+      {
+        "id": "town/votives/5",
+        "family": "votives",
+        "feet": [
+          374,
+          556
+        ]
+      },
+      {
+        "id": "town/relic/0",
+        "family": "relic",
+        "feet": [
+          1454,
+          540
+        ]
+      },
+      {
+        "id": "town/relic/1",
+        "family": "relic",
+        "feet": [
+          1333,
+          678
+        ]
+      },
+      {
+        "id": "town/relic/2",
+        "family": "relic",
+        "feet": [
+          935,
+          633
+        ]
+      },
+      {
+        "id": "town/relic/3",
+        "family": "relic",
+        "feet": [
+          449,
+          844
+        ]
+      },
+      {
+        "id": "town/relic/4",
+        "family": "relic",
+        "feet": [
+          161,
+          679
+        ]
+      },
+      {
+        "id": "town/relic/5",
+        "family": "relic",
+        "feet": [
+          960,
+          374
+        ]
+      }
+    ],
+    "arena": [
+      {
+        "id": "arena/fern/0",
+        "family": "fern",
+        "feet": [
+          122,
+          342
+        ]
+      },
+      {
+        "id": "arena/fern/1",
+        "family": "fern",
+        "feet": [
+          177,
+          371
+        ]
+      },
+      {
+        "id": "arena/fern/2",
+        "family": "fern",
+        "feet": [
+          843,
+          382
+        ]
+      },
+      {
+        "id": "arena/fern/3",
+        "family": "fern",
+        "feet": [
+          911,
+          450
+        ]
+      },
+      {
+        "id": "arena/fern/4",
+        "family": "fern",
+        "feet": [
+          284,
+          494
+        ]
+      },
+      {
+        "id": "arena/mushrooms/0",
+        "family": "mushrooms",
+        "feet": [
+          147,
+          356
+        ]
+      },
+      {
+        "id": "arena/mushrooms/1",
+        "family": "mushrooms",
+        "feet": [
+          855,
+          399
+        ]
+      },
+      {
+        "id": "arena/mushrooms/2",
+        "family": "mushrooms",
+        "feet": [
+          295,
+          507
+        ]
+      },
+      {
+        "id": "arena/mushrooms/3",
+        "family": "mushrooms",
+        "feet": [
+          805,
+          241
+        ]
+      },
+      {
+        "id": "arena/votives/0",
+        "family": "votives",
+        "feet": [
+          189,
+          350
+        ]
+      },
+      {
+        "id": "arena/votives/1",
+        "family": "votives",
+        "feet": [
+          736,
+          435
+        ]
+      },
+      {
+        "id": "arena/votives/2",
+        "family": "votives",
+        "feet": [
+          349,
+          463
+        ]
+      },
+      {
+        "id": "arena/votives/3",
+        "family": "votives",
+        "feet": [
+          598,
+          527
+        ]
+      },
+      {
+        "id": "arena/relic/0",
+        "family": "relic",
+        "feet": [
+          252,
+          385
+        ]
+      },
+      {
+        "id": "arena/relic/1",
+        "family": "relic",
+        "feet": [
+          782,
+          437
+        ]
+      },
+      {
+        "id": "arena/relic/2",
+        "family": "relic",
+        "feet": [
+          459,
+          489
+        ]
+      },
+      {
+        "id": "arena/relic/3",
+        "family": "relic",
+        "feet": [
+          901,
+          330
+        ]
+      },
+      {
+        "id": "arena/relic/4",
+        "family": "relic",
+        "feet": [
+          695,
+          514
+        ]
+      }
+    ]
+  }
+}

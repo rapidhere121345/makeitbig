@@ -81,6 +81,15 @@ static func _append_entries(placement: Placement, entries: Array[Dictionary]) ->
 			"sort_rank": int(part.get("sort_rank", 0)),
 			"revealed_path": String(part.get("revealed_path", "")), "mask_path": String(part.get("mask_path", "")),
 		}
+		## Explicit policies add their own entry fields; legacy parts stay
+		## byte-identical so an existing baked scene still matches.
+		if sorted_part and String(part.get("reveal_policy", "")) == "primitive_fade":
+			entry["reveal_policy"] = "primitive_fade"
+			entry["occlusion_volumes"] = _world_volumes(part.get("occlusion_volumes", []), placement.position)
+		elif sorted_part and String(part.get("reveal_policy", "")) == "paired_reveal":
+			entry["reveal_policy"] = "paired_reveal"
+			var rect: Rect2 = part.get("occlusion_rect", Rect2())
+			entry["occlusion_rect"] = Rect2(rect.position + placement.position, rect.size)
 		entries.append(entry)
 	for shape: Dictionary in definition.movement_envelopes:
 		var entry := {
@@ -112,8 +121,23 @@ static func _make_node(entry: Dictionary) -> Node2D:
 		sprite.set_meta("texture_path", entry.full_path)
 		sprite.set_meta("sort_rank", entry.sort_rank)
 		sprite.set_meta("sort_stable_id", entry.binding_id)
-		sprite.set_meta("reveal_policy", "none" if entry.revealed_path.is_empty() else "authored_variant")
-		if not entry.revealed_path.is_empty():
+		var policy := String(entry.get("reveal_policy", ""))
+		if policy.is_empty():
+			policy = "none" if String(entry.revealed_path).is_empty() else "authored_variant"
+		sprite.set_meta("reveal_policy", policy)
+		if policy == "primitive_fade":
+			## Presentation metadata only: the volumes ride the sprite and
+			## never enter the movement manifest or static colliders.
+			sprite.set_meta("occlusion_volumes", (entry.get("occlusion_volumes", []) as Array).duplicate(true))
+		elif policy == "paired_reveal":
+			## Whole-object pair: the detection rect rides the sprite in
+			## WORLD space (already placement-translated); no mask, no
+			## volumes, and the transparent variant's authored alpha is
+			## used exactly once inside the paired shader mix.
+			sprite.set_meta("reveal_full_path", entry.full_path)
+			sprite.set_meta("reveal_variant_path", entry.revealed_path)
+			sprite.set_meta("occlusion_rect", entry.get("occlusion_rect", Rect2()))
+		elif not String(entry.revealed_path).is_empty():
 			sprite.set_meta("reveal_full_path", entry.full_path)
 			sprite.set_meta("reveal_variant_path", entry.revealed_path)
 			sprite.set_meta("reveal_mask_path", entry.mask_path)
@@ -146,9 +170,16 @@ static func _matches(node: Node, entry: Dictionary) -> bool:
 	if entry.type == "visual":
 		if not node is Sprite2D or node.centered or node.offset != entry.offset or node.get_meta("texture_path", "") != entry.full_path or node.get_meta("sort_rank", null) != entry.sort_rank or node.get_meta("sort_stable_id", "") != entry.binding_id:
 			return false
-		var policy := "none" if entry.revealed_path.is_empty() else "authored_variant"
+		var policy := String(entry.get("reveal_policy", ""))
+		if policy.is_empty():
+			policy = "none" if String(entry.revealed_path).is_empty() else "authored_variant"
 		if node.get_meta("reveal_policy", "") != policy:
 			return false
+		if policy == "primitive_fade":
+			return node.get_meta("occlusion_volumes", []) == entry.get("occlusion_volumes", [])
+		if policy == "paired_reveal":
+			return (node.get_meta("reveal_full_path", "") == entry.full_path and node.get_meta("reveal_variant_path", "") == entry.revealed_path
+				and node.get_meta("occlusion_rect", Rect2()) == entry.get("occlusion_rect", Rect2()) and not node.has_meta("reveal_mask_path") and not node.has_meta("occlusion_volumes"))
 		return policy == "none" or (node.get_meta("reveal_full_path", "") == entry.full_path and node.get_meta("reveal_variant_path", "") == entry.revealed_path and node.get_meta("reveal_mask_path", "") == entry.mask_path)
 	if entry.type == "socket":
 		if not node is Marker2D:
@@ -165,6 +196,31 @@ static func _check_container(node: Node, path: String, errors: Array[String]) ->
 		errors.append("missing_environment_group:" + path)
 	elif node.is_set_as_top_level() or node.transform != Transform2D.IDENTITY:
 		errors.append("unsupported_environment_container_transform:" + path)
+
+
+## Placement translation for authored occlusion volumes, the same translation
+## the part's own sprite receives: a local canvas point maps to world by the
+## placement position alone. Presentation metadata only — the result rides
+## the visual sprite and never becomes static collision geometry.
+static func _world_volumes(volumes: Variant, placement_position: Vector2) -> Array:
+	var world: Array = []
+	if not volumes is Array:
+		return world
+	for volume: Variant in volumes:
+		if not volume is Dictionary:
+			continue
+		var data: Dictionary = volume
+		if data.get("type") == "circle":
+			var center: Variant = data.get("center", null)
+			if center is Vector2:
+				world.append({"type": "circle", "center": (center as Vector2) + placement_position,
+					"radius": float(data.get("radius", 0.0))})
+		elif data.get("type") == "polygon":
+			var points := PackedVector2Array()
+			for point: Variant in data.get("points", PackedVector2Array()):
+				points.append((point as Vector2) + placement_position if point is Vector2 else Vector2.INF)
+			world.append({"type": "polygon", "points": points})
+	return world
 
 
 static func _collect_bindings(node: Node, bindings: Dictionary, errors: Array[String]) -> void:

@@ -128,15 +128,15 @@ func validate_frame(frame: Dictionary) -> String:
 func draw_shadows(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted) -> void:
 	if canvas == null or world_view == null or not _frame_is_drawable(frame):
 		return
-	world_view.draw_shadow(canvas, world_view.gameplay_to_world(frame["player_position"]), 30.0, 12.0, 0.24)
+	world_view.draw_shadow(canvas, world_view.gameplay_to_world(frame["player_position"]), 21.0, 9.0, 0.60)
 	for enemy: CombatEnemyState in frame["enemies"]:
 		if enemy.is_boss:
-			world_view.draw_shadow(canvas, world_view.gameplay_to_world(enemy.position), 92.0, 28.0, 0.34)
+			world_view.draw_shadow(canvas, world_view.gameplay_to_world(enemy.position), 58.0, 18.0, 0.42)
 		else:
-			world_view.draw_shadow(canvas, world_view.gameplay_to_world(enemy.position), 38.0, 14.0, 0.24)
+			world_view.draw_shadow(canvas, world_view.gameplay_to_world(enemy.position), 20.0, 8.0, 0.38)
 	for loot: Dictionary in frame.get("loot_entities", []):
 		if String(loot.get("state", "")) == "available":
-			world_view.draw_shadow(canvas, world_view.gameplay_to_world(loot.get("position", Vector2.ZERO)), 18.0, 7.0, 0.22)
+			world_view.draw_shadow(canvas, world_view.gameplay_to_world(loot.get("position", Vector2.ZERO)), 12.0, 5.0, 0.30)
 	_record_report(frame, "actor_shadows")
 
 
@@ -224,6 +224,27 @@ func _prepare_occlusion(drawables: Array[Dictionary], frame: Dictionary, world_v
 	world_view.prepare_actor_occlusion(front_cells, world_view.gameplay_to_world(frame["player_position"]))
 
 
+## One update per committed frame. Draw callbacks reuse these band alphas.
+## Live enemies are protected too: a ruin must not hide an attack windup.
+func prepare_structure_fades(drawables: Array[Dictionary], frame: Dictionary, world_view: RefCounted, delta: float) -> void:
+	var subjects: Array = []
+	for drawable: Dictionary in drawables:
+		var box := Rect2()
+		match String(drawable.kind):
+			"player":
+				box = world_view.hero_cell_world(drawable.world)
+			"enemy":
+				box = _enemy_occlusion_descriptor(frame, drawable.enemy, drawable.world, world_view).get("art_box", Rect2())
+			"boss_part":
+				if String(drawable.part_id) == "body":
+					box = world_view.sprite_art_box(String(drawable.part.sprite_id), drawable.part.feet)
+		if box.has_area():
+			var subject := {"stable_id": drawable.stable_id, "baseline_y": drawable.baseline_y,
+				"rank": drawable.rank, "readability_box": box}
+			subjects.append(subject)
+	world_view.advance_structure_fades(drawables, subjects, delta)
+
+
 func draw_entry(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, drawable: Dictionary) -> void:
 	var hero: Vector2 = world_view.gameplay_to_world(frame["player_position"])
 	match String(drawable.kind):
@@ -249,7 +270,7 @@ func draw_entry(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, d
 ## WorldPresenter and places it under world_view.gameplay_transform(). Each cell
 ## becomes a direct sibling of native SortRoot children, with z_index left at 0.
 ## This submits view state outside a CanvasItem _draw; do not also call draw().
-func sync_sort_views(domain: WorldPresenter, frame: Dictionary, world_view: RefCounted) -> Dictionary:
+func sync_sort_views(domain: WorldPresenter, frame: Dictionary, world_view: RefCounted, display_delta: float = 0.0) -> Dictionary:
 	if domain == null or world_view == null:
 		return {"ok": false, "error": "sort_domain_unavailable"}
 	var error := validate_frame(frame)
@@ -269,6 +290,7 @@ func sync_sort_views(domain: WorldPresenter, frame: Dictionary, world_view: RefC
 	detached["enemies"] = enemies
 	var drawables := draw_list(detached, world_view)
 	_prepare_occlusion(drawables, detached, world_view)
+	prepare_structure_fades(drawables, detached, world_view, display_delta)
 	var ids: Array[String] = []
 	for drawable: Dictionary in drawables:
 		ids.append(String(drawable.id))
@@ -293,6 +315,12 @@ func sync_sort_views(domain: WorldPresenter, frame: Dictionary, world_view: RefC
 		view.drawable = drawable
 		view.world_view = world_view
 		view.art_to_native = art_to_native
+		if String(drawable.kind) == "structure" or String(drawable.kind) == "tower":
+			## Whole-object pairs draw through their own reveal material on this
+			## drawable's SortView; legacy pieces and every actor keep material
+			## null, so an asset-mode change can never strand a stale shader.
+			var piece_id := "tower" if String(drawable.kind) == "tower" else String(drawable.get("sprite", ""))
+			view.material = world_view.paired_reveal_material(piece_id, drawable.world)
 		domain.sync_actor(id, art_to_native * (drawable.world as Vector2), Vector2.ZERO, int(drawable.rank), id)
 		view.queue_redraw()
 	_record_report(detached, "actors")
@@ -415,7 +443,7 @@ func _draw_ranger_frame(canvas: CanvasItem, frame: Dictionary, world_view: RefCo
 	var action := String(action_frame.get("action", "idle"))
 	var frame_index := int(action_frame.get("frame", 0))
 	RangerMotionOverlayScript.draw_back(canvas, feet_world, facing, action, frame_index, float(frame["ranger_visual_time"]))
-	canvas.draw_texture_rect_region(texture, Rect2((feet_world - Vector2(anchor) + Vector2(draw_offset)).round(), Vector2(rect.size)), Rect2(rect))
+	canvas.draw_texture_rect_region(texture, Rect2((feet_world - Vector2(anchor) + Vector2(draw_offset)).round(), Vector2(rect.size)), Rect2(rect), world_view.illumination_at(feet_world))
 	RangerMotionOverlayScript.draw_front(canvas, feet_world, facing, action, frame_index, float(frame["ranger_visual_time"]))
 
 
@@ -425,7 +453,8 @@ func _draw_enemy(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted, 
 	match enemy.kind_id:
 		"charging_raider": role_tint = Color(1.22, 1.16, 1.10, 1.0)
 		"fan_ranged": role_tint = Color(1.14, 1.20, 1.24, 1.0)
-	var modulate := Color(1.6, 1.6, 1.6, 1.0) if int(frame["sim_tick"]) < enemy.hit_flash_until_tick else role_tint
+	var light: Color = world_view.illumination_at(feet)
+	var modulate := Color(1.6, 1.6, 1.6, 1.0) if int(frame["sim_tick"]) < enemy.hit_flash_until_tick else Color(role_tint.r * light.r, role_tint.g * light.g, role_tint.b * light.b, 1.0)
 	var action_frame := _enemy_action_frame(frame, enemy.entity_id)
 	if not action_frame.is_empty():
 		var visibility := _enemy_frame_occlusion_descriptor(action_frame, feet, world_view)
@@ -445,7 +474,7 @@ func _draw_enemy_corpse(canvas: CanvasItem, frame: Dictionary, world_view: RefCo
 	var feet: Vector2 = world_view.gameplay_to_world(corpse.get("position", Vector2.ZERO) as Vector2)
 	var visibility := _enemy_frame_occlusion_descriptor(action_frame, feet, world_view)
 	var cut: Dictionary = world_view.cutaway_for(visibility.get("art_box", Rect2()), feet, world_view.gameplay_to_world(frame["player_position"]), sort_rank, stable_id, visibility)
-	_draw_enemy_action_frame(canvas, world_view, action_frame, feet, Color.WHITE, cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
+	_draw_enemy_action_frame(canvas, world_view, action_frame, feet, world_view.illumination_at(feet), cut["window"] if cut["in_front"] else Rect2(), float(cut["local_alpha"]))
 
 
 func _enemy_action_frame(frame: Dictionary, entity_id: int) -> Dictionary:

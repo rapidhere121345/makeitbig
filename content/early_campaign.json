@@ -7,24 +7,24 @@
       "display_name": "Shattered Outpost",
       "concept": "An open square forecourt. First read which side the enemy pack is approaching from.",
       "landmark": "Ruined Gate",
-      "entry_hint": "Enter the forecourt from the south, keep a retreat route open, and deal with the enemies ahead first.",
-      "exit_hint": "After clearing the area, pass through the ruined gate to the east."
+      "entry_hint": "South steps; keep a way back.",
+      "exit_hint": "The north gate stays sealed; once the court is clear its wards fall, then choose Leave to take the route onward."
     },
     {
       "id": "corridor",
       "display_name": "Windcut Passage",
       "concept": "A narrow wind gap where lateral movement matters more than retreating in a straight line.",
       "landmark": "Gorge Banner",
-      "entry_hint": "Move sideways along the banners to avoid charge lanes and ranged fans.",
-      "exit_hint": "After clearing the area, pass through the wind gate to the east."
+      "entry_hint": "South stair; avoid charge lanes.",
+      "exit_hint": "The east ward seals the causeway; once it is clear the ward falls, then choose Leave to take the route onward."
     },
     {
       "id": "ring",
       "display_name": "Salvage Ring",
       "concept": "A ring-shaped salvage yard with an impassable center; inner and outer edges define the walkable ring.",
       "landmark": "Ring Beacon",
-      "entry_hint": "Circle the central beacon along the ring to gain distance; the inner and outer edges physically block movement.",
-      "exit_hint": "After clearing the area, leave through the southeastern ring gate."
+      "entry_hint": "West stones; circle the well.",
+      "exit_hint": "The north-east gate stays sealed; once the ring is clear its wards fall, then choose Leave to take the route onward."
     }
   ],
   "objectives": [

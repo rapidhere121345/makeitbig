@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "sprites": [
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "action.piercing_arrow",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "piercing_arrow.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "action.hunter_mark",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "hunter_mark.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "action.dash",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "dash.png",
+      "type": "ui_icon"
+    },
+    {
+      "anchor": [
+        16,
+        16
+      ],
+      "id": "action.basic_dodge",
+      "rect": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "texture": "basic_dodge.png",
+      "type": "ui_icon"
+    }
+  ]
+}

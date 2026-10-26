@@ -58,8 +58,8 @@ const TEXTURE_PATH := "res://art/production/p1/enemy_actions_v01/enemies.png"
 const PACK_PREFIX := "res://art/production/p1/enemy_actions_v01/"
 ## Keep the published action identity; the explicit skin binding changes only
 ## same-size texture pixels and is also reported on each resolved frame.
-const STYLE_ATLAS_PATH := "res://art/production/p1/combat_style_r13/v03/enemy_atlas.json"
-const STYLE_TEXTURE_PATH := "res://art/production/p1/combat_style_r13/v03/enemies.png"
+const STYLE_ATLAS_PATH := "res://art/production/p1/actors_v02/enemy_atlas.json"
+const STYLE_TEXTURE_PATH := "res://art/production/p1/actors_v02/enemies.png"
 const NATIVE_VIEW := Vector2i(640, 360)
 const SCHEMA_VERSION := 1
 ## The action cell. 48x48 with a (24,44) foot anchor is the same cell the

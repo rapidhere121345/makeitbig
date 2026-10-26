@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "package": "town_order_v01",
+  "source_dir": "docs/art-production/town-order-20261026/sources",
+  "output_dir": "art/production/p1/town_order_v01",
+  "report_dir": "build/current/performance-layout-20261026/packing",
+  "default_alpha_threshold": 240,
+  "margin": 8,
+  "occlusion_grow": 8,
+  "transparent_alpha": 128,
+  "grounds": {},
+  "assets": {
+    "forge_west": {
+      "canvas": [
+        320,
+        288
+      ],
+      "anchor": [
+        160,
+        264
+      ],
+      "section": "town",
+      "source_sha256": "1f3811b668a12eadcaf0b2dffaea5349e467ee8c434dc31fb5210e6af6f7a4f5"
+    },
+    "loadout_east": {
+      "canvas": [
+        288,
+        240
+      ],
+      "anchor": [
+        144,
+        220
+      ],
+      "section": "town",
+      "source_sha256": "ff339dd8ae8e3ddea63c3d6306d10c7756882d560e46c1dd7832372063ca692a",
+      "occlusion_rect": [
+        30,
+        0,
+        220,
+        228
+      ]
+    },
+    "wall_north_south": {
+      "canvas": [
+        128,
+        256
+      ],
+      "anchor": [
+        64,
+        240
+      ],
+      "section": "town",
+      "source_sha256": "5fcf11cb5fe179a26eab892f15b50deab407bd4d8be8400c5511494572a4b0ec",
+      "source": "wall_north_south_v2_raw.png"
+    },
+    "wall_ne": {
+      "canvas": [
+        192,
+        112
+      ],
+      "anchor": [
+        96,
+        104
+      ],
+      "section": "town",
+      "source_sha256": "d0d0b488695cec9d9f64956ddfa06994df63ecb57eaa150e9861eb270f86b332"
+    }
+  }
+}

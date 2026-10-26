@@ -27,11 +27,11 @@ const NATIVE_VIEW := Vector2i(640, 360)
 ## Art pixels are shown at integer 2x throughout this slice.
 const SCALE := 2
 
-const RANGER_ATLAS_PATH := "res://art/production/p1/scene_rework_v01/atlas.json"
-const TARGET_ATLAS_PATH := "res://art/production/p1/calibration_v01/atlas.json"
+const RANGER_ATLAS_PATH := "res://art/production/p1/actors_v02/scene_atlas.json"
+const TARGET_ATLAS_PATH := "res://art/production/p1/actors_v02/legacy_atlas.json"
 const GROUND_ATLAS_PATH := "res://art/production/p1/ground_refine_v01/atlas.json"
-const RANGER_TEXTURE_PATH := "res://art/production/p1/scene_rework_v01/ranger.png"
-const TARGET_TEXTURE_PATH := "res://art/production/p1/calibration_v01/enemies.png"
+const RANGER_TEXTURE_PATH := "res://art/production/p1/actors_v02/ranger_idle.png"
+const TARGET_TEXTURE_PATH := "res://art/production/p1/actors_v02/legacy_enemies.png"
 const GROUND_TEXTURE_PATH := "res://art/production/p1/ground_refine_v01/ground.png"
 
 const RANGER_FACING_SPRITES := {
@@ -64,8 +64,8 @@ var _images := {}
 func _init(load_images := true, path_overrides: Dictionary = {}) -> void:
 	## path_overrides is for tests: pointing a role at a missing or malformed
 	## atlas has to exercise the ASSETS PENDING path, not a special case.
-	var ranger_atlas := _read_atlas(String(path_overrides.get("ranger", RANGER_ATLAS_PATH)), "scene_rework_v01")
-	var target_atlas := _read_atlas(String(path_overrides.get("target", TARGET_ATLAS_PATH)), "calibration_v01")
+	var ranger_atlas := _read_atlas(String(path_overrides.get("ranger", RANGER_ATLAS_PATH)), "actors_v02")
+	var target_atlas := _read_atlas(String(path_overrides.get("target", TARGET_ATLAS_PATH)), "actors_v02")
 	var ground_atlas := _read_atlas(String(path_overrides.get("ground", GROUND_ATLAS_PATH)), "ground_refine_v01")
 	if not ranger_atlas.is_empty():
 		for facing in RANGER_FACING_SPRITES.keys():
@@ -82,7 +82,7 @@ func _init(load_images := true, path_overrides: Dictionary = {}) -> void:
 		_load_images()
 	ranger_animation = RangerAnimationScript.new(
 		load_images,
-		{"atlas": String(path_overrides.get("actions", RangerAnimationScript.ATLAS_PATH))}
+		{"atlas": String(path_overrides.get("actions", RangerAnimationScript.STYLE_ATLAS_PATH))}
 	)
 
 

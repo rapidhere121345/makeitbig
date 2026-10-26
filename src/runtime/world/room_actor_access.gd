@@ -375,13 +375,19 @@ func is_position_clear(position: Vector2, radius_or_bounds: Variant, optional_ra
 	return _is_clear(position, radius)
 
 
+## Initial placement must also clear already registered actors. Movement and
+## teleports retain their existing soft-body policy; this query is for a body
+## that has not joined the registry yet.
+func is_spawn_position_clear(position: Vector2, radius: float) -> bool:
+	return _is_clear(position, radius) and dynamic_index != null and dynamic_index.overlaps(SpatialChannelsScript.MOVEMENT, position, radius).is_empty()
+
+
 func has_movement_boundary() -> bool:
 	return static_index != null and not static_index.movement_boundary().is_empty()
 
 
-## Conservative bounding circles for authored static blockers on the movement
-## channel (ruins, gates, the tower, town buildings). AI steering scores its
-## candidate directions against these circles; exact shapes stay in the index.
+## Authored blockers for local steering. Keep polygon edges as well as their
+## bounds: a circumscribed circle can incorrectly close a narrow legal lane.
 func static_blocker_bounds() -> Array[Dictionary]:
 	if static_index == null:
 		return []
@@ -405,7 +411,7 @@ func static_blocker_bounds() -> Array[Dictionary]:
 				var radius := 0.0
 				for point: Vector2 in points:
 					radius = maxf(radius, center.distance_to(point))
-				bounds.append({"id": surface_id, "center": center, "radius": radius})
+				bounds.append({"id": surface_id, "center": center, "radius": radius, "points": points})
 	return bounds
 
 

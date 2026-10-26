@@ -148,10 +148,11 @@ func _test_draw_paths_use_the_clipped_marks() -> void:
 	_expect(slam.contains("draw_rect(rect, color)") and slam.contains("draw_rect(rect, color, false, 2.0)"), "active and recovery slam semantics are untouched")
 	_expect(not mark.contains("draw_arc("), "the hunter mark is no longer a full circle")
 	_expect(mark.contains("CombatMarksScript.corner_bracket_segments"), "the hunter mark draws open corner brackets")
-	_expect(mark.contains("draw_circle(") and mark.contains("-126.0") and mark.contains("-56.0"), "the published hunter mark dot keeps its offsets")
+	_expect(mark.contains("draw_colored_polygon(") and mark.contains("-126.0") and mark.contains("-56.0"), "the pixel diamond mark keeps its boss and enemy offsets")
+	_expect(mark.contains("enemy.health <= 0.0") and mark.contains("marked_expires_tick"), "the mark remains gated by live target health and expiry")
 	_expect(not overlay.contains("draw_rect(dodge_frame"), "the dodge no longer draws a closed box")
-	_expect(overlay.contains("CombatMarksScript.corner_bracket_segments(dodge_frame"), "the dodge draws four short bone corners on the same frame")
-	_expect(overlay.contains("Vector2(44.0, 64.0)") and overlay.contains("dodge_remaining_ticks") and overlay.contains("> 0"), "the dodge keeps its authored bounds and active window")
+	_expect(overlay.contains("for side: float in [-1.0, 1.0]") and overlay.contains("Vector2(side * 16.0, 2.0)") and overlay.contains("Vector2(side * 5.0, -4.0)"), "the dodge draws short symmetric ground ticks outside the actor silhouette")
+	_expect(overlay.contains("if int(frame[\"dodge_remaining_ticks\"]) > 0:") and overlay.contains("Color(COLOR_BONE, 0.85)"), "the bone dodge accents retain the simulation's active window")
 
 
 func _function_body(source: String, name: String) -> String:

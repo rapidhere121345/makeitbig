@@ -55,7 +55,7 @@ func _test_presentation_and_spawn_profiles() -> void:
 	var catalog = RoomCatalogScript.new()
 	var rectangle_presentation: Dictionary = catalog.presentation("rectangle_arena")
 	_expect(String(rectangle_presentation.get("display_name", "")) == "Shattered Outpost", "catalog: rectangle presentation was not content-owned")
-	_expect(String(rectangle_presentation.get("exit_hint", "")) == "After clearing the area, pass through the ruined gate to the east.", "catalog: rectangle presentation fields were incomplete")
+	_expect(String(rectangle_presentation.get("exit_hint", "")) == "The north gate stays sealed; once the court is clear its wards fall, then choose Leave to take the route onward.", "catalog: rectangle presentation fields were incomplete")
 	_expect(String(catalog.presentation("corridor").get("display_name", "")) == "Windcut Passage", "catalog: corridor presentation was not resolved")
 	_expect(String(catalog.presentation("ring").get("display_name", "")) == "Salvage Ring", "catalog: ring presentation was not resolved")
 
@@ -65,8 +65,8 @@ func _test_presentation_and_spawn_profiles() -> void:
 	], "rectangle default")
 	_expect_offsets(catalog.spawn_offsets({"layout_id": "rectangle_arena", "room_id": "first_hunt_clear"}, 3), [
 		Vector2(-220.0, 100.0) + Vector2.from_angle(deg_to_rad(-69.0)) * 350.0,
-		Vector2(-220.0, 100.0) + Vector2.from_angle(deg_to_rad(-35.0)) * 350.0,
-		Vector2(-220.0, 100.0) + Vector2.from_angle(0.0) * 350.0,
+		Vector2(-220.0, 100.0) + Vector2.from_angle(deg_to_rad(-24.0)) * 350.0,
+		Vector2(-220.0, 100.0) + Vector2.from_angle(deg_to_rad(14.0)) * 350.0,
 	], "rectangle first hunt")
 	_expect_offsets(catalog.spawn_offsets({"layout_id": "rectangle_arena", "room_id": "first_hunt_followup"}, 3), [
 		Vector2(-220.0, 100.0) + Vector2.from_angle(deg_to_rad(-60.0)) * 350.0,

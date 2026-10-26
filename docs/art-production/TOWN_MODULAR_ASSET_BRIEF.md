@@ -25,6 +25,8 @@ World uses design pixels,640×360 viewport. Retain 48×48 actor animation canvas
 
 No initial whole-town panorama, dozens of candidates, or all-facility replacement. Building/tree/fence samples must prove layering, ground occupancy, and revealed appearance in runtime before expanding the series.
 
+The corrected first-sample numbers for the loadout building — 256×224 canvas, placement (148,148), layer/socket contracts, and alignment rules — are fixed in [TOWN_LOADOUT_SAMPLE_SPEC.md](TOWN_LOADOUT_SAMPLE_SPEC.md). The packed sample exists under `art/production/p1/town_modular_v01/` and `content/environment_objects/town_loadout_v01.tres`; its rendered-sample preview was accepted on 2026-10-23 ([acceptance record](../playtest/TOWN_LOADOUT_SAMPLE_ACCEPTANCE_20261023.md)), and shipped-town integration is pending. Four raw candidates remain retained unaccepted under [p1-town-modular-v01/](p1-town-modular-v01/) — exact requests in its PROMPTS.md, packing recipe and accepted deviations in its PROCESSING.md. The remaining ground/pine/fence/log sample scope below is unchanged.
+
 ## 3. What a Revealed Version Means
 
 Roof removal exposes credible beam/post sections, rear low walls/floor, or complete exterior ground. First-chapter interactions stay in exterior service zones; no full interior gameplay needed. Shared full/roof-off content must come from one reviewed layer set.

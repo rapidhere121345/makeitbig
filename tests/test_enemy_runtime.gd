@@ -14,6 +14,13 @@ var fixture := PlayerFixture.new()
 var session: Dictionary = {}
 
 
+func _place_fixture_actor(arena: Node, actor_id: String, position: Vector2, failures: Array[String]) -> bool:
+	var result: Dictionary = arena.teleport_actor(actor_id, position)
+	var placed := bool(result.get("ok", false)) and (result.get("position", Vector2.INF) as Vector2).is_equal_approx(position)
+	_expect(placed, "enemy fixture: %s placement at %s rejected: %s" % [actor_id, position, result], failures)
+	return placed
+
+
 class FakeSaveStore:
 	extends RefCounted
 
@@ -184,14 +191,16 @@ func _test_fan_attack_radius_runtime(arena: Node, failures: Array[String]) -> vo
 func _test_same_role_action_lane_runtime(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["fan_ranged", "fan_ranged"])
 	arena.combat_event_stream.reset()
-	## Shift the fixture south of centre: the authored low-pier sits in the
-	## east strafe lane at mid height and would otherwise deflect the waiting
-	## fan out of its attack band before the lane releases.
-	arena.teleport_actor("ranger", arena._arena_rect().get_center() + Vector2(0.0, 60.0))
+	## Use the open eastern floor so whole-object blockers cannot redirect
+	## the waiting fan; retain exact 150-unit distances and lane timing.
+	if not _place_fixture_actor(arena, "ranger", Vector2(1100.0, 434.0), failures):
+		return
 	var first = arena.enemies[0]
 	var waiting = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(-150.0, 0.0))
-	arena.teleport_actor("enemy/%d" % waiting.entity_id, arena.player_position + Vector2(150.0, 0.0))
+	if not _place_fixture_actor(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(0.0, -150.0), failures):
+		return
+	if not _place_fixture_actor(arena, "enemy/%d" % waiting.entity_id, arena.player_position + Vector2(0.0, 150.0), failures):
+		return
 
 	fixture.drive(arena, {"enemies": true})
 	fixture.step(arena)
@@ -333,18 +342,20 @@ func _test_public_proxy_geometry_snapshot(arena: Node, failures: Array[String]) 
 func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 	# Preserve the authored six-entity crowd-control fixture. The player starts
 	# on the legal ring band; charger launch authority is covered by the chord
-	# test below. The authored south fan slot sits in a blind pocket sealed by
-	# the authored low pier and wall corner, so the fan/charger pair is mirrored
-	# onto the clean north/south axis (still exactly antipodal) while the band
-	# is held on the west side, where the whole approach chord stays walkable.
+	# test below. Use the inner north/south axis, clear of the moved southern
+	# pier. The pair remains exactly antipodal and starts 200 units from the
+	# west-side player, outside both attack bands, with a walkable approach.
 	arena = _configure_room(arena, "ring", "clear", ["charging_raider", "melee_pursuer", "melee_pursuer", "fan_ranged", "fan_ranged", "melee_pursuer"])
 	var center: Vector2 = arena._arena_rect().get_center()
-	arena.teleport_actor("ranger", center + Vector2.LEFT * 160.0)
+	if not _place_fixture_actor(arena, "ranger", center + Vector2.LEFT * 160.0, failures):
+		return
 	var charger = arena.enemies[0]
 	var fan = arena.enemies[3]
 	var melee = arena.enemies[5]
-	arena.teleport_actor("enemy/%d" % charger.entity_id, center + Vector2.DOWN * 185.0)
-	arena.teleport_actor("enemy/%d" % fan.entity_id, center + Vector2.UP * 185.0)
+	if not _place_fixture_actor(arena, "enemy/%d" % charger.entity_id, center + Vector2.DOWN * 120.0, failures):
+		return
+	if not _place_fixture_actor(arena, "enemy/%d" % fan.entity_id, center + Vector2.UP * 120.0, failures):
+		return
 	_expect((charger.position - center).normalized().dot((fan.position - center).normalized()) < -0.999, "authored ring: charger/fan fixture is not antipodal", failures)
 
 	var fan_entered_band := false
@@ -516,12 +527,12 @@ func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) ->
 	var player_geometry: Dictionary = arena._walkable_geometry(14.0)
 	var enemy_geometry: Dictionary = arena._walkable_geometry(16.0)
 	## The authored tower blocker sits near the vertical centre of the west
-	## edge; slide the edge fixture north so the projected charge lane stays
+	## edge; slide the edge fixture south so the projected charge lane stays
 	## clear of it.
-	var player_start := Vector2(float(player_geometry.bounds.position.x), float(player_geometry.bounds.position.y) + 110.0)
+	var player_start := Vector2(float(player_geometry.bounds.position.x), 460.0)
 	var charger = arena.enemies[0]
-	arena.teleport_actor("ranger", player_start)
-	arena.teleport_actor("enemy/%d" % charger.entity_id, player_start + Vector2.RIGHT * 100.0)
+	_expect(bool(arena.teleport_actor("ranger", player_start).get("ok", false)), "padding runtime: ranger fixture placement failed", failures)
+	_expect(bool(arena.teleport_actor("enemy/%d" % charger.entity_id, player_start + Vector2.RIGHT * 100.0).get("ok", false)), "padding runtime: charger fixture placement failed", failures)
 	var player_check: Dictionary = arena.ArenaGeometryScript.project(player_start, player_geometry)
 	var contact: Dictionary = arena.ArenaGeometryScript.project(player_start, enemy_geometry)
 	_expect(bool(player_check.ok) and Vector2(player_check.position).is_equal_approx(player_start), "padding runtime: player edge is illegal under padding 14", failures)
@@ -611,10 +622,10 @@ func _test_invalid_charge_distance_runtime(arena: Node, failures: Array[String])
 
 func _test_rectangle_runtime_does_not_detour(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-	var center: Vector2 = arena._arena_rect().get_center()
-	arena.teleport_actor("ranger", center)
+	var center := Vector2(450.0, 630.0)
+	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "rectangle runtime: ranger fixture placement failed", failures)
 	var charger = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % charger.entity_id, center + Vector2(250.0, 0.0))
+	_expect(bool(arena.teleport_actor("enemy/%d" % charger.entity_id, center + Vector2(250.0, 0.0)).get("ok", false)), "rectangle runtime: charger fixture placement failed", failures)
 	var before: Vector2 = charger.position
 
 	fixture.drive(arena, {"enemies": true})
@@ -691,23 +702,23 @@ func _test_hazards(arena: Node, failures: Array[String]) -> void:
 		arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [hazard_id])
 		var center: Vector2 = arena._arena_rect().get_center()
 		# Both the waiting position and the hit position are legal registry feet.
-		arena.teleport_actor("ranger", center + Vector2(350.0, 100.0))
+		arena.teleport_actor("ranger", center + Vector2(350.0, 170.0))
 		fixture.advance_to(arena, 30)
 		var state: Dictionary = arena.hazard_states[0]
-		var hit_position: Vector2 = state.origin + Vector2(0.0, state.length * 0.5) if hazard_id == "moving_fireline" else state.origin
-		arena.teleport_actor("ranger", hit_position)
+		var hit_position: Vector2 = state.origin + Vector2(0.0, state.length * 0.5) if hazard_id == "moving_fireline" else state.origin + Vector2(0, -45)
+		_expect(bool(arena.teleport_actor("ranger", hit_position).get("ok", false)), "%s hit pose is blocked" % hazard_id, failures)
 		fixture.step(arena)
 		fixture.step(arena)
 		var after_hit: float = arena.player_health
 		fixture.step(arena)
 		_expect(after_hit < 100.0 and is_equal_approx(arena.player_health, after_hit), "%s did not deal exactly one hit per cycle" % hazard_id, failures)
-		arena.teleport_actor("ranger", center + Vector2(350.0, 100.0))
+		arena.teleport_actor("ranger", center + Vector2(350.0, 170.0))
 		fixture.advance_to(arena, 119)
 		var before_dodge: float = arena.player_health
 		_expect(fixture.cast(arena, "dodge", 0, Vector2.UP).get("accepted", false), "%s real dodge setup failed" % hazard_id, failures)
 		state = arena.hazard_states[0]
-		hit_position = state.origin + Vector2(0.0, state.length * 0.5) if hazard_id == "moving_fireline" else state.origin
-		arena.teleport_actor("ranger", hit_position)
+		hit_position = state.origin + Vector2(0.0, state.length * 0.5) if hazard_id == "moving_fireline" else state.origin + Vector2(0, -45)
+		_expect(bool(arena.teleport_actor("ranger", hit_position).get("ok", false)), "%s hit pose is blocked" % hazard_id, failures)
 		arena._update_hazards_tick()
 		_expect(is_equal_approx(arena.player_health, before_dodge), "%s ignored dodge immunity" % hazard_id, failures)
 

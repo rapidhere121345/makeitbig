@@ -11,6 +11,9 @@ const Resolver := preload("res://src/systems/build_resolver.gd")
 const Motion := preload("res://src/systems/player_motion_system.gd")
 
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
+const SceneRuntimeScript := preload("res://src/runtime/world/scene_runtime.gd")
+const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const PhasePort := preload("res://tests/helpers/callable_combat_phase_port.gd")
 
 class DrivenMain:
@@ -43,6 +46,7 @@ func _run() -> void:
 	await process_frame
 
 	_test_ring_geometry(arena)
+	_test_ring_circulation(arena)
 	_test_geometry_layers(arena)
 	_test_ring_player_boundaries(arena)
 	_test_ring_enemy_boundary(arena)
@@ -136,6 +140,169 @@ func _test_ring_geometry(arena: Node) -> void:
 	_expect(_near_vector(hole_projection, center + Vector2.RIGHT * float(geometry.inner_radius)), "ring: a point in the inner hole remained walkable")
 	var outer_projection: Vector2 = arena._clamp_to_arena(center + Vector2.RIGHT * (float(geometry.outer_radius) + 100.0), 14.0)
 	_expect(_near_vector(outer_projection, center + Vector2.RIGHT * float(geometry.outer_radius)), "ring: the outer boundary did not project onto the annulus")
+
+
+## A C-shaped annulus is still one connected component, so connectivity alone
+## does not prove circulation. The ring must offer a full cycle around the
+## beacon. The boundary comes from the same DrivenMain fixture the player
+## movement checks use; the authored blocker set comes from a mount of the
+## production ring room (the fixture's standalone index carries the boundary
+## only). Sample the hero-eroded annulus on a polar grid (14 gp clearance, the
+## player footprint), label the 4-connected free components, and require one
+## whose complement cannot connect the inner edge to the outer edge — the same
+## conservative winding test used to accept the authored placement moves.
+func _test_ring_circulation(arena: Node) -> void:
+	_configure_room(arena, "ring", ["melee_pursuer"])
+	var boundary := _ring_boundary(arena)
+	var center: Vector2 = boundary["center"]
+	var r_lo := float(boundary["inner_radius"]) + 15.0
+	var r_hi := float(boundary["outer_radius"]) - 15.0
+	var n_r := int(floor(r_hi - r_lo)) + 1
+	const N_THETA := 360
+	var packed := load("res://content/rooms/combat/ring.tscn") as PackedScene
+	_expect(packed != null, "ring circulation: production ring scene failed to load")
+	if packed == null:
+		return
+	var manifest_path := "res://content/rooms/combat/ring.spatial.json"
+	var manifest = SpatialManifestScript.new(JSON.parse_string(FileAccess.get_file_as_string(manifest_path)))
+	var runtime: SceneRuntime = SceneRuntimeScript.new()
+	root.add_child(runtime)
+	var mounted: Dictionary = runtime.mount(
+		{
+			"room_id": "combat.ring",
+			"world_asset_id": "combat/ring",
+			"encounter_id": "encounter.circulation-regression",
+			"ruleset_id": "rules.circulation-regression",
+			"tags": ["regression"],
+		},
+		{
+			"world_scene_path": packed.resource_path,
+			"manifest_path": manifest_path,
+			"gameplay_digest": manifest.gameplay_digest_sha256(),
+			"presentation_digest": manifest.presentation_digest_sha256(),
+			"schema_version": 1,
+		},
+		packed,
+		null,
+		0,
+		30
+	)
+	_expect(bool(mounted.get("ok", false)), "ring circulation: production ring room failed to mount: %s" % str(mounted))
+	var index: Variant = runtime.static_spatial_index if bool(mounted.get("ok", false)) else null
+	if index == null:
+		_expect(false, "ring circulation: static spatial index unavailable in the mounted room")
+		runtime.free()
+		return
+	var free: Array = []
+	var free_total := 0
+	for ri in n_r:
+		var row: Array = []
+		row.resize(N_THETA)
+		var rr := r_lo + float(ri)
+		for ti in N_THETA:
+			var angle := deg_to_rad(float(ti) + 0.5)
+			var point := center + Vector2(rr, 0.0).rotated(angle)
+			var clear: bool = index.is_position_clear(Channels.MOVEMENT, point, 14.0)
+			row[ti] = clear
+			if clear:
+				free_total += 1
+		free.append(row)
+	runtime.shutdown()
+	runtime.free()
+	_expect(free_total > 0, "ring circulation: the hero-eroded annulus has no walkable cells at all")
+	if free_total == 0:
+		return
+	var largest := _free_component_sizes(free, n_r, N_THETA)
+	_expect(largest > N_THETA, "ring circulation: the largest free component is smaller than one inner lap (%d cells)" % largest)
+	_expect(_has_winding_component(free, n_r, N_THETA), "ring circulation: no free component winds around the beacon with hero clearance (a sealed C-shape annulus)")
+
+
+## 4-connected component labeling over the polar free grid.
+func _free_component_sizes(free: Array, n_r: int, n_theta: int) -> int:
+	var comp: Array = []
+	for ri in n_r:
+		var row: Array = []
+		row.resize(n_theta)
+		for ti in n_theta:
+			row[ti] = -1
+		comp.append(row)
+	var best := 0
+	for seed_r in n_r:
+		for seed_t in n_theta:
+			if not bool(free[seed_r][seed_t]) or comp[seed_r][seed_t] != -1:
+				continue
+			var size := 0
+			var stack: Array = [[seed_r, seed_t]]
+			comp[seed_r][seed_t] = 0
+			while not stack.is_empty():
+				var cell: Array = stack.pop_back()
+				size += 1
+				for step in [[1, 0], [-1, 0], [0, 1], [0, -1]]:
+					var nr: int = cell[0] + step[0]
+					var nt: int = (cell[1] + step[1] + n_theta) % n_theta
+					if nr >= 0 and nr < n_r and bool(free[nr][nt]) and comp[nr][nt] == -1:
+						comp[nr][nt] = 0
+						stack.append([nr, nt])
+			best = maxi(best, size)
+	return best
+
+
+## A free component winds around the beacon iff its complement cannot connect
+## the inner edge (row 0) to the outer edge (row n_r-1). The complement floods
+## 8-connected, which is conservative: diagonal gaps count as connected, so a
+## claimed cycle survives grid discretization.
+func _has_winding_component(free: Array, n_r: int, n_theta: int) -> bool:
+	var comp: Array = []
+	for ri in n_r:
+		var row: Array = []
+		row.resize(n_theta)
+		for ti in n_theta:
+			row[ti] = -1
+		comp.append(row)
+	var comps := 0
+	for seed_r in n_r:
+		for seed_t in n_theta:
+			if not bool(free[seed_r][seed_t]) or comp[seed_r][seed_t] != -1:
+				continue
+			var stack: Array = [[seed_r, seed_t]]
+			comp[seed_r][seed_t] = comps
+			while not stack.is_empty():
+				var cell: Array = stack.pop_back()
+				for step in [[1, 0], [-1, 0], [0, 1], [0, -1]]:
+					var nr: int = cell[0] + step[0]
+					var nt: int = (cell[1] + step[1] + n_theta) % n_theta
+					if nr >= 0 and nr < n_r and bool(free[nr][nt]) and comp[nr][nt] == -1:
+						comp[nr][nt] = comps
+						stack.append([nr, nt])
+			comps += 1
+	for c in comps:
+		var visited: Array = []
+		for ri in n_r:
+			var row: Array = []
+			row.resize(n_theta)
+			for ti in n_theta:
+				row[ti] = false
+			visited.append(row)
+		var stack: Array = []
+		for ti in n_theta:
+			if comp[0][ti] != c:
+				visited[0][ti] = true
+				stack.append([0, ti])
+		var escaped := false
+		while not stack.is_empty() and not escaped:
+			var cell: Array = stack.pop_back()
+			if cell[0] == n_r - 1:
+				escaped = true
+				break
+			for step in [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]:
+				var nr: int = cell[0] + step[0]
+				var nt: int = (cell[1] + step[1] + n_theta) % n_theta
+				if nr >= 0 and nr < n_r and not bool(visited[nr][nt]) and comp[nr][nt] != c:
+					visited[nr][nt] = true
+					stack.append([nr, nt])
+		if not escaped:
+			return true
+	return false
 
 
 func _test_geometry_layers(arena: Node) -> void:

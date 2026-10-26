@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "generator": "OpenAI built-in image_gen",
+  "style_reference": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+  "runtime_package": "art/production/p1/world_expansion_v01",
+  "compiler": "tools/art_pipeline/world_expansion_v01/pack.py",
+  "sources": [
+    {
+      "source": "sources/town_ground_raw.png",
+      "sha256": "7d3d01f58faa5037c9e29b7c26e12afa0058506436daacff44c1c158e3195956",
+      "size": [
+        1536,
+        1024
+      ],
+      "prompt": "prompts/town_ground.txt",
+      "status": "retained_draft",
+      "note": "River was too straight; replaced by winding edit."
+    },
+    {
+      "source": "sources/town_ground_winding_raw.png",
+      "sha256": "0a9579415efb9114bfad7fcc2818c2d19317f8324112cae2a35e3e304ca40f07",
+      "size": [
+        1536,
+        1024
+      ],
+      "prompt": "prompts/town_ground_winding.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/court_ground_raw.png",
+      "sha256": "a3d77550d53ae2ecac11a962382c328d4c86fa9594f4058699e55d704ab31e88",
+      "size": [
+        1586,
+        992
+      ],
+      "prompt": "prompts/court_ground.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/causeway_ground_draft_raw.png",
+      "sha256": "11ad7b801168e72644e31b7cfce886ce88b456d8b5eca49b791b4abcbe3f0523",
+      "size": [
+        1586,
+        992
+      ],
+      "prompt": "prompts/causeway_ground.txt",
+      "status": "retained_draft",
+      "note": "Roadway sat north of authoritative combat strip."
+    },
+    {
+      "source": "sources/causeway_ground_raw.png",
+      "sha256": "b8290f142de94dbe182283fc1b26efe2ccfcec4c2a7ec237dd5bcac4608e2e92",
+      "size": [
+        1586,
+        992
+      ],
+      "prompt": "prompts/causeway_ground_aligned.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/ritual_ground_draft_raw.png",
+      "sha256": "476c16a2708fca8659e54d57669a8cbc9a85de898b445831317f39591a5cf747",
+      "size": [
+        1586,
+        992
+      ],
+      "prompt": "prompts/ritual_ground.txt",
+      "status": "retained_draft",
+      "note": "Painted well did not match authoritative ring geometry; final floor leaves pit to precise runtime edge drawing."
+    },
+    {
+      "source": "sources/ritual_ground_raw.png",
+      "sha256": "486cca4237b34ae169597d4bf000968fb47535fec957c535c19670892d78bad8",
+      "size": [
+        1586,
+        992
+      ],
+      "prompt": "prompts/ritual_ground_flat.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/bridge_raw.png",
+      "sha256": "c63ac4874310e7aa569e7778a82f9a9f01bd6e6fb265b664cf4570b5469b41b1",
+      "size": [
+        1180,
+        1333
+      ],
+      "prompt": "prompts/bridge.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/bridge_ne_raw.png",
+      "sha256": "fda246211972b7d9c75a5c29b377b28e04369905e8ddaf40c2421aad4e59489b",
+      "size": [
+        1180,
+        1333
+      ],
+      "prompt": "prompts/bridge_ne.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/gateway_raw.png",
+      "sha256": "560b0ae6bc434917065483bbdfe4887654684449d53545f60f249719e384463d",
+      "size": [
+        1536,
+        1024
+      ],
+      "prompt": "prompts/gateway.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/house_east_raw.png",
+      "sha256": "8d3e384bae0814ea5e567993281b8a60346c50fe4c402b8b58800e6bb118f939",
+      "size": [
+        1536,
+        1024
+      ],
+      "prompt": "prompts/house_east.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/house_west_raw.png",
+      "sha256": "9d83d6bc539d072174a87c3c308404bd8d8b3dc2b1f71738cb40cdcf21260ce4",
+      "size": [
+        1402,
+        1122
+      ],
+      "prompt": "prompts/house_west.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    },
+    {
+      "source": "sources/wall_raw.png",
+      "sha256": "dc9a455dc5ebf9761d5caf64da6e89ea7447ecaccc5ce8baf03c62d6ca5008da",
+      "size": [
+        1717,
+        916
+      ],
+      "prompt": "prompts/wall.txt",
+      "status": "selected",
+      "note": "Original generated source; packed with deterministic rational sampling, never used as collision authority."
+    }
+  ]
+}

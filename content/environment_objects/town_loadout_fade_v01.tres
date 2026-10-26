@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="EnvironmentObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/runtime/world/environment_object_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+asset_id = "town.loadout.fade.v01"
+canvas_size = Vector2i(256, 224)
+visual_parts = [{
+"canvas_offset": Vector2(0, 0),
+"full_path": "res://art/production/p1/town_modular_v01/loadout_common.png",
+"part_id": "common",
+"reveal_policy": "none",
+"sort_anchor": Vector2(128, 178),
+"sort_rank": 0
+}, {
+"canvas_offset": Vector2(0, 0),
+"full_path": "res://art/production/p1/town_modular_v01/loadout_upper_full.png",
+"occlusion_volumes": [{
+"points": PackedVector2Array(37, 45, 221, 45, 221, 135, 37, 135),
+"type": "polygon"
+}],
+"part_id": "upper",
+"reveal_policy": "primitive_fade",
+"sort_anchor": Vector2(128, 142),
+"sort_rank": 1
+}]
+ground_parts = [{
+"canvas_offset": Vector2(0, 0),
+"full_path": "res://art/production/p1/town_modular_v01/loadout_shadow.png",
+"layer": "GroundEffects",
+"part_id": "shadow.contact"
+}]
+footprints = [{
+"part_id": "footprint.body",
+"points": PackedVector2Array(64, 134, 192, 134, 192, 178, 64, 178),
+"type": "polygon"
+}]
+movement_envelopes = [{
+"part_id": "envelope.body",
+"points": PackedVector2Array(58, 128, 198, 128, 198, 184, 58, 184),
+"type": "polygon"
+}]
+sockets = [{
+"id": "loadout",
+"kind": "interaction",
+"label": "Loadout",
+"landmark_offset_y": -112.0,
+"locked": false,
+"order": 1.0,
+"part_id": "door.service",
+"position": Vector2(128, 196),
+"radius": 48.0
+}]

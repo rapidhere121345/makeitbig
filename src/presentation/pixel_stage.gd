@@ -29,7 +29,8 @@ extends Control
 ##
 ## Fixed-pixel presentation table:
 ##   1280x720  -> stage 1280x720,  UI 1,   world 2, full
-##   1600x900  -> stage 1280x720,  UI 1,   world 2, ink bars
+##   1600x900  -> stage 1600x900,  UI 1.25, world 2.5 (display fit), full
+##   1600x1000 -> stage 1600x900,  UI 1.25, bars above and below
 ##   1920x1080 -> stage 1920x1080, UI 1.5, world 3, full
 ##   2560x1440 -> stage 2560x1440, UI 2,   world 4, full
 ##   3440x1440 -> stage 2560x1440, UI 2,   world 4, side bars

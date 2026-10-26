@@ -9,9 +9,13 @@ const ProxyBuildScript := preload("res://src/systems/proxy_build.gd")
 const RangerAnimationScript := preload("res://src/presentation/ranger_animation.gd")
 const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.gd")
 
+## Clear of the current whole scenery boxes, including the full upward dash.
+const SKILL_ORIGIN := Vector2(500.0, 398.0)
+
 
 var fixture := PlayerFixture.new()
 var session: Dictionary = {}
+var placement_failures: Array[String] = []
 
 
 func _initialize() -> void:
@@ -56,6 +60,7 @@ func _run() -> void:
 
 	_release_input_actions()
 	fixture.free_session(session)
+	failures.append_array(placement_failures)
 	if failures.is_empty():
 		print("PASS  test_ranger_combat_skills.gd")
 		quit(0)
@@ -92,8 +97,8 @@ func _test_hunter_mark(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
 	var near = arena.enemies[0]
 	var far = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % near.entity_id, arena.player_position + Vector2(70.0, 0.0))
-	arena.teleport_actor("enemy/%d" % far.entity_id, arena.player_position + Vector2(120.0, 0.0))
+	_place(arena, "enemy/%d" % near.entity_id, arena.player_position + Vector2(70.0, 0.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(120.0, 0.0))
 	_expect(_cast(arena, "hunter_mark") and _player(arena).marked_entity_id == near.entity_id, "hunter mark did not select nearest in-range living enemy", failures)
 	_expect(arena.battle_report == "Hunter's Mark locked: Melee Pursuer." and "entity" not in arena.battle_report and "#" not in arena.battle_report, "hunter mark report exposed an internal entity id: %s" % arena.battle_report, failures)
 	var expiry: int = _player(arena).hunter_mark_expires_tick
@@ -102,10 +107,10 @@ func _test_hunter_mark(arena: Node, failures: Array[String]) -> void:
 	fixture.advance_to(arena, expiry)
 	_expect(_player(arena).marked_entity_id == 0 and _player(arena).hunter_mark_expires_tick == 0, "hunter mark did not clear at expiry tick", failures)
 	fixture.wait_ready(arena, "hunter_mark_cooldown_ticks")
-	arena.teleport_actor("enemy/%d" % near.entity_id, arena.player_position + Vector2(151.0, 0.0))
-	arena.teleport_actor("enemy/%d" % far.entity_id, arena.player_position + Vector2(180.0, 0.0))
+	_place(arena, "enemy/%d" % near.entity_id, arena.player_position + Vector2(151.0, 0.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(180.0, 0.0))
 	_expect(not _cast(arena, "hunter_mark") and _player(arena).marked_entity_id == 0, "hunter mark accepted a target outside 1.5x range", failures)
-	arena.teleport_actor("enemy/%d" % near.entity_id, arena.player_position + Vector2(150.0, 0.0))
+	_place(arena, "enemy/%d" % near.entity_id, arena.player_position + Vector2(150.0, 0.0))
 	_expect(_cast(arena, "hunter_mark"), "hunter mark rejected a target on the range boundary", failures)
 	near.health = 0.0
 	fixture.step(arena)
@@ -116,10 +121,10 @@ func _test_mark_priority_and_damage(arena: Node, failures: Array[String]) -> voi
 	_configure_enemies(arena)
 	var first = arena.enemies[0]
 	var marked = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(140.0, 0.0))
-	arena.teleport_actor("enemy/%d" % marked.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(140.0, 0.0))
+	_place(arena, "enemy/%d" % marked.entity_id, arena.player_position + Vector2(80.0, 0.0))
 	_expect(_cast(arena, "hunter_mark") and _player(arena).marked_entity_id == marked.entity_id, "priority setup failed to mark requested target", failures)
-	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(20.0, 0.0))
 	var base_damage: float = float(arena.locked_payload) * float(arena._current_model().total_events_float)
 	first.health = base_damage * 4.0
 	marked.health = base_damage * 4.0
@@ -133,7 +138,7 @@ func _test_mark_priority_and_damage(arena: Node, failures: Array[String]) -> voi
 func _test_action_timeline_and_buffer(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena, {"v": 400.0})
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(90.0, 0.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	var health_before: float = target.health
@@ -178,7 +183,7 @@ func _test_piercing_arrow_frozen_impact_geometry(arena: Node, failures: Array[St
 	_configure_enemies(arena)
 	var target = arena.enemies[0]
 	var actor_origin: Vector2 = arena.player_position
-	arena.teleport_actor("enemy/%d" % target.entity_id, actor_origin + Vector2(90.0, 22.0))
+	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(90.0, 22.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	var health_before: float = target.health
@@ -208,12 +213,12 @@ func _test_piercing_arrow_frozen_impact_geometry(arena: Node, failures: Array[St
 	_configure_enemies(arena)
 	target = arena.enemies[0]
 	actor_origin = arena.player_position
-	arena.teleport_actor("enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 22.0))
+	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 22.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	health_before = target.health
 	_expect(_start_frozen_arrow(arena, target, Vector2.RIGHT), "frozen impact: lateral-miss setup was rejected", failures)
-	arena.teleport_actor("enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 220.0))
+	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 220.0))
 	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
 	projectile = arena.projectiles[0]
 	frozen_origin = projectile.origin
@@ -226,12 +231,12 @@ func _test_piercing_arrow_frozen_impact_geometry(arena: Node, failures: Array[St
 	_configure_enemies(arena)
 	target = arena.enemies[0]
 	actor_origin = arena.player_position
-	arena.teleport_actor("enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 22.0))
+	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 22.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	health_before = target.health
 	_expect(_start_frozen_arrow(arena, target, Vector2.RIGHT), "frozen impact: range-miss setup was rejected", failures)
-	arena.teleport_actor("enemy/%d" % target.entity_id, actor_origin + Vector2(arena.locked_targeting_distance + 40.0, 22.0))
+	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(arena.locked_targeting_distance + 40.0, 22.0))
 	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
 	projectile = arena.projectiles[0]
 	frozen_origin = projectile.origin
@@ -245,7 +250,7 @@ func _test_projectile_entity_bound(arena: Node, failures: Array[String]) -> void
 	# A slow frozen projectile build keeps real arrows in flight across casts.
 	_configure_enemies(arena, {"v": 1.0})
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(80.0, 0.0))
 	target.health = 1.0e30
 	target.maximum_health = target.health
 	for _index in range(arena.combat_system.MAX_ACTIVE_PIERCING_PROJECTILES + 1):
@@ -261,8 +266,8 @@ func _test_kill_cancels_only_matching_buffered_arrow(arena: Node, failures: Arra
 	_configure_enemies(arena, {"v": 50.0})
 	var first = arena.enemies[0]
 	var second = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(60.0, 0.0))
-	arena.teleport_actor("enemy/%d" % second.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(90.0, 0.0))
 	first.health = 1.0
 	first.maximum_health = 1.0
 	second.health = 1.0e12
@@ -293,8 +298,8 @@ func _test_kill_cancels_only_matching_buffered_arrow(arena: Node, failures: Arra
 	_configure_enemies(arena, {"v": 50.0})
 	first = arena.enemies[0]
 	second = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(60.0, 0.0))
-	arena.teleport_actor("enemy/%d" % second.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(90.0, 0.0))
 	first.health = 1.0
 	second.health = 1.0e12
 	fixture.cast(arena, "piercing_arrow", first.entity_id)
@@ -330,7 +335,7 @@ func _test_same_tick_runtime_arbitration(arena: Node, failures: Array[String]) -
 	fixture.drive(arena, {"input": true})
 	arena.in_arena = true
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
 	var base_damage: float = float(arena.locked_payload) * float(arena._current_model().total_events_float)
 	target.health = base_damage * 10.0
 	target.maximum_health = target.health
@@ -357,12 +362,12 @@ func _test_proxy_decision_state_runtime(arena: Node, failures: Array[String]) ->
 	_start_proxy(arena, _white_proxy_build())
 	var first = arena.enemies[0]
 	var second = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(50.0, 0.0))
-	arena.teleport_actor("enemy/%d" % second.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(50.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(80.0, 0.0))
 	var first_commands: Array[Dictionary] = arena._auto_commands()
 	_expect(_cast_target(first_commands) == first.entity_id and _cast_has_aim(first_commands), "proxy: first perception did not emit an explicit target and aim", failures)
-	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(90.0, 0.0))
-	arena.teleport_actor("enemy/%d" % second.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(20.0, 0.0))
 	fixture.advance_to(arena, 29)
 	arena._auto_commands()
 	var retained_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
@@ -392,11 +397,11 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 	}
 	fixture.reset(arena, arena.framework_room, fixture.build({"d": 100.0, "max_health": 1.0e9}))
 	fixture.drive(arena)
-	arena.teleport_actor("ranger", arena._arena_rect().get_center())
+	_place(arena, "ranger", SKILL_ORIGIN)
 	var elite = arena.enemies[0]
 	var secondary = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % elite.entity_id, arena.player_position + Vector2(20.0, 0.0))
-	arena.teleport_actor("enemy/%d" % secondary.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % elite.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % secondary.entity_id, arena.player_position + Vector2(60.0, 0.0))
 	arena.selected_mode = "Auto"
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
 	arena._update_room_rules_tick()
@@ -431,8 +436,8 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 	arena.selected_mode = "Auto"
 	var ordinary = arena.enemies[0]
 	var elite = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % ordinary.entity_id, arena.player_position + Vector2(20.0, 0.0))
-	arena.teleport_actor("enemy/%d" % elite.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % ordinary.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % elite.entity_id, arena.player_position + Vector2(60.0, 0.0))
 	arena.elite_entity_id = elite.entity_id
 	var marking_build := _proxy_build("marking_prism", "direct_gait")
 	_start_proxy(arena, marking_build)
@@ -444,7 +449,7 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 	_expect("elite" in elite_tags and _cast_target(arena._auto_commands()) == elite.entity_id,
 		"resolved proxy: marking prism did not receive public classification and prioritize the elite", failures)
 
-	arena.teleport_actor("enemy/%d" % ordinary.entity_id, arena.player_position + Vector2(55.0, 0.0))
+	_place(arena, "enemy/%d" % ordinary.entity_id, arena.player_position + Vector2(55.0, 0.0))
 	arena.enemies.clear()
 	arena.enemies.append(ordinary)
 	arena.elite_entity_id = 0
@@ -472,14 +477,14 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	arena.framework_resolved_proxy_build = _white_proxy_build()
 	fixture.reset(arena, arena.framework_room, fixture.build({"d": 100.0, "max_health": 1.0e9, "damage": 1.0}))
 	fixture.drive(arena, {"input": true, "enemies": true})
-	arena.teleport_actor("ranger", arena._arena_rect().get_center())
+	_place(arena, "ranger", SKILL_ORIGIN)
 	arena.selected_mode = "Auto"
 	arena.in_arena = true
 	arena.battle_over = false
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
 	arena.combat_event_stream.reset()
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(20.0, 0.0))
 	target.health = 1.0e30
 	target.maximum_health = target.health
 	var start_player: Vector2 = arena.player_position
@@ -555,10 +560,10 @@ func _test_proxy_target_death_reacquire_state_reset(arena: Node, failures: Array
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
 	var first = arena.enemies[0]
 	var second = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % first.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(20.0, 0.0))
 	first.health = 1.0
 	first.maximum_health = first.health
-	arena.teleport_actor("enemy/%d" % second.entity_id, arena.player_position + Vector2(70.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(70.0, 0.0))
 	second.health = 1.0e30
 	second.maximum_health = second.health
 	for enemy in [first, second]:
@@ -583,7 +588,7 @@ func _test_proxy_target_death_reacquire_state_reset(arena: Node, failures: Array
 	if first_died_through_main:
 		## A distance between retreat enter and exit distinguishes a reset hold band
 		## from an inherited retreat band on the target-missing reacquire tick.
-		arena.teleport_actor("enemy/%d" % second.entity_id, arena.player_position + Vector2(30.0, 0.0))
+		_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(30.0, 0.0))
 		arena._simulate_tick()
 		var proxy_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
 		_expect(int(proxy_state.get("target_entity_id", 0)) == second.entity_id, "proxy reacquire: target death did not reacquire the remaining enemy through real Main", failures)
@@ -627,7 +632,7 @@ func _test_dodge_facing_integration(arena: Node, failures: Array[String]) -> voi
 func _test_dodge_interrupts_arrow(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	var health_before: float = target.health
@@ -654,7 +659,7 @@ func _test_dodge_interrupts_arrow(arena: Node, failures: Array[String]) -> void:
 func _test_mobility_boundary_buffer(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
 	_expect(_cast_skill_one(arena), "mobility buffer: recovery setup arrow was rejected", failures)
 	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS + 1)
 	_expect(_player(arena).action_phase == Timeline.PHASE_RECOVERY, "mobility buffer: arrow did not enter recovery", failures)
@@ -702,8 +707,8 @@ func _test_manual_pointer_exact_selection(arena: Node, failures: Array[String]) 
 	_configure_enemies(arena)
 	var left = arena.enemies[0]
 	var right = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % left.entity_id, arena.player_position + Vector2(-80.0, 0.0))
-	arena.teleport_actor("enemy/%d" % right.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	_place(arena, "enemy/%d" % left.entity_id, arena.player_position + Vector2(-80.0, 0.0))
+	_place(arena, "enemy/%d" % right.entity_id, arena.player_position + Vector2(80.0, 0.0))
 	for target in [left, right]:
 		var anchor: Vector2 = target.position + Vector2(0.0, -22.0)
 		arena.input_adapter.capture_attack_event(_mouse_attack_event(_gameplay_to_screen(arena, anchor), true), false, arena.gameplay_snapshot())
@@ -727,7 +732,7 @@ func _test_manual_pointer_blank_and_quick_edge(arena: Node, failures: Array[Stri
 
 	_configure_enemies(arena)
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(70.0, 0.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(70.0, 0.0))
 	var target_screen := _gameplay_to_screen(arena, target.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(target_screen, true), false, arena.gameplay_snapshot())
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(target_screen, false), false, arena.gameplay_snapshot())
@@ -740,13 +745,13 @@ func _test_manual_pointer_lock_lifecycle(arena: Node, failures: Array[String]) -
 	_configure_enemies(arena)
 	var locked = arena.enemies[0]
 	var other = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % locked.entity_id, arena.player_position + Vector2(160.0, 0.0))
-	arena.teleport_actor("enemy/%d" % other.entity_id, arena.player_position + Vector2(30.0, 70.0))
+	_place(arena, "enemy/%d" % locked.entity_id, arena.player_position + Vector2(160.0, 0.0))
+	_place(arena, "enemy/%d" % other.entity_id, arena.player_position + Vector2(30.0, -70.0))
 	var locked_screen := _gameplay_to_screen(arena, locked.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(locked_screen, true), false, arena.gameplay_snapshot())
 	_expect(arena.input_adapter.manual_pointer_target_entity_id == locked.entity_id and arena.input_adapter.manual_pointer_status == arena.input_adapter.POINTER_STATUS_OUT_OF_RANGE, "pointer range: out-of-range click did not retain the entity lock", failures)
 	_expect(_piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot())).is_empty(), "pointer range: out-of-range lock emitted a cast", failures)
-	arena.teleport_actor("ranger", locked.position + Vector2(-80.0, 0.0))
+	_place(arena, "ranger", locked.position + Vector2(-80.0, 0.0))
 	var entered_command: Dictionary = _piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot()))
 	_expect(int(entered_command.get("target_entity_id", 0)) == locked.entity_id, "pointer range: entering range while held did not fire at the original entity", failures)
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(locked_screen, false), false, arena.gameplay_snapshot())
@@ -755,8 +760,8 @@ func _test_manual_pointer_lock_lifecycle(arena: Node, failures: Array[String]) -
 	_configure_enemies(arena)
 	locked = arena.enemies[0]
 	other = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % locked.entity_id, arena.player_position + Vector2(80.0, 0.0))
-	arena.teleport_actor("enemy/%d" % other.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % locked.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	_place(arena, "enemy/%d" % other.entity_id, arena.player_position + Vector2(20.0, 0.0))
 	locked_screen = _gameplay_to_screen(arena, locked.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(locked_screen, true), false, arena.gameplay_snapshot())
 	locked.health = 0.0
@@ -770,8 +775,8 @@ func _test_assisted_and_pointer_arbitration(arena: Node, failures: Array[String]
 	_configure_enemies(arena)
 	var nearest = arena.enemies[0]
 	var marked = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % nearest.entity_id, arena.player_position + Vector2(25.0, 0.0))
-	arena.teleport_actor("enemy/%d" % marked.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	_place(arena, "enemy/%d" % nearest.entity_id, arena.player_position + Vector2(25.0, 0.0))
+	_place(arena, "enemy/%d" % marked.entity_id, arena.player_position + Vector2(80.0, 0.0))
 	_expect(_cast(arena, "hunter_mark", marked.entity_id), "assisted Space: real mark setup failed", failures)
 	arena.input_adapter.capture_attack_event(_attack_key_event(true), true, arena.gameplay_snapshot())
 	_expect(_cast_target(arena.input_adapter.collect_commands(arena.gameplay_snapshot())) == marked.entity_id, "assisted Space: HUD hover or nearest target overrode the live mark", failures)
@@ -816,18 +821,25 @@ func _test_auto_ignores_manual_device_state(arena: Node, failures: Array[String]
 func _test_pointer_camera_round_trip(arena: Node, failures: Array[String]) -> void:
 	var arena_rect: Rect2 = arena._walkable_geometry(14.0).bounds
 	var cases := [
-		{"player": arena_rect.get_center(), "offset": Vector2(70.0, 0.0), "label": "center"},
-		{"player": arena_rect.position + Vector2(8.0, 8.0), "offset": Vector2(60.0, 40.0), "label": "top_left_clamp"},
-		{"player": arena_rect.end - Vector2(8.0, 8.0), "offset": Vector2(-60.0, -40.0), "label": "bottom_right_clamp"},
+		{"player": arena_rect.get_center(), "offset": Vector2(-70.0, 0.0), "label": "center"},
+		{"player": arena_rect.position + Vector2(8.0, 8.0), "offset": Vector2(0.0, Vector2(60.0, 40.0).length()), "label": "top_left_clamp"},
+		{"player": arena_rect.end - Vector2(8.0, 8.0), "offset": Vector2(-60.0, -40.0), "label": "lower_right_edge"},
 	]
 	for camera_case: Dictionary in cases:
 		_configure_enemies(arena)
-		arena.teleport_actor("ranger", camera_case.player)
+		_place(arena, "ranger", camera_case.player)
 		var target = arena.enemies[0]
-		arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(camera_case.offset))
+		_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(camera_case.offset))
 		arena.enemies[1].health = 0.0
 		var anchor: Vector2 = target.position + Vector2(0.0, -22.0)
 		var screen: Vector2 = _gameplay_to_screen(arena, anchor)
+		var view = arena.presentation.world_view
+		if camera_case.label == "top_left_clamp":
+			_expect(view.camera_origin().is_equal_approx(Vector2.ZERO), "camera top-left fixture did not exercise both clamps: origin=%s visible=%s" % [view.camera_origin(), view.visible_world_size()], failures)
+		elif camera_case.label == "lower_right_edge":
+			# At 1280x720, authored camera headroom keeps the lower legal edge
+			# above the world's bottom clamp; the right axis must still clamp.
+			_expect(is_equal_approx(view.camera_origin().x, (view.world_size() - view.visible_world_size()).x) and view.camera_origin().y > 0.0, "camera lower-right fixture did not exercise the right clamp", failures)
 		var round_trip: Vector2 = arena.presentation.world_view.screen_to_gameplay(screen)
 		_expect(round_trip.distance_to(anchor) <= 0.001, "camera %s: screen/gameplay round trip drifted" % String(camera_case.label), failures)
 		arena.input_adapter.capture_attack_event(_mouse_attack_event(screen, true), false, arena.gameplay_snapshot())
@@ -838,7 +850,7 @@ func _test_pointer_camera_round_trip(arena: Node, failures: Array[String]) -> vo
 func _test_pointer_command_protocol_boundary(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 45.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, -45.0))
 	var screen := _gameplay_to_screen(arena, target.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(screen, true), false, arena.gameplay_snapshot())
 	var command: Dictionary = _piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot()))
@@ -859,7 +871,7 @@ func _test_held_attack_repeats_without_buffer_churn(arena: Node, failures: Array
 	arena.input_adapter.manual_combat_input.reset()
 	arena.command_source.attack_requested = false
 	for enemy in arena.enemies:
-		arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(60.0 + float(enemy.entity_id), 0.0))
+		_place(arena, "enemy/%d" % enemy.entity_id, arena.player_position + Vector2(60.0 + float(enemy.entity_id), 0.0))
 		enemy.health = 1.0e30
 		enemy.maximum_health = enemy.health
 
@@ -925,15 +937,24 @@ func _test_arena_reset(arena: Node, failures: Array[String]) -> void:
 	_expect(arena.in_arena and after.marked_entity_id == 0 and after.hunter_mark_expires_tick == 0 and after.hunter_mark_cooldown_ticks == 0 and after.dash_remaining_ticks == 0 and after.dash_cooldown_ticks == 0 and after.mobility_input_buffer.is_empty(), "enter arena did not reset skill authority state", failures)
 
 
+## Keep rejected setup poses in the test result instead of silently testing a
+## previous spawn position. Teleports remain validated by the real room registry.
+func _place(arena: Node, actor_id: String, position: Vector2) -> Dictionary:
+	var receipt: Dictionary = arena.teleport_actor(actor_id, position)
+	if not bool(receipt.get("ok", false)):
+		placement_failures.append("fixture placement %s at %s rejected: %s" % [actor_id, position, receipt])
+	return receipt
+
+
 func _configure_enemies(arena: Node, overrides: Dictionary = {}, skills: Array = ["piercing_arrow", "hunter_mark", "dash"]) -> void:
 	_release_input_actions()
 	var parameters := {"d": 100.0, "max_health": 1.0e9}
 	parameters.merge(overrides, true)
 	fixture.reset(arena, _skill_room(), fixture.build(parameters), skills)
-	arena.teleport_actor("ranger", arena._arena_rect().get_center())
+	_place(arena, "ranger", SKILL_ORIGIN)
 	fixture.drive(arena)
 	for index in arena.enemies.size():
-		arena.teleport_actor("enemy/%d" % arena.enemies[index].entity_id, arena.player_position + Vector2(60.0 + index * 30.0, 0.0))
+		_place(arena, "enemy/%d" % arena.enemies[index].entity_id, arena.player_position + Vector2(60.0 + index * 30.0, 0.0))
 
 
 func _cast_and_resolve_arrow(arena: Node) -> bool:

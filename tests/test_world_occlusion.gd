@@ -13,6 +13,7 @@ extends SceneTree
 ## consume, because both come from the same functions.
 
 const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
+const TownExpectations = preload("res://tests/helpers/town_scene_expectations.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
 const ArenaActorPresenterScript = preload("res://src/presentation/arena_actor_presenter.gd")
 const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd")
@@ -22,6 +23,9 @@ const EnemyScript = preload("res://src/runtime/world/combat_enemy_state.gd")
 const OcclusionPlanScript = preload("res://src/presentation/occlusion/occlusion_plan.gd")
 const OcclusionControllerScript = preload("res://src/presentation/occlusion/occlusion_controller.gd")
 const AuthoredRevealScript = preload("res://src/presentation/occlusion/authored_reveal_controller.gd")
+const SilhouetteRevealScript = preload("res://src/presentation/occlusion/silhouette_reveal_controller.gd")
+const PrimitiveFadeScript = preload("res://src/presentation/occlusion/primitive_fade_controller.gd")
+const PairedRevealScript = preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
 
 ## Visual-overlap budget: at most this much total local opacity may sit on top of
 ## the hero's own cell, so a per-channel comparison against the source pixels can
@@ -55,7 +59,13 @@ func _run() -> void:
 	_test_budget()
 	_test_pieces()
 	await _test_town_scene()
+	await _test_town_silhouette_reveal()
+	await _test_town_primitive_fade()
+	await _test_silhouette_canvas_cells()
 	_test_town_cover_tiers()
+	_test_primitive_fade_controller()
+	_test_paired_reveal_controller()
+	_test_arena_paired_pack()
 	_test_authored_reveal()
 	_test_arena()
 	_test_room_concept_geometry()
@@ -157,25 +167,17 @@ func _test_posed_boss_geometry() -> void:
 
 
 func _test_room_concept_geometry() -> void:
+	## Room concepts now come from CombatRoomScene, which derives every edge,
+	## entry and exit from the authored manifest instead of fixed midpoints.
 	var view = ArenaWorldViewScript.new()
-	view.begin_frame(ARENA_VIEWPORT, Vector2(430.0, 360.0), ARENA_RECT)
-	var gameplay_bounds := Rect2(Vector2(56.0, 204.0), Vector2(1168.0, 460.0))
-	var geometry := {
-		"bounds": gameplay_bounds,
-		"center": gameplay_bounds.get_center(),
-		"corridor_half_height": 72.0,
-		"inner_radius": 97.6,
-		"outer_radius": 209.84,
-	}
-	var world_bounds: Rect2 = view._concept_bounds_world(geometry)
-	_expect(world_bounds == Rect2(view.gameplay_to_world(gameplay_bounds.position), gameplay_bounds.size * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: room landmarks did not use gameplay bounds")
-	_expect(view._concept_center_world(geometry, world_bounds) == view.gameplay_to_world(gameplay_bounds.get_center()), "concept: room landmarks did not use gameplay center")
-	_expect(is_equal_approx(view._concept_radius_world(geometry, "corridor_half_height", 62.0), 72.0 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: corridor landmark used a stale visual half-height")
-	_expect(is_equal_approx(view._concept_radius_world(geometry, "outer_radius", 152.0), 209.84 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: ring landmark used a stale visual radius")
-	var corridor_edge := view._concept_corridor_edge_world(geometry, world_bounds, 1.0)
-	_expect(is_equal_approx(corridor_edge, view._concept_center_world(geometry, world_bounds).y + 72.0 * ArenaWorldViewScript.GAMEPLAY_TO_WORLD), "concept: corridor edge did not follow the authoritative half-height")
-	var trace_radius := view._concept_ring_trace_radius_world(view._concept_radius_world(geometry, "inner_radius", 70.0), view._concept_radius_world(geometry, "outer_radius", 152.0))
-	_expect(trace_radius > view._concept_radius_world(geometry, "inner_radius", 70.0) and trace_radius < view._concept_radius_world(geometry, "outer_radius", 152.0), "concept: ring trace escaped the authoritative radius band")
+	_expect(view.load_assets(), "concept: world view did not load: %s" % String(view.pending_reason))
+	for name: String in ["_concept_bounds_world", "_concept_corridor_edge_world", "_concept_ring_trace_radius_world", "_draw_room_gate"]:
+		_expect(not view.has_method(name), "concept: unaligned procedural gate helper %s is still present" % name)
+	for layout_id: String in ["rectangle_arena", "corridor", "ring"]:
+		var report: Dictionary = view.room_scene_report(layout_id, false)
+		_expect(bool(report.get("ready", false)) and String(report.get("exit_state", "")) == "sealed" and not bool(report.get("exit_walkable", true)),
+			"concept: %s room scene is not a sealed, socket-aligned presentation" % layout_id)
+		_expect(String(view.room_scene_report(layout_id, true).get("exit_state", "")) == "wards_down", "concept: %s cleared ward state" % layout_id)
 
 
 func _test_world_frame_projection() -> void:
@@ -258,9 +260,25 @@ func _test_town_scene() -> void:
 	var view := hub.get_hub_view()
 	var town = hub.get_town_runtime()
 	_expect(bool(hub.town_load_report.get("ok", false)), "town: native scene failed to load")
+	await _warm_hub()
+	_settle_reveal(view)
 	var audit := view.render_audit()
-	_expect(audit.ground_source_path == "res://content/rooms/town/layers/ground.png" and audit.runtime_background_patches == 0, "town: legacy background patch path survived")
-	_expect(audit.unknown_underplate == "transparent" and audit.supports_cutaway and audit.supports_fade, "town: authored opacity capabilities were hidden")
+	var authored: Dictionary = TownExpectations.load_expectations()
+	_expect(not (authored.paired_ids as Array).is_empty() and (authored.unpaired_sort_ids as Array).is_empty(),
+		"town: every authored SortRoot visual must be a whole paired object: " + str(authored.unpaired_sort_ids))
+	_expect(view.occlusion_report().get("available", false)
+		and TownExpectations.sorted_strings((view.occlusion_report().get("paired_reveal", {}) as Dictionary).keys()) == authored.paired_ids,
+		"town: registered paired ids must equal the scene-authored paired ids %s, got %s" % [str(authored.paired_ids), str((view.occlusion_report().get("paired_reveal", {}) as Dictionary).keys())])
+	_expect((authored.base_ground_paths as Array) == [TownExpectations.EXPANSION_GROUND] and audit.ground_source_path == TownExpectations.EXPANSION_GROUND and audit.runtime_background_patches == 0,
+		"town: the scene must declare and mount the world_expansion_v01 town ground, got %s / %s" % [str(authored.base_ground_paths), str(audit.ground_source_path)])
+	_expect((authored.sort_bridge_ids as Array).is_empty(), "town: bridges are opaque ground art and must not be sortable: " + str(authored.sort_bridge_ids))
+	_expect((authored.ground_bridge_ids as Array).size() == 2, "town: both bridge decks must be authored in Ground")
+	for bridge_id: String in authored.ground_bridge_ids:
+		var bridge: Node = view.world_presenter.native_binding_node(bridge_id)
+		_expect(bridge is Sprite2D and bridge.get_parent() == view.world_presenter.ground_layer, "town: bridge %s did not mount in Ground" % bridge_id)
+		if bridge is Sprite2D:
+			_expect(String(bridge.get_meta("texture_path", "")).ends_with("_opaque.png") and bridge.texture != null and bridge.material == null and is_equal_approx(bridge.modulate.a, 1.0), "town: ground bridge %s must remain an opaque deck" % bridge_id)
+	_expect(audit.unknown_underplate == "opaque" and audit.supports_cutaway and not audit.supports_fade, "town: whole-object ground capabilities changed")
 	var shared: Node2D = view.world_presenter.sort_root
 	_expect(shared.y_sort_enabled and view._hero_sprite.get_parent() == shared, "town: hero has a parallel sort domain")
 	var native_count := 0
@@ -270,7 +288,7 @@ func _test_town_scene() -> void:
 	for node: Node in shared.get_children():
 		if not node.has_meta("texture_path"): continue
 		native_count += 1
-		_expect(node is Sprite2D and not (node as Sprite2D).region_enabled and String(node.get_meta("texture_path")).begins_with("res://content/rooms/town/layers/"), "town: visual was cropped from background at runtime")
+		_expect(node is Sprite2D and not (node as Sprite2D).region_enabled and TownExpectations.art_path_accepted(String(node.get_meta("texture_path"))), "town: visual was cropped from background or left the whole-object art roots: " + String(node.get_meta("texture_path")))
 		_expect((node as CanvasItem).visible and is_equal_approx((node as CanvasItem).modulate.a, 1.0), "town: transparent underplate enabled fade or hiding")
 	var before: int = shared.get_child_count()
 	for target: Vector2 in town.route_points("contract"):
@@ -285,12 +303,663 @@ func _test_town_scene() -> void:
 			if node.has_meta("texture_path"):
 				var alpha := float((node as CanvasItem).modulate.a)
 				_expect((node as CanvasItem).visible, "town: movement hid native art")
-				_expect(alpha >= 0.39 and alpha <= 1.0, "town: window tier escaped its bounds: %.3f" % alpha)
+				## Whole-object contract: the paired policy never dims modulate;
+				## a covered piece reveals through its own material only.
 				var piece_id := String(node.get_meta("binding_id", ""))
-				if piece_id.is_empty() or not windowed.has(piece_id) or absf(float(windowed[piece_id]) - 1.0) < 0.001:
-					_expect(is_equal_approx(alpha, 1.0), "town: unwcovered native art faded: %.3f" % alpha)
-	_expect(native_count == 35, "town: offline native ownership is incomplete")
+				_expect(is_equal_approx(alpha, 1.0), "town: a whole object dimmed its own modulate: %s %.3f" % [piece_id, alpha])
+				_expect(not windowed.has(piece_id), "town: %s kept a legacy window tier row" % piece_id)
+	_expect(native_count == (authored.sort_ids as Array).size(), "town: mounted whole objects %d != authored %d" % [native_count, (authored.sort_ids as Array).size()])
+	for binding_id: String in authored.paired_ids:
+		var authored_piece: Node = view.world_presenter.native_binding_node(binding_id)
+		_expect(authored_piece is Sprite2D and String(authored_piece.get_meta("reveal_policy", "")) == "paired_reveal"
+			and int(authored_piece.get_meta("sort_rank")) == 0
+			and not authored_piece.has_meta("occlusion_volumes") and not authored_piece.has_meta("reveal_mask_path"),
+			"town: %s lost its whole paired policy" % binding_id)
+	for id: String in ["loadout", "tree_south", "tree_east"]:
+		var piece: Node = view.world_presenter.native_binding_node("town/native/" + id)
+		_expect(piece is Sprite2D, "town: %s missing" % id)
+		## The retired split pieces must not survive as parallel bindings.
+		_expect(view.world_presenter.native_binding_node("town/native/%s_common" % id) == null
+			and view.world_presenter.native_binding_node("town/native/%s_upper" % id) == null,
+			"town: %s kept a retired split companion" % id)
 	hub.free()
+
+
+## Production presenter path for the actual-silhouette foreground reveal.
+## GPU visual finding 2026-10-22: behind the Loadout forecourt and tree_south
+## the hero was tinted ~50.8% gray because the legacy occluder window kept
+## half the piece at its 0.4 tier. The mounted hub drives the real
+## TownPresenter end to end here: the covering piece's material must carry the
+## hero's live draw cell and atlas region, clear exactly over the silhouette
+## on a transition independent of the 0.4..1 window tier, open nothing under a
+## piece's transparent tail, reveal the protected conversation resident
+## together with the hero, close cleanly after the hero leaves, and never
+## punch any other resident.
+func _test_town_silhouette_reveal() -> void:
+	var hub := BaseHubScript.new()
+	root.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	var town = hub.get_town_runtime()
+	_expect(bool(hub.town_load_report.get("ok", false)), "silhouette: native scene failed to load")
+
+	# Whole-object contract: every native piece is ONE sprite with an opaque
+	# and a baked transparent pair — no upper/base split, no mask. Standing
+	# clear of the loadout's detection ring keeps it closed.
+	var placed: Dictionary = town.place_hero(Vector2(562.0, 166.0))
+	_expect(bool(placed.get("ok", false)), "paired reveal: closed placement rejected: " + str(placed))
+	await _warm_hub()
+	_settle_reveal(view)
+	var report: Dictionary = view.occlusion_report()
+	_expect(bool(report.get("available", false)), "paired reveal: presenter lost its occlusion plan")
+	_check_whole_pair(view, report, "loadout", false, "CLOSED")
+	_check_reveal_invariants(view, report, "CLOSED")
+
+	# Standing behind the angled house, north of its padded ground footprint,
+	# covers the readability box: the WHOLE object eases open at weight 1 —
+	# the revealed alpha lives inside the single piece material, modulate
+	# stays 1 and no band splits off.
+	placed = town.place_hero(Vector2(711.0, 140.0))
+	_expect(bool(placed.get("ok", false)), "paired reveal: open placement rejected: " + str(placed))
+	await _warm_hub()
+	_settle_reveal(view)
+	report = view.occlusion_report()
+	_check_whole_pair(view, report, "loadout", true, "OPEN")
+	var open_actors: Dictionary = ((report.get("paired_reveal", {}) as Dictionary).get("town/native/loadout", {}) as Dictionary).get("actors", {})
+	_expect(open_actors.has("town/ranger"), "paired reveal: the hero under the detection ring opened no reveal")
+	_expect(is_equal_approx(view.actor_alpha("town/ranger"), 1.0), "paired reveal: the hero sprite itself was dimmed")
+	_check_reveal_invariants(view, report, "OPEN")
+
+	# In front of the piece: the whole object closes again.
+	placed = town.place_hero(Vector2(711.0, 250.0))
+	_expect(bool(placed.get("ok", false)), "paired reveal: front placement rejected: " + str(placed))
+	await _warm_hub()
+	_settle_reveal(view)
+	report = view.occlusion_report()
+	_check_whole_pair(view, report, "loadout", false, "FRONT")
+	var front_row: Dictionary = (report.get("paired_reveal", {}) as Dictionary).get("town/native/loadout", {})
+	_expect(not (front_row.get("actors", {}) as Dictionary).has("town/ranger"), "paired reveal: a hero row survived on a closed piece")
+	_check_reveal_invariants(view, report, "FRONT")
+
+	# tree_south (pine): the same closed→open transition on its ring edge.
+	placed = town.place_hero(Vector2(900.0, 700.0))
+	_expect(bool(placed.get("ok", false)), "paired reveal: pine closed placement rejected")
+	await _warm_hub()
+	_settle_reveal(view)
+	_check_whole_pair(view, view.occlusion_report(), "tree_south", false, "pine closed")
+	placed = town.place_hero(Vector2(985.0, 700.0))
+	_expect(bool(placed.get("ok", false)), "paired reveal: pine open placement rejected")
+	await _warm_hub()
+	_settle_reveal(view)
+	_expect(view.camera_world_offset() != Vector2.ZERO, "paired reveal: fixture lost its camera offset")
+	report = view.occlusion_report()
+	_check_whole_pair(view, report, "tree_south", true, "pine open")
+	_check_reveal_invariants(view, report, "pine open")
+
+	# The hero alone covers tree_east's ring. Protected Mira stands SOUTH of
+	# the piece baseline (in front): she must NOT be a covered subject, must
+	# stay fully opaque, and no ambient actor may join the row.
+	view.protect_dialogue_resident("mira")
+	placed = town.place_hero(Vector2(1290.0, 410.0))
+	_expect(bool(placed.get("ok", false)), "paired reveal: PAIR hero placement rejected: " + str(placed))
+	await _warm_hub()
+	_settle_reveal(view)
+	report = view.occlusion_report()
+	var reveal: Dictionary = report.get("paired_reveal", {})
+	var pair_row: Dictionary = reveal.get("town/native/tree_east", {})
+	_expect(not pair_row.is_empty() and bool(pair_row.get("open", false))
+		and (pair_row.get("actors", {}) as Dictionary).has("town/ranger"),
+		"paired reveal: the covered hero did not open tree_east")
+	var pair_actors: Array = (pair_row.get("actors", {}) as Dictionary).keys()
+	_expect(not pair_actors.has("town/npc/mira") and pair_actors.all(func(a: String): return a == "town/ranger"),
+		"paired reveal: ineligible subject joined the row: " + str(pair_actors))
+	_expect(is_equal_approx(view.actor_alpha("town/npc/mira"), 1.0), "paired reveal: the protected resident was dimmed")
+	var pair_node: Node = view.world_presenter.native_binding_node("town/native/tree_east")
+	var pair_material := (pair_node as Sprite2D).material as ShaderMaterial if pair_node is Sprite2D else null
+	_expect(pair_material != null and pair_material.shader == PairedRevealScript.RevealShader
+		and is_equal_approx(float(pair_material.get_shader_parameter("reveal_weight")), 1.0),
+		"paired reveal: tree_east lost its whole-object material")
+	_check_reveal_invariants(view, report, "PAIR")
+
+	# Dialogue ends: the resident loses slot eligibility again while the hero
+	# walks clear. Every whole-object row closes, no hero entry survives.
+	view.protect_dialogue_resident("")
+	placed = town.place_hero(Vector2(711.0, 250.0))
+	_expect(bool(placed.get("ok", false)), "paired reveal: EXIT hero placement rejected: " + str(placed))
+	await _warm_hub()
+	_settle_reveal(view)
+	report = view.occlusion_report()
+	reveal = report.get("paired_reveal", {})
+	for occluder_id: String in reveal.keys():
+		var row: Dictionary = reveal[occluder_id]
+		_expect(not bool(row.get("open", false)), "paired reveal: a stale reveal stayed open after the hero left: %s" % occluder_id)
+		_expect(is_equal_approx(float(row.get("weight", 0.0)), 0.0), "paired reveal: reveal weight did not close: %s %.3f" % [occluder_id, float(row.get("weight", 0.0))])
+		_expect(not (row.get("actors", {}) as Dictionary).has("town/ranger"), "paired reveal: a hero entry survived the exit on %s" % occluder_id)
+	hub.free()
+
+
+## Roof/canopy-only physical transparency through the real presenter. The
+## confirmed user policy: an opted-in upper piece eases only its own
+## modulate.a over a protected actor's readability box against authored
+## volumes; bases, every other piece and every actor stay fully drawn. The
+## mounted hub proves the dispatch on mid-run stamps — a piece that already
+## carries a legacy silhouette material must lose it the moment it becomes an
+## explicit "none" base or a "primitive_fade" target, so an explicit solid
+## base means unchanged drawn pixels, not modulate.a == 1 under a leftover
+## reveal material — and exactly one policy ever operates on a piece.
+func _test_town_primitive_fade() -> void:
+	var hub := BaseHubScript.new()
+	root.add_child(hub)
+	hub._ready()
+	var view := hub.get_hub_view()
+	var town = hub.get_town_runtime()
+	_expect(bool(hub.town_load_report.get("ok", false)), "primitive fade: native scene failed to load")
+
+	# tree_south/Loadout are now explicit native pairs, so the unconfigured
+	# legacy fallback is proven on tree_east instead: it carries an
+	# exact-silhouette material over the hero beside the protected resident.
+	var placed: Dictionary
+	view.protect_dialogue_resident("mira")
+	placed = town.place_hero(Vector2(1290.0, 410.0))
+	_expect(bool(placed.get("ok", false)), "primitive fade: FADE hero placement rejected: " + str(placed))
+	await _warm_hub()
+	_settle_reveal(view)
+	var tree_east: Node = view.world_presenter.native_binding_node("town/native/tree_east")
+	var tree_south: Node = view.world_presenter.native_binding_node("town/native/tree_south")
+
+	# Whole-object contract: the paired piece opens behind the covered hero —
+	# one whole sprite, one eased reveal weight, modulate never touched.
+	_settle_reveal(view)
+	var report: Dictionary = view.occlusion_report()
+	var row: Dictionary = (report.get("paired_reveal", {}) as Dictionary).get("town/native/tree_east", {})
+	_expect(not row.is_empty(), "paired reveal: the authored piece registered no paired row")
+	if not row.is_empty():
+		_expect(String(row.get("policy", "")) == "paired_reveal" and bool(row.get("open", false))
+			and is_equal_approx(float(row.get("weight", 0.0)), 1.0), "paired reveal: the row did not settle open at full weight")
+		var row_actors: Dictionary = row.get("actors", {})
+		_expect(row_actors.has("town/ranger"), "paired reveal: the covered hero opened no reveal")
+		for actor_id: String in row_actors.keys():
+			_expect(actor_id == "town/ranger" or actor_id == "town/npc/mira",
+				"paired reveal: an ambient actor opened the reveal: " + actor_id)
+	var tree_material := tree_east.material as ShaderMaterial
+	_expect(tree_material != null and tree_material.shader == PairedRevealScript.RevealShader
+		and is_equal_approx(float(tree_material.get_shader_parameter("reveal_weight")), 1.0),
+		"paired reveal: tree_east did not carry the eased whole-object material")
+	_expect(is_equal_approx((tree_east as CanvasItem).modulate.a, 1.0), "paired reveal: the whole object dimmed its own modulate")
+	_expect(not (report.get("silhouette_reveal", {}) as Dictionary).has("town/native/tree_east")
+		and not (report.get("primitive_fade", {}) as Dictionary).has("town/native/tree_east"),
+		"paired reveal: one piece ended up in two policies at once")
+	# Every other piece and every actor stays fully drawn: the reveal lives
+	# entirely inside the piece's own material.
+	for node: Node in view.world_presenter.sort_root.get_children():
+		if node is Sprite2D and node.has_meta("texture_path"):
+			_expect(is_equal_approx((node as CanvasItem).modulate.a, 1.0),
+				"paired reveal: a native piece's modulate was dimmed: %.3f" % float((node as CanvasItem).modulate.a))
+	for actor_id: String in view.actor_presentation_ids():
+		_expect(is_equal_approx(view.actor_alpha(actor_id), 1.0), "paired reveal: an actor was dimmed: " + actor_id)
+	var audit: Dictionary = view.render_audit()
+	_expect(((audit.get("paired_reveal", {}) as Dictionary).get("occluders", {}) as Dictionary).has("town/native/tree_east")
+		or not (audit.get("paired_reveal", {}) as Dictionary).is_empty(),
+		"paired reveal: the render audit lost its paired report field")
+
+	# Dialogue ends and the hero walks clear: the reveal closes, weight eases
+	# to zero and the piece draws exactly its authored opaque pixels again.
+	view.protect_dialogue_resident("")
+	placed = town.place_hero(Vector2(576.0, 595.3))
+	_expect(bool(placed.get("ok", false)), "paired reveal: EXIT hero placement rejected: " + str(placed))
+	await _warm_hub()
+	_settle_reveal(view)
+	report = view.occlusion_report()
+	row = (report.get("paired_reveal", {}) as Dictionary).get("town/native/tree_east", {})
+	_expect(not bool(row.get("open", true)) and is_equal_approx(float(row.get("weight", 1.0)), 0.0),
+		"paired reveal: the reveal stayed open after the hero left")
+	var exit_material := tree_east.material as ShaderMaterial
+	_expect(is_equal_approx((tree_east as CanvasItem).modulate.a, 1.0)
+		and (exit_material == null or is_equal_approx(float(exit_material.get_shader_parameter("reveal_weight")), 0.0)),
+		"paired reveal: the piece did not return to its opaque pixels after exit")
+	hub.free()
+
+
+## One explicit common/upper pair (loadout or tree_south) through the real
+## Whole-object pair check: one native sprite carries the shared
+## paired_reveal material; its row, live shader weight and canvas state must
+## agree with the expected state independently computed here — the piece is
+## never split, never mask-revealed, and never absent from the report.
+func _check_whole_pair(view, report: Dictionary, name: String, expect_open: bool, label: String) -> void:
+	var piece_id := "town/native/" + name
+	var piece: Node = view.world_presenter.native_binding_node(piece_id)
+	_expect(piece is Sprite2D and not (piece as Sprite2D).region_enabled, "whole pair %s: %s lost its whole canvas sprite" % [label, name])
+	if not piece is Sprite2D:
+		return
+	var row: Dictionary = (report.get("paired_reveal", {}) as Dictionary).get(piece_id, {})
+	_expect(not row.is_empty() and String(row.get("policy", "")) == PairedRevealScript.POLICY,
+		"whole pair %s: %s is not a registered paired reveal" % [label, name])
+	if not row.is_empty():
+		_expect(bool(row.get("open", false)) == expect_open, "whole pair %s: %s open=%s, expected %s (coverage %.3f)" % [label, name, row.get("open"), expect_open, float(row.get("coverage", 0.0))])
+		_expect(is_equal_approx(float(row.get("weight", -1.0)), 1.0 if expect_open else 0.0), "whole pair %s: %s weight %.3f did not settle" % [label, name, float(row.get("weight", -1.0))])
+	var material := (piece as Sprite2D).material as ShaderMaterial
+	_expect(material != null and material.shader == PairedRevealScript.RevealShader
+		and is_equal_approx(float(material.get_shader_parameter("reveal_weight")), 1.0 if expect_open else 0.0),
+		"whole pair %s: %s live shader weight diverged" % [label, name])
+	_expect(is_equal_approx((piece as CanvasItem).modulate.a, 1.0), "whole pair %s: %s modulate was dimmed" % [label, name])
+	_expect(not (report.get("primitive_fade", {}) as Dictionary).has(piece_id)
+		and not (report.get("silhouette_reveal", {}) as Dictionary).has(piece_id)
+		and not (report.get("occluder_alphas", {}) as Dictionary).has(piece_id),
+		"whole pair %s: %s also ran a legacy path" % [label, piece_id])
+	for actor_id: String in view.actor_presentation_ids():
+		_expect(is_equal_approx(view.actor_alpha(actor_id), 1.0), "whole pair %s: an actor was dimmed: %s" % [label, actor_id])
+
+
+## The hub's first engine frame after a mount can carry a zero delta and never
+## reaches the sim tick, so the occlusion plan only exists from the next one;
+## three frames guarantees a projected plan before the explicit reveal ticks.
+func _warm_hub() -> void:
+	for _warm in 3:
+		await process_frame
+
+
+func _settle_reveal(view, ticks: int = 12) -> void:
+	for _tick in ticks:
+		view._process(1.0 / 30.0)
+
+
+## Roof/canopy primitive fade, detached contract. The exact coverage geometry
+## comes first — disjoint, fully containing and half-overlapping volumes are
+## pinned so an inverted intersection (box minus volume) can never pass — then
+## the hysteresis band, the shared front/back ordering, the eased transition
+## on the piece's own modulate.a alone, fail-closed registrations and clean
+## resets. Fixture style follows _test_authored_reveal: no scene, no sim state.
+func _test_primitive_fade_controller() -> void:
+	_expect(PrimitiveFadeScript.FADED_ALPHA == 0.25 and PrimitiveFadeScript.TRANSITION_SECONDS == 0.18,
+		"primitive fade: independent quarter-opacity/transition contract changed")
+	var box := Rect2(0.0, 0.0, 10.0, 10.0)
+	_expect(is_equal_approx(PrimitiveFadeScript.box_coverage([{"type": "polygon",
+		"points": PackedVector2Array([Vector2(100, 100), Vector2(140, 100), Vector2(140, 140), Vector2(100, 140)])}], box), 0.0),
+		"primitive fade: a disjoint polygon covered the box")
+	_expect(is_equal_approx(PrimitiveFadeScript.box_coverage([{"type": "polygon",
+		"points": PackedVector2Array([Vector2(-20, -20), Vector2(30, -20), Vector2(30, 30), Vector2(-20, 30)])}], box), 1.0),
+		"primitive fade: a containing polygon did not cover the box fully")
+	_expect(is_equal_approx(PrimitiveFadeScript.box_coverage([{"type": "polygon",
+		"points": PackedVector2Array([Vector2(5, 0), Vector2(25, 0), Vector2(25, 10), Vector2(5, 10)])}], box), 0.5),
+		"primitive fade: a half overlap did not measure half the box")
+	_expect(is_equal_approx(PrimitiveFadeScript.box_coverage(
+		[{"type": "circle", "center": Vector2(100, 100), "radius": 4.0}], box), 0.0),
+		"primitive fade: a disjoint circle covered the box")
+
+	var image := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	image.fill(Color.FOREST_GREEN)
+	var sprite := Sprite2D.new()
+	sprite.texture = ImageTexture.create_from_image(image)
+	var controller := PrimitiveFadeScript.new()
+	var volumes: Array = [
+		{"type": "circle", "center": Vector2.ZERO, "radius": 12.0},
+		{"type": "polygon", "points": PackedVector2Array([Vector2(-20, -30), Vector2(20, -30), Vector2(20, -6), Vector2(-20, -6)])},
+	]
+	_expect(bool(controller.register_piece("roof/upper", sprite, volumes).ok), "primitive fade: valid volumes were rejected")
+	_expect(is_equal_approx(sprite.modulate.a, 1.0), "primitive fade: registration pre-faded the piece")
+	var piece := {"stable_id": "roof/upper", "baseline_y": 140.0, "rank": 1, "art_box": Rect2(-20, -30, 40, 24)}
+	## Behind the roof: the readability box (16x28, area 448) takes 320 from
+	## the circle's bounds — 5/7 coverage, far past the 0.08 enter gate.
+	var behind := {"stable_id": "hero", "baseline_y": 100.0, "rank": 1, "readability_box": Rect2(-8, -20, 16, 28)}
+	controller.update([piece], [behind], 0.0)
+	var opened: Dictionary = controller.report()["roof/upper"]
+	_expect(bool(opened.get("open", false)) and is_equal_approx(float(opened.get("weight", -1.0)), 0.0)
+		and is_equal_approx(float(opened.get("coverage", -1.0)), 320.0 / 448.0),
+		"primitive fade: the behind box did not open at zero weight with exact coverage")
+	controller.update([piece], [behind], 0.09)
+	_expect(is_equal_approx(sprite.modulate.a, 0.625), "primitive fade: the transition did not ease half way in half its duration: %.4f" % sprite.modulate.a)
+	controller.update([piece], [behind], 0.3)
+	_expect(is_equal_approx(sprite.modulate.a, PrimitiveFadeScript.FADED_ALPHA), "primitive fade: the piece did not settle at the faded alpha")
+	## A subject standing in front of the piece never fades it.
+	var ahead := {"stable_id": "ahead", "baseline_y": 180.0, "rank": 1, "readability_box": Rect2(-8, -20, 16, 28)}
+	controller.update([piece], [ahead], 0.3)
+	var ahead_row: Dictionary = controller.report()["roof/upper"]
+	_expect(not bool(ahead_row.get("open", true)) and (ahead_row.get("actors", {}) as Dictionary).is_empty(),
+		"primitive fade: a subject in front of the piece opened the fade")
+	## The graze box keeps 32/448 inside the circle bounds — inside the
+	## hysteresis band: it holds an open fade open but never opens one.
+	var graze := {"stable_id": "grazer", "baseline_y": 100.0, "rank": 1, "readability_box": Rect2(10, -4, 16, 28)}
+	controller.update([piece], [behind], 0.0)
+	controller.update([piece], [graze], 0.3)
+	_expect(bool(controller.report()["roof/upper"].get("open", false)), "primitive fade: the hysteresis band dropped an open fade")
+	controller.reset()
+	controller.update([piece], [graze], 0.3)
+	var stayed: Dictionary = controller.report()["roof/upper"]
+	_expect(not bool(stayed.get("open", true)) and is_equal_approx(float(stayed.get("weight", -1.0)), 0.0),
+		"primitive fade: the hysteresis band opened a closed fade")
+	controller.reset()
+	_expect(is_equal_approx(sprite.modulate.a, 1.0), "primitive fade: reset left the piece faded")
+	## Fail-closed registrations: nothing may half-register a guessed piece.
+	for bad: Array in [
+		[],
+		[{"type": "circle", "center": Vector2.INF, "radius": 8.0}],
+		[{"type": "circle", "center": Vector2.ZERO, "radius": 0.0}],
+		[{"type": "polygon", "points": PackedVector2Array([Vector2.ZERO, Vector2(8, 0)])}],
+		[{"type": "polygon", "points": PackedVector2Array([Vector2.ZERO, Vector2(8, 0), Vector2(16, 0)])}],
+		[{"type": "ellipse", "center": Vector2.ZERO, "radius": 8.0}],
+	]:
+		_expect(not bool(controller.register_piece("roof/bad", sprite, bad).ok),
+			"primitive fade: malformed volumes were accepted: " + str(bad))
+	_expect(not bool(controller.register_piece("", sprite, volumes).ok), "primitive fade: an empty stable id was accepted")
+	_expect(not bool(controller.register_piece("roof/none", null, volumes).ok), "primitive fade: a null sprite was accepted")
+	## Canonical volume payload shared by the fingerprint and the audit rows.
+	_expect(PrimitiveFadeScript.volumes_payload(volumes) == [
+		{"type": "circle", "center": [0.0, 0.0], "radius": 12.0},
+		{"type": "polygon", "points": [[-20.0, -30.0], [20.0, -30.0], [20.0, -6.0], [-20.0, -6.0]]},
+	], "primitive fade: the volume payload left its canonical form")
+	controller.clear()
+	_expect(is_equal_approx(sprite.modulate.a, 1.0) and controller.report().is_empty(),
+		"primitive fade: clear left a faded piece or a stale registration")
+	sprite.free()
+
+
+## Canvas-inclusive cell contract, independent of the town's own coordinate
+## wiring: an asymmetric sprite at a fractional position under a translated
+## parent must report its cell in VIEWPORT space — a canvas translation of
+## (13, 9) shifts the cell by exactly (13, 9) (counted once, never zero from
+## a global-only read and never (26, 18) from double counting), and any
+## nonidentity canvas basis (scale, rotation) must yield NO cell at all.
+## Whole-object paired reveal: one sprite, one opaque/transparent pair, one
+## detection rect. The eased weight drives only the shared premultiplied
+## shader mix; the piece's own modulate is never touched, so the baked
+## transparent alpha is used exactly once.
+func _test_paired_reveal_controller() -> void:
+	var full := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	full.fill(Color.FOREST_GREEN)
+	full.fill_rect(Rect2i(0, 0, 8, 16), Color.TRANSPARENT)
+	var variant := Image.create(16, 16, false, Image.FORMAT_RGBA8)
+	variant.fill(Color(0.3, 0.5, 0.7, 64.0 / 255.0))
+	var sprite := Sprite2D.new()
+	sprite.centered = false
+	sprite.texture = ImageTexture.create_from_image(full)
+	var controller := PairedRevealScript.new()
+	## Occupied AABB is the right half (8,0,8,16); the detection rect must
+	## contain it grown by DETECTION_GROW -> (0,-8,24,32).
+	var bound := controller.register_piece("tree/whole", sprite, ImageTexture.create_from_image(variant), Rect2(0, -8, 24, 32))
+	_expect(bound.ok, "paired reveal: valid whole pair rejected")
+	_expect(sprite.material != null and sprite.material is ShaderMaterial, "paired reveal: reveal material not attached")
+	_expect(not controller.register_piece("tree/whole", sprite, ImageTexture.create_from_image(variant), Rect2(0, -8, 24, 32)).ok,
+		"paired reveal: duplicate binding accepted")
+	var part := {"stable_id": "tree/whole", "baseline_y": 16.0, "rank": 0, "art_box": Rect2(0, -8, 24, 32)}
+	var subject := {"stable_id": "hero", "baseline_y": 8.0, "rank": 1, "readability_box": Rect2(0, 0, 8, 8)}
+	controller.update([part], [subject], 0.2)
+	_expect(is_equal_approx(float(controller.report()["tree/whole"].weight), 1.0), "paired reveal: covered hero did not open the pair")
+	_expect(is_equal_approx(float((sprite.material as ShaderMaterial).get_shader_parameter("reveal_weight")), 1.0),
+		"paired reveal: eased weight did not reach the shader")
+	_expect(sprite.modulate == Color.WHITE, "paired reveal: piece modulate touched")
+	subject.baseline_y = 24.0
+	controller.update([part], [subject], 0.2)
+	_expect(is_equal_approx(float(controller.report()["tree/whole"].weight), 0.0), "paired reveal: piece behind hero opened")
+	subject.baseline_y = 8.0
+	controller.update([part], [subject], 0.2)
+	controller.update([part], [], 0.05)
+	var closing := float(controller.report()["tree/whole"].weight)
+	_expect(closing > 0.0 and closing < 1.0, "paired reveal: close did not interpolate")
+	controller.update([part], [], 0.2)
+	_expect(is_equal_approx(float(controller.report()["tree/whole"].weight), 0.0), "paired reveal: stale reveal remained")
+	controller.clear()
+	_expect(sprite.material == null, "paired reveal: did not restore prior material")
+	## Fail-closed registrations.
+	_expect(not controller.register_piece("tree/tiny", sprite, ImageTexture.create_from_image(variant), Rect2(0, 0, 8, 8)).ok,
+		"paired reveal: rect smaller than occupied.grow(8) accepted")
+	_expect(not controller.register_piece("tree/degenerate", sprite, ImageTexture.create_from_image(variant), Rect2()).ok,
+		"paired reveal: degenerate rect accepted")
+	var small := ImageTexture.create_from_image(Image.create(4, 4, false, Image.FORMAT_RGBA8))
+	_expect(not controller.register_piece("tree/mismatch", sprite, small, Rect2(0, -8, 24, 32)).ok,
+		"paired reveal: mismatched variant canvas accepted")
+	for flip: String in ["flip_h", "flip_v"]:
+		sprite.set(flip, true)
+		_expect(not controller.register_piece("tree/flipped", sprite, ImageTexture.create_from_image(variant), Rect2(0, -8, 24, 32)).ok,
+			"paired reveal: flipped sprite accepted")
+		sprite.set(flip, false)
+	## Immediate-mode static path shared with the arena fade states.
+	var state := PairedRevealScript.advance_state(Rect2(0, -8, 24, 32), part, [subject], {}, 0.2)
+	_expect(bool(state.open) and is_equal_approx(float(state.weight), 1.0), "paired reveal: immediate state did not open")
+	state = PairedRevealScript.advance_state(Rect2(0, -8, 24, 32), part, [], state, 0.2)
+	_expect(not bool(state.open) and is_equal_approx(float(state.weight), 0.0), "paired reveal: immediate state did not close")
+	## Real mounts translate both the sprite and its detection rectangle.
+	## Parent translation, offset and centered canvases must all be honored.
+	var mount := Node2D.new()
+	mount.position = Vector2(100, 200)
+	root.add_child(mount)
+	mount.add_child(sprite)
+	sprite.position = Vector2(32, 48)
+	sprite.offset = Vector2(-4, -12)
+	for centered: bool in [false, true]:
+		sprite.centered = centered
+		var origin := Vector2(128, 236) - (Vector2(8, 8) if centered else Vector2.ZERO)
+		var world_rect := Rect2(origin + Vector2(0, -8), Vector2(24, 32))
+		_expect(controller.register_piece("translated", sprite, ImageTexture.create_from_image(variant), world_rect).ok,
+			"paired reveal: translated canvas rejected")
+		_expect(controller.report().get("translated", {}).get("occlusion_rect", []) == [world_rect.position.x, world_rect.position.y, 24.0, 32.0],
+			"paired reveal: stored detection lost world coordinates")
+		controller.clear()
+		_expect(not controller.register_piece("wrong_local", sprite, ImageTexture.create_from_image(variant), Rect2(0, -8, 24, 32)).ok,
+			"paired reveal: untranslated canvas bounds accepted as world coordinates")
+	## Detached two-subject proof: an explicitly front-sorted piece reports
+	## BOTH covered protected subjects and opens once on combined coverage.
+	var two_subjects := [
+		{"stable_id": "sub/a", "baseline_y": 8.0, "rank": 0, "readability_box": Rect2(0, -8, 24, 32)},
+		{"stable_id": "sub/b", "baseline_y": 12.0, "rank": 0, "readability_box": Rect2(0, -8, 24, 32)}]
+	var two := PairedRevealScript.advance_state(Rect2(0, -8, 24, 32), part, two_subjects, {}, 0.2)
+	_expect(bool(two.get("open", false)) and (two.get("actors", {}) as Dictionary).has("sub/a")
+		and (two.get("actors", {}) as Dictionary).has("sub/b"),
+		"paired reveal: two covered subjects did not share one open state")
+	mount.remove_child(sprite)
+	mount.free()
+	sprite.free()
+
+
+## Live arena consumption of the generated whole-object pack: a synthetic
+## COMPLETE assets.json switches the structure sprites to one whole band each
+## with one detection rect and one reveal material; an absent pack keeps the
+## legacy banded atlas path byte-for-byte for the historical fixtures.
+func _test_arena_paired_pack() -> void:
+	var dir := "res://build/current"
+	DirAccess.make_dir_recursive_absolute(dir)
+	var prefix := dir + "/paired_pack_"
+	var full := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	full.fill(Color.FOREST_GREEN)
+	var variant := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	variant.fill(Color(0.3, 0.5, 0.7, 64.0 / 255.0))
+	full.save_png(prefix + "opaque.png")
+	variant.save_png(prefix + "transparent.png")
+	## A present pack requires a packed arena ground at exact world size.
+	var ground := Image.create(1024, 640, false, Image.FORMAT_RGBA8)
+	ground.fill(Color.DARK_SLATE_GRAY)
+	ground.save_png(prefix + "ground.png")
+	var ground_entry := {"status": "packed", "kind": "ground", "section": "arena",
+		"canvas": [1024, 640], "anchor": [0, 0], "occupied_rect": [0, 0, 1024, 640],
+		"occlusion_rect": null, "opaque_path": prefix + "ground.png", "transparent_path": null}
+	var entry := {"status": "packed", "kind": "object", "section": "arena",
+		"canvas": [8, 8], "anchor": [4, 6],
+		"occupied_rect": [0, 0, 8, 8], "occlusion_rect": [-8, -8, 24, 24],
+		"opaque_path": prefix + "opaque.png", "transparent_path": prefix + "transparent.png"}
+	var assets := {}
+	for asset_id: String in ["ruin_wall_corner", "ruin_gate", "ruin_low_pier", "ruin_broken_wall", "tower"]:
+		assets[asset_id] = entry.duplicate(true)
+	var pack := {"schema_version": 1,
+		"sections": {"arena": {"assets": assets.keys(), "grounds": ["arena_ground"], "pending": [], "stale": [], "complete": true}},
+		"assets": assets, "grounds": {"arena_ground": ground_entry}}
+	var file := FileAccess.open(prefix + "assets.json", FileAccess.WRITE)
+	file.store_string(JSON.stringify(pack))
+	file.close()
+	var view = ArenaWorldViewScript.new()
+	view.generated_world_path = prefix + "assets.json"
+	_expect(view.load_assets(), "paired pack: view rejected a complete synthetic pack: " + view.pending_reason)
+	## One whole band per piece — the upper/base split is gone.
+	var feet := Vector2(300, 200)
+	var bands := view.structure_geometry("ruin.wall_corner", feet)
+	_expect(bands.size() == 1 and String(bands[0].get("part")) == "whole", "paired pack: whole object still split into bands")
+	_expect((bands[0].dest as Rect2) == Rect2(296, 194, 8, 8), "paired pack: whole dest left the feet-anchor mapping")
+	_expect(view.paired_detection_rect_world("ruin.wall_corner", feet) == Rect2(288, 186, 24, 24), "paired pack: detection rect mistranslated")
+	## Fade state opens through the shared controller on one eased weight.
+	var drawable := {"kind": "structure", "sprite": "ruin.wall_corner", "world": feet, "baseline_y": feet.y, "rank": 0, "stable_id": "s/0"}
+	var subject := {"stable_id": "hero", "baseline_y": feet.y - 8.0, "rank": 1, "readability_box": Rect2(feet - Vector2(8, 8), Vector2(16, 16))}
+	view.advance_structure_fades([drawable], [subject], 0.2)
+	var state := view.structure_fade_state("ruin.wall_corner", feet)
+	_expect(String(state.get("policy")) == "paired_reveal" and bool(state.open) and is_equal_approx(float(state.weight), 1.0),
+		"paired pack: covered hero did not open the whole state")
+	## Settled alpha is the measured variant maximum (64/255 here), never an
+	## invented constant; a closed state returns the fully opaque 1.0.
+	_expect(is_equal_approx(float(state.get("alpha", 0.0)), 64.0 / 255.0),
+		"paired pack: settled alpha ignored the measured variant alpha")
+	var material: Material = view.paired_reveal_material("ruin.wall_corner", feet)
+	_expect(material is ShaderMaterial and is_equal_approx(float((material as ShaderMaterial).get_shader_parameter("reveal_weight")), 1.0),
+		"paired pack: reveal material missing or weight unset")
+	_expect(view.structure_geometry("tower", feet).size() == 1, "paired pack: tower still split into bands")
+	## A present-but-incomplete pack claims the authority: fail closed.
+	var incomplete := {"schema_version": 1,
+		"sections": {"arena": {"assets": assets.keys(), "grounds": ["arena_ground"], "pending": ["tower"], "stale": [], "complete": false}},
+		"assets": assets, "grounds": {"arena_ground": ground_entry}}
+	var incomplete_view = ArenaWorldViewScript.new()
+	file = FileAccess.open(prefix + "incomplete.json", FileAccess.WRITE)
+	file.store_string(JSON.stringify(incomplete))
+	file.close()
+	incomplete_view.generated_world_path = prefix + "incomplete.json"
+	_expect(not incomplete_view.load_assets() and not String(incomplete_view.pending_reason).is_empty(),
+		"paired pack: present-but-incomplete pack silently fell back to legacy")
+	## A complete section still requires the packed ground — never a silent
+	## legacy ground under generated whole objects.
+	var no_ground := {"schema_version": 1,
+		"sections": {"arena": {"assets": assets.keys(), "grounds": [], "pending": [], "stale": [], "complete": true}},
+		"assets": assets, "grounds": {}}
+	var no_ground_view = ArenaWorldViewScript.new()
+	file = FileAccess.open(prefix + "no_ground.json", FileAccess.WRITE)
+	file.store_string(JSON.stringify(no_ground))
+	file.close()
+	no_ground_view.generated_world_path = prefix + "no_ground.json"
+	_expect(not no_ground_view.load_assets(), "paired pack: complete section without packed ground loaded anyway")
+	## An absent pack keeps the legacy banded path for historical fixtures.
+	var legacy = ArenaWorldViewScript.new()
+	legacy.generated_world_path = prefix + "missing.json"
+	_expect(legacy.load_assets(), "paired pack: absent pack broke the legacy load")
+	_expect(legacy.structure_geometry("tower", feet).size() == 2, "paired pack: absent pack lost legacy tower bands")
+	_expect(legacy.paired_reveal_material("ruin.wall_corner", feet) == null, "paired pack: legacy path leaked a reveal material")
+	for name: String in ["opaque.png", "transparent.png", "ground.png", "assets.json", "incomplete.json", "no_ground.json"]:
+		DirAccess.remove_absolute(prefix + name)
+
+
+func _test_silhouette_canvas_cells() -> void:
+	var image := Image.create(7, 5, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	for x in range(3):
+		for y in range(5):
+			if y != 2:
+				image.set_pixel(x, y, Color(0.25, 0.5, 0.75, 1.0))
+	var layer := CanvasLayer.new()
+	root.add_child(layer)
+	var parent := Node2D.new()
+	parent.position = Vector2(24, 44)
+	layer.add_child(parent)
+	var sprite := Sprite2D.new()
+	sprite.name = "CanvasCellProbe"
+	sprite.texture = ImageTexture.create_from_image(image)
+	sprite.centered = false
+	sprite.offset = Vector2(10.5, 20.25)
+	sprite.position = Vector2(100.75, 50.5)
+	parent.add_child(sprite)
+	await process_frame
+
+	layer.offset = Vector2.ZERO
+	var plain: Rect2 = SilhouetteRevealScript.viewport_cell_rect(sprite)
+	_expect(plain.position == Vector2(135.25, 114.75) and plain.size == Vector2(7, 5),
+		"canvas cells: zero-canvas cell expected (135.25, 114.75) 7x5, got %s" % str(plain))
+
+	layer.offset = Vector2(13, 9)
+	var shifted: Rect2 = SilhouetteRevealScript.viewport_cell_rect(sprite)
+	_expect(shifted.position == Vector2(148.25, 123.75) and shifted.size == Vector2(7, 5),
+		"canvas cells: canvas translation must shift the cell by exactly (13, 9) once, got %s" % str(shifted))
+
+	layer.scale = Vector2(1, 2)
+	var scaled: Rect2 = SilhouetteRevealScript.viewport_cell_rect(sprite)
+	_expect(not scaled.has_area(), "canvas cells: a scaled canvas must yield no cell, got %s" % str(scaled))
+	layer.scale = Vector2.ONE
+	layer.rotation = 0.3
+	var rotated: Rect2 = SilhouetteRevealScript.viewport_cell_rect(sprite)
+	_expect(not rotated.has_area(), "canvas cells: a rotated canvas must yield no cell, got %s" % str(rotated))
+	layer.queue_free()
+	print("SILHOUETTE canvas-cell contract verified plain=", str(plain), " shifted=", str(shifted))
+
+
+## The open reveal row carrying the hero past the enter gate, if any.
+func _silhouette_hero_row(reveal: Dictionary) -> Dictionary:
+	for occluder_id: String in reveal.keys():
+		var row: Dictionary = reveal[occluder_id]
+		if not bool(row.get("open", false)):
+			continue
+		var hero: Dictionary = row.get("actors", {}).get("town/ranger", {})
+		if not hero.is_empty() and float(hero.get("coverage", 0.0)) >= SilhouetteRevealScript.ENTER_COVERAGE:
+			return {"id": occluder_id, "row": row}
+	return {"id": "", "row": {}}
+
+
+## Slot eligibility and native-piece-only invariants, checked at every hero
+## position: exact clears may only ever name the hero or the currently
+## protected resident, never an ambient one, and every reveal occluder must be
+## a native binding piece — an actor node can be a plan occluder but can never
+## carry a reveal material.
+func _check_reveal_invariants(view, report: Dictionary, label: String) -> void:
+	_expect(bool(report.get("silhouette_native_piece_only", false)), "silhouette: %s reported an actor node as a reveal occluder" % label)
+	## Every reported actor-occluder entry must be one of this presenter's own
+	## bound actors — the diagnostic names real actor nodes the plan selected
+	## as foreground occluders, never an arbitrary or stale id.
+	var actor_occluders: Array = report.get("actor_occluder_ids", [])
+	var presenter_ids: Array[String] = view.actor_presentation_ids()
+	for occluder_entry: String in actor_occluders:
+		_expect(presenter_ids.has(occluder_entry), "silhouette: %s reported unknown actor occluder %s" % [label, occluder_entry])
+	var protected_id := "town/npc/" + String(view._protected_resident)
+	for rows_key: String in ["silhouette_reveal", "paired_reveal"]:
+		var reveal: Dictionary = report.get(rows_key, {})
+		for occluder_id: String in reveal.keys():
+			if actor_occluders.has(occluder_id):
+				_expect(false, "reveal invariants: %s actor %s carries a reveal material" % [label, occluder_id])
+			var piece: Node = view.world_presenter.native_binding_node(occluder_id)
+			_expect(piece is Sprite2D and piece.has_meta("binding_id"), "reveal invariants: %s reveal occluder %s is not a native binding piece" % [label, occluder_id])
+			for actor_id: String in (reveal[occluder_id].get("actors", {}) as Dictionary).keys():
+				_expect(actor_id == "town/ranger" or actor_id == protected_id,
+					"reveal invariants: %s revealed ambient resident %s on %s" % [label, actor_id, occluder_id])
+
+
+## Independent recompute: the uniforms really uploaded to a covering piece
+## must equal the live sprites' own draw state, rebuilt here from the sprite
+## transforms instead of the presenter's helpers, and the diagnostic row must
+## agree with them.
+func _verify_silhouette_material(view, occluder_id: String, row: Dictionary, label: String) -> void:
+	var piece: Node = view.world_presenter.native_binding_node(occluder_id)
+	if not (piece is Sprite2D and piece.material is ShaderMaterial):
+		_expect(false, "silhouette: %s piece %s lost its reveal material" % [label, occluder_id])
+		return
+	var material := piece.material as ShaderMaterial
+	_expect(int(material.get_shader_parameter("actor_count")) == int(row["actor_count"]), "silhouette: %s material actor_count diverged from its row" % label)
+	_expect(is_equal_approx(float(material.get_shader_parameter("reveal_weight")), float(row["weight"])), "silhouette: %s material weight diverged from its row" % label)
+	_expect(float(material.get_shader_parameter("clear_alpha")) == 0.0, "silhouette: %s material must clear to fully transparent" % label)
+	var cells: PackedVector4Array = material.get_shader_parameter("actor_cells")
+	var regions: PackedVector4Array = material.get_shader_parameter("actor_regions")
+	var flags: PackedVector4Array = material.get_shader_parameter("actor_flags")
+	var textures: Array = material.get_shader_parameter("actor_textures")
+	var actors: Dictionary = row.get("actors", {})
+	_expect(cells.size() == SilhouetteRevealScript.MAX_ACTORS and regions.size() == SilhouetteRevealScript.MAX_ACTORS
+		and flags.size() == SilhouetteRevealScript.MAX_ACTORS and textures.size() == SilhouetteRevealScript.MAX_ACTORS,
+		"silhouette: %s uniform arrays left the shader's declared length" % label)
+	var ids: Array = actors.keys()
+	for slot in ids.size():
+		var actor_id := String(ids[slot])
+		var sprite: Sprite2D = view._hero_sprite if actor_id == "town/ranger" else view._resident_views[actor_id.trim_prefix("town/npc/")]["node"]
+		var expected_cell := Rect2(sprite.get_global_transform() * sprite.offset, sprite.region_rect.size)
+		var uploaded := Rect2(Vector2(cells[slot].x, cells[slot].y), Vector2(cells[slot].z, cells[slot].w))
+		_expect(uploaded.is_equal_approx(expected_cell), "silhouette: %s slot %s cell %s left the live draw cell %s" % [label, actor_id, str(uploaded), str(expected_cell)])
+		var expected_region: Rect2 = sprite.region_rect
+		_expect(is_equal_approx(float(regions[slot].x), expected_region.position.x) and is_equal_approx(float(regions[slot].y), expected_region.position.y)
+			and is_equal_approx(float(regions[slot].z), expected_region.size.x) and is_equal_approx(float(regions[slot].w), expected_region.size.y),
+			"silhouette: %s slot %s region left its atlas frame" % [label, actor_id])
+		_expect(float(flags[slot].x) == (1.0 if sprite.flip_h else 0.0) and float(flags[slot].y) == (1.0 if sprite.flip_v else 0.0)
+			and is_equal_approx(float(flags[slot].z), float(sprite.texture.get_width())) and is_equal_approx(float(flags[slot].w), float(sprite.texture.get_height())),
+			"silhouette: %s slot %s flags left the live texture state" % [label, actor_id])
+		_expect(textures[slot] == sprite.texture, "silhouette: %s slot %s uploaded a stale source frame" % [label, actor_id])
+		var audit_row: Dictionary = actors[actor_id]
+		_expect(String(audit_row.get("source_frame", "")) == String(sprite.texture.resource_path), "silhouette: %s slot %s diagnostic source frame diverged" % [label, actor_id])
+		_expect(is_equal_approx(float(audit_row.get("modulate", -1.0)), sprite.modulate.a), "silhouette: %s slot %s diagnostic modulate diverged" % [label, actor_id])
 
 
 ## Audit R2 town gate: the detached plan must measure how much of a subject's
@@ -417,7 +1086,11 @@ func _test_arena() -> void:
 	for placement: Dictionary in view.structure_placements():
 		var sprite_id := String(placement.get("id", ""))
 		var feet := Vector2(float((placement["feet"] as Array)[0]), float((placement["feet"] as Array)[1]))
-		_check_arena_cell(view, sprite_id, feet, feet - Vector2(0.0, 12.0), "ruin %s at %s" % [sprite_id, str(feet)])
+		# This detached presentation sweep needs an actual covered subject. The
+		# coarse low pier is only 41 native pixels high; the old 85-game-pixel
+		# offset now stands wholly above its image. Mounted tests own clearance.
+		var covered_offset := 30.0 if sprite_id == "ruin.low_pier" else 85.0
+		_check_arena_cell(view, sprite_id, feet, feet - Vector2(0.0, covered_offset), "ruin %s at %s" % [sprite_id, str(feet)])
 		_check_arena_ahead(view, sprite_id, feet, feet + Vector2(0.0, 12.0), "ruin %s at %s" % [sprite_id, str(feet)])
 
 	_check_arena_tower(view)
@@ -586,77 +1259,57 @@ func _test_mixed_actor_budget(view) -> void:
 		actors.append({"id": "fixture_actor_%d" % index, "feet_world": hero + Vector2.DOWN, "art_box": box, "base_alpha": 1.0})
 	view.prepare_actor_occlusion(actors, hero)
 	var report: Dictionary = view.occlusion_report(hero)
-	_expect(report.occluder_count >= 7, "mixed: real ruin and all six actor cells must share the plan")
+	_expect(report.occluder_count == 6, "mixed: actor budget must contain six actors and exclude structure bands")
 	_expect(report.local_opacity_total <= 0.160001, "mixed: independent group budgets composed above 0.16")
-	var sprite_id := String(placement.id)
-	for piece: Dictionary in view.cutaway_geometry(sprite_id, view.gameplay_to_world(feet), hero):
-		if piece.window:
-			_expect(is_equal_approx(piece.alpha, report.local_alpha_each), "mixed: static drawing did not consume the shared prepass budget")
 	var actor_cut: Dictionary = view.cutaway_for(box, hero + Vector2.DOWN, hero)
 	_expect(is_equal_approx(actor_cut.local_alpha, report.local_alpha_each), "mixed: actor drawing did not consume the same budget")
 	view.begin_frame(ARENA_VIEWPORT, hero_gameplay, ARENA_RECT)
 	_expect(view.occlusion_report(hero).occluder_count == view.cutaway_front(hero).size(), "mixed: next frame retained stale dynamic occluders")
 
 
-## Standing behind a ruin: it must be reported in front, cut with a window that
-## covers the hero's own cell, and the pieces the draw calls use must read the same
-## source pixels the authored cell does.
+## Exercise the actual whole-object draw geometry, independently of controller constants.
+func _settle_structure(view, sprite_id: String, feet: Vector2, hero: Vector2) -> void:
+	var drawable := {"kind": "tower" if sprite_id == "tower" else "structure", "sprite": sprite_id,
+		"world": feet, "stable_id": "fixture/structure", "baseline_y": feet.y, "rank": 0}
+	var subject := {"stable_id": "ranger/body", "baseline_y": hero.y, "rank": 2,
+		"readability_box": view.hero_cell_world(hero)}
+	view.advance_structure_fades([drawable], [subject], 0.2)
+
+
 func _check_arena_cell(view, sprite_id: String, feet_gameplay: Vector2, hero_gameplay: Vector2, label: String) -> void:
+	view.reset_structure_fades()
 	view.begin_frame(ARENA_VIEWPORT, hero_gameplay, ARENA_RECT)
-	var hero_world: Vector2 = view.gameplay_to_world(hero_gameplay)
-	var report: Dictionary = view.occlusion_report(hero_world)
-	_expect(int(report["occluder_count"]) >= 1, "arena: %s reports no foreground cell" % label)
-	_expect((report["front_ids"] as Array).has(sprite_id), "arena: %s is not reported as the cell in front" % label)
-	_expect(float(report["local_opacity_total"]) <= LOCAL_OPACITY_CEILING, "arena: %s composes %.3f local opacity" % [label, float(report["local_opacity_total"])])
-	_expect((report["window_world"] as Rect2).encloses(report["hero_cell_world"]), "arena: the window must cover the hero's own cell for %s" % label)
-
+	var hero: Vector2 = view.gameplay_to_world(hero_gameplay)
 	var feet: Vector2 = view.gameplay_to_world(feet_gameplay)
-	var authored: float = view.structure_fade(sprite_id, feet, hero_world)
-	_expect(is_equal_approx(view.structure_draw_alpha(sprite_id, feet, hero_world), 1.0), "arena: %s globally faded the whole ruin instead of using the local cutaway window" % label)
-	var drawn: Array[Dictionary] = view.cutaway_geometry(sprite_id, feet, hero_world, authored)
-	_expect(not drawn.is_empty(), "arena: %s keeps its single-rectangle draw while covering the hero" % label)
-	var window_seen := false
-	for piece: Dictionary in drawn:
-		_expect(ARENA_VIEWPORT.encloses(piece["dest"]), "arena: %s draws outside the visible frame" % label)
-		if bool(piece["window"]):
-			window_seen = true
-			_expect(float(piece["alpha"]) <= LOCAL_OPACITY_CEILING + 0.000001, "arena: %s draws its window at %.3f local opacity" % [label, float(piece["alpha"])])
-		else:
-			_expect(is_equal_approx(float(piece["alpha"]), authored), "arena: %s changed the authored alpha outside the window" % label)
-	_expect(window_seen, "arena: %s drew no low-alpha window at all" % label)
+	_settle_structure(view, sprite_id, feet, hero)
+	var bands: Array = view.structure_geometry(sprite_id, feet)
+	_expect(bands.size() == 1 and String(bands[0].part) == "whole", "arena: %s must draw as one whole object" % label)
+	_expect(is_equal_approx(bands[0].alpha, 1.0), "arena: %s whole object lost its draw alpha" % label)
+	var state: Dictionary = view.structure_fade_state(sprite_id, feet)
+	_expect(String(state.get("policy")) == "paired_reveal" and bool(state.get("open", false)) and is_equal_approx(float(state.get("weight", -1.0)), 1.0),
+		"arena: %s whole object did not reveal" % label)
+	var material: Material = view.paired_reveal_material(sprite_id, feet)
+	_expect(material is ShaderMaterial and is_equal_approx(float((material as ShaderMaterial).get_shader_parameter("reveal_weight")), 1.0),
+		"arena: %s reveal material missing or eased weight unset" % label)
+	_expect(view.cutaway_geometry(sprite_id, feet, hero).is_empty(), "arena: %s still stacks a character cutout on paired reveal" % label)
+	_expect((view.hero_cover_report(hero).faded as Array).has(sprite_id), "arena: revealed structure absent from its report")
 
 
-## Standing in front of the ruin: no cutaway may touch it, and the historical
-## headless cover report must still agree.
 func _check_arena_ahead(view, sprite_id: String, feet_gameplay: Vector2, hero_gameplay: Vector2, label: String) -> void:
 	view.begin_frame(ARENA_VIEWPORT, hero_gameplay, ARENA_RECT)
-	var hero_world: Vector2 = view.gameplay_to_world(hero_gameplay)
-	var report: Dictionary = view.occlusion_report(hero_world)
+	var hero: Vector2 = view.gameplay_to_world(hero_gameplay)
 	var feet: Vector2 = view.gameplay_to_world(feet_gameplay)
-	_expect(is_equal_approx(view.structure_fade(sprite_id, feet, hero_world), 1.0), "arena: %s must keep its authored alpha while the hero stands in front of it" % label)
-	## Another placement of the same ruin id may legitimately still stand in front
-	## somewhere else in the arena, so this instance is checked on its own geometry:
-	## the cutaway belongs to the placed cell, never to the ruin id.
-	for occluder: Dictionary in report["occluders"]:
-		_expect(not (occluder["feet_world"] as Vector2).is_equal_approx(feet), "arena: %s is reported in front while the hero stands in front of it" % label)
-	_expect(view.cutaway_geometry(sprite_id, feet, hero_world).is_empty(), "arena: %s was cut while the hero stands in front of it" % label)
+	_settle_structure(view, sprite_id, feet, hero)
+	for band: Dictionary in view.structure_geometry(sprite_id, feet):
+		_expect(is_equal_approx(band.alpha, 1.0), "arena: %s did not restore the whole object in front" % label)
+	var front_state: Dictionary = view.structure_fade_state(sprite_id, feet)
+	_expect(is_equal_approx(float(front_state.get("weight", -1.0)), 0.0) and is_equal_approx(float(front_state.get("alpha", 0.0)), 1.0),
+		"arena: %s stayed revealed behind the hero" % label)
 
 
 func _check_arena_tower(view) -> void:
-	var tower_gameplay: Vector2 = view.tower_feet()
-	var hero_gameplay: Vector2 = tower_gameplay - Vector2(0.0, 12.0)
-	view.begin_frame(ARENA_VIEWPORT, hero_gameplay, ARENA_RECT)
-	var hero_world: Vector2 = view.gameplay_to_world(hero_gameplay)
-	var report: Dictionary = view.occlusion_report(hero_world)
-	_expect((report["front_ids"] as Array).has("tower"), "arena: the tower is not reported as the cell in front while the hero stands behind it")
-	_expect(float(report["local_opacity_total"]) <= LOCAL_OPACITY_CEILING, "arena: the tower composes %.3f local opacity" % float(report["local_opacity_total"]))
-	var feet: Vector2 = view.tower_feet_world()
-	for sprite_id in ["tower.base", "tower.upper"]:
-		var drawn: Array[Dictionary] = view.cutaway_geometry(sprite_id, feet, hero_world, view.structure_fade(sprite_id, feet, hero_world))
-		_expect(not drawn.is_empty(), "arena: the tower's %s band keeps its single-rectangle draw while covering the hero" % sprite_id)
-		for piece: Dictionary in drawn:
-			if bool(piece["window"]):
-				_expect(float(piece["alpha"]) <= LOCAL_OPACITY_CEILING + 0.000001, "arena: the tower's %s window draws at %.3f local opacity" % [sprite_id, float(piece["alpha"])])
+	_check_arena_cell(view, "tower", view.tower_feet(), view.tower_feet() - Vector2(0, 110), "tower")
+	_check_arena_ahead(view, "tower", view.tower_feet(), view.tower_feet() + Vector2(0, 80), "tower")
 
 
 ## The colossus is one occluder drawn as four sprites: standing behind it must cut
@@ -691,20 +1344,16 @@ func _check_arena_boss(view) -> void:
 ## the live draw path.  This catches stale feet-only checks and Boss helpers that
 ## ignore a posed hand's actual sort anchor.
 func _test_shared_diagnostic_geometry(view) -> void:
-	var tower_gameplay: Vector2 = view.tower_feet() - Vector2(0.0, 12.0)
+	var tower_gameplay: Vector2 = view.tower_feet() - Vector2(0, 110)
 	view.begin_frame(ARENA_VIEWPORT, tower_gameplay, ARENA_RECT)
 	var tower_world: Vector2 = view.gameplay_to_world(tower_gameplay)
+	_settle_structure(view, "tower", view.tower_feet_world(), tower_world)
 	var cover: Dictionary = view.hero_cover_report(tower_world)
-	var live: Dictionary = view.occlusion_report(tower_world)
-	_expect((cover["in_front"] as Array).has("tower.upper"), "diagnostic cover report disagreed with the live tower occluder")
-	_expect((cover["faded"] as Array).has("tower.upper"), "diagnostic cover report lost the tower fade decision")
-	_expect((live["front_ids"] as Array).has("tower"), "live tower report lost its shared static entry")
-	var placement: Dictionary = view.structure_placements()[0]
-	var ruin_id := String(placement["id"])
-	var ruin_feet_gameplay := Vector2(float((placement["feet"] as Array)[0]), float((placement["feet"] as Array)[1]))
-	view.begin_frame(ARENA_VIEWPORT, ruin_feet_gameplay - Vector2(0.0, 12.0), ARENA_RECT)
-	var ruin_cover: Dictionary = view.hero_cover_report(view.gameplay_to_world(ruin_feet_gameplay - Vector2(0.0, 12.0)))
-	_expect((ruin_cover["faded"] as Array).has(ruin_id), "diagnostic cover report treated a foreground ruin cutaway as opaque")
+	_expect((cover.faded as Array).has("tower"), "diagnostic cover lost physical tower transparency")
+	var fades: Dictionary = view.occlusion_report(tower_world).primitive_fade
+	_expect(not fades.is_empty(), "diagnostic report omitted structure fade state")
+	_expect(fades.values().any(func(state: Dictionary): return String(state.get("policy")) == "paired_reveal"),
+		"diagnostic report omitted the paired whole-object policy")
 
 	var boss_feet := Vector2(500.0, 400.0)
 	var hero := Vector2(500.0, 430.0)

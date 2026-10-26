@@ -21,10 +21,10 @@ func _run() -> void:
 			print("LAYOUT ",route," ",size," root=",screen.size," frame=",screen._layout_frame)
 			for node in screen.find_children("*","ScrollContainer",true,false):
 				var scroll := node as ScrollContainer
-				# Dropdowns own internal scrolling for long option lists. Like detail
-				# readers, they need visible scroll affordances; they are not the
-				# passive page-layout fallback this check is intended to suppress.
-				var is_reader := String(scroll.name) in ["SkillDetailScroll", "ItemDetailScroll"] or _inside_popup_menu(scroll)
+				# Facility workspaces, detail readers and dropdowns expose long
+				# content with visible scroll affordances. Other passive layout
+				# fallbacks retain their quiet chrome.
+				var is_reader := String(scroll.name) in ["FacilityCardsScroll", "SkillDetailScroll", "ItemDetailScroll"] or _inside_popup_menu(scroll)
 				var rail := scroll.get_v_scroll_bar().get_theme_stylebox("scroll")
 				if is_reader and rail is StyleBoxEmpty:
 					failures.append("%s %s active reader or dropdown lost visible scrollbar chrome" % [route, str(size)])

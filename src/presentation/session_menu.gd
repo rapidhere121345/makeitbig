@@ -10,7 +10,8 @@ signal display_requested(resolution: Vector2i, fullscreen: bool)
 signal effects_volume_changed(value: float)
 
 const Shell = preload("res://src/presentation/shell_theme.gd")
-const RESOLUTIONS: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1366, 768), Vector2i(1600, 900), Vector2i(1920, 1080)]
+const DisplayPolicyScript = preload("res://src/presentation/display_policy.gd")
+const PixelStageScript = preload("res://src/presentation/pixel_stage.gd")
 var _root: Control
 var _shade: ColorRect
 var _panel: PanelContainer
@@ -21,6 +22,8 @@ var _resume: Button
 var _abandon: Button
 var _resolution: OptionButton
 var _fullscreen: CheckButton
+var _display_hint: Label
+var _options: Array[Vector2i] = DisplayPolicyScript.PRESETS.duplicate()
 var _volume: HSlider
 var _volume_label: Label
 var _open := false
@@ -69,15 +72,19 @@ func _ready() -> void:
 	_resolution = OptionButton.new()
 	_resolution.name = "WindowResolution"
 	_resolution.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for value in RESOLUTIONS:
-		_resolution.add_item("%d × %d" % [value.x, value.y])
+	_resolution.item_selected.connect(func(_index: int): _refresh_hint())
 	display.add_child(_resolution)
 	_fullscreen = CheckButton.new()
 	_fullscreen.name = "FullscreenToggle"
 	_fullscreen.text = "Fullscreen"
+	_fullscreen.toggled.connect(func(_on: bool): _refresh_hint())
 	display.add_child(_fullscreen)
+	_display_hint = _label("", 16)
+	_display_hint.name = "DisplayHint"
+	column.add_child(_display_hint)
+	_rebuild_options(Vector2i.ZERO)
 	var apply := _button("Apply Display Settings", "ApplyDisplay", column)
-	apply.pressed.connect(func(): display_requested.emit(RESOLUTIONS[_resolution.selected], _fullscreen.button_pressed))
+	apply.pressed.connect(func(): display_requested.emit(selected_resolution(), _fullscreen.button_pressed))
 	var volume_row := HBoxContainer.new()
 	volume_row.add_theme_constant_override("separation", 16)
 	column.add_child(volume_row)
@@ -132,11 +139,39 @@ func set_route(route: String) -> void:
 
 
 func sync_settings(resolution: Vector2i, fullscreen: bool, volume: float) -> void:
-	var index := RESOLUTIONS.find(resolution)
-	_resolution.select(index if index >= 0 else 2)
+	if resolution not in _options:
+		_options = DisplayPolicyScript.with_entry(_options, resolution)
+	_rebuild_options(resolution)
 	_fullscreen.set_pressed_no_signal(fullscreen)
 	_volume.set_value_no_signal(clampf(volume, 0, 1) * 100)
 	_volume_label.text = "Sound %d%%" % int(_volume.value)
+	_refresh_hint()
+
+
+## Replaces the offered window sizes; the current one is kept selected and listed.
+func set_resolution_options(options: Array[Vector2i], current: Vector2i) -> void:
+	_options = DisplayPolicyScript.with_entry(options, current)
+	_rebuild_options(current)
+
+
+func selected_resolution() -> Vector2i:
+	return _options[clampi(_resolution.selected, 0, _options.size() - 1)]
+
+
+func _rebuild_options(select: Vector2i) -> void:
+	var keep := select if select != Vector2i.ZERO else (selected_resolution() if _resolution.item_count > 0 else DisplayPolicyScript.DEFAULT_WINDOW)
+	_resolution.clear()
+	for value in _options:
+		_resolution.add_item("%d × %d" % [value.x, value.y])
+	var index := _options.find(keep)
+	_resolution.select(index if index >= 0 else 0)
+	_refresh_hint()
+
+
+func _refresh_hint() -> void:
+	if _display_hint != null and _fullscreen != null and _resolution.item_count > 0:
+		_display_hint.text = DisplayPolicyScript.hint(selected_resolution(), _fullscreen.button_pressed)
+		_display_hint.visible = not _display_hint.text.is_empty()
 
 
 func open_menu() -> void:
@@ -189,7 +224,7 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_F11:
 			_fullscreen.set_pressed_no_signal(not _fullscreen.button_pressed)
-			display_requested.emit(RESOLUTIONS[_resolution.selected], _fullscreen.button_pressed)
+			display_requested.emit(selected_resolution(), _fullscreen.button_pressed)
 			get_viewport().set_input_as_handled()
 
 
@@ -201,4 +236,14 @@ func _fit() -> void:
 	_panel.size = Vector2(minf(620, available.x), _panel.get_combined_minimum_size().y)
 	_panel.position = ((viewport_size - _panel.size) * 0.5).floor()
 	_launcher.size = Vector2(122, 38)
-	_launcher.position = Vector2(12, viewport_size.y - _launcher.size.y - 8) if _arena else Vector2(viewport_size.x - _launcher.size.x - 12, 14)
+	if _arena:
+		# This root-window control follows the same physical stage as the HUD.
+		# Side/top borders must remain empty, and the pause cue scales with the HUD.
+		var layout: Dictionary = PixelStageScript.layout_for_window(Vector2i(viewport_size))
+		var ui_scale := float(layout.ui_scale)
+		_launcher.scale = Vector2.ONE * ui_scale
+		_launcher.position = Vector2(layout.origin) + Vector2(12.0 * ui_scale,
+			float(layout.stage_size.y) - (_launcher.size.y + 8.0) * ui_scale)
+	else:
+		_launcher.scale = Vector2.ONE
+		_launcher.position = Vector2(viewport_size.x - _launcher.size.x - 12, 14)

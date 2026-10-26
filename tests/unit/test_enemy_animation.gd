@@ -96,7 +96,7 @@ func _test_production_state() -> void:
 		_expect(not reader.has_real_art(), "production: a missing pack claimed real art")
 		_expect(reader.using_fallback(), "production: a missing pack did not declare its fallback")
 		_expect(reader.pending_reason().begins_with("ASSETS PENDING:"), "production: the pending reason is not explicit: %s" % reader.pending_reason())
-		_expect(reader.pending_reason().contains("enemy_actions_v01/atlas.json"), "production: the pending reason does not name the missing atlas: %s" % reader.pending_reason())
+		_expect(reader.pending_reason().contains("actors_v02/enemy_atlas.json"), "production: the pending reason does not name the missing atlas: %s" % reader.pending_reason())
 		_expect(reader.resolve({"role": "melee"}).get("fallback", false), "production: a pending reader did not resolve to its explicit fallback")
 		return
 	## The pack exists: the gate turns strict. A partial or drifted delivery fails
@@ -430,7 +430,7 @@ func _test_arena_integration() -> void:
 	if not reader.has_real_art():
 		_expect(reader.asset_state() == EnemyAnimationScript.STATE_PENDING, "arena: a missing pack reports %s" % reader.asset_state())
 		_expect(String(arena.presentation.animations.enemy_animation_pending_reason).begins_with("ASSETS PENDING:"), "arena: the pending diagnostic is not explicit: %s" % String(arena.presentation.animations.enemy_animation_pending_reason))
-		_expect(String(arena.presentation.animations.enemy_animation_pending_reason).contains("enemy_actions_v01"), "arena: the pending diagnostic does not name the package: %s" % String(arena.presentation.animations.enemy_animation_pending_reason))
+		_expect(String(arena.presentation.animations.enemy_animation_pending_reason).contains("actors_v02"), "arena: the pending diagnostic does not name the package: %s" % String(arena.presentation.animations.enemy_animation_pending_reason))
 	else:
 		_expect(String(arena.presentation.animations.enemy_animation_pending_reason).is_empty(), "arena: a healthy pack still reports a pending reason: %s" % String(arena.presentation.animations.enemy_animation_pending_reason))
 	_configure_room(arena, ["melee_pursuer", "charging_raider", "fan_ranged"])
@@ -451,7 +451,8 @@ func _test_arena_integration() -> void:
 	## Movement is inferred from the position the simulation really moved, and only
 	## on the render frames where the authoritative tick advanced.
 	var walker = arena.enemies[0]
-	arena.teleport_actor("ranger", walker.position + Vector2(400.0, 0.0))
+	_expect(bool(arena.teleport_actor("ranger", Vector2(420.0, 600.0)).get("ok", false)),
+		"arena: the player parking pose was rejected")
 	arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 0.0)
 	_expect(not bool(arena.presentation.animations.enemy_state(arena.gameplay_snapshot(), walker)["moving"]), "arena: a standing enemy read as moving")
 	var redraw_snapshot: Dictionary = arena.gameplay_snapshot()
@@ -480,12 +481,15 @@ func _test_arena_integration() -> void:
 	for rate in [30, 60, 144]:
 		_configure_room(arena, ["melee_pursuer", "charging_raider", "fan_ranged"])
 		var runner = arena.enemies[0]
-		## The typed movement boundary keeps bodies out of each other, so the
-		## rate lane must be clear: park the runner on the open west side before
-		## driving it east past the other spawn bodies. The authored tower
-		## blocker owns the near-west lane at mid height, so the lane starts
-		## east of its padded footprint.
-		_expect(bool(arena.teleport_actor("enemy/%d" % runner.entity_id, Vector2(arena._arena_rect().position.x + 220.0, runner.position.y)).get("ok", false)),
+		## Keep the complete 36-tick eastward run (and the redraw tick) clear of
+		## whole scenery and other bodies; movement speed and clock stay unchanged.
+		_expect(bool(arena.teleport_actor("ranger", Vector2(420.0, 600.0)).get("ok", false)),
+			"rate: the player parking pose was rejected")
+		for index in range(1, arena.enemies.size()):
+			_expect(bool(arena.teleport_actor("enemy/%d" % arena.enemies[index].entity_id,
+				Vector2(1100.0, 360.0 + float(index - 1) * 260.0)).get("ok", false)),
+				"rate: another enemy's parking pose was rejected")
+		_expect(bool(arena.teleport_actor("enemy/%d" % runner.entity_id, Vector2(430.0, 360.0)).get("ok", false)),
 			"rate: the clear walk lane was rejected by teleport")
 		arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 0.0)
 		rate_states[rate] = _drive_render_rate(arena, runner, rate, 1.2)
@@ -574,7 +578,8 @@ func _test_arena_integration() -> void:
 	var victim = arena.enemies[0]
 	var victim_id: int = victim.entity_id
 	var victim_position: Vector2 = victim.position
-	arena.teleport_actor("ranger", victim.position)
+	_expect(bool(arena.teleport_actor("ranger", victim.position).get("ok", false)),
+		"arena: the lethal projectile setup pose was rejected")
 	var contact_resolved := _cast_and_resolve_arrow(arena, victim_id)
 	_expect(contact_resolved and victim.health <= 0.0, "arena: the lethal projectile contact did not resolve")
 	_expect(_enemy_index(arena, victim_id) < 0, "arena: the kill did not despawn on its contact tick")

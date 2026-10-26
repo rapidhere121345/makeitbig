@@ -67,6 +67,9 @@ var _result_label: Label
 var _body_row: BoxContainer
 
 
+var _primary_action: Button
+
+
 func _ready() -> void:
 	_build_ui()
 	_apply_presentation()
@@ -274,6 +277,7 @@ func _build_footer(root: Control) -> void:
 	base_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	base_button.pressed.connect(_on_base_pressed)
 	footer.add_child(base_button)
+	_primary_action = base_button
 	var title_button := Button.new()
 	title_button.name = "ReturnToTitleButton"
 	title_button.text = TITLE_BUTTON_TEXT
@@ -281,6 +285,15 @@ func _build_footer(root: Control) -> void:
 	title_button.pressed.connect(_on_title_pressed)
 	footer.add_child(title_button)
 
+
+## Keyboard entry: the primary ending action owns initial focus when the screen
+## first has none. Ordinary present() refreshes never steal focus the player
+## already navigated elsewhere.
+func _seed_initial_focus() -> void:
+	if not is_inside_tree() or get_viewport().gui_get_focus_owner() != null:
+		return
+	if _primary_action != null and _primary_action.is_visible_in_tree():
+		_primary_action.grab_focus()
 
 func _apply_presentation() -> void:
 	var progression := _as_dictionary(_profile.get("progression", {}))
@@ -290,6 +303,7 @@ func _apply_presentation() -> void:
 		int(progression.get("contract_wins", 0)),
 		int(progression.get("auto_contract_wins", 0)),
 	]
+	_seed_initial_focus()
 	var outcome := String(_last_result.get("outcome", "final_victory"))
 	var contract_id := String(_last_result.get("contract_id", "auto_certification"))
 	var mode := String(_last_result.get("mode", "Auto"))

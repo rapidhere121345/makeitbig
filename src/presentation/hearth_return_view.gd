@@ -11,9 +11,14 @@ const ROOT := "res://art/production/p1/hearth_return_v01/"
 const BACKGROUND_PATH := ROOT + "background.png"
 const NATIVE_SIZE := Vector2i(640, 360)
 const PLACEMENTS := [
-	{"id":"return.mira", "feet":Vector2i(296,189)},
 	{"id":"return.bench", "feet":Vector2i(235,225)},
-	{"id":"return.leia", "feet":Vector2i(237,254)},
+]
+## The two residents are real actors now: they loop their actors_v02 work
+## clips at the same authored feet, like they do in the town. The bench stays
+## published furniture from the scene atlas.
+const NPC_PLACEMENTS := [
+	{"id":"return.mira", "clip":"mira.south.work", "feet":Vector2i(296,189)},
+	{"id":"return.leia", "clip":"leia.south.work", "feet":Vector2i(237,254)},
 ]
 const RANGER_FEET := Vector2i(124,293)
 const SOCKETS := [
@@ -23,11 +28,13 @@ const SOCKETS := [
 const ATMOSPHERE_PRESET := "hearth"
 const ATMOSPHERE_BOUNDS := Rect2(Vector2.ZERO, Vector2(NATIVE_SIZE))
 const HEARTH_LIGHT_FEET := Vector2(189.0, 187.0)
+const NPC_LIFE_DIR := "res://art/production/p1/actors_v02/residents/"
 var _errors: Array[String] = []
 var _atmosphere_layer: AtmosphereLayerScript
 var _layers: Array[Dictionary] = []
 var _effects: Array[Dictionary] = []
 var _life = Life.new()
+var _npc_life = Life.new()
 var _clock := 0.0
 var _frozen := false
 var _loaded := false
@@ -76,6 +83,21 @@ func load_scene() -> bool:
 			continue
 		var node := _sprite(id, sheet, rect, Vector2i(item.feet), anchor)
 		_layers.append({"id":id,"node":node,"rect":rect,"feet":item.feet,"anchor":anchor})
+	## The two residents loop their actors_v02 work clips at the same feet.
+	if not _npc_life.load_assets_at(NPC_LIFE_DIR):
+		_errors.append_array(_npc_life.pending_reasons())
+	else:
+		for item: Dictionary in NPC_PLACEMENTS:
+			var entry: Dictionary = _npc_life.frame_at(String(item.clip), 0.0)
+			if entry.is_empty():
+				_errors.append("published npc clip unavailable " + String(item.clip))
+				continue
+			var node := _sprite(String(item.id), entry.texture, entry.rect, Vector2i(item.feet), entry.anchor)
+			## The panel owns a shared two-second loop: stretch each work clip so
+			## it still advances and still closes with the fire/steam cycle.
+			var frames := maxf(1.0, _npc_life.clip_frame_count(String(item.clip)))
+			var fps := maxf(0.001, _npc_life.clip_fps(String(item.clip)))
+			_effects.append({"id":String(item.id),"node":node,"clip":String(item.clip),"feet":item.feet,"frame":0,"reader":_npc_life,"time_scale":(frames/fps)/2.0})
 	var ranger = Ranger.new()
 	var frame: Dictionary = ranger.frame_for("ranger.east.idle",0)
 	if not ranger.has_real_art() or frame.is_empty():
@@ -83,7 +105,9 @@ func load_scene() -> bool:
 	else:
 		var node := _sprite("ReturnRanger",frame.texture,frame.rect,RANGER_FEET,frame.anchor)
 		_layers.append({"id":"ranger.east.idle","node":node,"rect":frame.rect,"feet":RANGER_FEET,"anchor":frame.anchor})
-	if not _life.load_default_assets():
+	## This retained story panel owns its original fire/steam sockets. The
+	## generated town deliberately has no overlays on its whole-object art.
+	if not _life.load_assets_at("res://art/production/p1/hamlet_life_r13/"):
 		_errors.append_array(_life.pending_reasons())
 	else:
 		for socket: Dictionary in SOCKETS:
@@ -123,7 +147,8 @@ func set_review_time(seconds: float) -> void:
 
 func _update_effects() -> void:
 	for item: Dictionary in _effects:
-		var frame: Dictionary = _life.frame_at(item.clip,_clock)
+		var reader: Variant = item.get("reader", _life)
+		var frame: Dictionary = reader.frame_at(item.clip,_clock * float(item.get("time_scale", 1.0)))
 		if frame.is_empty():
 			continue
 		var node: Sprite2D = item.node
@@ -137,7 +162,7 @@ func scene_report() -> Dictionary:
 		layers.append({"id":item.id,"feet":item.feet,"anchor":item.anchor,"rect":item.rect})
 	var effects: Array[Dictionary] = []
 	for item: Dictionary in _effects:
-		effects.append({"id":str(item.node.name),"clip":item.clip,"frame":item.frame,"feet":item.feet})
+		effects.append({"id":str(item.get("id", item.node.name)),"clip":item.clip,"frame":item.frame,"feet":item.feet})
 	return {"ready":_loaded and _errors.is_empty(),"errors":_errors.duplicate(),"native_size":NATIVE_SIZE,
 		"source_path":BACKGROUND_PATH,"layers":layers,"effects":effects,"time":_clock,
 		"atmosphere":_atmosphere_layer.atmosphere_report() if _atmosphere_layer != null else {},

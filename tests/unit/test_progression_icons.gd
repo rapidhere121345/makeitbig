@@ -100,10 +100,11 @@ func _run() -> void:
 	screen.present(_screen_snapshot())
 	var implemented_button: Button = screen.find_child("TalentNode_ranger_steady_string", true, false) as Button
 	var pending_button: Button = screen.find_child("TalentNode_ranger_wind_slice_stance", true, false) as Button
+	var pending_name: Label = pending_button.get_node_or_null("TalentName") as Label if pending_button != null else null
 	_expect(implemented_button != null and not implemented_button.disabled
 		and pending_button != null and not pending_button.disabled
-		and pending_button.text.contains("Windcut Stance")
-		and pending_button.get_theme_font_size("font_size") >= 22,
+		and pending_name != null and pending_name.text == "Windcut Stance"
+		and pending_name.get_theme_font_size("font_size") >= 18,
 		"iconed pending wind-slice stopped being inspectable or lost its visible name", errors)
 	if pending_button != null:
 		pending_button.pressed.emit()

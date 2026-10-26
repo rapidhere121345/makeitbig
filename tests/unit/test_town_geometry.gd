@@ -5,8 +5,8 @@ extends SceneTree
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 const LayoutBlockerLoaderScript := preload("res://src/runtime/geometry/layout_blocker_loader.gd")
 const HubScript = preload("res://src/presentation/base_hub_screen.gd")
-const WORLD_MARGIN := 20.0
-const SOURCE_LAYOUT_PATH := "res://art/production/p1/hamlet_town/layout.json"
+const WORLD_MARGIN := 38.0
+const SOURCE_LAYOUT_PATH := "res://content/rooms/town/hearthside.spatial.json"
 const HERO_RADIUS := 6.0
 var failures: Array[String] = []
 
@@ -43,7 +43,7 @@ func _geometry(shapes: Array) -> RefCounted:
 func _bounds() -> Rect2:
 	# ActorMotor receives the outer walkable world and keeps the circular
 	# footprint inside it.  The old town bounds represented the centre range.
-	return Rect2(Vector2.ONE * (WORLD_MARGIN - HERO_RADIUS), Vector2(1024.0, 640.0) - Vector2.ONE * (WORLD_MARGIN - HERO_RADIUS) * 2.0)
+	return Rect2(Vector2.ONE * 14.0, Vector2(1024.0, 640.0) - Vector2.ONE * 28.0)
 
 
 func _position(result: Dictionary) -> Vector2:
@@ -111,106 +111,69 @@ func _test_reset_and_placement_loading() -> void:
 	_expect(bool(second.ok) and not motor.is_position_clear(Vector2(404,245)) and motor.is_position_clear(Vector2(304,195)), "placement: old feet leaked after a layout update")
 
 
+## The live scene's checked offline derivative supplies geometry. Legacy
+## illustration UV paths are retained as provenance, never a second authority.
+func _live_layout() -> Dictionary:
+	return JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
+
+
 func _live_motor() -> RefCounted:
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
+	var metadata: Dictionary = _live_layout().gameplay_spatial_metadata
+	var shapes: Array = metadata.static_geometry.duplicate(true)
+	for resident: Dictionary in metadata.residents:
+		shapes.append({"id": "resident/" + String(resident.id), "kind": "circle", "center": resident.position, "radius": resident.radius})
 	var motor := ActorMotorScript.new(HERO_RADIUS)
-	var result := LayoutBlockerLoaderScript.populate_geometry(motor, layout)
-	_expect(bool(result.ok), "town: production layout rejected: %s" % [result.get("errors", [])])
+	var result := LayoutBlockerLoaderScript.populate_geometry(motor, {"collision": {"hero_radius": HERO_RADIUS, "world": shapes}})
+	_expect(bool(result.ok), "town: production spatial geometry rejected: %s" % [result.get("errors", [])])
 	return motor
 
 
-func _point_uv(pair: Array) -> Vector2:
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
-	return Vector2(float(pair[0]), float(pair[1])) * Vector2(layout.world[0], layout.world[1])
-
-
 func _live_bounds() -> Rect2:
-	return Rect2(Vector2.ONE * (WORLD_MARGIN - HERO_RADIUS), _point_uv([1, 1]) - Vector2.ONE * (WORLD_MARGIN - HERO_RADIUS) * 2.0)
+	for binding: Dictionary in _live_layout().stable_bindings:
+		if binding.binding_id == "town/movement-boundary":
+			var rect: Array = binding.geometry.rect
+			return Rect2(float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3]))
+	_expect(false, "town movement boundary missing")
+	return Rect2()
 
 
 func _test_live_layout() -> void:
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
+	var layout: Dictionary = _live_layout()
+	var metadata: Dictionary = layout.gameplay_spatial_metadata
 	var collision = _live_motor()
-	var spawn := _point_uv(layout.hero_start_uv)
+	var pair: Array = metadata.routes.contract[0]
+	var spawn := Vector2(pair[0], pair[1])
 	_expect(collision.is_position_clear(spawn, _live_bounds()), "town: initial player is trapped")
 	for direction: Vector2 in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN]:
-		_expect(_position(collision.move(spawn, direction * 4.0, _live_bounds())).distance_to(spawn + direction * 4.0) < 0.01,
-			"town: spawn cannot move in every direction")
-	for shape: Dictionary in collision.snapshot():
-		var point: Vector2
-		if shape.kind == "polygon":
-			var points: PackedVector2Array = shape.points
-			point = Vector2.ZERO
-			for vertex: Vector2 in points:
-				point += vertex
-			point /= float(points.size())
-		elif shape.kind == "circle":
-			point = shape.center
-		else:
-			point = shape.rect.get_center()
-		_expect(not collision.is_position_clear(point), "town: visible solid has no collision " + String(shape.id))
-	for id: String in layout.routes_uv:
+		_expect(_position(collision.move(spawn, direction * 4, _live_bounds())).distance_to(spawn + direction * 4) < 0.01, "town: spawn cannot move in every direction")
+	for id: String in metadata.routes:
 		var position := spawn
-		for pair: Array in layout.routes_uv[id]:
-			var target := _point_uv(pair)
+		for point: Array in metadata.routes[id]:
+			var target := Vector2(point[0], point[1])
 			_expect(collision.is_position_clear(target, _live_bounds()), "town route %s: waypoint blocked %s" % [id, target])
-			var finish: Vector2 = _position(collision.move(position, target - position, _live_bounds()))
+			var finish: Vector2 = _position(collision.move(position, target-position, _live_bounds()))
 			_expect(finish.distance_to(target) < 0.02, "town route %s: interrupted at %s before %s" % [id, finish, target])
 			position = target
-		print("  town route %s: %d waypoints checked" % [id, layout.routes_uv[id].size()])
-	_test_waterfront(collision)
-
-func _test_waterfront(collision) -> void:
-	# Both sides of the one source bridge remain water; no old mirrored bridge.
-	# Samples are authored in the 1024x640 design space and scaled to the
-	# 1536x960 world; the texture itself is a separate 1536x1024 space.
-	for point: Vector2 in [Vector2(860, 596), Vector2(851, 534), Vector2(666, 564), Vector2(946, 496)]:
-		point = _point_uv([point.x / 1024.0, point.y / 640.0])
-		_expect(not collision.is_position_clear(point), "water: outside-deck water is walkable at %s" % point)
-	var layout: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(SOURCE_LAYOUT_PATH))
-	var deck: Array = layout.routes_uv.bridge
-	## Deck segments start at the plank inner section (texture 1150,740); the
-	## west entrance segment legitimately escapes onto the shore path.
-	for index in range(6, deck.size() - 2):
-		var start := _point_uv(deck[index])
-		var finish := _point_uv(deck[index + 1])
-		_expect(_position(collision.move(finish, start - finish, _live_bounds())).distance_to(start) < 0.02, "bridge: return passage blocked")
-		var tangent := (finish - start).normalized()
-		var normal := Vector2(-tangent.y, tangent.x)
-		for side in [-1.0, 1.0]:
-			var escaped: Vector2 = _position(collision.move((start + finish) * 0.5, normal * side * 150.0, _live_bounds()))
-			_expect(collision.is_position_clear(escaped) and escaped.distance_to((start + finish) * 0.5) < 60.0,
-				"bridge: walking sideways leaves the deck at %s" % escaped)
-	_test_bridge_deck(collision)
-
-
-func _test_bridge_deck(collision) -> void:
-	## The visible plank centerline, authored in texture pixels of the
-	## 1536x1024 source, must walk end-to-end while both off-deck rails stay
-	## blocked water. UV converts as x/1536 and texture_y/1024.
-	var centerline_uv: Array = [
-		[0.716146, 0.700195], [0.748698, 0.722656], [0.78125, 0.75],
-		[0.813802, 0.774414], [0.846354, 0.805664], [0.878906, 0.838867],
-		[0.911458, 0.871094], [0.93099, 0.887695],
-	]
-	var previous := Vector2.ZERO
-	for index in centerline_uv.size():
-		var point := _point_uv(centerline_uv[index])
-		_expect(collision.is_position_clear(point, _live_bounds()), "bridge deck: visible centerline blocked at %s" % point)
-		if index > 0:
-			var walked: Vector2 = _position(collision.move(previous, point - previous, _live_bounds()))
-			_expect(walked.distance_to(point) < 0.02, "bridge deck: walk interrupted at %s" % walked)
-		previous = point
-	for rail_uv: Array in [[0.813802, 0.722656], [0.813802, 0.839844]]:
-		var rail := _point_uv(rail_uv)
-		_expect(not collision.is_position_clear(rail, _live_bounds()), "bridge deck: off-deck water walkable at %s" % rail)
-	## Playtest rail fix: the south water boundary sits at tex y=815 (x=1250)
-	## so a 12px foot stops on the planks instead of the rail top.
-	_expect(not collision.is_position_clear(_point_uv([0.813802, 0.802734]), _live_bounds()), "bridge deck: south rail stop walkable")
-	_expect(collision.is_position_clear(_point_uv([0.813802, 0.787109]), _live_bounds()), "bridge deck: south plank strip blocked")
-	for roof_uv: Array in [[0.41862, 0.074219], [0.16862, 0.179688], [0.650391, 0.139648], [0.917969, 0.267578]]:
-		var roof := _point_uv(roof_uv)
-		_expect(not collision.is_position_clear(roof, _live_bounds()), "roofs: building body walkable at %s" % roof)
+		print("  generated town route %s: %d waypoints checked" % [id, metadata.routes[id].size()])
+	for facility: Dictionary in metadata.facilities:
+		_expect(collision.is_position_clear(Vector2(facility.position[0], facility.position[1]), _live_bounds()), "facility socket blocked: " + String(facility.id))
+	for point: Vector2 in [Vector2(283, 267), Vector2(711, 190), Vector2(1107, 284), Vector2(1390, 410), Vector2(790, 483)]:
+		_expect(not collision.is_position_clear(point), "town: ground footprint has no collision at %s" % point)
+	## 2.5D traversal: rows that sat inside the retired whole-image envelopes
+	## now stand legally behind the projected art, and a continuous move
+	## crosses them without interruption or footprint penetration.
+	for point: Vector2 in [Vector2(283, 206), Vector2(711, 140), Vector2(1091, 175), Vector2(1390, 377), Vector2(985, 700), Vector2(280, 564), Vector2(410, 235)]:
+		_expect(collision.is_position_clear(point, _live_bounds()), "town: legal stand behind projected art blocked at %s" % point)
+	for sweep: Array in [[Vector2(650, 124), Vector2(770, 124)], [Vector2(1000, 178), Vector2(1200, 178)], [Vector2(950, 700), Vector2(1020, 700)]]:
+		var finish: Vector2 = _position(collision.move(sweep[0], sweep[1] - sweep[0], _live_bounds()))
+		_expect(finish.distance_to(sweep[1]) < 0.02, "town: cannot move continuously behind object at %s (stopped %s)" % [sweep[0], finish])
+	# The traced winding river blocks off-bridge water; both measured decks and
+	# the south bank stay walkable. The outer map edge still blocks.
+	for point: Vector2 in [Vector2(790, 874), Vector2(300, 700), Vector2(1200, 760)]:
+		_expect(not collision.is_position_clear(point, _live_bounds()), "open river water is walkable at %s" % point)
+	for point: Vector2 in [Vector2(746.5, 819), Vector2(1350.5, 745.5), Vector2(600, 850)]:
+		_expect(collision.is_position_clear(point, _live_bounds()), "bridge deck or south bank blocked at %s" % point)
+	_expect(not collision.is_position_clear(Vector2(850, 935), _live_bounds()), "invisible map boundary is missing")
 
 
 func _test_live_view() -> void:

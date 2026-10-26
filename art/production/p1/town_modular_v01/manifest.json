@@ -1,0 +1,62 @@
+{
+  "artifacts": [
+    {
+      "bytes": 17687,
+      "kind": "common_layer",
+      "part_id": "common",
+      "path": "art/production/p1/town_modular_v01/loadout_common.png",
+      "sha256": "8e734c20497e306110c53b05469059e64780d68e1f65701637cc148ceb95af78"
+    }
+  ],
+  "asset_package": "p1.town_modular_v01",
+  "layer": "common",
+  "measurements": {
+    "alpha_values": [
+      0,
+      255
+    ],
+    "occupied_bbox": [
+      59,
+      128,
+      195,
+      177
+    ],
+    "opaque_pixels": 6748,
+    "transparent_pixels": 50596,
+    "unique_rgba_colors": 4046
+  },
+  "recipe": {
+    "alpha_threshold": 128,
+    "canvas": [
+      256,
+      224
+    ],
+    "dst_origin": [
+      59,
+      128
+    ],
+    "dst_size": [
+      138,
+      50
+    ],
+    "margin": 8,
+    "max_feet_row": 177,
+    "max_lip_top": 128,
+    "scale": [
+      155,
+      24
+    ],
+    "source": "docs/art-production/p1-town-modular-v01/sources/loadout_common_candidate_01.png",
+    "source_sha256": "2e7dd83a010e0be94ec17b504de075b69c71ca13050c0b14ae2ad2a504ed758a",
+    "src_origin": [
+      227,
+      715
+    ]
+  },
+  "schema_version": 1,
+  "status": "checkpoint_1_unaccepted",
+  "technical_verification": {
+    "scope": "deterministic transform, binary alpha, canvas/margin/lip/feet bounds; visual acceptance and runtime integration are pending",
+    "status": "mechanical_invariants_passed"
+  }
+}

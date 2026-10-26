@@ -7,6 +7,11 @@ const RangerAnimationScript := preload("res://src/presentation/ranger_animation.
 const HamletLifeAnimationScript := preload("res://src/presentation/hamlet_life_animation.gd")
 const OcclusionControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
 const AuthoredRevealScript := preload("res://src/presentation/occlusion/authored_reveal_controller.gd")
+const SilhouetteRevealScript := preload("res://src/presentation/occlusion/silhouette_reveal_controller.gd")
+const PrimitiveFadeScript := preload("res://src/presentation/occlusion/primitive_fade_controller.gd")
+const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
+const DressingScript := preload("res://src/presentation/world_dressing.gd")
+const GroundingScript := preload("res://src/presentation/town_grounding.gd")
 const HERO_ID := "town/ranger"
 const HERO_VISUAL_ID := "ranger.town.idle"
 const DESTINATION_EDGE_MARGIN := Vector2(22, 96)
@@ -19,6 +24,9 @@ var world_presenter
 var ranger_animation
 var life_animation
 var _state: Dictionary = {}
+var _dressing = DressingScript.new()
+var _dressing_layer: Node2D
+var _grounding_layer: Node2D
 var _hero_sprite: Sprite2D
 var _resident_views: Dictionary = {}
 var _destination_marker: Polygon2D
@@ -33,6 +41,9 @@ var _hero_frame: Dictionary = {}
 var _presentation_runtime: Variant = null
 var _occlusion_controller = OcclusionControllerScript.new()
 var _authored_reveal = AuthoredRevealScript.new()
+var _silhouette_reveal = SilhouetteRevealScript.new()
+var _primitive_fade = PrimitiveFadeScript.new()
+var _paired_reveal = PairedRevealScript.new()
 var _protected_resident := ""
 var _occlusion_report: Dictionary = {"available": false, "reason": "presentation_unbound", "alphas": {}}
 
@@ -66,6 +77,8 @@ func load_character_assets() -> Dictionary:
 	life_animation = HamletLifeAnimationScript.new()
 	life_animation.load_default_assets()
 	_load_errors.clear()
+	if not _dressing.load_assets():
+		_load_errors.append(_dressing.pending_reason)
 	if not ranger_animation.has_real_art():
 		_load_errors.append_array(ranger_animation.pending_reasons())
 	if not life_animation.has_real_art():
@@ -75,13 +88,31 @@ func load_character_assets() -> Dictionary:
 
 func attach(presenter: Variant, initial_state: Dictionary, presentation_runtime: Variant = null) -> Dictionary:
 	_authored_reveal.clear()
+	_silhouette_reveal.clear()
+	_primitive_fade.clear()
+	_paired_reveal.clear()
 	_protected_resident = ""
+	## Pieces surviving a re-attach must not keep a stale reveal material from
+	## the previous binding; retired pieces are freed with their scene.
+	for occluder_id: String in _occluder_piece_cache.keys():
+		var piece: CanvasItem = _occluder_piece(occluder_id)
+		if piece != null and piece.material != null and piece.material == _occluder_materials.get(occluder_id, null):
+			piece.material = null
 	_occluder_piece_cache.clear()
 	_occluder_materials.clear()
-	_occluder_hole_anchors.clear()
 	if not _load_errors.is_empty() or ranger_animation == null or life_animation == null or not ranger_animation.has_real_art() or not life_animation.has_real_art():
 		return {"ok": false, "error": "town_character_assets_missing", "errors": _load_errors.duplicate()}
+	if is_instance_valid(_dressing_layer):
+		_dressing_layer.free()
+	if is_instance_valid(_grounding_layer):
+		_grounding_layer.free()
 	world_presenter = presenter
+	_grounding_layer = GroundingScript.new()
+	_grounding_layer.name = "TownGrounding"
+	_grounding_layer.configure(world_presenter.sort_root)
+	world_presenter.ground_effects_layer.add_child(_grounding_layer)
+	_dressing_layer = _dressing.create_town_layer()
+	world_presenter.ground_effects_layer.add_child(_dressing_layer)
 	_presentation_runtime = presentation_runtime
 	_occlusion_controller = OcclusionControllerScript.new()
 	_occlusion_report = {"available": false, "reason": "presentation_unbound", "alphas": {}}
@@ -187,9 +218,20 @@ func consume(state: Dictionary) -> void:
 	_apply_frame(_hero_sprite, _hero_frame)
 	for id: String in _resident_views:
 		world_presenter.sync_actor("town/npc/" + id, (_state.get("residents", {}) as Dictionary).get(id, Vector2.ZERO), Vector2.ZERO, 1, "town/npc/" + id)
+	var shadow_actors: Array[Dictionary] = [{"id": HERO_ID, "feet": hero_world_position()}]
+	_hero_sprite.self_modulate = _grounding_layer.illumination_at(hero_world_position())
+	for id: String in _resident_views:
+		var feet: Vector2 = (_state.get("residents", {}) as Dictionary).get(id, Vector2.ZERO)
+		shadow_actors.append({"id": "town/npc/" + id, "feet": feet})
+		(_resident_views[id].node as Sprite2D).self_modulate = _grounding_layer.illumination_at(feet)
+	_grounding_layer.sync_actors(shadow_actors)
 	_update_life()
 	_update_destination()
 	_sync_occlusion(0.0)
+
+
+func grounding_report() -> Dictionary:
+	return _grounding_layer.report() if is_instance_valid(_grounding_layer) else {}
 
 
 func _process(delta: float) -> void:
@@ -221,29 +263,45 @@ func _sync_occlusion(display_delta: float) -> void:
 		_reset_occlusion("plan_sync_failed")
 		return
 	var entries: Array = plan.entries()
-	for entry: Dictionary in entries:
-		var stable_id := String(entry.get("stable_id", ""))
+	# Subject alpha is only consumed for live actors. Scenery is an occluder,
+	# driven separately below by its cover over actors; computing scenery's
+	# own cover scanned every scenery pair on each new simulation frame.
+	for stable_id: String in actor_presentation_ids():
 		var report: Dictionary = plan.occlusion_report(stable_id)
 		if bool(report.get("ok", false)):
 			_occlusion_controller.set_cover(stable_id, float(report.get("cover_fraction", 0.0)))
-	## Occluder windows replace subject dimming: a dimmed actor under an
-	## opaque front piece was invisible anyway (GPU visual acceptance
-	## 2026-10-20), so the piece itself opens a tiered window instead and the
-	## actor sprite stays fully opaque.
-	var occluder_covers: Dictionary = {}
-	var occluder_holes: Dictionary = {}
+	## Reveal policy: a native front piece stays globally opaque unless it
+	## explicitly opts into a policy. Unconfigured legacy pieces keep the
+	## exact-silhouette clear over the CURRENT opaque silhouette of each
+	## covered actor that holds a readability slot (the hero and the resident
+	## the hub is protecting for conversation). Pieces with an explicit
+	## reveal_policy meta are dispatched instead: "authored_variant" swaps in
+	## mask art, "primitive_fade" eases the opted-in upper part's own
+	## modulate.a over a protected actor's readability box against authored
+	## occlusion volumes, and "none" is an explicit solid base that never
+	## enters the fallback. Ambient residents behind a piece read through the
+	## authored art gaps only, and actor nodes are never occluders — only
+	## native pieces with an occlusion binding id carry reveal materials.
+	## Actor ids are populated completely before any relationship is read, so
+	## the actor-occluder diagnostic never depends on iteration order.
 	var actor_ids: Dictionary = {}
 	for actor_id: String in actor_presentation_ids():
 		actor_ids[actor_id] = true
-		var anchor := _actor_world_position(actor_id)
+	var occluder_covers: Dictionary = {}
+	var occluder_slot_actors: Dictionary = {}
+	var occluder_actor_ids: Array[String] = []
+	for actor_id: String in actor_presentation_ids():
 		for occluder: Dictionary in plan.occluders_of(actor_id):
 			var occluder_id := String(occluder.get("stable_id", ""))
 			if occluder_id.is_empty():
 				continue
 			var cover := float(occluder.get("cover_fraction", 0.0))
 			occluder_covers[occluder_id] = maxf(float(occluder_covers.get(occluder_id, 0.0)), cover)
-			if anchor.is_finite():
-				(occluder_holes.get_or_add(occluder_id, []) as Array).append(anchor)
+			if actor_ids.has(occluder_id) and not occluder_actor_ids.has(occluder_id):
+				occluder_actor_ids.append(occluder_id)
+			if _reveal_slot_eligible(actor_id):
+				(occluder_slot_actors.get_or_add(occluder_id, []) as Array).append(actor_id)
+	occluder_actor_ids.sort()
 	## Every plan entry that is not an actor is a native front piece: covered
 	## pieces get their tiered window, uncovered pieces ease back to opaque.
 	## Resolving the piece node here also seeds the node cache.
@@ -253,7 +311,35 @@ func _sync_occlusion(display_delta: float) -> void:
 			continue
 		var native := _occluder_piece(stable_id)
 		if native != null and native.has_meta("reveal_policy"):
-			if native.get_meta("reveal_policy") == "authored_variant" and not _authored_reveal.has_piece(stable_id):
+			var piece_policy := String(native.get_meta("reveal_policy"))
+			## Policy dispatch: an explicitly configured piece is never part
+			## of the legacy silhouette fallback. Any reveal material the
+			## piece collected while it was still unconfigured is detached
+			## here, so an explicit solid base (policy "none") and a fade
+			## target both draw exactly their configured pixels — modulate.a 1
+			## alone would still let a leftover silhouette material cut them.
+			_detach_silhouette_material(stable_id, native)
+			if piece_policy == PrimitiveFadeScript.POLICY:
+				if native.has_meta("reveal_variant_path") or native.has_meta("reveal_full_path"):
+					_reset_occlusion("primitive_fade_invalid", ["primitive_fade_policy_conflict:" + stable_id])
+					return
+				if not _primitive_fade.has_piece(stable_id):
+					var faded: Dictionary = _primitive_fade.register_piece(stable_id, native as Sprite2D,
+						native.get_meta("occlusion_volumes", null))
+					if not bool(faded.get("ok", false)):
+						_reset_occlusion("primitive_fade_invalid", [String(faded.get("error", "unknown"))])
+						return
+			elif piece_policy == PairedRevealScript.POLICY:
+				## Whole-object pair: no mask, no volumes, one detection rect.
+				if native.has_meta("reveal_mask_path") or native.has_meta("occlusion_volumes"):
+					_reset_occlusion("paired_reveal_invalid", ["paired_reveal_policy_conflict:" + stable_id])
+					return
+				if not _paired_reveal.has_piece(stable_id):
+					var paired: Dictionary = _paired_reveal.register_native_piece(stable_id, native as Sprite2D)
+					if not bool(paired.get("ok", false)):
+						_reset_occlusion("paired_reveal_invalid", [String(paired.get("error", "unknown"))])
+						return
+			elif piece_policy == "authored_variant" and not _authored_reveal.has_piece(stable_id):
 				var registered: Dictionary = _authored_reveal.register_native_piece(stable_id, native as Sprite2D)
 				if not registered.ok:
 					_reset_occlusion("authored_reveal_invalid", [registered.error])
@@ -269,6 +355,8 @@ func _sync_occlusion(display_delta: float) -> void:
 			protected.append({"stable_id": actor_id, "baseline_y": anchor.y, "rank": 1,
 				"readability_box": Rect2(anchor + Vector2(-8, -34), Vector2(16, 28))})
 	_authored_reveal.update(entries, protected, maxf(display_delta, 0.0))
+	_primitive_fade.update(entries, protected, maxf(display_delta, 0.0))
+	_paired_reveal.update(entries, protected, maxf(display_delta, 0.0))
 	_occlusion_controller.update(maxf(display_delta, 0.0))
 	var alphas: Dictionary = {}
 	var window_alphas: Dictionary = {}
@@ -279,21 +367,46 @@ func _sync_occlusion(display_delta: float) -> void:
 		if alpha < 0.999:
 			occluded_ids.append(actor_id)
 		_apply_actor_alpha(actor_id, 1.0)
+	var silhouette_rows: Dictionary = {}
 	for occluder_id: String in _occlusion_controller.occluder_ids():
 		var piece: CanvasItem = _occluder_piece(occluder_id)
+		if piece != null and piece.has_meta("reveal_policy"):
+			## One policy per piece: an explicitly dispatched piece (solid
+			## base, authored variant, or primitive fade) is never part of
+			## the legacy silhouette fallback, even if a stale window row
+			## from before the dispatch remains in the report registry.
+			continue
 		var window := _occlusion_controller.occluder_alpha(occluder_id)
 		var piece_alpha := clampf(window, 0.0, 1.0) if is_finite(window) else 1.0
 		window_alphas[occluder_id] = piece_alpha
 		if piece != null:
+			## Pieces are globally opaque; the window value stays report-only
+			## continuity for the detached plan tiers. What changes on screen is
+			## only the shader's exact silhouette clear.
 			piece.modulate.a = 1.0
-			_apply_occluder_cutout(occluder_id, piece, occluder_holes.get(occluder_id, []), piece_alpha)
+			silhouette_rows[occluder_id] = _apply_silhouette_reveal(occluder_id, piece,
+				occluder_slot_actors.get(occluder_id, []), maxf(display_delta, 0.0))
+	_silhouette_reveal.drop_except(silhouette_rows.keys())
+	## Whether any live plan selected an actual actor node as a foreground
+	## occluder. Such entries keep their legacy report row but can never carry
+	## a reveal material: actor sprites have no occlusion binding id, so the
+	## exact reveal is native-piece only by construction.
+	var native_only := true
+	for occluder_id: String in silhouette_rows.keys():
+		if actor_ids.has(occluder_id):
+			native_only = false
 	_occlusion_report = {"available": true, "reason": "", "plan_size": entries.size(),
 		"occluded_ids": occluded_ids, "alphas": alphas, "occluder_alphas": window_alphas,
-		"authored_reveal": _authored_reveal.report()}
+		"silhouette_reveal": silhouette_rows, "actor_occluder_ids": occluder_actor_ids,
+		"silhouette_native_piece_only": native_only, "authored_reveal": _authored_reveal.report(),
+		"primitive_fade": _primitive_fade.report(), "paired_reveal": _paired_reveal.report()}
 
 
 func _reset_occlusion(reason: String, errors: Array = []) -> void:
 	_authored_reveal.reset()
+	_silhouette_reveal.reset()
+	_primitive_fade.reset()
+	_paired_reveal.reset()
 	for actor_id: String in actor_presentation_ids():
 		_apply_actor_alpha(actor_id, 1.0)
 	_occlusion_controller.clear_occluders()
@@ -301,21 +414,27 @@ func _reset_occlusion(reason: String, errors: Array = []) -> void:
 		var piece: CanvasItem = _occluder_piece(occluder_id)
 		if piece != null:
 			piece.modulate.a = 1.0
-		var material: ShaderMaterial = _occluder_materials.get(occluder_id, null)
-		if material != null:
-			material.set_shader_parameter("hole_count", 0)
-	_occluder_hole_anchors.clear()
+	for material: ShaderMaterial in _occluder_materials.values():
+		material.set_shader_parameter("actor_count", 0)
+		material.set_shader_parameter("reveal_weight", 0.0)
 	_occlusion_report = {"available": false, "reason": reason, "errors": errors.duplicate(), "alphas": {}}
 
 
 func _apply_actor_alpha(actor_id: String, alpha: float) -> void:
-	var sprite: Sprite2D = _hero_sprite if actor_id == HERO_ID else null
-	if sprite == null and actor_id.begins_with("town/npc/"):
-		var resident_id := actor_id.trim_prefix("town/npc/")
-		var record: Variant = _resident_views.get(resident_id, null)
-		sprite = record.get("node", null) if record is Dictionary else null
-	if sprite != null and is_instance_valid(sprite):
+	var sprite := _actor_sprite_of(actor_id)
+	if sprite != null:
 		sprite.modulate.a = clampf(alpha, 0.0, 1.0)
+
+
+## Detaches a piece's silhouette reveal material and forgets its cached
+## uniform set, so a dispatched policy — including an explicit solid "none"
+## base — can never keep cutting pixels the policy did not configure.
+func _detach_silhouette_material(stable_id: String, piece: CanvasItem) -> void:
+	if not _occluder_materials.has(stable_id):
+		return
+	if piece.material != null and piece.material == _occluder_materials.get(stable_id, null):
+		piece.material = null
+	_occluder_materials.erase(stable_id)
 
 
 func actor_presentation_ids() -> Array[String]:
@@ -331,13 +450,40 @@ func actor_presentation_ids() -> Array[String]:
 ## can never reuse a freed node.
 var _occluder_piece_cache: Dictionary = {}
 
-const CUTOUT_SHADER := preload("res://src/presentation/occlusion/occluder_cutout.gdshader")
-const CUTOUT_HOLE_RADIUS := 30.0
-const CUTOUT_HOLE_FEATHER := 9.0
-const CUTOUT_INNER_ALPHA := 0.18
-const CUTOUT_ANCHOR_LIFT := -22.0
 var _occluder_materials: Dictionary = {}
-var _occluder_hole_anchors: Dictionary = {}
+
+
+## The drawn sprite of one bound town actor: the hero's or a resident's live
+## Sprite2D, whatever frame it currently shows.
+func _actor_sprite_of(actor_id: String) -> Sprite2D:
+	if actor_id == HERO_ID:
+		return _hero_sprite if _hero_sprite != null and is_instance_valid(_hero_sprite) else null
+	if actor_id.begins_with("town/npc/"):
+		var record: Variant = _resident_views.get(actor_id.trim_prefix("town/npc/"), null)
+		var sprite: Variant = record.get("node", null) if record is Dictionary else null
+		return sprite if sprite is Sprite2D and is_instance_valid(sprite) else null
+	return null
+
+
+## Reveal slot eligibility: the hero and the resident the hub is currently
+## protecting for conversation. Exact silhouette clears are a readability
+## affordance for the player and their dialogue partner — ambient residents
+## never receive them and the covering piece stays fully opaque over them.
+func _reveal_slot_eligible(actor_id: String) -> bool:
+	return actor_id == HERO_ID or (not _protected_resident.is_empty() and actor_id == "town/npc/" + _protected_resident)
+
+
+var _silhouette_padding: ImageTexture
+
+
+## Fills the uniform sampler array past actor_count. Always transparent so a
+## renderer or shader regression that samples it can never clear anything.
+func _silhouette_padding_texture() -> ImageTexture:
+	if _silhouette_padding == null:
+		var image := Image.create(4, 4, false, Image.FORMAT_RGBA8)
+		image.fill(Color(0.0, 0.0, 0.0, 0.0))
+		_silhouette_padding = ImageTexture.create_from_image(image)
+	return _silhouette_padding
 
 
 ## The covered actor's authoritative feet anchor. A missing resident position
@@ -355,36 +501,87 @@ func _actor_world_position(actor_id: String) -> Vector2:
 	return Vector2.INF
 
 
-## Opens a soft per-actor cutout on the covering piece instead of fading the
-## whole sprite: the eased window alpha drives the hole's inner opacity, so
-## opening and closing keep the same temporal ramp the flat fade used.
-func _apply_occluder_cutout(occluder_id: String, piece: CanvasItem, anchors: Array, eased_alpha: float) -> void:
+## Opens the actual-silhouette reveal on one covering front piece. The AABB
+## candidates from the detached plan are refined against the live source
+## alpha, so an overlap with a piece's transparent tail opens nothing; the
+## piece then clears exactly over each covered actor's current opaque
+## silhouette texels while every other pixel keeps its authored look. The
+## reveal weight eases on the silhouette controller's own clock — where the
+## legacy window tier settles between 0.4 and 1 no longer bounds how clear the
+## actor becomes. Returns the applied, diagnostic-ready row.
+func _apply_silhouette_reveal(occluder_id: String, piece: CanvasItem, actor_ids: Array, display_delta: float) -> Dictionary:
+	var coverages: Dictionary = {}
+	for actor_id: String in actor_ids:
+		var sprite := _actor_sprite_of(actor_id)
+		if sprite != null:
+			coverages[actor_id] = _silhouette_reveal.silhouette_coverage(sprite, piece as Sprite2D)
+	var state: Dictionary = _silhouette_reveal.update(occluder_id, coverages, display_delta)
+	var slots: Array[String] = []
+	for actor_id: String in coverages.keys():
+		if float(coverages[actor_id]) > 0.0:
+			slots.append(actor_id)
+	slots.sort_custom(func(left: String, right: String) -> bool:
+		if not is_equal_approx(float(coverages[left]), float(coverages[right])):
+			return float(coverages[left]) > float(coverages[right])
+		return left < right)
+	if slots.size() > SilhouetteRevealScript.MAX_ACTORS:
+		slots = slots.slice(0, SilhouetteRevealScript.MAX_ACTORS)
 	var material: ShaderMaterial = _occluder_materials.get(occluder_id, null)
 	if material == null:
 		material = ShaderMaterial.new()
-		material.shader = CUTOUT_SHADER
-		material.set_shader_parameter("feather", CUTOUT_HOLE_FEATHER)
+		material.shader = _silhouette_reveal.RevealShader
 		piece.material = material
 		_occluder_materials[occluder_id] = material
-	## Coverage drop keeps the last anchors so the hole fades out via
-	## inner_alpha instead of vanishing in one frame; once the window is fully
-	## closed again the anchors are forgotten.
-	var live: Variant = _occluder_hole_anchors.get(occluder_id, null)
-	if not anchors.is_empty():
-		live = anchors
-		_occluder_hole_anchors[occluder_id] = live
-	elif eased_alpha >= 0.999:
-		live = []
-		_occluder_hole_anchors.erase(occluder_id)
-	var camera_off := camera_world_offset()
-	var holes := PackedVector4Array()
-	for anchor: Variant in live if live is Array else []:
-		if anchor is Vector2:
-			var center: Vector2 = anchor + Vector2(0.0, CUTOUT_ANCHOR_LIFT) - camera_off
-			holes.append(Vector4(center.x, center.y, CUTOUT_HOLE_RADIUS, 0.0))
-	material.set_shader_parameter("holes", holes)
-	material.set_shader_parameter("hole_count", mini(holes.size(), 8))
-	material.set_shader_parameter("inner_alpha", lerpf(1.0, CUTOUT_INNER_ALPHA, 1.0 - eased_alpha))
+	## Uniform arrays are uploaded at the shader's declared length, padded past
+	## actor_count with an always-transparent texel source: renderers validate
+	## the whole array, while the count guard never samples the padding.
+	var cells := PackedVector4Array()
+	cells.resize(SilhouetteRevealScript.MAX_ACTORS)
+	var regions := PackedVector4Array()
+	regions.resize(SilhouetteRevealScript.MAX_ACTORS)
+	var flags := PackedVector4Array()
+	flags.resize(SilhouetteRevealScript.MAX_ACTORS)
+	var textures: Array = []
+	textures.resize(SilhouetteRevealScript.MAX_ACTORS)
+	for index in range(SilhouetteRevealScript.MAX_ACTORS):
+		textures[index] = _silhouette_padding_texture()
+	var actor_rows: Dictionary = {}
+	for slot in slots.size():
+		var actor_id := String(slots[slot])
+		var sprite := _actor_sprite_of(actor_id)
+		var cell: Rect2 = SilhouetteRevealScript.viewport_cell_rect(sprite)
+		var region: Rect2 = SilhouetteRevealScript.cell_region(sprite)
+		var texture: Texture2D = sprite.texture
+		cells[slot] = Vector4(cell.position.x, cell.position.y, cell.size.x, cell.size.y)
+		regions[slot] = Vector4(region.position.x, region.position.y, region.size.x, region.size.y)
+		flags[slot] = Vector4(1.0 if sprite.flip_h else 0.0, 1.0 if sprite.flip_v else 0.0,
+			texture.get_width(), texture.get_height())
+		textures[slot] = texture
+		actor_rows[actor_id] = {
+			"coverage": float(coverages[actor_id]),
+			"cell": [cell.position.x, cell.position.y, cell.size.x, cell.size.y],
+			"region": [region.position.x, region.position.y, region.size.x, region.size.y],
+			"source_frame": String(texture.resource_path),
+			"flip_h": sprite.flip_h, "flip_v": sprite.flip_v,
+			"modulate": sprite.modulate.a,
+		}
+	material.set_shader_parameter("actor_cells", cells)
+	material.set_shader_parameter("actor_regions", regions)
+	material.set_shader_parameter("actor_flags", flags)
+	material.set_shader_parameter("actor_textures", textures)
+	material.set_shader_parameter("actor_count", slots.size())
+	material.set_shader_parameter("reveal_weight", float(state["weight"]))
+	material.set_shader_parameter("clear_alpha", SilhouetteRevealScript.CLEAR_ALPHA)
+	return {
+		"occluder": occluder_id,
+		"open": bool(state["open"]),
+		"weight": float(state["weight"]),
+		"coverage": float(state["coverage"]),
+		"clear_alpha": SilhouetteRevealScript.CLEAR_ALPHA,
+		"actor_count": slots.size(),
+		"piece_modulate": piece.modulate.a,
+		"actors": actor_rows,
+	}
 
 
 func _occluder_piece(occluder_id: String) -> CanvasItem:
@@ -425,14 +622,8 @@ func protect_dialogue_resident(resident_id: String) -> void:
 
 
 func actor_alpha(stable_id: String) -> float:
-	if stable_id == HERO_ID and _hero_sprite != null and is_instance_valid(_hero_sprite):
-		return _hero_sprite.modulate.a
-	if stable_id.begins_with("town/npc/"):
-		var record: Variant = _resident_views.get(stable_id.trim_prefix("town/npc/"), null)
-		var sprite: Variant = record.get("node", null) if record is Dictionary else null
-		if sprite is CanvasItem and is_instance_valid(sprite):
-			return (sprite as CanvasItem).modulate.a
-	return 1.0
+	var sprite := _actor_sprite_of(stable_id)
+	return sprite.modulate.a if sprite != null else 1.0
 
 
 func _update_life() -> void:
@@ -664,9 +855,29 @@ func render_audit() -> Dictionary:
 		var value: Variant = _presentation_runtime.get("native_scene_contract")
 		if value is Dictionary:
 			contract = value
-	return {"ready": is_ready(), "view_size": Vector2(world_viewport.size), "ground_source_path": contract.get("ground_source_path", ""), "runtime_background_patches": 0,
+	## Actual drawn state, kept distinct from the plan's hypothetical alphas:
+	## every actor's real modulate plus the silhouette uniforms really applied
+	## to covering front pieces (source frame, viewport cell, refined opaque
+	## coverage), so a rendered frame can be verified against what the draw
+	## calls consumed instead of against presentation intentions.
+	var modulates: Dictionary = {}
+	for actor_id: String in actor_presentation_ids():
+		modulates[actor_id] = actor_alpha(actor_id)
+	var silhouette: Dictionary = _occlusion_report.get("silhouette_reveal", {}) if _occlusion_report.get("available", false) else {}
+	var primitive: Dictionary = _occlusion_report.get("primitive_fade", {}) if _occlusion_report.get("available", false) else {}
+	var paired: Dictionary = _occlusion_report.get("paired_reveal", {}) if _occlusion_report.get("available", false) else {}
+	return {"ready": is_ready(), "dressing": _dressing.report("town"), "view_size": Vector2(world_viewport.size), "ground_source_path": contract.get("ground_source_path", ""), "runtime_background_patches": 0,
 		"unknown_underplate": contract.get("unknown_underplate", "unknown"),
 		"supports_cutaway": contract.get("supports_cutaway", false), "supports_fade": contract.get("supports_fade", false),
 		"occlusion_available": bool(_occlusion_report.get("available", false)),
 		"shared_sort_root": world_presenter != null and world_presenter.sort_root.y_sort_enabled,
-		"native_count": world_presenter.sort_root.get_child_count() - world_presenter.actor_ids().size() if world_presenter != null else 0}
+		"native_count": world_presenter.sort_root.get_child_count() - world_presenter.actor_ids().size() if world_presenter != null else 0,
+		"actor_modulates": modulates,
+		"silhouette_reveal": {"clear_alpha": SilhouetteRevealScript.CLEAR_ALPHA, "occluders": silhouette,
+			"actor_occluder_ids": _occlusion_report.get("actor_occluder_ids", []).duplicate(),
+			"native_piece_only": bool(_occlusion_report.get("silhouette_native_piece_only", true))},
+		"primitive_fade": {"faded_alpha": PrimitiveFadeScript.FADED_ALPHA,
+			"transition_seconds": PrimitiveFadeScript.TRANSITION_SECONDS,
+			"occluders": primitive},
+		"paired_reveal": {"transition_seconds": PairedRevealScript.TRANSITION_SECONDS,
+			"occluders": paired}}

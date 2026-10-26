@@ -14,6 +14,10 @@ const ENTRY_FIELDS: Array[String] = ["stable_id", "baseline_y", "rank", "feet_an
 
 var _entries: Array[Dictionary] = []
 var _by_id: Dictionary = {}
+## Memo of derived answers. Entries are private and never mutated after build,
+## so these stay valid for the plan's lifetime; every accessor still returns copies.
+var _occluder_memo: Dictionary = {}
+var _report_memo: Dictionary = {}
 
 
 ## Builds an ordered plan.  Returns {ok, errors} on rejection or
@@ -113,6 +117,10 @@ func occluders_of(stable_id: String) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	if not _by_id.has(stable_id):
 		return result
+	if _occluder_memo.has(stable_id):
+		for row: Dictionary in _occluder_memo[stable_id]:
+			result.append(row.duplicate(true))
+		return result
 	var subject_entry: Dictionary = _by_id[stable_id]
 	var subject_box: Rect2 = subject_entry["art_box"]
 	for candidate: Dictionary in _entries:
@@ -125,6 +133,10 @@ func occluders_of(stable_id: String) -> Array[Dictionary]:
 		var detached := candidate.duplicate(true)
 		detached["cover_fraction"] = cover_fraction_of_box(subject_box, detached["art_box"] as Rect2)
 		result.append(detached)
+	var memo: Array[Dictionary] = []
+	for row: Dictionary in result:
+		memo.append(row.duplicate(true))
+	_occluder_memo[stable_id] = memo
 	return result
 
 
@@ -143,6 +155,8 @@ static func cover_fraction_of_box(subject_box: Rect2, occluder_box: Rect2) -> fl
 func occlusion_report(stable_id: String) -> Dictionary:
 	if not _by_id.has(stable_id):
 		return {"ok": false, "error": "unknown_stable_id", "occluded": false, "occluder_ids": [], "cover_fraction": 0.0}
+	if _report_memo.has(stable_id):
+		return (_report_memo[stable_id] as Dictionary).duplicate(true)
 	var occluders := occluders_of(stable_id)
 	var subject := _by_id[stable_id] as Dictionary
 	var subject_box: Rect2 = subject["art_box"]
@@ -153,12 +167,14 @@ func occlusion_report(stable_id: String) -> Dictionary:
 		ids.append(String(occluder["stable_id"]))
 		covered += (subject_box.intersection(occluder["art_box"] as Rect2)).get_area()
 	var cover_fraction := 0.0 if subject_area <= 0.0 else clampf(covered / subject_area, 0.0, 1.0)
-	return {
+	var report := {
 		"ok": true,
 		"occluded": not ids.is_empty(),
 		"occluder_ids": ids,
 		"cover_fraction": cover_fraction,
 	}
+	_report_memo[stable_id] = report.duplicate(true)
+	return report
 
 
 ## Explicit marker: this object is presentation truth only.

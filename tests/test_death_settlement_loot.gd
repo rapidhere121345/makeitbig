@@ -5,6 +5,7 @@ const DeathScript := preload("res://src/runtime/combat/death_settlement.gd")
 const DeathNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
 const LootScript := preload("res://src/runtime/combat/combat_room_loot_rebuild.gd")
 const PlacementPortScript := preload("res://src/runtime/world/room_loot_placement_port.gd")
+const MountedPlacementScript := preload("res://src/game/main_loot_placement_port.gd")
 
 
 class FakeMaterializer:
@@ -24,14 +25,39 @@ class AlwaysClearPlacement:
 		return true
 
 
+class WallPlacementRoom:
+	var divided := false
+
+	func is_position_clear(position: Vector2, radius: float) -> bool:
+		if divided:
+			# A narrow pocket and a separate open area across a solid wall.
+			return (position.x >= radius and position.x <= 32.0 - radius) or position.x >= 40.0 + radius
+		return position.x >= radius
+
+
 func _initialize() -> void:
 	var failures: Array[String] = []
 	_test_death_settlement(failures)
 	_test_room_loot(failures)
+	_test_near_wall_drop(failures)
 	for failure: String in failures:
 		printerr("- %s" % failure)
 	print("PASS test_death_settlement_loot.gd" if failures.is_empty() else "FAIL test_death_settlement_loot.gd")
 	quit(0 if failures.is_empty() else 1)
+
+
+func _test_near_wall_drop(failures: Array[String]) -> void:
+	var room := WallPlacementRoom.new()
+	var placement := MountedPlacementScript.new()
+	placement.configure(room)
+	var origin := Vector2(16, 0)
+	var resolved: Variant = placement.resolve_drop_position(origin, 18.0)
+	_expect(resolved == Vector2(20, 0), "near-wall drop did not move to adjacent clear floor", failures)
+	_expect(resolved == placement.resolve_drop_position(origin, 18.0), "near-wall drop is not deterministic", failures)
+	_expect(placement.resolve_drop_position(Vector2(30, 0), 18.0) == Vector2(30, 0), "clear drop changed position", failures)
+	_expect(placement.resolve_drop_position(Vector2.ZERO, 18.0) == null, "blocked drop origin was rescued", failures)
+	room.divided = true
+	_expect(placement.resolve_drop_position(origin, 18.0) == null, "drop crossed a wall to reach disconnected floor", failures)
 
 
 func _test_death_settlement(failures: Array[String]) -> void:

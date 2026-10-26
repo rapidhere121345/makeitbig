@@ -46,7 +46,7 @@ Before exposure, pass both validation commands, ensure the release root contains
 
 ## Existing Host Endpoint
 
-The existing host endpoint is <https://example-runtime.tail99c4e8.ts.net:8448>. It is not a new devbox deployment or a current availability guarantee. Project scripts never run `tailscaled`.
+The current publish URL, supplied by the operator, is <http://192.0.2.10:18080/>. It supersedes the former HTTPS endpoint. No endpoint check was performed, as requested by the operator. Project scripts never run `tailscaled`.
 
 For a sandbox managed by AF Infra, use the sanctioned control plane and an operator-approved deployment contract rather than configuring host networking from the sandbox. Moving the checkout alone does not provision a publication endpoint.
 

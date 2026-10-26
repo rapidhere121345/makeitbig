@@ -1,160 +1,160 @@
 {
-  "schema_version": 1,
-  "rooms": [
-    {
-      "layout_id": "rectangle_arena",
-      "world_scene_path": "res://content/rooms/combat/rectangle_arena.tscn",
-      "manifest_path": "res://content/rooms/combat/rectangle_arena.spatial.json",
-      "gameplay_digest": "3c189484e9eb7f13ff11fc8e2481e5e405978c145001a6ec9361300efdf844fe",
-      "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
-      "schema_version": 1,
-      "presentation": {
-        "display_name": "Shattered Outpost",
-        "concept": "An open square forecourt. First read which side the enemy pack is approaching from.",
-        "landmark": "Ruined Gate",
-        "entry_hint": "Enter the forecourt from the south, keep a retreat route open, and deal with the enemies ahead first.",
-        "exit_hint": "After clearing the area, pass through the ruined gate to the east."
-      },
-      "spawn_profiles": {
-        "default": {
-          "pattern": "grid",
-          "origin": [
-            -145.0,
-            -80.0
-          ],
-          "columns": 3,
-          "column_step": 145.0,
-          "row_step": 110.0
-        },
-        "first_hunt_clear": {
-          "pattern": "fan",
-          "origin": [
-            -220.0,
-            100.0
-          ],
-          "radius": 350.0,
-          "angles_degrees": [
-            -69.0,
-            -35.0,
-            0.0
-          ]
-        },
-        "first_hunt_followup": {
-          "pattern": "fan",
-          "origin": [
-            -220.0,
-            100.0
-          ],
-          "radius": 350.0,
-          "angles_degrees": [
-            -60.0,
-            -25.0,
-            10.0
-          ]
-        },
-        "test.fixture": {
-          "pattern": "explicit",
-          "offsets": [
-            [
-              -70.0,
-              -150.0
-            ],
-            [
-              115.0,
-              -125.0
-            ],
-            [
-              210.0,
-              25.0
-            ],
-            [
-              125.0,
-              150.0
-            ],
-            [
-              -65.0,
-              165.0
-            ],
-            [
-              -210.0,
-              -45.0
-            ],
-            [
-              250.0,
-              -40.0
-            ]
-          ]
-        }
-      }
-    },
-    {
-      "layout_id": "corridor",
-      "world_scene_path": "res://content/rooms/combat/corridor.tscn",
-      "manifest_path": "res://content/rooms/combat/corridor.spatial.json",
-      "gameplay_digest": "7f4941d3c944d64d9d2ec1e9d2c262d364a165dd62a469e9b1fde2d5ddc1d2cb",
-      "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
-      "schema_version": 1,
-      "presentation": {
-        "display_name": "Windcut Passage",
-        "concept": "A narrow wind gap where lateral movement matters more than retreating in a straight line.",
-        "landmark": "Gorge Banner",
-        "entry_hint": "Move sideways along the banners to avoid charge lanes and ranged fans.",
-        "exit_hint": "After clearing the area, pass through the wind gate to the east."
-      },
-      "spawn_profiles": {
-        "default": {
-          "pattern": "alternating_rows",
-          "origin": [
-            -180.0,
-            0.0
-          ],
-          "columns": 4,
-          "x_step": 120.0,
-          "row_values": [
-            -42.0,
-            42.0
-          ]
-        },
-        "first_hunt_followup": {
-          "pattern": "approach_band",
-          "origin": [
-            -220.0,
-            58.0
-          ],
-          "distance": 350.0,
-          "offsets_y": [
-            -4.0,
-            -3.0,
-            -2.0
-          ]
-        }
-      }
-    },
-    {
-      "layout_id": "ring",
-      "world_scene_path": "res://content/rooms/combat/ring.tscn",
-      "manifest_path": "res://content/rooms/combat/ring.spatial.json",
-      "gameplay_digest": "d46f19768b888404df8ff29b443a61bf7507d3c587e8251251d3a5b1a591be23",
-      "presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
-      "schema_version": 1,
-      "presentation": {
-        "display_name": "Salvage Ring",
-        "concept": "A ring-shaped salvage yard with an impassable center; inner and outer edges define the walkable ring.",
-        "landmark": "Ring Beacon",
-        "entry_hint": "Circle the central beacon along the ring to gain distance; the inner and outer edges physically block movement.",
-        "exit_hint": "After clearing the area, leave through the southeastern ring gate."
-      },
-      "spawn_profiles": {
-        "default": {
-          "pattern": "radial",
-          "center": [
-            0.0,
-            0.0
-          ],
-          "radius": 175.0,
-          "start_angle_degrees": -90.0
-        }
-      }
-    }
-  ]
+	"rooms": [
+		{
+			"gameplay_digest": "44b78a7bb719e71eb03a9cb0a9b3383aff142e7e99d674c48e18388bf4b745b1",
+			"layout_id": "rectangle_arena",
+			"manifest_path": "res://content/rooms/combat/rectangle_arena.spatial.json",
+			"presentation": {
+				"concept": "An open square forecourt. First read which side the enemy pack is approaching from.",
+				"display_name": "Shattered Outpost",
+				"entry_hint": "South steps; keep a way back.",
+				"exit_hint": "The north gate stays sealed; once the court is clear its wards fall, then choose Leave to take the route onward.",
+				"landmark": "Ruined Gate"
+			},
+			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
+			"schema_version": 1,
+			"spawn_profiles": {
+				"default": {
+					"column_step": 145.0,
+					"columns": 3,
+					"origin": [
+						-145.0,
+						-80.0
+					],
+					"pattern": "grid",
+					"row_step": 110.0
+				},
+				"first_hunt_clear": {
+					"angles_degrees": [
+						-69.0,
+						-24.0,
+						14.0
+					],
+					"origin": [
+						-220.0,
+						100.0
+					],
+					"pattern": "fan",
+					"radius": 350.0
+				},
+				"first_hunt_followup": {
+					"angles_degrees": [
+						-60.0,
+						-25.0,
+						10.0
+					],
+					"origin": [
+						-220.0,
+						100.0
+					],
+					"pattern": "fan",
+					"radius": 350.0
+				},
+				"test.fixture": {
+					"offsets": [
+						[
+							-70.0,
+							-150.0
+						],
+						[
+							115.0,
+							-125.0
+						],
+						[
+							210.0,
+							25.0
+						],
+						[
+							125.0,
+							150.0
+						],
+						[
+							-65.0,
+							165.0
+						],
+						[
+							-210.0,
+							-45.0
+						],
+						[
+							250.0,
+							-40.0
+						]
+					],
+					"pattern": "explicit"
+				}
+			},
+			"world_scene_path": "res://content/rooms/combat/rectangle_arena.tscn"
+		},
+		{
+			"gameplay_digest": "2d7430508dc51728a02e64d8461578a06c969f555e3202049a44160d876adcc6",
+			"layout_id": "corridor",
+			"manifest_path": "res://content/rooms/combat/corridor.spatial.json",
+			"presentation": {
+				"concept": "A narrow wind gap where lateral movement matters more than retreating in a straight line.",
+				"display_name": "Windcut Passage",
+				"entry_hint": "South stair; avoid charge lanes.",
+				"exit_hint": "The east ward seals the causeway; once it is clear the ward falls, then choose Leave to take the route onward.",
+				"landmark": "Gorge Banner"
+			},
+			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
+			"schema_version": 1,
+			"spawn_profiles": {
+				"default": {
+					"columns": 4,
+					"origin": [
+						-180.0,
+						0.0
+					],
+					"pattern": "alternating_rows",
+					"row_values": [
+						-42.0,
+						42.0
+					],
+					"x_step": 120.0
+				},
+				"first_hunt_followup": {
+					"distance": 350.0,
+					"offsets_y": [
+						-4.0,
+						-3.0,
+						-2.0
+					],
+					"origin": [
+						-220.0,
+						58.0
+					],
+					"pattern": "approach_band"
+				}
+			},
+			"world_scene_path": "res://content/rooms/combat/corridor.tscn"
+		},
+		{
+			"gameplay_digest": "b08f815b682aeed5465c1cb3499cc579a18817698136c84bd6bd21d4ba8e99c5",
+			"layout_id": "ring",
+			"manifest_path": "res://content/rooms/combat/ring.spatial.json",
+			"presentation": {
+				"concept": "A ring-shaped salvage yard with an impassable center; inner and outer edges define the walkable ring.",
+				"display_name": "Salvage Ring",
+				"entry_hint": "West stones; circle the well.",
+				"exit_hint": "The north-east gate stays sealed; once the ring is clear its wards fall, then choose Leave to take the route onward.",
+				"landmark": "Ring Beacon"
+			},
+			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
+			"schema_version": 1,
+			"spawn_profiles": {
+				"default": {
+					"center": [
+						0.0,
+						0.0
+					],
+					"pattern": "radial",
+					"radius": 175.0,
+					"start_angle_degrees": -90.0
+				}
+			},
+			"world_scene_path": "res://content/rooms/combat/ring.tscn"
+		}
+	],
+	"schema_version": 1
 }

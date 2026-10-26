@@ -24,3 +24,6 @@ __pycache__/
 *.key
 *.p12
 *.pfx
+
+# Generated local publication site; release sources live in release/.
+/release-online/

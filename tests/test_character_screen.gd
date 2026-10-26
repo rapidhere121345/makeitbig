@@ -1,6 +1,8 @@
 extends SceneTree
 
 const CharacterScreenScript = preload("res://src/presentation/character_screen.gd")
+const TalentBoardScript = preload("res://src/presentation/ranger_talent_board.gd")
+const ApplicationStateScript = preload("res://src/game/application_state.gd")
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 
 
@@ -28,6 +30,8 @@ func _run() -> void:
 
 	screen.present(_snapshot(false, false))
 	await process_frame
+	_test_keyboard_entry_focus(screen, failures)
+	_test_real_talent_names_fit(screen, failures)
 	_test_point_count_copy(screen, failures)
 	_test_selected_node_and_copy(screen, failures)
 	_test_long_detail_dark_paper_contrast(screen, failures)
@@ -45,6 +49,68 @@ func _run() -> void:
 		for failure in failures:
 			printerr("character screen: %s" % failure)
 		quit(1)
+
+
+func _test_keyboard_entry_focus(screen, failures: Array[String]) -> void:
+	## Initial entry seeds focus on the selected talent's button so keyboard
+	## navigation starts somewhere meaningful.
+	var owner := root.gui_get_focus_owner()
+	var selected: Button = screen._talent_board.node_button(screen._selected_talent_id)
+	_expect(selected != null and owner == selected,
+		"character: initial focus did not land on the selected talent", failures)
+	## An ordinary authoritative refresh must not steal focus back.
+	var other := screen.find_child("CloseCharacterButton", true, false) as Button
+	if other != null:
+		other.grab_focus()
+		screen.present(_snapshot(false, false))
+		_expect(root.gui_get_focus_owner() == other,
+			"character: refresh stole keyboard focus", failures)
+
+
+## The REAL authored names (Continuation Calibration, Final-Generation Reload,
+## …) are the ones that clipped — synthetic fixtures hid it. Present the live
+## growth snapshot and require every node name fully readable in its lane.
+func _test_real_talent_names_fit(screen, failures: Array[String]) -> void:
+	var app := ApplicationStateScript.new()
+	app.start_new_profile("ranger")
+	var live := app.growth_snapshot()
+	var trees: Array = live.get("trees", [])
+	_expect(not trees.is_empty(), "live growth snapshot has no trees", failures)
+	if trees.is_empty():
+		return
+	## The board presents only the implemented ranger tree; the live snapshot
+	## also carries future class trees that are intentionally not rendered.
+	var real_names := {}
+	for tree_value in trees:
+		var tree: Dictionary = tree_value
+		if String(tree.get("id", "")) != "ranger":
+			continue
+		for node_value in tree.get("nodes", []):
+			real_names[String((node_value as Dictionary).id)] = String((node_value as Dictionary).get("name", ""))
+	screen.present(live)
+	var board := screen.find_child("RangerTalentBoard", true, false) as Control
+	var checked := 0
+	for node_id: String in real_names:
+		var button := screen.find_child("TalentNode_" + node_id, true, false) as Button
+		var lane := button.get_node_or_null("TalentName") as Label if button != null else null
+		if lane == null:
+			_expect(false, "live node %s lost its name lane" % node_id, failures)
+			continue
+		checked += 1
+		_expect(lane.text == real_names[node_id],
+			"live node %s lane shows '%s' not '%s'" % [node_id, lane.text, real_names[node_id]], failures)
+		_expect(lane.get_visible_line_count() == lane.get_line_count() and lane.get_line_count() <= 3,
+			"live node %s name wraps past its lane: '%s'" % [node_id, lane.text], failures)
+		var lane_rect := lane.get_global_rect()
+		_expect(board != null and board.get_global_rect().encloses(lane_rect),
+			"live node %s lane escaped the board: %s" % [node_id, str(lane_rect)], failures)
+		for other: Button in _talent_nodes(screen):
+			var center := other.get_global_rect().get_center()
+			var radius := Vector2.ONE * TalentBoardScript.MEDALLION_RADIUS
+			_expect(not lane_rect.intersects(Rect2(center - radius, radius * 2.0)),
+				"live name %s overlaps drawn medallion %s" % [node_id, other.name], failures)
+	_expect(checked == 15, "live board checked %d of 15 authored names" % checked, failures)
+	screen.present(_snapshot(false, false))
 
 
 func _test_point_count_copy(screen, failures: Array[String]) -> void:
@@ -137,7 +203,7 @@ func _test_desktop_bounds_and_readability(screen, failures: Array[String]) -> vo
 		var node_buttons := _talent_nodes(screen)
 		var node_button: Button = screen.find_child("TalentNode_trail", true, false) as Button
 		var detail_copy: Label = screen.find_child("SelectedTalentDescription", true, false) as Label
-		_expect(node_button != null and node_button.get_theme_font_size("font_size") >= ShellThemeScript.BODY_FONT_SIZE, "%s talent node dropped below 22px body readability" % size, failures)
+		_expect(node_button != null, "%s talent node is missing" % size, failures)
 		_expect(detail_copy != null and detail_copy.get_theme_font_size("font_size") >= ShellThemeScript.BODY_FONT_SIZE, "%s detail copy dropped below 22px body readability" % size, failures)
 		for node in node_buttons:
 			var rect := (node as Control).get_global_rect()
@@ -148,6 +214,23 @@ func _test_desktop_bounds_and_readability(screen, failures: Array[String]) -> vo
 				if other == node:
 					continue
 				_expect(not rect.intersects((other as Control).get_global_rect()), "%s talent nodes overlap" % size, failures)
+			var lane := (node as Control).get_node_or_null("TalentName") as Label
+			_expect(lane != null, "%s lost its TalentName lane" % size, failures)
+			if lane != null:
+				_expect(not lane.text.is_empty() and not lane.text.contains("…"),
+					"%s talent name clipped: '%s'" % [size, lane.text], failures)
+				_expect(lane.get_theme_font_size("font_size") >= 18,
+					"%s talent name fell below the 18px floor" % size, failures)
+				_expect(lane.get_visible_line_count() == lane.get_line_count() and lane.get_line_count() <= 3,
+					"%s talent name wraps past its visible lane: '%s'" % [size, lane.text], failures)
+				var lane_rect := lane.get_global_rect()
+				_expect(board != null and board.get_global_rect().encloses(lane_rect),
+					"%s name lane escaped RangerTalentBoard: %s" % [size, str(lane_rect)], failures)
+				for other in node_buttons:
+					if other == node:
+						continue
+					_expect(not lane_rect.intersects((other as Control).get_global_rect()),
+						"%s name lane of %s overlaps medallion %s" % [size, node.name, (other as Control).name], failures)
 		_test_talent_board_annotations(screen, node_buttons, size, failures)
 		var viewport := Rect2(Vector2.ZERO, Vector2(size))
 		for node in screen.find_children("*", "Control", true, false):

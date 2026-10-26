@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "reference": "The Last Spell: visual perspective/pixel-art guidance, no extracted assets",
+  "view": "elevated three-quarter parallel view; diagonal ground axes",
+  "retained": "Ranger, enemy, boss and resident animation artwork retained",
+  "sources": [
+    {
+      "id": "arena_ground",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/arena_ground_raw.png",
+      "sha256": "f9ded049173dbc7d9025f2c1361443ffa1dd6a85d93d3e1b4891f86a38a7c547",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/arena_ground.txt",
+      "prompt_sha256": "59ba60744bf02705bc55b22d10fc43d73021aa51dc34dd2af3a9124f387d1c24",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "board",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/board_raw.png",
+      "sha256": "bdca618618d53a45075e2192161334d3689d174c4d73a0680a9333829e5ddac2",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/board.txt",
+      "prompt_sha256": "1937aa0005f4aac4f9ccffa1f79af36e6773266538d407630a81066f5cc5a6db",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "cart",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/cart_raw.png",
+      "sha256": "728a7bdaccb7641d494431c833333a4164317a1ec066a12afab12b173c4ee918",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/cart.txt",
+      "prompt_sha256": "b707ff57feb690fce675d1b902d7980ee8361a389c1349e08016dd2eab4b7e80",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "fence_long",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/fence_long_raw.png",
+      "sha256": "36062591843254741896c23277622b5ec80aea2876474a456b88314f449e6e8a",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/fence_long.txt",
+      "prompt_sha256": "ee2565b99419b2c0cf5b8dce38dc358de88cfd281511c2de3274a0ef62b85874",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "fence_short",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/fence_short_raw.png",
+      "sha256": "853a3649f5eb8fcc29c302eeb63c5511c95ee86a88d1bcff3e65634c0d56d184",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/fence_short.txt",
+      "prompt_sha256": "b1f7101acd01bc48fd6c61585f761270bfda751cd893cc92555c4fdf729bdf01",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "forge",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/forge_raw.png",
+      "sha256": "cc5c35bbf830c85c79842506e60cec76a92c090e91aa4558d4abe7154452edfc",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/forge.txt",
+      "prompt_sha256": "8aff3da426a07da3d9fa69e38084fbd48f16af0ec297d17f9553377c600677a0",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "hearth",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/hearth_raw.png",
+      "sha256": "2c63682c023bd2305a662832742825e616fc86cc436333daa930df05280be9f5",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/hearth.txt",
+      "prompt_sha256": "9927339964d6336c459eea3f33df942b2d3017927e86cbb88ef2b014fceed526",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "lamp",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/lamp_raw.png",
+      "sha256": "5fbcc4ea8a83637c7fb821afc948798af6ea2c3cc057c70b224f322c548faf28",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/lamp.txt",
+      "prompt_sha256": "189c43dbc047baaae72bbbf745e66c97e87b517be8aa90ea07efff49e321eb05",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "loadout",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/loadout_raw.png",
+      "sha256": "daedf6a19f74b929c1296c3cf1d1bc4c2b333ef12e2928df876043a2bf6bdaaf",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/loadout.txt",
+      "prompt_sha256": "b822745798b9615602d3a89dc9066ecd9a3a8aa893680d110df0b14e961d5a70",
+      "method": "built-in image_gen; original generation from authored brief"
+    },
+    {
+      "id": "pine",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/pine_raw.png",
+      "sha256": "695c22669c4b419424927fe56d2a5989fe794fc0c714308e27dea883755b367a",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/pine.txt",
+      "prompt_sha256": "383e582124396020c68231a2de9d89d85d439f0b7e0ac47fd8aded2b7f60f5ca",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "proxy",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/proxy_raw.png",
+      "sha256": "a7862d3dfb4d464a675f6c8bc3ea8f0c730e5e7d6f26a654ec9420655f0164f3",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/proxy.txt",
+      "prompt_sha256": "b3b5ca7d8b1d6471836d0bd7e2f7bb1cbea968b7db5d672fe37cce6eda0321da",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "ruin_broken_wall",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/ruin_broken_wall_raw.png",
+      "sha256": "3361f3a3d6255df798b855576a836be3995965061d75db5008afa7c9cc919e64",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/ruin_broken_wall.txt",
+      "prompt_sha256": "5c6dddb368bce8c0cd785125cf2437f0360586ce850c3d3f0863ff4f3d67256f",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "ruin_gate",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/ruin_gate_raw.png",
+      "sha256": "75a2f7c9d20379c311e2d4e55cc9bc2365d8981d53f2f60202dfe9142d0f03ef",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/ruin_gate.txt",
+      "prompt_sha256": "fa1a1ab5d00a503b221fff64d8e5950d02a7f380df6a304d587e3558f156c9bd",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "ruin_low_pier",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/ruin_low_pier_raw.png",
+      "sha256": "6572aa4561aca33ea0f8468fac038a498712e43dd0714cbf7a4b930c9e6f8426",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/ruin_low_pier.txt",
+      "prompt_sha256": "a6fc779829f02818b231a45f535c4bbdc4006054f4049ce4bc552a2c96ab9935",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "ruin_wall_corner",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/ruin_wall_corner_raw.png",
+      "sha256": "89abd55133d192a6115ccb6fb28f3fdbc4a788bb55ccac69cc463e6c254db54e",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/ruin_wall_corner.txt",
+      "prompt_sha256": "d273d0de3f302227cd2aace1e04e735a767cc1570905faf011fddca0c9b71a06",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "tower",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/tower_raw.png",
+      "sha256": "574c07f221c99804c23d444f6d40a9e6b4ed7dc94f2eced4e5e80ba9572285a8",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/tower.txt",
+      "prompt_sha256": "4344fa45868911a39b45d10df047ee4434fb5c4282d966aede27542f43ebcef6",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "town_ground",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/town_ground_raw.png",
+      "sha256": "779d343ed32f6f6e85969cc3435eca94212ff54d0543e142aca6c84721206748",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/town_ground.txt",
+      "prompt_sha256": "8c631abfd19cac747f067b9640e66fda42719bb9311d4987846912d9968beb96",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "training_dummy",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/training_dummy_raw.png",
+      "sha256": "ebc831f1309b025e3f4b5c315eeb6244e0d323bedab3434ee172529a1d0c9b46",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/training_dummy.txt",
+      "prompt_sha256": "719e56d855a71b56dd6b80e9eb23f0cf701cfd7cfa8383bd925b223e89f3eb51",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    },
+    {
+      "id": "woodpile",
+      "source": "docs/art-production/generated-world-v02/perspective-20261024/sources/woodpile_raw.png",
+      "sha256": "be796df2d3c44371c7aab5ebccbfb0e50b20ac140f5fe68e3ce4879f279ce5f9",
+      "prompt": "docs/art-production/generated-world-v02/perspective-20261024/prompts/woodpile.txt",
+      "prompt_sha256": "3d37b99fff6253d86f1cb104739fc2ecb6c3cd8c0062bfccb3534f44b6e06eea",
+      "method": "built-in image_gen; original generation; house supplied only as style/perspective reference"
+    }
+  ]
+}

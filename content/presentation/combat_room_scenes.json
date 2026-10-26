@@ -1,0 +1,65 @@
+{
+	"schema_version": 1,
+	"rooms": {
+		"rectangle_arena": {
+			"ground_id": "court_ground",
+			"edge_style": "court",
+			"entry": {"socket_ref": "combat/spawn", "style": "court_steps"},
+			"exit": {"binding_ref": "combat/structure/ruin.gate#0", "style": "gate_ward"},
+			"dressing": [
+				{"id": "court/fern/0", "family": "fern", "feet": [150, 600]},
+				{"id": "court/votives/0", "family": "votives", "feet": [240, 560]},
+				{"id": "court/mushrooms/0", "family": "mushrooms", "feet": [470, 575]},
+				{"id": "court/relic/0", "family": "relic", "feet": [560, 610]},
+				{"id": "court/fern/1", "family": "fern", "feet": [700, 590]},
+				{"id": "court/votives/1", "family": "votives", "feet": [860, 560]},
+				{"id": "court/relic/1", "family": "relic", "feet": [980, 470]},
+				{"id": "court/mushrooms/1", "family": "mushrooms", "feet": [40, 300]},
+				{"id": "court/fern/2", "family": "fern", "feet": [45, 470]},
+				{"id": "court/votives/2", "family": "votives", "feet": [520, 200]},
+				{"id": "court/relic/2", "family": "relic", "feet": [330, 170]},
+				{"id": "court/mushrooms/2", "family": "mushrooms", "feet": [860, 160]}
+			]
+		},
+		"corridor": {
+			"ground_id": "causeway_ground",
+			"edge_style": "causeway",
+			"entry": {"socket_ref": "combat/spawn", "style": "causeway_stair"},
+			"exit": {"boundary_anchor": "east", "style": "boundary_ward"},
+			"dressing": [
+				{"id": "causeway/fern/0", "family": "fern", "feet": [130, 270]},
+				{"id": "causeway/mushrooms/0", "family": "mushrooms", "feet": [420, 285]},
+				{"id": "causeway/relic/0", "family": "relic", "feet": [520, 270]},
+				{"id": "causeway/votives/0", "family": "votives", "feet": [760, 290]},
+				{"id": "causeway/fern/1", "family": "fern", "feet": [880, 260]},
+				{"id": "causeway/relic/1", "family": "relic", "feet": [200, 470]},
+				{"id": "causeway/mushrooms/1", "family": "mushrooms", "feet": [450, 480]},
+				{"id": "causeway/votives/1", "family": "votives", "feet": [640, 500]},
+				{"id": "causeway/fern/2", "family": "fern", "feet": [820, 480]},
+				{"id": "causeway/relic/2", "family": "relic", "feet": [980, 300]},
+				{"id": "causeway/votives/2", "family": "votives", "feet": [980, 430]},
+				{"id": "causeway/mushrooms/2", "family": "mushrooms", "feet": [60, 420]}
+			]
+		},
+		"ring": {
+			"ground_id": "ritual_ground",
+			"edge_style": "ritual",
+			"entry": {"socket_ref": "combat/spawn", "style": "ritual_stones"},
+			"exit": {"binding_ref": "combat/structure/ruin.gate#0", "style": "gate_ward"},
+			"dressing": [
+				{"id": "ritual/votives/0", "family": "votives", "feet": [666, 449]},
+				{"id": "ritual/votives/1", "family": "votives", "feet": [512, 540]},
+				{"id": "ritual/votives/2", "family": "votives", "feet": [358, 272]},
+				{"id": "ritual/relic/0", "family": "relic", "feet": [714, 360]},
+				{"id": "ritual/relic/1", "family": "relic", "feet": [310, 350]},
+				{"id": "ritual/fern/0", "family": "fern", "feet": [240, 520]},
+				{"id": "ritual/fern/1", "family": "fern", "feet": [800, 520]},
+				{"id": "ritual/mushrooms/0", "family": "mushrooms", "feet": [770, 250]},
+				{"id": "ritual/mushrooms/1", "family": "mushrooms", "feet": [250, 250]},
+				{"id": "ritual/fern/2", "family": "fern", "feet": [140, 420]},
+				{"id": "ritual/relic/2", "family": "relic", "feet": [880, 300]},
+				{"id": "ritual/mushrooms/2", "family": "mushrooms", "feet": [430, 580]}
+			]
+		}
+	}
+}

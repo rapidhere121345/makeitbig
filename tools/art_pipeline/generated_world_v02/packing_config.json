@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "package": "generated_world_v02",
+  "source_dir": "docs/art-production/generated-world-v02/perspective-20261024/sources",
+  "output_dir": "art/production/p1/generated_world_v02",
+  "report_dir": "build/current/generated-world-v02/packing",
+  "default_alpha_threshold": 240,
+  "margin": 8,
+  "occlusion_grow": 8,
+  "transparent_alpha": 128,
+  "primary_ground": "town_ground",
+  "grounds": {
+    "town_ground": {
+      "source": "town_ground_raw.png",
+      "source_sha256": "779d343ed32f6f6e85969cc3435eca94212ff54d0543e142aca6c84721206748",
+      "mode": "fit_width_crop_height",
+      "canvas": [
+        1536,
+        960
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "town",
+      "fit_width": 1536
+    },
+    "arena_ground": {
+      "source": "arena_ground_raw.png",
+      "source_sha256": "f9ded049173dbc7d9025f2c1361443ffa1dd6a85d93d3e1b4891f86a38a7c547",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "arena"
+    }
+  },
+  "assets": {
+    "board": {
+      "canvas": [
+        224,
+        176
+      ],
+      "anchor": [
+        112,
+        160
+      ],
+      "source": "board_raw.png",
+      "source_sha256": "bdca618618d53a45075e2192161334d3689d174c4d73a0680a9333829e5ddac2",
+      "section": "town"
+    },
+    "loadout": {
+      "canvas": [
+        288,
+        240
+      ],
+      "anchor": [
+        144,
+        220
+      ],
+      "source": "loadout_raw.png",
+      "source_sha256": "daedf6a19f74b929c1296c3cf1d1bc4c2b333ef12e2928df876043a2bf6bdaaf",
+      "section": "town"
+    },
+    "forge": {
+      "canvas": [
+        320,
+        288
+      ],
+      "anchor": [
+        160,
+        264
+      ],
+      "source": "forge_raw.png",
+      "source_sha256": "cc5c35bbf830c85c79842506e60cec76a92c090e91aa4558d4abe7154452edfc",
+      "section": "town"
+    },
+    "proxy": {
+      "canvas": [
+        224,
+        320
+      ],
+      "anchor": [
+        112,
+        296
+      ],
+      "source_sha256": "a7862d3dfb4d464a675f6c8bc3ea8f0c730e5e7d6f26a654ec9420655f0164f3",
+      "section": "town",
+      "occlusion_grow": 11
+    },
+    "pine": {
+      "canvas": [
+        96,
+        144
+      ],
+      "anchor": [
+        48,
+        132
+      ],
+      "source_sha256": "695c22669c4b419424927fe56d2a5989fe794fc0c714308e27dea883755b367a",
+      "section": "town"
+    },
+    "hearth": {
+      "canvas": [
+        160,
+        176
+      ],
+      "anchor": [
+        80,
+        160
+      ],
+      "source_sha256": "2c63682c023bd2305a662832742825e616fc86cc436333daa930df05280be9f5",
+      "section": "town"
+    },
+    "fence_long": {
+      "canvas": [
+        192,
+        80
+      ],
+      "anchor": [
+        96,
+        72
+      ],
+      "source_sha256": "36062591843254741896c23277622b5ec80aea2876474a456b88314f449e6e8a",
+      "section": "town"
+    },
+    "fence_short": {
+      "canvas": [
+        96,
+        96
+      ],
+      "anchor": [
+        48,
+        88
+      ],
+      "source_sha256": "853a3649f5eb8fcc29c302eeb63c5511c95ee86a88d1bcff3e65634c0d56d184",
+      "section": "town"
+    },
+    "training_dummy": {
+      "canvas": [
+        64,
+        96
+      ],
+      "anchor": [
+        32,
+        88
+      ],
+      "source_sha256": "ebc831f1309b025e3f4b5c315eeb6244e0d323bedab3434ee172529a1d0c9b46",
+      "section": "town"
+    },
+    "lamp": {
+      "canvas": [
+        64,
+        112
+      ],
+      "anchor": [
+        32,
+        104
+      ],
+      "source_sha256": "5fbcc4ea8a83637c7fb821afc948798af6ea2c3cc057c70b224f322c548faf28",
+      "section": "town"
+    },
+    "woodpile": {
+      "canvas": [
+        128,
+        80
+      ],
+      "anchor": [
+        64,
+        72
+      ],
+      "source_sha256": "be796df2d3c44371c7aab5ebccbfb0e50b20ac140f5fe68e3ce4879f279ce5f9",
+      "section": "town",
+      "occlusion_grow": 11
+    },
+    "cart": {
+      "canvas": [
+        144,
+        112
+      ],
+      "anchor": [
+        72,
+        104
+      ],
+      "source_sha256": "728a7bdaccb7641d494431c833333a4164317a1ec066a12afab12b173c4ee918",
+      "section": "town"
+    },
+    "ruin_wall_corner": {
+      "canvas": [
+        128,
+        128
+      ],
+      "anchor": [
+        64,
+        120
+      ],
+      "source_sha256": "89abd55133d192a6115ccb6fb28f3fdbc4a788bb55ccac69cc463e6c254db54e",
+      "section": "arena"
+    },
+    "ruin_gate": {
+      "canvas": [
+        128,
+        128
+      ],
+      "anchor": [
+        64,
+        120
+      ],
+      "source_sha256": "75a2f7c9d20379c311e2d4e55cc9bc2365d8981d53f2f60202dfe9142d0f03ef",
+      "section": "arena"
+    },
+    "ruin_low_pier": {
+      "canvas": [
+        128,
+        128
+      ],
+      "anchor": [
+        64,
+        120
+      ],
+      "source_sha256": "6572aa4561aca33ea0f8468fac038a498712e43dd0714cbf7a4b930c9e6f8426",
+      "section": "arena",
+      "occlusion_grow": 12
+    },
+    "ruin_broken_wall": {
+      "canvas": [
+        128,
+        128
+      ],
+      "anchor": [
+        64,
+        120
+      ],
+      "source_sha256": "3361f3a3d6255df798b855576a836be3995965061d75db5008afa7c9cc919e64",
+      "section": "arena"
+    },
+    "tower": {
+      "canvas": [
+        128,
+        192
+      ],
+      "anchor": [
+        64,
+        184
+      ],
+      "source_sha256": "574c07f221c99804c23d444f6d40a9e6b4ed7dc94f2eced4e5e80ba9572285a8",
+      "section": "arena"
+    }
+  },
+  "preserved_subdirs": [
+    "residents"
+  ]
+}

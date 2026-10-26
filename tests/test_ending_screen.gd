@@ -29,6 +29,28 @@ func _run() -> void:
 		"elapsed_seconds": 0.47,
 		"rewards": {"equipment_drop_count": 2},
 	})
+	var base_action := screen.find_child("ReturnToBaseButton", true, false) as Button
+	var title_action := screen.find_child("ReturnToTitleButton", true, false) as Button
+	_expect(base_action != null and root.gui_get_focus_owner() == base_action,
+		"ending: initial keyboard focus did not land on the primary action", failures)
+	if title_action != null:
+		title_action.grab_focus()
+		## An ordinary refresh must not steal focus — then restore the real
+		## payload so every later assertion reads the actual ending data.
+		screen.present({"initial_class": "ranger", "progression": {"contract_wins": 7}}, {"outcome": "final_victory"})
+		_expect(root.gui_get_focus_owner() == title_action,
+			"ending: ordinary refresh stole keyboard focus", failures)
+		screen.present({
+			"initial_class": "ranger",
+			"progression": {"contract_wins": 7, "auto_contract_wins": 1},
+		}, {
+			"outcome": "final_victory",
+			"contract_id": "auto_certification",
+			"mode": "Auto",
+			"ticks": 14,
+			"elapsed_seconds": 0.47,
+			"rewards": {"equipment_drop_count": 2},
+		})
 	var title: Label = screen.find_child("EndingTitle", true, false)
 	var copy: Label = screen.find_child("EndingCopy", true, false)
 	var preview: Label = screen.find_child("MidgamePreview", true, false)
@@ -67,11 +89,13 @@ func _run() -> void:
 			"ending: dedicated return layers did not load: %s" % str(scene), failures)
 		_expect(scene.get("story_state", "") == "early_return_unrepaired" and not bool(scene.get("final_e03_repair", true)),
 			"ending: Auto graduation falsely implied the final repair", failures)
-		_expect(scene.get("layers", []).size() == 4 and scene.get("effects", []).size() == 2,
-			"ending: expected Mira, Leia, bench, ranger and two reused effects", failures)
+		_expect(scene.get("layers", []).size() == 2 and scene.get("effects", []).size() == 4,
+			"ending: expected bench + ranger layers and Mira/Leia work loops plus two effects", failures)
 		var feet := {}
 		for layer: Dictionary in scene.get("layers", []):
 			feet[layer.id] = layer.feet
+		for effect: Dictionary in scene.get("effects", []):
+			feet[String(effect.get("id", ""))] = effect.feet
 		_expect(feet.get("return.mira") == Vector2i(296, 189)
 			and feet.get("return.bench") == Vector2i(235, 225)
 			and feet.get("return.leia") == Vector2i(237, 254)
@@ -85,7 +109,7 @@ func _run() -> void:
 		illustration.set_review_time(2.0)
 		_expect(first_effects == illustration.scene_report().get("effects", []),
 			"ending: the shared two-second loop did not close", failures)
-		_expect(illustration.load_scene() and illustration.scene_report().get("layers", []).size() == 4,
+		_expect(illustration.load_scene() and illustration.scene_report().get("layers", []).size() == 2,
 			"ending: repeated loading duplicated static layers", failures)
 	var boundary: Label = screen.find_child("ReturnStoryBoundary", true, false)
 	_expect(boundary != null and boundary.text.contains("wind is still cold") and boundary.text.contains("connections need tending"),

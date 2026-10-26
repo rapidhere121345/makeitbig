@@ -18,15 +18,36 @@ extends RefCounted
 
 const PaletteScript = preload("res://src/presentation/combat_palette.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
+const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const SortRelation = preload("res://src/presentation/occlusion_query.gd")
-const TOWER_LIGHT_FEET := Vector2(212.0, 394.0)
-const RUIN_LIGHT_FEET := Vector2(703.0, 220.0)
+const PrimitiveFade := preload("res://src/presentation/occlusion/primitive_fade_controller.gd")
+const PairedReveal := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
+## Whole-object generated world pack: each family sprite is ONE opaque texture
+## plus its baked transparent variant on the same canvas/anchor, with one
+## authored detection rect (occupied AABB grown by DETECTION_GROW) in local
+## canvas coordinates. Absent the pack, the approved atlas keeps drawing the
+## historical fixtures unchanged.
+const GENERATED_WORLD_PATH := "res://art/production/p1/generated_world_v02/assets.json"
+const GENERATED_GROUND_ID := "arena_ground"
+## Pack asset id -> live arena sprite id. The whole-object entries replace
+## the legacy cells atomically once sections.arena.complete is true.
+const GENERATED_SPRITE_IDS := {
+	"ruin_wall_corner": "ruin.wall_corner",
+	"ruin_gate": "ruin.gate",
+	"ruin_low_pier": "ruin.low_pier",
+	"ruin_broken_wall": "ruin.broken_wall",
+	"tower": "tower",
+}
+## Existing 128px ruin cells share an anchor at row 120. Keep their lower
+## 36px of visible structure solid; source pixels are neither repainted nor moved.
+const STRUCTURE_BASE_ROW := 84.0
+const STRUCTURE_VOLUME_PAD := 4.0
 const ATMOSPHERE_PRESET := "arena"
 
-const SCENE_ATLAS_PATH: String = "res://art/production/p1/combat_style_r13/v03/scene_atlas.json"
+const SCENE_ATLAS_PATH: String = "res://art/production/p1/actors_v02/scene_atlas.json"
 const SCENE_LAYOUT_PATH: String = "res://art/production/p1/combat_style_r13/v03/layout.json"
-const LEGACY_ATLAS_PATH: String = "res://art/production/p1/combat_style_r13/v03/legacy_atlas.json"
+const LEGACY_ATLAS_PATH: String = "res://art/production/p1/actors_v02/legacy_atlas.json"
 const APPROVED_GROUND_PATH: String = "res://art/production/p1/combat_style_r13/v03/ground.png"
 const APPROVED_GROUND_KEY: String = "approved_ground"
 const DISPLAY_SCALE: float = 2.0
@@ -126,9 +147,8 @@ var _hero_world := Vector2.ZERO
 ## action frame may have a draw offset, so ArenaActorPresenter replaces this
 ## with the exact destination rectangle before any foreground plan is built.
 var _hero_occlusion_box := Rect2()
-## One cutaway plan per hero position: every ruin, the tower and the colossus
-## share the same window and the same split of the local opacity budget, so no
-## combination of them can stack into an opaque wall over the hero.
+## One actor-over-actor cutaway plan per hero position. Structures use their
+## own upper-band primitive fade and do not consume this local actor budget.
 var _cutaway_hero := Vector2(INF, INF)
 var _cutaway_front: Array[Dictionary] = []
 var _cutaway_window := Rect2()
@@ -140,7 +160,20 @@ var _actor_occluders: Array[Dictionary] = []
 ## really drawn.
 var _ready := false
 var _atmosphere_drawn := false
+var _grounding_counts := {"contact": 0, "base": 0, "base_ids": [], "lit": 0}
+var _grounding_lights_cache: Array = []
 var _room_catalog: RefCounted
+var _structure_fades: Dictionary = {}
+var _layout_id := "rectangle_arena"
+var _room_structure_overrides: Dictionary = {}
+## Whole-object generated sprites: sprite_id -> {texture_key, opaque, variant,
+## canvas, anchor, occupied_rect, occlusion_rect(canvas-local)}. One ShaderMaterial
+## per placed piece key carries the eased reveal weight.
+var _generated_sprites: Dictionary = {}
+var _paired_materials: Dictionary = {}
+## Fixture seams: production always points at GENERATED_WORLD_PATH; tests may
+## substitute a synthetic pack to exercise the whole-object branch.
+var generated_world_path := GENERATED_WORLD_PATH
 
 
 func _init() -> void:
@@ -184,16 +217,28 @@ func hero_world() -> Vector2:
 
 
 func decal_placements() -> Array[Dictionary]:
+	if not _generated_sprites.is_empty():
+		return []
 	return _decals.duplicate(true)
 
 
 func structure_placements() -> Array[Dictionary]:
-	return _structures.duplicate(true)
+	var result: Array[Dictionary] = _structures.duplicate(true)
+	var occurrences := {}
+	var overrides: Dictionary = _room_structure_overrides.get(_layout_id, {})
+	for placement: Dictionary in result:
+		var id := String(placement.id)
+		var ordinal := int(occurrences.get(id, 0))
+		occurrences[id] = ordinal + 1
+		var key := id + "#" + str(ordinal)
+		if overrides.has(key):
+			placement.feet = (overrides[key] as Array).duplicate()
+	return result
 
 
 func structure_draw_list() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for placement in _structures:
+	for placement in structure_placements():
 		result.append({
 			"sprite_id": String(placement.get("id", "")),
 			"feet_world": gameplay_to_world(_point(placement.get("feet", []))),
@@ -202,14 +247,26 @@ func structure_draw_list() -> Array[Dictionary]:
 
 
 func tower_feet() -> Vector2:
-	return _tower_feet
+	var overrides: Dictionary = _room_structure_overrides.get(_layout_id, {})
+	return _point(overrides.tower) if overrides.has("tower") else _tower_feet
 
 
 func tower_feet_world() -> Vector2:
-	return gameplay_to_world(_tower_feet)
+	return gameplay_to_world(tower_feet())
+
+
+var _dressing = preload("res://src/presentation/world_dressing.gd").new()
+var _room_scene = preload("res://src/presentation/combat_room_scene.gd").new()
+## Fixture seam for the per-room floor pack; production uses the module default.
+var room_floor_pack_path := ""
+
+
+func dressing_report() -> Dictionary:
+	return _dressing.report("arena")
 
 
 func load_assets() -> bool:
+	reset_structure_fades()
 	pending_reason = ""
 	_sprites.clear()
 	_textures.clear()
@@ -218,6 +275,7 @@ func load_assets() -> bool:
 	_alpha_masks.clear()
 	_decals.clear()
 	_structures.clear()
+	_room_structure_overrides.clear()
 	_ready = false
 	var scene_atlas := _read_json(SCENE_ATLAS_PATH)
 	var legacy_atlas := _read_json(LEGACY_ATLAS_PATH)
@@ -232,6 +290,18 @@ func load_assets() -> bool:
 		return false
 	if not _read_layout(layout):
 		return false
+	if not _load_generated_world():
+		return false
+	## The floor pack is required whenever the generated world pack claims
+	## authority; an absent generated pack is the historical-fixture flag.
+	if not room_floor_pack_path.is_empty():
+		_room_scene.pack_path = room_floor_pack_path
+	if not _room_scene.load_assets(FileAccess.file_exists(generated_world_path), WORLD_FOCUS, GAMEPLAY_TO_WORLD):
+		pending_reason = _room_scene.pending_reason
+		return false
+	if not _dressing.load_assets():
+		pending_reason = _dressing.pending_reason
+		return false
 	_ready = true
 	return true
 
@@ -239,6 +309,8 @@ func load_assets() -> bool:
 func begin_frame(clip_rect: Rect2, focus_gameplay: Vector2, arena_rect: Rect2) -> void:
 	_clip = clip_rect
 	_arena = arena_rect
+	_grounding_counts = {"contact": 0, "base": 0, "base_ids": [], "lit": 0}
+	_grounding_lights_cache = []
 	_anchor = WORLD_FOCUS - arena_rect.size * GAMEPLAY_TO_WORLD * 0.5
 	_hero_world = gameplay_to_world(focus_gameplay)
 	_hero_occlusion_box = _default_hero_cell(_hero_world)
@@ -323,8 +395,8 @@ static func draw_piercing_arrow(
 	## it keeps a fast arrow readable against both snow and slate without changing
 	## its authoritative position or swept contact.
 	canvas.draw_line(glow_start, position, Color(PaletteScript.COLD, 0.13), 4.0, false)
-	canvas.draw_line(trail_start, trail_mid, Color(PaletteScript.COPPER, 0.20), 1.8, false)
-	canvas.draw_line(trail_mid, position, Color(PaletteScript.COPPER, 0.34), 2.2, false)
+	canvas.draw_line(trail_start, trail_mid, Color(PaletteScript.COLD, 0.28), 1.8, false)
+	canvas.draw_line(trail_mid, position, Color(PaletteScript.COLD, 0.55), 2.2, false)
 	canvas.draw_line(shaft_tail, shaft_head, Color(PaletteScript.INK, 0.88), 3.8, false)
 	canvas.draw_line(shaft_tail, shaft_head, PaletteScript.BONE, 1.8, false)
 	canvas.draw_line(shaft_tail - side * 2.1, shaft_tail + aim * 2.4, PaletteScript.COPPER, 1.0, false)
@@ -334,8 +406,10 @@ static func draw_piercing_arrow(
 		position - aim * 2.2 + side * 3.4,
 		position - aim * 2.2 - side * 3.4,
 	]), PaletteScript.COPPER)
-	canvas.draw_circle(position, 2.8, Color(PaletteScript.BONE, 0.55))
-	canvas.draw_circle(position + aim * 1.0, 1.15, PaletteScript.BONE)
+	canvas.draw_rect(Rect2(position.round() - Vector2.ONE, Vector2(2, 2)), PaletteScript.BONE)
+	for index in 3:
+		var spark := (trail_start.lerp(position, float(index + 1) / 4.0) + side * (-2.0 if index % 2 == 0 else 2.0)).round()
+		canvas.draw_rect(Rect2(spark, Vector2.ONE), Color(PaletteScript.COLD, 0.5))
 
 
 ## Pure geometry for the in-flight arrow. The wake never runs behind its frozen
@@ -369,7 +443,9 @@ func visible_world_region() -> Rect2:
 
 
 func draw_ground(canvas: CanvasItem) -> void:
-	var texture: Texture2D = _textures.get(APPROVED_GROUND_KEY)
+	## A loaded room floor pack owns every layout's plate; the shared approved
+	## ground only draws on the explicit historical-fixture seam.
+	var texture: Texture2D = _room_scene.ground_texture(_layout_id) if _room_scene.has_grounds() else _textures.get(APPROVED_GROUND_KEY)
 	if texture == null:
 		return
 	var region := visible_world_region().intersection(Rect2(Vector2.ZERO, WORLD_SIZE))
@@ -399,149 +475,30 @@ func room_concept_report(layout_id: String) -> Dictionary:
 	}
 
 
-## A low-contrast landmark pass gives each published layout a spatial identity.
-## It is drawn under actors and telegraphs, and reads only the fixed layout id plus
-## the already-running simulation tick for a bounded lantern pulse.
-func draw_room_concept(canvas: CanvasItem, layout_id: String, phase_ticks: int = 0, walkable_geometry: Dictionary = {}) -> void:
+## Each published layout draws its own place: code-native edge trim from the
+## authoritative boundary, a ground-level entry threshold at the spawn socket
+## side and a sealed exit ward (CombatRoomScene). It is drawn under actors and
+## telegraphs and reads only the layout id, the running simulation tick for a
+## bounded pulse, and the read-only cleared flag for the ward state.
+func draw_room_concept(canvas: CanvasItem, layout_id: String, phase_ticks: int = 0, _walkable_geometry: Dictionary = {}, room_cleared: bool = false) -> void:
 	if canvas == null:
 		return
 	var phase := fmod(float(phase_ticks), 60.0) / 60.0
-	match layout_id:
-		"ring":
-			_draw_ring_concept(canvas, phase, walkable_geometry)
-		"corridor":
-			_draw_corridor_concept(canvas, phase, walkable_geometry)
-		_:
-			_draw_outpost_concept(canvas, phase, walkable_geometry)
+	_room_scene.draw_room(canvas, layout_id, Callable(self, "gameplay_to_world"), GAMEPLAY_TO_WORLD, phase, room_cleared)
 
 
-## Concept landmarks use the same detached geometry snapshot as the authoritative
-## boundary guide.  The presentation never owns this geometry; it only maps the
-## gameplay-space values into the native art space for drawing.
-func _concept_bounds_world(geometry: Dictionary) -> Rect2:
-	var gameplay_bounds := _arena
-	var candidate: Variant = geometry.get("bounds", null)
-	if candidate is Rect2 and (candidate as Rect2).size.x > 0.0 and (candidate as Rect2).size.y > 0.0:
-		gameplay_bounds = candidate as Rect2
-	if gameplay_bounds.size.x <= 0.0 or gameplay_bounds.size.y <= 0.0:
-		return Rect2(Vector2(92.0, 194.0), Vector2(840.0, 386.0))
-	return Rect2(gameplay_to_world(gameplay_bounds.position), gameplay_bounds.size * GAMEPLAY_TO_WORLD)
-
-
-func _concept_center_world(geometry: Dictionary, bounds: Rect2) -> Vector2:
-	var candidate: Variant = geometry.get("center", null)
-	if candidate is Vector2 and (candidate as Vector2).is_finite():
-		return gameplay_to_world(candidate as Vector2)
-	return bounds.get_center()
-
-
-func _concept_radius_world(geometry: Dictionary, key: String, fallback: float) -> float:
-	var candidate: Variant = geometry.get(key, null)
-	if candidate is int or candidate is float:
-		return maxf(0.0, float(candidate) * GAMEPLAY_TO_WORLD)
-	return fallback
-
-
-func _concept_corridor_edge_world(geometry: Dictionary, bounds: Rect2, side: float) -> float:
-	return _concept_center_world(geometry, bounds).y + _concept_radius_world(geometry, "corridor_half_height", 62.0) * side
-
-
-func _concept_ring_trace_radius_world(inner_radius: float, outer_radius: float) -> float:
-	return lerpf(inner_radius, outer_radius, 0.66)
-
-
-func _draw_outpost_concept(canvas: CanvasItem, phase: float, geometry: Dictionary = {}) -> void:
-	var field := _concept_bounds_world(geometry)
-	canvas.draw_rect(field, Color(PaletteScript.SLATE_0, 0.25), true)
-	## Corner posts and short edge ticks mark the arena bounds. A full
-	## double wireframe rect read as debug strokes on the snow ground
-	## (GPU visual backlog), so the border stays a ground-marking instead.
-	for corner in [field.position, Vector2(field.end.x, field.position.y), field.end, Vector2(field.position.x, field.end.y)]:
-		var sign_x := 1.0 if corner.x == field.position.x else -1.0
-		var sign_y := 1.0 if corner.y == field.position.y else -1.0
-		canvas.draw_line(corner, corner + Vector2(sign_x * 34.0, 0.0), Color(PaletteScript.COPPER_DULL, 0.55), 3.0, false)
-		canvas.draw_line(corner, corner + Vector2(0.0, sign_y * 34.0), Color(PaletteScript.COPPER_DULL, 0.55), 3.0, false)
-		canvas.draw_circle(corner, 4.0, Color(PaletteScript.COPPER, 0.45))
-	var lamp_alpha := 0.28 + 0.18 * (0.5 + 0.5 * sin(phase * TAU))
-	_draw_room_gate(canvas, Vector2(field.position.x + 8.0, field.get_center().y), Vector2.RIGHT, Color(PaletteScript.COLD, lamp_alpha), false)
-	_draw_room_gate(canvas, Vector2(field.end.x - 8.0, field.get_center().y), Vector2.LEFT, Color(PaletteScript.COPPER, lamp_alpha), true)
-	var x := field.position.x + 98.0
-	while x < field.end.x - 30.0:
-		canvas.draw_line(Vector2(x, field.position.y + 24.0), Vector2(x + 38.0, field.position.y + 24.0), Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
-		canvas.draw_line(Vector2(x, field.end.y - 24.0), Vector2(x + 38.0, field.end.y - 24.0), Color(PaletteScript.BONE_DIM, 0.18), 2.0, false)
-		x += 140.0
-
-
-func _draw_ring_concept(canvas: CanvasItem, phase: float, geometry: Dictionary = {}) -> void:
-	var bounds := _concept_bounds_world(geometry)
-	var center := _concept_center_world(geometry, bounds)
-	var inner_radius := _concept_radius_world(geometry, "inner_radius", 70.0)
-	var outer_radius := _concept_radius_world(geometry, "outer_radius", 152.0)
-	canvas.draw_circle(center, outer_radius + 12.0, Color(PaletteScript.SLATE_0, 0.31))
-	canvas.draw_circle(center, inner_radius, Color(PaletteScript.INK, 0.38))
-	## The gameplay presenter owns the visible authoritative boundary strokes.
-	## Keep this layer to fills and landmarks so the same ring is never drawn twice
-	## under different transforms and source-over colors.
-	for index in 8:
-		var angle := TAU * float(index) / 8.0
-		var point := center + Vector2(cos(angle), sin(angle)) * outer_radius
-		canvas.draw_rect(Rect2(point - Vector2(5.0, 7.0), Vector2(10.0, 14.0)), Color(PaletteScript.SLATE_2, 0.54), true)
-		var glow := 0.18 + 0.11 * (0.5 + 0.5 * sin(phase * TAU + float(index) * 0.6))
-		canvas.draw_circle(point + Vector2(0.0, -5.0), 2.5, Color(PaletteScript.COPPER, glow))
-	var trace_radius := _concept_ring_trace_radius_world(inner_radius, outer_radius)
-	canvas.draw_arc(center, trace_radius, phase * TAU, phase * TAU + PI * 0.42, 12, Color(PaletteScript.COLD, 0.42), 3.0, false)
-	_draw_room_gate(canvas, center + Vector2(outer_radius, 0.0), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
-	_draw_room_gate(canvas, center + Vector2(outer_radius * 0.70, outer_radius * 0.70), Vector2.UP, Color(PaletteScript.COLD, 0.48), false)
-
-
-func _draw_corridor_concept(canvas: CanvasItem, phase: float, geometry: Dictionary = {}) -> void:
-	var bounds := _concept_bounds_world(geometry)
-	var center_y := _concept_center_world(geometry, bounds).y
-	var half_height := _concept_radius_world(geometry, "corridor_half_height", 62.0)
-	var left := bounds.position.x
-	var right := bounds.end.x
-	var lane := Rect2(Vector2(left, center_y - half_height), Vector2(right - left, half_height * 2.0))
-	var top := maxf(0.0, bounds.position.y - 114.0)
-	var bottom := minf(WORLD_SIZE.y, bounds.end.y + 114.0)
-	canvas.draw_rect(Rect2(Vector2(left, top), Vector2(right - left, lane.position.y - top)), Color(PaletteScript.INK, 0.24), true)
-	canvas.draw_rect(Rect2(Vector2(left, lane.end.y), Vector2(right - left, bottom - lane.end.y)), Color(PaletteScript.INK, 0.24), true)
-	canvas.draw_rect(lane, Color(PaletteScript.SLATE_1, 0.28), true)
-	## Corridor edge strokes come from ArenaCombatPresenter's gameplay pass. The
-	## concept layer supplies the lane fill and vertical wayfinding posts only.
-	for index in 6:
-		var x := left + 90.0 + float(index) * 126.0
-		var y := center_y + sin(phase * TAU + float(index) * 0.55) * 3.0
-		var post_half_height := half_height * 0.75
-		canvas.draw_line(Vector2(x, y + post_half_height), Vector2(x, y - post_half_height), Color(PaletteScript.COPPER_DULL, 0.58), 3.0, false)
-		canvas.draw_line(Vector2(x, y - post_half_height + 4.0), Vector2(x + 14.0, y - post_half_height + 11.0), Color(PaletteScript.COLD, 0.48), 2.0, false)
-	_draw_room_gate(canvas, Vector2(left + 8.0, center_y), Vector2.RIGHT, Color(PaletteScript.COLD, 0.60), false)
-	_draw_room_gate(canvas, Vector2(right - 8.0, center_y), Vector2.LEFT, Color(PaletteScript.COPPER, 0.66), true)
-	for index in 4:
-		var x := left + 210.0 + float(index) * 156.0
-		var y := center_y + 15.0 * sin(phase * TAU + float(index))
-		canvas.draw_line(Vector2(x - 8.0, y), Vector2(x + 8.0, y), Color(PaletteScript.BONE, 0.45), 2.0, false)
-		canvas.draw_line(Vector2(x + 8.0, y), Vector2(x + 2.0, y - 5.0), Color(PaletteScript.BONE, 0.45), 2.0, false)
-
-
-func _draw_room_gate(canvas: CanvasItem, point: Vector2, direction: Vector2, color: Color, exit_gate: bool) -> void:
-	var side := direction.rotated(PI * 0.5).normalized()
-	var span := 28.0 if exit_gate else 24.0
-	## Two grounded posts plus a threshold line read as a doorway across the
-	## walkway; the old parallel rails with a floating U-bar looked like debug
-	## strokes (GPU visual backlog). The chevron still points the way through.
-	var left_post := point + side * span
-	var right_post := point - side * span
-	for post in [left_post, right_post]:
-		canvas.draw_line(post - side * 5.0, post + side * 5.0, Color(PaletteScript.SLATE_0, 0.9), 10.0, false)
-		canvas.draw_line(post - side * 4.0, post + side * 4.0, color, 3.0, false)
-	canvas.draw_line(left_post, right_post, Color(color, color.a * 0.6), 2.0, false)
-	var arrow_tip := point + direction * 10.0
-	canvas.draw_line(arrow_tip - direction * 7.0 + side * 5.0, arrow_tip, color, 2.0, false)
-	canvas.draw_line(arrow_tip - direction * 7.0 - side * 5.0, arrow_tip, color, 2.0, false)
+func room_scene_report(layout_id: String, room_cleared: bool = false) -> Dictionary:
+	return _room_scene.room_report(layout_id, room_cleared)
 
 
 func draw_decals(canvas: CanvasItem) -> void:
-	for placement in _decals:
+	if _room_scene.has_room(_layout_id):
+		_room_scene.draw_dressing(canvas, _layout_id, visible_world_region())
+	else:
+		_dressing.draw_floor(canvas, "arena", visible_world_region())
+	## The generated plate already contains its terrain detail. Legacy snow and
+	## foundation stamps belong only to the historical atlas composition.
+	for placement in decal_placements():
 		draw_sprite(canvas, String(placement.get("id", "")), gameplay_to_world(_point(placement.get("feet", []))))
 
 
@@ -555,23 +512,13 @@ func draw_atmosphere(canvas: CanvasItem) -> void:
 	AtmosphereScript.draw_fore(canvas, region, ATMOSPHERE_PRESET)
 
 
-## Fixed-direction hard-edge contact shadows, drawn before every actor so they
-## read as grounding rather than as lighting.
+## Cached pixel-ellipse contact shadow at the real feet, drawn before every actor
+## so it reads as grounding rather than as lighting. `alpha` is the strength.
 func draw_shadow(canvas: CanvasItem, feet_world: Vector2, width_world: float, depth_world: float, alpha: float) -> void:
-	if alpha <= 0.0:
+	if alpha <= 0.0 or not visible_world_region().grow(width_world).has_point(feet_world):
 		return
-	var half := width_world * 0.5
-	var lift := depth_world
-	var polygon := PackedVector2Array([
-		feet_world + Vector2(-half + 3.0, -lift * 0.25),
-		feet_world + Vector2(half + 3.0, -lift * 0.25),
-		feet_world + Vector2(half + 7.0, 3.0),
-		feet_world + Vector2(-half + 7.0, 3.0),
-	])
-	var clip := visible_world_region()
-	for index in polygon.size():
-		polygon[index] = polygon[index].clamp(clip.position, clip.end)
-	canvas.draw_colored_polygon(polygon, Color(PaletteScript.CONTACT_SHADOW, alpha))
+	_grounding_counts.contact += 1
+	GroundingScript.draw_contact(canvas, feet_world, Vector2(width_world, depth_world), alpha)
 
 
 ## Room-local equipment is rendered as a small readable pickup marker. The item
@@ -595,20 +542,85 @@ func draw_loot(canvas: CanvasItem, feet_world: Vector2, entity: Dictionary) -> v
 
 
 func draw_structure_shadows(canvas: CanvasItem) -> void:
-	for placement in _structures:
-		var metadata := sprite(String(placement.get("id", "")))
-		var size := _cell_size(metadata)
-		draw_shadow(canvas, gameplay_to_world(_point(placement.get("feet", []))), size.x * 0.72, size.y * 0.28, 0.30)
-	draw_shadow(canvas, tower_feet_world(), 92.0, 26.0, 0.32)
+	for placement in structure_placements():
+		_draw_base_shadow(canvas, String(placement.get("id", "")), gameplay_to_world(_point(placement.get("feet", []))))
+	_draw_base_shadow(canvas, "tower", tower_feet_world())
+
+
+## Shadow from the structure's actual lowest opaque contour (its base band, or the whole
+## generated object) at the geometry the draw path really uses; source art is untouched.
+func _draw_base_shadow(canvas: CanvasItem, sprite_id: String, feet_world: Vector2) -> void:
+	var bands := structure_geometry(sprite_id, feet_world)
+	for index in range(bands.size() - 1, -1, -1):
+		var band: Dictionary = bands[index]
+		if String(band.part) == "upper":
+			continue
+		var texture: Texture2D = _textures.get(String(band.texture))
+		if texture == null:
+			break
+		_grounding_counts.base += 1
+		_grounding_counts.base_ids.append(sprite_id)
+		GroundingScript.draw_base(canvas, texture, band.source, feet_world - (band.dest as Rect2).position, feet_world)
+		return
+	var size := _cell_size(sprite(sprite_id))
+	_grounding_counts.contact += 1
+	GroundingScript.draw_contact(canvas, feet_world, Vector2(maxf(size.x * 0.5, 40.0), maxf(size.y * 0.14, 12.0)), 0.30)
+
+
+## The existing fixed warm sources (same positions, radii and strengths as the
+## atmosphere pools), as light rows for GroundingScript.illumination. Cached per frame.
+func grounding_lights() -> Array:
+	if _grounding_lights_cache.is_empty():
+		_grounding_lights_cache = [
+			{"id": "tower", "position": tower_feet_world(), "radius": 44.0, "color": GroundingScript.AMBER, "strength": 0.17},
+			{"id": "ruin", "position": ruin_light_feet_world(), "radius": 30.0, "color": GroundingScript.AMBER, "strength": 0.14},
+		]
+	return _grounding_lights_cache
+
+
+## RGB-only light response (alpha 1, boost bounded by the helper). Any caller-tinted
+## modulate (hit flash, telegraph or core tints) is returned untouched, so those keep
+## priority; alpha, cutaway and reveal semantics are never read or changed here.
+func _lit(modulate: Color, feet_world: Vector2) -> Color:
+	if modulate.r != 1.0 or modulate.g != 1.0 or modulate.b != 1.0:
+		return modulate
+	var light := illumination_at(feet_world)
+	return Color(light.r, light.g, light.b, modulate.a)
+
+
+## Public RGB light multiplier (alpha always 1) at a world feet point, for presenters
+## that draw frames directly. Multiply it into a draw colour's RGB only; never its alpha.
+func illumination_at(feet_world: Vector2) -> Color:
+	var light := GroundingScript.illumination(feet_world, grounding_lights())
+	if light.r != 1.0 or light.g != 1.0 or light.b != 1.0:
+		_grounding_counts.lit += 1
+	return light
+
+
+## Presentation-only counters for the last frame, for capture reports.
+func grounding_report() -> Dictionary:
+	var report := _grounding_counts.duplicate(true)
+	report["lights"] = grounding_lights().duplicate(true)
+	report["presentation_only"] = true
+	return report
 
 
 ## Two fixed sources: holy light on the tower and a low ember reflection by the
 ## eastern ruin. No live enemy or projectile position is consumed, so a light can
 ## never expose or mask a gameplay object.
+
+
+func ruin_light_feet_world() -> Vector2:
+	for placement: Dictionary in structure_placements():
+		if String(placement.id) == "ruin.broken_wall":
+			return gameplay_to_world(_point(placement.feet))
+	return tower_feet_world()
+
+
 func atmosphere_warm_lights() -> Array:
 	return [
-		AtmosphereScript.warm_light(TOWER_LIGHT_FEET, 44.0, 0.17),
-		AtmosphereScript.warm_light(RUIN_LIGHT_FEET, 30.0, 0.14),
+		AtmosphereScript.warm_light(tower_feet_world(), 44.0, 0.17),
+		AtmosphereScript.warm_light(ruin_light_feet_world(), 30.0, 0.14),
 	]
 
 
@@ -616,8 +628,8 @@ func atmosphere_report() -> Dictionary:
 	var report := AtmosphereScript.atmosphere_report(ATMOSPHERE_PRESET, visible_world_region(), atmosphere_warm_lights())
 	report["base_drawn_with_ground"] = _atmosphere_drawn
 	report["world_lights_clipped"] = (
-		Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(TOWER_LIGHT_FEET - Vector2.ONE * 44.0, Vector2.ONE * 88.0))
-		and Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(RUIN_LIGHT_FEET - Vector2.ONE * 30.0, Vector2.ONE * 60.0))
+		Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(tower_feet_world() - Vector2.ONE * 44.0, Vector2.ONE * 88.0))
+		and Rect2(Vector2.ZERO, WORLD_SIZE).encloses(Rect2(ruin_light_feet_world() - Vector2.ONE * 30.0, Vector2.ONE * 60.0))
 	)
 	return report
 
@@ -785,58 +797,14 @@ func _structure_stable_id(structure_index: int, sprite_id: String) -> String:
 	return "structure/%d/%s" % [structure_index, sprite_id]
 
 
-## Every ruin and the tower that really draws in front of the hero and reaches
-## into the hero's own window. Anything the feet sort already draws first cannot
-## hide the hero, and every other cell keeps its authored alpha untouched.
-func cutaway_front(hero_world_point: Vector2) -> Array[Dictionary]:
-	var window := cutaway_window(hero_cell_world(hero_world_point))
-	var hero_sort := _hero_sort_entry(hero_world_point)
-	var found: Array[Dictionary] = []
-	for structure_index: int in _structures.size():
-		var placement: Dictionary = _structures[structure_index]
-		var sprite_id := String(placement.get("id", ""))
-		var feet := gameplay_to_world(_point(placement.get("feet", [])))
-		var stable_id := _structure_stable_id(structure_index, sprite_id)
-		if not SortRelation.is_front(SortRelation.entry(feet.y, 0, stable_id), hero_sort):
-			continue
-		var visibility := sprite_occlusion_descriptor(sprite_id, feet)
-		var box: Rect2 = visibility.get("art_box", Rect2())
-		if box.size.x <= 0.0 or not visibility_intersects(visibility, window):
-			continue
-		found.append({
-			"id": sprite_id,
-			"stable_id": stable_id,
-			"feet_world": feet,
-			"art_box": box,
-			"visibility": visibility,
-			"overlap": box.intersection(window),
-			"base_alpha": 1.0,
-		})
-	var tower_feet := tower_feet_world()
-	if SortRelation.is_front(SortRelation.entry(tower_feet.y, 0, "structure/tower"), hero_sort):
-		var upper_visibility := sprite_occlusion_descriptor("tower.upper", tower_feet)
-		var base_visibility := sprite_occlusion_descriptor("tower.base", tower_feet)
-		var upper: Rect2 = upper_visibility.get("art_box", Rect2())
-		var base: Rect2 = base_visibility.get("art_box", Rect2())
-		var tower_box := upper.merge(base)
-		var tower_visibility: Array[Dictionary] = [upper_visibility, base_visibility]
-		if visibility_intersects(tower_visibility, window):
-			found.append({
-				"id": "tower",
-				"stable_id": "structure/tower",
-				"feet_world": tower_feet,
-				"art_box": tower_box,
-				"visibility": tower_visibility,
-				"overlap": tower_box.intersection(window),
-				"base_alpha": 1.0,
-			})
-	return found
+## Compatibility query for the actor cutaway budget. Structure transparency
+## is reported separately by structure_fade_report().
+func cutaway_front(_hero_world_point: Vector2) -> Array[Dictionary]:
+	# Structures use whole upper-band transparency, never character cutouts.
+	# This list is retained as a compatibility query for the actor-only budget.
+	return []
 
 
-## Public, read-only cutaway lookup for the actor pass this file does not draw
-## itself (main.gd owns the enemies): the window, whether the actor draws in
-## front of the hero and the local alpha its own cell must use. An empty window
-## means the actor keeps its authored alpha for this frame.
 func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2, sort_rank: int = 1, stable_id: String = "actor", visibility: Variant = null) -> Dictionary:
 	var cell := hero_cell_world(hero_world_point)
 	var window := cutaway_window(cell)
@@ -844,15 +812,13 @@ func cutaway_for(art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2,
 	var overlaps := visibility_intersects(visibility, window) if visibility != null else art_box.intersects(window)
 	if not SortRelation.is_front(actor_sort, _hero_sort_entry(hero_world_point)) or not overlaps:
 		return {"window": window, "local_alpha": 1.0, "in_front": false}
-	## The ruins and the tower keep the same budget this actor shares, so the
-	## whole foreground stack still composes under CUTAWAY_TOTAL_OPACITY.
+	## This budget covers only actor-over-actor drawing; structures fade separately.
 	var share := float(_cutaway_plan(hero_world_point)["alpha"]) if _actor_cutaway_ready else cutaway_alpha(cutaway_front(hero_world_point).size() + 1)
 	return {"window": window, "local_alpha": share, "in_front": true}
 
 
-## The actor pass supplies every live front-facing draw cell before drawing any
-## ruins. A single budget then covers static props, enemies and all Boss parts;
-## computing each group's budget independently would compound above the limit.
+## The actor pass supplies every live front-facing actor cell before drawing.
+## Normal enemies and Boss parts share one local opacity budget.
 func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2) -> void:
 	_actor_occluders.clear()
 	var window := cutaway_window(hero_cell_world(hero_world_point))
@@ -873,6 +839,10 @@ func prepare_actor_occlusion(cells: Array[Dictionary], hero_world_point: Vector2
 
 func _tower_upper_faded(hero_world_point: Vector2) -> bool:
 	var feet := tower_feet_world()
+	if _generated_sprites.has("tower"):
+		if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), _hero_sort_entry(hero_world_point)):
+			return false
+		return paired_detection_rect_world("tower", feet).intersects(hero_cell_world(hero_world_point))
 	if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), _hero_sort_entry(hero_world_point)):
 		return false
 	return visibility_intersects(sprite_occlusion_descriptor("tower.upper", feet), hero_cell_world(hero_world_point))
@@ -975,20 +945,16 @@ func occlusion_report(hero_world_point: Vector2) -> Dictionary:
 		"front_ids": front_ids,
 		"front_nodes": front_ids.duplicate(),
 		"unchanged": entries.is_empty(),
+		"primitive_fade": structure_fade_report(),
+		"local_opacity_scope": "actor-over-actor cutaway only; structure bands reported separately",
 	}
 
 
 ## Static ruins in front of the hero fade out instead of hiding it, the same
 ## treatment the approved sample applies to the tower. Props behind the hero need
 ## no fade because the y-sort already draws them first.
-func structure_fade(sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> float:
-	var metadata := sprite(sprite_id)
-	if metadata.is_empty():
-		return 1.0
-	if not SortRelation.is_front(SortRelation.entry(feet_world.y, 0, "structure/%s" % sprite_id), _hero_sort_entry(hero_world_point)):
-		return 1.0
-	var visibility := sprite_occlusion_descriptor(sprite_id, feet_world)
-	return FORE_FADE if visibility_intersects(visibility, hero_cell_world(hero_world_point)) else 1.0
+func structure_fade(sprite_id: String, feet_world: Vector2, _hero_world_point: Vector2) -> float:
+	return float(structure_fade_state(sprite_id, feet_world).get("alpha", 1.0))
 
 
 func hero_cell_world(hero_world_point: Vector2) -> Rect2:
@@ -1020,63 +986,41 @@ func sprite_screen_rect(sprite_id: String, feet_world: Vector2) -> Rect2:
 	return Rect2(to_screen(destination.position), destination.size * DISPLAY_SCALE)
 
 
-## Headless occlusion report: which props would sit in front of the hero, which of
-## them are faded, and whether anything un-faded still covers the hero completely.
+## Upper-band report. Solid-base clearance belongs to the authored movement
+## contract and rendered acceptance, not this presentation-only overlap query.
 func hero_cover_report(hero_world_point: Vector2) -> Dictionary:
-	var hero_cell := hero_cell_world(hero_world_point)
 	var in_front: Array[String] = []
 	var faded: Array[String] = []
 	var full_covers: Array[String] = []
-	## Consume the same static entries as the live cutaway plan.  The old report
-	## compared raw feet.y and full atlas cells, which disagreed for equal-depth
-	## rank ties and for keep_rows cells such as the tower upper.
-	for entry: Dictionary in cutaway_front(hero_world_point):
-		var entry_id := String(entry.get("id", ""))
-		var report_id := "tower.upper" if entry_id == "tower" else entry_id
-		var art_box: Rect2 = entry.get("art_box", Rect2())
-		if not art_box.intersects(hero_cell):
+	var box := hero_cell_world(hero_world_point)
+	for state: Dictionary in _structure_fades.values():
+		if not SortRelation.is_front(state.part, _hero_sort_entry(hero_world_point)) or not (state.volume as Rect2).intersects(box):
 			continue
-		in_front.append(report_id)
-		var cut := _cutaway_for_cell(entry_id, entry["feet_world"], hero_world_point)
-		var is_faded := entry_id == "tower" or (cut["window"] as Rect2).has_area() or structure_fade(entry_id, entry["feet_world"], hero_world_point) < 1.0
-		if is_faded:
-			faded.append(report_id)
-		elif art_box.encloses(hero_cell):
-			full_covers.append(report_id)
-	return {
-		"hero_cell": hero_cell,
-		"in_front": in_front,
-		"faded": faded,
-		"unfaded_full_covers": full_covers,
-		"hero_visible": full_covers.is_empty(),
-	}
+		var id := String(state.sprite_id)
+		in_front.append(id)
+		if float(state.alpha) < 1.0:
+			faded.append(id)
+		elif (state.volume as Rect2).encloses(box):
+			full_covers.append(id)
+	return {"hero_cell": box, "in_front": in_front, "faded": faded,
+		"unfaded_full_covers": full_covers, "hero_visible": full_covers.is_empty(),
+		"scope": "upper structure bands and whole-object paired rects; solid-base clearance is a movement contract"}
 
 
-func draw_structure(canvas: CanvasItem, sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> void:
-	var alpha := structure_draw_alpha(sprite_id, feet_world, hero_world_point)
-	## A foreground ruin keeps its authored opacity outside the exact player
-	## window.  Only the window is reduced by the shared cutaway budget, so a gate
-	## does not turn into a translucent ghost merely because one pixel overlaps.
-	var cut := _cutaway_for_cell(sprite_id, feet_world, hero_world_point)
-	draw_sprite(canvas, sprite_id, feet_world, false, Color(1.0, 1.0, 1.0, alpha), cut["window"], cut["alpha"])
+func draw_structure(canvas: CanvasItem, sprite_id: String, feet_world: Vector2, _hero_world_point: Vector2) -> void:
+	for band: Dictionary in structure_geometry(sprite_id, feet_world):
+		_draw_cell_piece(canvas, _textures[band.texture], band.source, band.dest, band.dest, _lit(Color(1, 1, 1, band.alpha), feet_world))
 
 
 func structure_draw_alpha(sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> float:
-	var cut := _cutaway_for_cell(sprite_id, feet_world, hero_world_point)
-	return 1.0 if (cut["window"] as Rect2).has_area() else structure_fade(sprite_id, feet_world, hero_world_point)
+	return structure_fade(sprite_id, feet_world, hero_world_point)
 
 
-func draw_tower(canvas: CanvasItem, hero_world_point: Vector2) -> void:
-	var feet := tower_feet_world()
-	var faded := _tower_upper_faded(hero_world_point)
-	var cut := _cutaway_for_cell("tower", feet, hero_world_point)
-	draw_sprite(canvas, "tower.base", feet, false, Color.WHITE, cut["window"], cut["alpha"])
-	draw_sprite(canvas, "tower.upper", feet, false, Color(1.0, 1.0, 1.0, TOWER_UPPER_FADE if faded else 1.0), cut["window"], cut["alpha"])
+func draw_tower(canvas: CanvasItem, _hero_world_point: Vector2) -> void:
+	for band: Dictionary in structure_geometry("tower", tower_feet_world()):
+		_draw_cell_piece(canvas, _textures[band.texture], band.source, band.dest, band.dest, _lit(Color(1, 1, 1, band.alpha), tower_feet_world()))
 
 
-## Colossus assembly. Like the ruins, a colossus standing in front of the hero
-## fades its body layer instead of hiding the hero completely; danger telegraphs
-## are drawn in another pass and stay opaque.
 func boss_draw_parts(feet_world: Vector2, phase: int, left_hand_delta_gameplay: Vector2, right_hand_delta_gameplay: Vector2, pose_frame: Dictionary = {}) -> Array[Dictionary]:
 	var phase_id := 2 if phase >= 2 else 1
 	var left_anchor := feet_world + BOSS_HAND_LEFT_OFFSET + left_hand_delta_gameplay * GAMEPLAY_TO_WORLD
@@ -1160,6 +1104,7 @@ func _draw_cell(canvas: CanvasItem, metadata: Dictionary, feet_world: Vector2, f
 	var texture: Texture2D = _textures.get(String(metadata.get("texture", "")))
 	if texture == null:
 		return
+	modulate = _lit(modulate, feet_world)
 	var rect: Rect2 = metadata.get("rect", Rect2())
 	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
 	var region := _region_of(metadata)
@@ -1516,10 +1461,36 @@ func _read_layout(layout: Dictionary) -> bool:
 		pending_reason = "ASSETS PENDING: layout world_size must be 1024x640"
 		return false
 	_tower_feet = _point(layout.get("tower_feet", []))
+	var overrides: Variant = layout.get("room_structure_overrides", {})
+	if not overrides is Dictionary:
+		pending_reason = "ASSETS PENDING: invalid room structure overrides"
+		return false
+	_room_structure_overrides = (overrides as Dictionary).duplicate(true)
 	for value in layout.get("decals", []) as Array:
 		_decals.append((value as Dictionary).duplicate(true))
 	for value in layout.get("structures", []) as Array:
 		_structures.append((value as Dictionary).duplicate(true))
+	var valid_ids := {"tower": true}
+	var occurrences := {}
+	for placement: Dictionary in _structures:
+		var id := String(placement.id)
+		var ordinal := int(occurrences.get(id, 0))
+		occurrences[id] = ordinal + 1
+		valid_ids[id + "#" + str(ordinal)] = true
+	for room: Variant in _room_structure_overrides:
+		var values: Variant = _room_structure_overrides[room]
+		if room not in ["rectangle_arena", "corridor", "ring"] or not values is Dictionary:
+			pending_reason = "ASSETS PENDING: unknown room structure override"
+			return false
+		for id: Variant in values:
+			var point: Variant = values[id]
+			if not valid_ids.has(id) or not point is Array or (point as Array).size() != 2:
+				pending_reason = "ASSETS PENDING: invalid structure override identity or point"
+				return false
+			for coordinate: Variant in point:
+				if not (coordinate is float or coordinate is int) or not is_finite(float(coordinate)):
+					pending_reason = "ASSETS PENDING: nonfinite structure override"
+					return false
 	if _decals.is_empty() or _structures.is_empty():
 		pending_reason = "ASSETS PENDING: layout must place decals and structures"
 		return false
@@ -1528,7 +1499,7 @@ func _read_layout(layout: Dictionary) -> bool:
 		if metadata.is_empty():
 			pending_reason = "ASSETS PENDING: layout places %s without an atlas sprite" % String(placement.get("id", ""))
 			return false
-		var cell := Rect2(_point(placement.get("feet", [])) - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
+		var cell := Rect2(WORLD_FOCUS + (_point(placement.get("feet", [])) - Vector2(640, 434)) * GAMEPLAY_TO_WORLD - (metadata.get("anchor", Vector2.ZERO) as Vector2), _cell_size(metadata))
 		if not Rect2(Vector2.ZERO, WORLD_SIZE).encloses(cell):
 			pending_reason = "ASSETS PENDING: %s leaves the world" % String(placement.get("id", ""))
 			return false
@@ -1580,3 +1551,229 @@ func _point(value: Variant) -> Vector2:
 
 func _canvas_world_transform(canvas: CanvasItem) -> Transform2D:
 	return canvas.get_meta("actor_world_transform", world_transform()) as Transform2D
+
+
+## Immediate-mode structure bands share the town controller's state machine.
+## Collision remains authored in room scenes; these boxes only affect drawing.
+func reset_structure_fades() -> void:
+	_structure_fades.clear()
+	for material: ShaderMaterial in _paired_materials.values():
+		material.set_shader_parameter("reveal_weight", 0.0)
+
+
+func set_layout_id(layout_id: String) -> void:
+	if layout_id != _layout_id:
+		_layout_id = layout_id
+		reset_structure_fades()
+
+
+func _structure_key(sprite_id: String, feet: Vector2) -> String:
+	return sprite_id + "@" + str(feet)
+
+
+func structure_fade_state(sprite_id: String, feet: Vector2) -> Dictionary:
+	return (_structure_fades.get(_structure_key(sprite_id, feet), {}) as Dictionary).duplicate(true)
+
+
+func structure_fade_report() -> Dictionary:
+	return _structure_fades.duplicate(true)
+
+
+## The world-space detection rect of one whole-object generated piece: its
+## authored canvas-local rect translated by the same feet-anchor mapping the
+## draw pass uses, so detection matches the sort domain exactly.
+func paired_detection_rect_world(sprite_id: String, feet: Vector2) -> Rect2:
+	var record: Variant = _generated_sprites.get(sprite_id, null)
+	if record == null:
+		return Rect2()
+	var local: Rect2 = record.occlusion_rect
+	return Rect2(feet - (record.anchor as Vector2) + local.position, local.size)
+
+
+## The material one placed whole-object piece draws through, or null for
+## legacy banded structures. Created during advance_structure_fades; the
+## presenter attaches it to that drawable's own sort view.
+func paired_reveal_material(sprite_id: String, feet: Vector2) -> Material:
+	return _paired_materials.get(_structure_key(sprite_id, feet), null)
+
+
+func _paired_material(key: String, sprite_id: String) -> ShaderMaterial:
+	var existing: Variant = _paired_materials.get(key, null)
+	if existing is ShaderMaterial:
+		return existing
+	var record: Dictionary = _generated_sprites.get(sprite_id, {})
+	var material := ShaderMaterial.new()
+	material.shader = PairedReveal.RevealShader
+	material.set_shader_parameter("revealed_texture", record.get("variant", null))
+	material.set_shader_parameter("reveal_weight", 0.0)
+	_paired_materials[key] = material
+	return material
+
+
+## Generated world pack: optional whole-object opaque/transparent pairs.
+## An ABSENT pack file is the historical-fixture flag: the legacy atlas draws
+## exactly as before. A PRESENT pack claims the authority — the arena section
+## must be complete and every family sprite must carry status "packed" and
+## validate, or the whole load fails closed (never a silent half-new scene
+## and never a silent fallback while the pack is still assembling).
+func _load_generated_world() -> bool:
+	_generated_sprites.clear()
+	_paired_materials.clear()
+	if not FileAccess.file_exists(generated_world_path):
+		return true
+	var pack := _read_json(generated_world_path)
+	if pack.is_empty():
+		return false
+	var grounds: Variant = pack.get("grounds", null)
+	var ground_entry: Variant = (grounds as Dictionary).get(GENERATED_GROUND_ID, null) if grounds is Dictionary else null
+	if not ground_entry is Dictionary or String((ground_entry as Dictionary).get("status", "")) != "packed":
+		pending_reason = "ASSETS PENDING: generated arena ground is not packed"
+		return false
+	if ground_entry is Dictionary and String((ground_entry as Dictionary).get("status", "")) == "packed":
+		var ground := _load_texture(String((ground_entry as Dictionary).get("opaque_path", "")))
+		if ground == null:
+			return false
+		if ground.get_size() != WORLD_SIZE:
+			pending_reason = "ASSETS PENDING: generated ground must be %dx%d" % [int(WORLD_SIZE.x), int(WORLD_SIZE.y)]
+			return false
+		_textures[APPROVED_GROUND_KEY] = ground
+	var sections: Variant = pack.get("sections", null)
+	var arena_section: Variant = (sections as Dictionary).get("arena", {}) if sections is Dictionary else {}
+	if not arena_section is Dictionary or not bool((arena_section as Dictionary).get("complete", false)):
+		pending_reason = "ASSETS PENDING: generated pack present but arena section is not complete"
+		return false
+	var assets: Variant = pack.get("assets", null)
+	if not assets is Dictionary:
+		pending_reason = "ASSETS PENDING: generated pack lacks assets"
+		return false
+	for asset_id: String in GENERATED_SPRITE_IDS.keys():
+		var raw: Variant = (assets as Dictionary).get(asset_id, null)
+		if not raw is Dictionary or String((raw as Dictionary).get("status", "")) != "packed":
+			pending_reason = "ASSETS PENDING: generated asset %s is not packed" % asset_id
+			return false
+		var sprite_id := String(GENERATED_SPRITE_IDS[asset_id])
+		var record := _normalize_generated_sprite(sprite_id, raw as Dictionary)
+		if record.is_empty():
+			return false
+		_generated_sprites[sprite_id] = record
+		_textures[record.texture_key] = record.opaque
+		_sprites[sprite_id] = {"texture": record.texture_key,
+			"rect": Rect2(Vector2.ZERO, record.canvas), "anchor": record.anchor}
+	return true
+
+
+## One generated sprite entry: canvas/anchor/rects plus the opaque and
+## transparent texture pair. The detection rect must contain the opaque
+## texture's MEASURED occupied bounds grown by DETECTION_GROW — the pack's
+## own declared occupied_rect is metadata; the texture is the truth.
+func _normalize_generated_sprite(sprite_id: String, raw: Dictionary) -> Dictionary:
+	var canvas := _point(raw.get("canvas", []))
+	var anchor := _point(raw.get("anchor", []))
+	var occupied := _rect_of(raw.get("occupied_rect", []))
+	var occlusion := _rect_of(raw.get("occlusion_rect", []))
+	if canvas.x <= 0.0 or canvas.y <= 0.0 or not anchor.is_finite():
+		pending_reason = "ASSETS PENDING: %s malformed canvas or anchor" % sprite_id
+		return {}
+	var opaque := _load_texture(String(raw.get("opaque_path", "")))
+	var variant := _load_texture(String(raw.get("transparent_path", "")))
+	if opaque == null or variant == null:
+		return {}
+	if opaque.get_size() != canvas or variant.get_size() != canvas:
+		pending_reason = "ASSETS PENDING: %s pair must share the authored canvas" % sprite_id
+		return {}
+	if PairedReveal.detection_rect_error(occlusion, opaque.get_image()) != "":
+		pending_reason = "ASSETS PENDING: %s detection rect must contain occupied.grow(%d)" % [sprite_id, int(PairedReveal.DETECTION_GROW)]
+		return {}
+	var variant_image := variant.get_image()
+	var variant_max_alpha := 0.0
+	for y: int in variant_image.get_height():
+		for x: int in variant_image.get_width():
+			variant_max_alpha = maxf(variant_max_alpha, variant_image.get_pixel(x, y).a)
+	return {"texture_key": "generated/" + sprite_id, "opaque": opaque, "variant": variant,
+		"canvas": canvas, "anchor": anchor, "occupied_rect": occupied, "occlusion_rect": occlusion,
+		"variant_max_alpha": variant_max_alpha}
+
+
+func _rect_of(value: Variant) -> Rect2:
+	if value is Rect2:
+		return value
+	if not value is Array or (value as Array).size() != 4:
+		return Rect2()
+	var array: Array = value
+	for component: Variant in array:
+		if not (component is float or component is int) or not is_finite(float(component)):
+			return Rect2()
+	return Rect2(float(array[0]), float(array[1]), float(array[2]), float(array[3]))
+
+
+func structure_geometry(sprite_id: String, feet: Vector2) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if _generated_sprites.has(sprite_id):
+		var record: Dictionary = _generated_sprites[sprite_id]
+		result.append({"part": "whole", "source": Rect2(Vector2.ZERO, record.canvas),
+			"dest": Rect2((feet - (record.anchor as Vector2)).round(), record.canvas),
+			"alpha": 1.0, "texture": String(record.texture_key)})
+		return result
+	var alpha := float(structure_fade_state(sprite_id, feet).get("alpha", 1.0))
+	var ids: Array = ["tower.upper", "tower.base"] if sprite_id == "tower" else [sprite_id]
+	for id: String in ids:
+		var meta := sprite(id)
+		if meta.is_empty():
+			continue
+		var rect: Rect2 = meta.rect
+		var regions: Array[Rect2] = []
+		if sprite_id == "tower":
+			regions.append(_region_of(meta))
+		else:
+			regions.append(Rect2(rect.position, Vector2(rect.size.x, STRUCTURE_BASE_ROW)))
+			regions.append(Rect2(rect.position + Vector2(0, STRUCTURE_BASE_ROW), Vector2(rect.size.x, rect.size.y - STRUCTURE_BASE_ROW)))
+		for index in regions.size():
+			var upper := id == "tower.upper" if sprite_id == "tower" else index == 0
+			var region: Rect2 = regions[index]
+			var dest := Rect2((feet - Vector2(meta.anchor) + region.position - rect.position).round(), region.size)
+			result.append({"part": "upper" if upper else "base", "source": region, "dest": dest,
+				"alpha": alpha if upper else 1.0, "texture": String(meta.texture)})
+	return result
+
+
+func structure_upper_volume(sprite_id: String, feet: Vector2) -> Rect2:
+	for band: Dictionary in structure_geometry(sprite_id, feet):
+		if band.part == "upper":
+			return (band.dest as Rect2).grow(STRUCTURE_VOLUME_PAD)
+	return Rect2()
+
+
+func advance_structure_fades(drawables: Array, subjects: Array, delta: float) -> void:
+	var next: Dictionary = {}
+	for drawable: Dictionary in drawables:
+		if drawable.kind not in ["structure", "tower"]:
+			continue
+		var id := "tower" if drawable.kind == "tower" else String(drawable.sprite)
+		var feet: Vector2 = drawable.world
+		var key := _structure_key(id, feet)
+		if _generated_sprites.has(id):
+			## Whole-object pair: one authored detection rect, one eased
+			## reveal weight, no band split. The rect stays report-only
+			## geometry; collision remains authored in the room scene.
+			var rect := paired_detection_rect_world(id, feet)
+			var state := PairedReveal.advance_state(rect, drawable, subjects, _structure_fades.get(key, {}), delta)
+			var material := _paired_material(key, id)
+			material.set_shader_parameter("reveal_weight", state.weight)
+			state.merge({"policy": PairedReveal.POLICY, "sprite_id": id, "feet_world": feet,
+				"part": drawable.duplicate(), "volume": rect, "material": material,
+				"alpha": lerpf(1.0, float(_generated_sprites[id].variant_max_alpha), float(state.weight)),
+				"variant_max_alpha": float(_generated_sprites[id].variant_max_alpha),
+				"transition_seconds": PairedReveal.TRANSITION_SECONDS})
+			next[key] = state
+			continue
+		var box := structure_upper_volume(id, feet)
+		if not box.has_area():
+			continue
+		var volume := {"type": "polygon", "points": PackedVector2Array([box.position,
+			Vector2(box.end.x, box.position.y), box.end, Vector2(box.position.x, box.end.y)])}
+		var state := PrimitiveFade.advance_state([volume], drawable, subjects, _structure_fades.get(key, {}), delta)
+		state.merge({"policy": PrimitiveFade.POLICY, "sprite_id": id, "feet_world": feet,
+			"part": drawable.duplicate(), "volume": box, "base_alpha": 1.0,
+			"faded_alpha": PrimitiveFade.FADED_ALPHA, "transition_seconds": PrimitiveFade.TRANSITION_SECONDS})
+		next[key] = state
+	_structure_fades = next

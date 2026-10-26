@@ -15,7 +15,7 @@ void fragment() {
 	float alpha = mix(full.a, revealed.a, weight);
 	vec3 premultiplied = mix(full.rgb * full.a, revealed.rgb * revealed.a, weight);
 	vec3 rgb = alpha > 0.00001 ? premultiplied / alpha : vec3(0.0);
-	// One sample per state, one tint, one composite. Shared structural art
-	// belongs in a separate common part rather than in both state sprites.
+	// One sample per state, one tint, one composite. Whole-object pairs have
+	// identical RGB/silhouettes and differ only in their authored alpha.
 	COLOR = vec4(rgb, alpha) * item_tint;
 }

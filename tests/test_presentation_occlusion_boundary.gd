@@ -32,6 +32,28 @@ func _initialize() -> void:
 			_expect(bool(controller.set_cover("actor/1", 0.5).get("ok", false)), "occlusion cover update failed", failures)
 			controller.update(0.1)
 			_expect(controller.alpha("actor/1") < 1.0, "occlusion alpha did not transition", failures)
+			# Memoized answers must be detached copies: poisoning a returned value cannot change later ones.
+			var poisoned: Array = plan.occluders_of("actor/1")
+			poisoned[0]["stable_id"] = "poison"
+			poisoned.clear()
+			plan.occlusion_report("actor/1")["occluder_ids"].append("poison")
+			var fresh_report: Dictionary = plan.occlusion_report("actor/1")
+			_expect((fresh_report.get("occluder_ids", []) as Array) == ["foreground/1"], "mutated report poisoned plan memo", failures)
+			var fresh_rows: Array = plan.occluders_of("actor/1")
+			_expect(fresh_rows.size() == 1 and fresh_rows[0]["stable_id"] == "foreground/1", "mutated occluders poisoned plan memo", failures)
+			# The frame reuses its plan while entries are unchanged, and rebuilds on any mutation or failure.
+			_expect(frame.occlusion_plan()["value"] == plan, "unchanged frame rebuilt its occlusion plan", failures)
+			frame.entries[1]["art_box"] = Rect2(100.0, 100.0, 8.0, 8.0)
+			var moved: Dictionary = frame.occlusion_plan()
+			_expect(moved.ok and moved["value"] != plan and not bool(moved["value"].occlusion_report("actor/1").get("occluded", true)), "mutated frame entry served a stale plan", failures)
+			frame.entries[1]["art_box"] = [2.0, 2.0, 8.0, 8.0]
+			var array_plan: Dictionary = frame.occlusion_plan()
+			_expect(array_plan.ok and array_plan.value.occlusion_report("actor/1").occluded, "array-form plan geometry rejected", failures)
+			frame.entries[1]["art_box"][0] = 100.0
+			var array_moved: Dictionary = frame.occlusion_plan()
+			_expect(array_moved.ok and array_moved.value != array_plan.value and not array_moved.value.occlusion_report("actor/1").occluded, "in-place array edit poisoned frame cache key", failures)
+			frame.entries[1]["art_box"] = Rect2(0.0, 0.0, 0.0, 0.0)
+			_expect(not bool(frame.occlusion_plan().get("ok", true)), "invalid mutated entry served a cached plan", failures)
 	# Tiny but real Y differences must take precedence over rank in both
 	# frame order and the occlusion plan; approximate equality changes depth.
 	var close_entries := raw_entries.duplicate(true)

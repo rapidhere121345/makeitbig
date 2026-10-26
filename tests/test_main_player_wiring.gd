@@ -179,7 +179,7 @@ func _test_mounted_reset(resolved: Dictionary) -> void:
 
 func _test_mark_report(arena) -> void:
 	const EXPECTED := "Hunter's Mark locked: Melee Pursuer."
-	var center: Vector2 = arena._arena_rect().get_center()
+	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
 	var target = arena.enemies[0]
 	_expect(arena.teleport_actor("ranger", center).get("ok", false) and arena.teleport_actor("enemy/%d" % target.entity_id, center + Vector2.RIGHT * 100.0).get("ok", false), "mounted mark report fixture placement failed")
 	var before_event: int = arena.combat_event_stream.latest_event_id()
@@ -312,7 +312,7 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 
 
 func _place_hud_targets(arena):
-	var center: Vector2 = arena._arena_rect().get_center()
+	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
 	_expect(arena.teleport_actor("ranger", center).get("ok", false), "HUD player placement failed")
 	for index in arena.enemies.size():
 		var enemy = arena.enemies[index]

@@ -3142,18 +3142,18 @@ func _project_actor_spawn_position(value: Vector2, radius: float) -> Dictionary:
 	return {"ok": true, "position": position}
 
 
-## Authored static blockers (ruins, gates, the tower) also own spawn clearance.
+## Authored static blockers and already registered actors own spawn clearance.
 ## Deterministic expanding-ring search around the boundary-projected point: the
 ## first clear candidate wins in a fixed ring/step order, so fixed-tick replays
 ## stay byte-stable. Returns null when no candidate inside the arena clears
-## every static surface, keeping the fail-closed contract of the caller.
+## every static surface and live body, keeping the fail-closed contract.
 func _project_static_clear(position: Vector2, radius: float) -> Variant:
-	if actor_registry.is_position_clear(position, radius):
+	if actor_registry.is_spawn_position_clear(position, radius):
 		return position
 	for ring: float in [16.0, 32.0, 48.0, 64.0, 96.0, 128.0, 160.0, 192.0, 224.0, 256.0]:
 		for step: int in 16:
 			var candidate := position + Vector2(ring, 0.0).rotated(TAU * float(step) / 16.0)
-			if candidate.is_finite() and actor_registry.is_position_clear(candidate, radius):
+			if candidate.is_finite() and actor_registry.is_spawn_position_clear(candidate, radius):
 				return candidate
 	return null
 

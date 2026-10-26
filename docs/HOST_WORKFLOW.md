@@ -46,6 +46,29 @@ through the launcher, while SHA256 verification reads the raw engine. This
 supports the devbox's scoped matching-loader wrapper without weakening the
 engine pin or modifying the official executable.
 
+## Python Launcher Contract
+
+The portable prefix's `python3` is a wrapper that starts its Python through
+the prefix's matching loader; the raw interpreter binary cannot start under
+the host's older glibc, so `sys.executable` is not directly spawnable there.
+`scripts/check.sh` resolves its working launcher (`command -v python3`) once
+and exports it as `MIB_TEST_PYTHON`, and the subprocess test harness re-enters
+Python through that launcher. `MIB_TEST_PYTHON` may be set deliberately to
+check with a different interpreter; a value that is not an executable file
+fails the check instead of being substituted.
+
+Running that harness directly under portable Python still needs the explicit
+launcher, for example:
+
+```bash
+MIB_TEST_PYTHON="$MIB_CPU_PREFIX/bin/python3" \
+  python3 tests/test_play_session_tool.py
+```
+
+Without `MIB_TEST_PYTHON` the harness uses `sys.executable`, which is correct
+for normal/system Python. Do not work around a launcher mismatch by exporting
+global library paths or installing the portable runtime system-wide.
+
 ## Acceptance Gate
 
 Run the complete test/export/empty-directory Linux smoke gate:

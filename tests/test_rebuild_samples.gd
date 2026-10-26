@@ -1,5 +1,6 @@
 extends SceneTree
 
+const TownExpectations = preload("res://tests/helpers/town_scene_expectations.gd")
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 const ActorStateScript := preload("res://src/runtime/world/actor_state.gd")
 const EntityDefinitionScript := preload("res://src/runtime/world/entity_definition.gd")
@@ -26,10 +27,21 @@ func _initialize() -> void:
 func _test_town_building_channels_and_sort_anchor() -> void:
 	var manifest = SpatialManifestScript.new(JSON.parse_string(FileAccess.get_file_as_string("res://content/rooms/town/hearthside.spatial.json")))
 	_expect(manifest.is_valid(), "town: native derived manifest invalid")
-	_expect(manifest.movement_bindings().size() == 1 and manifest.occlusion_bindings().size() == 35, "town: boundary and visual channels collapsed")
+	var authored: Dictionary = TownExpectations.load_expectations()
+	var occlusion_ids: Array = []
+	for binding: Dictionary in manifest.occlusion_bindings():
+		occlusion_ids.append(String(binding.binding_id))
+	occlusion_ids.sort()
+	_expect(manifest.movement_bindings().size() == 1 and occlusion_ids == authored.sort_ids and not occlusion_ids.is_empty(),
+		"town: manifest occlusion bindings must equal the scene's SortRoot ids %s, got %s" % [str(authored.sort_ids), str(occlusion_ids)])
 	var boundary: Dictionary = manifest.movement_bindings()[0]
 	_expect(not bool(boundary.channels.occlusion) and boundary.geometry.type == "rect", "town: movement boundary inferred from visible alpha")
-	_expect((manifest.gameplay_spatial_metadata.static_geometry as Array).size() > 100, "town: authored collision pieces disappeared")
+	var geometry_ids: Array = []
+	for piece: Dictionary in manifest.gameplay_spatial_metadata.static_geometry:
+		geometry_ids.append(String(piece.id))
+	geometry_ids.sort()
+	_expect(geometry_ids == authored.static_ids and int(authored.triangle_count) + int(authored.circle_count) == geometry_ids.size(),
+		"town: manifest static geometry must equal the scene's triangulation (%d triangles, %d circles)" % [authored.triangle_count, authored.circle_count])
 	var definition_result: Dictionary = EntityDefinitionScript.from_dict({
 		"entity_id": "ranger", "feet_anchor": Vector2(12.0, 18.0),
 		"footprint": {"kind": "circle", "radius": 6.0}, "sort_baseline": 18.0,

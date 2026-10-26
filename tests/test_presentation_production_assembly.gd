@@ -27,6 +27,8 @@ const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.g
 const TownPresenterScript := preload("res://src/presentation/town_presenter.gd")
 const HamletLifeAnimationScript := preload("res://src/presentation/hamlet_life_animation.gd")
 const OcclusionControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
+const SilhouetteRevealScript := preload("res://src/presentation/occlusion/silhouette_reveal_controller.gd")
+const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
 
 const TICK_DELTA := 1.0 / 30.0
 const OCCLUSION_FLOOR := 0.399
@@ -69,7 +71,7 @@ func _test_town_composition_root_assembly() -> void:
 	for source: Variant in occlusion_bindings:
 		expected_ids.append(String((source as Dictionary)["binding_id"]))
 	expected_ids.sort()
-	_expect(binding_ids == expected_ids and binding_ids.size() == 35, "town: static assembly did not cover every authored occlusion piece (%d vs %d)" % [binding_ids.size(), expected_ids.size()], failures)
+	_expect(binding_ids == expected_ids, "town: static assembly did not cover every authored occlusion piece (%d vs %d)" % [binding_ids.size(), expected_ids.size()], failures)
 	_expect(projector.call("static_binding_count") == occlusion_bindings.size(), "town: static binding count diverged from the manifest", failures)
 	_check_town_static_art(runtime, projector, binding_ids)
 
@@ -111,6 +113,33 @@ func _test_town_composition_root_assembly() -> void:
 	# the runtime restart: a restarted town re-attaches through the hub, and
 	# until then the projector correctly holds statics only.
 	_expect(projector_after.call("actor_binding", "town/ranger") == null, "town: restart kept actor bindings on the fresh projector", failures)
+	# The reused presenter must not keep stale reveal state across the restart
+	# boundary: one tick on the fresh runtime resets occlusion fail-closed.
+	# Materials stay cached per native piece by design, so the restart contract
+	# is that every still-attached reveal material sits at its identity state
+	# (no actor slots, zero weight, opaque piece), and the audit's silhouette
+	# report is empty rather than stale.
+	view.call("_process", TICK_DELTA)
+	var after_report: Dictionary = view.call("occlusion_report")
+	_expect(not bool(after_report.get("available", false)), "town: reused presenter kept occlusion alive across the restart", failures)
+	var stale_pieces := 0
+	var stale_walk: Array[Node] = [runtime.get("presenter")]
+	while not stale_walk.is_empty():
+		var node: Node = stale_walk.pop_back()
+		if node is Sprite2D and node.material is ShaderMaterial \
+				and (node.material as ShaderMaterial).shader == SilhouetteRevealScript.RevealShader:
+			var reveal_material := node.material as ShaderMaterial
+			var fail_closed := int(reveal_material.get_shader_parameter("actor_count")) == 0 \
+				and is_equal_approx(float(reveal_material.get_shader_parameter("reveal_weight")), 0.0) \
+				and is_equal_approx((node as Sprite2D).modulate.a, 1.0)
+			if not fail_closed:
+				stale_pieces += 1
+		for child: Node in node.get_children():
+			stale_walk.push_back(child)
+	_expect(stale_pieces == 0, "town: restart left a live reveal on pieces (%d)" % stale_pieces, failures)
+	var stale_audit: Dictionary = view.call("render_audit")
+	_expect((stale_audit.get("silhouette_reveal", {}) as Dictionary).get("occluders", {}).is_empty(),
+		"town: restart leaked stale silhouette rows into the audit", failures)
 
 	town.call("abort_loading", {"ok": true, "error": ""})
 	_expect(runtime.get("presentation_projector") == null and runtime.get("presentation_port") == null, "town: unmount kept presentation seams alive", failures)
@@ -233,6 +262,39 @@ func _run_town_occlusion_chain(port: Variant, view: Variant, runtime: Variant, t
 		_expect(probe_row.has("cover_fraction") and float(probe_row["cover_fraction"]) > OcclusionControllerScript.COVER_FULL_THRESHOLD,
 			"town: probe occluder row lost its cover fraction: %s" % str(probe_row), failures)
 
+	# Actual drawn state, kept distinct from the plan's hypothetical alphas:
+	# the audit reports every actor's real modulate and the silhouette
+	# uniforms really applied to covering pieces, so a rendered frame can be
+	# verified against what the draw calls consumed. The virtual probe has no
+	# scene node, so it can never open a silhouette reveal; only real binding
+	# pieces carry the material.
+	var audit: Dictionary = view.call("render_audit")
+	var modulates: Dictionary = audit.get("actor_modulates", {})
+	_expect(not modulates.is_empty(), "town: audit lost the actor modulate report", failures)
+	for actor_id: String in modulates.keys():
+		_expect(is_equal_approx(float(modulates[actor_id]), 1.0), "town: audit dimmed %s under occluder windows: %.3f" % [actor_id, float(modulates[actor_id])], failures)
+	_expect(float(display.get("alphas", {}).get("town/ranger", 1.0)) < 0.999,
+		"town: the distinctness fixture lost its plan-side dimmed alpha", failures)
+	var silhouette_audit: Dictionary = audit.get("silhouette_reveal", {})
+	_expect(silhouette_audit.has("clear_alpha") and is_equal_approx(float(silhouette_audit.get("clear_alpha", -1.0)), 0.0),
+		"town: silhouette audit lost its full-clear contract", failures)
+	_expect(not (silhouette_audit.get("occluders", {}) as Dictionary).has("town/test/probe"),
+		"town: a nodeless virtual probe opened a silhouette reveal", failures)
+	var paired_pieces := 0
+	var declared_paired := 0
+	var walk: Array[Node] = [runtime.get("presenter")]
+	while not walk.is_empty():
+		var node: Node = walk.pop_back()
+		if node is Sprite2D and node.has_meta("binding_id"):
+			if String(node.get_meta("reveal_policy", "")) == "paired_reveal":
+				declared_paired += 1
+				if node.material is ShaderMaterial and (node.material as ShaderMaterial).shader == PairedRevealScript.RevealShader:
+					paired_pieces += 1
+		for child: Node in node.get_children():
+			walk.push_back(child)
+	_expect(declared_paired > 0 and paired_pieces == declared_paired,
+		"town: mounted whole pieces did not all carry the paired reveal material (%d of %d)" % [paired_pieces, declared_paired], failures)
+
 
 ## Cross-checks the assembled static bindings against the mounted scene's
 ## authored sprite data through an independent formula: authored
@@ -266,7 +328,17 @@ func _check_town_static_art(runtime: Variant, projector: Variant, binding_ids: A
 		var projected_box := Rect2((binding.static_feet_anchor as Vector2) + (binding.art_box as Rect2).position, (binding.art_box as Rect2).size)
 		_expect(projected_box.is_equal_approx(world_box), "town: %s art box left the real drawn pixels: %s vs %s" % [binding_id, str(projected_box), str(world_box)], failures)
 		_expect((binding.static_feet_anchor as Vector2).is_equal_approx(feet), "town: %s baseline left the native Y-sort anchor" % binding_id, failures)
-		_expect(String(binding.visual_id) == binding_id and int(binding.rank) == 0, "town: %s identity diverged from the manifest binding" % binding_id, failures)
+		## Rank is the authored sort_rank: 0 on every whole-object paired
+		## sprite — there are no upper/base splits or explicit fade ranks.
+		var authored_rank := 0
+		_expect(String(binding.visual_id) == binding_id and int(binding.rank) == authored_rank and int(node.get_meta("sort_rank", 0)) == authored_rank, "town: %s identity diverged from the manifest binding" % binding_id, failures)
+		## Whole-object contract: every mounted sort piece carries exactly the
+		## paired metas — both texture paths and one world detection rect —
+		## and never the retired mask/volume metas.
+		if String(node.get_meta("reveal_policy", "")) == "paired_reveal":
+			_expect(not String(node.get_meta("reveal_variant_path", "")).is_empty() and (node.get_meta("occlusion_rect", null) is Rect2)
+				and not node.has_meta("reveal_mask_path") and not node.has_meta("occlusion_volumes"),
+				"town: %s paired metas incomplete or polluted" % binding_id, failures)
 		checked += 1
 	_expect(checked == binding_ids.size(), "town: static art cross-check skipped pieces", failures)
 
@@ -388,10 +460,11 @@ func _drive_occlusion_display(session: Dictionary, headless: Dictionary, enemy_i
 	_expect(bool(occlusion.get("available", false)), "occlusion: presentation controller did not adopt the detached plan: %s" % str(occlusion), failures)
 	var alphas: Dictionary = occlusion.get("alphas", {})
 	var enemy_alpha := float(alphas.get(enemy_id, 1.0))
-	_expect(enemy_alpha < 0.999 and enemy_alpha >= OCCLUSION_FLOOR, "occlusion: enemy display alpha not driven by the plan (%.3f)" % enemy_alpha, failures)
+	_expect(is_equal_approx(enemy_alpha, 1.0), "occlusion: covered enemy became translucent instead of its covering object", failures)
+	_expect(float(occlusion.get("plan_alphas", {}).get(enemy_id, 1.0)) < 0.999, "occlusion: detached cover evidence was lost", failures)
 	_expect(is_equal_approx(float(alphas.get("ranger", 1.0)), 1.0), "occlusion: clear ranger was dimmed", failures)
 	var actor_presenter: Variant = session.node.get("presentation").get("actor_presenter")
-	_expect(float(actor_presenter.call("drawn_alpha", enemy_id + "/body")) < 0.999, "occlusion: drawn enemy sort view did not receive the plan alpha", failures)
+	_expect(is_equal_approx(float(actor_presenter.call("drawn_alpha", enemy_id + "/body")), 1.0), "occlusion: covered enemy sort view must remain opaque", failures)
 	_expect(is_equal_approx(float(actor_presenter.call("drawn_alpha", "ranger/body")), 1.0), "occlusion: drawn ranger view changed without an occluder", failures)
 
 

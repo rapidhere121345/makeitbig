@@ -1,0 +1,27 @@
+{
+  "generator": "built-in image_gen",
+  "purpose": "Original project scenery dressing and skill icons",
+  "reference": "docs/art-production/actor-redraw-20261024/references/accepted_world_calibration.png",
+  "reference_sha256": "7676eff5cbdb92a80c7cbcce42dc21728e0b0ed5553bd0756bc42e9dbc3b6bf5",
+  "reference_role": "Style only; no source extraction",
+  "source_files": {
+    "sources/basic_dodge_raw.png": "be0d06248ee21c4a46616fb611db5bb55fdb20fc3ddb85757cfa2d48b3308b36",
+    "sources/dash_raw.png": "be25a4c486bdce5c7a597c0180d6faf91aa628a592047e56074c1da78f674280",
+    "sources/fern_raw.png": "96c59890db4461f8045f8af085e0b7fdd415af9a297645806331236e3911dd20",
+    "sources/hunter_mark_raw.png": "3cfd0d0a05ea40f2f1eecb0895da211f472d09894b413cbb8cb93f3c5e0b8cbd",
+    "sources/mushrooms_raw.png": "d2278da7fb8e15b5c9b71bdb81219635e1ec475c2dd1c9cb97c521c9c030a46f",
+    "sources/piercing_arrow_raw.png": "2df8ea9cdc7e1562b1030a4435068c925cac92dc3bf18710af5cb79ceb2e9257",
+    "sources/relic_raw.png": "78e61972113683dc410a162fe4805f9611876078592b144ac4245b21ac22043e",
+    "sources/votives_raw.png": "9b71827f077d011c499ddfdca49975c33684924153fe10e096461639122650b9"
+  },
+  "prompt_files": {
+    "prompts/basic_dodge.txt": "a46f656ca0d3f99c19314cf209ec677d01e678636d2fc2c8077e74231c227cbb",
+    "prompts/dash.txt": "2f5a47f338fcde894a38d48237368ffa9d676e1fdf40b69b64785f70a9c6be85",
+    "prompts/fern.txt": "b9ea4ad5ef8b6b5e5bffa776c6c4a517e5ef94770c2abf1a76ba8ae35a3d784b",
+    "prompts/hunter_mark.txt": "9bae73af6814551fea2323b9f68890e2ade5c7971284f9a486806173c4bd927d",
+    "prompts/mushrooms.txt": "ea012540a2daffba1ee62b30b8eab30dc35dba8061bcda85925c532ee95e3315",
+    "prompts/piercing_arrow.txt": "c825e2fe13d45ebfc165f8498be7ee1e6425ce8f05a5fd6f90997cb1c2d2f987",
+    "prompts/relic.txt": "790642105312f000ea23b068c1822e3bd3d9cd72f7c52e5114737d2a329e1e4c",
+    "prompts/votives.txt": "ba8cf472f2c7419ae20a09b7962d76447903dab4c0dd803c0b559eab93442869"
+  }
+}

@@ -44,6 +44,10 @@ const DATA_FONT_PATH := "res://art/fonts/NotoSansCJKsc-Medium.otf"
 const BODY_FONT_SIZE := 22
 ## Smallest size any shared control may ask for, so CJK never drops to unreadable.
 const MIN_FONT_SIZE := 18
+## Quiet hierarchy steps: sections and controls sit one step below body copy so
+## panel titles stop competing with the text they frame.
+const SECTION_FONT_SIZE := 20
+const COMPACT_FONT_SIZE := 18
 
 ## Approved cold-slate ramp (2026-09-14 brief, plus the raised step shared with the
 ## production skin in combat_palette.gd so combat and shell agree on the greys).
@@ -159,6 +163,25 @@ static func _box(fill: Color, border: Color, width: int, radius: int) -> StyleBo
 	box.content_margin_top = 12.0
 	box.content_margin_right = 16.0
 	box.content_margin_bottom = 12.0
+	return box
+
+
+## Flat slate surface with a single thin copper edge: the calm default for
+## repeated panels and strips, so the ornate copper frame keeps meaning "major
+## framed surface" instead of appearing everywhere at once.
+static func slate_panel(edge: Color = COPPER_DULL, fill: Color = DEEP_BLUE) -> StyleBoxFlat:
+	var box := _box(fill, edge, 1, 0)
+	return box
+
+
+## Accent variant used on headers and selected frames: slate fill, brighter
+## bronze rule on the bottom edge only.
+static func slate_header() -> StyleBoxFlat:
+	var box := _box(Color("18222b"), DEEP_BLUE, 1, 0)
+	box.border_color = Color("00000000")
+	box.set_border_width_all(0)
+	box.border_width_bottom = 2
+	box.border_color = COPPER_DULL
 	return box
 
 

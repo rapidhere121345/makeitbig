@@ -24,6 +24,7 @@ func _run() -> void:
 	_test_rejections()
 	_test_modular_contract()
 	_test_digest_partition()
+	_test_paired_policy()
 	for path: String in created_files:
 		DirAccess.remove_absolute(path)
 	for failure: String in failures:
@@ -216,6 +217,71 @@ func _test_modular_contract() -> void:
 			"visible": visual.visible = false
 		_expect(not town.validate_contract().ok, "unfingerprinted visual override accepted: " + override)
 		town.free()
+
+
+## Whole-object generated policy: one part carries the opaque/transparent
+## pair and ONE local-canvas detection rect (occupied AABB grown by 8),
+## translated to world space at bake time like the primitive volumes.
+func _paired_definition() -> Definition:
+	var definition := Definition.new()
+	definition.asset_id = "environment/test-paired"
+	definition.canvas_size = Vector2i(8, 8)
+	definition.visual_parts = [
+		{"part_id": "whole", "full_path": _path("full"), "canvas_offset": Vector2(-3, -7), "sort_anchor": Vector2(1, 2), "sort_rank": 0,
+			"reveal_policy": "paired_reveal", "revealed_path": _path("variant"), "occlusion_rect": Rect2(-8, -8, 24, 24)},
+	]
+	definition.footprints = [{"part_id": "contact", "type": "circle", "center": Vector2(1, 2), "radius": 1.0}]
+	return definition
+
+
+func _test_paired_policy() -> void:
+	var definition := _paired_definition()
+	_expect(definition.validate().is_empty(), "paired: valid whole-pair definition rejected: " + str(definition.validate()))
+	var town := _town(definition)
+	_expect(Baker.expand(town).ok, "paired: bake failed")
+	var whole := _binding(town, "west/whole")
+	_expect(whole != null and String(whole.get_meta("reveal_policy")) == "paired_reveal", "paired: policy meta missing")
+	_expect(String(whole.get_meta("reveal_full_path")) == _path("full") and String(whole.get_meta("reveal_variant_path")) == _path("variant"),
+		"paired: pair paths lost at bake")
+	_expect(not whole.has_meta("reveal_mask_path") and not whole.has_meta("occlusion_volumes"), "paired: foreign metas leaked")
+	## Local rect (-8,-8,24,24) at the west placement (15,20) -> world (7,12,24,24).
+	_expect(whole.get_meta("occlusion_rect") == Rect2(7, 12, 24, 24), "paired: detection rect not placement-translated")
+	var report := town.validate_contract()
+	_expect(report.ok, "paired: contract rejected: " + str(report.errors))
+	if report.ok:
+		var bindings: Array = report.value.paired_reveal_bindings
+		_expect(bindings.has("west/whole") and bindings.has("east/whole"), "paired: bindings missing from contract")
+		_expect(Spatial.new(report.value.spatial_manifest).is_valid(), "paired: manifest invalid")
+	town.free()
+	## Fail-closed authoring rejections.
+	for variant_case: Dictionary in [
+		{"drop": "revealed_path", "label": "missing variant"},
+		{"set": {"mask_path": _path("mask")}, "label": "mask conflict"},
+		{"set": {"occlusion_volumes": []}, "label": "volumes conflict"},
+		{"drop": "occlusion_rect", "label": "missing rect"},
+		{"set": {"occlusion_rect": Rect2(0, 0, 8, 8)}, "label": "rect smaller than occupied.grow(8)"},
+		{"set": {"occlusion_rect": "not-a-rect"}, "label": "non-rect detection"},
+	]:
+		var bad := _paired_definition()
+		var part: Dictionary = bad.visual_parts[0]
+		if variant_case.has("drop"):
+			part.erase(String(variant_case["drop"]))
+		if variant_case.has("set"):
+			for key: String in variant_case["set"]:
+				part[key] = variant_case["set"][key]
+		_expect(not bad.validate().is_empty(), "paired: " + String(variant_case.label) + " accepted")
+	## Variant pixels belong to the presentation digest.
+	var town2 := _town(_paired_definition())
+	var baseline := Spatial.new(town2.derive_spatial_manifest())
+	_expect(baseline.is_valid(), "paired digest fixture invalid")
+	town2.free()
+	_write_image("variant", Vector2i(8, 8), Color.CORNFLOWER_BLUE)
+	town2 = _town(_paired_definition())
+	var changed := Spatial.new(town2.derive_spatial_manifest())
+	_expect(changed.presentation_digest_sha256() != baseline.presentation_digest_sha256(), "paired: variant pixels did not change presentation digest")
+	_expect(changed.gameplay_digest_sha256() == baseline.gameplay_digest_sha256(), "paired: variant pixels changed gameplay digest")
+	town2.free()
+	_write_image("variant", Vector2i(8, 8), Color.SADDLE_BROWN)
 
 
 func _test_digest_partition() -> void:

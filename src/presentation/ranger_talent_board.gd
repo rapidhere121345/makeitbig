@@ -20,9 +20,8 @@ const LAW := Color("8fb7b2")
 const BONE := Color("e9ddc3")
 const NEUTRAL := Color("8a94a1")
 const INK := Color("111820")
-const NODE_SIZE := Vector2(96, 96)
-const TIER_Y := [0.14, 0.50, 0.86]
-const GATE_Y := [0.315, 0.675]
+const NODE_SIZE := Vector2(56, 56)
+const MEDALLION_RADIUS := 32.0
 const ROW_LABEL_WIDTH := 64.0
 const ROW_LABEL_GUTTER := 88.0
 const GATE_LABEL_WIDTH := 280.0
@@ -90,11 +89,12 @@ func _build() -> void:
 		if tier > 0:
 			var gate := Label.new()
 			gate.name = "TalentTierGate_%d" % (tier + 1)
-			gate.add_theme_font_size_override("font_size", 20)
+			gate.add_theme_font_size_override("font_size", 18)
+			gate.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			gate.add_theme_color_override("font_color", COPPER_BRIGHT)
 			gate.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 			gate.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			gate.custom_minimum_size = Vector2(120, 26)
+			gate.custom_minimum_size = Vector2(64, 40)
 			gate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			add_child(gate)
 			_gate_labels.append(gate)
@@ -110,10 +110,22 @@ func _build() -> void:
 			add_child(button)
 			var mark := Label.new()
 			mark.name = "AllocationMark"
-			mark.position = Vector2(73, 8)
+			mark.position = Vector2(43, 3)
 			mark.add_theme_font_size_override("font_size", 18)
 			mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			button.add_child(mark)
+			## The medallion's own text stays empty: names live in a separate
+			## two-line lane under the circle, so long titles never clip.
+			var name_label := Label.new()
+			name_label.name = "TalentName"
+			name_label.add_theme_font_size_override("font_size", 18)
+			name_label.add_theme_color_override("font_outline_color", INK)
+			name_label.add_theme_constant_override("outline_size", 2)
+			name_label.add_theme_constant_override("line_spacing", -8)
+			name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			button.add_child(name_label)
 			_buttons.append(button)
 
 
@@ -127,6 +139,7 @@ func _sync_buttons() -> void:
 			if slot >= nodes.size():
 				button.name = "TalentSlot_%d_%d" % [tier, slot + 1]
 				button.text = "Empty"
+				(button.get_node("TalentName") as Label).text = ""
 				button.icon = null
 				button.disabled = true
 				button.visible = false
@@ -137,7 +150,8 @@ func _sync_buttons() -> void:
 			button.name = "TalentNode_%s" % node_id
 			button.visible = true
 			button.set_meta("talent_id", node_id)
-			button.text = String(node.get("name", node_id))
+			button.text = ""
+			(button.get_node("TalentName") as Label).text = String(node.get("name", node_id))
 			button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 			button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -165,30 +179,51 @@ func _layout() -> void:
 	var index := 0
 	for tier in range(3):
 		var heading := _tier_headings[tier]
-		heading.position = Vector2(10, size.y * float(TIER_Y[tier]) - 33.0)
+		heading.position = Vector2(8, _row_y(tier + 1) - 33.0)
 		heading.size = Vector2(ROW_LABEL_WIDTH, 66)
 		if tier > 0:
 			var gate_label := _gate_labels[tier - 1] as Label
-			# The text is a side marker, while the centered hex is the single shared
-			# collector. This keeps the total rule legible without implying a node-to-node prerequisite.
-			gate_label.position = Vector2(4, size.y * float(GATE_Y[tier - 1]) - 13.0)
-			gate_label.size = Vector2(120, 26)
+			# Thresholds occupy the left gutter between the two row headings.
+			var midpoint := (_row_y(tier) + _row_y(tier + 1)) * 0.5
+			gate_label.position = Vector2(2, midpoint - 25.0)
+			gate_label.size = Vector2(72, 50)
 		for slot in range(5):
 			var button := _buttons[index]
 			index += 1
 			var center := node_center(tier + 1, slot)
 			button.position = center - NODE_SIZE * 0.5
 			button.size = NODE_SIZE
+			## Name lane: centered under the medallion, as wide as the slot
+			## spacing allows without touching the neighbour's circle.
+			var lane := button.get_node("TalentName") as Label
+			var lane_width := clampf(usable_slot_spacing() - 8.0, 96.0, 176.0)
+			# A dedicated caption below the entire 64px medallion silhouette.
+			# A 140px row reserves 66px for three lines, independently of icon size.
+			lane.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+			lane.position = Vector2((NODE_SIZE.x - lane_width) * 0.5, 62.0)
+			lane.size = Vector2(lane_width, 66.0)
 
 
 func node_center(tier: int, slot: int) -> Vector2:
 	# Reserve a real left gutter for the row tag.  Its right edge clears the
 	# visible medallion ring, rather than merely the button's rectangular hitbox.
 	var x_margin := ROW_LABEL_GUTTER
-	var usable_width := maxf(180.0, size.x - x_margin * 2.0)
+	var usable_width := maxf(180.0, size.x - x_margin - 16.0)
 	var x := x_margin + usable_width * (float(slot) + 0.5) / 5.0
-	var y: float = size.y * float(TIER_Y[tier - 1])
+	var y := _row_y(tier)
 	return Vector2(x, y)
+
+
+## Horizontal pitch between slot centres — the width budget a name lane can use
+## without reaching into the neighbouring medallion.
+func usable_slot_spacing() -> float:
+	var x_margin := ROW_LABEL_GUTTER
+	return maxf(180.0, size.x - x_margin - 16.0) / 5.0
+
+
+func _row_y(tier: int) -> float:
+	var row_height := size.y / 3.0
+	return 38.0 + (row_height - 140.0) * 0.5 + float(tier - 1) * row_height
 
 
 func _draw() -> void:
@@ -202,8 +237,8 @@ func _draw() -> void:
 
 	# Three route bands: broad, faded and slightly uneven.
 	for tier in range(3):
-		var y: float = size.y * float(TIER_Y[tier])
-		var band := Rect2(Vector2(24, y - 43), Vector2(size.x - 48, 86))
+		var y := _row_y(tier + 1)
+		var band := Rect2(Vector2(24, y - 34), Vector2(size.x - 48, 68))
 		draw_rect(band, Color(SLATE_RAISED.r, SLATE_RAISED.g, SLATE_RAISED.b, 0.52 if tier == 1 else 0.38))
 		draw_line(Vector2(28, band.position.y), Vector2(size.x - 28, band.position.y), Color(COPPER.r, COPPER.g, COPPER.b, 0.24), 2.0)
 		draw_line(Vector2(28, band.end.y), Vector2(size.x - 28, band.end.y), Color(COPPER.r, COPPER.g, COPPER.b, 0.18), 2.0)
@@ -225,10 +260,10 @@ func _draw() -> void:
 		var points := PackedVector2Array()
 		for side in range(6):
 			var angle := PI / 6.0 + TAU * float(side) / 6.0
-			points.append(center + Vector2(cos(angle), sin(angle)) * 58.0)
+			points.append(center + Vector2(cos(angle), sin(angle)) * MEDALLION_RADIUS)
 		draw_colored_polygon(points, Color(0, 0, 0, 0))
 		draw_polyline(points, Color(PAPER.r, PAPER.g, PAPER.b, 0.20), 2.0)
-		draw_arc(center, 52.0, 0.0, TAU, 40, Color(COPPER.r, COPPER.g, COPPER.b, 0.22), 1.0)
+		draw_arc(center, 30.0, 0.0, TAU, 40, Color(COPPER.r, COPPER.g, COPPER.b, 0.22), 1.0)
 
 	# Law-light pools mark allocated medallions; a copper nail marks locked ones.
 	for button in _buttons:
@@ -239,9 +274,9 @@ func _draw() -> void:
 		var center := button.position + button.size * 0.5
 		if bool(node.get("allocated", false)):
 			for ring in range(4):
-				draw_circle(center, 62.0 + ring * 10.0, Color(LAW.r, LAW.g, LAW.b, 0.050 - ring * 0.009))
+				draw_circle(center, 38.0 + ring * 8.0, Color(LAW.r, LAW.g, LAW.b, 0.050 - ring * 0.009))
 		elif not bool(node.get("can_allocate", false)):
-			draw_circle(center + Vector2(30, 30), 3.0, Color(COPPER.r, COPPER.g, COPPER.b, 0.70))
+			draw_circle(center + Vector2(20, 20), 3.0, Color(COPPER.r, COPPER.g, COPPER.b, 0.70))
 
 	# Corner rivets and a warm reading lamp keep the board materially anchored.
 	for corner in [Vector2(14, 14), Vector2(size.x - 14, 14), Vector2(14, size.y - 14), Vector2(size.x - 14, size.y - 14)]:
@@ -251,7 +286,7 @@ func _draw() -> void:
 
 
 func _draw_tier_conduit(from_tier: int, to_tier: int, opened: bool) -> void:
-	var collector_y := size.y * float(GATE_Y[from_tier - 1])
+	var collector_y := (_row_y(from_tier) + _row_y(to_tier)) * 0.5
 	var gate := Vector2(size.x * 0.5, collector_y)
 	var from_first := node_center(from_tier, 0)
 	var from_last := node_center(from_tier, 4)
@@ -264,7 +299,7 @@ func _draw_tier_conduit(from_tier: int, to_tier: int, opened: bool) -> void:
 	for slot in range(5):
 		_draw_curve(node_center(from_tier, slot), Vector2(node_center(from_tier, slot).x, collector_y), line_color, width)
 	draw_line(Vector2(from_first.x, collector_y), Vector2(from_last.x, collector_y), copper_color, 4.0 if opened else 3.0)
-	_draw_hex_gate(gate, opened)
+	# The threshold is written in the gutter; a central badge would cover names.
 	for slot in range(5):
 		_draw_curve(gate, node_center(to_tier, slot), line_color, width)
 
@@ -312,6 +347,12 @@ func _apply_node_style(button: Button, node: Dictionary, selected: bool) -> void
 	button.add_theme_stylebox_override("disabled", _node_box(Color("16202a"), Color("2b3742"), 1))
 	button.add_theme_stylebox_override("focus", _node_box(Color(0, 0, 0, 0), LAW, 3))
 	button.add_theme_color_override("font_color", font_color)
+	## Names cross the medallion's lower edge and the slate below it. The ink
+	## outline keeps these state colors readable against both backgrounds.
+	var lane := button.get_node_or_null("TalentName") as Label
+	if lane != null:
+		lane.add_theme_color_override("font_color",
+			COPPER_BRIGHT if allocated else (BONE if available else NEUTRAL))
 	button.add_theme_color_override("font_hover_color", INK if allocated else BONE)
 	button.add_theme_color_override("font_pressed_color", INK if allocated else BONE)
 	button.add_theme_color_override("font_hover_pressed_color", INK if allocated else BONE)

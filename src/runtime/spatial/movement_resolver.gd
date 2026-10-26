@@ -170,6 +170,22 @@ func move(request: Variant) -> Dictionary:
 	if include_boundary:
 		position = _constrain_boundary_endpoint(position, radius)
 
+	# A skin offset away from one face can enter a neighbouring rounded corner
+	# by a few float32 units. Never publish an endpoint that the next tick's
+	# start-overlap query rejects. The start was validated above; retaining it
+	# rejects only this invalid step and preserves outward movement next tick.
+	# An unmoved endpoint is the start position, whose environment overlaps were
+	# already proven empty above (otherwise the start_penetrating return fired),
+	# and no index changes inside this call; skip the identical second query.
+	var endpoint_overlaps: Array = _environment_overlaps(position, radius, include_boundary) if position != start else []
+	if not endpoint_overlaps.is_empty():
+		for contact: Variant in endpoint_overlaps:
+			_record_contact(contacts, recorded, contact)
+		position = start
+		remaining = displacement
+		blocked = true
+		mode = "blocked"
+
 	return {
 		"ok": true,
 		"errors": [],

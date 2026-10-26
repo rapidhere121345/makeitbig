@@ -284,7 +284,7 @@ func _draw_walkable_layout_boundaries(canvas: CanvasItem, frame: Dictionary) -> 
 				canvas.draw_arc(center, outer_radius, 0.0, TAU, 96, edge, 1.5, false)
 		"corridor":
 			var half_height := float(geometry.get("corridor_half_height", 0.0))
-			for sign_value in [-1.0, 1.0]:
+			for sign_value: float in [-1.0, 1.0]:
 				var y: float = bounds.get_center().y + half_height * sign_value
 				var x := bounds.position.x
 				while x < bounds.end.x:
@@ -348,22 +348,26 @@ func _draw_player_status_overlay(canvas: CanvasItem, frame: Dictionary, world_vi
 	if dash_remaining > 0:
 		var dash_direction: Vector2 = frame["dash_direction"]
 		var dash_step := float(frame["dash_step"])
+		var side := dash_direction.orthogonal()
 		for trail_index in range(1, 4):
-			canvas.draw_circle(player_position - dash_direction * dash_step * float(trail_index), 8.0 - float(trail_index), Color(COLOR_PROXY, 0.28 / float(trail_index)))
+			var center := player_position - dash_direction * dash_step * float(trail_index)
+			for flank: float in [-1.0, 1.0]:
+				var tail := (center + side * flank * (5.0 + trail_index)).round()
+				canvas.draw_line(tail, (tail - dash_direction * (9.0 - trail_index)).round(), Color(COLOR_PROXY, 0.55 / float(trail_index)), 2.0, false)
 	if int(frame["dodge_remaining_ticks"]) > 0:
-		var dodge_frame := Rect2(player_position - Vector2(22.0, 54.0), Vector2(44.0, 64.0))
-		for segment in CombatMarksScript.corner_bracket_segments(dodge_frame, 10.0):
-			canvas.draw_line(segment[0], segment[1], COLOR_BONE, 2.0)
-	var aim_origin := player_position + Vector2(0.0, -24.0)
+		# Ground-level escape ticks leave the moving silhouette unobscured.
+		for side: float in [-1.0, 1.0]:
+			var point := player_position + Vector2(side * 16.0, 2.0)
+			canvas.draw_line(point, point + Vector2(side * 5.0, -4.0), Color(COLOR_BONE, 0.85), 2.0, false)
 	var player_facing: Vector2 = frame["player_facing"]
 	var aim_direction := player_facing.normalized() if player_facing.length_squared() > 0.0001 else Vector2.RIGHT
-	var aim_end := aim_origin + aim_direction * 18.0
-	var aim_side := aim_direction.rotated(PI * 0.5)
-	canvas.draw_line(aim_origin, aim_end, Color(COLOR_INK, 0.92), 5.0, false)
-	canvas.draw_line(aim_origin, aim_end, COLOR_AMBER, 2.0, false)
-	canvas.draw_line(aim_end - aim_direction * 6.0 + aim_side * 4.0, aim_end, COLOR_AMBER, 2.0, false)
-	canvas.draw_line(aim_end - aim_direction * 6.0 - aim_side * 4.0, aim_end, COLOR_AMBER, 2.0, false)
-	canvas.draw_circle(aim_origin, 2.5, COLOR_AMBER)
+	# A quiet ground chevron communicates facing without repainting the bow.
+	var aim_end := (player_position + aim_direction * 22.0 + Vector2(0, 3)).round()
+	var aim_side := aim_direction.orthogonal()
+	for sign_value: float in [-1.0, 1.0]:
+		var root_point := (aim_end - aim_direction * 4.0 + aim_side * sign_value * 3.0).round()
+		canvas.draw_line(root_point, aim_end, Color(COLOR_INK, 0.8), 3.0, false)
+		canvas.draw_line(root_point, aim_end, Color(COLOR_AMBER, 0.72), 1.0, false)
 
 
 func _draw_piercing_projectiles(canvas: CanvasItem, frame: Dictionary) -> void:
@@ -431,10 +435,13 @@ func _draw_contact_sparks(canvas: CanvasItem, position: Vector2, direction: Vect
 	var spark_alpha := clampf(1.0 - age / COMBAT_SPARK_LIFETIME_SECONDS, 0.0, 1.0)
 	if spark_alpha <= 0.0:
 		return
-	for index in 2:
-		var spread := (-0.58 + 1.16 * float(index)) * (1.0 - 0.38 * float(index))
+	for index in 5:
+		var spread := -0.9 + 0.45 * float(index)
 		var spark_direction := direction.rotated(spread)
-		canvas.draw_line(position, position + spark_direction * (7.0 + 3.0 * float(index)), Color(color, color.a * spark_alpha), 1.0)
+		var distance := 5.0 + float(index % 3) * 3.0 + age * 18.0
+		var point := (position + spark_direction * distance).round()
+		canvas.draw_line(point, (point + spark_direction * 3.0).round(), Color(color, color.a * spark_alpha), 1.0, false)
+		canvas.draw_rect(Rect2(point, Vector2(2, 2)), Color(COLOR_BONE, spark_alpha * 0.8))
 
 
 func _draw_death_burst(canvas: CanvasItem, position: Vector2, progress: float, edge: Color, core: Color) -> void:
@@ -458,7 +465,7 @@ func _draw_mark_indicator(canvas: CanvasItem, frame: Dictionary, world_view: Ref
 	var bracket := Rect2(dot - Vector2(half_extent, 4.0), Vector2(half_extent * 2.0, 8.0))
 	for segment in CombatMarksScript.corner_bracket_segments(bracket, 3.0):
 		canvas.draw_line(segment[0], segment[1], COLOR_AMBER, 2.0)
-	canvas.draw_circle(dot, 2.0, COLOR_AMBER)
+	canvas.draw_colored_polygon(PackedVector2Array([dot + Vector2(0,-3), dot + Vector2(3,0), dot + Vector2(0,3), dot + Vector2(-3,0)]), COLOR_AMBER)
 
 
 func _draw_pointer_target_indicator(canvas: CanvasItem, frame: Dictionary, world_view: RefCounted) -> void:

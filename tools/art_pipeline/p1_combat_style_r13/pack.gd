@@ -284,7 +284,19 @@ func _manifests() -> void:
 	legacy_textures.tower.path = resource_prefix + "tower.png"
 	legacy_textures.enemies.path = resource_prefix + "legacy_enemies.png"
 	_write_json("legacy_atlas.json", {"schema_version": 1, "native_view": [640, 360], "textures": legacy_textures, "sprites": legacy_sprites, "source_atlas": "res://art/production/p1/calibration_v01/atlas.json"})
-	DirAccess.copy_absolute(ProjectSettings.globalize_path("res://art/production/p1/scene_rework_v01/layout.json"), output.path_join("layout.json"))
+	var layout := _json("res://art/production/p1/scene_rework_v01/layout.json")
+	# Whole-object collision needs five pixels more clearance at EncounterOrigin.
+	# Preserve the historical source and reproduce this sole shared placement edit.
+	if layout.structures[6].id != "ruin.wall_corner" or layout.structures[6].feet != [733.0, 557.0]:
+		errors.append("Unexpected source wall-corner placement")
+		return
+	layout.structures[6].feet = [738.0, 557.0]
+	var room_overrides := _json(DOCS + "room_structure_overrides.json")
+	if room_overrides.is_empty():
+		errors.append("Missing authored room structure overrides")
+	else:
+		layout["room_structure_overrides"] = room_overrides
+		_write_json("layout.json", layout)
 
 func _finish() -> void:
 	var public_samples := samples.duplicate(true)

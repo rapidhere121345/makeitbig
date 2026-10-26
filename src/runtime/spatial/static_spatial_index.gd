@@ -10,6 +10,9 @@ extends RefCounted
 ## validation gate; resolvers validate before calling through.
 
 const SCHEMA_VERSION: int = 1
+## Far above every narrowphase epsilon (1e-4) and float error, so inclusive
+## tangent and epsilon contacts always stay inside the broadphase.
+const BROADPHASE_MARGIN: float = 0.01
 
 const Shape := preload("res://src/runtime/geometry/spatial_shape.gd")
 const Sweep := preload("res://src/runtime/geometry/spatial_sweep.gd")
@@ -25,6 +28,10 @@ var _asset_id := ""
 var _surfaces: Array[Dictionary] = []
 var _surfaces_by_id: Dictionary = {}
 var _surfaces_by_channel: Dictionary = {}
+## Conservative per-channel AABBs (min_x, min_y, max_x, max_y per surface) in the
+## exact order of _surfaces_by_channel. Built once with the immutable index; used
+## only to skip surfaces that cannot reach a query, never to decide a contact.
+var _bounds_by_channel: Dictionary = {}
 var _movement_boundary: Dictionary = {}
 var _errors: Array[String] = []
 var _valid := false
@@ -65,6 +72,11 @@ func _init(asset: Variant = null) -> void:
 		(_surfaces_by_channel[channel] as Array).sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 			return String(left["id"]) < String(right["id"])
 		)
+		var flat := PackedFloat64Array()
+		for surface: Dictionary in _surfaces_by_channel[channel]:
+			var box := _shape_bounds(surface["shape"])
+			flat.append_array(PackedFloat64Array([box.position.x, box.position.y, box.end.x, box.end.y]))
+		_bounds_by_channel[channel] = flat
 	_valid = true
 
 
@@ -108,7 +120,13 @@ func sweep(channel: StringName, start: Vector2, displacement: Vector2, radius: f
 		return contacts
 	if not (start.is_finite() and displacement.is_finite()) or not is_finite(radius) or radius < 0.0:
 		return contacts
-	for surface: Dictionary in _surfaces_by_channel.get(channel, []):
+	var reach := Rect2(start, Vector2.ZERO).expand(start + displacement).grow(radius + BROADPHASE_MARGIN)
+	var sweep_surfaces: Array = _surfaces_by_channel.get(channel, [])
+	var sweep_bounds: PackedFloat64Array = _bounds_by_channel.get(channel, PackedFloat64Array())
+	for index in sweep_surfaces.size():
+		if _outside(sweep_bounds, index, reach):
+			continue
+		var surface: Dictionary = sweep_surfaces[index]
 		var raw := _sweep_shape(surface["shape"], start, displacement, radius)
 		if raw.is_empty():
 			continue
@@ -123,7 +141,13 @@ func overlaps(channel: StringName, position: Vector2, radius: float) -> Array:
 		return contacts
 	if not position.is_finite() or not is_finite(radius) or radius < 0.0:
 		return contacts
-	for surface: Dictionary in _surfaces_by_channel.get(channel, []):
+	var reach := Rect2(position, Vector2.ZERO).grow(radius + BROADPHASE_MARGIN)
+	var overlap_surfaces: Array = _surfaces_by_channel.get(channel, [])
+	var overlap_bounds: PackedFloat64Array = _bounds_by_channel.get(channel, PackedFloat64Array())
+	for index in overlap_surfaces.size():
+		if _outside(overlap_bounds, index, reach):
+			continue
+		var surface: Dictionary = overlap_surfaces[index]
 		var overlap := Shape.circle_shape_overlap(position, radius, surface["shape"])
 		if not bool(overlap["overlaps"]):
 			continue
@@ -226,6 +250,23 @@ static func _boundary_snapshot(boundary: Dictionary) -> Dictionary:
 				"half_height": float(boundary["half_height"]),
 			}
 	return {}
+
+
+static func _shape_bounds(shape: Dictionary) -> Rect2:
+	if String(shape["kind"]) == "circle":
+		var center: Vector2 = shape["center"]
+		var extent := float(shape["radius"])
+		return Rect2(center - Vector2(extent, extent), Vector2(extent, extent) * 2.0)
+	var points: PackedVector2Array = shape["points"]
+	var box := Rect2(points[0], Vector2.ZERO)
+	for point: Vector2 in points:
+		box = box.expand(point)
+	return box
+
+
+static func _outside(bounds: PackedFloat64Array, index: int, reach: Rect2) -> bool:
+	var at := index * 4
+	return bounds[at] > reach.end.x or bounds[at + 2] < reach.position.x or bounds[at + 1] > reach.end.y or bounds[at + 3] < reach.position.y
 
 
 static func _sweep_shape(shape: Dictionary, start: Vector2, displacement: Vector2, radius: float) -> Dictionary:

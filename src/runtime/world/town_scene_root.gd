@@ -6,6 +6,8 @@ extends Node2D
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const EnvironmentBaker := preload("res://src/runtime/world/environment_object_baker.gd")
 const EnvironmentDefinition := preload("res://src/runtime/world/environment_object_definition.gd")
+const PrimitiveFadeScript := preload("res://src/presentation/occlusion/primitive_fade_controller.gd")
+const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
 const GROUPS: Array[String] = ["Ground", "GroundEffects", "SortRoot", "Foreground", "GeometrySources", "Sockets"]
 const LAYERS_MANIFEST := "res://content/rooms/town/layers/manifest.json"
 
@@ -57,6 +59,10 @@ func validate_contract(expected: Dictionary = {}) -> Dictionary:
 		if not get_node_or_null(group) is Node2D:
 			errors.append("missing_native_group:" + group)
 	errors.append_array(_spatial_source_errors())
+	var primitive_scan: Dictionary = _primitive_fade_scan()
+	errors.append_array(primitive_scan.errors)
+	var paired_scan: Dictionary = _paired_reveal_scan()
+	errors.append_array(paired_scan.errors)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors, "value": {}}
 	if scene_id.is_empty() or world_asset_id.is_empty() or gameplay_source.is_empty() or presentation_source.is_empty():
@@ -85,6 +91,8 @@ func validate_contract(expected: Dictionary = {}) -> Dictionary:
 		"spatial_manifest": manifest.snapshot(), "unknown_underplate": "opaque" if modular_environment_objects else "transparent",
 		"ground_source_path": modular_underplate_path if modular_environment_objects else "res://content/rooms/town/layers/ground.png",
 		"supports_cutaway": true, "supports_fade": not modular_environment_objects,
+		"primitive_fade_bindings": primitive_scan.bindings,
+		"paired_reveal_bindings": paired_scan.bindings,
 	}
 	for key: String in expected:
 		if contract.has(key) and contract[key] != expected[key]:
@@ -115,6 +123,17 @@ func derive_spatial_manifest() -> Dictionary:
 				var fingerprint := _visual_fingerprint(node as Sprite2D, group, image_records)
 				errors.append_array(fingerprint.errors)
 				binding.source = "town.modular.visual.v1:" + String(fingerprint.value)
+			elif String(node.get_meta("reveal_policy", "")) == PrimitiveFadeScript.POLICY:
+				## Native regional opt-in: only explicitly opted-in pieces gain a
+				## source; unconfigured legacy native bindings keep their exact
+				## historical shape, and any error below voids the whole payload.
+				var fade := _native_fade_fingerprint(node)
+				errors.append_array(fade.errors)
+				binding.source = "town.native.fade.v1:" + String(fade.value)
+			elif String(node.get_meta("reveal_policy", "")) == PairedRevealScript.POLICY:
+				var paired := _native_paired_fingerprint(node)
+				errors.append_array(paired.errors)
+				binding.source = "town.native.paired.v1:" + String(paired.value)
 			bindings.append(binding)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors, "value": {}}
@@ -138,6 +157,7 @@ func derive_spatial_manifest() -> Dictionary:
 	var sockets: Array[Dictionary] = []
 	var facilities: Array[Dictionary] = []
 	var residents: Array[Dictionary] = []
+	var gateways: Array[Dictionary] = []
 	for node: Marker2D in get_node("Sockets").get_children():
 		var kind := String(node.get_meta("kind", ""))
 		var id := String(node.get_meta("id", ""))
@@ -150,17 +170,24 @@ func derive_spatial_manifest() -> Dictionary:
 				"radius": float(node.get_meta("radius", 48)), "landmark_offset_y": float(node.get_meta("landmark_offset_y", -112)), "order": float(node.get_meta("order", 0)), "locked": bool(node.get_meta("locked", false))})
 		elif kind == "resident":
 			residents.append({"id": id, "position": position, "role": String(node.get_meta("role", "")), "radius": 7.0})
+		elif kind == "exit" and node.has_meta("gateway_action"):
+			gateways.append({"id": id, "position": position, "label": String(node.get_meta("label", id)),
+				"radius": float(node.get_meta("radius", 48)), "action": String(node.get_meta("gateway_action")), "order": float(node.get_meta("order", 0))})
 	var routes := {}
 	for route: Node2D in get_node("GeometrySources/Routes").get_children():
 		var points: Array = []
 		for point: Marker2D in route.get_children():
 			points.append(_pair(point.position))
 		routes[String(route.name)] = points
-	return {"coordinate_convention": {"units": "design_pixel", "up": "negative_y", "scale": 1.0},
+	var manifest := {"coordinate_convention": {"units": "design_pixel", "up": "negative_y", "scale": 1.0},
 		"stable_bindings": bindings, "traversal_profiles": [], "regions_and_portals": [], "spawn_interaction_exit_sockets": sockets,
 		"gameplay_spatial_metadata": {"room_kind": "town", "geometry_source": "town.native.v1", "coordinate_precision": 1.0 / 64.0, "world_size": _pair(world_size),
 			"view_size": _pair(view_size), "hero_screen_anchor": _pair(hero_screen_anchor), "hero_radius": hero_radius,
 			"facilities": facilities, "residents": residents, "routes": routes, "static_geometry": geometry}}
+	## Only present when the scene authors a gate, so gateless manifests keep their digest.
+	if not gateways.is_empty():
+		manifest["gameplay_spatial_metadata"]["gateways"] = gateways
+	return manifest
 
 
 ## Coordinates below are authored directly in root space. Only leaves may
@@ -218,9 +245,19 @@ func _visual_fingerprint(sprite: Sprite2D, group: String, images: Dictionary) ->
 		"rank": int(sprite.get_meta("sort_rank", 0)), "stable_id": String(sprite.get_meta("sort_stable_id", sprite.get_meta("binding_id", ""))),
 		"centered": sprite.centered, "policy": policy, "full": {},
 	}
-	for role: String in (["full", "variant", "mask"] if policy == "authored_variant" else ["full"]):
+	if policy == PrimitiveFadeScript.POLICY:
+		record["volumes"] = PrimitiveFadeScript.volumes_payload(sprite.get_meta("occlusion_volumes", []))
+	elif policy == PairedRevealScript.POLICY:
+		var rect: Rect2 = sprite.get_meta("occlusion_rect", Rect2())
+		record["occlusion_rect"] = [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+	var roles: Array[String] = ["full"]
+	if policy == "authored_variant":
+		roles = ["full", "variant", "mask"]
+	elif policy == PairedRevealScript.POLICY:
+		roles = ["full", "variant"]
+	for role: String in roles:
 		var path := full_path if role == "full" else String(sprite.get_meta("reveal_" + role + "_path", ""))
-		if role == "full" and policy == "authored_variant" and String(sprite.get_meta("reveal_full_path", "")) != full_path:
+		if role == "full" and policy in ["authored_variant", PairedRevealScript.POLICY] and String(sprite.get_meta("reveal_full_path", "")) != full_path:
 			errors.append("invalid_modular_full_reference:" + String(sprite.name))
 		if not images.has(path):
 			images[path] = _image_fingerprint(path, sprite.texture if role == "full" else null)
@@ -247,6 +284,98 @@ static func _image_fingerprint(path: String, supplied: Texture2D = null) -> Dict
 	context.start(HashingContext.HASH_SHA256)
 	context.update(image.get_data())
 	return {"path": path, "size": [image.get_width(), image.get_height()], "rgba8_sha256": context.finish().hex_encode()}
+
+
+## Native regional opt-in fingerprint for one explicit primitive_fade piece:
+## policy plus the canonical WORLD-space volumes. Unconfigured legacy pieces
+## never enter here, and every volume is validated fail-closed BEFORE any
+## digest exists — a malformed volume voids the whole manifest payload.
+func _native_fade_fingerprint(node: Node) -> Dictionary:
+	var errors: Array[String] = []
+	var id := String(node.get_meta("binding_id", String(node.name)))
+	if not node is Sprite2D:
+		errors.append("invalid_native_fade_piece:" + id)
+		return {"errors": errors, "value": ""}
+	var sprite := node as Sprite2D
+	if sprite.has_meta("reveal_variant_path") or sprite.has_meta("reveal_full_path"):
+		errors.append("primitive_fade_policy_conflict:" + id)
+		return {"errors": errors, "value": ""}
+	var volumes: Variant = sprite.get_meta("occlusion_volumes", [])
+	if not volumes is Array or (volumes as Array).is_empty():
+		errors.append("missing_modular_occlusion_volumes:" + id)
+		return {"errors": errors, "value": ""}
+	for volume: Variant in volumes:
+		var invalid := PrimitiveFadeScript._validate_volume(volume)
+		if not invalid.is_empty():
+			errors.append(invalid + ":" + id)
+	if not errors.is_empty():
+		return {"errors": errors, "value": ""}
+	return {"errors": errors, "value": SpatialManifestScript.digest_payload_sha256(
+		{"binding_id": id, "policy": PrimitiveFadeScript.POLICY, "volumes": PrimitiveFadeScript.volumes_payload(volumes)})}
+
+
+## Native whole-object opt-in fingerprint for one explicit paired_reveal
+## piece: policy, both texture references and the canonical WORLD-space
+## detection rect. Every meta is validated fail-closed BEFORE any digest
+## exists — a malformed rect or a conflicting meta voids the whole payload.
+func _native_paired_fingerprint(node: Node) -> Dictionary:
+	var errors: Array[String] = []
+	var id := String(node.get_meta("binding_id", String(node.name)))
+	if not node is Sprite2D:
+		errors.append("invalid_paired_reveal_piece:" + id)
+		return {"errors": errors, "value": ""}
+	var sprite := node as Sprite2D
+	errors.append_array(_paired_piece_errors(sprite, id))
+	if not errors.is_empty():
+		return {"errors": errors, "value": ""}
+	var rect: Rect2 = sprite.get_meta("occlusion_rect", Rect2())
+	return {"errors": errors, "value": SpatialManifestScript.digest_payload_sha256(
+		{"binding_id": id, "policy": PairedRevealScript.POLICY,
+			"full": String(sprite.get_meta("texture_path", "")),
+			"variant": String(sprite.get_meta("reveal_variant_path", "")),
+			"occlusion_rect": [rect.position.x, rect.position.y, rect.size.x, rect.size.y]})}
+
+
+## Fail-closed meta checks shared by the modular layer scan, the native
+## fingerprint and the paired binding scan. A paired piece must carry both
+## texture paths and a finite, non-degenerate WORLD detection rect, and must
+## not carry the other policies' metas.
+func _paired_piece_errors(sprite: Sprite2D, id: String) -> Array[String]:
+	var errors: Array[String] = []
+	if sprite == null:
+		return ["invalid_paired_reveal_piece:" + id]
+	if sprite.has_meta("reveal_mask_path") or sprite.has_meta("occlusion_volumes"):
+		errors.append("paired_reveal_policy_conflict:" + id)
+	if String(sprite.get_meta("reveal_full_path", "")).is_empty() or String(sprite.get_meta("reveal_variant_path", "")).is_empty():
+		errors.append("missing_paired_reveal_paths:" + id)
+	elif String(sprite.get_meta("reveal_full_path", "")) != String(sprite.get_meta("texture_path", "")):
+		errors.append("invalid_paired_full_reference:" + id)
+	var rect_error := PairedRevealScript.detection_rect_error(sprite.get_meta("occlusion_rect", null), null)
+	if not rect_error.is_empty():
+		errors.append(rect_error + ":" + id)
+	return errors
+
+
+## Pieces may opt into paired_reveal individually — native authors stamp the
+## same metas the baker emits. List the opted-in bindings for the honest
+## whole-object contract and fail closed on any malformed piece.
+func _paired_reveal_scan() -> Dictionary:
+	var errors: Array[String] = []
+	var bindings: Array[String] = []
+	for group: String in _visual_groups():
+		var parent := get_node_or_null(group)
+		if parent == null:
+			continue
+		for node: Node in parent.get_children():
+			if String(node.get_meta("reveal_policy", "")) != PairedRevealScript.POLICY:
+				continue
+			var id := String(node.get_meta("binding_id", String(node.name)))
+			var piece_errors := _paired_piece_errors(node as Sprite2D, id)
+			errors.append_array(piece_errors)
+			if piece_errors.is_empty():
+				bindings.append(id)
+	bindings.sort()
+	return {"errors": errors, "bindings": bindings}
 
 
 ## Modular reveal requires a real, fully opaque world-sized lower layer.
@@ -287,9 +416,52 @@ func _modular_layer_errors() -> Array[String]:
 				# bypass the shared sort domain or alter full-state pixels.
 				if node.z_index != 0 or not node.z_as_relative or not node.visible or node.modulate != Color.WHITE or node.self_modulate != Color.WHITE or node.material != null:
 					errors.append("unsupported_modular_visual_override:" + String(node.name))
-				if node.get_meta("reveal_policy", "") not in ["none", "authored_variant"]:
+				var policy := String(node.get_meta("reveal_policy", ""))
+				if policy not in ["none", "authored_variant", PrimitiveFadeScript.POLICY, PairedRevealScript.POLICY]:
 					errors.append("missing_modular_reveal_policy:" + String(node.name))
+				elif policy == PrimitiveFadeScript.POLICY:
+					var volumes: Variant = node.get_meta("occlusion_volumes", [])
+					if not volumes is Array or (volumes as Array).is_empty():
+						errors.append("missing_modular_occlusion_volumes:" + String(node.name))
+					if node.has_meta("reveal_variant_path") or node.has_meta("reveal_full_path"):
+						errors.append("primitive_fade_policy_conflict:" + String(node.name))
+				elif policy == PairedRevealScript.POLICY:
+					errors.append_array(_paired_piece_errors(node as Sprite2D, String(node.name)))
 	return errors
+
+
+## Pieces may opt into primitive_fade individually — native authors stamp the
+## same metas the baker emits. List the opted-in bindings for the honest
+## regional contract and fail closed on absent volumes or variant conflicts.
+func _primitive_fade_scan() -> Dictionary:
+	var errors: Array[String] = []
+	var bindings: Array[String] = []
+	for group: String in _visual_groups():
+		var parent := get_node_or_null(group)
+		if parent == null:
+			continue
+		for node: Node in parent.get_children():
+			if String(node.get_meta("reveal_policy", "")) != PrimitiveFadeScript.POLICY:
+				continue
+			var id := String(node.get_meta("binding_id", String(node.name)))
+			var volumes: Variant = node.get_meta("occlusion_volumes", [])
+			if not volumes is Array or (volumes as Array).is_empty():
+				errors.append("missing_modular_occlusion_volumes:" + id)
+				continue
+			if node.has_meta("reveal_variant_path") or node.has_meta("reveal_full_path"):
+				errors.append("primitive_fade_policy_conflict:" + id)
+				continue
+			var malformed := false
+			for volume: Variant in volumes:
+				var invalid := PrimitiveFadeScript._validate_volume(volume)
+				if not invalid.is_empty():
+					errors.append(invalid + ":" + id)
+					malformed = true
+			if malformed:
+				continue
+			bindings.append(id)
+	bindings.sort()
+	return {"errors": errors, "bindings": bindings}
 
 
 func _check_source_transform(source: Node2D, allows_position: bool, errors: Array[String]) -> void:

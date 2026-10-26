@@ -32,7 +32,7 @@ metadata/geometry = {"type": "ring", "center": [640.0, 434.0], "inner_radius": 9
 [node name="Wall_corner0" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(271, 224)
-polygon = PackedVector2Array(46, 0, 33, 33, 0, 46, -33, 33, -46, 0, -33, -33, 0, -46, 33, -33)
+polygon = PackedVector2Array(-84.75, -54.1875, 84.75, -54.1875, 84.75, 6.9375, -84.75, 6.9375)
 metadata/binding_id = "combat/structure/ruin.wall_corner#0"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
@@ -40,7 +40,7 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Low_pier0" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(354, 237)
-polygon = PackedVector2Array(36, 0, 25, 25, 0, 36, -25, 25, -36, 0, -25, -25, 0, -36, 25, -25)
+polygon = PackedVector2Array(-84.75, -43.0625, 84.75, -43.0625, 84.75, 6.9375, -84.75, 6.9375)
 metadata/binding_id = "combat/structure/ruin.low_pier#0"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
@@ -48,7 +48,7 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Gate0" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(760, 229)
-polygon = PackedVector2Array(52, 0, 37, 37, 0, 52, -37, 37, -52, 0, -37, -37, 0, -52, 37, -37)
+polygon = PackedVector2Array(-81.9375, -44.4375, 81.9375, -44.4375, 81.9375, 6.9375, -81.9375, 6.9375)
 metadata/binding_id = "combat/structure/ruin.gate#0"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
@@ -56,15 +56,15 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Broken_wall0" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(699, 227)
-polygon = PackedVector2Array(44, 0, 31, 31, 0, 44, -31, 31, -44, 0, -31, -31, 0, -44, 31, -31)
+polygon = PackedVector2Array(-73.625, -69.4375, 73.625, -69.4375, 73.625, 6.9375, -73.625, 6.9375)
 metadata/binding_id = "combat/structure/ruin.broken_wall#0"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
 
 [node name="Low_pier1" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
-position = Vector2(762, 365)
-polygon = PackedVector2Array(36, 0, 25, 25, 0, 36, -25, 25, -36, 0, -25, -25, 0, -36, 25, -25)
+position = Vector2(832, 326)
+polygon = PackedVector2Array(-84.75, -43.0625, 84.75, -43.0625, 84.75, 6.9375, -84.75, 6.9375)
 metadata/binding_id = "combat/structure/ruin.low_pier#1"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
@@ -72,23 +72,23 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Broken_wall1" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(286, 539)
-polygon = PackedVector2Array(44, 0, 31, 31, 0, 44, -31, 31, -44, 0, -31, -31, 0, -44, 31, -31)
+polygon = PackedVector2Array(-73.625, -69.4375, 73.625, -69.4375, 73.625, 6.9375, -73.625, 6.9375)
 metadata/binding_id = "combat/structure/ruin.broken_wall#1"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
 
 [node name="Wall_corner1" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
-position = Vector2(733, 557)
-polygon = PackedVector2Array(46, 0, 33, 33, 0, 46, -33, 33, -46, 0, -33, -33, 0, -46, 33, -33)
+position = Vector2(814.1, 663.2)
+polygon = PackedVector2Array(-84.725, -54.1375, 84.7125, -54.1375, 84.7125, 6.925, -84.725, 6.925)
 metadata/binding_id = "combat/structure/ruin.wall_corner#1"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
 
 [node name="Low_pier2" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
-position = Vector2(601, 552)
-polygon = PackedVector2Array(36, 0, 25, 25, 0, 36, -25, 25, -36, 0, -25, -25, 0, -36, 25, -25)
+position = Vector2(563.8, 666.1)
+polygon = PackedVector2Array(-84.7375, -43.0375, 84.7, -43.0375, 84.7, 6.9625, -84.7375, 6.9625)
 metadata/binding_id = "combat/structure/ruin.low_pier#2"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
@@ -96,7 +96,7 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Gate1" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(532, 126)
-polygon = PackedVector2Array(52, 0, 37, 37, 0, 52, -37, 37, -52, 0, -37, -37, 0, -52, 37, -37)
+polygon = PackedVector2Array(-81.9375, -44.4375, 81.9375, -44.4375, 81.9375, 6.9375, -81.9375, 6.9375)
 metadata/binding_id = "combat/structure/ruin.gate#1"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
@@ -104,7 +104,7 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Wall_corner2" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(921, 549)
-polygon = PackedVector2Array(46, 0, 33, 33, 0, 46, -33, 33, -46, 0, -33, -33, 0, -46, 33, -33)
+polygon = PackedVector2Array(-84.75, -54.1875, 84.75, -54.1875, 84.75, 6.9375, -84.75, 6.9375)
 metadata/binding_id = "combat/structure/ruin.wall_corner#2"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
@@ -112,7 +112,7 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Broken_wall2" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(97, 174)
-polygon = PackedVector2Array(44, 0, 31, 31, 0, 44, -31, 31, -44, 0, -31, -31, 0, -44, 31, -31)
+polygon = PackedVector2Array(-73.625, -69.4375, 73.625, -69.4375, 73.625, 6.9375, -73.625, 6.9375)
 metadata/binding_id = "combat/structure/ruin.broken_wall#2"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
@@ -120,7 +120,7 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Low_pier3" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(872, 182)
-polygon = PackedVector2Array(36, 0, 25, 25, 0, 36, -25, 25, -36, 0, -25, -25, 0, -36, 25, -25)
+polygon = PackedVector2Array(-84.75, -43.0625, 84.75, -43.0625, 84.75, 6.9375, -84.75, 6.9375)
 metadata/binding_id = "combat/structure/ruin.low_pier#3"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
@@ -128,7 +128,7 @@ metadata/channels = {"movement": true, "navigation": false, "vision": false, "pr
 [node name="Tower" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
 visible = false
 position = Vector2(175, 405)
-polygon = PackedVector2Array(58, 0, 41, 41, 0, 58, -41, 41, -58, 0, -41, -41, 0, -58, 41, -41)
+polygon = PackedVector2Array(-79.1875, -48.625, 79.1875, -48.625, 79.1875, 6.9375, -79.1875, 6.9375)
 metadata/binding_id = "combat/structure/tower"
 metadata/source = "arena.static.convex.v1"
 metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}

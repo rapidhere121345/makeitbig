@@ -50,7 +50,7 @@ func _run() -> void:
 			"boss_id": "", "drop_tags": [],
 		}
 		_expect(not arena.enemies.is_empty(), "mounted fixture did not materialize its first encounter wave")
-		_expect(bool(arena.teleport_actor("ranger", arena._arena_rect().get_center()).get("ok", false)), "fixture failed to place player")
+		_expect(bool(arena.teleport_actor("ranger", arena._arena_rect().get_center() + Vector2(0, -36)).get("ok", false)), "fixture failed to place player")
 		var enemy = arena.enemies[0]
 		_expect(bool(arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(100.0, 0.0)).get("ok", false)), "fixture failed to place target")
 		enemy.health = 1.0e12
@@ -107,6 +107,24 @@ func _run() -> void:
 	_expect(advanced.ok, "real SimulationWorld advancement failed")
 	var next: Dictionary = visible._commit_actor_move("ranger", Vector2(4.0, 0.0))
 	_expect(bool(next.get("ok", false)) and int(visible.actor_registry.actor("ranger").last_movement_tick) == visible.sim_tick, "real SimulationWorld advancement did not permit the next movement")
+
+	# Exercise the mounted snapshot -> controller -> world-frame boundary. Defeat
+	# and an unfinished encounter must never lower the victory ward.
+	for state: Dictionary in [
+		{"over": false, "victory": false, "cleared": false},
+		{"over": true, "victory": false, "cleared": false},
+		{"over": true, "victory": true, "cleared": true},
+	]:
+		visible.room_rules.reset()
+		if state.over:
+			var projected: Dictionary = visible.room_rules.project_terminal(state.victory, false, 0.0, 0, 0)
+			_expect(bool(projected.get("ok", false)), "controlled terminal projection failed")
+		var ward_hash: String = visible._semantic_state_hash("ward_projection")
+		visible.refresh_presentation(0.0)
+		var ward_frame: Dictionary = visible.presentation.world_frame()
+		_expect(ward_frame.has("room_cleared") and bool(ward_frame.get("room_cleared", false)) == bool(state.cleared), "mounted world frame lost the victory-only ward state: " + str(state))
+		_expect(visible._semantic_state_hash("ward_projection") == ward_hash, "ward presentation changed gameplay authority")
+		print("WARD_FRAME state=", state, " actual=", ward_frame.get("room_cleared"), " authority_unchanged=", visible._semantic_state_hash("ward_projection") == ward_hash)
 
 	for runtime in runtimes:
 		var domain: WorldPresenter = runtime.scene_runtime.presenter

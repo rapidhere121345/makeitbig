@@ -67,7 +67,7 @@ func _test_successful_intent_clears_feedback(arena: Node) -> void:
 	_configure_enemies(arena)
 	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.sim_tick)
 	var target = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(70.0, 0.0))
+	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(70.0, 0.0))
 	var target_screen := _gameplay_to_screen(arena, target.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(target_screen, true), false, arena.gameplay_snapshot())
 	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
@@ -136,8 +136,8 @@ func _test_unavailable_skill_feedback_without_commands(arena: Node) -> void:
 func _test_assisted_rejection_cue(arena: Node) -> void:
 	_configure_enemies(arena)
 	var far = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % far.entity_id, arena.player_position + Vector2(260.0, 0.0))
-	arena.teleport_actor("enemy/%d" % arena.enemies[1].entity_id, arena.player_position + Vector2(300.0, 40.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(260.0, 0.0))
+	_place(arena, "enemy/%d" % arena.enemies[1].entity_id, arena.player_position + Vector2(300.0, 40.0))
 	arena.input_adapter.request_assisted_attack()
 	## Out-of-range assists queue at their target; the authority rejects them at
 	## cast time. Targeting rules are unchanged — assert the queue, then execute.
@@ -164,8 +164,8 @@ func _test_assisted_rejection_cue(arena: Node) -> void:
 func _test_pointer_out_of_range_notice(arena: Node) -> void:
 	_configure_enemies(arena)
 	var far = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % far.entity_id, arena.player_position + Vector2(260.0, 0.0))
-	arena.teleport_actor("enemy/%d" % arena.enemies[1].entity_id, arena.player_position + Vector2(300.0, 40.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(260.0, 0.0))
+	_place(arena, "enemy/%d" % arena.enemies[1].entity_id, arena.player_position + Vector2(300.0, 40.0))
 	var far_screen := _gameplay_to_screen(arena, far.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(far_screen, true), false, arena.gameplay_snapshot())
 	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Target out of range · Move closer to shoot",
@@ -181,8 +181,8 @@ func _test_assisted_indicator_snapshot_target(arena: Node) -> void:
 	_configure_enemies(arena)
 	var near = arena.enemies[0]
 	var far = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % near.entity_id, arena.player_position + Vector2(70.0, 0.0))
-	arena.teleport_actor("enemy/%d" % far.entity_id, arena.player_position + Vector2(120.0, 0.0))
+	_place(arena, "enemy/%d" % near.entity_id, arena.player_position + Vector2(70.0, 0.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(120.0, 0.0))
 	var state: Dictionary = arena.presentation.frame_builder.attack_target(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 	_expect(String(state.get("source", "")) == arena.ATTACK_SOURCE_ASSISTED
 		and int(state.get("target_entity_id", 0)) == int(near.entity_id),
@@ -193,7 +193,7 @@ func _test_assisted_indicator_snapshot_target(arena: Node) -> void:
 	var marked: Dictionary = fixture.cast(arena, "hunter_mark", int(far.entity_id))
 	_expect(bool(marked.get("accepted", false)) and int(fixture.player(arena).marked_entity_id) == int(far.entity_id),
 		"assisted snapshot: the domain did not establish the requested live mark")
-	arena.teleport_actor("enemy/%d" % far.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(90.0, 0.0))
 	var marked_state: Dictionary = arena.presentation.frame_builder.attack_target(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 	_expect(int(marked_state.get("target_entity_id", 0)) == int(far.entity_id),
 		"assisted snapshot: a live mark lost priority over plain nearest")
@@ -216,8 +216,16 @@ func _configure_enemies(arena: Node, skills: Array = ["piercing_arrow", "hunter_
 	_release_input_actions()
 	fixture.reset(arena, _room(), fixture.build({"d": 100.0}), skills)
 	fixture.drive(arena)
-	_expect(bool(arena.teleport_actor("ranger", arena._arena_rect().get_center()).get("ok", false)),
+	_expect(bool(_place(arena, "ranger", Vector2(880.0, 360.0)).get("ok", false)),
 		"input feedback fixture: the legal registry player placement failed")
+
+
+## This eastern lane leaves the exact +260 and +(300,40) range probes clear
+## of whole scenery. Every setup still passes through production validation.
+func _place(arena: Node, actor_id: String, position: Vector2) -> Dictionary:
+	var receipt: Dictionary = arena.teleport_actor(actor_id, position)
+	_expect(bool(receipt.get("ok", false)), "input feedback fixture: %s at %s rejected: %s" % [actor_id, position, receipt])
+	return receipt
 
 
 func _room() -> Dictionary:
