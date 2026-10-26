@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 from PIL import Image
 
+if __name__ == "__main__":  # -P / PYTHONSAFEPATH leaves the script directory off sys.path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build
 from contract import ALL_IDS, ANCHOR, CELL_SIZE, ENTRIES, GROUPS, MAX_COLORS, MAX_VISIBLE, PADDING
 

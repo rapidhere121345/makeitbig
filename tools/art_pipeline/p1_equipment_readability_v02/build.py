@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
-import json
 import os
 import shutil
 import sys
@@ -37,6 +36,9 @@ from types import ModuleType
 from typing import Any, Final
 
 from PIL import Image, ImageOps
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
 PIPELINE: Final = "p1_equipment_readability_v02"
 SCHEMA_VERSION: Final = 1
@@ -107,11 +109,12 @@ BRIDGE = load_bridge()
 ContractError = BRIDGE.contract_error_type()
 prepare_sprite = BRIDGE.prepare_sprite()
 verify_rgba_cell = BRIDGE.verify_rgba_cell()
-# Reviewed elementary helpers from the same modules: file digests and the exact
-# colour / rectangle parsing every P1 recipe already uses.
+# Reviewed elementary helpers from the same modules: the exact colour / rectangle
+# parsing every P1 recipe already uses.
 _REVIEWED = BRIDGE._modules()["build"]
 _REVIEWED_CONTRACT = BRIDGE._modules()["contract"]
-sha256_file = _REVIEWED.sha256_file
+sha256_file = common.sha256_file
+write_json = common.write_json
 parse_color = _REVIEWED.parse_color
 require_rect = _REVIEWED.require_rect
 
@@ -140,17 +143,7 @@ TECHNICAL_CONTRACT: Final = {
 
 
 def load_json(path: Path, label: str) -> dict[str, Any]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ContractError(f"cannot read {label} {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ContractError(f"{label} root must be an object")
-    return value
-
-
-def write_json(path: Path, value: Any) -> None:
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return common.load_json(path, label, ContractError)
 
 
 def hex_color(color: tuple[int, int, int]) -> str:

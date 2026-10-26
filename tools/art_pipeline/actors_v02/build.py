@@ -19,6 +19,9 @@ import tempfile
 
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[3]
 SOURCE = ROOT / "docs/art-production/actor-redraw-20261024/sources"
 OUT = ROOT / "art/production/p1/actors_v02"
@@ -48,12 +51,11 @@ ENEMY_FRAMES = [
 CONFIG_PATH = ROOT / "tools/art_pipeline/actors_v02/placement_overrides.json"
 
 
-def sha256(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+sha256 = common.sha256_file
 
 
 def write_json(path, value):
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+    common.write_json(path, value, ensure_ascii=True)
 
 
 def binarize(im):

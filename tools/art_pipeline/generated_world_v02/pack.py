@@ -61,6 +61,9 @@ from pathlib import Path
 
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG = Path(__file__).resolve().parent / "packing_config.json"
 MANIFEST_NAME = "assets.json"
@@ -80,19 +83,8 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def display_path(path: Path, root: Path) -> str:
-    try:
-        return str(path.resolve().relative_to(root.resolve()))
-    except ValueError:
-        return str(path.resolve())
+sha256_file = common.sha256_file
+display_path = common.display_path
 
 
 def res_path(output_dir: str, filename: str) -> str:

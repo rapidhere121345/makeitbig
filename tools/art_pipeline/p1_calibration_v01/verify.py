@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from pathlib import Path
@@ -12,6 +11,10 @@ from typing import Any
 
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
+if __name__ == "__main__":  # -P / PYTHONSAFEPATH leaves the script directory off sys.path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build
 
 
@@ -21,20 +24,11 @@ class VerificationFailed(RuntimeError):
         super().__init__("; ".join(errors[:3]))
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+_sha256_file = common.sha256_file
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        value = json.load(handle)
-    if not isinstance(value, dict):
-        raise ValueError(f"{path} root is not an object")
-    return value
+    return common.load_json(path)
 
 
 def _safe_output_path(output: Path, value: str) -> Path:
@@ -386,9 +380,7 @@ def _write_verification(manifest_path: Path, errors: list[str]) -> None:
         "errors": errors,
         "scope": "mechanical output properties only; not visual approval",
     }
-    with manifest_path.open("w", encoding="utf-8") as handle:
-        json.dump(manifest, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
+    common.write_json(manifest_path, manifest)
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -30,6 +30,9 @@ from typing import Any, Iterable
 
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
+
 PIPELINE = "p1_ranger_actions_v01"
 SCHEMA_VERSION = 1
 NATIVE_VIEW = (640, 360)
@@ -172,23 +175,11 @@ def hex_text(color: tuple[int, int, int, int]) -> str:
     return "#{:02x}{:02x}{:02x}{:02x}".format(*color)
 
 
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+sha256_file = common.sha256_file
 
 
 def load_json(path: Path) -> dict[str, Any]:
-    try:
-        with path.open("r", encoding="utf-8") as handle:
-            value = json.load(handle)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ConfigError(f"cannot read JSON {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ConfigError(f"{path} root must be an object")
-    return value
+    return common.load_json(path, "JSON", ConfigError)
 
 
 def color_distance(left: tuple[int, int, int, int], right: tuple[int, int, int, int]) -> float:
@@ -734,33 +725,18 @@ def _previous_artifact_paths(output: Path) -> list[Path]:
 def guard_output(output: Path, replace_generated: bool, texture_filename: str = TEXTURE_FILENAME) -> None:
     if not isinstance(texture_filename, str) or Path(texture_filename).name != texture_filename:
         raise ConfigError(f"texture filename must stay inside the output directory: {texture_filename!r}")
-    if not output.exists():
-        return
-    if not output.is_dir():
-        raise ConfigError(f"output exists and is not a directory: {output}")
-    existing = list(output.iterdir())
-    if not existing:
-        return
-    if not replace_generated:
-        raise ConfigError(
-            f"output directory is not empty: {output}; pass --replace-generated to replace only "
-            "manifest-owned files"
-        )
-    allowed = {path.resolve() for path in _previous_artifact_paths(output)}
     # The texture this build is about to write is owned by this build, even when
     # the previous manifest named it differently.
-    allowed.add((output.resolve() / texture_filename).resolve())
-    for item in existing:
-        if item.resolve() not in allowed:
-            raise ConfigError(f"refusing to replace unmanaged output entry: {item}")
-        if item.is_symlink():
-            raise ConfigError(f"refusing to replace symlinked output entry: {item}")
+    common.guard_generated_output(
+        output,
+        replace_generated,
+        _previous_artifact_paths,
+        ConfigError,
+        extra_allowed=[output.resolve() / texture_filename],
+    )
 
 
-def json_write(path: Path, value: Any) -> None:
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
+json_write = common.write_json
 
 
 def external_sources(

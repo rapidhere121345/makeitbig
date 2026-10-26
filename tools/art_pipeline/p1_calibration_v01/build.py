@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import sys
@@ -14,6 +13,9 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from PIL import Image
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
 
 REQUIRED_TOP_LEVEL = (
@@ -140,23 +142,11 @@ def _background_distance(left: tuple[int, int, int, int], right: tuple[int, int,
     return math.sqrt(sum((a - b) * (a - b) for a, b in zip(left[:3], right[:3])))
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+_sha256_file = common.sha256_file
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    try:
-        with path.open("r", encoding="utf-8") as handle:
-            value = json.load(handle)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ConfigError(f"cannot read config {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ConfigError("config root must be an object")
-    return value
+    return common.load_json(path, "config", ConfigError)
 
 
 def validate_config(config: dict[str, Any]) -> None:
@@ -587,10 +577,7 @@ def _contact_sheet(
     return canvas
 
 
-def _json_write(path: Path, value: Any) -> None:
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
-        handle.write("\n")
+_json_write = common.write_json
 
 
 def _build_atlas_contract(
@@ -660,22 +647,7 @@ def _previous_artifact_paths(output: Path) -> list[Path]:
 
 
 def _guard_output(output: Path, replace_generated: bool) -> None:
-    if not output.exists():
-        return
-    if not output.is_dir():
-        raise ConfigError(f"output exists and is not a directory: {output}")
-    existing = [item for item in output.iterdir()]
-    if not existing:
-        return
-    if not replace_generated:
-        raise ConfigError(f"output directory is not empty: {output}; use --replace-generated for manifest-owned paths only")
-    allowed = {path.resolve() for path in _previous_artifact_paths(output)}
-    for item in existing:
-        resolved = item.resolve()
-        if resolved not in allowed:
-            raise ConfigError(f"refusing to replace unmanaged output entry: {item}")
-        if item.is_symlink():
-            raise ConfigError(f"refusing to replace symlinked output entry: {item}")
+    common.guard_generated_output(output, replace_generated, _previous_artifact_paths, ConfigError)
 
 
 def build_artifacts(config_path: Path, output: Path, *, replace_generated: bool = False) -> dict[str, Any]:

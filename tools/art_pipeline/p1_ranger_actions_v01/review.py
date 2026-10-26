@@ -20,6 +20,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+if __name__ == "__main__":  # -P / PYTHONSAFEPATH leaves the script directory off sys.path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build
 
 CHECKER_DARK = (42, 47, 54, 255)

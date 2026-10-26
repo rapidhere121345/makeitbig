@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from dataclasses import dataclass
@@ -12,6 +11,9 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
 
 EXPECTED_NATIVE_VIEW = (640, 360)
@@ -77,22 +79,10 @@ LAYOUT_STRUCTURE_IDS = set(ATLAS_CONTRACTS["ruins"].sprite_ids)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
-    try:
-        with path.open("r", encoding="utf-8") as handle:
-            value = json.load(handle)
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError(f"cannot read JSON {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ValueError(f"JSON root is not an object: {path}")
-    return value
+    return common.load_json(path)
 
 
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+_sha256 = common.sha256_file
 
 
 def _integer_pair(value: Any, name: str, errors: list[str]) -> tuple[int, int] | None:

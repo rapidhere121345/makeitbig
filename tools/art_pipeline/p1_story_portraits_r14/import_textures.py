@@ -4,17 +4,19 @@ The temporary project keeps editor scans away from concurrent test processes.
 This changes import metadata/cache only; authored PNG bytes are never rewritten.
 """
 import argparse
-import hashlib
 import json
 import os
 from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
 
-def sha(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+sha = common.sha256_file
 
 
 def main():

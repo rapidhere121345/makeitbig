@@ -4,10 +4,9 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
-import json
 import math
 import os
+import sys
 import tempfile
 from collections import deque
 from pathlib import Path
@@ -15,6 +14,10 @@ from typing import Any
 
 from PIL import Image, ImageOps
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
+if __name__ == "__main__":  # -P / PYTHONSAFEPATH leaves the script directory off sys.path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 from contract import ALL_IDS, ANCHOR, CELL_SIZE, ENTRIES, GROUPS, MAX_COLORS, MAX_VISIBLE, PADDING
 
 
@@ -22,22 +25,11 @@ class ContractError(ValueError):
     """Raised when inputs would make asset processing ambiguous or unsafe."""
 
 
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+sha256_file = common.sha256_file
 
 
 def load_json(path: Path, label: str) -> dict[str, Any]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ContractError(f"cannot read {label} {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ContractError(f"{label} root must be an object")
-    return value
+    return common.load_json(path, label, ContractError)
 
 
 def parse_color(value: Any, label: str) -> tuple[int, int, int]:
@@ -395,10 +387,6 @@ def _silhouette(image: Image.Image) -> Image.Image:
     return Image.merge("RGBA", (white, white, white, alpha))
 
 
-def _write_json(path: Path, value: Any) -> None:
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-
 def build(catalog_path: Path, recipe_path: Path, output: Path) -> Path:
     catalog_path = catalog_path.resolve()
     recipe_path = recipe_path.resolve()
@@ -456,7 +444,7 @@ def build(catalog_path: Path, recipe_path: Path, output: Path) -> Path:
             ],
             "sprites": sprites,
         }
-        _write_json(stage / "atlas.json", atlas)
+        common.write_json(stage / "atlas.json", atlas)
         artifact_names = [texture for _, texture, _ in GROUPS] + ["atlas.json", *qa.keys()]
         artifacts = []
         for name in artifact_names:
@@ -486,7 +474,7 @@ def build(catalog_path: Path, recipe_path: Path, output: Path) -> Path:
             },
             "technical_contract": {"cell": [CELL_SIZE, CELL_SIZE], "padding": PADDING, "max_visible": [MAX_VISIBLE, MAX_VISIBLE], "anchor": ANCHOR, "max_colors": MAX_COLORS, "alpha": "binary", "transparent_rgb": [0, 0, 0]},
         }
-        _write_json(stage / "manifest.json", manifest)
+        common.write_json(stage / "manifest.json", manifest)
         if output.exists():
             output.rmdir()
         os.replace(stage, output)

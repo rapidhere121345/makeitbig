@@ -1,16 +1,18 @@
 """Import only this pack, keeping editor writes out of the shared project."""
 import argparse
-import hashlib
 import json
 import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
-def sha(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+sha = common.sha256_file
 
 
 def main():

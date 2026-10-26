@@ -7,12 +7,14 @@ outputs in memory and compares without mutating production files.
 """
 from pathlib import Path
 from fractions import Fraction
-import hashlib
 import importlib.util
 import io
 import json
 import sys
 from PIL import Image
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 SOURCE = ROOT / 'docs/art-production/world-polish-20261025'
@@ -62,8 +64,8 @@ def compile_pack():
         entries[name] = {'path': 'res://art/production/p1/world_polish_v01/' + name + '.png',
                          'canvas': [w, h], 'anchor': [w//2, h//2 if name in ICONS else h-2],
                          'occupied_rect': [occupied[0], occupied[1], occupied[2]-occupied[0], occupied[3]-occupied[1]],
-                         'source_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
-                         'prompt_sha256': hashlib.sha256((SOURCE/'prompts'/(name+'.txt')).read_bytes()).hexdigest(),
+                         'source_sha256': common.sha256_file(path),
+                         'prompt_sha256': common.sha256_file(SOURCE/'prompts'/(name+'.txt')),
                          'source_box': list(box), 'scale': [scale.numerator, scale.denominator]}
     outputs['assets.json'] = json_bytes({'schema_version': 1, 'generator': 'built-in image_gen; original assets',
                                        'packing': 'alpha>=240; uniform rational nearest; no alpha border fix',

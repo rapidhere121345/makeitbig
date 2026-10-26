@@ -17,10 +17,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+import sys
 from typing import Any
 
 from PIL import Image, ImageOps
 
+if __name__ == "__main__":  # -P / PYTHONSAFEPATH leaves the script directory off sys.path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import contract
 
 # Review labels, matching the sibling packages' contact-sheet vocabulary so a

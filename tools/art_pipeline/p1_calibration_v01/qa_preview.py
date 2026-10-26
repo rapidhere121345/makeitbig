@@ -7,15 +7,17 @@ No new sprites, painting, generated substitutes or gameplay changes.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
-def sha(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+sha = common.sha256_file
 
 
 def tower_upper_overlaps(atlas: dict, hero_feet: tuple[int, int], tower_feet: tuple[int, int]) -> bool:

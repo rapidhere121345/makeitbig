@@ -10,7 +10,11 @@ from pathlib import Path
 import hashlib
 import json
 import math
+import sys
 from PIL import Image
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 SOURCE = ROOT / 'docs/art-production/generated-world-v02/sources'
@@ -19,12 +23,11 @@ NAMES = ('mira', 'iven', 'taren', 'leia', 'oren')
 THRESHOLD = 240
 
 
-def digest(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+digest = common.sha256_file
 
 
 def write_json(path, value):
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + '\n')
+    common.write_json(path, value, ensure_ascii=True)
 
 
 def main():

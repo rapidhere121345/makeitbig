@@ -9,12 +9,16 @@ cd "$MIB_PROJECT_ROOT"
 python3 -B scripts/check_english.py
 python3 -B tools/test_check_english.py
 python3 -B tools/test_devbox_preflight.py
-python3 -B -m unittest discover -s tools/art_pipeline/generated_world_v02/tests
+# Every art-pipeline test directory (shared helpers plus one per pipeline) runs here.
+# actors_v02/tests/test_pack.py is a standalone script and runs on its own line below.
+for ART_TESTS_DIR in tools/art_pipeline/tests tools/art_pipeline/*/tests; do
+  [[ "$ART_TESTS_DIR" == */actors_v02/tests ]] && continue
+  python3 -B -m unittest discover -s "$ART_TESTS_DIR"
+done
 python3 -B tools/art_pipeline/generated_world_v02/pack.py --verify
 python3 -B tools/art_pipeline/actors_v02/tests/test_pack.py
 python3 -B tools/art_pipeline/actors_v02/build.py --verify
 python3 -B tools/art_pipeline/world_polish_v01/build.py --verify
-python3 -B -m unittest discover -s tools/art_pipeline/world_expansion_v01/tests
 python3 -B tools/art_pipeline/world_expansion_v01/pack.py --verify
 python3 -B tools/art_pipeline/world_expansion_v01/pack.py --config tools/art_pipeline/town_order_v01/packing_config.json --verify
 

@@ -4,9 +4,12 @@ Run from project root: python tools/art_pipeline/p1_ui_style_r13/build.py
 No generation/noise/gradient synthesis happens in this packing step.
 """
 from pathlib import Path
-import hashlib
 import json
+import sys
 from PIL import Image, ImageEnhance
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / "art/production/p1/ui_style_r13"
@@ -14,8 +17,7 @@ DOC = ROOT / "docs/art-production/p1-ui-style-r13"
 SOURCE = DOC / "sources/hearth_material_atlas_v01.png"
 
 
-def digest(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+digest = common.sha256_file
 
 
 def main():

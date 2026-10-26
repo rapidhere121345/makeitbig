@@ -24,7 +24,6 @@ separate new directory; the review derivatives are never written into the pack.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from pathlib import Path
@@ -32,6 +31,10 @@ from typing import Any
 
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # art_pipeline/common.py
+import common  # noqa: E402
+if __name__ == "__main__":  # -P / PYTHONSAFEPATH leaves the script directory off sys.path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 import contract
 import review
 from bridge import contract_error_type, prepare_sprite
@@ -54,25 +57,12 @@ TECHNICAL_CONTRACT = {
 }
 
 
-def sha256_file(path: Path) -> str:
-    """The reviewed early-loop file digest, reached through the same bridge."""
-    from bridge import _modules
-
-    return _modules()["build"].sha256_file(path)
+sha256_file = common.sha256_file
+write_json = common.write_json
 
 
 def load_json(path: Path, label: str) -> dict[str, Any]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ContractError(f"cannot read {label} {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ContractError(f"{label} root must be an object")
-    return value
-
-
-def write_json(path: Path, value: Any) -> None:
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return common.load_json(path, label, ContractError)
 
 
 def write_png(image: Image.Image, path: Path) -> None:
