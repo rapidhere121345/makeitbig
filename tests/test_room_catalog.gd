@@ -114,9 +114,10 @@ func _test_runtime_has_no_layout_manifest_branch() -> void:
 	_expect(not source.contains("_manifest_path_for_layout"), "runtime: hard-coded manifest resolver still exists")
 	_expect(not source.contains("match layout_id"), "runtime: layout match branch still exists")
 	var main_source := FileAccess.get_file_as_string("res://src/game/main.gd")
-	_expect(main_source.contains("room_catalog.spawn_offsets"), "main: spawn placement is not delegated to RoomCatalog")
-	_expect(not main_source.contains("match id"), "main: layout-specific spawn branch still exists")
-	_expect(not main_source.contains("first_hunt_clear"), "main: room-specific spawn profile leaked back into runtime code")
+	var geometry_source := FileAccess.get_file_as_string("res://src/game/combat_room/room_geometry.gd")
+	_expect(geometry_source.contains("room_catalog.spawn_offsets"), "main: spawn placement is not delegated to RoomCatalog")
+	_expect(not main_source.contains("match id") and not geometry_source.contains("match id"), "main: layout-specific spawn branch still exists")
+	_expect(not main_source.contains("first_hunt_clear") and not geometry_source.contains("first_hunt_clear"), "main: room-specific spawn profile leaked back into runtime code")
 
 
 func _has_fragment(values: Array[String], fragment: String) -> bool:
