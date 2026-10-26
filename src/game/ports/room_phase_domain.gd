@@ -40,11 +40,11 @@ func update_room_rules() -> void:
 
 
 func refresh_hazard_states() -> void:
-	_owner._hazards._refresh_hazard_states_tick()
+	_owner._refresh_hazard_states_tick()
 
 
 func collect_commands() -> Array[Dictionary]:
-	return _owner._player_commands._simulation_collect_commands()
+	return _owner._simulation_collect_commands()
 
 
 func route_commands(commands: Array[Dictionary]) -> Dictionary:
@@ -52,19 +52,19 @@ func route_commands(commands: Array[Dictionary]) -> Dictionary:
 
 
 func update_enemies() -> void:
-	_owner._enemy_ai._update_enemies_tick()
+	_owner._update_enemies_tick()
 
 
 func advance_projectiles() -> void:
-	_owner._arrows._advance_piercing_projectiles_tick()
+	_owner._advance_piercing_projectiles_tick()
 
 
 func resolve_hazard_hits() -> void:
-	_owner._hazards._resolve_hazard_hits_tick()
+	_owner._resolve_hazard_hits_tick()
 
 
 func check_battle_end() -> void:
-	_owner._terminal._check_battle_end()
+	_owner._check_battle_end()
 
 
 func room_terminal_locked() -> bool:

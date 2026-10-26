@@ -628,7 +628,7 @@ func _test_rectangle_runtime_does_not_detour(arena: Node, failures: Array[String
 func _test_room_completion_and_validation(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
 	_defeat_target(arena, arena.enemies[0], failures)
-	arena._terminal._check_battle_end()
+	arena._check_battle_end()
 	_expect(arena.battle_over and arena.battle_victory, "normal clear room did not win with no living targets", failures)
 	arena = _configure_room(arena, "rectangle_arena", "timed_break", ["melee_pursuer"])
 	fixture.advance_to(arena, 901)
@@ -637,7 +637,7 @@ func _test_room_completion_and_validation(arena: Node, failures: Array[String]) 
 	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", ["melee_pursuer", "fan_ranged"])
 	var elite = arena.enemies[0]
 	_defeat_target(arena, elite, failures)
-	arena._terminal._check_battle_end()
+	arena._check_battle_end()
 	_expect(arena.battle_over and arena.battle_victory and arena.enemies.size() == 1, "hunt_elite did not use the first enemy as authoritative objective", failures)
 	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", [], "threshold_colossus")
 	_expect(arena.boss != null and arena.enemies.size() == 1 and arena.boss.entity_id == 1, "Boss room did not spawn authoritative threshold colossus", failures)
@@ -651,7 +651,7 @@ func _test_room_completion_and_validation(arena: Node, failures: Array[String]) 
 func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [], [], ["equipment_general", "damage", "add_dice", "rewrite_dice", "refine_dice"])
 	_defeat_target(arena, arena.enemies[0], failures)
-	arena._terminal._check_battle_end()
+	arena._check_battle_end()
 	_expect(arena.battle_victory, "embedded rewards: clear room did not remain a victory", failures)
 	_expect(arena.room_reward_snapshot == {
 		"add_dice_delta": 1,
@@ -665,7 +665,7 @@ func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 	fixture.advance_to(arena, 901)
 	arena._update_room_rules_tick()
 	_defeat_target(arena, arena.enemies[0], failures)
-	arena._terminal._check_battle_end()
+	arena._check_battle_end()
 	_expect(arena.battle_victory and arena.room_reward_snapshot == {
 		"add_dice_delta": 0,
 		"rewrite_dice_delta": 0,
@@ -751,11 +751,11 @@ func _test_elite_rules(arena: Node, failures: Array[String]) -> void:
 	arena.teleport_actor("ranger", arena._arena_rect().get_center() + Vector2.from_angle(-PI * 0.75) * 175.0)
 	elite.health = 1.0
 	_cast_and_resolve_arrow(arena)
-	arena._terminal._check_battle_end()
+	arena._check_battle_end()
 	_expect(arena.reinforcements_summoned and arena.enemies.size() == 1 and arena.enemies[0].entity_id == 2, "lethal threshold crossing skipped the reinforcement", failures)
 	_expect(not arena.battle_over, "hunt elite ended before summoned reinforcement was cleared", failures)
 	_defeat_target(arena, arena.enemies[0], failures)
-	arena._terminal._check_battle_end()
+	arena._check_battle_end()
 	_expect(arena.battle_over and arena.battle_victory, "hunt elite did not finish after summoned reinforcement was cleared", failures)
 
 

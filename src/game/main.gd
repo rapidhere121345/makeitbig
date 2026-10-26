@@ -900,6 +900,33 @@ func _simulation_set_elapsed(value: float) -> void:
 	elapsed = value
 
 
+## Fixed-tick phase hooks. RoomPhaseDomain dispatches to these owner methods so
+## the phase logic stays overridable by test subclasses; the work lives in the
+## room collaborators.
+func _simulation_collect_commands() -> Array[Dictionary]:
+	return _player_commands._simulation_collect_commands()
+
+
+func _update_enemies_tick() -> void:
+	_enemy_ai._update_enemies_tick()
+
+
+func _advance_piercing_projectiles_tick() -> void:
+	_arrows._advance_piercing_projectiles_tick()
+
+
+func _refresh_hazard_states_tick() -> void:
+	_hazards._refresh_hazard_states_tick()
+
+
+func _resolve_hazard_hits_tick() -> void:
+	_hazards._resolve_hazard_hits_tick()
+
+
+func _check_battle_end() -> void:
+	_terminal._check_battle_end()
+
+
 func _simulation_check_timeout() -> void:
 	if automation_smoke and not battle_over and sim_tick >= SIM_TICKS_PER_SECOND * 180:
 		_terminal._fail_automation_smoke("timeout ticks=%d casts=%d" % [sim_tick, shots])

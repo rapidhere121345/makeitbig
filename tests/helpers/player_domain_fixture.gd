@@ -129,7 +129,7 @@ func _observe_release_and_advance(arena) -> void:
 			"player_position": player(arena).player_position, "player_facing": player(arena).player_facing,
 		}
 	_release_frames[arena.get_instance_id()] = frames
-	arena._arrows._advance_piercing_projectiles_tick()
+	arena._advance_piercing_projectiles_tick()
 
 
 func release_frame(arena, action_id: int) -> Dictionary:

@@ -23,11 +23,11 @@ class DrivenMain:
 	func test_collect_commands() -> Array[Dictionary]:
 		var commands: Array[Dictionary] = []
 		if requested_movement != Vector2.ZERO:
-			commands.append(_move_command(requested_movement, 1.0))
+			commands.append(_player_commands._move_command(requested_movement, 1.0))
 		return commands
 	func test_update_enemies_tick() -> void:
 		if drive_enemy_outward:
-			_commit_normal_enemy_intent(enemies[0], {"move_direction": Vector2.RIGHT, "speed_scale": 1.0, "reason": "bounds_test"})
+			_enemy_ai._commit_normal_enemy_intent(enemies[0], {"move_direction": Vector2.RIGHT, "speed_scale": 1.0, "reason": "bounds_test"})
 
 
 var failures: Array[String] = []

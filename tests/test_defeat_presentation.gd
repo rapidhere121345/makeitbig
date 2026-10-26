@@ -13,7 +13,7 @@ extends SceneTree
 ##
 ## Honored contracts:
 ##  * the death is never hand-filled. A real melee pursuer in the production room
-##    roster lands its own contact damage through _update_melee_tick(); the only
+##    roster lands its own contact damage through _enemy_ai._update_melee_tick(); the only
 ##    fixtures are the roster, the enemy's starting contact distance and a health
 ##    value equal to that one impact.
 ##  * the GameRoot layer asserts the settlement at its real time point through
