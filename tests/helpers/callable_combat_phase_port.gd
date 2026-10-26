@@ -1,6 +1,6 @@
 extends "res://src/runtime/combat/combat_phase_port.gd"
 
-## Test-only composition adapter. Production uses MainArena.RoomPhaseDomain;
+## Test-only composition adapter. Production uses src/game/ports/room_phase_domain.gd;
 ## tests can replace individual phase owners without weakening the typed
 ## CombatSimulation boundary.
 

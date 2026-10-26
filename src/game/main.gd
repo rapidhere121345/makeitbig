@@ -63,6 +63,12 @@ const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement
 const CombatLootPickupProtocolScript := preload("res://src/systems/combat_loot_pickup_protocol.gd")
 const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
+const MainCombatRoomPortScript := preload("res://src/game/ports/main_combat_room_port.gd")
+const MainHitAdmissionPortScript := preload("res://src/game/ports/main_hit_admission_port.gd")
+const MainMovementPolicyPortScript := preload("res://src/game/ports/main_movement_policy_port.gd")
+const RoomPhaseDomainScript := preload("res://src/game/ports/room_phase_domain.gd")
+const MainEncounterRoomPortScript := preload("res://src/game/ports/main_encounter_room_port.gd")
+const MainEncounterSpawnPortScript := preload("res://src/game/ports/main_encounter_spawn_port.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -322,8 +328,8 @@ var automation_smoke_failure: String = ""
 var presentation
 var input_adapter
 ## Production fixed-tick phase owner. CombatSimulation never receives Main as a
-## callback bag; it receives the typed RoomPhaseDomain declared at the bottom
-## of this script. Phase dispatch is typed virtual calls only.
+## callback bag; it receives the typed RoomPhaseDomain from
+## src/game/ports/room_phase_domain.gd. Phase dispatch is typed virtual calls only.
 var room_phase_owner: CombatPhasePort = null
 
 ## These read-only input relays are used by CombatStateSnapshotBuilder; the
@@ -379,7 +385,7 @@ func _ensure_encounter_director() -> void:
 	if encounter_director != null:
 		return
 	encounter_director = EncounterDirectorScript.new()
-	var room_port := MainEncounterRoomPort.new()
+	var room_port := MainEncounterRoomPortScript.new()
 	var room_bound: Dictionary = room_port.bind(self, player_combat_rules, combat_system)
 	if not bool(room_bound.get("ok", false)):
 		push_error("encounter_room_port_bind_failed:%s" % String(room_bound.get("error", "unknown")))
@@ -394,7 +400,7 @@ func _ensure_encounter_director() -> void:
 func _ensure_encounter_spawn_port() -> void:
 	if encounter_spawn_port != null:
 		return
-	var port := MainEncounterSpawnPort.new()
+	var port := MainEncounterSpawnPortScript.new()
 	var bound: Dictionary = port.bind(self)
 	if not bool(bound.get("ok", false)):
 		push_error("encounter_spawn_port_bind_failed:%s" % String(bound.get("error", "unknown")))
@@ -419,7 +425,7 @@ func _configure_player_domain(start_tick: int) -> bool:
 	if not _configure_combat_ports():
 		return false
 	_ensure_combat_simulation()
-	var phase_domain := RoomPhaseDomain.new()
+	var phase_domain := RoomPhaseDomainScript.new()
 	var phase_bound: Dictionary = phase_domain.bind(self)
 	if not bool(phase_bound.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(phase_bound.get("error", "combat_phase_port_unavailable"))
@@ -436,7 +442,7 @@ func _configure_combat_ports() -> bool:
 	if replay_geometry_profile != CombatSystemScript.QUERY_PROFILE_MULTIPART_V2 and not automation_smoke:
 		last_save_message = "Deployment blocked: historical replay profile requires auto smoke"
 		return false
-	var room_port := MainCombatRoomPort.new()
+	var room_port := MainCombatRoomPortScript.new()
 	var port_bound: Dictionary = room_port.bind(self)
 	if not bool(port_bound.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(port_bound.get("error", "combat_room_port_unavailable"))
@@ -865,7 +871,7 @@ func _configure_actor_registry() -> bool:
 	if not _bind_kernel_room_ports():
 		actor_registry_instance_id = ""
 		return false
-	var movement_policy_port := MainMovementPolicyPort.new()
+	var movement_policy_port := MainMovementPolicyPortScript.new()
 	var movement_policy_bound: Dictionary = movement_policy_port.bind(self)
 	if not bool(movement_policy_bound.get("ok", false)):
 		push_error("actor_registry_configuration_failed:movement_policy_port:%s" % String(movement_policy_bound.get("error", "unknown")))
@@ -1419,7 +1425,7 @@ func _bind_kernel_room_ports() -> bool:
 	if room_spatial_port == null or room_combat_port == null or room_encounter_port == null:
 		push_error("kernel_room_ports_unavailable")
 		return false
-	var hit_admission_port := MainHitAdmissionPort.new()
+	var hit_admission_port := MainHitAdmissionPortScript.new()
 	var admission_bound: Dictionary = hit_admission_port.bind(self)
 	if not bool(admission_bound.get("ok", false)):
 		push_error("kernel_hit_admission_port_bind_failed:%s" % String(admission_bound.get("error", "unknown")))
@@ -3025,256 +3031,3 @@ func defeat_skip_presentation(reason: String = "skipped") -> void:
 
 func defeat_presentation_report() -> Dictionary:
 	return presentation.animations.defeat_presentation_report(gameplay_snapshot())
-
-
-## Typed combat-system composition owned by Main.  The production ranged
-## coordinator receives this object once and never receives a callback bag.
-## Player-domain retention/sequence state and encounter admission remain room
-## owned, while the coordinator only invokes these typed operations.
-class MainCombatRoomPort extends "res://src/runtime/combat/combat_system_room_port.gd":
-
-	var _owner: MainArena = null
-
-	func bind(owner: MainArena) -> Dictionary:
-		if owner == null or not is_instance_valid(owner):
-			return {"ok": false, "error": "combat_room_owner_unavailable"}
-		if owner.player_combat_rules == null or owner.encounter_director == null:
-			return {"ok": false, "error": "combat_room_dependencies_unavailable"}
-		_owner = owner
-		return {"ok": true, "error": ""}
-
-	func is_ready() -> bool:
-		return _owner != null and is_instance_valid(_owner)
-
-	func target_by_id(entity_id: int) -> CombatEnemyState:
-		return _owner._enemy_by_entity_id(entity_id)
-
-	func aim_candidate(target: CombatEnemyState) -> Dictionary:
-		return _owner._manual_aim_candidate(target)
-
-	func current_model() -> Dictionary:
-		return _owner._current_model()
-
-	func target_blocked(target: CombatEnemyState) -> Dictionary:
-		if target == null or _owner.encounter_director == null:
-			return {"ok": false, "error": "target_blocked_port_unavailable"}
-		return {"ok": true, "error": "", "blocked": _owner.encounter_director.is_target_blocked(target)}
-
-	func maybe_summon(target: CombatEnemyState) -> void:
-		_owner._maybe_summon_reinforcements(target)
-
-	func remove_target(target: CombatEnemyState) -> void:
-		_owner._remove_combat_target(target)
-
-	func cancel_buffered_target(entity_id: int) -> int:
-		return _owner._cancel_buffered_target(entity_id)
-
-	func update_mark() -> void:
-		_owner._refresh_player_mark()
-
-	func advance_sequence(skill_id: String) -> void:
-		_owner.player_combat_rules.advance_three_skill_sequence(skill_id)
-
-	func reset_sequence() -> void:
-		_owner.player_combat_rules.reset_three_skill_sequence()
-
-	func erase_attack_request(request_id: int) -> void:
-		_owner._erase_attack_request(request_id)
-
-	func consume_first_critical_bonus() -> int:
-		return _owner.player_combat_rules.consume_first_critical_bonus()
-
-	func retain_missed_arrow(aggregate: BigValue, ordinary: float) -> bool:
-		_owner.player_combat_rules.retain_missed_arrow(aggregate, ordinary)
-		return true
-
-	func take_retained_arrow() -> Dictionary:
-		return _owner.player_combat_rules.take_retained_arrow()
-
-	func is_normal_kernel_projectile(projectile) -> bool:
-		return _owner._is_normal_kernel_projectile(projectile)
-
-	func is_boss_kernel_projectile(projectile) -> bool:
-		return _owner._is_boss_kernel_projectile(projectile)
-
-	func sync_kernel_target_record(projectile) -> void:
-		_owner._sync_kernel_target_record(projectile)
-
-	func sync_boss_kernel_target(projectile) -> Variant:
-		return _owner._sync_boss_kernel_target(projectile)
-
-
-class MainHitAdmissionPort extends "res://src/runtime/combat/room_hit_admission_port.gd":
-
-	var _owner: MainArena = null
-
-	func bind(owner: MainArena) -> Dictionary:
-		if owner == null or not is_instance_valid(owner):
-			return {"ok": false, "error": "hit_admission_owner_unavailable"}
-		_owner = owner
-		return {"ok": true, "error": ""}
-
-	func admit(hit: Dictionary) -> Dictionary:
-		if _owner == null or not is_instance_valid(_owner):
-			return {"allowed": false, "reason": "hit_admission_owner_unavailable"}
-		return _owner._admit_kernel_hit(hit)
-
-
-class MainMovementPolicyPort extends "res://src/runtime/world/room_movement_policy_port.gd":
-
-	var _owner: MainArena = null
-
-	func bind(owner: MainArena) -> Dictionary:
-		if owner == null or not is_instance_valid(owner):
-			return {"ok": false, "error": "movement_policy_owner_unavailable"}
-		_owner = owner
-		return {"ok": true, "error": ""}
-
-	func resolve(actor_id: String) -> Variant:
-		if _owner == null or not is_instance_valid(_owner):
-			return null
-		return _owner._resolve_ranger_movement_policy(actor_id)
-
-
-## Typed production phase domain for the fixed combat tick.
-##
-## This is the room-domain side of the CombatSimulation authority seam. It is
-## a CombatPhasePort subclass declared by the room owner itself, and every
-## phase dispatches through a typed owner reference. There is deliberately no
-## has_method protocol, no string .call() indirection and no separate adapter
-## script. When the remaining Main-owned phases migrate into the runtime room
-## domain, this class shrinks with them.
-class RoomPhaseDomain extends "res://src/runtime/combat/combat_phase_port.gd":
-
-	var _owner: MainArena = null
-
-	func bind(owner: MainArena) -> Dictionary:
-		if owner == null or not is_instance_valid(owner):
-			return {"ok": false, "error": "combat_phase_room_unavailable"}
-		_owner = owner
-		return {"ok": true, "error": ""}
-
-	func is_ready() -> bool:
-		return _owner != null and is_instance_valid(_owner)
-
-	func read_only_targets() -> Array[Dictionary]:
-		return _owner._read_only_targets()
-
-	func set_elapsed(value: float) -> void:
-		_owner._simulation_set_elapsed(value)
-
-	func consume_player_events(result: Dictionary) -> void:
-		_owner._consume_player_events(result)
-
-	func update_room_rules() -> void:
-		_owner._update_room_rules_tick()
-
-	func refresh_hazard_states() -> void:
-		_owner._refresh_hazard_states_tick()
-
-	func collect_commands() -> Array[Dictionary]:
-		return _owner._simulation_collect_commands()
-
-	func route_commands(commands: Array[Dictionary]) -> Dictionary:
-		return _owner._route_commands(commands)
-
-	func update_enemies() -> void:
-		_owner._update_enemies_tick()
-
-	func advance_projectiles() -> void:
-		_owner._advance_piercing_projectiles_tick()
-
-	func resolve_hazard_hits() -> void:
-		_owner._resolve_hazard_hits_tick()
-
-	func check_battle_end() -> void:
-		_owner._check_battle_end()
-
-	func room_terminal_locked() -> bool:
-		return _owner != null and is_instance_valid(_owner) and bool(_owner.battle_over)
-
-	func check_timeout() -> void:
-		_owner._simulation_check_timeout()
-
-
-## Typed EncounterDirector composition owned by Main.  The director receives
-## this object once at construction and never receives a callback dictionary;
-## each operation dispatches directly to the room owner through a typed method.
-class MainEncounterRoomPort extends "res://src/game/encounter_room_port.gd":
-
-	var _owner: MainArena = null
-
-	func bind(owner: MainArena, rules: RefCounted, outcome: RefCounted) -> Dictionary:
-		if owner == null or not is_instance_valid(owner):
-			return {"ok": false, "error": "encounter_room_owner_unavailable"}
-		if rules == null or not rules.has_method("apply_damage"):
-			return {"ok": false, "error": "player_rule_port_unavailable"}
-		if outcome == null or not outcome.has_method("outcome_snapshot"):
-			return {"ok": false, "error": "combat_outcome_port_unavailable"}
-		_owner = owner
-		player_rule_port = rules
-		combat_outcome_port = outcome
-		return {"ok": true, "error": ""}
-
-	func move_enemy(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
-		if not _ready():
-			return {"ok": false, "error": "encounter_room_owner_unavailable"}
-		return _owner._move_enemy_actor(enemy, displacement)
-
-	func set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
-		return _ready() and _owner._set_enemy_collision_class(enemy, collision_class)
-
-	func register_enemy(enemy: CombatEnemyState) -> Dictionary:
-		if not _ready():
-			return {"ok": false, "error": "encounter_room_owner_unavailable"}
-		var accepted: bool = _owner._register_enemy_actor(enemy)
-		return {"ok": accepted, "error": "" if accepted else "register_enemy_rejected"}
-
-	func collision_geometry(padding: float) -> Dictionary:
-		if not _ready():
-			return {}
-		return _owner._collision_geometry(padding)
-
-	func static_blocker_bounds() -> Array[Dictionary]:
-		if not _ready():
-			return []
-		return _owner._static_blocker_bounds()
-
-	func layout_spawn_offsets(layout_id: String, count: int) -> Array[Vector2]:
-		if not _ready():
-			return []
-		return _owner._layout_spawn_offsets(layout_id, count)
-
-	func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
-		if not _ready():
-			return Vector2(INF, INF)
-		return _owner._clamp_to_arena(value, padding)
-
-	func quantize_position(value: Vector2) -> Vector2:
-		if not _ready():
-			return Vector2(INF, INF)
-		return _owner._quantize_position(value)
-
-	func queue_player_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
-		if not _ready():
-			return {"ok": false, "error": "encounter_room_owner_unavailable"}
-		return _owner._queue_kernel_player_hit(tick, amount, source_id, source_position)
-
-	func _ready() -> bool:
-		return _owner != null and is_instance_valid(_owner)
-
-
-class MainEncounterSpawnPort extends "res://src/runtime/world/room_encounter_spawn_port.gd":
-
-	var _owner: MainArena = null
-
-	func bind(owner: MainArena) -> Dictionary:
-		if owner == null or not is_instance_valid(owner):
-			return {"ok": false, "error": "encounter_spawn_owner_unavailable"}
-		_owner = owner
-		return {"ok": true, "error": ""}
-
-	func spawn(request: EncounterSpawnRequest, context: Dictionary) -> Variant:
-		if _owner == null or not is_instance_valid(_owner):
-			return EncounterSpawnResultScript.failed(request, "encounter_spawn_owner_unavailable")
-		return _owner.reconcile_encounter_spawn(request, context)
