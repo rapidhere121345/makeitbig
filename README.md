@@ -99,11 +99,11 @@ After a passing build, generate and validate the static release page:
 ./scripts/release.sh verify
 ```
 
-The ignored `build/releases/` directory can be served as a static site. Each build includes Windows/Linux downloads, `build.json`, and `SHA256SUMS`. `all` retains the latest 20 valid builds and can delete older ones; review and approve retention before running it against existing release history. See [the release workflow](docs/RELEASE_WORKFLOW.md) for templates and naming.
+The ignored `release-online/` directory (the live publish root, `MIB_RELEASE_ROOT`) can be served as a static site. Each build includes Windows/Linux downloads, `build.json`, and `SHA256SUMS`. `all` retains the 3 newest valid builds by default and can delete older ones; review and approve retention before running it against existing release history. See [the release workflow](docs/RELEASE_WORKFLOW.md) for templates and naming.
 
 The current publish URL, supplied by the operator, is <http://192.0.2.10:18080/>.
 
-For Tailscale access, validate `build/releases/` with `./deploy/tailscale/stage_release_page.sh`, then have the host operator configure exposure as described in the [Tailscale guide](deploy/tailscale/README.md).
+For Tailscale access, validate `release-online/` with `./deploy/tailscale/stage_release_page.sh`, then have the host operator configure exposure as described in the [Tailscale guide](deploy/tailscale/README.md).
 
 ## Documentation
 

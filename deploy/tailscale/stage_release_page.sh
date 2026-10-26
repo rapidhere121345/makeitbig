@@ -10,8 +10,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 resolve_path() {
   if [[ "$1" = /* ]]; then printf '%s\n' "$1"; else printf '%s\n' "$PROJECT_ROOT/$1"; fi
 }
-RELEASE_ROOT="$(resolve_path "${MIB_RELEASE_ROOT:-build/releases}")"
-STAGING_DIR="$(resolve_path "${MIB_RELEASE_STAGING_DIR:-${MIB_RELEASE_ROOT:-build/releases}}")"
+RELEASE_ROOT="$(resolve_path "${MIB_RELEASE_ROOT:-release-online}")"
+STAGING_DIR="$(resolve_path "${MIB_RELEASE_STAGING_DIR:-${MIB_RELEASE_ROOT:-release-online}}")"
 
 usage() { echo "Usage: $0 [--check]"; }
 die() { echo "[tailscale-stage] ERROR: $*" >&2; exit 1; }
@@ -24,7 +24,7 @@ check_only() {
 }
 
 validate_site() {
-  [[ "$STAGING_DIR" == "$RELEASE_ROOT" ]] || die "staging and release roots must be the same; serve build/releases directly to avoid copying build history"
+  [[ "$STAGING_DIR" == "$RELEASE_ROOT" ]] || die "staging and release roots must be the same; serve release-online directly to avoid copying build history"
   [[ -f "$RELEASE_ROOT/index.html" ]] || die "missing $RELEASE_ROOT/index.html; run scripts/release.sh all first"
   [[ -f "$RELEASE_ROOT/index.json" ]] || die "missing $RELEASE_ROOT/index.json; run scripts/release.sh all first"
   [[ -f "$RELEASE_ROOT/app.js" && -f "$RELEASE_ROOT/style.css" ]] || die "release site assets are incomplete: $RELEASE_ROOT"

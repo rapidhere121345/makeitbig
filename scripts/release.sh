@@ -8,8 +8,9 @@ if [[ -f "$CONFIG_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$CONFIG_FILE"
 fi
-MIB_RELEASE_ROOT="${MIB_RELEASE_ROOT:-build/releases}"
-MIB_RELEASE_KEEP_BUILDS="${MIB_RELEASE_KEEP_BUILDS:-20}"
+# Fallbacks mirror release/config/release.conf and apply only when it is absent.
+MIB_RELEASE_ROOT="${MIB_RELEASE_ROOT:-release-online}"
+MIB_RELEASE_KEEP_BUILDS="${MIB_RELEASE_KEEP_BUILDS:-3}"
 MIB_RELEASE_LINUX_SOURCE="${MIB_RELEASE_LINUX_SOURCE:-build/current/linux/make-it-big.x86_64}"
 MIB_RELEASE_WINDOWS_SOURCE="${MIB_RELEASE_WINDOWS_SOURCE:-build/current/windows/make-it-big.exe}"
 MIB_RELEASE_LINUX_NAME="${MIB_RELEASE_LINUX_NAME:-make-it-big.x86_64}"
@@ -36,7 +37,7 @@ prepare_root() {
 }
 check_id() { [[ "$1" =~ $BUILD_ID_RE ]] || die "invalid build id: $1"; }
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 Usage:
   scripts/release.sh package [--id ID] [--note TEXT] [--allow-empty]
   scripts/release.sh index
@@ -45,7 +46,7 @@ Usage:
   scripts/release.sh verify [--deep]
   scripts/release.sh all [--id ID] [--note TEXT] [--allow-empty]
 
-Defaults: MIB_RELEASE_ROOT=build/releases, MIB_RELEASE_KEEP_BUILDS=20
+Defaults: MIB_RELEASE_ROOT=$MIB_RELEASE_ROOT, MIB_RELEASE_KEEP_BUILDS=$MIB_RELEASE_KEEP_BUILDS (see release/config/release.conf)
 EOF
 }
 

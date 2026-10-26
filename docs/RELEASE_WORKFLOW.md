@@ -1,6 +1,6 @@
 # Release Workflow
 
-Release sources and page templates live in `release/`; `scripts/release.sh` generates ignored output in `build/releases/`. Do not commit generated deliverables.
+Release sources and page templates live in `release/`; `scripts/release.sh` generates ignored output in the live publish root `release-online/` (defaults in `release/config/release.conf`: `MIB_RELEASE_ROOT=release-online`, `MIB_RELEASE_KEEP_BUILDS=3`). Do not commit generated deliverables.
 
 ## Layout and Naming
 
@@ -11,7 +11,7 @@ Release sources and page templates live in `release/`; `scripts/release.sh` gene
 - `windows/make-it-big.exe`: Windows x86_64 download.
 - `SHA256SUMS`: download checksums.
 
-`index` writes newest-first metadata to `build/releases/index.json`; `site` writes the page, stylesheet, script, and embedded index to the same root. Serve this directory directly as a static site. Metadata and UI explicitly distinguish missing platform files instead of offering broken downloads.
+`index` writes newest-first metadata to `release-online/index.json`; `site` writes the page, stylesheet, script, and embedded index to the same root. Serve this directory directly as a static site. Metadata and UI explicitly distinguish missing platform files instead of offering broken downloads.
 
 ## Standard Commands
 
@@ -28,7 +28,7 @@ git status --short
 ./deploy/tailscale/stage_release_page.sh --check
 ```
 
-`all` runs package → prune → index → site → verify. `prune` defaults to retaining the latest 20 direct child directories with valid IDs and `build.json`, and never cleans other paths. Set `MIB_RELEASE_ROOT` explicitly for an isolated validation root and inspect its contents first. To validate new packaging without pruning existing history, run `package`, `index`, `site`, and `verify --deep` separately in that fresh root.
+`all` runs package → prune → index → site → verify. Against the live `release-online/` root, `all` and `prune` delete every build older than the 3 newest, so list the candidates and obtain explicit approval first. `prune` defaults to retaining the 3 newest direct child directories with valid IDs and `build.json`, and never cleans other paths. Set `MIB_RELEASE_ROOT` explicitly for an isolated validation root and inspect its contents first. To validate new packaging without pruning existing history, run `package`, `index`, `site`, and `verify --deep` separately in that fresh root.
 
 Do not publish exports after changing runtime code or assets without rebuilding. After publication, compare the served `/index.json` build ID with local metadata and verify HTTP status, size, and SHA256 for both downloads. A successful Windows export is not native Windows acceptance.
 
@@ -40,7 +40,7 @@ The project validates generated files locally:
 ./deploy/tailscale/stage_release_page.sh
 ```
 
-Staging validates the single `build/releases/` root and requires both downloads in the latest build. History, index, and page assets share that root; there is no separate single-build page. The operator owns Tailscale/TUN and must confirm that the host can see the release root before running `deploy/tailscale/serve_host.sh.example serve`. The default is tailnet-only HTTPS; public `funnel` exposure requires a separate policy/ACL/unsigned-binary review.
+Staging validates the single `release-online/` root and requires both downloads in the latest build. History, index, and page assets share that root; there is no separate single-build page. The operator owns Tailscale/TUN and must confirm that the host can see the release root before running `deploy/tailscale/serve_host.sh.example serve`. The default is tailnet-only HTTPS; public `funnel` exposure requires a separate policy/ACL/unsigned-binary review.
 
 Before exposure, pass both validation commands, ensure the release root contains no source checkout, confirm `tailscale serve status` targets it, and test the home page and both downloads from the tailnet. The page does not implement account authentication; Tailscale ACLs control access.
 

@@ -15,11 +15,11 @@ After a passing build, run from the host checkout:
 ./deploy/tailscale/stage_release_page.sh --check
 ```
 
-`release.sh all` writes the page, index, checksums, and latest 20 builds to `build/releases/`. It may prune older builds: review and approve deletion first. Staging validates this single root and requires both Linux and Windows downloads in the latest build. It neither duplicates binaries nor changes networking. If set, `MIB_RELEASE_STAGING_DIR` must resolve to `MIB_RELEASE_ROOT`.
+`release.sh all` writes the page, index, checksums, and the 3 newest builds to `release-online/` (the defaults in `release/config/release.conf`). It may prune older builds: review and approve deletion first. Staging validates this single root and requires both Linux and Windows downloads in the latest build. It neither duplicates binaries nor changes networking. If set, `MIB_RELEASE_STAGING_DIR` must resolve to `MIB_RELEASE_ROOT`.
 
 ## Host Exposure
 
-Confirm the real host release path first. The default checkout is `/data/paseo-makeitbig/project`; override it with `MIB_RELEASE_HOST_ROOT` if different. After verifying that the host can see `build/releases/index.html`, an authorized operator may run:
+Confirm the real host release path first. The default checkout is `/data/paseo-makeitbig/project`; override it with `MIB_RELEASE_HOST_ROOT` if different. After verifying that the host can see `release-online/index.html`, an authorized operator may run:
 
 ```bash
 MIB_RELEASE_HOST_ROOT=/data/paseo-makeitbig/project ./deploy/tailscale/serve_host.sh.example serve
@@ -41,7 +41,7 @@ This exposes the generated static root, including current/history pages and both
 ./deploy/tailscale/serve_host.sh.example funnel
 ```
 
-Use tailnet-only `serve` by default. Tailscale ACLs govern access. Never serve the project checkout; expose only generated `build/releases/`.
+Use tailnet-only `serve` by default. Tailscale ACLs govern access. Never serve the project checkout; expose only generated `release-online/`.
 
 ## Exposure Checklist
 

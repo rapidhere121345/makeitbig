@@ -3,7 +3,7 @@
 set -euo pipefail
 
 MIB_RELEASE_HOST_ROOT="${MIB_RELEASE_HOST_ROOT:-/data/paseo-makeitbig/project}"
-MIB_RELEASE_PAGE_DIR="${MIB_RELEASE_HOST_PAGE_DIR:-$MIB_RELEASE_HOST_ROOT/build/releases}"
+MIB_RELEASE_PAGE_DIR="${MIB_RELEASE_HOST_PAGE_DIR:-$MIB_RELEASE_HOST_ROOT/release-online}"
 usage() { echo "Usage: $0 {serve|funnel|status|off}"; }
 command_name=""
 if (($#)); then command_name="$1"; fi
