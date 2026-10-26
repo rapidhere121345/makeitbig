@@ -81,16 +81,16 @@ func take_retained_arrow() -> Dictionary:
 
 
 func is_normal_kernel_projectile(projectile) -> bool:
-	return _owner._is_normal_kernel_projectile(projectile)
+	return _owner._kernel_reconciler._is_normal_kernel_projectile(projectile)
 
 
 func is_boss_kernel_projectile(projectile) -> bool:
-	return _owner._is_boss_kernel_projectile(projectile)
+	return _owner._kernel_reconciler._is_boss_kernel_projectile(projectile)
 
 
 func sync_kernel_target_record(projectile) -> void:
-	_owner._sync_kernel_target_record(projectile)
+	_owner._kernel_reconciler._sync_kernel_target_record(projectile)
 
 
 func sync_boss_kernel_target(projectile) -> Variant:
-	return _owner._sync_boss_kernel_target(projectile)
+	return _owner._kernel_reconciler._sync_boss_kernel_target(projectile)

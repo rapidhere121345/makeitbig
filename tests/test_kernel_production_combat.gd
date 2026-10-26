@@ -206,8 +206,8 @@ func _run_boss_kernel_predicate(arena) -> void:
 		BigValueScript.from_float(10.0), 10.0,
 		BigValueScript.from_float(1.0), 10.0
 	)
-	_expect(arena._is_kernel_projectile(projectile), "kernel combat: boss target was excluded from the mounted kernel path")
-	_expect(arena._is_boss_kernel_projectile(projectile), "kernel combat: Boss selector rejected the boss projectile")
+	_expect(arena._kernel_reconciler._is_kernel_projectile(projectile), "kernel combat: boss target was excluded from the mounted kernel path")
+	_expect(arena._kernel_reconciler._is_boss_kernel_projectile(projectile), "kernel combat: Boss selector rejected the boss projectile")
 	_expect(not arena.has_method("_is_legacy_projectile"), "kernel combat: Main retained a legacy Boss production selector")
 	enemy.is_boss = false
 

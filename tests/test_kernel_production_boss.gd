@@ -85,7 +85,7 @@ func _run_boss_kill(arena) -> void:
 	_expect(arena._boss_combat_domain != null, "kernel boss: production did not create a BossCombatDomain")
 	_expect(arena.room_spatial_port.boss_domain == arena._boss_combat_domain, "kernel boss: spatial port did not bind the production Boss domain")
 	_expect(arena.room_combat_port.boss_domain == arena._boss_combat_domain, "kernel boss: combat port did not bind the same Boss domain")
-	_expect(arena._boss_domain_room_is_current(), "kernel boss: Boss domain identity does not match the mounted room")
+	_expect(arena._kernel_reconciler._boss_domain_room_is_current(), "kernel boss: Boss domain identity does not match the mounted room")
 	_expect(arena._kernel_boss_flight.is_configured(), "kernel boss: Boss flight driver was not configured")
 	if not _failures.is_empty():
 		return
@@ -235,7 +235,7 @@ func _run_stale_identity_fail_closed(arena) -> void:
 	_expect(bool(stale.configure("stale.kernel.boss.room", int(arena.simulation_world.world_revision)).get("ok", false)), "kernel boss: stale domain fixture failed")
 	_expect(bool(arena.room_spatial_port.bind_boss_domain(stale).get("ok", false)), "kernel boss: stale fixture could not exercise the typed port")
 	_expect(bool(arena.room_combat_port.bind_boss_domain(stale).get("ok", false)), "kernel boss: stale fixture could not exercise the combat port")
-	_expect(not arena._boss_domain_room_is_current(), "kernel boss: a stale room identity was accepted as current")
+	_expect(not arena._kernel_reconciler._boss_domain_room_is_current(), "kernel boss: a stale room identity was accepted as current")
 
 
 func _expect(condition: bool, message: String) -> void:

@@ -13,4 +13,4 @@ func bind(owner: MainArena) -> Dictionary:
 func admit(hit: Dictionary) -> Dictionary:
 	if _owner == null or not is_instance_valid(_owner):
 		return {"allowed": false, "reason": "hit_admission_owner_unavailable"}
-	return _owner._admit_kernel_hit(hit)
+	return _owner._kernel_reconciler._admit_kernel_hit(hit)
