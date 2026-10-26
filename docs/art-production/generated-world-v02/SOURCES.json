@@ -1,253 +1,145 @@
 {
   "generation_date": "2026-10-23",
+  "retired": {
+    "date": "2026-10-26",
+    "reason": "The front-facing scenery and ground sources were superseded by perspective-20261024/ (angled view) and are no longer packed by any config. The raw PNGs were deleted; their prompts remain under prompts/ and these entries keep the pinned hashes of the deleted files.",
+    "records": [
+      {
+        "id": "town_ground",
+        "source": "sources/town_ground_raw.png",
+        "prompt": "prompts/town_ground.txt",
+        "source_sha256": "fbe00ff8acee5eb5e442e3a63172d87ea929263cf898b0631fd1573b064eede2",
+        "prompt_sha256": "851d8bbfb43edb25ad31578488eb54bc4fa8173aa7cb9fffb73ab3fcf185a7fa"
+      },
+      {
+        "id": "loadout",
+        "source": "sources/loadout_raw.png",
+        "prompt": "prompts/loadout.txt",
+        "source_sha256": "1365e62780f02d9fdcaad0e34bf37c08720a1b11a7eef67d7e5e8b3ddb36f049",
+        "prompt_sha256": "06eeaea8479429086d9b1546bbcceb766d12aac7d15702028705cfbb439a95ac"
+      },
+      {
+        "id": "forge",
+        "source": "sources/forge_raw.png",
+        "prompt": "prompts/forge.txt",
+        "source_sha256": "d98661bc857ee8b086179935d52527335d5a075b20cb2ac3a3a61d0460379d76",
+        "prompt_sha256": "2d220ed739e65be8de5b95a3d9f1bb679018083f26b79943d4e4d95b90f3d4ec"
+      },
+      {
+        "id": "board",
+        "source": "sources/board_raw.png",
+        "prompt": "prompts/board.txt",
+        "source_sha256": "d253e151a589c618165ba4b9d2c94f7ddb4f1c8fe3381cac6223f7b6488fe8b6",
+        "prompt_sha256": "0eba385f7e62a3130c3c9b5ea4967dedf5a987ad19fd2373a275059f93593083"
+      },
+      {
+        "id": "proxy",
+        "source": "sources/proxy_raw.png",
+        "prompt": "prompts/proxy.txt",
+        "source_sha256": "4eae7237b3aafe4f9e539b521826ddbc9218a9017241ba888e99517f8e9db577",
+        "prompt_sha256": "9095cb7aaea3db55cdc8b4847dff21d681bb4be23fe29905ec2852acd21bd6cb"
+      },
+      {
+        "id": "pine",
+        "source": "sources/pine_raw.png",
+        "prompt": "prompts/pine.txt",
+        "source_sha256": "9c29a6c40fedf12d8264dc77cae0a4d06def0e741af3f7cd021485d31614c7d1",
+        "prompt_sha256": "973eea0e9e1c9deaf809176005a8e9229822095c1364a6120ab39742858398fe"
+      },
+      {
+        "id": "hearth",
+        "source": "sources/hearth_raw.png",
+        "prompt": "prompts/hearth.txt",
+        "source_sha256": "bc81a0648a1e674ac01369c0cda729f79313ce14cafda12b2a63aa59e27756c2",
+        "prompt_sha256": "6102c70d35a194ce718a2437182499fe9dd413377bad439e4ae9a106e6f792f8"
+      },
+      {
+        "id": "lamp",
+        "source": "sources/lamp_raw.png",
+        "prompt": "prompts/lamp.txt",
+        "source_sha256": "a286bc96c285828f7a98a8457b351ad05ee3af20aad5e21e952c8ed540474d7e",
+        "prompt_sha256": "e1674e27f458fabf43f4ba642a21ac1d392b5545a53fab7a8f3eb94ef36df94b"
+      },
+      {
+        "id": "training_dummy",
+        "source": "sources/training_dummy_raw.png",
+        "prompt": "prompts/training_dummy.txt",
+        "source_sha256": "a9223fb8d1d8a42102f9b8f18674221914efc278e3fa01f93c63a54215a1d3c1",
+        "prompt_sha256": "2c421855ec9f0a695a20a7556ae69ac1d83487c2087713e6c60253f81d69f446"
+      },
+      {
+        "id": "fence_long",
+        "source": "sources/fence_long_raw.png",
+        "prompt": "prompts/fence_long.txt",
+        "source_sha256": "97017701051a277a8bf45d20129820ae8a2add3011aef66d0c7043e439445a4f",
+        "prompt_sha256": "52cdac27d905b18ac0c10ab13259dd7fa1d4f3806512edb0b7a6e9ea2ec9089f"
+      },
+      {
+        "id": "fence_short",
+        "source": "sources/fence_short_raw.png",
+        "prompt": "prompts/fence_short.txt",
+        "source_sha256": "a1ed541b2c73b4645ca9277d859fb0da0561cdcee6f8ef3ad695b39caff84581",
+        "prompt_sha256": "5e40be606f4550bec1920807c2aba578276ccf082c889de840b9ce6ea2c4688a"
+      },
+      {
+        "id": "woodpile",
+        "source": "sources/woodpile_raw.png",
+        "prompt": "prompts/woodpile.txt",
+        "source_sha256": "d0b99390e829022da51bbbc597c9ab4c116672c7b774de48fb8a00b603b46bc3",
+        "prompt_sha256": "a8053768c33ab15b45ed9702ad282992038f58a58cb6fb97b4e7234f0fb7efdd"
+      },
+      {
+        "id": "cart",
+        "source": "sources/cart_raw.png",
+        "prompt": "prompts/cart.txt",
+        "source_sha256": "2bf17a5f2a0c0f95f9a974e4641cdc3f71c1040fa219bd5a6b4b17e52224e60c",
+        "prompt_sha256": "534f892ea394a56e5d25f3a51564aa040d034201a19655deda0f372d57af957c"
+      },
+      {
+        "id": "arena_ground",
+        "source": "sources/arena_ground_raw.png",
+        "prompt": "prompts/arena_ground.txt",
+        "source_sha256": "ed871589e1a2d4f3a29e7626770a6c88249a06d537bef32773e47c2de9444ae1",
+        "prompt_sha256": "80c2db32eee36dc0cbbbfdd5e83e479aa71cbcae0bc6e5d8d7950854ba6c4e55"
+      },
+      {
+        "id": "ruin_wall_corner",
+        "source": "sources/ruin_wall_corner_raw.png",
+        "prompt": "prompts/ruin_wall_corner.txt",
+        "source_sha256": "2698ff44b09ba0974cee1b3ce26bef295aa41109933eb15fd1334f941309ca21",
+        "prompt_sha256": "351e01b5d96237ac9c11e0e3896d5f8ba201a606cbd1514d022e0a65a3d87ecc"
+      },
+      {
+        "id": "ruin_gate",
+        "source": "sources/ruin_gate_raw.png",
+        "prompt": "prompts/ruin_gate.txt",
+        "source_sha256": "849912166927080d2fbb8d3980bba3e8003be32f49552798327811b32ad80309",
+        "prompt_sha256": "ea1bb7b32deff37796f859aacfbb08cff44ab2e565aec2e56f44769188a5b965"
+      },
+      {
+        "id": "ruin_low_pier",
+        "source": "sources/ruin_low_pier_raw.png",
+        "prompt": "prompts/ruin_low_pier.txt",
+        "source_sha256": "77b1073ada1bde9dc5b7e41b1bf0435000f598d55a3e93a5592db1b1d1cfcbc2",
+        "prompt_sha256": "9f486cd1f716126f60339fa2216f8cca9eba1d69cddb5caed8118e30d075f05d"
+      },
+      {
+        "id": "ruin_broken_wall",
+        "source": "sources/ruin_broken_wall_raw.png",
+        "prompt": "prompts/ruin_broken_wall.txt",
+        "source_sha256": "832c5b993955c7723a82b822a899368bde0ca42b25464ce222879754a468a32f",
+        "prompt_sha256": "a82e2c63f90db868127ee7dd9c8ca826174f3a4b6d02d96e22e11ebdf3c7203c"
+      },
+      {
+        "id": "tower",
+        "source": "sources/tower_raw.png",
+        "prompt": "prompts/tower.txt",
+        "source_sha256": "ea95f7e749d6c9b0eeb86124f2b130f92b5161e40cfcb03c9933177399bd5d94",
+        "prompt_sha256": "f9cfd9aad7779e2b7f6058d15841d84984a06d1f214bb7b112eed3aa088d3d70"
+      }
+    ]
+  },
   "records": [
-    {
-      "id": "town_ground",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/town_ground_raw.png",
-      "prompt": "prompts/town_ground.txt",
-      "transparent_background": false,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-039085f5-484d-4ac8-a456-325abbd875de.png",
-      "source_sha256": "fbe00ff8acee5eb5e442e3a63172d87ea929263cf898b0631fd1573b064eede2",
-      "prompt_sha256": "851d8bbfb43edb25ad31578488eb54bc4fa8173aa7cb9fffb73ab3fcf185a7fa",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "loadout",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/loadout_raw.png",
-      "prompt": "prompts/loadout.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-99e08844-b3af-4747-bdd3-2fe822365b26.png",
-      "source_sha256": "1365e62780f02d9fdcaad0e34bf37c08720a1b11a7eef67d7e5e8b3ddb36f049",
-      "prompt_sha256": "06eeaea8479429086d9b1546bbcceb766d12aac7d15702028705cfbb439a95ac",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "forge",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/forge_raw.png",
-      "prompt": "prompts/forge.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-df345d82-0df4-42f9-a6e0-e8328082ebeb.png",
-      "source_sha256": "d98661bc857ee8b086179935d52527335d5a075b20cb2ac3a3a61d0460379d76",
-      "prompt_sha256": "2d220ed739e65be8de5b95a3d9f1bb679018083f26b79943d4e4d95b90f3d4ec",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "board",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/board_raw.png",
-      "prompt": "prompts/board.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-089d4ab2-b5f3-44fa-b600-b302c2c2760c.png",
-      "source_sha256": "d253e151a589c618165ba4b9d2c94f7ddb4f1c8fe3381cac6223f7b6488fe8b6",
-      "prompt_sha256": "0eba385f7e62a3130c3c9b5ea4967dedf5a987ad19fd2373a275059f93593083",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "proxy",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/proxy_raw.png",
-      "prompt": "prompts/proxy.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-bb4d8b78-5da8-4b5c-830b-d23c0b1771f8.png",
-      "source_sha256": "4eae7237b3aafe4f9e539b521826ddbc9218a9017241ba888e99517f8e9db577",
-      "prompt_sha256": "9095cb7aaea3db55cdc8b4847dff21d681bb4be23fe29905ec2852acd21bd6cb",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "pine",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/pine_raw.png",
-      "prompt": "prompts/pine.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-ea2a0187-47af-498d-aca3-47c6762f8568.png",
-      "source_sha256": "9c29a6c40fedf12d8264dc77cae0a4d06def0e741af3f7cd021485d31614c7d1",
-      "prompt_sha256": "973eea0e9e1c9deaf809176005a8e9229822095c1364a6120ab39742858398fe",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "hearth",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/hearth_raw.png",
-      "prompt": "prompts/hearth.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-8a966378-a760-4160-a63e-f38016f2da45.png",
-      "source_sha256": "bc81a0648a1e674ac01369c0cda729f79313ce14cafda12b2a63aa59e27756c2",
-      "prompt_sha256": "6102c70d35a194ce718a2437182499fe9dd413377bad439e4ae9a106e6f792f8",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "lamp",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/lamp_raw.png",
-      "prompt": "prompts/lamp.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-2a77caad-3ea6-4ce8-89b1-56df74c7d3bc.png",
-      "source_sha256": "a286bc96c285828f7a98a8457b351ad05ee3af20aad5e21e952c8ed540474d7e",
-      "prompt_sha256": "e1674e27f458fabf43f4ba642a21ac1d392b5545a53fab7a8f3eb94ef36df94b",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "training_dummy",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/training_dummy_raw.png",
-      "prompt": "prompts/training_dummy.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-8f6eaade-387f-4631-86dd-368a280097b0.png",
-      "source_sha256": "a9223fb8d1d8a42102f9b8f18674221914efc278e3fa01f93c63a54215a1d3c1",
-      "prompt_sha256": "2c421855ec9f0a695a20a7556ae69ac1d83487c2087713e6c60253f81d69f446",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "fence_long",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/fence_long_raw.png",
-      "prompt": "prompts/fence_long.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-4ddb2a78-5e53-4fe9-bc19-3e19b3c576c6.png",
-      "source_sha256": "97017701051a277a8bf45d20129820ae8a2add3011aef66d0c7043e439445a4f",
-      "prompt_sha256": "52cdac27d905b18ac0c10ab13259dd7fa1d4f3806512edb0b7a6e9ea2ec9089f",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "fence_short",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/fence_short_raw.png",
-      "prompt": "prompts/fence_short.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-268a97ca-d8a1-4e25-83ec-54128f2c7cbb.png",
-      "source_sha256": "a1ed541b2c73b4645ca9277d859fb0da0561cdcee6f8ef3ad695b39caff84581",
-      "prompt_sha256": "5e40be606f4550bec1920807c2aba578276ccf082c889de840b9ce6ea2c4688a",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "woodpile",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/woodpile_raw.png",
-      "prompt": "prompts/woodpile.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-ba98f67f-70b3-4617-bcad-e8c80c9bcc39.png",
-      "source_sha256": "d0b99390e829022da51bbbc597c9ab4c116672c7b774de48fb8a00b603b46bc3",
-      "prompt_sha256": "a8053768c33ab15b45ed9702ad282992038f58a58cb6fb97b4e7234f0fb7efdd",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "cart",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/cart_raw.png",
-      "prompt": "prompts/cart.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-c8f85c2c-4022-469c-a8d4-a89633dc64f6.png",
-      "source_sha256": "2bf17a5f2a0c0f95f9a974e4641cdc3f71c1040fa219bd5a6b4b17e52224e60c",
-      "prompt_sha256": "534f892ea394a56e5d25f3a51564aa040d034201a19655deda0f372d57af957c",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "arena_ground",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/arena_ground_raw.png",
-      "prompt": "prompts/arena_ground.txt",
-      "transparent_background": false,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-3bdd0d6d-090c-4e8b-abfe-db7b83ec0dfe.png",
-      "source_sha256": "ed871589e1a2d4f3a29e7626770a6c88249a06d537bef32773e47c2de9444ae1",
-      "prompt_sha256": "80c2db32eee36dc0cbbbfdd5e83e479aa71cbcae0bc6e5d8d7950854ba6c4e55",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "ruin_wall_corner",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/ruin_wall_corner_raw.png",
-      "prompt": "prompts/ruin_wall_corner.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-7c3ad519-3dd4-42e3-8251-ee727239a928.png",
-      "source_sha256": "2698ff44b09ba0974cee1b3ce26bef295aa41109933eb15fd1334f941309ca21",
-      "prompt_sha256": "351e01b5d96237ac9c11e0e3896d5f8ba201a606cbd1514d022e0a65a3d87ecc",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "ruin_gate",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/ruin_gate_raw.png",
-      "prompt": "prompts/ruin_gate.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-c0af53fa-2007-438d-b82a-a0a0f9808866.png",
-      "source_sha256": "849912166927080d2fbb8d3980bba3e8003be32f49552798327811b32ad80309",
-      "prompt_sha256": "ea1bb7b32deff37796f859aacfbb08cff44ab2e565aec2e56f44769188a5b965",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "ruin_low_pier",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/ruin_low_pier_raw.png",
-      "prompt": "prompts/ruin_low_pier.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-4d733dba-789d-41de-ac35-3a4f384c03e7.png",
-      "source_sha256": "77b1073ada1bde9dc5b7e41b1bf0435000f598d55a3e93a5592db1b1d1cfcbc2",
-      "prompt_sha256": "9f486cd1f716126f60339fa2216f8cca9eba1d69cddb5caed8118e30d075f05d",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "ruin_broken_wall",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/ruin_broken_wall_raw.png",
-      "prompt": "prompts/ruin_broken_wall.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-1d3dc921-97cd-4f24-bda0-cdfd98eac1e3.png",
-      "source_sha256": "832c5b993955c7723a82b822a899368bde0ca42b25464ce222879754a468a32f",
-      "prompt_sha256": "a82e2c63f90db868127ee7dd9c8ca826174f3a4b6d02d96e22e11ebdf3c7203c",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
-    {
-      "id": "tower",
-      "tool": "image_gen.imagegen",
-      "intent": "new generation; reference used as style guide only",
-      "source": "sources/tower_raw.png",
-      "prompt": "prompts/tower.txt",
-      "transparent_background": true,
-      "reference": "docs/art-production/concepts/r13/hearthside-town-composition-v01.png",
-      "original_path": "/home/dev/.codex/generated_images/01a165a0-131e-7690-be00-610833ac1143/exec-f6987ef8-1c84-406a-8334-2c436ec063b7.png",
-      "source_sha256": "ea95f7e749d6c9b0eeb86124f2b130f92b5161e40cfcb03c9933177399bd5d94",
-      "prompt_sha256": "f9cfd9aad7779e2b7f6058d15841d84984a06d1f214bb7b112eed3aa088d3d70",
-      "reference_sha256": "7d32195435160893375c50a79de477a4cd16c8e3f1d8574639130abc9e17fc68"
-    },
     {
       "id": "npc_iven",
       "tool": "image_gen.imagegen",

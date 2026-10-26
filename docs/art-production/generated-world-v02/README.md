@@ -5,17 +5,23 @@ art. The retained Hearthside concept supplied a palette, materials and camera
 reference. Its buildings, trees and ground pixels were not extracted into this
 package.
 
-The retained original `SOURCES.json` records 24 image-generation outputs: two ground plates, 17 complete
+`SOURCES.json` records the original 24 image-generation outputs: two ground plates, 17 complete
 scenery objects and five resident sheets containing four work poses each. Every
-record links the exact prompt and retained source and pins their SHA256 hashes,
-plus the reference hash. Original generator output paths are provenance records;
-the checked-in `sources/` copies reproduce that original set. Repeating a
-generation prompt is not claimed to reproduce identical pixels.
+record links the exact prompt and pins the source and prompt SHA256 hashes, plus
+the reference hash. Original generator output paths are provenance records.
+Repeating a generation prompt is not claimed to reproduce identical pixels.
 
-The active scenery inputs are now the 17 angled dark-fantasy objects and two grounds in
+The front-facing set (two grounds and 17 scenery objects) was retired on 2026-10-26.
+Its raw PNGs and the rejected `polish-20261024/` drafts were deleted. `SOURCES.json`
+keeps those entries under `retired` with the pinned hashes and prompts under
+`prompts/`; only the five `npc_*_raw.png` resident sheets remain in `sources/`.
+
+The active scenery inputs are the 17 angled dark-fantasy objects and two grounds in
 `perspective-20261024/sources/`, with exact prompts and hashes in
-`perspective-20261024/PROVENANCE.json`. The original five resident sheets remain
-active. Bright and coarse front-facing drafts are retained but are not packed.
+`perspective-20261024/PROVENANCE.json`. The original five resident sheets in
+`sources/` remain active (resident animations are further described in
+`../actor-redraw-20261024/`).
+
 The active art uses an elevated three-quarter view with visible top and side
 planes. This corrects asset perspective; the runtime camera transform is unchanged.
 The Last Spell is a qualitative dark-fantasy/isometric reference, not a claim of
