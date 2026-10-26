@@ -1,5 +1,5 @@
 extends RefCounted
-## Objective, progress and navigation-copy derivations extracted from BaseHubScreen.
+## Objective, progress and navigation-copy derivations extracted from _hub.
 ## Every line is derived from the save/campaign/story snapshots the hub was
 ## handed, reached through the owner reference; nothing here writes state.
 
@@ -43,10 +43,10 @@ const _KNOWN_OUTCOMES := {
 const FILLED_MARK := "\u25c6"
 const LOCK_MARK := "\u25c7"
 
-var _hub: BaseHubScreen
+var _hub  # untyped to avoid a preload cycle
 
 
-func _init(hub: BaseHubScreen) -> void:
+func _init(hub) -> void:
 	_hub = hub
 
 

@@ -7,39 +7,39 @@ const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
 const HubStyles = preload("res://src/presentation/base_hub/hub_styles.gd")
 
-var _hub: BaseHubScreen
+var _hub  # untyped to avoid a preload cycle
 
 
-func _init(hub: BaseHubScreen) -> void:
+func _init(hub) -> void:
 	_hub = hub
 
 
 func nearby_resident_id() -> String:
 	if _hub._view == null or _hub.is_dialogue_open(): return ""
-	var feet := _hub._town.hero_world_position()
+	var feet = _hub._town.hero_world_position()
 	var facility_gap := INF
 	var best_distance := INF
 	var closest := ""
-	var feature := _hub._town.entry_for(_hub._town.nearby_feature_id())
+	var feature = _hub._town.entry_for(_hub._town.nearby_feature_id())
 	if not feature.is_empty():
 		facility_gap = feet.distance_to(feature.get("feet", Vector2(INF, INF)))
 	for id: String in _hub._resident_conversations:
 		if not _hub._town.resident_positions().has(id): continue
-		var candidate := feet.distance_to(_hub._town.resident_positions()[id])
+		var candidate = feet.distance_to(_hub._town.resident_positions()[id])
 		## Strict nearest inside TALK_RADIUS: later/farther residents never
 		## overwrite an earlier nearer one, whatever the iteration order.
-		if candidate > BaseHubScreen.TALK_RADIUS or candidate >= best_distance: continue
+		if candidate > _hub.TALK_RADIUS or candidate >= best_distance: continue
 		best_distance = candidate
 		closest = id
-	if closest.is_empty() or best_distance > facility_gap + BaseHubScreen.RESIDENT_PRIORITY_SLACK:
+	if closest.is_empty() or best_distance > facility_gap + _hub.RESIDENT_PRIORITY_SLACK:
 		return ""
 	return closest
 
 
 func talk_to_resident(resident_id: String) -> bool:
 	if _hub._dialogue == null or _hub.is_dialogue_open() or not _hub._resident_conversations.has(resident_id): return false
-	if not _hub._town.resident_positions().has(resident_id) or _hub._town.hero_world_position().distance_to(_hub._town.resident_positions()[resident_id]) > BaseHubScreen.TALK_RADIUS: return false
-	var opened := _hub._dialogue.open_conversation(_hub._resident_conversations[resident_id])
+	if not _hub._town.resident_positions().has(resident_id) or _hub._town.hero_world_position().distance_to(_hub._town.resident_positions()[resident_id]) > _hub.TALK_RADIUS: return false
+	var opened = _hub._dialogue.open_conversation(_hub._resident_conversations[resident_id])
 	if opened:
 		_hub._view.protect_dialogue_resident(resident_id)
 		_hub._nearby_panel.hide()
@@ -102,9 +102,9 @@ func _update_resident_markers() -> void:
 		var marker: Label = _hub._resident_markers[id]
 		marker.visible = false
 		if _hub._details_expanded or _hub.is_dialogue_open() or not _hub._town.resident_positions().has(id) or not _hub._resident_conversations.has(id): continue
-		var global_point := _hub._view.design_point_for_world(_hub._town.resident_positions()[id] - Vector2(0, 38), _hub._design_canvas.position, _hub._design_canvas.scale)
-		var point := _hub._design_canvas.get_global_transform_with_canvas().affine_inverse() * global_point
+		var global_point = _hub._view.design_point_for_world(_hub._town.resident_positions()[id] - Vector2(0, 38), _hub._design_canvas.position, _hub._design_canvas.scale)
+		var point = _hub._design_canvas.get_global_transform_with_canvas().affine_inverse() * global_point
 		marker.position = (point - Vector2(17, 28)).floor()
 		marker.size = Vector2(34, 28)
-		marker.visible = marker.position.y > BaseHubScreen.HEADER_RECT.end.y and marker.position.y + 28 < BaseHubScreen.DESIGN_SIZE.y and marker.position.x > 12 and marker.position.x + 34 < BaseHubScreen.DESIGN_SIZE.x - 12
+		marker.visible = marker.position.y > _hub.HEADER_RECT.end.y and marker.position.y + 28 < _hub.DESIGN_SIZE.y and marker.position.x > 12 and marker.position.x + 34 < _hub.DESIGN_SIZE.x - 12
 		marker.modulate.a = 0.55 if bool(_hub._resident_conversations[id].get("is_read", false)) else 1.0

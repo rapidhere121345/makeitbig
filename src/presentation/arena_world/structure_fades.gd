@@ -42,7 +42,7 @@ func paired_reveal_material(sprite_id: String, feet: Vector2) -> Material:
 	return _paired_materials.get(_structure_key(sprite_id, feet), null)
 
 
-func _paired_material(view: ArenaWorldProjection, key: String, sprite_id: String) -> ShaderMaterial:
+func _paired_material(view, key: String, sprite_id: String) -> ShaderMaterial:
 	var existing: Variant = _paired_materials.get(key, null)
 	if existing is ShaderMaterial:
 		return existing
@@ -55,7 +55,7 @@ func _paired_material(view: ArenaWorldProjection, key: String, sprite_id: String
 	return material
 
 
-func advance_structure_fades(view: ArenaWorldProjection, drawables: Array, subjects: Array, delta: float) -> void:
+func advance_structure_fades(view, drawables: Array, subjects: Array, delta: float) -> void:
 	var next: Dictionary = {}
 	for drawable: Dictionary in drawables:
 		if drawable.kind not in ["structure", "tower"]:
@@ -68,7 +68,7 @@ func advance_structure_fades(view: ArenaWorldProjection, drawables: Array, subje
 		## Whole-object pair: one authored detection rect, one eased
 		## reveal weight, no band split. The rect stays report-only
 		## geometry; collision remains authored in the room scene.
-		var rect := view.paired_detection_rect_world(id, feet)
+		var rect = view.paired_detection_rect_world(id, feet)
 		var state := PairedReveal.advance_state(rect, drawable, subjects, _structure_fades.get(key, {}), delta)
 		var material := _paired_material(view, key, id)
 		material.set_shader_parameter("reveal_weight", state.weight)
@@ -83,11 +83,11 @@ func advance_structure_fades(view: ArenaWorldProjection, drawables: Array, subje
 
 ## Upper-band report. Solid-base clearance belongs to the authored movement
 ## contract and rendered acceptance, not this presentation-only overlap query.
-func hero_cover_report(view: ArenaWorldProjection, hero_world_point: Vector2) -> Dictionary:
+func hero_cover_report(view, hero_world_point: Vector2) -> Dictionary:
 	var in_front: Array[String] = []
 	var faded: Array[String] = []
 	var full_covers: Array[String] = []
-	var box := view.hero_cell_world(hero_world_point)
+	var box = view.hero_cell_world(hero_world_point)
 	for state: Dictionary in _structure_fades.values():
 		if not SortRelation.is_front(state.part, view._hero_sort_entry(hero_world_point)) or not (state.volume as Rect2).intersects(box):
 			continue

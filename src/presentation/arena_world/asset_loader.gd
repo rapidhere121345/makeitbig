@@ -55,7 +55,7 @@ const CELL_CONTRACTS := {
 }
 
 
-func select_union(view: ArenaWorldProjection, scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
+func select_union(view, scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
 	var scene_sprites := scene_atlas.get("sprites", {}) as Dictionary
 	var legacy_sprites := legacy_atlas.get("sprites", {}) as Dictionary
 	for sprite_id in scene_sprites.keys():
@@ -78,7 +78,7 @@ func select_union(view: ArenaWorldProjection, scene_atlas: Dictionary, legacy_at
 	return true
 
 
-func normalize_sprite(view: ArenaWorldProjection, raw: Dictionary) -> Dictionary:
+func normalize_sprite(view, raw: Dictionary) -> Dictionary:
 	var rect: Array = raw.get("rect", [])
 	var anchor: Array = raw.get("anchor", [])
 	if rect.size() != 4 or anchor.size() != 2:
@@ -94,7 +94,7 @@ func normalize_sprite(view: ArenaWorldProjection, raw: Dictionary) -> Dictionary
 	return normalized
 
 
-func load_textures(view: ArenaWorldProjection, scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
+func load_textures(view, scene_atlas: Dictionary, legacy_atlas: Dictionary) -> bool:
 	var sources: Dictionary = (scene_atlas.get("textures", {}) as Dictionary).duplicate(true)
 	var legacy_sources: Dictionary = legacy_atlas.get("textures", {})
 	for sprite_id: String in LEGACY_SPRITE_IDS:
@@ -109,7 +109,7 @@ func load_textures(view: ArenaWorldProjection, scene_atlas: Dictionary, legacy_a
 	for texture_key in sources.keys():
 		var metadata := sources[texture_key] as Dictionary
 		var path := String(metadata.get("path", ""))
-		var texture := view._load_texture(path)
+		var texture = view._load_texture(path)
 		if texture == null:
 			return false
 		if texture.get_width() != int(metadata.get("width", 0)) or texture.get_height() != int(metadata.get("height", 0)):
@@ -120,9 +120,9 @@ func load_textures(view: ArenaWorldProjection, scene_atlas: Dictionary, legacy_a
 	return true
 
 
-func validate_cells(view: ArenaWorldProjection) -> bool:
+func validate_cells(view) -> bool:
 	for sprite_id in CELL_CONTRACTS.keys():
-		var metadata := view.sprite(String(sprite_id))
+		var metadata = view.sprite(String(sprite_id))
 		if metadata.is_empty():
 			view.pending_reason = "ASSETS PENDING: missing sprite %s" % sprite_id
 			return false
@@ -143,8 +143,8 @@ func validate_cells(view: ArenaWorldProjection) -> bool:
 	return true
 
 
-func read_layout(view: ArenaWorldProjection, layout: Dictionary) -> bool:
-	var world := view._point(layout.get("world_size", []))
+func read_layout(view, layout: Dictionary) -> bool:
+	var world = view._point(layout.get("world_size", []))
 	if world != view.WORLD_SIZE:
 		view.pending_reason = "ASSETS PENDING: layout world_size must be 1024x640"
 		return false
@@ -181,7 +181,7 @@ func read_layout(view: ArenaWorldProjection, layout: Dictionary) -> bool:
 		view.pending_reason = "ASSETS PENDING: layout must place structures"
 		return false
 	for placement in view._structures:
-		var metadata := view.sprite(String(placement.get("id", "")))
+		var metadata = view.sprite(String(placement.get("id", "")))
 		if metadata.is_empty():
 			view.pending_reason = "ASSETS PENDING: layout places %s without an atlas sprite" % String(placement.get("id", ""))
 			return false

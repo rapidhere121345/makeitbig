@@ -40,10 +40,10 @@ func detection_rect_world(sprite_id: String, feet: Vector2) -> Rect2:
 ## required — a missing file, an incomplete arena section, or any family
 ## sprite that is not "packed" and valid fails the whole load closed (never a
 ## silent half-new scene and never a silent fallback).
-func load_pack(view: ArenaWorldProjection) -> bool:
+func load_pack(view) -> bool:
 	sprites.clear()
 	view._fades.clear_materials()
-	var pack := view._read_json(view.generated_world_path)
+	var pack = view._read_json(view.generated_world_path)
 	if pack.is_empty():
 		return false
 	var grounds: Variant = pack.get("grounds", null)
@@ -52,7 +52,7 @@ func load_pack(view: ArenaWorldProjection) -> bool:
 		view.pending_reason = "ASSETS PENDING: generated arena ground is not packed"
 		return false
 	if ground_entry is Dictionary and String((ground_entry as Dictionary).get("status", "")) == "packed":
-		var ground := view._load_texture(String((ground_entry as Dictionary).get("opaque_path", "")))
+		var ground = view._load_texture(String((ground_entry as Dictionary).get("opaque_path", "")))
 		if ground == null:
 			return false
 		if ground.get_size() != view.WORLD_SIZE:
@@ -88,16 +88,16 @@ func load_pack(view: ArenaWorldProjection) -> bool:
 ## transparent texture pair. The detection rect must contain the opaque
 ## texture's MEASURED occupied bounds grown by DETECTION_GROW — the pack's
 ## own declared occupied_rect is metadata; the texture is the truth.
-func _normalize_generated_sprite(view: ArenaWorldProjection, sprite_id: String, raw: Dictionary) -> Dictionary:
-	var canvas := view._point(raw.get("canvas", []))
-	var anchor := view._point(raw.get("anchor", []))
+func _normalize_generated_sprite(view, sprite_id: String, raw: Dictionary) -> Dictionary:
+	var canvas = view._point(raw.get("canvas", []))
+	var anchor = view._point(raw.get("anchor", []))
 	var occupied := _rect_of(raw.get("occupied_rect", []))
 	var occlusion := _rect_of(raw.get("occlusion_rect", []))
 	if canvas.x <= 0.0 or canvas.y <= 0.0 or not anchor.is_finite():
 		view.pending_reason = "ASSETS PENDING: %s malformed canvas or anchor" % sprite_id
 		return {}
-	var opaque := view._load_texture(String(raw.get("opaque_path", "")))
-	var variant := view._load_texture(String(raw.get("transparent_path", "")))
+	var opaque = view._load_texture(String(raw.get("opaque_path", "")))
+	var variant = view._load_texture(String(raw.get("transparent_path", "")))
 	if opaque == null or variant == null:
 		return {}
 	if opaque.get_size() != canvas or variant.get_size() != canvas:
@@ -106,7 +106,7 @@ func _normalize_generated_sprite(view: ArenaWorldProjection, sprite_id: String, 
 	if PairedReveal.detection_rect_error(occlusion, opaque.get_image()) != "":
 		view.pending_reason = "ASSETS PENDING: %s detection rect must contain occupied.grow(%d)" % [sprite_id, int(PairedReveal.DETECTION_GROW)]
 		return {}
-	var variant_image := variant.get_image()
+	var variant_image = variant.get_image()
 	var variant_max_alpha := 0.0
 	for y: int in variant_image.get_height():
 		for x: int in variant_image.get_width():

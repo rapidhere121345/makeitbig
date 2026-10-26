@@ -3,23 +3,23 @@ extends RefCounted
 ## gateway activation, world clicks and the proximity badge geometry. Reaches
 ## the town runtime and presenter through the owner reference.
 
-var _hub: BaseHubScreen
+var _hub  # untyped to avoid a preload cycle
 
 
-func _init(hub: BaseHubScreen) -> void:
+func _init(hub) -> void:
 	_hub = hub
 
 
 func activate_nearby_feature() -> bool:
 	if _hub.is_dialogue_open(): return false
-	var feature_id := _hub._town.nearby_feature_id()
+	var feature_id = _hub._town.nearby_feature_id()
 	if feature_id.is_empty():
 		return false
 	return _hub.navigation_card_activated(feature_id)
 
 
 func activate_nearby_interaction() -> bool:
-	var resident_id := _hub.nearby_resident_id()
+	var resident_id = _hub.nearby_resident_id()
 	if not resident_id.is_empty(): return _hub.talk_to_resident(resident_id)
 	if not _hub._town.nearby_feature_id().is_empty(): return activate_nearby_feature()
 	return activate_nearby_gateway()
@@ -47,7 +47,7 @@ func click_at_design_point(point: Vector2) -> bool:
 	## Distant stations become destinations. Only a nearby station opens a page.
 	if _hub._view == null:
 		return false
-	var world_point := _hub._view.world_point_at_design(point, _hub._design_canvas.position, _hub._design_canvas.scale)
+	var world_point = _hub._view.world_point_at_design(point, _hub._design_canvas.position, _hub._design_canvas.scale)
 	if _hub._residents._click_resident(world_point): return true
 	var feature_id := _hit_feature(world_point)
 	if feature_id.is_empty():
@@ -79,10 +79,10 @@ func _update_nearby_feature() -> void:
 		_hub._nearby_panel.hide()
 		_hub._prompt_rect = Rect2()
 		return
-	var feature_id := _hub._town.nearby_feature_id()
+	var feature_id = _hub._town.nearby_feature_id()
 	_hub._residents._update_resident_markers()
-	var resident_id := _hub.nearby_resident_id()
-	var gateway := _hub._town.entry_for_gateway(nearby_gateway_id()) if feature_id.is_empty() and resident_id.is_empty() else {}
+	var resident_id = _hub.nearby_resident_id()
+	var gateway = _hub._town.entry_for_gateway(nearby_gateway_id()) if feature_id.is_empty() and resident_id.is_empty() else {}
 	if feature_id.is_empty() and resident_id.is_empty() and gateway.is_empty():
 		_hub._view.set_interaction_focus(false)
 		_hub._nearby_panel.visible = false
@@ -103,7 +103,7 @@ func _update_nearby_feature() -> void:
 
 
 func _facility_prompt_text(feature_id: String) -> String:
-	var entry := _hub._town.entry_for(feature_id) if _hub._view != null else {}
+	var entry = _hub._town.entry_for(feature_id) if _hub._view != null else {}
 	var label := String(entry.get("label", ""))
 	if label.is_empty():
 		label = _hub._nav_title(feature_id)
@@ -122,8 +122,8 @@ func _hero_foot_design_point() -> Vector2:
 	## Where the avatar's foot point lands on the 1280x720 canvas with the live
 	## camera of this screen.
 	if _hub._view == null:
-		return BaseHubScreen.HERO_ENTRY_FOOT_ANCHOR
-	var screen_point := _hub._view.design_point_for_world(_hub._town.hero_world_position(), _hub._design_canvas.position, _hub._design_canvas.scale)
+		return _hub.HERO_ENTRY_FOOT_ANCHOR
+	var screen_point = _hub._view.design_point_for_world(_hub._town.hero_world_position(), _hub._design_canvas.position, _hub._design_canvas.scale)
 	return _hub._design_canvas.get_global_transform_with_canvas().affine_inverse() * screen_point
 
 
@@ -143,20 +143,20 @@ func _hero_cell_design_rect() -> Rect2:
 			anchor = Vector2(float(metadata_anchor[0]), float(metadata_anchor[1]))
 		foot = _hub._town.hero_world_position()
 	if _hub._view == null:
-		return Rect2((foot - anchor) * BaseHubScreen.WORLD_TO_DESIGN, cell * BaseHubScreen.WORLD_TO_DESIGN)
-	var screen_to_canvas := _hub._design_canvas.get_global_transform_with_canvas().affine_inverse()
-	var top_left := screen_to_canvas * _hub._view.design_point_for_world(foot - anchor, _hub._design_canvas.position, _hub._design_canvas.scale)
-	var bottom_right := screen_to_canvas * _hub._view.design_point_for_world(foot - anchor + cell, _hub._design_canvas.position, _hub._design_canvas.scale)
+		return Rect2((foot - anchor) * _hub.WORLD_TO_DESIGN, cell * _hub.WORLD_TO_DESIGN)
+	var screen_to_canvas = _hub._design_canvas.get_global_transform_with_canvas().affine_inverse()
+	var top_left = screen_to_canvas * _hub._view.design_point_for_world(foot - anchor, _hub._design_canvas.position, _hub._design_canvas.scale)
+	var bottom_right = screen_to_canvas * _hub._view.design_point_for_world(foot - anchor + cell, _hub._design_canvas.position, _hub._design_canvas.scale)
 	return Rect2(top_left, bottom_right - top_left)
 
 
 func _prompt_width() -> float:
 	## Just the width the badge's own copy needs, clamped to its published bounds.
 	var font: Font = _hub._nearby_label.get_theme_font("font")
-	var measured := BaseHubScreen.PROMPT_MIN_WIDTH
+	var measured = _hub.PROMPT_MIN_WIDTH
 	if font != null:
-		measured = font.get_string_size(_hub._nearby_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, BaseHubScreen.PROMPT_FONT_SIZE).x + 24.0
-	return clampf(measured, BaseHubScreen.PROMPT_MIN_WIDTH, BaseHubScreen.PROMPT_MAX_WIDTH)
+		measured = font.get_string_size(_hub._nearby_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, _hub.PROMPT_FONT_SIZE).x + 24.0
+	return clampf(measured, _hub.PROMPT_MIN_WIDTH, _hub.PROMPT_MAX_WIDTH)
 
 
 func _resolve_prompt_rect() -> Rect2:
@@ -164,21 +164,21 @@ func _resolve_prompt_rect() -> Rect2:
 	## not: never over the avatar's own cell and never off the canvas.
 	var foot := _hero_foot_design_point()
 	var cell := _hero_cell_design_rect()
-	var bottom_limit := BaseHubScreen.DESIGN_SIZE.y - BaseHubScreen.PROMPT_CLEARANCE
+	var bottom_limit = _hub.DESIGN_SIZE.y - _hub.PROMPT_CLEARANCE
 	var width := _prompt_width()
-	var top := cell.end.y + BaseHubScreen.PROMPT_GAP
-	if top + BaseHubScreen.PROMPT_HEIGHT > bottom_limit:
-		var above := cell.position.y - BaseHubScreen.PROMPT_GAP - BaseHubScreen.PROMPT_HEIGHT
-		top = above if above >= BaseHubScreen.HEADER_RECT.end.y + BaseHubScreen.PROMPT_CLEARANCE else bottom_limit - BaseHubScreen.PROMPT_HEIGHT
-	top = clampf(top, BaseHubScreen.HEADER_RECT.end.y + BaseHubScreen.PROMPT_CLEARANCE, bottom_limit - BaseHubScreen.PROMPT_HEIGHT)
-	var left := clampf(foot.x - width * 0.5, BaseHubScreen.PROMPT_MARGIN, BaseHubScreen.DESIGN_SIZE.x - BaseHubScreen.PROMPT_MARGIN - width)
+	var top = cell.end.y + _hub.PROMPT_GAP
+	if top + _hub.PROMPT_HEIGHT > bottom_limit:
+		var above = cell.position.y - _hub.PROMPT_GAP - _hub.PROMPT_HEIGHT
+		top = above if above >= _hub.HEADER_RECT.end.y + _hub.PROMPT_CLEARANCE else bottom_limit - _hub.PROMPT_HEIGHT
+	top = clampf(top, _hub.HEADER_RECT.end.y + _hub.PROMPT_CLEARANCE, bottom_limit - _hub.PROMPT_HEIGHT)
+	var left := clampf(foot.x - width * 0.5, _hub.PROMPT_MARGIN, _hub.DESIGN_SIZE.x - _hub.PROMPT_MARGIN - width)
 	## Snapped to the pixel grid like every other hub rectangle: the world is drawn
 	## at whole-number scale, so a half-pixel badge would soften its own edge.
-	return Rect2(floorf(left), floorf(top), ceilf(width), BaseHubScreen.PROMPT_HEIGHT)
+	return Rect2(floorf(left), floorf(top), ceilf(width), _hub.PROMPT_HEIGHT)
 
 
 func _hit_feature(point: Vector2) -> String:
-	var id := _hub._view.hit_test(point)
+	var id = _hub._view.hit_test(point)
 	if not id.is_empty():
 		return id
 	var distance := INF

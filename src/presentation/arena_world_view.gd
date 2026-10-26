@@ -1,4 +1,3 @@
-class_name ArenaWorldProjection
 extends RefCounted
 ## R13 snowy-outpost production skin. New ground, ruins, beacon and colossus
 ## textures keep the original scene/legacy cells, layout and module anchors.
@@ -27,9 +26,8 @@ const JsonIO := preload("res://src/core/json_io.gd")
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 ## Collaborators in src/presentation/arena_world/. The view keeps the frame state
 ## (camera, hero cell, sprite and texture tables) and passes itself to the ones
-## that need it, so nothing holds a reference back to the view. The class_name
-## exists only so those collaborators can type that parameter without a
-## preload cycle.
+## that need it, so nothing holds a reference back to the view. The parameter
+## stays untyped to avoid a preload cycle.
 const AlphaOcclusionScript := preload("res://src/presentation/arena_world/alpha_occlusion.gd")
 const AssetLoaderScript := preload("res://src/presentation/arena_world/asset_loader.gd")
 const BossPartsScript := preload("res://src/presentation/arena_world/boss_parts.gd")

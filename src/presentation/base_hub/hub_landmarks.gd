@@ -15,24 +15,24 @@ const UiKit := preload("res://src/presentation/ui_kit.gd")
 const LANDMARK_WINDOW_ALPHA := 0.35
 const LANDMARK_WINDOW_RATE := 8.0
 
-var _hub: BaseHubScreen
+var _hub  # untyped to avoid a preload cycle
 var _landmark_styles: Dictionary = {}
 
 
-func _init(hub: BaseHubScreen) -> void:
+func _init(hub) -> void:
 	_hub = hub
 
 
 func _update_landmark_windows(delta: float) -> void:
 	if _hub._view == null or _hub._design_canvas == null:
 		return
-	var hero_cell := _hub._hero_cell_design_rect()
+	var hero_cell = _hub._hero_cell_design_rect()
 	for feature_id: String in _hub._landmarks.keys():
 		var landmark: Control = _hub._landmarks[feature_id]
 		if not landmark.visible:
 			landmark.modulate.a = 1.0
 			continue
-		var plate := Rect2(landmark.position, BaseHubScreen.LANDMARK_SIZE)
+		var plate := Rect2(landmark.position, _hub.LANDMARK_SIZE)
 		var target := LANDMARK_WINDOW_ALPHA if plate.intersects(hero_cell) else 1.0
 		var current := float(landmark.modulate.a)
 		var step: float = LANDMARK_WINDOW_RATE * maxf(delta, 0.0)
@@ -40,10 +40,10 @@ func _update_landmark_windows(delta: float) -> void:
 
 
 func _navigation_has_focus() -> bool:
-	var viewport := _hub.get_viewport()
+	var viewport = _hub.get_viewport()
 	if viewport == null:
 		return false
-	var owner := viewport.gui_get_focus_owner()
+	var owner = viewport.gui_get_focus_owner()
 	for landmark: Control in _hub._landmarks.values():
 		if owner != null and (owner == landmark or landmark.is_ancestor_of(owner)):
 			return true
@@ -52,14 +52,14 @@ func _navigation_has_focus() -> bool:
 
 func _focus_visible_landmark(reverse: bool) -> bool:
 	var visible_ids: Array[String] = []
-	for feature_id: String in BaseHubScreen.LANDMARK_FEATURE_IDS:
+	for feature_id: String in _hub.LANDMARK_FEATURE_IDS:
 		var landmark := get_landmark(feature_id)
 		if landmark != null and landmark.is_visible_in_tree():
 			visible_ids.append(feature_id)
 	if visible_ids.is_empty():
 		return false
 	var current := -1
-	var focus_owner := _hub.get_viewport().gui_get_focus_owner() if _hub.is_inside_tree() else null
+	var focus_owner = _hub.get_viewport().gui_get_focus_owner() if _hub.is_inside_tree() else null
 	for index: int in visible_ids.size():
 		var landmark := get_landmark(visible_ids[index])
 		if landmark != null and focus_owner != null and (focus_owner == landmark or landmark.is_ancestor_of(focus_owner)):
@@ -76,8 +76,8 @@ func _focus_visible_landmark(reverse: bool) -> bool:
 
 
 func _build_landmarks() -> void:
-	for feature_id: String in BaseHubScreen.LANDMARK_FEATURE_IDS:
-		var landmark := BaseHubScreen.TownLandmark.new(feature_id)
+	for feature_id: String in _hub.LANDMARK_FEATURE_IDS:
+		var landmark = _hub.TownLandmark.new(feature_id)
 		landmark.toggle_mode = false
 		landmark.focus_mode = Control.FOCUS_ALL
 		landmark.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -98,24 +98,24 @@ func _build_landmarks() -> void:
 		copy.offset_right = -10.0
 		copy.offset_bottom = -4.0
 		landmark.add_child(copy)
-		var title := _hub._copy_label("", "Title", 22)
+		var title = _hub._copy_label("", "Title", 22)
 		title.clip_text = true
 		title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		title.position = Vector2.ZERO
-		title.size = Vector2(BaseHubScreen.LANDMARK_SIZE.x - 20.0, 32.0)
+		title.size = Vector2(_hub.LANDMARK_SIZE.x - 20.0, 32.0)
 		copy.add_child(title)
-		var status := _hub._copy_label("", "Status", 18)
+		var status = _hub._copy_label("", "Status", 18)
 		status.clip_text = true
 		status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		status.position = Vector2(0.0, 36.0)
-		status.size = Vector2(BaseHubScreen.LANDMARK_SIZE.x - 20.0, 28.0)
+		status.size = Vector2(_hub.LANDMARK_SIZE.x - 20.0, 28.0)
 		copy.add_child(status)
 		_hub._landmarks[feature_id] = landmark
 	_hub._town.select_destination(_hub._town.destination_id())
 
 
 func wayfinding_report() -> Dictionary:
-	var entry := _hub._town.entry_for(_hub._town.destination_id()) if _hub._view != null else {}
+	var entry = _hub._town.entry_for(_hub._town.destination_id()) if _hub._view != null else {}
 	if entry.is_empty(): return {}
 	var delta: Vector2 = entry.feet - _hub._town.hero_world_position()
 	var arrived := delta.length() <= float(entry.radius)
@@ -147,7 +147,7 @@ func _landmark_style(hovered: bool, nearby: bool) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("111820d9" if nearby else "111820b8")
 	var amber := ShellThemeScript.AMBER
-	var grey := BaseHubScreen.COOL_GREY
+	var grey = _hub.COOL_GREY
 	if hovered or nearby:
 		style.border_color = Color(amber.r, amber.g, amber.b, 0.95 if nearby else 0.72)
 	else:
@@ -173,13 +173,13 @@ func _landmark_focus_style() -> StyleBoxFlat:
 
 
 func _landmark_world_rect(feature_id: String) -> Rect2:
-	var entry := _hub._feature_entry(feature_id)
+	var entry = _hub._feature_entry(feature_id)
 	if entry.is_empty():
 		return Rect2()
 	var feet: Vector2 = entry.get("feet", Vector2.ZERO)
 	var building_top := feet.y + float(entry.get("landmark_offset_y", -112.0))
-	var size := BaseHubScreen.LANDMARK_SIZE * BaseHubScreen.DESIGN_TO_WORLD
-	var position := Vector2(feet.x - size.x * 0.5, building_top - BaseHubScreen.LANDMARK_GAP * BaseHubScreen.DESIGN_TO_WORLD - size.y)
+	var size = _hub.LANDMARK_SIZE * _hub.DESIGN_TO_WORLD
+	var position := Vector2(feet.x - size.x * 0.5, building_top - _hub.LANDMARK_GAP * _hub.DESIGN_TO_WORLD - size.y)
 	return Rect2(position, size)
 
 
@@ -187,9 +187,9 @@ func _landmark_design_rect(feature_id: String) -> Rect2:
 	var world_rect := _landmark_world_rect(feature_id)
 	if world_rect == Rect2() or _hub._view == null or _hub._design_canvas == null:
 		return Rect2()
-	var screen_point := _hub._view.design_point_for_world(world_rect.position, _hub._design_canvas.position, _hub._design_canvas.scale)
-	var canvas_point := _hub._design_canvas.get_global_transform_with_canvas().affine_inverse() * screen_point
-	return Rect2(canvas_point, BaseHubScreen.LANDMARK_SIZE)
+	var screen_point = _hub._view.design_point_for_world(world_rect.position, _hub._design_canvas.position, _hub._design_canvas.scale)
+	var canvas_point = _hub._design_canvas.get_global_transform_with_canvas().affine_inverse() * screen_point
+	return Rect2(canvas_point, _hub.LANDMARK_SIZE)
 
 
 func get_landmark(feature_id: String) -> Button:
@@ -200,7 +200,7 @@ func _update_landmarks() -> void:
 	if _hub._view == null or _hub._design_canvas == null:
 		return
 	var camera := Rect2(_hub._view.camera_world_offset(), Vector2(_hub._view.world_viewport.size))
-	var nearby_id := _hub._town.nearby_feature_id()
+	var nearby_id = _hub._town.nearby_feature_id()
 	_hub._nav_states = navigation_state()
 	for state: Dictionary in _hub._nav_states:
 		var feature_id := String(state.id)
@@ -209,21 +209,21 @@ func _update_landmarks() -> void:
 			continue
 		var world_rect := _landmark_world_rect(feature_id)
 		var design_rect := _landmark_design_rect(feature_id)
-		landmark.visible = camera.encloses(world_rect) and BaseHubScreen.LANDMARK_SAFE_RECT.encloses(design_rect) and not _hub.is_dialogue_open() and not _hub._details_expanded
-		_hub._place_control(landmark, Rect2(design_rect.position.floor(), BaseHubScreen.LANDMARK_SIZE))
+		landmark.visible = camera.encloses(world_rect) and _hub.LANDMARK_SAFE_RECT.encloses(design_rect) and not _hub.is_dialogue_open() and not _hub._details_expanded
+		_hub._place_control(landmark, Rect2(design_rect.position.floor(), _hub.LANDMARK_SIZE))
 		var title := landmark.get_node("Copy/Title") as Label
 		var status := landmark.get_node("Copy/Status") as Label
-		var nearby := feature_id == nearby_id
-		var selected := feature_id == _hub._town.destination_id()
+		var nearby = feature_id == nearby_id
+		var selected = feature_id == _hub._town.destination_id()
 		if selected:
 			## The label can be hidden while its world feet stay technically on
 			## screen (the top band, another stand's art): the local road guide
 			## must keep pointing until the stand's own interaction radius.
-			_hub._view.set_destination_occluded(not (camera.encloses(world_rect) and BaseHubScreen.LANDMARK_SAFE_RECT.encloses(design_rect)))
+			_hub._view.set_destination_occluded(not (camera.encloses(world_rect) and _hub.LANDMARK_SAFE_RECT.encloses(design_rect)))
 		title.text = String(state.get("title", feature_id))
 		status.text = String(state.get("status", ""))
-		title.add_theme_color_override("font_color", ShellThemeScript.BONE if nearby or selected else BaseHubScreen.COOL_GREY)
-		status.add_theme_color_override("font_color", ShellThemeScript.AMBER if nearby or selected else BaseHubScreen.COOL_GREY)
+		title.add_theme_color_override("font_color", ShellThemeScript.BONE if nearby or selected else _hub.COOL_GREY)
+		status.add_theme_color_override("font_color", ShellThemeScript.AMBER if nearby or selected else _hub.COOL_GREY)
 		landmark.tooltip_text = "%s\n%s\n%s\nClick for directions; approach, then click or press E to enter" % [
 			title.text, status.text, String(state.get("detail", "")),
 		]
@@ -239,7 +239,7 @@ func _update_landmarks() -> void:
 
 func _wire_landmark_focus_neighbours() -> void:
 	var visible_ids: Array[String] = []
-	for feature_id: String in BaseHubScreen.LANDMARK_FEATURE_IDS:
+	for feature_id: String in _hub.LANDMARK_FEATURE_IDS:
 		var landmark := get_landmark(feature_id)
 		if landmark != null and landmark.is_visible():
 			visible_ids.append(feature_id)
@@ -265,7 +265,7 @@ func navigation_state() -> Array:
 	var progression := UiKit.as_dictionary(_hub._profile.get("progression", {}))
 	var earned_rewards := UiKit.as_array(_hub._campaign_snapshot.get("earned_reward_tags", []))
 	var states: Array = []
-	for feature_id: String in BaseHubScreen.LANDMARK_FEATURE_IDS:
+	for feature_id: String in _hub.LANDMARK_FEATURE_IDS:
 		states.append({
 			"id": feature_id,
 			"title": _hub._nav_title(feature_id),
@@ -287,10 +287,10 @@ func get_navigation_state(feature_id: String) -> Dictionary:
 
 func navigation_card_activated(feature_id: String) -> bool:
 	## A far click is a request for directions, not a remote facility opening.
-	if _hub.is_dialogue_open() or _hub._details_expanded or not BaseHubScreen.LANDMARK_FEATURE_IDS.has(feature_id):
+	if _hub.is_dialogue_open() or _hub._details_expanded or not _hub.LANDMARK_FEATURE_IDS.has(feature_id):
 		return false
-	var entry := _hub._town.entry_for(feature_id)
-	var within_reach := not entry.is_empty() and _hub._town.hero_world_position().distance_to(entry.feet) <= float(entry.radius)
+	var entry = _hub._town.entry_for(feature_id)
+	var within_reach = not entry.is_empty() and _hub._town.hero_world_position().distance_to(entry.feet) <= float(entry.radius)
 	if not within_reach:
 		## Only an explicit directions request moves the local road guide. Walking
 		## up to a stand and entering it is not a destination choice, so a mistaken

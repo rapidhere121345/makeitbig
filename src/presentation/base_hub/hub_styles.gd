@@ -1,6 +1,6 @@
 extends RefCounted
 ## Stylebox factories shared by the hub's header, badge, buttons and residents,
-## extracted from BaseHubScreen. Pure constructors; no state.
+## extracted from _hub. Pure constructors; no state.
 
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")

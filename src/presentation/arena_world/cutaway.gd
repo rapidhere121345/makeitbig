@@ -69,11 +69,11 @@ func cutaway_front(_hero_world_point: Vector2) -> Array[Dictionary]:
 	return []
 
 
-func cutaway_for(view: ArenaWorldProjection, art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2, sort_rank: int = 1, stable_id: String = "actor", visibility: Variant = null) -> Dictionary:
-	var cell := view.hero_cell_world(hero_world_point)
+func cutaway_for(view, art_box: Rect2, feet_world: Vector2, hero_world_point: Vector2, sort_rank: int = 1, stable_id: String = "actor", visibility: Variant = null) -> Dictionary:
+	var cell = view.hero_cell_world(hero_world_point)
 	var window := cutaway_window(cell)
 	var actor_sort := SortRelation.entry(feet_world.y, sort_rank, stable_id)
-	var overlaps := view.visibility_intersects(visibility, window) if visibility != null else art_box.intersects(window)
+	var overlaps = view.visibility_intersects(visibility, window) if visibility != null else art_box.intersects(window)
 	if not SortRelation.is_front(actor_sort, view._hero_sort_entry(hero_world_point)) or not overlaps:
 		return {"window": window, "local_alpha": 1.0, "in_front": false}
 	## This budget covers only actor-over-actor drawing; structures fade separately.
@@ -83,10 +83,10 @@ func cutaway_for(view: ArenaWorldProjection, art_box: Rect2, feet_world: Vector2
 
 ## The actor pass supplies every live front-facing actor cell before drawing.
 ## Normal enemies and Boss parts share one local opacity budget.
-func prepare_actor_occlusion(view: ArenaWorldProjection, cells: Array[Dictionary], hero_world_point: Vector2) -> void:
+func prepare_actor_occlusion(view, cells: Array[Dictionary], hero_world_point: Vector2) -> void:
 	_actor_occluders.clear()
 	var window := cutaway_window(view.hero_cell_world(hero_world_point))
-	var hero_sort := view._hero_sort_entry(hero_world_point)
+	var hero_sort = view._hero_sort_entry(hero_world_point)
 	for cell: Dictionary in cells:
 		var box: Rect2 = cell["art_box"]
 		var visibility: Variant = cell.get("visibility", null)
@@ -94,21 +94,21 @@ func prepare_actor_occlusion(view: ArenaWorldProjection, cells: Array[Dictionary
 		var sort_rank := int(cell.get("sort_rank", cell.get("rank", 1)))
 		var baseline_y := float(cell.get("baseline_y", (cell.get("feet_world", Vector2.ZERO) as Vector2).y))
 		var actor_sort := SortRelation.entry(baseline_y, sort_rank, stable_id)
-		var overlaps := view.visibility_intersects(visibility, window) if visibility != null else box.intersects(window)
+		var overlaps = view.visibility_intersects(visibility, window) if visibility != null else box.intersects(window)
 		if SortRelation.is_front(actor_sort, hero_sort) and overlaps:
 			_actor_occluders.append(cell.duplicate())
 	_actor_cutaway_ready = true
 	_cutaway_hero = Vector2(INF, INF)
 
 
-func _tower_upper_faded(view: ArenaWorldProjection, hero_world_point: Vector2) -> bool:
-	var feet := view.tower_feet_world()
+func _tower_upper_faded(view, hero_world_point: Vector2) -> bool:
+	var feet = view.tower_feet_world()
 	if not SortRelation.is_front(SortRelation.entry(feet.y, 0, "structure/tower"), view._hero_sort_entry(hero_world_point)):
 		return false
 	return view.paired_detection_rect_world("tower", feet).intersects(view.hero_cell_world(hero_world_point))
 
 
-func _cutaway_plan(view: ArenaWorldProjection, hero_world_point: Vector2) -> Dictionary:
+func _cutaway_plan(view, hero_world_point: Vector2) -> Dictionary:
 	if _cutaway_hero != hero_world_point:
 		_cutaway_hero = hero_world_point
 		_cutaway_front = cutaway_front(hero_world_point)
@@ -121,7 +121,7 @@ func _cutaway_plan(view: ArenaWorldProjection, hero_world_point: Vector2) -> Dic
 ## means that cell keeps its authored alpha for this frame: a ruin that stands
 ## behind the hero is never cut, and only the instance that really sorts in front
 ## of it shares the window, even when the arena places the same ruin twice.
-func _cutaway_for_cell(view: ArenaWorldProjection, sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> Dictionary:
+func _cutaway_for_cell(view, sprite_id: String, feet_world: Vector2, hero_world_point: Vector2) -> Dictionary:
 	var plan := _cutaway_plan(view, hero_world_point)
 	for entry: Dictionary in plan["front"] as Array:
 		var entry_id := String(entry["id"])
@@ -138,11 +138,11 @@ func _cutaway_for_cell(view: ArenaWorldProjection, sprite_id: String, feet_world
 ## The colossus is one occluder drawn as four sprites: when it really stands in
 ## front of the hero they all share a single split of the budget the ruins are not
 ## already using, so body, core and both hands can never stack opaquely.
-func boss_cutaway(view: ArenaWorldProjection, sprite_ids: Array, feet_list: Array, feet_world: Vector2, hero_world_point: Vector2, sort_feet_list: Array = []) -> Dictionary:
+func boss_cutaway(view, sprite_ids: Array, feet_list: Array, feet_world: Vector2, hero_world_point: Vector2, sort_feet_list: Array = []) -> Dictionary:
 	var plan := _cutaway_plan(view, hero_world_point)
 	var window: Rect2 = plan["window"]
 	var overlapping := 0
-	var hero_sort := view._hero_sort_entry(hero_world_point)
+	var hero_sort = view._hero_sort_entry(hero_world_point)
 	var part_ids := ["body", "core", "left_hand", "right_hand"]
 	for index: int in sprite_ids.size():
 		var sort_feet: Vector2 = feet_world if index < 2 else feet_list[index]
@@ -150,7 +150,7 @@ func boss_cutaway(view: ArenaWorldProjection, sprite_ids: Array, feet_list: Arra
 			sort_feet = sort_feet_list[index] as Vector2
 		var sort_id := "enemy/boss/%s" % String(part_ids[index] if index < part_ids.size() else sprite_ids[index])
 		var actor_sort := SortRelation.entry(sort_feet.y, 3, sort_id)
-		var visibility := view.sprite_occlusion_descriptor(String(sprite_ids[index]), feet_list[index] as Vector2)
+		var visibility = view.sprite_occlusion_descriptor(String(sprite_ids[index]), feet_list[index] as Vector2)
 		if SortRelation.is_front(actor_sort, hero_sort) and view.visibility_intersects(visibility, window):
 			overlapping += 1
 	if overlapping <= 0:
@@ -163,8 +163,8 @@ func boss_cutaway(view: ArenaWorldProjection, sprite_ids: Array, feet_list: Arra
 ## Read-only cutaway diagnostic for the external visibility harness: how many
 ## foreground cells really cover the hero, the total local opacity they compose
 ## to, and the window itself. Nothing here writes or re-sorts the arena.
-func occlusion_report(view: ArenaWorldProjection, hero_world_point: Vector2) -> Dictionary:
-	var cell := view.hero_cell_world(hero_world_point)
+func occlusion_report(view, hero_world_point: Vector2) -> Dictionary:
+	var cell = view.hero_cell_world(hero_world_point)
 	var window := cutaway_window(cell)
 	var front := cutaway_front(hero_world_point)
 	var alpha := cutaway_alpha(front.size() + _actor_occluders.size())
@@ -213,16 +213,16 @@ func occlusion_report(view: ArenaWorldProjection, hero_world_point: Vector2) -> 
 ## Read-only geometry of one cell for this frame: what it is drawn as, where, from
 ## which source pixels and with which alpha. An empty list means the cell keeps its
 ## authored single-rectangle drawing.
-func cutaway_geometry(view: ArenaWorldProjection, sprite_id: String, feet_world: Vector2, hero_world_point: Vector2, base_alpha: float = 1.0) -> Array[Dictionary]:
-	var metadata := view.sprite(sprite_id)
+func cutaway_geometry(view, sprite_id: String, feet_world: Vector2, hero_world_point: Vector2, base_alpha: float = 1.0) -> Array[Dictionary]:
+	var metadata = view.sprite(sprite_id)
 	if metadata.is_empty():
 		return []
 	var rect: Rect2 = metadata.get("rect", Rect2())
 	var anchor: Vector2 = metadata.get("anchor", Vector2.ZERO)
-	var region := view._region_of(metadata)
+	var region = view._region_of(metadata)
 	var destination := Rect2((feet_world - anchor + (region.position - rect.position)).round(), region.size)
 	var cut := _cutaway_for_cell(view, sprite_id, feet_world, hero_world_point)
-	var core := view._cutaway_core(destination, cut["window"] as Rect2, float(cut["alpha"]))
+	var core = view._cutaway_core(destination, cut["window"] as Rect2, float(cut["alpha"]))
 	if core.size.x <= 0.0 or core.size.y <= 0.0:
 		return []
 	return view.cut_pieces(destination, region, core, base_alpha, float(cut["alpha"]))
