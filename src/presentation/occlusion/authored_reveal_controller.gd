@@ -6,6 +6,7 @@ extends RefCounted
 ## All query inputs are detached presentation values; no gameplay writes.
 const RevealShader := preload("res://src/presentation/occlusion/authored_reveal.gdshader")
 const SortRelation := preload("res://src/presentation/occlusion_query.gd")
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const ENTER_COVER := 0.12
 const EXIT_COVER := 0.04
 const TRANSITION_SECONDS := 0.15
@@ -51,15 +52,9 @@ func register_native_piece(stable_id: String, sprite: Sprite2D) -> Dictionary:
 
 
 static func _read_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		return load(path) as Texture2D
 	# Fresh author previews may precede editor import. Exported production
-	# assets resolve through ResourceLoader above.
-	if FileAccess.file_exists(path):
-		var image := Image.new()
-		if image.load(path) == OK:
-			return ImageTexture.create_from_image(image)
-	return null
+	# assets resolve through ResourceLoader.
+	return TextureLoader.load_imported_or_file(path, false)
 
 
 ## subjects carry stable_id, baseline_y, rank and a world-space readability_box.

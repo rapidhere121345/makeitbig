@@ -29,6 +29,7 @@ extends RefCounted
 
 const LIFE_DIR := "res://art/production/p1/actors_v02/residents/"
 const JsonIO := preload("res://src/core/json_io.gd")
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const LIFE_ATLAS_PATH := LIFE_DIR + "atlas.json"
 const LIFE_MANIFEST_PATH := LIFE_DIR + "life.json"
 const SCHEMA_VERSION := 1
@@ -306,28 +307,7 @@ func load_texture_at(path: String, declared_size: Vector2i) -> Texture2D:
 	## PCK-safe loader: the imported resource first, the raw PNG second. Both
 	## paths check the declared size, so a half-imported tree never ships a
 	## half-scaled sheet into the hub.
-	if path.is_empty() or declared_size.x <= 0 or declared_size.y <= 0:
-		return null
-	if ResourceLoader.exists(path):
-		var imported := ResourceLoader.load(path) as Texture2D
-		if imported != null and Vector2i(imported.get_size()) == declared_size:
-			return imported
-	var decoded := _decode_png_path(path)
-	if decoded == null or Vector2i(decoded.get_width(), decoded.get_height()) != declared_size:
-		return null
-	return ImageTexture.create_from_image(decoded)
-
-
-func _decode_png_path(path: String) -> Image:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return null
-	var bytes := file.get_buffer(file.get_length())
-	file.close()
-	var image := Image.new()
-	if image.load_png_from_buffer(bytes) != OK:
-		return null
-	return image
+	return TextureLoader.load_sized(path, declared_size, true)
 
 
 ## ------------------------------------------------------------------- runtime

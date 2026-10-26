@@ -8,6 +8,7 @@ const EnvironmentBaker := preload("res://src/runtime/world/environment_object_ba
 const EnvironmentDefinition := preload("res://src/runtime/world/environment_object_definition.gd")
 const PrimitiveFadeScript := preload("res://src/presentation/occlusion/primitive_fade_controller.gd")
 const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const GROUPS: Array[String] = ["Ground", "GroundEffects", "SortRoot", "Foreground", "GeometrySources", "Sockets"]
 
 @export var world_size := Vector2(1536, 960)
@@ -33,13 +34,7 @@ func bind_native_art() -> Array[String]:
 				errors.append("invalid_native_visual:" + String(node.name))
 				continue
 			var path := String(node.get_meta("texture_path", ""))
-			var texture: Texture2D
-			if ResourceLoader.exists(path):
-				texture = load(path) as Texture2D
-			if texture == null and FileAccess.file_exists(path):
-				var decoded := Image.new()
-				if decoded.load(path) == OK:
-					texture = ImageTexture.create_from_image(decoded)
+			var texture: Texture2D = TextureLoader.load_imported_or_file(path)
 			if texture == null:
 				errors.append("missing_native_texture:" + path)
 			else:

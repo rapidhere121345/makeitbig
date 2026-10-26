@@ -82,6 +82,7 @@ fi
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_pixel_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_display_policy.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_json_io.gd
+"$GODOT_BIN" --headless --path . --script res://tests/unit/test_texture_loader.gd
 "$GODOT_BIN" --headless --path . --script res://tests/unit/test_game_root_stage.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_exploration.gd
 "$GODOT_BIN" --headless --path . --script res://tests/test_town_geometry_rebuild.gd

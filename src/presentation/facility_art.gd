@@ -22,6 +22,7 @@ extends RefCounted
 ## valid substitute.
 
 const ICON_ATLAS_PATH: String = "res://art/production/p1/early_loop_v01/atlas.json"
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const ICON_ATLAS_DIRECTORY: String = "res://art/production/p1/early_loop_v01"
 const MARK_ATLAS_PATH: String = "res://art/production/p1/hamlet_style_r13/atlas.json"
 
@@ -559,22 +560,15 @@ func _region(entry: Dictionary) -> Texture2D:
 
 
 func _load_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var resource: Variant = ResourceLoader.load(path)
-		if resource is Texture2D:
-			return resource
-	if not FileAccess.file_exists(path):
-		pending_reason = "ASSETS PENDING: missing %s" % path
-		return null
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null or file.get_length() == 0:
-		pending_reason = "ASSETS PENDING: cannot read %s" % path
-		return null
-	var image := Image.new()
-	if image.load_png_from_buffer(file.get_buffer(file.get_length())) != OK:
-		pending_reason = "ASSETS PENDING: invalid PNG %s" % path
-		return null
-	return ImageTexture.create_from_image(image)
+	var loaded := TextureLoader.load_imported_first(path)
+	match String(loaded.error):
+		TextureLoader.ERROR_MISSING:
+			pending_reason = "ASSETS PENDING: missing %s" % path
+		TextureLoader.ERROR_UNREADABLE:
+			pending_reason = "ASSETS PENDING: cannot read %s" % path
+		TextureLoader.ERROR_INVALID_PNG:
+			pending_reason = "ASSETS PENDING: invalid PNG %s" % path
+	return loaded.texture
 
 
 func _note_missing(canonical: String) -> void:

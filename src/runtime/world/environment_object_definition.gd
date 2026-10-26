@@ -2,6 +2,7 @@ class_name EnvironmentObjectDefinition
 extends Resource
 
 const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 
 ## Local author data only. Footprints describe contact; explicitly authored
 ## movement_envelopes become blockers without any additional inflation.
@@ -175,15 +176,7 @@ static func _degenerate_volume(points: PackedVector2Array) -> bool:
 
 
 static func read_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		var texture := load(path) as Texture2D
-		if texture != null:
-			return texture
-	if FileAccess.file_exists(path):
-		var image := Image.new()
-		if image.load(path) == OK:
-			return ImageTexture.create_from_image(image)
-	return null
+	return TextureLoader.load_imported_or_file(path)
 
 
 func _check_art(value: Variant, label: String, errors: Array[String]) -> void:

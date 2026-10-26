@@ -5,6 +5,7 @@ extends RefCounted
 ## is generated here, and no gameplay value is derived from the art.
 
 const ATLAS_PATH: String = "res://art/production/p1/world_polish_v01/combat_atlas.json"
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const ATLAS_DIRECTORY: String = "res://art/production/p1/world_polish_v01"
 const NATIVE_ICON_SIZE := Vector2i(32, 32)
 const DISPLAY_ICON_SIZE := Vector2i(64, 64)
@@ -118,19 +119,9 @@ func _load_texture(path: String) -> Texture2D:
 		return _texture_cache[path]
 	# Prefer the approved icon PNG bytes; fall back to the imported resource for
 	# exported builds.
-	var absolute := ProjectSettings.globalize_path(path)
-	if FileAccess.file_exists(absolute):
-		var file := FileAccess.open(absolute, FileAccess.READ)
-		if file != null and file.get_length() > 0:
-			var image := Image.new()
-			if image.load_png_from_buffer(file.get_buffer(file.get_length())) == OK:
-				var texture := ImageTexture.create_from_image(image)
-				_texture_cache[path] = texture
-				return texture
-	if ResourceLoader.exists(path):
-		var resource: Variant = load(path)
-		if resource is Texture2D:
-			_texture_cache[path] = resource
-			return resource
-	pending_reason = "ASSETS PENDING: missing %s" % path
-	return null
+	var texture := TextureLoader.load_png_first(path)
+	if texture == null:
+		pending_reason = "ASSETS PENDING: missing %s" % path
+		return null
+	_texture_cache[path] = texture
+	return texture

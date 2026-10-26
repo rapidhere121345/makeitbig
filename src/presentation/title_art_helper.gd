@@ -16,6 +16,7 @@ extends Control
 
 const NATIVE_VIEW := Vector2i(640, 360)
 const JsonIO := preload("res://src/core/json_io.gd")
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const DISPLAY_SCALE := 2
 const DISPLAY_SIZE := Vector2i(1280, 720)
 
@@ -325,17 +326,7 @@ func _load_plate_from_atlas(atlas: Dictionary) -> bool:
 func _load_texture_at(path: String, declared_size: Vector2i) -> Texture2D:
 	## Imported resource first, raw PNG second: a tree whose import step has not
 	## run yet still gets its plate, and a wrong size is refused either way.
-	if path.is_empty() or declared_size.x <= 0 or declared_size.y <= 0:
-		return null
-	if ResourceLoader.exists(path):
-		var imported := ResourceLoader.load(path) as Texture2D
-		if imported != null:
-			return imported if Vector2i(imported.get_size()) == declared_size else null
-	var decoded := _decode_png_path(path)
-	if decoded == null or decoded.get_size() != declared_size:
-		return null
-	var texture: Texture2D = ImageTexture.create_from_image(decoded)
-	return texture
+	return TextureLoader.load_sized(path, declared_size, false)
 
 
 func _load_life_overlay() -> bool:
@@ -448,18 +439,6 @@ func _atlas_textures(atlas: Dictionary) -> Dictionary:
 			"height": int(metadata.get("height", 0)),
 		}
 	return result
-
-
-func _decode_png_path(path: String) -> Image:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return null
-	var bytes := file.get_buffer(file.get_length())
-	file.close()
-	var image := Image.new()
-	if image.load_png_from_buffer(bytes) != OK:
-		return null
-	return image
 
 
 ## ------------------------------------------------------------------ framing

@@ -8,6 +8,7 @@ extends RefCounted
 ## reader never generates, substitutes, or interprets art.
 
 const ATLAS_DIRECTORY := "res://art/production/p1/ui_style_r13"
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const ATLAS_PATH := "res://art/production/p1/ui_style_r13/atlas.json"
 const SCHEMA_VERSION := 1
 const NATIVE_ICON_SIZE := Vector2i(32, 32)
@@ -189,22 +190,12 @@ func _load_texture(path: String) -> Texture2D:
 		return _texture_cache[path]
 	# Source PNG is preferred during development; the imported resource keeps the
 	# same cell readable in an exported package.
-	var absolute := ProjectSettings.globalize_path(path)
-	if FileAccess.file_exists(absolute):
-		var file := FileAccess.open(absolute, FileAccess.READ)
-		if file != null and file.get_length() > 0:
-			var image := Image.new()
-			if image.load_png_from_buffer(file.get_buffer(file.get_length())) == OK:
-				var texture := ImageTexture.create_from_image(image)
-				_texture_cache[path] = texture
-				return texture
-	if ResourceLoader.exists(path):
-		var resource: Variant = load(path)
-		if resource is Texture2D:
-			_texture_cache[path] = resource
-			return resource
-	pending_reason = "ASSETS PENDING: missing %s" % path
-	return null
+	var texture := TextureLoader.load_png_first(path)
+	if texture == null:
+		pending_reason = "ASSETS PENDING: missing %s" % path
+		return null
+	_texture_cache[path] = texture
+	return texture
 
 
 func _all_integers(values: Array) -> bool:

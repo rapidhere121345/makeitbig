@@ -24,6 +24,7 @@ const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const SortRelation = preload("res://src/presentation/occlusion_query.gd")
 const PairedReveal := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 ## Whole-object generated world pack: each family sprite is ONE opaque texture
 ## plus its baked transparent variant on the same canvas/anchor, with one
 ## authored detection rect (occupied AABB grown by DETECTION_GROW) in local
@@ -1483,19 +1484,10 @@ func _load_texture(path: String) -> Texture2D:
 	# The approved PNG bytes are the source of truth: reading them directly keeps
 	# the arena on the exact approved art even when an import cache is stale.
 	# Exported builds fall back to the imported resource.
-	var absolute := ProjectSettings.globalize_path(path)
-	if FileAccess.file_exists(absolute):
-		var file := FileAccess.open(absolute, FileAccess.READ)
-		if file != null and file.get_length() > 0:
-			var image := Image.new()
-			if image.load_png_from_buffer(file.get_buffer(file.get_length())) == OK:
-				return ImageTexture.create_from_image(image)
-	if ResourceLoader.exists(path):
-		var resource: Variant = load(path)
-		if resource is Texture2D:
-			return resource
-	pending_reason = "ASSETS PENDING: missing %s" % path
-	return null
+	var texture := TextureLoader.load_png_first(path)
+	if texture == null:
+		pending_reason = "ASSETS PENDING: missing %s" % path
+	return texture
 
 
 func _point(value: Variant) -> Vector2:

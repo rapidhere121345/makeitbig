@@ -18,6 +18,7 @@ extends RefCounted
 
 const RevealShader := preload("res://src/presentation/occlusion/authored_reveal.gdshader")
 const SortRelation := preload("res://src/presentation/occlusion_query.gd")
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const POLICY := "paired_reveal"
 const DETECTION_GROW := 8.0
 const TRANSITION_SECONDS := 0.15
@@ -89,13 +90,7 @@ func register_native_piece(stable_id: String, sprite: Sprite2D) -> Dictionary:
 
 
 static func _read_texture(path: String) -> Texture2D:
-	if ResourceLoader.exists(path):
-		return load(path) as Texture2D
-	if FileAccess.file_exists(path):
-		var image := Image.new()
-		if image.load(path) == OK:
-			return ImageTexture.create_from_image(image)
-	return null
+	return TextureLoader.load_imported_or_file(path, false)
 
 
 ## entries carry the detached plan rows (stable_id, baseline_y, rank,
