@@ -10,7 +10,6 @@ __pycache__/
 # Mechanical contact sheets are reproducible previews, not source assets.
 /art/production/p1/ground_refine_v01/contact_sheet.png
 /art/production/p1/hamlet_concept_v02/contact_sheet.png
-/art/production/p1/hamlet_ground_v03/contact_sheet.png
 /art/production/p1/hearth_return_v01/contact_sheet.png
 /art/production/p1/title_concept_v02/contact_sheet.png
 /art/production/p1/title_life_v01/contact_sheet.png
@@ -27,3 +26,4 @@ __pycache__/
 
 # Generated local publication site; release sources live in release/.
 /release-online/
+.claude/
