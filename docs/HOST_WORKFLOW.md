@@ -32,7 +32,7 @@ by `MIB_PORTABLE_ENV`), so agents can run one test without `source`:
 ./scripts/with_env.sh ./scripts/check.sh
 ```
 
- The prefix chooses its matching loader and CPU
+The prefix chooses its matching loader and CPU
 libraries without changing global library paths. The project verifies the
 official engine's version and SHA256. Native-host fallbacks remain portable
 compatibility options, not the devbox's installation method.

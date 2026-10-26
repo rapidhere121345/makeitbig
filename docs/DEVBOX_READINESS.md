@@ -34,8 +34,9 @@ paths. `GODOT_BIN` points to the launcher; `MIB_GODOT_BINARY_PATH` identifies th
 unchanged official engine verified by version and SHA256 in `project_env.sh`.
 
 The portable Python subprocess compatibility issue found during the scan is
-resolved: `scripts/check.sh` resolves its working `python3` launcher and
-exports it as `MIB_TEST_PYTHON` for the subprocess test harness, and an
+resolved: `project_env.sh`'s `mib_resolve_test_python` (used by `check.sh`,
+`test.sh` and `play_session_window.sh`) resolves the working `python3` launcher
+and exports it as `MIB_TEST_PYTHON` for the subprocess test harness, and an
 invalid override fails instead of substituting. Running that harness directly
 under portable Python still needs the explicit launcher; without the variable
 it uses `sys.executable`, which suits normal/system Python. The contract and
