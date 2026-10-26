@@ -6,6 +6,7 @@ signal query_changed(query: Dictionary)
 
 const Shell = preload("res://src/presentation/shell_theme.gd")
 const Readable = preload("res://src/presentation/player_readable_build.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 const SORTS := {"name": "By Name", "highest_tier": "By Highest Affix Tier", "affix_count": "By Affix Count"}
 
 var _query: Dictionary = default_query()
@@ -226,8 +227,4 @@ func _focus_control(control: Control) -> void:
 
 
 func _button(text_value: String, node_name: String) -> Button:
-	var button := Button.new()
-	button.name = node_name
-	button.text = text_value
-	button.add_theme_font_size_override("font_size", 18)
-	return button
+	return UiKit.sized_button(text_value, node_name, 18)

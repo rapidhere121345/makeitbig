@@ -9,6 +9,7 @@ signal talent_selected(talent_id: String)
 
 const ProgressionIconsScript = preload("res://src/presentation/progression_icons.gd")
 const SharedPalette := preload("res://src/presentation/palette.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 const SLATE := Color("1b2630")
 const SLATE_RAISED := Color("273743")
@@ -361,16 +362,7 @@ func _apply_node_style(button: Button, node: Dictionary, selected: bool) -> void
 
 
 func _node_box(fill: Color, border: Color, width: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = fill
-	box.border_color = border
-	box.set_border_width_all(width)
-	box.set_corner_radius_all(54)
-	box.content_margin_left = 3.0
-	box.content_margin_right = 3.0
-	box.content_margin_top = 6.0
-	box.content_margin_bottom = 0.0
-	return box
+	return UiKit.flat_style(fill, border, width, 54, Vector4(3.0, 6.0, 3.0, 0.0))
 
 
 func _find_node(talent_id: String) -> Dictionary:

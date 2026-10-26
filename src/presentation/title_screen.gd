@@ -8,6 +8,7 @@ signal continue_requested
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const TitleArtHelperScript = preload("res://src/presentation/title_art_helper.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 ## Layout follows the approved standalone title sample: a slate veil with
 ## a single copper rail, then one 416px column of copy and actions.
@@ -122,18 +123,18 @@ func _add_menu_column() -> void:
 	column.add_theme_constant_override("separation", 14)
 	add_child(column)
 
-	column.add_child(_label(KICKER_TEXT, KICKER_FONT_SIZE, COOL_GREY))
-	var wordmark := _label(TITLE_TEXT, TITLE_FONT_SIZE, ShellThemeScript.BONE)
+	column.add_child(UiKit.colored_label(KICKER_TEXT, KICKER_FONT_SIZE, COOL_GREY))
+	var wordmark := UiKit.colored_label(TITLE_TEXT, TITLE_FONT_SIZE, ShellThemeScript.BONE)
 	wordmark.name = "Wordmark"
 	column.add_child(wordmark)
 	column.add_child(_copper_rule())
-	var premise := _label(PREMISE_TEXT, BODY_FONT_SIZE, COOL_GREY)
+	var premise := UiKit.colored_label(PREMISE_TEXT, BODY_FONT_SIZE, COOL_GREY)
 	premise.name = "Premise"
 	premise.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	premise.custom_minimum_size = Vector2(COLUMN_WIDTH, 64.0)
 	column.add_child(premise)
 	column.add_child(_spacer(10.0))
-	var identity := _label(IDENTITY_TEXT, CONTROL_FONT_SIZE, ShellThemeScript.BONE)
+	var identity := UiKit.colored_label(IDENTITY_TEXT, CONTROL_FONT_SIZE, ShellThemeScript.BONE)
 	identity.name = "RangerIdentity"
 	column.add_child(identity)
 
@@ -157,23 +158,15 @@ func _add_menu_column() -> void:
 	column.add_child(_continue_button)
 
 	column.add_child(_spacer(4.0))
-	_status_label = _label("", CONTROL_FONT_SIZE, ShellThemeScript.WARNING)
+	_status_label = UiKit.colored_label("", CONTROL_FONT_SIZE, ShellThemeScript.WARNING)
 	_status_label.name = "StatusLabel"
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status_label.custom_minimum_size = Vector2(COLUMN_WIDTH, 44.0)
 	column.add_child(_status_label)
 	column.add_child(_spacer(4.0))
-	var hint := _label(FOOTER_TEXT, KICKER_FONT_SIZE, COOL_GREY)
+	var hint := UiKit.colored_label(FOOTER_TEXT, KICKER_FONT_SIZE, COOL_GREY)
 	hint.name = "KeyboardHintLabel"
 	column.add_child(hint)
-
-
-func _label(text: String, font_size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	return label
 
 
 func _copper_rule() -> ColorRect:

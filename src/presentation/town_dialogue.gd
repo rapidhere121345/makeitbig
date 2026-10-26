@@ -6,6 +6,7 @@ signal finished(entry_id: String)
 signal dismissed
 
 const ShellTheme = preload("res://src/presentation/shell_theme.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 const PORTRAIT_ROOT := "res://art/production/p1/story_portraits_r14/"
 const NPC_ROLES := {"mira":"Winter Tower Keeper", "iven":"Chronicler", "taren":"Traveling Merchant", "leia":"Keeper's Apprentice", "oren":"Mender"}
 const NPC_NAMES := {"mira":"Mira", "iven":"Iven", "taren":"Taren", "leia":"Leia", "oren":"Oren"}
@@ -63,10 +64,10 @@ func _ready() -> void:
 	var heading := HBoxContainer.new()
 	heading.add_theme_constant_override("separation", 16)
 	column.add_child(heading)
-	_speaker = _label("", 28, ShellTheme.BONE)
+	_speaker = UiKit.colored_label("", 28, ShellTheme.BONE)
 	_speaker.name = "DialogueSpeaker"
 	heading.add_child(_speaker)
-	_role = _label("", 18, ShellTheme.NEUTRAL)
+	_role = UiKit.colored_label("", 18, ShellTheme.NEUTRAL)
 	_role.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_role.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.add_child(_role)
@@ -85,7 +86,7 @@ func _ready() -> void:
 	_close.shortcut = close_shortcut
 	_close.pressed.connect(close_dialogue)
 	heading.add_child(_close)
-	_speech = _label("", 22, ShellTheme.BONE)
+	_speech = UiKit.colored_label("", 22, ShellTheme.BONE)
 	_speech.name = "DialogueSpeech"
 	_speech.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_speech.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -94,7 +95,7 @@ func _ready() -> void:
 	var controls := HBoxContainer.new()
 	controls.add_theme_constant_override("separation", 12)
 	column.add_child(controls)
-	_count = _label("", 18, ShellTheme.NEUTRAL)
+	_count = UiKit.colored_label("", 18, ShellTheme.NEUTRAL)
 	_count.name = "DialoguePageCount"
 	_count.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	controls.add_child(_count)
@@ -259,10 +260,3 @@ static func portrait_for_line(entry: Dictionary, line: String) -> Texture2D:
 	var path := PORTRAIT_ROOT.path_join(id + ".png")
 	return load(path) as Texture2D if FileAccess.file_exists(path + ".import") and ResourceLoader.exists(path) else null
 
-
-func _label(value: String, font_size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.text = value
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	return label

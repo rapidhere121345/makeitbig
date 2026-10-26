@@ -40,8 +40,8 @@ const EquipmentPresentationModelScript = preload("res://src/presentation/models/
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const ReportEvidenceMarkScript = preload("res://src/presentation/report_evidence_mark.gd")
 const SettlementRouteViewScript = preload("res://src/presentation/settlement_route_view.gd")
-const PixelGridIconScript = preload("res://src/presentation/pixel_grid_icon.gd")
 const ContractTitles = preload("res://src/presentation/contract_screen.gd").NODE_TITLES
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 ## The shell's one UI resolution. Every rect below is expressed in these pixels.
 const DESIGN_SIZE := Vector2(1280.0, 720.0)
@@ -914,7 +914,7 @@ func _apply_presentation() -> void:
 	_run_facts_label.text = _run_facts_text()
 	_apply_report_evidence()
 
-	var rewards := _as_dictionary(_result.get("rewards", {}))
+	var rewards := UiKit.as_dictionary(_result.get("rewards", {}))
 	_equipment_drop_entries = _equipment_entries(rewards)
 	_equipment_page = 0
 	_loot_scroll.scroll_vertical = 0
@@ -969,7 +969,7 @@ func _skill_ready_in_build(skill_id: String, slot_index: int) -> bool:
 	## Readiness comes from the resolved loadout, not the reward tag: the skill
 	## must sit in its own hotkey slot (the grant can no-op when that slot is
 	## occupied), mirroring main.gd's _is_skill_equipped(slot_index, skill_id).
-	var active := _as_dictionary(_current_profile.get("active_build", {}))
+	var active := UiKit.as_dictionary(_current_profile.get("active_build", {}))
 	var skills: Variant = active.get("skills", [])
 	if not (skills is Array):
 		return false
@@ -1004,7 +1004,7 @@ func _apply_report_evidence() -> void:
 	_evidence_bodies.observed.tooltip_text = "Actual recorded time, kills, and casts for this run."
 	_evidence_bodies.unverified.text = "This run settles combat and loot only.\nVisit Training for build growth conclusions."
 	var diagnosis := _defeat_diagnosis_text()
-	var bottleneck := _as_dictionary(_result.get("primary_bottleneck", {})) if not diagnosis.is_empty() else {}
+	var bottleneck := UiKit.as_dictionary(_result.get("primary_bottleneck", {})) if not diagnosis.is_empty() else {}
 	var title := String(bottleneck.get("title", "")).strip_edges()
 	var action := String(bottleneck.get("action", "")).strip_edges()
 	var failure_reason := _first_text([_result.get("failure_reason", "")])
@@ -1018,7 +1018,7 @@ func _apply_report_evidence() -> void:
 		_evidence_bodies.next.text = action
 	elif String(_result.get("outcome", "")) == "final_victory":
 		_evidence_bodies.next.text = "This journey is complete.\nView the epilogue to look back."
-	elif _is_first_proxy_unlock(_as_dictionary(_result.get("rewards", {}))):
+	elif _is_first_proxy_unlock(UiKit.as_dictionary(_result.get("rewards", {}))):
 		_evidence_bodies.next.text = "Four Common cores obtained.\nInstall them in town to send your proxy out."
 	else:
 		_evidence_bodies.next.text = "Return to Hearthside to sort equipment,\nor visit Training to keep studying your build."
@@ -1032,7 +1032,7 @@ func _reported_route_steps() -> Array:
 	var steps: Array = []
 	for index in _room_results().size():
 		var raw: Variant = _room_results()[index]
-		var room := _as_dictionary(raw)
+		var room := UiKit.as_dictionary(raw)
 		var outcome := String(room.get("outcome", "")).to_lower()
 		var state := "unknown"
 		if outcome in ["victory","final_victory"]: state = "completed"
@@ -1044,7 +1044,7 @@ func _reported_route_steps() -> Array:
 
 
 func _render_core_rewards(rewards: Dictionary) -> void:
-	_clear_children(_core_rewards)
+	UiKit.clear_children_immediate(_core_rewards)
 	_core_rewards.visible = _is_first_proxy_unlock(rewards)
 	if not _core_rewards.visible:
 		return
@@ -1240,7 +1240,7 @@ func _compact_reward_text(rewards: Dictionary, equipment_entries: Array, proxy_c
 	var first_rewards := _first_reward_text().split("\n")
 	if first_rewards.size() > 1:
 		parts.append("First Clears: %d" % (first_rewards.size() - 1))
-	var tally_delta := _as_dictionary(rewards.get("law_tallies_delta", {}))
+	var tally_delta := UiKit.as_dictionary(rewards.get("law_tallies_delta", {}))
 	var tally_total := 0
 	for operation in ["inscribe", "rewrite", "refine"]:
 		tally_total += _coerce_int(tally_delta.get(operation, 0))
@@ -1260,7 +1260,7 @@ func _settlement_headline(outcome: String, equipment_count: int, proxy_component
 		acquisition = "New Equipment: %d Items" % equipment_count
 	elif proxy_component_count > 0:
 		acquisition = "Proxy Components: %d" % proxy_component_count
-	elif _is_first_proxy_unlock(_as_dictionary(_result.get("rewards", {}))):
+	elif _is_first_proxy_unlock(UiKit.as_dictionary(_result.get("rewards", {}))):
 		acquisition = "Proxy Bay Unlocked"
 	if not first_reward.is_empty():
 		acquisition = first_reward if acquisition.is_empty() else "%s · %s" % [acquisition, first_reward]
@@ -1274,7 +1274,7 @@ func _next_step_text(outcome: String, equipment_count: int, proxy_component_coun
 		return "Compare new equipment, then return to town to prepare"
 	if proxy_component_count > 0:
 		return "Proxy component stored; install it after returning to town"
-	if _is_first_proxy_unlock(_as_dictionary(_result.get("rewards", {}))):
+	if _is_first_proxy_unlock(UiKit.as_dictionary(_result.get("rewards", {}))):
 		return "Proxy Bay unlocked; return to town to install cores"
 	if outcome in ["defeat", "error"]:
 		return "Review the battle report, then return to town to adjust"
@@ -1301,7 +1301,7 @@ func _reward_field_lines(rewards: Dictionary) -> Array[String]:
 	var bonus_lost := bool(rewards.get("bonus_lost", false))
 	if bonus_earned != bonus_lost:
 		lines.append("%s: %s" % [TIMED_BONUS_LABEL, "Obtained" if bonus_earned else "Not Obtained"])
-	var tally_delta := _as_dictionary(rewards.get("law_tallies_delta", {}))
+	var tally_delta := UiKit.as_dictionary(rewards.get("law_tallies_delta", {}))
 	for operation in ["inscribe", "rewrite", "refine"]:
 		var tally_amount := _coerce_int(tally_delta.get(operation, 0))
 		if tally_amount != 0:
@@ -1380,7 +1380,7 @@ func _proxy_core_names(rewards: Dictionary) -> Array[String]:
 				values = source.get(key)
 				break
 		if values.is_empty():
-			var unlock := _as_dictionary(source.get("unlock", source.get("unlocks", {})))
+			var unlock := UiKit.as_dictionary(source.get("unlock", source.get("unlocks", {})))
 			var components: Variant = unlock.get("cores", unlock.get("components", null))
 			values = components if components is Array else []
 		if not values.is_empty():
@@ -1428,7 +1428,7 @@ func _sync_equipment_pagination() -> void:
 ## section has no loadout-comparison action and states that the frozen build did
 ## not change when the drop entered inventory.
 func _render_proxy_component_cards(entries: Array) -> void:
-	_clear_children(_proxy_component_box)
+	UiKit.clear_children_immediate(_proxy_component_box)
 	_proxy_component_box.visible = not entries.is_empty()
 	if entries.is_empty():
 		_proxy_detail_button = null
@@ -1454,7 +1454,7 @@ func _render_proxy_component_cards(entries: Array) -> void:
 	for entry_value in entries:
 		var entry := entry_value as Dictionary
 		var card := PanelContainer.new()
-		card.name = "ProxyComponentDrop_%s" % _stable_node_token(String(entry.get("id", "")))
+		card.name = "ProxyComponentDrop_%s" % UiKit.stable_node_token(String(entry.get("id", "")))
 		card.add_theme_stylebox_override("panel", _frame(ShellThemeScript.INK, ShellThemeScript.COPPER_DULL, 1))
 		_proxy_component_box.add_child(card)
 		var body := VBoxContainer.new()
@@ -1576,7 +1576,7 @@ func _equipment_card(entry: Dictionary, entry_index: int = 0) -> PanelContainer:
 		# long and scroll independently; hiding the only comparison entry below them
 		# would make the settlement look informational rather than actionable.
 		var review_button := Button.new()
-		review_button.name = "ReviewDrop_%s" % _stable_node_token(instance_id)
+		review_button.name = "ReviewDrop_%s" % UiKit.stable_node_token(instance_id)
 		var equipment_state := _equipment_state(entry)
 		review_button.text = String({
 			"equipped": "Inspect (Equipped)", "owned": REVIEW_DROP_TEXT,
@@ -1607,11 +1607,11 @@ func _equipment_state(entry: Dictionary) -> String:
 	if _current_profile.is_empty():
 		return "unknown"
 	var instance_id := String(entry.get("instance_id", ""))
-	var active := _as_dictionary(_current_profile.get("active_build", {}))
-	var equipped := _as_dictionary(active.get("equipped_item_ids", {}))
+	var active := UiKit.as_dictionary(_current_profile.get("active_build", {}))
+	var equipped := UiKit.as_dictionary(active.get("equipped_item_ids", {}))
 	if not instance_id.is_empty() and String(equipped.get(String(entry.get("slot", "")), "")) == instance_id:
 		return "equipped"
-	var inventory := _as_dictionary(_current_profile.get("inventory", {}))
+	var inventory := UiKit.as_dictionary(_current_profile.get("inventory", {}))
 	var items: Variant = inventory.get("equipment", [])
 	if items is Array:
 		for item: Variant in items:
@@ -1645,8 +1645,8 @@ func _equipment_status_summary(entry: Dictionary) -> String:
 
 
 func _equipment_full_text(entry: Dictionary) -> String:
-	var current := _as_dictionary(entry.get("current_parameters", {}))
-	var replacement := _as_dictionary(entry.get("equipped_parameters", {}))
+	var current := UiKit.as_dictionary(entry.get("current_parameters", {}))
+	var replacement := UiKit.as_dictionary(entry.get("equipped_parameters", {}))
 	var historical_preview := "\nEquipment preview at acquisition:" if not current.is_empty() or not replacement.is_empty() else ""
 	return "At acquisition: added to equipment storage\n%s%s\n%s" % [
 		_equipment_status_text(entry), historical_preview, _player_readable.format_item(entry, current, replacement),
@@ -1661,7 +1661,7 @@ func _equipment_field_text(entry: Dictionary) -> String:
 
 
 func _clear_equipment_cards() -> void:
-	_clear_children(_equipment_box)
+	UiKit.clear_children_immediate(_equipment_box)
 
 
 func _open_equipment_detail(entry_index: int) -> void:
@@ -1735,14 +1735,6 @@ func _set_equipment_page(page: int, focus_after_render: Control = null) -> void:
 	_render_equipment_cards()
 
 
-func _clear_children(box: Node) -> void:
-	if box == null:
-		return
-	for child in box.get_children():
-		box.remove_child(child)
-		child.free()
-
-
 ## The player-facing name of one dropped item: an explicit name field on the drop
 ## first, then the published base item of the content table. Unknown raw ids stay
 ## in the folded diagnostic text instead of leaking onto the player-facing card.
@@ -1757,7 +1749,7 @@ func _item_display_name(entry: Dictionary) -> String:
 func _published_rows(table: String) -> Dictionary:
 	if _item_registry == null:
 		return {}
-	return _as_dictionary(_item_registry.base_items if table == "base_items" else _item_registry.affix_families)
+	return UiKit.as_dictionary(_item_registry.base_items if table == "base_items" else _item_registry.affix_families)
 
 
 ## The authoritative instance id, whole. A display that shortens an id hides the one
@@ -1766,7 +1758,7 @@ func _published_rows(table: String) -> Dictionary:
 func _registry_rows(table: String) -> Dictionary:
 	if _item_registry == null:
 		return {}
-	return _as_dictionary(_item_registry.base_items if table == "base_items" else _item_registry.affix_families)
+	return UiKit.as_dictionary(_item_registry.base_items if table == "base_items" else _item_registry.affix_families)
 
 
 func _equipment_entries(rewards: Dictionary) -> Array:
@@ -1978,10 +1970,6 @@ func _coerce_int(value: Variant) -> int:
 	return 0
 
 
-func _as_dictionary(value: Variant) -> Dictionary:
-	return value as Dictionary if value is Dictionary else {}
-
-
 func _heading(text_value: String) -> Label:
 	var label := Label.new()
 	label.text = text_value
@@ -2012,19 +2000,10 @@ func _frame(_fill: Color, _border: Color, width: int) -> StyleBox:
 ## (2x, so 64 pixels and no resampling); `native` keeps the cell at its own 32px
 ## size, which only the slot badge uses.
 func _icon_node(texture: Texture2D, scaled: bool = true) -> TextureRect:
-	var icon: TextureRect = PixelGridIconScript.new() if scaled else TextureRect.new()
-	icon.texture = texture
-	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_SCALE
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var display_size := Vector2(FacilityArtScript.ICON_NATIVE_SIZE)
 	if scaled:
 		display_size *= FacilityArtScript.ICON_DISPLAY_SCALE
-	icon.custom_minimum_size = display_size
-	return icon
+	return UiKit.icon_node(texture, display_size, scaled, TextureRect.STRETCH_SCALE)
 
 
 ## Read-only load of the published icon batch. A package that cannot be read leaves
@@ -2080,7 +2059,7 @@ func get_presented_contract() -> Dictionary:
 
 
 func get_detail_text() -> String:
-	var rewards := _as_dictionary(_result.get("rewards", {}))
+	var rewards := UiKit.as_dictionary(_result.get("rewards", {}))
 	return "\n".join(_detail_lines() + _detail_raw_lines(rewards, _equipment_entries(rewards)))
 
 
@@ -2150,16 +2129,6 @@ func _card_audit_text(card: Node) -> String:
 		return (card as Label).text
 	var label := card.find_child(CARD_TEXT_NODE_NAME, true, false) as Label
 	return label.text if label != null else ""
-
-
-func _stable_node_token(value: String) -> String:
-	var token := ""
-	for index in value.length():
-		var character := value.substr(index, 1)
-		var code := character.unicode_at(0)
-		var legal := code >= 48 and code <= 57 or code >= 65 and code <= 90 or code >= 97 and code <= 122 or character in ["_", "-"]
-		token += character if legal else "_"
-	return token
 
 
 func _on_base_pressed() -> void:

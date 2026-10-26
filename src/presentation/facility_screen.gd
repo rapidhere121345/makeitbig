@@ -11,7 +11,6 @@ const FacilityLayoutScript = preload("res://src/presentation/facility_layout.gd"
 const LoadoutCharacterViewScript = preload("res://src/presentation/loadout_character_view.gd")
 const TrainingTraceViewScript = preload("res://src/presentation/training_trace_view.gd")
 const LockedSlotMarkScript = preload("res://src/presentation/locked_slot_mark.gd")
-const PixelGridIconScript = preload("res://src/presentation/pixel_grid_icon.gd")
 const EquipmentBackpackGridScript = preload("res://src/presentation/equipment_backpack_grid.gd")
 const EquipmentFilterBarScript = preload("res://src/presentation/equipment_filter_bar.gd")
 const PlayerReadableBuildScript = preload("res://src/presentation/player_readable_build.gd")
@@ -24,6 +23,7 @@ const EarlyInterfaceVocabularyScript = preload("res://src/content/early_interfac
 ## The forge authority owns the highest legal affix tier. Presentation reads this
 ## public contract only to stop offering a reveal the authority will reject.
 const LawForgeScript = preload("res://src/systems/law_forge.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 const FACILITY_TITLES: Dictionary = {
 	"loadout": "Loadout · Equipment and Runes",
@@ -330,12 +330,12 @@ func present(
 	_facility_data = facility_data.duplicate(true)
 	_equipment_model = EquipmentPresentationModelScript.new(
 		_readable_build,
-		_as_dictionary(_facility_data.get("base_items", {})),
-		_as_dictionary(_facility_data.get("affix_families", {})),
-		_as_dictionary(_facility_data.get("salvage_previews", {}))
+		UiKit.as_dictionary(_facility_data.get("base_items", {})),
+		UiKit.as_dictionary(_facility_data.get("affix_families", {})),
+		UiKit.as_dictionary(_facility_data.get("salvage_previews", {}))
 	)
 	if _facility_id == "loadout":
-		var context := _as_dictionary(_facility_data.get("initial_focus", {}))
+		var context := UiKit.as_dictionary(_facility_data.get("initial_focus", {}))
 		var return_route := String(_facility_data.get("return_route", context.get("return_route", "")))
 		if return_route != "result":
 			_loadout_review_instance_id = ""
@@ -379,12 +379,12 @@ func present(
 
 
 func _apply_initial_loadout_focus() -> void:
-	var context := _as_dictionary(_facility_data.get("initial_focus", {}))
+	var context := UiKit.as_dictionary(_facility_data.get("initial_focus", {}))
 	var instance_id := String(context.get("review_instance_id", "")).strip_edges()
 	var slot := String(context.get("focus_slot", "")).strip_edges()
-	if instance_id.is_empty() or slot.is_empty() or slot not in _as_array(_facility_data.get("prototype_open_slots", [])):
+	if instance_id.is_empty() or slot.is_empty() or slot not in UiKit.as_array(_facility_data.get("prototype_open_slots", [])):
 		return
-	for raw_item in _as_array(_facility_data.get("inventory_equipment", [])):
+	for raw_item in UiKit.as_array(_facility_data.get("inventory_equipment", [])):
 		if not raw_item is Dictionary:
 			continue
 		var item: Dictionary = raw_item
@@ -584,7 +584,7 @@ func _build_ui() -> void:
 func _sync_back_button() -> void:
 	if _back_button == null:
 		return
-	var context := _as_dictionary(_facility_data.get("initial_focus", {}))
+	var context := UiKit.as_dictionary(_facility_data.get("initial_focus", {}))
 	var return_route := String(_facility_data.get("return_route", context.get("return_route", "")))
 	_back_button.text = "Results" if return_route == "result" else "Hub"
 	_back_button.tooltip_text = "Return to Results" if return_route == "result" else "Return to Hub"
@@ -606,8 +606,8 @@ func _apply_presentation() -> void:
 		_read_presentation_place(not _slot_switch_pending)
 	_facility_switch_pending = false
 	_slot_switch_pending = false
-	_clear_children(_cards)
-	_clear_children(_actions)
+	UiKit.clear_children(_cards)
+	UiKit.clear_children(_actions)
 	_facility_icon = null
 	_lead_row = null
 	_facility_root = null
@@ -1069,19 +1069,10 @@ func _recessed_panel_style(kind: String = "well") -> StyleBoxTexture:
 ## integer 2x that only the 32x32 icon batch may use; a facility mark passes
 ## false and keeps its native pixel size so it is never resampled smaller.
 func _icon_node(texture: Texture2D, native_size: Vector2i, scaled: bool) -> TextureRect:
-	var icon: TextureRect = PixelGridIconScript.new() if scaled else TextureRect.new()
-	icon.texture = texture
-	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var display_size := native_size
 	if scaled:
 		display_size = native_size * FacilityArtScript.ICON_DISPLAY_SCALE
-	icon.custom_minimum_size = Vector2(display_size)
-	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	return icon
+	return UiKit.icon_node(texture, Vector2(display_size), scaled, TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
 
 ## The 64x64 display rect of a canonical id, or null when the package publishes
 ## nothing under it. Null means no image: the caller's own text stays the only
@@ -1111,7 +1102,7 @@ func _add_icon_row(parent: Container, canonical_ids: Array, node_prefix: String)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for index in icons.size():
 		var icon := _icon_node(icons[index], FacilityArtScript.ICON_NATIVE_SIZE, true)
-		icon.name = "%s_%s" % [node_prefix, _stable_node_token(resolved[index])]
+		icon.name = "%s_%s" % [node_prefix, UiKit.stable_node_token(resolved[index])]
 		icon.set_meta("canonical_id", resolved[index])
 		row.add_child(icon)
 	parent.add_child(row)
@@ -1153,8 +1144,8 @@ func _build_loadout() -> void:
 
 
 func _build_legacy_loadout() -> void:
-	var builds := _as_array(_facility_data.get("available_builds", []))
-	var active_data := _as_dictionary(_facility_data.get("active_build", {}))
+	var builds := UiKit.as_array(_facility_data.get("available_builds", []))
+	var active_data := UiKit.as_dictionary(_facility_data.get("active_build", {}))
 	var active_id := String(active_data.get("id", active_data.get("preset_id", "")))
 	var rendered := 0
 	for value in builds:
@@ -1199,9 +1190,9 @@ func _has_real_loadout_data() -> bool:
 	for key in ["equipment_slots", "prototype_open_slots", "inventory_equipment", "base_items", "affix_families", "active_build", "resolved_build"]:
 		if not _facility_data.has(key):
 			return false
-	var equipment_slots := _as_array(_facility_data.get("equipment_slots", []))
-	var open_slots := _as_array(_facility_data.get("prototype_open_slots", []))
-	var active := _as_dictionary(_facility_data.get("active_build", {}))
+	var equipment_slots := UiKit.as_array(_facility_data.get("equipment_slots", []))
+	var open_slots := UiKit.as_array(_facility_data.get("prototype_open_slots", []))
+	var active := UiKit.as_dictionary(_facility_data.get("active_build", {}))
 	return equipment_slots.size() == 12 \
 		and open_slots.size() == 4 \
 		and _facility_data.get("inventory_equipment") is Array \
@@ -1212,11 +1203,11 @@ func _has_real_loadout_data() -> bool:
 
 
 func _build_real_loadout() -> void:
-	var slots := _as_array(_facility_data.get("equipment_slots", []))
-	var open := _as_array(_facility_data.get("prototype_open_slots", []))
-	var active := _as_dictionary(_facility_data.get("active_build", {}))
-	var equipped := _as_dictionary(active.get("equipped_item_ids", {}))
-	var inventory := _as_array(_facility_data.get("inventory_equipment", []))
+	var slots := UiKit.as_array(_facility_data.get("equipment_slots", []))
+	var open := UiKit.as_array(_facility_data.get("prototype_open_slots", []))
+	var active := UiKit.as_dictionary(_facility_data.get("active_build", {}))
+	var equipped := UiKit.as_dictionary(active.get("equipped_item_ids", {}))
+	var inventory := UiKit.as_array(_facility_data.get("inventory_equipment", []))
 	_normalize_focus_slot(open)
 	var stage := Control.new()
 	stage.name = "LoadoutConceptRoot"
@@ -1306,7 +1297,7 @@ func _build_loadout_skill_strip(parent: Container) -> void:
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("h_separation", 4)
 	parent.add_child(row)
-	var skills := _as_array(_as_dictionary(_facility_data.get("active_build", {})).get("skills", []))
+	var skills := UiKit.as_array(UiKit.as_dictionary(_facility_data.get("active_build", {})).get("skills", []))
 	while skills.size() < 3:
 		skills.append("")
 	skills = skills.slice(0, 3)
@@ -1337,7 +1328,7 @@ func _build_loadout_skill_strip(parent: Container) -> void:
 			row.add_child(button)
 			continue
 		var skill := _player_skill_entry(skill_id)
-		button.name = "SkillSummary_%s" % _stable_node_token(skill_id)
+		button.name = "SkillSummary_%s" % UiKit.stable_node_token(skill_id)
 		button.text = _compact_skill_text(skill, index + 1)
 		button.tooltip_text = "Click to view %s's full targeting, effects, cooldown, synergies, and limits" % String(skill.get("name", "this skill"))
 		var texture: Texture2D = _skill_icons.icon(skill_id)
@@ -1353,7 +1344,7 @@ func _build_loadout_skill_strip(parent: Container) -> void:
 func _compact_skill_text(skill: Dictionary, slot_index: int) -> String:
 	if skill.is_empty():
 		return "Skill Slot %d\nDetails unavailable" % slot_index
-	var bindings := _as_array(skill.get("key_bindings", []))
+	var bindings := UiKit.as_array(skill.get("key_bindings", []))
 	var primary_binding := "Unbound"
 	if not bindings.is_empty():
 		primary_binding = String(bindings[0]).replace("Left Mouse Button", "Left-click").replace("Right Mouse Button", "Right-click")
@@ -1431,7 +1422,7 @@ func _fit_skill_detail_text() -> void:
 
 func _player_skill_entry(skill_id: String) -> Dictionary:
 	for registry_key in ["early_skill_registry", "skill_registry", "skills"]:
-		var entry := _as_dictionary(_as_dictionary(_facility_data.get(registry_key, {})).get(skill_id, {}))
+		var entry := UiKit.as_dictionary(UiKit.as_dictionary(_facility_data.get(registry_key, {})).get(skill_id, {}))
 		if not entry.is_empty():
 			return entry
 	return _skill_registry.get_skill(skill_id)
@@ -1457,9 +1448,9 @@ func _build_loadout_details_entry(parent: Container) -> void:
 
 func _on_loadout_details_reference_pressed() -> void:
 	var lines := _resolved_build_fact_lines()
-	var active := _as_dictionary(_facility_data.get("active_build", {}))
+	var active := UiKit.as_dictionary(_facility_data.get("active_build", {}))
 	for kind in ["runes", "laws"]:
-		for value in _as_array(active.get(kind, [])):
+		for value in UiKit.as_array(active.get(kind, [])):
 			lines.append(_player_modifier_name(_display_value(value)))
 	_show_item_detail("Build Reference", "\n".join(lines), get_action_button("LoadoutDetailsToggle"))
 	_item_detail_dialog.title = "Build Details"
@@ -1468,8 +1459,8 @@ func _on_loadout_details_reference_pressed() -> void:
 func _on_closed_slot_reference_pressed() -> void:
 	if _item_detail_dialog == null or _item_detail_dialog_text == null:
 		return
-	var slots := _as_array(_facility_data.get("equipment_slots", []))
-	var open := _as_array(_facility_data.get("prototype_open_slots", []))
+	var slots := UiKit.as_array(_facility_data.get("equipment_slots", []))
+	var open := UiKit.as_array(_facility_data.get("prototype_open_slots", []))
 	var lines: Array[String] = ["All 12 Slot States"]
 	for raw_slot in slots:
 		var slot := String(raw_slot)
@@ -1481,13 +1472,13 @@ func _on_closed_slot_reference_pressed() -> void:
 ## Readable reference facts for the complete build dialog. Growth classification
 ## is revealed only by a training report for the current build fingerprint.
 func _resolved_build_fact_lines() -> Array[String]:
-	var resolved := _as_dictionary(_facility_data.get("resolved_build", {}))
-	var parameters := _as_dictionary(resolved.get("final_parameters", {}))
+	var resolved := UiKit.as_dictionary(_facility_data.get("resolved_build", {}))
+	var parameters := UiKit.as_dictionary(resolved.get("final_parameters", {}))
 	var parameter_lines: Array[String] = []
 	for parameter in PlayerReadableBuildScript.PARAMETER_ORDER:
 		parameter_lines.append(_readable_build.format_parameter(parameter, parameters.get(parameter, null)))
 	var fingerprint := String(resolved.get("build_fingerprint", ""))
-	var training := _as_dictionary(_facility_data.get("training", {}))
+	var training := UiKit.as_dictionary(_facility_data.get("training", {}))
 	var classification := "Unverified"
 	var report := _matched_training_report(training, fingerprint)
 	if not report.is_empty():
@@ -1505,7 +1496,7 @@ func _resolved_build_fact_lines() -> Array[String]:
 
 func _resolved_interface_facts_text(value: Variant) -> String:
 	var labels: Array[String] = []
-	for id: Variant in _as_array(value):
+	for id: Variant in UiKit.as_array(value):
 		labels.append(EarlyInterfaceVocabularyScript.player_name(String(id)))
 	return _joined_or_none(labels)
 
@@ -1535,7 +1526,7 @@ func _build_slot_grid(parent: Container, equipment_slots: Array, open_slots: Arr
 func _slot_cell(slot: String, equipped_ids: Dictionary, inventory: Array, _open_slot: bool, _cell_width: int, _cell_height: int) -> PanelContainer:
 	var item := _inventory_item_by_id(inventory, String(equipped_ids.get(slot,"")))
 	var focused := slot == _focus_slot
-	var token := _stable_node_token(slot)
+	var token := UiKit.stable_node_token(slot)
 	var cell := PanelContainer.new()
 	cell.name = "LoadoutSlotCell_" + token
 	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1572,7 +1563,7 @@ func _build_slot_compare(open_slots: Array, equipped_ids: Dictionary, inventory:
 	if _focus_slot.is_empty() or _focus_slot not in open_slots:
 		section.add_child(_note_label("No available slots on this page can be compared."))
 		return
-	var candidates_panel := _section_in(section, "Equipment Backpack · %s" % _slot_title(_focus_slot), "CandidateListPanel_%s" % _stable_node_token(_focus_slot))
+	var candidates_panel := _section_in(section, "Equipment Backpack · %s" % _slot_title(_focus_slot), "CandidateListPanel_%s" % UiKit.stable_node_token(_focus_slot))
 	var panel_style := _section_panel(candidates_panel).get_theme_stylebox("panel").duplicate() as StyleBox
 	panel_style.content_margin_top = 6
 	panel_style.content_margin_bottom = 6
@@ -1590,15 +1581,15 @@ func _build_slot_compare(open_slots: Array, equipped_ids: Dictionary, inventory:
 func _refresh_candidate_results() -> void:
 	if not is_instance_valid(_candidate_results):
 		return
-	_clear_children(_candidate_results)
+	UiKit.clear_children(_candidate_results)
 	_loadout_backpack_detail = null
 	_loadout_backpack_detail_region = null
 	_loadout_empty_hint = null
 	_loadout_detail_pointer_inside = false
 	_loadout_backpack_items = []
-	var active := _as_dictionary(_facility_data.get("active_build", {}))
-	var equipped_id := String(_as_dictionary(active.get("equipped_item_ids", {})).get(_focus_slot, ""))
-	var inventory := _as_array(_facility_data.get("inventory_equipment", []))
+	var active := UiKit.as_dictionary(_facility_data.get("active_build", {}))
+	var equipped_id := String(UiKit.as_dictionary(active.get("equipped_item_ids", {})).get(_focus_slot, ""))
+	var inventory := UiKit.as_array(_facility_data.get("inventory_equipment", []))
 	var current := _inventory_item_by_id(inventory, equipped_id)
 	var all_alternatives := _same_slot_candidates(_focus_slot, equipped_id, inventory)
 	var alternatives := _filter_sort_candidates(all_alternatives)
@@ -1682,8 +1673,8 @@ func _backpack_entries(items: Array, icon_prefix: String) -> Array:
 			"tooltip": "%s\n%s" % [_equipment_model.display_name(item), _equipment_model.compact_difference(item)],
 			"canonical_id": canonical,
 			"icon": _body_icon_texture(canonical),
-			"icon_node_name": "%s_%s" % [icon_prefix, _stable_node_token(instance_id)],
-			"status_label": "Equipped" if instance_id in _as_dictionary(_as_dictionary(_facility_data.get("active_build", {})).get("equipped_item_ids", {})).values() else ("This Run" if instance_id == _loadout_review_instance_id else ""),
+			"icon_node_name": "%s_%s" % [icon_prefix, UiKit.stable_node_token(instance_id)],
+			"status_label": "Equipped" if instance_id in UiKit.as_dictionary(UiKit.as_dictionary(_facility_data.get("active_build", {})).get("equipped_item_ids", {})).values() else ("This Run" if instance_id == _loadout_review_instance_id else ""),
 		})
 	return entries
 
@@ -1748,7 +1739,7 @@ func _finish_loadout_backpack_exit() -> void:
 func _render_loadout_backpack_detail(instance_id: String) -> void:
 	if _loadout_backpack_detail == null or not is_instance_valid(_loadout_backpack_detail):
 		return
-	_clear_children(_loadout_backpack_detail)
+	UiKit.clear_children(_loadout_backpack_detail)
 	var item := _inventory_item_by_id(_loadout_backpack_items, instance_id)
 	if is_instance_valid(_loadout_empty_hint):
 		_loadout_empty_hint.visible = item.is_empty()
@@ -1768,17 +1759,17 @@ func _render_loadout_backpack_detail(instance_id: String) -> void:
 func _add_current_item_backpack_detail(item: Dictionary) -> void:
 	var instance_id := String(item.get("instance_id", ""))
 	var slot := String(item.get("slot", _focus_slot))
-	var token := _stable_node_token(instance_id)
+	var token := UiKit.stable_node_token(instance_id)
 	var title := _body_label("Equipped · %s" % _item_display_name(item))
 	title.name = "BackpackDetailName"
 	_loadout_backpack_detail.add_child(title)
 	var summary := _note_label(_item_inline_summary_text(item))
-	summary.name = "CurrentItemSummary_%s" % _stable_node_token(slot)
+	summary.name = "CurrentItemSummary_%s" % UiKit.stable_node_token(slot)
 	summary.add_theme_color_override("font_color", ShellThemeScript.BONE)
 	_loadout_backpack_detail.add_child(summary)
 	var actions := _make_row("BackpackActions")
 	_loadout_backpack_detail.add_child(actions)
-	_action_button(actions, "Unequip", "unequip_item", {"slot": slot}, "Unequip_%s" % _stable_node_token(slot))
+	_action_button(actions, "Unequip", "unequip_item", {"slot": slot}, "Unequip_%s" % UiKit.stable_node_token(slot))
 	_add_full_item_detail_button(
 		actions,
 		item,
@@ -1807,7 +1798,7 @@ func _add_current_item_backpack_detail(item: Dictionary) -> void:
 func _add_full_item_detail_button(parent: Container, item: Dictionary, title_text: String, detail_text: String) -> Button:
 	var instance_id := String(item.get("instance_id", ""))
 	var button := Button.new()
-	button.name = "FullItemDetails_%s" % _stable_node_token(instance_id)
+	button.name = "FullItemDetails_%s" % UiKit.stable_node_token(instance_id)
 	button.text = "Full Equipment Details"
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.tooltip_text = "Open full item details; closing returns focus to this button"
@@ -1917,7 +1908,7 @@ func character_preview_report() -> Dictionary:
 
 func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	var instance_id := String(item.get("instance_id", ""))
-	var token := _stable_node_token(instance_id)
+	var token := UiKit.stable_node_token(instance_id)
 	var cell := PanelContainer.new()
 	cell.name = "CandidateCell_%s" % token
 	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2034,7 +2025,7 @@ func _candidate_preview_state_text(item: Dictionary) -> String:
 	if preview.is_empty():
 		return "Sacred Law Preview: Unverified (no preview data for this candidate)"
 	var fingerprint := String(preview.get("build_fingerprint", "")).strip_edges()
-	var training := _as_dictionary(_facility_data.get("training", {}))
+	var training := UiKit.as_dictionary(_facility_data.get("training", {}))
 	var report := _matched_training_report(training, fingerprint)
 	if not report.is_empty():
 		var classification := String(report.get("state", "")).strip_edges()
@@ -2050,7 +2041,7 @@ func _same_slot_candidates(slot: String, equipped_id: String, inventory: Array) 
 func _build_candidate_filters(parent: Container, candidates: Array[Dictionary]) -> void:
 	_candidate_filter_bar = EquipmentFilterBarScript.new()
 	parent.add_child(_candidate_filter_bar)
-	_candidate_filter_bar.configure(_candidate_query, candidates, _as_dictionary(_facility_data.get("affix_families", {})))
+	_candidate_filter_bar.configure(_candidate_query, candidates, UiKit.as_dictionary(_facility_data.get("affix_families", {})))
 	_candidate_filter_bar.query_changed.connect(_on_candidate_query_changed)
 
 
@@ -2077,9 +2068,9 @@ func _on_candidate_query_changed(query: Dictionary) -> void:
 func _on_slot_focus_pressed(slot: String) -> void:
 	if slot.is_empty() or slot == _focus_slot:
 		return
-	var active := _as_dictionary(_facility_data.get("active_build", {}))
-	var equipped_ids := _as_dictionary(active.get("equipped_item_ids", {}))
-	var inventory := _as_array(_facility_data.get("inventory_equipment", []))
+	var active := UiKit.as_dictionary(_facility_data.get("active_build", {}))
+	var equipped_ids := UiKit.as_dictionary(active.get("equipped_item_ids", {}))
+	var inventory := UiKit.as_array(_facility_data.get("inventory_equipment", []))
 	var candidates := _same_slot_candidates(slot, String(equipped_ids.get(slot, "")), inventory)
 	if not String(_candidate_query.family).is_empty() and not _candidate_family_exists(candidates, String(_candidate_query.family)):
 		_candidate_query.family = ""
@@ -2096,7 +2087,7 @@ func _on_slot_focus_pressed(slot: String) -> void:
 
 func _candidate_family_exists(candidates: Array[Dictionary], family_id: String) -> bool:
 	for item in candidates:
-		for raw_affix in _as_array(item.get("affixes", [])):
+		for raw_affix in UiKit.as_array(item.get("affixes", [])):
 			if raw_affix is Dictionary and String((raw_affix as Dictionary).get("family_id", "")) == family_id:
 				return true
 	return false
@@ -2121,7 +2112,7 @@ func _normalize_focus_slot(open_slots: Array) -> void:
 ## The snapshot's own base-item table entry for one owned item, or {} when the
 ## snapshot carries no entry: the page never invents a base it was not given.
 func _base_item_data(item: Dictionary) -> Dictionary:
-	return _as_dictionary(_equipment_model.base_items.get(String(item.get("base_item_id", "")), {}))
+	return UiKit.as_dictionary(_equipment_model.base_items.get(String(item.get("base_item_id", "")), {}))
 
 
 ## The player-facing name of one owned item, or its base id when the snapshot has
@@ -2141,7 +2132,7 @@ func _joined_or_none(value: Variant) -> String:
 func _equip_preview_data(instance_id: String) -> Dictionary:
 	if instance_id.is_empty():
 		return {}
-	var previews := _as_dictionary(_facility_data.get("equip_previews", {}))
+	var previews := UiKit.as_dictionary(_facility_data.get("equip_previews", {}))
 	var preview_value: Variant = previews.get(instance_id, null)
 	if not preview_value is Dictionary or not bool((preview_value as Dictionary).get("ok", true)):
 		return {}
@@ -2155,18 +2146,18 @@ func _equip_preview_data(instance_id: String) -> Dictionary:
 ## their own stable toggle, and nothing here is dropped, renamed, or recomputed.
 func _item_detail_text(item: Dictionary) -> String:
 	var modifiers: Array[String] = []
-	for raw_modifier in _as_array(_base_item_data(item).get("modifiers", [])):
+	for raw_modifier in UiKit.as_array(_base_item_data(item).get("modifiers", [])):
 		if raw_modifier is Dictionary:
 			modifiers.append(_modifier_text(raw_modifier))
 	var affixes: Array[String] = []
-	var families := _as_dictionary(_facility_data.get("affix_families", {}))
+	var families := UiKit.as_dictionary(_facility_data.get("affix_families", {}))
 	var affix_index := 1
-	for raw_affix in _as_array(item.get("affixes", [])):
+	for raw_affix in UiKit.as_array(item.get("affixes", [])):
 		if not raw_affix is Dictionary:
 			continue
 		var affix: Dictionary = raw_affix
 		var family_id := String(affix.get("family_id", ""))
-		var family := _as_dictionary(families.get(family_id, {}))
+		var family := UiKit.as_dictionary(families.get(family_id, {}))
 		var tier := int(affix.get("tier", 0))
 		var effect := _affix_effect_text(family, tier)
 		affixes.append("%d. %s T%d%s(family_id: %s)" % [
@@ -2202,11 +2193,11 @@ func _raw_fields_are_long(item: Dictionary) -> bool:
 
 func _raw_entry_count(item: Dictionary) -> int:
 	var base_id := String(item.get("base_item_id", ""))
-	var base := _as_dictionary(_as_dictionary(_facility_data.get("base_items", {})).get(base_id, {}))
+	var base := UiKit.as_dictionary(UiKit.as_dictionary(_facility_data.get("base_items", {})).get(base_id, {}))
 	# Internal parameter entries only: the base's own modifiers plus the item's
 	# affixes. The rune and the law are single short fields that stay readable, so
 	# they never push a block over the budget on their own.
-	return _as_array(base.get("modifiers", [])).size() + _as_array(item.get("affixes", [])).size()
+	return UiKit.as_array(base.get("modifiers", [])).size() + UiKit.as_array(item.get("affixes", [])).size()
 
 
 ## Why this block folds, in one line: the exact raw length or entry count, never a
@@ -2262,7 +2253,7 @@ func _field_block_toggle(kind: String, owner_id: String) -> Button:
 	var toggle := Button.new()
 	toggle.name = "%s_%s" % [
 		String(FIELD_BLOCK_TOGGLE_PREFIXES.get(kind, "FieldBlockToggle")),
-		_stable_node_token(owner_id),
+		UiKit.stable_node_token(owner_id),
 	]
 	toggle.text = "Hide Raw Details" if open else "Show Raw Details"
 	toggle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -2300,9 +2291,9 @@ func _equip_preview_text(instance_id: String) -> String:
 	var preview := _equip_preview_data(instance_id)
 	if preview.is_empty():
 		return ""
-	var final_parameters := _as_dictionary(preview.get("final_parameters", {}))
-	var resolved := _as_dictionary(_facility_data.get("resolved_build", {}))
-	var current_parameters := _as_dictionary(resolved.get("final_parameters", {}))
+	var final_parameters := UiKit.as_dictionary(preview.get("final_parameters", {}))
+	var resolved := UiKit.as_dictionary(_facility_data.get("resolved_build", {}))
+	var current_parameters := UiKit.as_dictionary(resolved.get("final_parameters", {}))
 	var lines: Array[String] = []
 	if not final_parameters.is_empty() and not current_parameters.is_empty():
 		var parameter_changes: Array[String] = []
@@ -2338,16 +2329,16 @@ func _equip_preview_text(instance_id: String) -> String:
 ## equip action; the complete canonical comparison remains below that action.
 func _candidate_decision_text(instance_id: String) -> String:
 	var preview := _equip_preview_data(instance_id)
-	var resolved := _as_dictionary(_facility_data.get("resolved_build", {}))
+	var resolved := UiKit.as_dictionary(_facility_data.get("resolved_build", {}))
 	var summary := _readable_build.format_candidate_decision_summary(
-		_as_dictionary(resolved.get("final_parameters", {})),
+		UiKit.as_dictionary(resolved.get("final_parameters", {})),
 		preview
 	)
 	return summary.replace("Stats: ", "Stats When Equipped: ")
 
 
 func _append_preview_group(lines: Array[String], preview: Dictionary, key: String, label: String) -> void:
-	var values := _as_array(preview.get(key, []))
+	var values := UiKit.as_array(preview.get(key, []))
 	if values.is_empty():
 		return
 	if key.begins_with("interfaces_"):
@@ -2392,18 +2383,6 @@ func _slot_display_name(slot: String) -> String:
 ## the raw slot id stays in the detail rows that name a concrete item.
 func _slot_title(slot: String) -> String:
 	return _readable_build.slot_label(slot)
-
-
-## The four open slot names as one player-facing list, for the locked-slot reason
-## line. Raw ids stay on the locked lines that already name their own slot.
-func _stable_node_token(value: String) -> String:
-	var token := ""
-	for index in value.length():
-		var character := value.substr(index, 1)
-		var code := character.unicode_at(0)
-		var legal := code >= 48 and code <= 57 or code >= 65 and code <= 90 or code >= 97 and code <= 122 or character in ["_", "-"]
-		token += character if legal else "_"
-	return token
 
 
 func _salvage_action_for(item: Dictionary, instance_id: String) -> Dictionary:
@@ -2466,8 +2445,8 @@ func _build_forge() -> void:
 	])
 	var input: VBoxContainer = columns[0]
 	var workflow: VBoxContainer = columns[1]
-	var target := _as_dictionary(_facility_data.get("target_item",{}))
-	var tallies := _as_dictionary(_facility_data.get("law_tallies", {}))
+	var target := UiKit.as_dictionary(_facility_data.get("target_item",{}))
+	var tallies := UiKit.as_dictionary(_facility_data.get("law_tallies", {}))
 	var target_panel := _section_in(input,"","ForgeTargetPanel")
 	var target_row := _make_row("ForgeTargetCompactRow")
 	target_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -2479,7 +2458,7 @@ func _build_forge() -> void:
 		# The compact target summary keeps the authored cell at native 32x32. The
 		# backpack below uses the larger 2x cells for browsing.
 		var target_icon := _icon_node(target_texture, FacilityArtScript.ICON_NATIVE_SIZE, false)
-		target_icon.name = "ForgeTargetIcon_%s" % _stable_node_token(canonical)
+		target_icon.name = "ForgeTargetIcon_%s" % UiKit.stable_node_token(canonical)
 		target_icon.set_meta("canonical_id", canonical)
 		target_row.add_child(target_icon)
 	var target_copy := VBoxContainer.new()
@@ -2538,7 +2517,7 @@ func _build_forge() -> void:
 			operation_button.add_theme_stylebox_override(state, style)
 		operation_button.pressed.connect(_on_forge_operation_selected.bind(operation))
 		operation_row.add_child(operation_button)
-	_build_forge_inventory(input,_as_array(_facility_data.get("inventory_items",[])),String(_facility_data.get("target_instance_id","")))
+	_build_forge_inventory(input,UiKit.as_array(_facility_data.get("inventory_items",[])),String(_facility_data.get("target_instance_id","")))
 	if not bool(_facility_data.get("unlocked",false)):
 		var locked := _section_in(workflow,"Law Token Forge Locked","ForgeLocked")
 		locked.add_child(_body_label(String(_facility_data.get("locked_reason","Unlock requirements not yet met"))))
@@ -2629,7 +2608,7 @@ func _build_forge_browse(parent: Container) -> void:
 	]
 	var equipped := bool(candidate.get("target_is_equipped", false))
 	panel.add_child(_note_label("Current Build Changes After Commit" if equipped else "Commit leaves current build unchanged; expected changes when equipped"))
-	var impact := _as_dictionary(candidate.get("build_comparison", {}))
+	var impact := UiKit.as_dictionary(candidate.get("build_comparison", {}))
 	_add_interface_changes(panel, impact)
 	var comparison = preload("res://src/presentation/equipment_comparison.gd").new()
 	comparison.name = "ForgeBuildComparison"
@@ -2728,7 +2707,7 @@ func _finish_forge_backpack_exit() -> void:
 func _render_forge_backpack_detail(instance_id: String) -> void:
 	if _forge_backpack_detail == null or not is_instance_valid(_forge_backpack_detail):
 		return
-	_clear_children(_forge_backpack_detail)
+	UiKit.clear_children(_forge_backpack_detail)
 	var item := _inventory_item_by_id(_forge_backpack_items, instance_id)
 	if item.is_empty():
 		if _forge_backpack_detail_region != null:
@@ -2736,7 +2715,7 @@ func _render_forge_backpack_detail(instance_id: String) -> void:
 		return
 	if _forge_backpack_detail_region != null:
 		_forge_backpack_detail_region.visible = true
-	var instance_token := _stable_node_token(instance_id)
+	var instance_token := UiKit.stable_node_token(instance_id)
 	var selected := instance_id == String(_facility_data.get("target_instance_id", ""))
 	var action_row := _make_row("BackpackActions")
 	_forge_backpack_detail.add_child(action_row)
@@ -2883,7 +2862,7 @@ func _build_training() -> void:
 		unavailable.add_child(_body_label("The current build cannot be resolved: stats, connected interfaces, and growth conclusions are unavailable."))
 		_add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
 		return
-	var training := _as_dictionary(_facility_data.get("training", {}))
+	var training := UiKit.as_dictionary(_facility_data.get("training", {}))
 	var fingerprint := String(resolved.get("build_fingerprint", "")).strip_edges()
 	var matched := _matched_training_report(training, fingerprint)
 	var verified := not matched.is_empty()
@@ -2925,7 +2904,7 @@ func _build_training() -> void:
 ## Build's own word or the matched report's own sentence.
 func _training_interface_text(value: Variant) -> String:
 	var labels: Array[String] = []
-	for id: Variant in _as_array(value):
+	for id: Variant in UiKit.as_array(value):
 		labels.append(EarlyInterfaceVocabularyScript.player_name(String(id)))
 	return _joined_or_none(labels)
 
@@ -2960,7 +2939,7 @@ func _build_training_details(resolved: Dictionary, training: Dictionary, fingerp
 	section.add_child(toggle)
 	if not _training_details_open:
 		return
-	var parameters := _as_dictionary(resolved.get("final_parameters", {}))
+	var parameters := UiKit.as_dictionary(resolved.get("final_parameters", {}))
 	var parameter_lines: Array[String] = []
 	for parameter in PlayerReadableBuildScript.PARAMETER_ORDER:
 		parameter_lines.append(_readable_build.format_parameter(parameter, parameters.get(parameter, null)))
@@ -3014,8 +2993,8 @@ func training_trace_report() -> Dictionary:
 func _matched_training_report(training: Dictionary, fingerprint: String) -> Dictionary:
 	if fingerprint.is_empty():
 		return {}
-	var reports_by_fingerprint := _as_dictionary(training.get("reports_by_fingerprint", {}))
-	var report := _as_dictionary(reports_by_fingerprint.get(fingerprint, {}))
+	var reports_by_fingerprint := UiKit.as_dictionary(training.get("reports_by_fingerprint", {}))
+	var report := UiKit.as_dictionary(reports_by_fingerprint.get(fingerprint, {}))
 	if report.is_empty() or String(report.get("build_fingerprint", "")).strip_edges() != fingerprint:
 		return {}
 	return report.duplicate(true)
@@ -3167,8 +3146,8 @@ func _is_decimal_reading(text: String) -> bool:
 
 
 func _build_proxy() -> void:
-	var proxy := _as_dictionary(_facility_data.get("proxy", {}))
-	var progression := _as_dictionary(_facility_data.get("progression", {}))
+	var proxy := UiKit.as_dictionary(_facility_data.get("proxy", {}))
+	var progression := UiKit.as_dictionary(_facility_data.get("progression", {}))
 	var unlocked := bool(proxy.get("unlocked", progression.get("proxy_unlocked", false)))
 	if not unlocked:
 		_build_proxy_core_strip(CORE_ORDER.duplicate(), false)
@@ -3206,7 +3185,7 @@ func _build_proxy_core_strip(core_ids: Array[String], unlocked: bool) -> void:
 
 func _proxy_core_cell(core_id: String, unlocked: bool) -> PanelContainer:
 	var cell := PanelContainer.new()
-	cell.name = "ProxyCoreCell_%s" % _stable_node_token(core_id)
+	cell.name = "ProxyCoreCell_%s" % UiKit.stable_node_token(core_id)
 	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cell.add_theme_stylebox_override("panel", _slot_cell_box(unlocked, not unlocked))
 	var content := VBoxContainer.new()
@@ -3216,7 +3195,7 @@ func _proxy_core_cell(core_id: String, unlocked: bool) -> PanelContainer:
 	var texture := _body_icon_texture(canonical)
 	if texture != null:
 		var icon := _icon_node(texture, FacilityArtScript.ICON_NATIVE_SIZE, true)
-		icon.name = "%s_%s" % ["CoreIcon" if unlocked else "RewardCoreIcon", _stable_node_token(canonical)]
+		icon.name = "%s_%s" % ["CoreIcon" if unlocked else "RewardCoreIcon", UiKit.stable_node_token(canonical)]
 		icon.set_meta("canonical_id", canonical)
 		content.add_child(icon)
 	content.add_child(_body_label("%s · %s" % [_proxy_core_display_name(core_id, {}), String(CORE_ROLES.get(core_id, "Core"))]))
@@ -3228,14 +3207,14 @@ func _proxy_core_cell(core_id: String, unlocked: bool) -> PanelContainer:
 ## the order it was stored in. An empty or unknown list falls back to the four
 ## fixed cores; an unknown word maps to nothing and keeps its own text cell.
 func _proxy_core_ids(proxy: Dictionary) -> Array[String]:
-	var proxy_build := _as_dictionary(proxy.get("build", {}))
+	var proxy_build := UiKit.as_dictionary(proxy.get("build", {}))
 	var by_slot := {}
-	var catalog := _as_dictionary(proxy.get("catalog", {}))
-	for raw_core in _as_array(proxy_build.get("cores", proxy.get("cores", []))):
+	var catalog := UiKit.as_dictionary(proxy.get("catalog", {}))
+	for raw_core in UiKit.as_array(proxy_build.get("cores", proxy.get("cores", []))):
 		var core_id := _core_canonical_name(raw_core)
 		if core_id.is_empty() or core_id not in IMPLEMENTED_CORE_IDS:
 			continue
-		var slot := String(_as_dictionary(catalog.get(core_id, {})).get("slot", _proxy_core_slot(core_id)))
+		var slot := String(UiKit.as_dictionary(catalog.get(core_id, {})).get("slot", _proxy_core_slot(core_id)))
 		if slot in PROXY_SLOT_ORDER and not by_slot.has(slot):
 			by_slot[slot] = core_id
 	var ids: Array[String] = []
@@ -3249,9 +3228,9 @@ func _proxy_core_ids(proxy: Dictionary) -> Array[String]:
 
 func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> void:
 	var section := _section("Core Inventory and Protocols", "ProxyInventory")
-	var catalog := _as_dictionary(proxy.get("catalog", {}))
+	var catalog := UiKit.as_dictionary(proxy.get("catalog", {}))
 	var owned := {}
-	for value in _as_array(proxy.get("inventory", [])):
+	for value in UiKit.as_array(proxy.get("inventory", [])):
 		if not value is Dictionary:
 			continue
 		var item := value as Dictionary
@@ -3259,11 +3238,11 @@ func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> 
 		if core_id in IMPLEMENTED_CORE_IDS:
 			owned[core_id] = item
 	for core_id in IMPLEMENTED_CORE_IDS:
-		var definition := _as_dictionary(catalog.get(core_id, {}))
+		var definition := UiKit.as_dictionary(catalog.get(core_id, {}))
 		if definition.is_empty():
 			continue
 		var row := VBoxContainer.new()
-		row.name = "ProxyInventoryRow_%s" % _stable_node_token(core_id)
+		row.name = "ProxyInventoryRow_%s" % UiKit.stable_node_token(core_id)
 		row.add_theme_constant_override("separation", 4)
 		section.add_child(row)
 		var slot := String(definition.get("slot", _proxy_core_slot(core_id)))
@@ -3273,10 +3252,10 @@ func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> 
 		elif owned.has(core_id):
 			state = "In Storage"
 		row.add_child(_body_label("%s · %s · %s" % [_proxy_core_display_name(core_id, definition), String(PROXY_SLOT_LABELS.get(slot, slot)), state]))
-		row.add_child(_note_label("Protocol: %s" % String(definition.get("protocol", _as_dictionary(owned.get(core_id, {})).get("protocol", "Not Recorded")))))
+		row.add_child(_note_label("Protocol: %s" % String(definition.get("protocol", UiKit.as_dictionary(owned.get(core_id, {})).get("protocol", "Not Recorded")))))
 		if owned.has(core_id) and core_id not in installed_ids:
 			var button := Button.new()
-			button.name = "ProxyEquip_%s" % _stable_node_token(core_id)
+			button.name = "ProxyEquip_%s" % UiKit.stable_node_token(core_id)
 			button.text = "Install in %s" % String(PROXY_SLOT_LABELS.get(slot, slot))
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3289,8 +3268,8 @@ func _build_proxy_distance_settings(proxy: Dictionary, installed_ids: Array[Stri
 		return
 	var section := _section("Distance Band", "ProxyDistanceBand")
 	section.add_child(_note_label("All distance bands scale with Piercing Arrow's actual range."))
-	var settings := _as_dictionary(_as_dictionary(proxy.get("build", {})).get("settings", {}))
-	var current := String(_as_dictionary(settings.get("distance_keeping_gait", {})).get("distance_band", "mid"))
+	var settings := UiKit.as_dictionary(UiKit.as_dictionary(proxy.get("build", {})).get("settings", {}))
+	var current := String(UiKit.as_dictionary(settings.get("distance_keeping_gait", {})).get("distance_band", "mid"))
 	if current not in ["near", "mid", "far"]:
 		current = "mid"
 	var labels := {"near": "Near", "mid": "Mid", "far": "Far"}
@@ -3351,7 +3330,7 @@ func _build_research() -> void:
 
 
 func _forge_session() -> Dictionary:
-	var session := _as_dictionary(_facility_data.get("session", {}))
+	var session := UiKit.as_dictionary(_facility_data.get("session", {}))
 	if String(session.get("session_id", "")).strip_edges().is_empty():
 		return {}
 	return session
@@ -3384,7 +3363,7 @@ func _forge_candidates() -> Array[Dictionary]:
 	if revealed_count <= 0:
 		return []
 	var result: Array[Dictionary] = []
-	for raw_candidate in _as_array(session.get("candidates", [])):
+	for raw_candidate in UiKit.as_array(session.get("candidates", [])):
 		if raw_candidate is Dictionary and not String((raw_candidate as Dictionary).get("candidate_id", "")).is_empty():
 			result.append((raw_candidate as Dictionary).duplicate(true))
 			if result.size() >= revealed_count:
@@ -3464,7 +3443,7 @@ func _law_token_name(operation: String, count: int = -1) -> String:
 
 
 func _law_tally(operation: String, tallies: Dictionary = {}) -> int:
-	var source := tallies if not tallies.is_empty() else _as_dictionary(_facility_data.get("law_tallies", {}))
+	var source := tallies if not tallies.is_empty() else UiKit.as_dictionary(_facility_data.get("law_tallies", {}))
 	return maxi(0, int(source.get(operation, 0)))
 
 
@@ -3478,7 +3457,7 @@ func _forge_candidate_affordable(candidate: Dictionary) -> bool:
 func _forge_operation_block_reason(operation: String) -> String:
 	if not bool(_facility_data.get("unlocked", false)):
 		return "The Law Token Forge is not yet unlocked."
-	if _as_dictionary(_facility_data.get("target_item", {})).is_empty() or String(_facility_data.get("target_instance_id", "")).is_empty():
+	if UiKit.as_dictionary(_facility_data.get("target_item", {})).is_empty() or String(_facility_data.get("target_instance_id", "")).is_empty():
 		return "Select target equipment first."
 	match String(_facility_data.get("blocked_reason", "")):
 		"affix_limit_reached":
@@ -3557,14 +3536,14 @@ func _forge_readable_item_text(item: Dictionary) -> String:
 
 
 func _forge_candidate_result_item_view(candidate: Dictionary) -> Dictionary:
-	var view := _as_dictionary(candidate.get("result_item_view", {}))
-	return view if not view.is_empty() else _as_dictionary(candidate.get("result_item", {}))
+	var view := UiKit.as_dictionary(candidate.get("result_item_view", {}))
+	return view if not view.is_empty() else UiKit.as_dictionary(candidate.get("result_item", {}))
 
 
 func _forge_build_change_text(candidate: Dictionary) -> String:
-	var comparison := _as_dictionary(candidate.get("build_comparison", {}))
-	var current := _as_dictionary(comparison.get("current_parameters", {}))
-	var after := _as_dictionary(comparison.get("result_parameters", {}))
+	var comparison := UiKit.as_dictionary(candidate.get("build_comparison", {}))
+	var current := UiKit.as_dictionary(comparison.get("current_parameters", {}))
+	var after := UiKit.as_dictionary(comparison.get("result_parameters", {}))
 	var preview_impact := String(candidate.get("preview_impact", ""))
 	var target_is_equipped: Variant = candidate.get("target_is_equipped", null)
 	if not (target_is_equipped is bool):
@@ -3695,7 +3674,7 @@ func _component_text(build: Dictionary, key: String, fallback: String) -> String
 	if value == null:
 		value = _nested_value(build, ["components", key], null)
 	if value == null and build.has("%ss" % key):
-		var values := _as_array(build.get("%ss" % key, []))
+		var values := UiKit.as_array(build.get("%ss" % key, []))
 		value = values[0] if not values.is_empty() else null
 	var text := _display_value(value)
 	if key == "skill" and not text.is_empty():
@@ -3717,7 +3696,7 @@ func _component_id(build: Dictionary, key: String) -> String:
 	if value == null:
 		value = _nested_value(build, ["components", key], null)
 	if value == null and build.has("%ss" % key):
-		var values := _as_array(build.get("%ss" % key, []))
+		var values := UiKit.as_array(build.get("%ss" % key, []))
 		value = values[0] if not values.is_empty() else null
 	if value is Dictionary:
 		return String((value as Dictionary).get("id", ""))
@@ -3738,7 +3717,7 @@ func _build_display_name(build: Dictionary, index: int, verified: bool) -> Strin
 func _equipment_text(build: Dictionary) -> String:
 	var value: Variant = build.get("equipment_summary", null)
 	if value == null:
-		var equipment := _as_dictionary(build.get("equipment", build.get("gear", {})))
+		var equipment := UiKit.as_dictionary(build.get("equipment", build.get("gear", {})))
 		var details: Array[String] = []
 		for key in ["name", "description", "summary", "affixes", "calibration"]:
 			if equipment.has(key):
@@ -3787,20 +3766,6 @@ func _core_canonical_name(value: Variant) -> String:
 		"memory": "short_trace_memory",
 	}
 	return String(aliases.get(id, id))
-
-
-func _clear_children(parent: Node) -> void:
-	for child: Node in parent.get_children():
-		parent.remove_child(child)
-		child.queue_free()
-
-
-func _as_dictionary(value: Variant) -> Dictionary:
-	return value as Dictionary if value is Dictionary else {}
-
-
-func _as_array(value: Variant) -> Array:
-	return value as Array if value is Array else []
 
 
 func _on_base_pressed() -> void:

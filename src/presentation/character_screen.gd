@@ -12,6 +12,7 @@ signal stance_requested(stance: String)
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const TalentBoardScript = preload("res://src/presentation/ranger_talent_board.gd")
 const ProgressionIconsScript = preload("res://src/presentation/progression_icons.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 const PAGE_MARGIN := 18
 const GAP := 12
@@ -92,10 +93,10 @@ func _build_heading(page: VBoxContainer) -> void:
 	title_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_column.add_theme_constant_override("separation", 0)
 	heading_row.add_child(title_column)
-	var title := _label("Ranger Progression", TITLE_FONT_SIZE, ShellThemeScript.BONE)
+	var title := UiKit.colored_label("Ranger Progression", TITLE_FONT_SIZE, ShellThemeScript.BONE)
 	title.name = "CharacterTitle"
 	title_column.add_child(title)
-	var subtitle := _label("Hunting · Three Paths on Cold Stone", BODY_FONT_SIZE, ShellThemeScript.NEUTRAL)
+	var subtitle := UiKit.colored_label("Hunting · Three Paths on Cold Stone", BODY_FONT_SIZE, ShellThemeScript.NEUTRAL)
 	subtitle.name = "CharacterSubtitle"
 	title_column.add_child(subtitle)
 	var class_tabs := HBoxContainer.new()
@@ -145,20 +146,10 @@ func _build_overview(page: VBoxContainer) -> void:
 	_experience_progress.show_percentage = false
 	_experience_progress.custom_minimum_size = Vector2(280, 9)
 	_experience_progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var track := StyleBoxFlat.new()
-	track.bg_color = Color("16202a")
-	track.border_color = Color("524c3e")
-	track.set_border_width_all(1)
-	track.set_corner_radius_all(0)
-	_experience_progress.add_theme_stylebox_override("background", track)
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color("8b6e42")
-	fill.border_color = Color("c4a76a")
-	fill.set_border_width_all(1)
-	fill.set_corner_radius_all(0)
-	_experience_progress.add_theme_stylebox_override("fill", fill)
+	_experience_progress.add_theme_stylebox_override("background", UiKit.flat_style(Color("16202a"), Color("524c3e"), 1))
+	_experience_progress.add_theme_stylebox_override("fill", UiKit.flat_style(Color("8b6e42"), Color("c4a76a"), 1))
 	(experience_card["content"] as VBoxContainer).add_child(_experience_progress)
-	_status_label = _label("", BODY_FONT_SIZE, ShellThemeScript.NEUTRAL)
+	_status_label = UiKit.colored_label("", BODY_FONT_SIZE, ShellThemeScript.NEUTRAL)
 	_status_label.name = "CharacterStatus"
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status_label.visible = false
@@ -189,10 +180,10 @@ func _build_workspace(page: VBoxContainer) -> void:
 	var board_header := HBoxContainer.new()
 	board_header.add_theme_constant_override("separation", 10)
 	tree_column.add_child(board_header)
-	_tree_title = _label("Hunting · Three Talent Tiers", BODY_FONT_SIZE, ShellThemeScript.BONE)
+	_tree_title = UiKit.colored_label("Hunting · Three Talent Tiers", BODY_FONT_SIZE, ShellThemeScript.BONE)
 	_tree_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board_header.add_child(_tree_title)
-	_tree_state_label = _label("", BODY_FONT_SIZE, ShellThemeScript.WARNING)
+	_tree_state_label = UiKit.colored_label("", BODY_FONT_SIZE, ShellThemeScript.WARNING)
 	_tree_state_label.name = "TreeStateLabel"
 	_tree_state_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	board_header.add_child(_tree_state_label)
@@ -214,16 +205,16 @@ func _build_workspace(page: VBoxContainer) -> void:
 	detail.name = "DetailContent"
 	detail.add_theme_constant_override("separation", 8)
 	detail_panel.add_child(detail)
-	_detail_title = _label("Select a Talent", BODY_FONT_SIZE, Color("d7a46b"))
+	_detail_title = UiKit.colored_label("Select a Talent", BODY_FONT_SIZE, Color("d7a46b"))
 	_detail_title.name = "SelectedTalentName"
 	_detail_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.add_child(_detail_title)
-	_detail_description = _label("Select a node on the left to view its full description.", BODY_FONT_SIZE, ShellThemeScript.BONE)
+	_detail_description = UiKit.colored_label("Select a node on the left to view its full description.", BODY_FONT_SIZE, ShellThemeScript.BONE)
 	_detail_description.name = "SelectedTalentDescription"
 	_detail_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail_description.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	detail.add_child(_detail_description)
-	_detail_state = _label("", BODY_FONT_SIZE, Color("cfc4a8"))
+	_detail_state = UiKit.colored_label("", BODY_FONT_SIZE, Color("cfc4a8"))
 	_detail_state.name = "SelectedTalentState"
 	_detail_state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.add_child(_detail_state)
@@ -243,7 +234,7 @@ func _build_workspace(page: VBoxContainer) -> void:
 	_reset_button.pressed.connect(_on_reset_pressed)
 	_reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(_reset_button)
-	_stance_gate_label = _label("Stances unlock after allocating the relevant keystone.", BODY_FONT_SIZE, Color("cfc4a8"))
+	_stance_gate_label = UiKit.colored_label("Stances unlock after allocating the relevant keystone.", BODY_FONT_SIZE, Color("cfc4a8"))
 	_stance_gate_label.name = "StanceGateLabel"
 	_stance_gate_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.add_child(_stance_gate_label)
@@ -265,28 +256,15 @@ func _metric_card(title_text: String, value_name: String) -> Dictionary:
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 2)
 	panel.add_child(content)
-	content.add_child(_label(title_text, BODY_FONT_SIZE, ShellThemeScript.NEUTRAL))
-	var value := _label("—", BODY_FONT_SIZE, ShellThemeScript.BONE)
+	content.add_child(UiKit.colored_label(title_text, BODY_FONT_SIZE, ShellThemeScript.NEUTRAL))
+	var value := UiKit.colored_label("—", BODY_FONT_SIZE, ShellThemeScript.BONE)
 	value.name = value_name
 	content.add_child(value)
 	return {"panel": panel, "content": content, "value": value}
 
 
-func _label(text_value: String, font_size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.text = text_value
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	return label
-
-
 func _button(text_value: String, node_name: String) -> Button:
-	var button := Button.new()
-	button.name = node_name
-	button.text = text_value
-	button.add_theme_font_size_override("font_size", BODY_FONT_SIZE)
-	button.focus_mode = Control.FOCUS_ALL
-	return button
+	return UiKit.sized_button(text_value, node_name, BODY_FONT_SIZE)
 
 
 func _apply_presentation() -> void:

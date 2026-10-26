@@ -23,6 +23,7 @@ signal title_requested
 
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const HearthReturnScript = preload("res://src/presentation/hearth_return_view.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 ## The shell's one UI resolution; the project's canvas_items stretch keeps the same
 ## layout at 1600x900 and 1024x576.
@@ -296,7 +297,7 @@ func _seed_initial_focus() -> void:
 		_primary_action.grab_focus()
 
 func _apply_presentation() -> void:
-	var progression := _as_dictionary(_profile.get("progression", {}))
+	var progression := UiKit.as_dictionary(_profile.get("progression", {}))
 	var initial_class := String(_profile.get("initial_class", "Not Created"))
 	_profile_label.text = "Class: %s    Contract wins: %d    Proxy wins: %d" % [
 		String(CLASS_LABELS.get(initial_class.to_lower(), initial_class)),
@@ -308,7 +309,7 @@ func _apply_presentation() -> void:
 	var contract_id := String(_last_result.get("contract_id", "auto_certification"))
 	var mode := String(_last_result.get("mode", "Auto"))
 	var elapsed := float(_last_result.get("elapsed_seconds", _last_result.get("time", 0.0)))
-	var rewards := _as_dictionary(_last_result.get("rewards", {}))
+	var rewards := UiKit.as_dictionary(_last_result.get("rewards", {}))
 	var equipment_count := int(rewards.get("equipment_drop_count", 0))
 	_result_label.text = "Contract: %s (%s)    Result: %s\nTime: %.2f s    Equipment gained: %d" % [
 		String(CONTRACT_LABELS.get(contract_id, contract_id)),
@@ -319,21 +320,8 @@ func _apply_presentation() -> void:
 	]
 
 
-func _as_dictionary(value: Variant) -> Dictionary:
-	return value as Dictionary if value is Dictionary else {}
-
-
 func _frame(fill: Color, border: Color, width: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = fill
-	box.border_color = border
-	box.set_border_width_all(width)
-	box.set_corner_radius_all(0)
-	box.content_margin_left = 12.0
-	box.content_margin_top = 12.0
-	box.content_margin_right = 12.0
-	box.content_margin_bottom = 12.0
-	return box
+	return UiKit.flat_style(fill, border, width, 0, Vector4(12.0, 12.0, 12.0, 12.0))
 
 
 ## ---- public surface used by the router, the harness and the tests ----

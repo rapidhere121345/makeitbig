@@ -32,6 +32,7 @@ const SkillIconsScript = preload("res://src/presentation/combat_skill_icons.gd")
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const EarlySkillRegistryScript = preload("res://src/content/early_skill_registry.gd")
 const PlayerReadableBuildScript = preload("res://src/presentation/player_readable_build.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 const COLOR_INK: Color = PaletteScript.INK
 const COLOR_DEEP_BLUE: Color = PaletteScript.SLATE_0
@@ -1306,16 +1307,8 @@ func _transparent_panel_style() -> StyleBoxFlat:
 
 
 func _style_progress(bar: ProgressBar, fill_color: Color) -> void:
-	var background := StyleBoxFlat.new()
-	background.bg_color = COLOR_INK
-	background.border_color = COLOR_NEUTRAL
-	background.set_border_width_all(1)
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = fill_color
-	fill.border_color = COLOR_BONE
-	fill.set_border_width_all(1)
-	bar.add_theme_stylebox_override("background", background)
-	bar.add_theme_stylebox_override("fill", fill)
+	bar.add_theme_stylebox_override("background", UiKit.flat_style(COLOR_INK, COLOR_NEUTRAL, 1))
+	bar.add_theme_stylebox_override("fill", UiKit.flat_style(fill_color, COLOR_BONE, 1))
 
 
 func _heading(text: String) -> Label:

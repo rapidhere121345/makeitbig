@@ -17,6 +17,7 @@ extends Control
 const NATIVE_VIEW := Vector2i(640, 360)
 const JsonIO := preload("res://src/core/json_io.gd")
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 const DISPLAY_SCALE := 2
 const DISPLAY_SIZE := Vector2i(1280, 720)
 
@@ -512,7 +513,7 @@ func _rebuild_world() -> void:
 	if world_root == null:
 		return
 	for layer: Node2D in [field_layer, life_overlay_layer]:
-		_clear_children(layer)
+		UiKit.clear_children(layer)
 	_life_nodes.clear()
 	_log_pending()
 	if _backdrop_source == BACKDROP_NONE:
@@ -640,14 +641,6 @@ func native_image() -> Image:
 		return null
 	var image := texture.get_image()
 	return image if image != null and not image.is_empty() else null
-
-
-func _clear_children(parent: Node) -> void:
-	if parent == null:
-		return
-	for child in parent.get_children():
-		parent.remove_child(child)
-		child.queue_free()
 
 
 func _integer_list(value: Variant, size: int) -> bool:

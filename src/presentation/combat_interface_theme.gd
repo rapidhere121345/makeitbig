@@ -5,6 +5,7 @@ extends RefCounted
 
 const PaletteScript := preload("res://src/presentation/combat_palette.gd")
 const ShellThemeScript := preload("res://src/presentation/shell_theme.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 const COLOR_INK: Color = PaletteScript.INK
 const COLOR_DEEP_BLUE: Color = PaletteScript.SLATE_0
 const COLOR_GROUND: Color = PaletteScript.SLATE_1
@@ -36,12 +37,4 @@ static func create() -> Theme:
 
 
 static func _button_style(background: Color, border: Color, border_width: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = background
-	style.border_color = border
-	style.set_border_width_all(border_width)
-	style.content_margin_left = 10.0
-	style.content_margin_right = 10.0
-	style.content_margin_top = 7.0
-	style.content_margin_bottom = 7.0
-	return style
+	return UiKit.flat_style(background, border, border_width, 0, Vector4(10.0, 7.0, 10.0, 7.0))

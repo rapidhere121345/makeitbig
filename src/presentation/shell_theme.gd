@@ -5,6 +5,7 @@ extends RefCounted
 ## away the established readable text and compact-window layout contracts.
 
 const SharedPalette := preload("res://src/presentation/palette.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 const MATERIAL_DIRECTORY := "res://art/production/p1/ui_style_r13"
 const EXPLORATION_ART := "res://art/production/p1/ui_exploration_v01"
 static var _materials: Dictionary = {}
@@ -155,16 +156,7 @@ static func hide_passive_scrollbar_chrome(scroll: ScrollContainer) -> void:
 
 
 static func _box(fill: Color, border: Color, width: int, radius: int) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = fill
-	box.border_color = border
-	box.set_border_width_all(width)
-	box.set_corner_radius_all(radius)
-	box.content_margin_left = 16.0
-	box.content_margin_top = 12.0
-	box.content_margin_right = 16.0
-	box.content_margin_bottom = 12.0
-	return box
+	return UiKit.flat_style(fill, border, width, radius, Vector4(16.0, 12.0, 16.0, 12.0))
 
 
 ## Flat slate surface with a single thin copper edge: the calm default for

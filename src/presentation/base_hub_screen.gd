@@ -18,6 +18,7 @@ const TownRuntimeScript = preload("res://src/runtime/world/town_runtime.gd")
 const TownControllerScript = preload("res://src/runtime/world/town_controller.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 const TALK_RADIUS := 36.0
 ## A resident standing at its own stand keeps E even when the hero is a step
 ## closer to the facility feet: dialogue beats the facility badge up to this slack.
@@ -308,8 +309,8 @@ func _derive_unlock_reasons() -> Dictionary:
 	## Lock reasons are read back from the same snapshot the cards use: a page is
 	## only ever "locked" while the authored reward that opens it is genuinely
 	## absent, and the reason names that reward instead of the current picture.
-	var earned_rewards := _as_array(_campaign_snapshot.get("earned_reward_tags", []))
-	var progression := _as_dictionary(_profile.get("progression", {}))
+	var earned_rewards := UiKit.as_array(_campaign_snapshot.get("earned_reward_tags", []))
+	var progression := UiKit.as_dictionary(_profile.get("progression", {}))
 	var reasons := _UNLOCK_REASONS.duplicate()
 	if "law_forge_unlock" in earned_rewards:
 		reasons.erase("forge")
@@ -527,7 +528,7 @@ func get_feature_marker_text(feature_id: String) -> String:
 
 
 func get_progress_text() -> String:
-	return _early_progress_text(_as_dictionary(_profile.get("progression", {})))
+	return _early_progress_text(UiKit.as_dictionary(_profile.get("progression", {})))
 
 
 func get_next_objective_text() -> String:
@@ -605,7 +606,7 @@ func _build_ui() -> void:
 	_build_landmarks()
 	_build_town_dialogue()
 	_unlock_reasons = _derive_unlock_reasons()
-	_update_progress_markers(_as_dictionary(_profile.get("progression", {})))
+	_update_progress_markers(UiKit.as_dictionary(_profile.get("progression", {})))
 	_update_nearby_feature()
 
 
@@ -989,9 +990,9 @@ func _open_settings() -> void:
 func _apply_presentation() -> void:
 	if not _built:
 		return
-	var resources := _as_dictionary(_profile.get("resources", {}))
-	var law_tallies := _as_dictionary(resources.get("law_tallies", {}))
-	var progression := _as_dictionary(_profile.get("progression", {}))
+	var resources := UiKit.as_dictionary(_profile.get("resources", {}))
+	var law_tallies := UiKit.as_dictionary(resources.get("law_tallies", {}))
+	var progression := UiKit.as_dictionary(_profile.get("progression", {}))
 	var class_name_text := String({"ranger": "Ranger", "alchemist": "Alchemist", "mage": "Mage"}.get(String(_profile.get("initial_class", "Not Created")), String(_profile.get("initial_class", "Not Created"))))
 	_profile_label.text = "Lv.%d · %s" % [int(_character_snapshot.get("level", 1)), class_name_text]
 	_profile_label.tooltip_text = "XP %d / %d\nLaw Tokens: Inscribe %d · Rewrite %d · Refine %d" % [
@@ -1003,7 +1004,7 @@ func _apply_presentation() -> void:
 	_update_progress_markers(progression)
 	_progress_label.text = _early_progress_text(progression).replace("Build", "Build").replace("Auto", "Proxy")
 	_objective_label.text = _displayed_objective_text()
-	var story_text := String(_as_dictionary(_story_snapshot.get("current_objective", {})).get("text", ""))
+	var story_text := String(UiKit.as_dictionary(_story_snapshot.get("current_objective", {})).get("text", ""))
 	if not story_text.is_empty() and story_text != _objective_label.text:
 		_objective_label.tooltip_text = "%s\n%s" % [_objective_label.text, story_text]
 	else:
@@ -1124,7 +1125,7 @@ func _on_information_toggle_pressed() -> void:
 func _settlement_text() -> String:
 	if _last_result.is_empty():
 		return "Latest Result: No Contract Record"
-	var rewards := _as_dictionary(_last_result.get("rewards", {}))
+	var rewards := UiKit.as_dictionary(_last_result.get("rewards", {}))
 	var equipment_count := maxi(0, int(rewards.get("equipment_drop_count", 0)))
 	var drop_summary := "Equipment: %d Items" % equipment_count if equipment_count > 0 else String(_last_result.get("drop", _last_result.get("last_drop", rewards.get("drop_label", rewards.get("drop_id", "None")))))
 	return "Latest: %s\nDrops: %s" % [_localized_outcome(String(_last_result.get("outcome", "Unknown"))), drop_summary]
@@ -1200,8 +1201,8 @@ func _resolve_prompt_rect() -> Rect2:
 func navigation_state() -> Array:
 	## One card state per facility, in the published order. The hub derives every
 	## field from the save snapshot it was handed; the bar only draws the copy.
-	var progression := _as_dictionary(_profile.get("progression", {}))
-	var earned_rewards := _as_array(_campaign_snapshot.get("earned_reward_tags", []))
+	var progression := UiKit.as_dictionary(_profile.get("progression", {}))
+	var earned_rewards := UiKit.as_array(_campaign_snapshot.get("earned_reward_tags", []))
 	var states: Array = []
 	for feature_id: String in LANDMARK_FEATURE_IDS:
 		states.append({
@@ -1251,7 +1252,7 @@ func _update_progress_markers(progression: Dictionary) -> void:
 	## card can never disagree about what is open.
 	if _view == null:
 		return
-	var earned_rewards := _as_array(_campaign_snapshot.get("earned_reward_tags", []))
+	var earned_rewards := UiKit.as_array(_campaign_snapshot.get("earned_reward_tags", []))
 	_marker_notes["contract"] = _nav_detail("contract", progression, earned_rewards)
 	_marker_notes["loadout"] = _nav_detail("loadout", progression, earned_rewards)
 	_marker_notes["forge"] = _nav_detail("forge", progression, earned_rewards)
@@ -1286,8 +1287,8 @@ func _nav_status_text(feature_id: String) -> String:
 	## The one line a player reads on a card. A locked page leads with the
 	## published non-colour lock mark and then names the single authored gate that
 	## opens it; an open page shows the same note its world marker carries.
-	var progression := _as_dictionary(_profile.get("progression", {}))
-	var earned_rewards := _as_array(_campaign_snapshot.get("earned_reward_tags", []))
+	var progression := UiKit.as_dictionary(_profile.get("progression", {}))
+	var earned_rewards := UiKit.as_array(_campaign_snapshot.get("earned_reward_tags", []))
 	if _nav_locked(feature_id, progression, earned_rewards):
 		var reason := String(_unlock_reasons.get(feature_id, ""))
 		return LOCK_MARK if reason.is_empty() else "%s %s" % [LOCK_MARK, reason]
@@ -1404,11 +1405,11 @@ func _first_hunt_pending() -> bool:
 	## departure step. Completed or later nodes fall through to their own copy.
 	if String(_campaign_snapshot.get("next_mainline_node_id", "")) != "mainline_01_first_hunt":
 		return false
-	return not _as_array(_as_dictionary(_profile.get("progression", {})).get("completed_node_ids", [])).has("mainline_01_first_hunt")
+	return not UiKit.as_array(UiKit.as_dictionary(_profile.get("progression", {})).get("completed_node_ids", [])).has("mainline_01_first_hunt")
 
 
 func _displayed_objective_text() -> String:
-	var story_objective := _as_dictionary(_story_snapshot.get("current_objective", {}))
+	var story_objective := UiKit.as_dictionary(_story_snapshot.get("current_objective", {}))
 	var story_text := String(story_objective.get("text", ""))
 	if _first_hunt_pending():
 		return FIRST_HUNT_OBJECTIVE_TEXT
@@ -1416,17 +1417,17 @@ func _displayed_objective_text() -> String:
 	## the requirements only look backward, so fall through to the live
 	## campaign step instead of pinning an already-done goal on the header.
 	var story_node := String(story_objective.get("campaign_node", ""))
-	var completed_nodes := _as_array(_as_dictionary(_profile.get("progression", {})).get("completed_node_ids", []))
+	var completed_nodes := UiKit.as_array(UiKit.as_dictionary(_profile.get("progression", {})).get("completed_node_ids", []))
 	if not story_text.is_empty() and (story_node.is_empty() or not completed_nodes.has(story_node)):
 		return story_text
 	return _next_objective_text()
 
 
 func _profile_training_complete() -> bool:
-	var training := _as_dictionary(_profile.get("training", {}))
-	var reports_by_fingerprint := _as_dictionary(training.get("reports_by_fingerprint", {}))
+	var training := UiKit.as_dictionary(_profile.get("training", {}))
+	var reports_by_fingerprint := UiKit.as_dictionary(training.get("reports_by_fingerprint", {}))
 	for fingerprint: Variant in reports_by_fingerprint:
-		var report := _as_dictionary(reports_by_fingerprint.get(fingerprint, {}))
+		var report := UiKit.as_dictionary(reports_by_fingerprint.get(fingerprint, {}))
 		if String(fingerprint).strip_edges().is_empty():
 			continue
 		if String(report.get("build_fingerprint", "")).strip_edges() != String(fingerprint).strip_edges():
@@ -1443,16 +1444,7 @@ func _place_control(control: Control, rect: Rect2) -> void:
 
 
 func _hotspot_style(fill: Color, border: Color, width: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = border
-	style.set_border_width_all(width)
-	style.set_corner_radius_all(0)
-	style.content_margin_left = 10.0
-	style.content_margin_top = 6.0
-	style.content_margin_right = 10.0
-	style.content_margin_bottom = 6.0
-	return style
+	return UiKit.flat_style(fill, border, width, 0, Vector4(10.0, 6.0, 10.0, 6.0))
 
 
 func _prompt_style() -> StyleBox:
@@ -1473,14 +1465,6 @@ func _toggle_style(kind: String) -> StyleBoxTexture:
 	style.content_margin_right = 8.0
 	style.content_margin_bottom = 1.0
 	return style
-
-
-func _as_dictionary(value: Variant) -> Dictionary:
-	return value as Dictionary if value is Dictionary else {}
-
-
-func _as_array(value: Variant) -> Array:
-	return value as Array if value is Array else []
 
 
 func _on_hub_entry_pressed(feature_id: String) -> void:

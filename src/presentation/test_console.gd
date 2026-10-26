@@ -4,6 +4,7 @@ extends CanvasLayer
 ## no dependency on GameRoot, game state, or a particular presentation screen.
 
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 const PANEL_MAX_SIZE := Vector2(920.0, 640.0)
 const PANEL_MIN_SIZE := Vector2(520.0, 320.0)
@@ -228,13 +229,4 @@ func _format_value(value: Variant) -> String:
 
 
 func _frame(fill: Color, border: Color) -> StyleBoxFlat:
-	var frame := StyleBoxFlat.new()
-	frame.bg_color = fill
-	frame.border_color = border
-	frame.set_border_width_all(1)
-	frame.set_corner_radius_all(0)
-	frame.content_margin_left = 12.0
-	frame.content_margin_top = 10.0
-	frame.content_margin_right = 12.0
-	frame.content_margin_bottom = 10.0
-	return frame
+	return UiKit.flat_style(fill, border, 1, 0, Vector4(12.0, 10.0, 12.0, 10.0))

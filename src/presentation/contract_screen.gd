@@ -11,6 +11,7 @@ const SkillIconsScript = preload("res://src/presentation/combat_skill_icons.gd")
 const EarlySkillRegistryScript = preload("res://src/content/early_skill_registry.gd")
 const PlayerReadableBuildScript = preload("res://src/presentation/player_readable_build.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 const MODES := ["Manual", "Auto"]
 const NODE_TITLES := {
 	"tutorial_ranger_basics": "Prologue · Ranger Basics",
@@ -882,16 +883,7 @@ func _create_start_transition_overlay() -> Control:
 	card.custom_minimum_size = Vector2(460, 184)
 	card.pivot_offset = Vector2(230, 92)
 	card.scale = Vector2(0.96, 0.96)
-	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color(ShellThemeScript.DEEP_BLUE, 0.97)
-	card_style.border_color = ShellThemeScript.COPPER_DULL
-	card_style.set_border_width_all(1)
-	card_style.set_corner_radius_all(2)
-	card_style.content_margin_left = 28.0
-	card_style.content_margin_top = 24.0
-	card_style.content_margin_right = 28.0
-	card_style.content_margin_bottom = 24.0
-	card.add_theme_stylebox_override("panel", card_style)
+	card.add_theme_stylebox_override("panel", UiKit.flat_style(Color(ShellThemeScript.DEEP_BLUE, 0.97), ShellThemeScript.COPPER_DULL, 1, 2, Vector4(28.0, 24.0, 28.0, 24.0)))
 	center.add_child(card)
 	var content := VBoxContainer.new()
 	content.name = "Content"

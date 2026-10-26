@@ -10,6 +10,7 @@ const StoryProgressionScript = preload("res://src/systems/story_progression.gd")
 const ShellTheme = preload("res://src/presentation/shell_theme.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
 const SharedPalette := preload("res://src/presentation/palette.gd")
+const UiKit := preload("res://src/presentation/ui_kit.gd")
 
 const TABS: Array[String] = ["Target", "Dialogue", "Journal", "Daily Life"]
 const LIST_PAGE_SIZE := 4
@@ -647,12 +648,7 @@ func _label(text_value: String, font_size: int, color: Color) -> Label:
 
 
 func _button(text_value: String, node_name: String, font_size: int = BODY_FONT_SIZE) -> Button:
-	var button := Button.new()
-	button.name = node_name
-	button.text = text_value
-	button.add_theme_font_size_override("font_size", font_size)
-	button.focus_mode = Control.FOCUS_ALL
-	return button
+	return UiKit.sized_button(text_value, node_name, font_size)
 
 
 func _entry_button(node_name: String) -> Button:
