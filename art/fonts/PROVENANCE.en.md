@@ -2,9 +2,11 @@
 
 This English companion explains the original [provenance record](PROVENANCE.md).
 That dated source record is preserved verbatim, as are all upstream license files.
-Neither the fonts nor their import settings change as part of the English-only
-content migration. Historical Chinese coverage checks describe the original
-production requirements, not a claim that the current interface is Chinese.
+Neither the fonts nor their import settings change as part of the English-source
+migration or the Simplified Chinese localization. The original record's Chinese
+coverage checks remain relevant: the interface is now offered in English and
+Simplified Chinese (see [LANGUAGE_POLICY.md](../../docs/LANGUAGE_POLICY.md)), and
+these complete SC fonts render the Chinese catalog without system fallback.
 
 ## Current Production Fonts
 

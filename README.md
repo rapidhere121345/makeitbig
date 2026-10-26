@@ -112,7 +112,7 @@ For Tailscale access, validate `build/releases/` with `./deploy/tailscale/stage_
 - [Graphical validation](docs/GRAPHICAL_VALIDATION.md): windowed and headless acceptance.
 - [Release workflow](docs/RELEASE_WORKFLOW.md): release pages, retention, and exposure.
 - [Devbox readiness](docs/DEVBOX_READINESS.md): target prerequisites and actual audit status.
-- [Source language and localization](docs/ENGLISH_ONLY.md): vocabulary, compatibility, and pinned authentic originals.
+- [Source language and localization](docs/LANGUAGE_POLICY.md): vocabulary, compatibility, and pinned authentic originals.
 - [content/](content/) and `src/`: implemented content and runtime behavior.
 
 Save schema is 10. Production saves use Godot's `user://saves`; playtest tools use separate directories. Design documents describe targets, not promises of implemented features. Code, content, and tests determine actual behavior.

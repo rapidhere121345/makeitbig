@@ -40,7 +40,7 @@ ENTRIES: Final = {
         ("action.piercing_arrow", "piercing_arrow", "src/game/main.gd#framework_active_build.skills[0]", "Piercing Arrow", "combat_action", "skill"),
         ("action.hunter_mark", "hunter_mark", "src/game/main.gd#framework_active_build.skills[1]", "Hunter's Mark", "combat_action", "skill"),
         ("action.dash", "dash", "src/game/main.gd#framework_active_build.skills[2]", "Dash", "combat_action", "skill"),
-        ("action.basic_dodge", None, "docs/art-production/p1-calibration-v01/NEXT_BATCH.md#skills_actions", "Dodge", "combat_action", "action"),
+        ("action.basic_dodge", None, "docs/art-production/p1-calibration-v01/SKILLS_ACTIONS_ANCHOR.md#skills_actions", "Dodge", "combat_action", "action"),
     ),
     "runes_law": (
         ("rune.breeding_split", "breeding_split", "content/early_items.json#runes", "Breeding Split", "semantic_modifier", "rune"),

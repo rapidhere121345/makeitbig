@@ -32,7 +32,7 @@
         {"id": "action.piercing_arrow", "canonical_id": "piercing_arrow", "canonical_source": "src/game/main.gd#framework_active_build.skills[0]", "label": "Piercing Arrow", "role": "combat_action", "type": "skill"},
         {"id": "action.hunter_mark", "canonical_id": "hunter_mark", "canonical_source": "src/game/main.gd#framework_active_build.skills[1]", "label": "Hunter's Mark", "role": "combat_action", "type": "skill"},
         {"id": "action.dash", "canonical_id": "dash", "canonical_source": "src/game/main.gd#framework_active_build.skills[2]", "label": "Dash", "role": "combat_action", "type": "skill"},
-        {"id": "action.basic_dodge", "canonical_id": null, "canonical_source": "docs/art-production/p1-calibration-v01/NEXT_BATCH.md#skills_actions", "label": "Dodge", "role": "combat_action", "type": "action"}
+        {"id": "action.basic_dodge", "canonical_id": null, "canonical_source": "docs/art-production/p1-calibration-v01/SKILLS_ACTIONS_ANCHOR.md#skills_actions", "label": "Dodge", "role": "combat_action", "type": "action"}
       ]
     },
     {

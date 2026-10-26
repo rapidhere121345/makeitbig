@@ -1,6 +1,9 @@
 # Ground Border Removal
 
-Built-in imagegen; input `sources/ground_source_original.png`, ground-only correction.
+Built-in imagegen; ground-only correction. The input was the first ground sheet,
+`ground_source_original.png`, which is no longer retained: only its corrected output
+`sources/ground_source_borderless.png` remains (see `SOURCE_REGISTER.json`), so this
+prompt documents the correction and cannot be re-run from the repository.
 Offline tiling exposed a light rectangular outer border, inconsistent with the quiet-ground requirement.
 
 ```text

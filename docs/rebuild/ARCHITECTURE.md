@@ -274,14 +274,49 @@ controller mounts SceneRuntime and injects its clock and registry; the runtime
 owns fixed-tick movement, routes, travel and interaction state. TownPresenter
 consumes snapshots and shares SortRoot with native buildings and residents.
 
-`tools/town_layers/bake.py` normalizes the approved source image once offline,
-then assigns each pixel to ground or one of the native foreground pieces.
-Recomposition must exactly equal that normalized source; unknown underplate
-stays transparent and pieces remain rendered with fade/cutaway disabled —
-static layering, not a claim of a clean painted ground. Town static author
-coordinates use the declared 1/64-pixel canonical grid; per-tick actor
-positions do not. Unsupported native transforms are rejected rather than
-silently dropped.
+The town is modular-only. `content/rooms/town/hearthside.tscn` is the gameplay
+and authoring source of truth. Its root, `town_scene_root.gd`, is a
+`TownSceneRoot` with `modular_environment_objects = true`: one opaque ground
+(`world_expansion_v01/town_ground.png`), opaque bridge decks, and whole
+sortable objects from `world_expansion_v01`, `generated_world_v02` and
+`town_order_v01`. Each sortable object ships an aligned opaque PNG and a
+half-alpha PNG on one canvas and anchor and uses the `paired_reveal` policy;
+ground and decks use `reveal_policy = "none"`. There are no roof, trunk or
+common-part slices and no static-layer town image chain.
+
+Authoring and baking order:
+
+1. Pack art with the deterministic packers in `tools/art_pipeline/`
+   (`generated_world_v02`, `world_expansion_v01`, `town_order_v01`); recipes and
+   source provenance live in `docs/art-production/`.
+2. Place objects in the scene (`tools/world_manifest/author_town_expansion.py`
+   writes the expansion-owned blocks idempotently from the reviewed recipe;
+   `author_ground_footprints.py` authors ground-contact footprints).
+3. Rebake `content/rooms/town/hearthside.spatial.json` with
+   `tools/world_manifest/bake_spatial.gd`, which calls
+   `TownSceneRoot.derive_spatial_manifest()`. Production never repairs a stale
+   manifest; the runtime compares it with the scene and rejects drift.
+
+Town static author coordinates use the declared 1/64-pixel canonical grid;
+per-tick actor positions do not. Unsupported native transforms are rejected
+rather than silently dropped.
+
+Still-current authoring rules for environment objects:
+
+- The footprint is the ground-contact body (wall bases, trunks, log bases), not
+  the image bounds. Roofs, crowns and shadows never become movement blockers;
+  the movement motor adds the hero radius, and the baker adds no second margin.
+- A paired part opens while it sorts in front of a protected actor (the player
+  or the current conversation resident) and its detection rectangle covers enough
+  of that actor's readability box. Detection uses the full-state art box only;
+  the controller outputs a transition weight between the opaque and half-alpha
+  states and never feeds it back into detection, so a revealed object cannot
+  flip itself closed.
+- Every sortable part enters one SortRoot at mount with the same
+  `(baseline, rank, binding_id)` tuple in drawing and in the occlusion plan.
+- `TownRuntime.restore_travel()` rejects a saved position that now lies inside a
+  blocker instead of relocating it; a layout change that moves facilities needs
+  an explicit migration boundary.
 
 ## Evidence discipline
 

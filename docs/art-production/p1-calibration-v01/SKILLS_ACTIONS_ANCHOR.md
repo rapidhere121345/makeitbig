@@ -1,6 +1,6 @@
 # Early Actions and Icon Mapping
 
-Maintenance entry: the basic-dodge source marker in `tools/art_pipeline/p1_early_loop_v01/contract.py` still references this page's `#skills_actions`.
+Maintenance anchor page (formerly `NEXT_BATCH.md`, renamed 2026-10-26): it holds the `#skills_actions` anchor that the basic-dodge source marker in `tools/art_pipeline/p1_early_loop_v01/contract.py` and `../p1-early-loop-v01/catalog.json` reference. Keep this path and anchor in sync with both.
 
 <a id="skills_actions"></a>
 ## skills_actions

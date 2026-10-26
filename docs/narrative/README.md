@@ -1,6 +1,6 @@
 # Story and World
 
-The current demo's first-chapter dialogue lives in [chapter_one_story.json](../../content/chapter_one_story.json): 28 scenes of 2-4 pages, connecting salvage along the Coldfield Old Road, changes in five townspeople, and the return after the Colossus opens the way. StoryProgression and tests define reading state and actual-discovery interfaces; see the story tests for maintenance contracts.
+The current demo's first-chapter dialogue lives in [chapter_one_story.json](../../content/chapter_one_story.json): 28 conversation scenes of 2-4 pages across 10 story units (counted from `units[].conversations[]`), connecting salvage along the Coldfield Old Road, changes in five townspeople, and the return after the Colossus opens the way. StoryProgression and tests define reading state and actual-discovery interfaces; see the story tests for maintenance contracts.
 
 The two current full-game plans:
 
