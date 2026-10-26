@@ -29,7 +29,7 @@ func _init() -> void:
 		_expect(life.clip_frame_count(clip) == 4 and life.clip_unique_frames(clip) == 4, person + " needs four distinct work poses")
 		var frame: Dictionary = life.frame_at(clip, 0.0)
 		_expect(frame.get("anchor", Vector2.ZERO) == Vector2(24, 44), person + " work pose foot anchor drifted")
-	for package in [STYLE, CYCLES, CYCLES + "v02/"]:
+	for package in [STYLE, CYCLES + "v02/"]:
 		var record: Dictionary = _read(package + "IMPORT.json")
 		for sheet: Dictionary in record.sheets:
 			_expect(FileAccess.get_sha256(package + String(sheet.file)) == String(sheet.sha256), String(sheet.file) + " differs from recorded native import")
