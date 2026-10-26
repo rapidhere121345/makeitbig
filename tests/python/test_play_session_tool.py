@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 
-PROJECT = Path(__file__).resolve().parents[1]
+PROJECT = Path(__file__).resolve().parents[2]
 DRIVER = PROJECT / "tools" / "play_session.py"
 
 # scripts/check.sh exports the launcher it used so spawned drivers re-enter

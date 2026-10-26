@@ -39,10 +39,10 @@ Ordinary prose containing a colon is not automatically a speaker line.
 
 ```bash
 python3 -B scripts/check_english.py
-python3 -B tools/test_check_english.py
+python3 -B tests/python/test_check_english.py
 ```
 
-The guard runs in both test entry scripts and the Linux CI gate. It scans
+The guard runs in `scripts/check.sh` (and so in `scripts/build.sh` and the Linux CI gate). It scans
 tracked and nonignored new text files, parses decoded JSON keys/values, and
 checks escaped GDScript strings. Its one runtime language exception is the Chinese
 catalog: source keys must remain English, translated values must be nonempty strings,

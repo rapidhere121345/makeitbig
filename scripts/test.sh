@@ -1,233 +1,256 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# Complete test gate. Runs every check even after a failure, prints a summary
+# with the failing names, and exits non-zero if anything failed.
+#
+# Stages: Python tests and art-pipeline verifiers, repository policy checks,
+# Godot import, every discovered Godot test, the special runners, and the
+# deterministic replay hash at 30/60/144 Hz and with presentation off.
+#
+# Godot tests are discovered, not listed: every tests/**/test_*.gd whose
+# `extends` chain ends in SceneTree runs with `--headless --script`. The
+# RefCounted-style suites (`run() -> Array[String]`) are aggregated by
+# tests/run_all.gd; a test_*.gd that is neither a SceneTree script nor preloaded
+# there fails the gate as an orphan.
+#
+# Overrides:
+#   MIB_TEST_TIMEOUT_SEC       total wall-clock limit for the gate (default 1800)
+#   MIB_TEST_CASE_TIMEOUT_SEC  limit for one Godot test or Python step (default 600)
+#   MIB_TEST_LOG               tee'd log path (default build/current/test.log)
+set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck source=project_env.sh
 source "${SCRIPT_DIR}/project_env.sh"
 cd "$MIB_PROJECT_ROOT"
+# project_env.sh enables `set -e`; this gate must keep running after a failure.
+set +e
+mib_resolve_test_python || exit $?
 
-python3 -B scripts/check_english.py
-python3 -B tools/test_check_english.py
-python3 -B tools/test_devbox_preflight.py
+MIB_TEST_LOG="${MIB_TEST_LOG:-${MIB_PROJECT_ROOT}/build/current/test.log}"
+MIB_TEST_TIMEOUT_SEC="${MIB_TEST_TIMEOUT_SEC:-1800}"
+MIB_TEST_CASE_TIMEOUT_SEC="${MIB_TEST_CASE_TIMEOUT_SEC:-600}"
+
+# Outer layer: run the gate under a total timeout and capture the streamed
+# output. Exit codes stay authoritative, but a GDScript runtime error can leave
+# Godot exiting 0 while a test function aborted early and skipped its remaining
+# assertions (a false PASS), so the log is also scanned for lines that start
+# with "SCRIPT ERROR:". Expected negative fixtures (CAPTURE_FAIL and friends)
+# do not start with that marker and keep passing.
+if [[ -z "${MIB_TEST_INNER:-}" ]]; then
+  mkdir -p "$(dirname "$MIB_TEST_LOG")"
+  test_status=0
+  MIB_TEST_INNER=1 timeout --foreground --kill-after=30s "${MIB_TEST_TIMEOUT_SEC}s" \
+    "${SCRIPT_DIR}/test.sh" "$@" 2>&1 | tee "$MIB_TEST_LOG"
+  test_status=${PIPESTATUS[0]}
+  if [[ "$test_status" -ne 0 ]]; then
+    echo "[makeitbig] test gate failed: runner exited with status ${test_status} (log: ${MIB_TEST_LOG})" >&2
+    exit "$test_status"
+  fi
+  if grep -q '^SCRIPT ERROR:' "$MIB_TEST_LOG"; then
+    echo "[makeitbig] GDScript runtime errors in test output (runner exit was 0, results not trustworthy):" >&2
+    grep -n -m 20 '^SCRIPT ERROR:' "$MIB_TEST_LOG" >&2
+    exit 1
+  fi
+  echo "[makeitbig] test gate passed: no failures, no GDScript runtime errors"
+  exit 0
+fi
+
+# Display-only or windowed tests that are discovered by name but must not run
+# in the headless gate. Paths are relative to the project root.
+SKIP_TESTS=(
+  # Windowed mounted-assembly gate: documented as "run under the host GPU
+  # entry"; it needs a real display, so it runs in graphical validation
+  # (docs/GRAPHICAL_VALIDATION.md), not here.
+  tests/test_presentation_production_assembly.gd
+  # Display-backed screenshot probe: needs a real display and --out=<dir>, and
+  # only prints SKIP under headless. The layout contracts of the same pages are
+  # asserted by tests/test_facility_screen.gd, which does run.
+  tests/unit/test_facility_concept_detail.gd
+)
+
+PASSED=0
+FAILED=0
+FAILED_NAMES=()
+
+record() {  # record <status> <name>
+  if [[ "$1" -eq 0 ]]; then
+    PASSED=$((PASSED + 1))
+    echo "[test] PASS  $2"
+  else
+    FAILED=$((FAILED + 1))
+    FAILED_NAMES+=("$2")
+    echo "[test] FAIL  $2 (exit $1)" >&2
+  fi
+}
+
+step() {  # step <name> <command...>: bounded run, never aborts the gate
+  local name="$1"
+  shift
+  echo "[test] RUN   ${name}"
+  timeout --foreground --kill-after=10s "${MIB_TEST_CASE_TIMEOUT_SEC}s" "$@"
+  record $? "$name"
+}
+
+fail_check() {  # fail_check <name> <message>
+  echo "$2" >&2
+  record 1 "$1"
+}
+
+godot_script() {  # godot_script <res:// relative path>
+  step "$1" "$GODOT_BIN" --headless --path . --script "res://$1"
+}
+
+# ---------------------------------------------------------------- Python ----
+for python_test in tools/test_*.py tests/*.py tests/python/test_*.py; do
+  [[ -f "$python_test" ]] || continue
+  step "$python_test" "$MIB_TEST_PYTHON" -B "$python_test"
+done
+
 # Every art-pipeline test directory (shared helpers plus one per pipeline) runs here.
 # actors_v02/tests/test_pack.py is a standalone script and runs on its own line below.
-for ART_TESTS_DIR in tools/art_pipeline/tests tools/art_pipeline/*/tests; do
-  [[ "$ART_TESTS_DIR" == */actors_v02/tests ]] && continue
-  python3 -B -m unittest discover -s "$ART_TESTS_DIR"
+for art_tests_dir in tools/art_pipeline/tests tools/art_pipeline/*/tests; do
+  [[ -d "$art_tests_dir" ]] || continue
+  [[ "$art_tests_dir" == */actors_v02/tests ]] && continue
+  step "unittest ${art_tests_dir}" "$MIB_TEST_PYTHON" -B -m unittest discover -s "$art_tests_dir"
 done
-python3 -B tools/art_pipeline/generated_world_v02/pack.py --verify
-python3 -B tools/art_pipeline/actors_v02/tests/test_pack.py
-python3 -B tools/art_pipeline/actors_v02/build.py --verify
-python3 -B tools/art_pipeline/world_polish_v01/build.py --verify
-python3 -B tools/art_pipeline/world_expansion_v01/pack.py --verify
-python3 -B tools/art_pipeline/world_expansion_v01/pack.py --config tools/art_pipeline/town_order_v01/packing_config.json --verify
+step "actors_v02 test_pack" "$MIB_TEST_PYTHON" -B tools/art_pipeline/actors_v02/tests/test_pack.py
 
+# Read-only pipeline verifiers against the committed art. Manifests that record
+# absolute paths under retired checkout roots are mapped onto this checkout by
+# tools/art_pipeline/common.py.
+verify_art() {  # verify_art <pipeline/script> <args...>
+  local script="$1"
+  shift
+  step "verify ${script} $*" "$MIB_TEST_PYTHON" -W ignore -B "tools/art_pipeline/${script}" "$@"
+}
+verify_art generated_world_v02/pack.py --verify
+verify_art actors_v02/build.py --verify
+verify_art world_polish_v01/build.py --verify
+verify_art world_expansion_v01/pack.py --verify
+verify_art world_expansion_v01/pack.py --config tools/art_pipeline/town_order_v01/packing_config.json --verify
+verify_art p1_calibration_v01/verify.py --output art/production/p1/calibration_v01
+verify_art p1_early_loop_v01/verify.py --output art/production/p1/early_loop_v01
+verify_art p1_hub_navigation_v01/verify.py --output art/production/p1/hub_navigation_v01
+verify_art p1_scene_rework_v01/verify.py --output art/production/p1/scene_rework_v01
+verify_art p1_ranger_actions_v01/verify.py --output art/production/p1/ranger_actions_v01 \
+  --config docs/art-production/p1-ranger-actions-v01/recipe.final.json
+verify_art p1_ranger_actions_v01/verify.py --output art/production/p1/enemy_actions_v01 \
+  --config docs/art-production/p1-enemy-actions-v01/recipe.final.json
+
+# ------------------------------------------------------- repository policy ----
 RUNTIME_RESOURCE_VIOLATIONS="$(grep -R -n -E --include='*.gd' --include='*.tscn' 'preload\([[:space:]]*"res://(tools|build)/|load\([[:space:]]*"res://build/' src || true)"
 if [[ -n "$RUNTIME_RESOURCE_VIOLATIONS" ]] || grep -q -E 'res://(tools|build)/' project.godot; then
-  echo "Runtime code must not compile-link excluded tools/ or build/ resources:" >&2
-  [[ -n "$RUNTIME_RESOURCE_VIOLATIONS" ]] && echo "$RUNTIME_RESOURCE_VIOLATIONS" >&2
-  exit 1
+  fail_check "runtime resource policy" "Runtime code must not compile-link excluded tools/ or build/ resources:
+${RUNTIME_RESOURCE_VIOLATIONS}"
+else
+  record 0 "runtime resource policy"
 fi
 
 PRESET_COUNT="$(grep -Ec '^\[preset\.[0-9]+\]$' export_presets.cfg || true)"
 TOOLS_EXCLUSION_COUNT="$(grep -Ec '^exclude_filter="[^"]*tools/\*' export_presets.cfg || true)"
 TESTS_EXCLUSION_COUNT="$(grep -Ec '^exclude_filter="[^"]*tests/\*' export_presets.cfg || true)"
 if [[ "$PRESET_COUNT" -lt 1 || "$TOOLS_EXCLUSION_COUNT" -ne "$PRESET_COUNT" || "$TESTS_EXCLUSION_COUNT" -ne "$PRESET_COUNT" ]]; then
-  echo "Every export preset must exclude tools/* and tests/*." >&2
-  exit 1
+  fail_check "export preset exclusions" "Every export preset must exclude tools/* and tests/*."
+else
+  record 0 "export preset exclusions"
 fi
 
-"$GODOT_BIN" --headless --path . --import
-"$GODOT_BIN" --headless --path . --script res://tests/test_generated_texture_import.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_world_dressing.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_grounding.gd
-"$GODOT_BIN" --headless --path . --script res://tests/run_all.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_runtime_world.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_simulation.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_simulation_kernel.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_spatial_kernel.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_target_combat_domains.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_death_settlement_loot.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_enemy_death_actor_deregistration.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_presentation_occlusion_boundary.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_world_asset_pipeline.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_structure_blockers.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_spawn_projection_whole_blockers.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_room_combat_port.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_spatial_room_port.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_presentation_room_port.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_lifecycle.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_production_combat.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_boss_combat.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_production_boss.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_room_encounter_production.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_room_terminal_authority.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_kernel_authority_boundary.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_hazard_domain.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_arena_presenter.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_arena_actor_presenter.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_arena_combat_presenter.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_actor_motor.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_player_motion_system.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_player_combat_state.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_player_combat_rules.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_stats_runtime.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_room_definition.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_room_catalog.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_scenes.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_rebuild_samples.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_native_concave_sample.gd
-"$GODOT_BIN" --headless --path . --script res://tests/run_training_report_builder.gd
-"$GODOT_BIN" --headless --path . --script res://tests/run_combat_state_codec.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_pixel_stage.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_display_policy.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_json_io.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_texture_loader.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_palette.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_ui_kit.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_collections.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_result.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_game_root_stage.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_town_exploration.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_town_geometry_rebuild.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_environment_object.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_town_native_contract.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_town_runtime.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_town_gateways.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_generated_town_layout.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_playtest_comfort.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_session_menu.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_localization.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_actor_readability.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_character_progression.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_talent_build.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_talent_runtime.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_progression_icons.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_ui_style_r13.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_character_screen.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_talent_board_refresh_r14.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_story_progression.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_story_evidence.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_story_screen.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_story_reading_flow.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_character_story_integration.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_town_story_r14.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_capture_contract.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_playtest_log.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_early_campaign.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_enemy_combat_profile.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_status_effect_ledger.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_mainline_room_loot.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_auto_contract_flow.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_room_loot_build_handoff.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_early_items.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_early_skills.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_player_readable_build.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_player_facing_status.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_build_resolver.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_equipment_drop_generator.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_command_protocol.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_loot_pickup_protocol.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_command_router.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_manual_combat_input.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_manual_aim_resolver.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_arena_geometry.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_arena_geometry_runtime.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_query.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_encounter_director.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_system.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_presentation_boundary.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_main_player_wiring.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_main_input_release.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_main_presentation_closeout.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_arena_walkable_bounds.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_player_action_timeline.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_enemy_tactics.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_proxy_build.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_proxy_decision.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_proxy_intent_system.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_event_stream.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_presentation_events.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_feedback_audio.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_enemy_runtime.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_boss_duration.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_boss_parts_combat.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_boss_parts_presentation.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_boss_action_pose.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_combat_marks.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_enemy_animation.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_combat_style_r13.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_hamlet_life_animation.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_hamlet_style_r13.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_town_geometry.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_arena_hud.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_input_feedback_transients.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_ranger_combat_skills.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_ranger_animation.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_ranger_motion_overlay.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_world_occlusion.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_scene_atmosphere.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_defeat_presentation.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_title_screen.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_tutorial_screen.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_tutorial_pointer_cast.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_facility_screen.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_facility_entry_focus.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_inventory_flow.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_equipment_backpack_paging.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_equipment_presentation_model.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_test_console.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_training_trace_view.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_facility_art.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_facility_override_contract.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_facility_layout.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_facility_detail_state.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_pixel_grid_icon.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_workbench_layout.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_item_forge.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_contract_screen.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_result_screen.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_contract_result_navigation.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_result_layout.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_result_evidence.gd
-"$GODOT_BIN" --headless --path . --script res://tests/unit/test_settlement_route_view.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_ending_screen.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_contract_run_controller.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_runtime.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_real_combat_domains.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_real_combat_room.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_authored_combat_room.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_repeatable_encounter_matrix.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_rules.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_smoke_input_driver.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_state_snapshot_builder.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_combat_room_result.gd
-"$GODOT_BIN" --headless --path . --script res://tests/test_result_roundtrip.gd
-"$GODOT_BIN" --headless --path . --script res://tests/run_game_flow_smoke.gd
+# ------------------------------------------------------------------ Godot ----
+step "godot --import" "$GODOT_BIN" --headless --path . --import
 
+# scenetree_test <file>: true when the file's extends chain ends in SceneTree.
+# A test may extend another test (tests/test_facility_entry_focus.gd extends
+# tests/test_facility_screen.gd), so follow res://tests/ parents.
+scenetree_test() {
+  local file="$1" line depth
+  for depth in 1 2 3 4; do
+    line="$(grep -m1 -E '^extends[[:space:]]' "$file" || true)"
+    case "$line" in
+      "extends SceneTree"*) return 0 ;;
+      "extends \"res://tests/"*)
+        file="${line#*\"res://}"
+        file="${file%%\"*}"
+        [[ -f "$file" ]] || return 1
+        ;;
+      *) return 1 ;;
+    esac
+  done
+  return 1
+}
+
+is_skipped() {
+  local skipped
+  for skipped in "${SKIP_TESTS[@]}"; do
+    [[ "$1" == "$skipped" ]] && return 0
+  done
+  return 1
+}
+
+# Aggregated suites must actually be aggregated: anything that is not a
+# SceneTree script has to be preloaded by run_all.gd or it would never run.
+DISCOVERED=()
+while IFS= read -r test_file; do
+  if is_skipped "$test_file"; then
+    echo "[test] SKIP  ${test_file}"
+  elif scenetree_test "$test_file"; then
+    DISCOVERED+=("$test_file")
+  elif ! grep -q "res://${test_file}" tests/run_all.gd; then
+    fail_check "orphan ${test_file}" "${test_file} is not a SceneTree script and is not preloaded by tests/run_all.gd"
+  fi
+done < <(find tests -name 'test_*.gd' | LC_ALL=C sort)
+
+echo "[test] discovered ${#DISCOVERED[@]} SceneTree tests"
+godot_script tests/run_all.gd
+for test_file in "${DISCOVERED[@]}"; do
+  godot_script "$test_file"
+done
+
+# tests/run_game_flow_smoke.gd is a runner, not a test_*.gd file, so discovery
+# does not find it. test_combat_room_result.gd and test_result_roundtrip.gd are
+# plain SceneTree tests and run in the discovered batch above.
+godot_script tests/run_game_flow_smoke.gd
+
+# ---------------------------------------------------------------- replay ----
 STATE_DIR="${MIB_TEST_STATE_DIR:-$(pwd -P)/build/test-state}"
 mkdir -p "$STATE_DIR"
 # Versioned historical-geometry replay hash for the current runtime authority.
 EXPECTED_HASH="b98adeadd44d9fb428f1cb762304f8e09c252b2f00ce00583efb40bc8147200b"
 HISTORICAL_REPLAY_PROFILE="historical_circle_v1"
-for RENDER_RATE in 30 60 144; do
-  HASH_PATH="$STATE_DIR/${RENDER_RATE}hz.sha256"
-  "$GODOT_BIN" --headless --fixed-fps "$RENDER_RATE" --path . -- \
-	    --auto-smoke "--replay-geometry-profile=$HISTORICAL_REPLAY_PROFILE" "--state-hash-out=$HASH_PATH"
-  ACTUAL_HASH="$(tr -d '\r\n' < "$HASH_PATH")"
-  if [[ "$ACTUAL_HASH" != "$EXPECTED_HASH" ]]; then
-    echo "Historical replay mismatch: golden=$EXPECTED_HASH ${RENDER_RATE}Hz=$ACTUAL_HASH" >&2
-    exit 1
-  fi
-done
-echo "PASS  30/60/144Hz full automation replay: $EXPECTED_HASH"
 
-PRESENTATION_OFF_HASH_PATH="$STATE_DIR/presentation-off-60hz.sha256"
-"$GODOT_BIN" --headless --fixed-fps 60 --path . -- \
-	  --auto-smoke --presentation-off "--replay-geometry-profile=$HISTORICAL_REPLAY_PROFILE" "--state-hash-out=$PRESENTATION_OFF_HASH_PATH"
-PRESENTATION_OFF_HASH="$(tr -d '\r\n' < "$PRESENTATION_OFF_HASH_PATH")"
-if [[ "$PRESENTATION_OFF_HASH" != "$EXPECTED_HASH" ]]; then
-  echo "Presentation-off replay mismatch: normal=$EXPECTED_HASH off=$PRESENTATION_OFF_HASH" >&2
+replay_check() {  # replay_check <name> <hash path> <godot args...>
+  local name="$1" hash_path="$2" actual
+  shift 2
+  rm -f "$hash_path"
+  step "$name" "$GODOT_BIN" --headless "$@" --path . -- \
+    --auto-smoke "--replay-geometry-profile=${HISTORICAL_REPLAY_PROFILE}" "--state-hash-out=${hash_path}"
+  [[ -f "$hash_path" ]] || return 0  # step already recorded the failure
+  actual="$(tr -d '\r\n' < "$hash_path")"
+  if [[ "$actual" == "$EXPECTED_HASH" ]]; then
+    record 0 "${name} hash"
+  else
+    fail_check "${name} hash" "Replay mismatch: golden=${EXPECTED_HASH} ${name}=${actual}"
+  fi
+}
+
+for render_rate in 30 60 144; do
+  replay_check "replay ${render_rate}Hz" "$STATE_DIR/${render_rate}hz.sha256" --fixed-fps "$render_rate"
+done
+rm -f "$STATE_DIR/presentation-off-60hz.sha256"
+step "replay presentation-off 60Hz" "$GODOT_BIN" --headless --fixed-fps 60 --path . -- \
+  --auto-smoke --presentation-off "--replay-geometry-profile=${HISTORICAL_REPLAY_PROFILE}" \
+  "--state-hash-out=$STATE_DIR/presentation-off-60hz.sha256"
+if [[ -f "$STATE_DIR/presentation-off-60hz.sha256" ]] \
+  && [[ "$(tr -d '\r\n' < "$STATE_DIR/presentation-off-60hz.sha256")" == "$EXPECTED_HASH" ]]; then
+  record 0 "replay presentation-off 60Hz hash"
+else
+  fail_check "replay presentation-off 60Hz hash" "Presentation-off replay hash does not match golden ${EXPECTED_HASH}"
+fi
+
+# --------------------------------------------------------------- summary ----
+echo
+echo "[makeitbig] test summary: ${PASSED} passed, ${FAILED} failed"
+if [[ "$FAILED" -ne 0 ]]; then
+  echo "[makeitbig] failing:" >&2
+  printf '  - %s\n' "${FAILED_NAMES[@]}" >&2
   exit 1
 fi
-echo "PASS  presentation-off 60Hz replay: $PRESENTATION_OFF_HASH"

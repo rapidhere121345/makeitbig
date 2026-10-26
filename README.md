@@ -18,10 +18,13 @@ The authorized devbox checkout uses the existing isolated CPU toolchain:
 
 ```bash
 cd /data/claude/workspace/makeitbig
-source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
-source scripts/project_env.sh
-./scripts/container_build.sh
+./scripts/with_env.sh ./scripts/build.sh
 ```
+
+`scripts/with_env.sh <command...>` sources the portable toolchain and
+`scripts/project_env.sh`, then runs the command, so agents and humans can run
+single tests without `source` (for example
+`./scripts/with_env.sh godot --headless --path . --script res://tests/test_x.gd`).
 
 See the [environment workflow](docs/HOST_WORKFLOW.md) for the pinned version,
 writable directories, export templates, and staged commands. The original
@@ -73,20 +76,20 @@ increases reading size where the window has enough space for the two-column page
 
 ## Test and Export
 
-The full gate runs tests, Linux/Windows exports, and smoke-tests the Linux release executable from an empty directory:
+The project builds on Linux only. `./scripts/build.sh` is the delivery gate: it
+runs the stages below in order and stops at the first failing stage.
 
 ```bash
-./scripts/container_test.sh
-./scripts/container_export.sh
-./scripts/container_smoke.sh
+./scripts/check.sh    # fast static checks: shell/Python syntax, English-only, manifests, Godot parse
+./scripts/test.sh     # complete test gate (discovers tests, runs all, prints a summary)
+./scripts/export.sh   # Linux and Windows release exports
+./scripts/smoke.sh    # boot the Linux export from an empty directory
 ```
 
-With the Godot environment already configured, the underlying commands are:
-
-```bash
-./scripts/test.sh
-./scripts/export_all.sh
-```
+Each stage runs standalone with the Godot environment configured (or through
+`scripts/with_env.sh`). `scripts/test.sh` discovers `tests/**/test_*.gd` scripts
+that extend `SceneTree`, runs every test even after a failure, and exits
+non-zero with the failing names if any failed.
 
 The Linux executable is `build/current/linux/make-it-big.x86_64`; the Windows executable is `build/current/windows/make-it-big.exe`. Exporting Windows is not native Windows acceptance. Public CI provides Windows smoke and cross-platform replay checks.
 

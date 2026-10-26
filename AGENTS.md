@@ -26,15 +26,24 @@ explicit request. Inside the devbox, as UID 1000:
 
 ```bash
 cd /data/claude/workspace/makeitbig
-source /data/claude/workspace/.tools/make-it-big/portable-cpu/env.sh
-source scripts/project_env.sh
-./scripts/container_build.sh
+./scripts/with_env.sh ./scripts/build.sh
 ```
+
+`scripts/with_env.sh <command...>` sources the portable environment and
+`scripts/project_env.sh` before running the command; use it for single tests too
+(`./scripts/with_env.sh godot --headless --path . --script res://tests/test_x.gd`).
+The pipeline is `check.sh` (static checks) -> `test.sh` (complete test gate) ->
+`export.sh` (Linux and Windows) -> `smoke.sh` (empty-directory Linux boot); `build.sh`
+runs them in order. The project builds on Linux only.
 
 Use `./scripts/check.sh` for syntax checks, not an unbounded
 `godot --headless --path . --check-only`: headless initialization can stall
 and occupy the foreground turn. Run the complete suite through
-`./scripts/container_test.sh`, which provides a total timeout.
+`./scripts/test.sh`, which provides a total timeout, a log, and a summary of
+failing tests. It discovers `tests/**/test_*.gd` automatically: a new SceneTree
+test needs no registration, and a `run()`-style suite must be preloaded by
+`tests/run_all.gd`. Display-only tests are listed in the `SKIP_TESTS` array in
+`scripts/test.sh`.
 
 Never restart OCX, Paseo, or Jingwei from project scripts. Do not run Godot tests as root. See [docs/HOST_WORKFLOW.md](docs/HOST_WORKFLOW.md) for the environment contract and [docs/DEVBOX_READINESS.md](docs/DEVBOX_READINESS.md) for migration prerequisites.
 
@@ -54,7 +63,7 @@ See [docs/GRAPHICAL_VALIDATION.md](docs/GRAPHICAL_VALIDATION.md) for graphical a
 ## Editing and Validation Rules
 
 1. Inspect `git status --short` first and preserve existing changes.
-2. Run relevant targeted tests after gameplay changes and `./scripts/container_build.sh` before delivery. Freeze runtime/content throughout the full gate.
+2. Run relevant targeted tests after gameplay changes and `./scripts/build.sh` before delivery. Freeze runtime/content throughout the full gate.
 3. Search `src/`, `tests/`, `tools/`, manifests, and recipes before changing assets or paths.
 4. Keep active runtime art and the source records needed to reproduce it. Review obsolete candidates, duplicate captures, caches, and broken links; do not delete existing files without explicit approval.
 5. Put documentation in its designated directories; do not duplicate lengthy guides in source, art, or handoff files.

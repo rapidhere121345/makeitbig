@@ -93,6 +93,25 @@ mib_godot() {
   "$GODOT_BIN" "$@"
 }
 
+# Resolve the Python launcher once and export it as MIB_TEST_PYTHON. Child
+# processes must re-enter Python through the launcher running the check: the
+# portable toolchain's python3 is a wrapper, and its raw sys.executable binary
+# cannot start under the host loader. An override that is not an executable
+# file fails here instead of being replaced.
+mib_resolve_test_python() {
+  if [[ -z "${MIB_TEST_PYTHON:-}" ]]; then
+    MIB_TEST_PYTHON="$(command -v python3)" || {
+      echo "python3 was not found on PATH; set MIB_TEST_PYTHON to a launcher" >&2
+      return 2
+    }
+  fi
+  if [[ ! -f "${MIB_TEST_PYTHON}" || ! -x "${MIB_TEST_PYTHON}" ]]; then
+    echo "MIB_TEST_PYTHON is not an executable launcher: ${MIB_TEST_PYTHON}" >&2
+    return 2
+  fi
+  export MIB_TEST_PYTHON
+}
+
 mib_require_export_templates() {
   if [[ ! -f "$MIB_GODOT_TEMPLATE_DIR/version.txt" ]]; then
     echo "Godot export templates are missing: ${MIB_GODOT_TEMPLATE_DIR}" >&2

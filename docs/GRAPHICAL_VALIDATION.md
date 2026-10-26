@@ -9,7 +9,7 @@ Windowed rendering and headless regression are separate acceptance paths. Paseo 
 | CPU virtual display | Xvfb plus `LIBGL_ALWAYS_SOFTWARE=1` | Mesa llvmpipe | UI, input, screenshots, sorting, reveal pixels |
 | Connected window | `"$GODOT_BIN" --editor --path .` | Actual configured renderer | Interactive debugging and graphical review |
 | Optional hardware path | Verified integrated/discrete GPU | Actual driver | Hardware-specific behavior/performance only |
-| Headless | `./scripts/container_build.sh` | No rendered window | Regressions, exports, empty-directory Linux smoke |
+| Headless | `./scripts/build.sh` | No rendered window | Regressions, exports, empty-directory Linux smoke |
 
 Use `GODOT_BIN` resolved by `project_env.sh` for every path.
 
@@ -39,7 +39,7 @@ Check project loading, scene-tree visibility, and major screens. Run the game in
 "$GODOT_BIN" --display-driver x11 --rendering-method gl_compatibility --path "$MIB_PROJECT_ROOT"
 ```
 
-Use `tools/play_session.gd` and `tools/play_session.py` for input and captures. Set `MIB_PLAY_SESSION_DIR` to an ignored `build/current/` directory first. Window checks do not replace `./scripts/container_build.sh`: require headless regression, both exports, and empty-directory Linux smoke too.
+Use `tools/play_session.gd` and `tools/play_session.py` for input and captures. Set `MIB_PLAY_SESSION_DIR` to an ignored `build/current/` directory first. Window checks do not replace `./scripts/build.sh`: require headless regression, both exports, and empty-directory Linux smoke too.
 
 ## CPU Rendering in the Devbox
 

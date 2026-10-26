@@ -23,7 +23,16 @@ deliverables. They do not create containers, install packages, or change network
 | Play session | Ignored `build/current/play-session/` |
 
 Source the isolated prefix's `env.sh`, then `scripts/project_env.sh`, and use
-`mib_godot` or `"$GODOT_BIN"`. The prefix chooses its matching loader and CPU
+`mib_godot` or `"$GODOT_BIN"`. `scripts/with_env.sh <command...>` does both for a
+single command (it sources the prefix's `env.sh` when it exists, or the file named
+by `MIB_PORTABLE_ENV`), so agents can run one test without `source`:
+
+```bash
+./scripts/with_env.sh godot --headless --path . --script res://tests/test_x.gd
+./scripts/with_env.sh ./scripts/check.sh
+```
+
+ The prefix chooses its matching loader and CPU
 libraries without changing global library paths. The project verifies the
 official engine's version and SHA256. Native-host fallbacks remain portable
 compatibility options, not the devbox's installation method.
@@ -51,7 +60,8 @@ engine pin or modifying the official executable.
 The portable prefix's `python3` is a wrapper that starts its Python through
 the prefix's matching loader; the raw interpreter binary cannot start under
 the host's older glibc, so `sys.executable` is not directly spawnable there.
-`scripts/check.sh` resolves its working launcher (`command -v python3`) once
+`project_env.sh`'s `mib_resolve_test_python` (used by `check.sh`, `test.sh` and
+`play_session_window.sh`) resolves the working launcher (`command -v python3`) once
 and exports it as `MIB_TEST_PYTHON`, and the subprocess test harness re-enters
 Python through that launcher. `MIB_TEST_PYTHON` may be set deliberately to
 check with a different interpreter; a value that is not an executable file
@@ -62,7 +72,7 @@ launcher, for example:
 
 ```bash
 MIB_TEST_PYTHON="$MIB_CPU_PREFIX/bin/python3" \
-  python3 tests/test_play_session_tool.py
+  python3 tests/python/test_play_session_tool.py
 ```
 
 Without `MIB_TEST_PYTHON` the harness uses `sys.executable`, which is correct
@@ -71,19 +81,36 @@ global library paths or installing the portable runtime system-wide.
 
 ## Acceptance Gate
 
-Run the complete test/export/empty-directory Linux smoke gate:
+The project builds on Linux only. Run the complete check, test, export, and
+empty-directory Linux smoke gate:
 
 ```bash
-./scripts/container_build.sh
+./scripts/with_env.sh ./scripts/build.sh
 ```
 
-The `container_*` names are historical compatibility entry points. They run in the current environment without starting Docker. For bounded stages:
+`build.sh` runs these stages in order and stops at the first failure; each also runs
+on its own:
 
 ```bash
-./scripts/container_test.sh
-./scripts/container_export.sh
-./scripts/container_smoke.sh
+./scripts/check.sh    # bash -n, Python syntax, check_english, world_manifest --check, bounded Godot --check-only
+./scripts/test.sh     # complete test gate
+./scripts/export.sh   # template check, Linux and Windows exports
+./scripts/smoke.sh    # exported Linux binary from an empty directory
 ```
+
+None of them start Docker or touch networking. `test.sh` runs Python tests
+(`tests/python/`, the art-pipeline suites and read-only verifiers), the repository
+policy checks, `godot --import`, every discovered Godot test, `tests/run_game_flow_smoke.gd`, and the
+30/60/144 Hz and presentation-off replay hash checks. Godot tests are discovered:
+each `tests/**/test_*.gd` that extends `SceneTree` (directly or through another
+`res://tests/` script) runs with `--headless --script`; `run()`-style suites are
+aggregated by `tests/run_all.gd`, and a `test_*.gd` that is neither fails as an
+orphan. `SKIP_TESTS` in `scripts/test.sh` lists the display-only tests. Every test
+runs even after a failure; the summary names the failures and the exit status is
+non-zero. The gate has a total timeout (`MIB_TEST_TIMEOUT_SEC`, default 1800), a
+per-test timeout (`MIB_TEST_CASE_TIMEOUT_SEC`, default 600), a log
+(`MIB_TEST_LOG`, default `build/current/test.log`), and fails if any output line
+starts with `SCRIPT ERROR:`.
 
 `--` separates engine options from game arguments. The exported executable accepts:
 
@@ -124,7 +151,7 @@ Configure portable paths explicitly when needed:
 export GODOT_BIN="/your/tools/godot"
 export MIB_GODOT_TEMPLATE_FALLBACK="/your/templates/4.7.2.stable"
 source scripts/project_env.sh
-./scripts/container_build.sh
+./scripts/build.sh
 ```
 
 Do not copy host-specific symlinks, `.godot/`, or test saves as installation substitutes. The new environment must regenerate imports and pass its own tests. See [devbox readiness](DEVBOX_READINESS.md) for current acceptance and separate follow-up work.

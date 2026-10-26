@@ -16,7 +16,7 @@ Release sources and page templates live in `release/`; `scripts/release.sh` gene
 ## Standard Commands
 
 ```bash
-./scripts/container_build.sh
+./scripts/build.sh
 # Review and commit after the passing build so release metadata names its source.
 git diff --check
 git status --short

@@ -321,7 +321,7 @@ Still-current authoring rules for environment objects:
 ## Evidence discipline
 
 Each integration slice has a headless deterministic test before the next is
-integrated. The delivery gate is `container_build.sh` (tests, 600/600 victory
+integrated. The delivery gate is `build.sh` (tests, 600/600 victory
 matrix, export, Linux empty-directory smoke) plus real-machine GPU acceptance
 recorded under `docs/playtest/`. Focused domain tests or an isolated
 SceneRuntime stress harness do not prove the complete game flow.
