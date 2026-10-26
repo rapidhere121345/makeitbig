@@ -11,16 +11,6 @@ const SimTickContextScript := preload("res://src/runtime/simulation/sim_tick_con
 const DeathSettlementNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
 
 
-class FakeSaveStore:
-	extends RefCounted
-
-	var save_calls := 0
-
-	func save(_payload: Variant) -> Dictionary:
-		save_calls += 1
-		return {"ok": true, "generation": save_calls, "slot": "test"}
-
-
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -98,23 +88,15 @@ func _run() -> void:
 		var config_snapshot: Dictionary = runtime.current_config
 		config_snapshot["presentation_enabled"] = false
 		_expect(bool(runtime.current_config.get("presentation_enabled", false)), "runtime: current_config presentation copy is not deeply isolated", failures)
-		_expect(bool(room_node.get("test_session")), "runtime: embedded persistence guard was not enabled", failures)
-		_expect(bool(room_node.get("embedded_session")), "runtime: embedded-session guard was not enabled", failures)
-		_expect(int(room_node.get("contract_wins")) == 0, "runtime: framework win count polluted the embedded profile", failures)
+		_expect(bool(room_node.get("test_session")), "runtime: embedded session flag was not enabled", failures)
 		_expect(String((room_node.get("framework_active_build") as Dictionary).get("preset_id", "")) == "convergent", "runtime: active Build was not injected", failures)
 		_expect((room_node.get("framework_resolved_build") as Dictionary) == convergent_build, "runtime: frozen resolved Build was not injected", failures)
 		var proxy_runtime_instance: Variant = room_node.get("proxy_runtime")
 		_expect(proxy_runtime_instance is Object and String(((proxy_runtime_instance as Object).get("cores") as Dictionary)[&"perception"].core_id) == "near_enemy_horizon", "runtime: resolved proxy Build was not installed", failures)
-		var fake_store := FakeSaveStore.new()
-		room_node.set("save_store", fake_store)
-		room_node.set("last_drop_id", "legacy.sentinel")
-		room_node.set("last_drop", "Legacy Sentinel")
-		var embedded_state_before: Dictionary = room_node.call("_embedded_authority_state_snapshot")
 		var typed_clear := _settle_first_encounter_member(room_node)
 		_expect(bool(typed_clear.get("ok", false)), "runtime: typed encounter member settlement was rejected", failures)
 		room_node.call("_check_battle_end")
 		room_node.call("_check_battle_end")
-		_expect(room_node.call("_embedded_authority_state_snapshot") == embedded_state_before and fake_store.save_calls == 0, "runtime: repeated terminal checks polluted embedded persistence", failures)
 		var snapshot: Dictionary = room_node.get("room_reward_snapshot")
 		snapshot["drop_id"] = "must.not.leak"
 		snapshot["drop_label"] = "Must Not Leak"
@@ -239,8 +221,6 @@ func _run() -> void:
 		_expect(bool((presented_node.get("presentation").get("hud") as Control).visible), "presentation twins: enabled arena HUD was not shown", failures)
 		_expect(bool((headless_node.get("presentation").get("hud") as Control).visible) and is_zero_approx((headless_node.get("presentation").get("hud") as Control).modulate.a), "presentation twins: off HUD changed input participation or remained drawn", failures)
 		_test_ranger_action_wiring(presented_node, failures)
-		_expect(not bool((headless_node.get("lab_view").get("base_panel") as Control).visible), "presentation twins: headless base panel stayed visible", failures)
-		_expect(not bool((headless_node.get("lab_view").get("systems_panel") as Control).visible), "presentation twins: headless systems panel stayed visible", failures)
 		_expect(headless_node.has_signal("return_requested"), "presentation twins: room return signal is unavailable", failures)
 		_expect((headless_node.get("presentation").get("hud") as Control).has_signal("return_requested"), "presentation twins: HUD return signal is unavailable", failures)
 		for _index in TWIN_TICKS:

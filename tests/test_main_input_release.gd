@@ -46,7 +46,7 @@ func _run() -> void:
 func _test_tail_buffer(resolved: Dictionary, initial: String, release: bool) -> void:
 	var label := "%s release=%s: " % [initial, release]
 	var arena := DrivenMain.new()
-	arena.embedded_session = true
+	arena.test_session = true
 	arena.presentation_enabled = false
 	arena.framework_resolved_build = resolved.duplicate(true)
 	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}

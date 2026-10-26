@@ -11,7 +11,7 @@ extends SceneTree
 ##    preset = the calibration_exponential fixture: p=0.61, T=34, d=150, v=620,
 ##    turn=0.18, damage=160, breeding_split + pack_hunt_mark);
 ##  * a real Main instance is configured exactly like the production
-##    CombatRoomRuntime (embedded_session, framework_room with boss
+##    CombatRoomRuntime (test_session, framework_room with boss
 ##    threshold_colossus, framework_resolved_build, automation_smoke=false) and
 ##    entered via start_room(), then advanced one authoritative
 ##    _simulate_tick() at a time — ticks are never skipped or rewound;
@@ -50,7 +50,6 @@ func _run() -> void:
 
 	var arena = MainScript.new()
 	# Same embedded configuration order as the production CombatRoomRuntime.
-	arena.embedded_session = true
 	arena.test_session = true
 	arena.automation_smoke = false
 	arena.selected_mode = "Manual"

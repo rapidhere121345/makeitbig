@@ -158,9 +158,7 @@ func start_session(config: Dictionary) -> Dictionary:
 		_cleanup_room_instance()
 		return _error("room_api_unavailable")
 
-	# The framework profile is the only persistence and contract-reward authority
-	# while the combat room is embedded.
-	_room_instance.set("last_save_message", "Embedded session — framework owns persistence")
+	# A combat room has no persistence or contract-reward authority: the framework profile owns both.
 	_connect_return_requested()
 
 	_room_instance.set("selected_mode", mode)
@@ -202,7 +200,6 @@ func _configure_room_instance(instance: Node) -> void:
 	## the native scene enters the tree, so its _ready() cannot start a contextless
 	## session or create a second runtime authority.
 	_room_instance = instance
-	instance.set("embedded_session", true)
 	instance.set("test_session", true)
 	instance.set("presentation_enabled", bool(_current_config.get("presentation_enabled", true)))
 	instance.set("framework_room", (_current_config.get("room", {}) as Dictionary).duplicate(true))

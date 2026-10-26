@@ -38,7 +38,7 @@ func _run() -> void:
 	var initial_maximum: float = float(resolved.final_parameters.max_health)
 	_expect(bool(resolved.get("ok", false)), "resolved fixture failed")
 	var arena := DrivenMain.new()
-	arena.embedded_session = true
+	arena.test_session = true
 	arena.presentation_enabled = false
 	arena.framework_resolved_build = resolved.duplicate(true)
 	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}

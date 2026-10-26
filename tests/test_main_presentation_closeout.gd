@@ -184,7 +184,7 @@ func _test_unconfigured_binding() -> void:
 	# A native author scene loaded without SceneRuntime must not be mistaken for
 	# the bare unmounted Main fixture or get a replacement WorldPresenter.
 	var authored: Node = load("res://content/rooms/combat/rectangle_arena.tscn").instantiate()
-	authored.set("embedded_session", true)
+	authored.set("test_session", true)
 	root.add_child(authored)
 	authored.set_process(false)
 	_expect((authored.get("startup_errors") as Array).has("presentation:mounted_runtime_detached"), "native Main without runtime injection silently used standalone rendering")
@@ -341,7 +341,7 @@ func _fixture_snapshot() -> Dictionary:
 		"equipped_parameters": {"shared_lifetime": 2.0, "distance": 225.0},
 		"model": {"p": 0.1, "g": 0, "state": "convergent"},
 		"selected_mode": "Manual", "proxy_prediction": "manual", "has_timeline": false, "timeline": {}, "action_phase": "idle",
-		"shots": 0, "defeated": 0, "elapsed": 0.0, "room_entry_start_tick": 0, "embedded_session": true,
+		"shots": 0, "defeated": 0, "elapsed": 0.0, "room_entry_start_tick": 0,
 		"hazard_states": [], "elite_rule_ids": [], "elite_entity_id": 0, "elite_barrier_active": false,
 		"reinforcements_summoned": false, "timed_bonus_available": true, "last_attack_outcome": {},
 		"arena_rect": arena, "walkable_geometry": Geometry.from_layout("rectangle_arena", arena, 14.0), "projectiles": [], "events": [],

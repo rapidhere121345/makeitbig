@@ -40,7 +40,7 @@ func _initialize() -> void:
 func _run() -> void:
 	root.size = Vector2i(1280, 720)
 	var arena = DrivenMain.new()
-	arena.embedded_session = true
+	arena.test_session = true
 	root.add_child(arena)
 	arena.set_process(false)
 	await process_frame
@@ -65,7 +65,7 @@ func _run() -> void:
 
 
 func _configure_room(arena: Node, layout: String, enemy_ids: Array, boss_id: String = "") -> void:
-	arena.embedded_session = true
+	arena.test_session = true
 	arena.framework_room = {
 		"room_id": "bounds.%s" % layout,
 		"layout_id": layout,

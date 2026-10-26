@@ -7,10 +7,9 @@ const PresentationController := preload("res://src/presentation/combat_presentat
 const PresentationSnapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
 const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.gd")
 const InputAdapter := preload("res://src/presentation/combat_input_adapter.gd")
-const LabView := preload("res://src/presentation/combat_lab_view.gd")
+const CombatInterfaceTheme := preload("res://src/presentation/combat_interface_theme.gd")
 
 const ContentRegistryScript = preload("res://src/content/content_registry.gd")
-const DestinyForgeScript = preload("res://src/systems/destiny_forge.gd")
 const ProxyRuntimeScript = preload("res://src/systems/proxy_runtime.gd")
 const ProxyDecisionScript = preload("res://src/systems/proxy_decision.gd")
 const ProxyIntentSystemScript = preload("res://src/systems/proxy_intent_system.gd")
@@ -20,7 +19,6 @@ const EnemyTacticsScript = preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 const CombatQueryScript = preload("res://src/runtime/geometry/combat_query.gd")
 const CombatEventStreamScript = preload("res://src/systems/combat_event_stream.gd")
-const SaveStoreScript = preload("res://src/persistence/save_store.gd")
 const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
 const PiercingArrowModelScript = preload("res://src/systems/piercing_arrow_model.gd")
 const ActorRegistryScript = preload("res://src/runtime/world/actor_registry.gd")
@@ -72,7 +70,6 @@ const SIM_STEP_SECONDS: float = 1.0 / float(SIM_TICKS_PER_SECOND)
 const AUTO_RANGE: float = 225.0
 const BASE_PAYLOAD: float = 160.0
 const FATE_SEED: int = 52969
-const SAVE_PROTOCOL_VERSION: int = 1
 const ENEMY_HIT_FLASH_TICKS: int = 3
 const MAX_ACTIVE_PIERCING_PROJECTILES: int = 16
 # Early campaign durability only; movement, action timing and Boss authority stay separate.
@@ -242,20 +239,11 @@ var kernel_reconcile_events: Array[Dictionary] = []
 var _enemy_stable_keys: Dictionary = {}
 var _kernel_settlement_cursor := 0
 var combat_event_stream
-var destiny_forge
-var save_store
 var startup_errors: Array[String] = []
 var proxy_prediction: String = "unknown"
-var contract_wins: int = 0
-var last_drop_id: String = ""
-var last_drop: String = "None"
-var last_loot_rng_state: Dictionary = {}
-var last_save_message: String = "No save yet"
-var command_line_arguments: PackedStringArray = []
+var last_save_message: String = ""
 var test_session: bool = false
-var embedded_session: bool = false
 var presentation_enabled: bool = true
-var state_hash_output_path: String = ""
 var replay_geometry_profile: String = CombatSystemScript.QUERY_PROFILE_MULTIPART_V2
 var framework_active_build: Dictionary = {}
 var framework_resolved_build: Dictionary = {}
@@ -329,11 +317,9 @@ var room_reward_snapshot: Dictionary:
 
 
 var automation_smoke: bool = false
-var automation_expected_contract_wins: int = 1
 var automation_smoke_failure: String = ""
 var presentation
 var input_adapter
-var lab_view
 ## Production fixed-tick phase owner. CombatSimulation never receives Main as a
 ## callback bag; it receives the typed RoomPhaseDomain declared at the bottom
 ## of this script. Phase dispatch is typed virtual calls only.
@@ -463,26 +449,13 @@ func _configure_combat_ports() -> bool:
 
 
 func _ready() -> void:
-	command_line_arguments = OS.get_cmdline_user_args()
-	test_session = embedded_session or command_line_arguments.has("--smoke") or command_line_arguments.has("--auto-smoke")
-	for argument: String in command_line_arguments:
-		if argument.begins_with("--state-hash-out="):
-			state_hash_output_path = argument.trim_prefix("--state-hash-out=")
-		elif argument.begins_with("--replay-geometry-profile="):
+	for argument: String in OS.get_cmdline_user_args():
+		if argument.begins_with("--replay-geometry-profile="):
 			replay_geometry_profile = argument.trim_prefix("--replay-geometry-profile=")
 	_initialize_runtime()
-	lab_view = LabView.new()
-	add_child(lab_view)
-	lab_view.build({"presets": content_registry.presets, "preset_order": content_registry.preset_order, "cores": content_registry.cores})
-	lab_view.preset_requested.connect(_select_preset)
-	lab_view.mode_requested.connect(_select_mode)
-	lab_view.deploy_requested.connect(start_room)
-	lab_view.forge_requested.connect(_choose_forge_candidate)
-	startup_errors.append_array(presentation.load_assets(presentation_enabled, lab_view.interface_theme))
-	_show_base()
+	startup_errors.append_array(presentation.load_assets(presentation_enabled, CombatInterfaceTheme.create()))
+	_reset_idle_state()
 	get_viewport().size_changed.connect(refresh_presentation)
-	if not embedded_session:
-		_handle_command_line()
 
 
 func _process(delta: float) -> void:
@@ -516,8 +489,9 @@ func _input(event: InputEvent) -> void:
 
 func release_manual_controls() -> void:
 	input_adapter.reset_intent()
-	# The lab has no configured player yet. Once a room owns the player, Rules
-	# clears queued mobility on the current tick without producing a command.
+	# Before a room is started there is no configured player. Once a room owns
+	# the player, Rules clears queued mobility on the current tick without
+	# producing a command.
 	if String(player_combat_state.snapshot(sim_tick)["actor_id"]).is_empty():
 		return
 	var released: Dictionary = player_combat_rules.release_input(sim_tick)
@@ -566,71 +540,10 @@ func _initialize_runtime() -> void:
 	manual_aim_resolver = ManualAimResolverScript.new()
 	combat_event_stream = CombatEventStreamScript.new()
 	proxy_prediction = "unknown"
-	var forge_families: Array[Dictionary] = [
-		{"name": "growth_probability", "weight": 1},
-		{"name": "shared_lifetime", "weight": 2},
-		{"name": "branch_count", "weight": 2},
-		{"name": "payload", "weight": 3},
-		{"name": "flight_speed", "weight": 3},
-		{"name": "turn_time", "weight": 1},
-	]
-	destiny_forge = DestinyForgeScript.new(FATE_SEED, forge_families, 3)
-	destiny_forge.set_dice(DestinyForgeScript.TRACK_ADD, 6)
-	save_store = SaveStoreScript.new()
-	if not test_session:
-		_load_progress()
 
 
-func _load_progress() -> void:
-	var loaded: Dictionary = save_store.load_latest()
-	if not bool(loaded.get("ok", false)):
-		last_save_message = "Fresh profile — save begins after a reward or forge choice"
-		return
-	var payload: Variant = loaded.get("payload", {})
-	if not (payload is Dictionary) or int((payload as Dictionary).get("sim_protocol_version", -1)) != SAVE_PROTOCOL_VERSION:
-		last_save_message = "Save ignored: incompatible simulation protocol"
-		return
-	var saved: Dictionary = payload
-	contract_wins = maxi(0, int(saved.get("contract_wins", 0)))
-	last_drop_id = String(saved.get("last_drop_id", ""))
-	last_drop = String(saved.get("last_drop", "None"))
-	var saved_loot_state: Variant = saved.get("last_loot_rng_state", {})
-	if saved_loot_state is Dictionary:
-		last_loot_rng_state = saved_loot_state.duplicate(true)
-	var saved_preset := _normalize_preset_id(String(saved.get("selected_preset", selected_preset)))
-	var saved_mode := String(saved.get("selected_mode", selected_mode))
-	if content_registry.presets.has(saved_preset):
-		selected_preset = saved_preset
-	if saved_mode in ["Manual", "Auto"]:
-		selected_mode = saved_mode
-	var forge_state: Variant = saved.get("forge", {})
-	if forge_state is Dictionary and not (forge_state as Dictionary).is_empty():
-		if not destiny_forge.restore_state(forge_state):
-			startup_errors.append("save: invalid forge state")
-	last_save_message = "Recovered generation %d from slot %s (no offline progress)" % [int(loaded.generation), String(loaded.slot).to_upper()]
-
-
-func _save_progress(reason: String) -> void:
-	if test_session:
-		return
-	var result: Dictionary = save_store.save({
-		"content_hash": _content_hash(),
-		"contract_wins": contract_wins,
-		"forge": destiny_forge.state(),
-		"last_drop": last_drop,
-		"last_drop_id": last_drop_id,
-		"last_loot_rng_state": last_loot_rng_state,
-		"offline_progress": 0,
-		"selected_mode": selected_mode,
-		"selected_preset": selected_preset,
-		"sim_protocol_version": SAVE_PROTOCOL_VERSION,
-	})
-	if bool(result.get("ok", false)):
-		last_save_message = "%s — generation %d / slot %s" % [reason, int(result.generation), String(result.slot).to_upper()]
-	else:
-		last_save_message = "SAVE FAILED: %s" % String(result.get("error", "unknown error"))
-
-
+## Digest of the authored combat content, consumed by CombatStateSnapshotBuilder
+## so a replay hash is tied to the content it ran against.
 func _content_hash() -> String:
 	var source := FileAccess.get_file_as_string(ContentRegistryScript.PROXY_PATH)
 	source += "\n" + FileAccess.get_file_as_string(ContentRegistryScript.PRESET_PATH)
@@ -644,65 +557,15 @@ func _content_hash() -> String:
 	return context.finish().hex_encode()
 
 
-func _select_preset(preset: String) -> void:
-	if not in_arena and content_registry.presets.has(preset):
-		selected_preset = preset
-		_refresh_lab()
-
-
-func _select_mode(mode: String) -> void:
-	if not in_arena:
-		selected_mode = mode
-		_refresh_lab()
-
-
-func _normalize_preset_id(value: String) -> String:
-	var normalized := value.strip_edges().to_lower()
-	if content_registry.presets.has(normalized):
-		return normalized
-	# One-way compatibility for saves created by the earliest prototype.
-	for preset_id in content_registry.preset_order:
-		if String(content_registry.presets[preset_id].name).to_lower() == normalized:
-			return preset_id
-	return selected_preset
-
-
 func _preset_display_name(preset_id: String) -> String:
 	if not content_registry.presets.has(preset_id):
 		return preset_id
 	return "%s / %s" % [preset_id.capitalize(), String(content_registry.presets[preset_id].name)]
 
 
-func _forge_family_name(family: String) -> String:
-	return String(LabView.FORGE_FAMILY_LABELS.get(family, family))
-
-
-func _next_empty_forge_slot() -> int:
-	for index in destiny_forge.affixes.size():
-		if (destiny_forge.affixes[index] as Dictionary).is_empty():
-			return index
-	return -1
-
-
-func _choose_forge_candidate(choice_number: int) -> void:
-	if in_arena or not startup_errors.is_empty():
-		return
-	var active_slot := _next_empty_forge_slot()
-	if active_slot < 0:
-		last_save_message = "All three prototype affix slots are filled"
-		_refresh_lab()
-		return
-	var chosen: Dictionary = destiny_forge.choose(DestinyForgeScript.TRACK_ADD, active_slot, choice_number)
-	if bool(chosen.get("ok", false)):
-		var result: Dictionary = chosen.result
-		last_drop = "Forged %s T%d" % [_forge_family_name(String(result.family)), int(result.tier)]
-		_save_progress("Forge choice #%d committed" % choice_number)
-	else:
-		last_save_message = "Forge refused: %s" % String(chosen.get("error", "unknown error"))
-	_refresh_lab()
-
-
-func _show_base() -> void:
+## Puts a freshly constructed room into its idle state: no contract running,
+## room rules and loot cleared, and no held manual input.
+func _reset_idle_state() -> void:
 	in_arena = false
 	room_rules.reset()
 	_reset_room_loot()
@@ -712,34 +575,27 @@ func _show_base() -> void:
 		proxy_runtime.end_contract()
 	if proxy_intent_system != null:
 		proxy_intent_system.reset()
-	lab_view.show_base(presentation_enabled)
-	_refresh_lab()
 	refresh_presentation()
 
 
 func start_room() -> void:
 	if scene_runtime != null and (not scene_runtime.is_ready() or _arena_rect().size.x <= 0.0 or _arena_rect().size.y <= 0.0 or _collision_geometry(14.0).is_empty()):
 		last_save_message = "Deployment blocked: native_room_geometry_unavailable"
-		_refresh_lab()
 		return
 	if not startup_errors.is_empty():
 		last_save_message = "Deployment blocked by content validation"
-		_refresh_lab()
 		return
-	if embedded_session and not _resolved_build_is_valid(framework_resolved_build):
+	if not _resolved_build_is_valid(framework_resolved_build):
 		last_save_message = "Deployment blocked: invalid_resolved_build"
-		_refresh_lab()
 		return
 	var room_error := _framework_room_error()
 	if not room_error.is_empty():
 		last_save_message = "Deployment blocked: %s" % room_error
-		_refresh_lab()
 		return
 	_freeze_room_build()
 	var room_stats := _apply_room_combat_stats()
 	if not bool(room_stats.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(room_stats.get("error", "invalid_room_combat_stats"))
-		_refresh_lab()
 		return
 	proxy_runtime.end_contract()
 	if selected_mode == "Auto":
@@ -749,12 +605,10 @@ func start_room() -> void:
 		)
 		if not bool(proxy_install.get("ok", false)):
 			last_save_message = "Deployment blocked: proxy_%s" % String(proxy_install.get("error", "invalid_build"))
-			_refresh_lab()
 			return
 		var proxy_start: Dictionary = proxy_intent_system.begin_contract(framework_resolved_proxy_build)
 		if not bool(proxy_start.get("ok", false)):
 			last_save_message = "Deployment blocked: proxy_%s" % String(proxy_start.get("error", "invalid_initial_state"))
-			_refresh_lab()
 			proxy_runtime.end_contract()
 			return
 	else:
@@ -762,7 +616,6 @@ func start_room() -> void:
 	var contract_start: Dictionary = proxy_runtime.begin_contract(selected_mode.to_lower())
 	if not bool(contract_start.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(contract_start.get("error", "unknown error"))
-		_refresh_lab()
 		return
 	var requirements := {
 		"perception": {"target_count": 1},
@@ -774,7 +627,6 @@ func start_room() -> void:
 	in_arena = true
 	room_rules.reset()
 	_reset_room_loot()
-	lab_view.hide_base()
 	input_adapter.reset_intent()
 	command_sequence = 0
 	last_command_receipts.clear()
@@ -790,7 +642,6 @@ func start_room() -> void:
 		if not bool(restarted.get("ok", false)):
 			last_save_message = "Deployment blocked: %s" % String(restarted.get("error", "room_restart_failed"))
 			in_arena = false
-			_refresh_lab()
 			return
 		actor_registry = scene_runtime.get("actor_registry")
 		simulation_world = scene_runtime.get("simulation")
@@ -808,7 +659,6 @@ func start_room() -> void:
 		if not last_save_message.begins_with("Deployment blocked:"):
 			last_save_message = "Deployment blocked: actor_registry_configuration_failed"
 		in_arena = false
-		_refresh_lab()
 		return
 	var loot_room: Dictionary = framework_room.duplicate(true)
 	if loot_room.is_empty() and test_session:
@@ -817,11 +667,9 @@ func start_room() -> void:
 	if not bool(loot_configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
 		in_arena = false
-		_refresh_lab()
 		return
 	if not _start_mounted_encounter():
 		in_arena = false
-		_refresh_lab()
 		return
 	refresh_presentation()
 
@@ -894,18 +742,11 @@ func _spawn_wave() -> bool:
 	room_id = String(spawned.get("room_id", ""))
 	layout_id = String(spawned.get("layout_id", ""))
 	objective_id = String(spawned.get("objective_id", "clear"))
-	room_drop_tags = (framework_room.get("drop_tags", []) as Array).duplicate(true) if embedded_session else []
+	room_drop_tags = (framework_room.get("drop_tags", []) as Array).duplicate(true)
 	_encounter_context()
-	var reward_port := MainRewardPort.new()
-	var reward_bound: Dictionary = reward_port.bind(self)
-	if not bool(reward_bound.get("ok", false)):
-		last_save_message = "Deployment blocked: %s" % String(reward_bound.get("error", "room_reward_port_unavailable"))
-		in_arena = false
-		return false
 	var configured: Dictionary = room_rules.reset_for_room(
-		{"objective_id": objective_id, "drop_tags": room_drop_tags}, embedded_session,
-		selected_mode, FATE_SEED, {"contract_wins": contract_wins, "cores": content_registry.cores},
-		reward_port
+		{"objective_id": objective_id, "drop_tags": room_drop_tags}, true,
+		selected_mode, FATE_SEED, {}
 	)
 	if not bool(configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "room_rules_unavailable"))
@@ -1326,7 +1167,7 @@ func _bind_boss_production_encounter() -> bool:
 	# terminal/death authority.  Boss-only Main construction still uses this
 	# fallback binding.
 	var mounted_room_roster: Variant = framework_room.get("enemy_ids", [])
-	if embedded_session and mounted_room_roster is Array and not (mounted_room_roster as Array).is_empty():
+	if mounted_room_roster is Array and not (mounted_room_roster as Array).is_empty():
 		return true
 	var spawns: Array = []
 	for index: int in enemies.size():
@@ -1513,7 +1354,7 @@ func _simulation_collect_commands() -> Array[Dictionary]:
 		loot_command = _auto_loot_pickup_command(snapshot)
 	if not loot_command.is_empty():
 		_submit_loot_pickup_command(loot_command)
-	if embedded_session and automation_smoke and selected_mode == "Manual":
+	if automation_smoke and selected_mode == "Manual":
 		var result: Dictionary = smoke_input_driver.decide({
 			"player": player_combat_state.snapshot(sim_tick), "targets": _read_only_targets(),
 			"hazards": hazard_states.duplicate(true), "targeting_distance": locked_targeting_distance,
@@ -2752,7 +2593,7 @@ func _quantize_position(value: Vector2) -> Vector2:
 
 
 func _framework_room_error() -> String:
-	if not embedded_session or framework_room.is_empty():
+	if framework_room.is_empty():
 		return ""
 	_ensure_room_catalog()
 	return EncounterDirectorScript.validate_room(framework_room, room_catalog)
@@ -2768,7 +2609,6 @@ func _layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
 
 
 func _check_battle_end() -> void:
-	var embedded_state_before := _embedded_authority_state_snapshot()
 	# Pickup is a committed post-movement phase. Requests are queued by the
 	# public input boundary and can only mutate the room ledger here.
 	_process_room_loot_pickups_tick()
@@ -2791,7 +2631,7 @@ func _check_battle_end() -> void:
 			_spawn_room_loot_for_source("wave_clear", 0, player_position)
 		else:
 			_settle_room_loot("defeat")
-		_handle_terminal_automation(victory, embedded_state_before)
+		_handle_terminal_automation(victory)
 		return
 	var observed: Dictionary = room_rules.observe(player_combat_state.snapshot(sim_tick), {
 		"has_boss": boss != null, "boss_health": boss.health if boss != null else 0.0,
@@ -2808,37 +2648,10 @@ func _check_battle_end() -> void:
 	if not battle_victory:
 		_settle_room_loot("defeat")
 	if battle_victory:
-		if automation_smoke:
-			var smoke_valid := false
-			if embedded_session:
-				smoke_valid = (
-					not framework_room.is_empty()
-					and battle_victory
-					and (selected_mode != "Auto" or proxy_prediction == "stable")
-					and _embedded_authority_state_snapshot() == embedded_state_before
-				)
-			else:
-				smoke_valid = contract_wins == automation_expected_contract_wins and destiny_forge.get_dice(DestinyForgeScript.TRACK_ADD) == 7 and not last_drop_id.is_empty() and proxy_prediction == "stable"
-			if not smoke_valid:
-				_fail_automation_smoke("integrated room/proxy/reward state is invalid")
-				return
-			if embedded_session:
-				return
-			var state_hash := _semantic_state_hash("victory")
-			if not _write_state_hash(state_hash):
-				Engine.time_scale = 1.0
-				get_tree().quit(1)
-				return
-			print("AUTO_SMOKE_PASS elapsed=%.2f ticks=%d casts=%d damage=%s state_hash=%s" % [elapsed, sim_tick, shots, boss_damage.to_short_string(5), state_hash])
-			Engine.time_scale = 1.0
-			get_tree().quit(0)
+		if automation_smoke and not _automation_smoke_state_valid():
+			_fail_automation_smoke("integrated room/proxy/reward state is invalid")
 	elif automation_smoke:
-		if embedded_session:
-			automation_smoke_failure = "defeat elapsed=%.2f casts=%d" % [elapsed, shots]
-			return
-		printerr("AUTO_SMOKE_FAIL elapsed=%.2f casts=%d" % [elapsed, shots])
-		Engine.time_scale = 1.0
-		get_tree().quit(1)
+		automation_smoke_failure = "defeat elapsed=%.2f casts=%d" % [elapsed, shots]
 
 
 func _mounted_encounter_terminal_active() -> bool:
@@ -2876,90 +2689,30 @@ func _observe_mounted_encounter_terminal() -> Dictionary:
 	return result.snapshot()
 
 
-func _handle_terminal_automation(victory: bool, embedded_state_before: Dictionary) -> void:
+func _handle_terminal_automation(victory: bool) -> void:
 	if not automation_smoke:
 		return
-	if embedded_session:
-		if not victory:
-			automation_smoke_failure = "defeat elapsed=%.2f casts=%d" % [elapsed, shots]
-			return
-		var smoke_valid := not framework_room.is_empty() and battle_victory and (selected_mode != "Auto" or proxy_prediction == "stable") and _embedded_authority_state_snapshot() == embedded_state_before
-		if not smoke_valid:
-			_fail_automation_smoke("integrated room/proxy/reward state is invalid")
-		return
 	if not victory:
-		printerr("AUTO_SMOKE_FAIL elapsed=%.2f casts=%d" % [elapsed, shots])
-		Engine.time_scale = 1.0
-		get_tree().quit(1)
+		automation_smoke_failure = "defeat elapsed=%.2f casts=%d" % [elapsed, shots]
 		return
-	var state_hash := _semantic_state_hash("victory")
-	if not _write_state_hash(state_hash):
-		Engine.time_scale = 1.0
-		get_tree().quit(1)
-		return
-	print("AUTO_SMOKE_PASS elapsed=%.2f ticks=%d casts=%d damage=%s state_hash=%s" % [elapsed, sim_tick, shots, boss_damage.to_short_string(5), state_hash])
-	Engine.time_scale = 1.0
-	get_tree().quit(0)
+	if not _automation_smoke_state_valid():
+		_fail_automation_smoke("integrated room/proxy/reward state is invalid")
 
 
+func _automation_smoke_state_valid() -> bool:
+	return not framework_room.is_empty() and battle_victory and (selected_mode != "Auto" or proxy_prediction == "stable")
+
+
+## The room reports a smoke failure to its host through automation_smoke_failure;
+## the host decides whether the process exits.
 func _fail_automation_smoke(reason: String) -> void:
 	automation_smoke_failure = reason
 	room_rules.fail(reason)
 	battle_report = String(room_rules.snapshot().report)
-	if embedded_session:
-		return
-	printerr("AUTO_SMOKE_FAIL %s" % reason)
-	Engine.time_scale = 1.0
-	get_tree().quit(1)
-
-
-func _commit_legacy_room_reward(commit: Dictionary) -> void:
-	# The room domain decides the reward and commits once. This sink projects its
-	# prepared values into the existing diagnostic profile/persistence ports.
-	contract_wins = int(commit.contract_wins)
-	last_drop_id = String(commit.last_drop_id)
-	last_drop = String(commit.last_drop)
-	last_loot_rng_state = (commit.last_loot_rng_state as Dictionary).duplicate(true)
-	destiny_forge.grant_dice(commit.track, int(commit.dice_awarded))
-	_save_progress(String(commit.save_reason))
-
-
-func _embedded_authority_state_snapshot() -> Dictionary:
-	return {
-		"contract_wins": contract_wins,
-		"forge": destiny_forge.state().duplicate(true),
-		"last_drop": last_drop,
-		"last_drop_id": last_drop_id,
-		"last_loot_rng_state": last_loot_rng_state.duplicate(true),
-	}
 
 
 func _semantic_state_hash(result: String) -> String:
 	return CombatStateSnapshotBuilderScript.hash_runtime(self, result)
-
-
-func _write_state_hash(state_hash: String) -> bool:
-	if state_hash.is_empty():
-		printerr("STATE_HASH_FAIL: could not calculate hash")
-		return false
-	if state_hash_output_path.is_empty():
-		return true
-	var output_path := state_hash_output_path
-	if not output_path.is_absolute_path() and not output_path.begins_with("user://") and not output_path.begins_with("res://"):
-		output_path = ProjectSettings.globalize_path("res://" + output_path)
-	var output_directory := output_path.get_base_dir()
-	if not output_directory.is_empty():
-		var directory_error := DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(output_directory))
-		if directory_error != OK:
-			printerr("STATE_HASH_FAIL: %s" % error_string(directory_error))
-			return false
-	var file := FileAccess.open(output_path, FileAccess.WRITE)
-	if file == null:
-		printerr("STATE_HASH_FAIL: %s" % error_string(FileAccess.get_open_error()))
-		return false
-	file.store_string(state_hash + "\n")
-	file.close()
-	return true
 
 
 func _current_model() -> Dictionary:
@@ -3158,41 +2911,6 @@ func _project_static_clear(position: Vector2, radius: float) -> Variant:
 	return null
 
 
-func _handle_command_line() -> void:
-	if command_line_arguments.has("--smoke"):
-		if not startup_errors.is_empty() or destiny_forge.preview(DestinyForgeScript.TRACK_ADD, 0, 3).size() != 3:
-			printerr("SCENE_SMOKE_FAIL systems=%s" % str(startup_errors))
-			get_tree().quit(1)
-			return
-		print("SCENE_SMOKE_PASS systems=content,forge,proxy,save fixed_tick=%d" % SIM_TICKS_PER_SECOND)
-		get_tree().create_timer(0.25).timeout.connect(func() -> void: get_tree().quit(0))
-	if command_line_arguments.has("--auto-smoke"):
-		automation_smoke = true
-		selected_preset = "exponential"
-		selected_mode = "Auto"
-		start_room()
-		if not in_arena:
-			printerr("AUTO_SMOKE_FAIL deployment blocked")
-			get_tree().quit(1)
-			return
-		Engine.time_scale = 20.0
-	for argument: String in command_line_arguments:
-		if argument.begins_with("--capture="):
-			_capture_frame.call_deferred(argument.trim_prefix("--capture="))
-
-
-func _capture_frame(path: String) -> void:
-	await get_tree().process_frame
-	await RenderingServer.frame_post_draw
-	var error: Error = get_viewport().get_texture().get_image().save_png(path)
-	if error != OK:
-		printerr("CAPTURE_FAIL %s: %s" % [path, error_string(error)])
-		get_tree().quit(1)
-		return
-	print("CAPTURE_PASS %s" % path)
-	get_tree().quit(0)
-
-
 func _resolved_build_is_valid(value: Variant) -> bool:
 	if not value is Dictionary:
 		return false
@@ -3230,25 +2948,7 @@ func _on_skill_requested(ability: String) -> void:
 
 
 func _on_return_requested() -> void:
-	if embedded_session:
-		return_requested.emit()
-	else:
-		_show_base()
-
-
-func _refresh_lab() -> void:
-	if lab_view == null:
-		return
-	var active_slot := _next_empty_forge_slot()
-	lab_view.select_build(selected_preset, selected_mode)
-	lab_view.present_status({
-		"startup_errors": startup_errors.duplicate(), "proxy_prediction": proxy_prediction,
-		"active_slot": active_slot, "dice": destiny_forge.get_dice(DestinyForgeScript.TRACK_ADD),
-		"affixes": destiny_forge.affixes.duplicate(true),
-		"candidates": [] if active_slot < 0 else destiny_forge.preview(DestinyForgeScript.TRACK_ADD, active_slot, 3),
-		"in_arena": in_arena, "contract_wins": contract_wins,
-		"last_drop": last_drop, "last_save_message": last_save_message,
-	})
+	return_requested.emit()
 
 
 ## This boundary is actually consumed by the controller and input adapter.
@@ -3271,7 +2971,6 @@ func gameplay_snapshot() -> Dictionary:
 		"room_id": room_id,
 		"layout_id": layout_id,
 		"objective_id": objective_id,
-		"embedded_session": embedded_session,
 		"framework_room": framework_room,
 		"room_loot": room_loot_snapshot,
 		"room_entry_start_tick": room_entry_start_tick,
@@ -3424,23 +3123,6 @@ class MainHitAdmissionPort extends "res://src/runtime/combat/room_hit_admission_
 		if _owner == null or not is_instance_valid(_owner):
 			return {"allowed": false, "reason": "hit_admission_owner_unavailable"}
 		return _owner._admit_kernel_hit(hit)
-
-
-class MainRewardPort extends "res://src/runtime/world/room_reward_port.gd":
-
-	var _owner: MainArena = null
-
-	func bind(owner: MainArena) -> Dictionary:
-		if owner == null or not is_instance_valid(owner):
-			return {"ok": false, "error": "reward_owner_unavailable"}
-		_owner = owner
-		return {"ok": true, "error": ""}
-
-	func commit(reward: Dictionary) -> Dictionary:
-		if _owner == null or not is_instance_valid(_owner):
-			return {"ok": false, "error": "reward_owner_unavailable"}
-		_owner._commit_legacy_room_reward(reward)
-		return {"ok": true, "error": ""}
 
 
 class MainMovementPolicyPort extends "res://src/runtime/world/room_movement_policy_port.gd":

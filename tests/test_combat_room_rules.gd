@@ -1,23 +1,9 @@
 extends SceneTree
 
 const RoomRules := preload("res://src/game/combat_room_rules.gd")
-const Main := preload("res://src/game/main.gd")
 const Content := preload("res://src/content/content_registry.gd")
-const Items := preload("res://src/content/early_item_registry.gd")
-const Resolver := preload("res://src/systems/build_resolver.gd")
 const Rng := preload("res://src/core/deterministic_rng.gd")
-const Forge := preload("res://src/systems/destiny_forge.gd")
 const RoomRewardPortScript := preload("res://src/runtime/world/room_reward_port.gd")
-
-class SaveSink:
-	extends RefCounted
-	var calls := 0
-	var payload: Dictionary = {}
-	func save(value: Dictionary) -> Dictionary:
-		calls += 1
-		payload = value.duplicate(true)
-		return {"ok": true, "generation": calls, "slot": "test"}
-
 
 class CollectRewardPort extends RoomRewardPortScript:
 	var commits: Array[Dictionary] = []
@@ -36,11 +22,10 @@ func _initialize() -> void:
 func _run() -> void:
 	_test_terminal_priorities()
 	_test_legacy_rewards()
-	_test_main_commits_once()
 	for failure: String in failures:
 		printerr("FAIL: " + failure)
 	if failures.is_empty():
-		print("PASS test_combat_room_rules.gd (terminal priority, embedded and legacy rewards, one save)")
+		print("PASS test_combat_room_rules.gd (terminal priority, embedded and legacy rewards)")
 	quit(0 if failures.is_empty() else 1)
 
 
@@ -105,41 +90,6 @@ func _old_reward(content, mode: String) -> Dictionary:
 	if mode == "Manual" and rng.next_float() < 0.35:
 		dice += 1
 	return {"id": id, "dice": dice, "rng": rng.export_state()}
-
-
-func _test_main_commits_once() -> void:
-	var items := Items.new()
-	_expect(items.load_all().is_empty(), "item fixture failed")
-	var arena := Main.new()
-	arena.embedded_session = true
-	arena.presentation_enabled = false
-	arena.framework_resolved_build = Resolver.new(items).resolve_fixture("calibration_convergent")
-	arena.framework_active_build = {"skills": ["piercing_arrow"]}
-	arena.framework_room = {"room_id": "test.legacy.reward", "layout_id": "rectangle_arena", "objective_id": "clear", "enemy_ids": ["melee_pursuer"], "hazard_ids": [], "elite_rule_ids": [], "boss_id": "", "drop_tags": []}
-	root.add_child(arena)
-	arena.set_process(false)
-	# Enter the standalone diagnostic reward path with an explicit save sink;
-	# startup stayed embedded so the real profile was never loaded or written.
-	arena.embedded_session = false
-	arena.test_session = false
-	var sink := SaveSink.new()
-	arena.save_store = sink
-	arena.start_room()
-	_expect(arena.in_arena, "diagnostic Main start failed")
-	var expected := _old_reward(arena.content_registry, "Manual")
-	var dice_before: int = arena.destiny_forge.get_dice(Forge.TRACK_ADD)
-	arena.enemies.clear()
-	arena._check_battle_end()
-	arena._check_battle_end()
-	_expect(arena.battle_victory and arena.contract_wins == 1 and sink.calls == 1, "Main reward sink did not commit/save once")
-	_expect(arena.last_drop_id == expected.id and arena.last_loot_rng_state == expected.rng and arena.destiny_forge.get_dice(Forge.TRACK_ADD) == dice_before + expected.dice, "Main reward sink changed old loot/tally semantics")
-	_expect(sink.payload.contract_wins == 1 and sink.payload.last_drop_id == expected.id, "save did not contain the committed reward")
-	var runtime: Variant = arena.get("scene_runtime")
-	if runtime != null and runtime.has_method("unmount"):
-		runtime.unmount()
-	if arena.get_parent() != null:
-		arena.get_parent().remove_child(arena)
-	arena.free()
 
 
 func _expect(condition: bool, message: String) -> void:

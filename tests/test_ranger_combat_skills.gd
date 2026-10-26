@@ -382,7 +382,7 @@ func _test_proxy_decision_state_runtime(arena: Node, failures: Array[String]) ->
 
 
 func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) -> void:
-	arena.embedded_session = true
+	arena.test_session = true
 	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
 	arena.framework_resolved_proxy_build = _white_proxy_build()
 	arena.framework_room = {
@@ -472,7 +472,7 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 
 
 func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
-	arena.embedded_session = true
+	arena.test_session = true
 	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
 	arena.framework_resolved_proxy_build = _white_proxy_build()
 	fixture.reset(arena, arena.framework_room, fixture.build({"d": 100.0, "max_health": 1.0e9, "damage": 1.0}))

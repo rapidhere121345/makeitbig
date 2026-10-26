@@ -488,7 +488,7 @@ func _combat_focus_near_action_edge(snapshot: Dictionary, nearest: CombatEnemySt
 
 
 func _draw_room_entry_overlay(viewport_rect: Rect2) -> void:
-	if not enabled or not _snapshot["embedded_session"] or _snapshot["framework_room"].is_empty() or _snapshot["battle_over"]:
+	if not enabled or _snapshot["framework_room"].is_empty() or _snapshot["battle_over"]:
 		return
 	var age_ticks: int = _snapshot["sim_tick"] - _snapshot["room_entry_start_tick"]
 	if age_ticks < 0 or age_ticks >= ROOM_ENTRY_DURATION_TICKS:
