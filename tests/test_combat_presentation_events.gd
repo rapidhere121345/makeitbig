@@ -5,6 +5,7 @@ const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 
 var fixture := Fixture.new()
 const ArenaCombatPresenterScript := preload("res://src/presentation/arena_combat_presenter.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -207,6 +208,4 @@ func _first_mark(arena: Node, kind: String) -> Dictionary:
 	return {}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

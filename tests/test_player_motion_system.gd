@@ -16,6 +16,7 @@ const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_sp
 const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
 const SimCommandScript := preload("res://src/runtime/simulation/sim_command.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const PLAYER_SPEED := 245.0
 const TICK_DISPLACEMENT := PLAYER_SPEED / 30.0
@@ -45,8 +46,7 @@ func _run() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition: failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _make_typed_room() -> Dictionary:

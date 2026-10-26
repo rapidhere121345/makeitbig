@@ -21,6 +21,7 @@ const RoomSpatialPortScript := preload("res://src/runtime/world/room_spatial_por
 const RoomActorAccessScript := preload("res://src/runtime/world/room_actor_access.gd")
 const SimulationWorldScript := preload("res://src/runtime/world/simulation_world.gd")
 const SimCommandScript := preload("res://src/runtime/simulation/sim_command.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 ## Every world mounted by this harness. Shutdown at the end of the run severs
@@ -391,9 +392,7 @@ func _teardown_worlds() -> void:
 	_worlds.clear()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _near(a: float, b: float, epsilon: float = 0.0001) -> bool:

@@ -12,6 +12,7 @@ const Rules := preload("res://src/systems/ranger_skill_rules.gd")
 const ArrowOrigin := preload("res://src/game/ranger_arrow_origin.gd")
 const Builder := preload("res://src/game/combat_state_snapshot_builder.gd")
 const RoomRuntime := preload("res://src/game/combat_room_runtime.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 class DrivenMain:
 	extends Main
@@ -355,6 +356,4 @@ func _shutdown_arena(arena: Node) -> void:
 	arena.free()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

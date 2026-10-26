@@ -2,6 +2,7 @@ extends SceneTree
 
 const Ledger := preload("res://src/game/status_effect_ledger.gd")
 const Enemy := preload("res://src/runtime/world/combat_enemy_state.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var _failures: Array[String] = []
 
@@ -60,9 +61,7 @@ func _run() -> void:
 	_finish()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		_failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, _failures)
 
 
 func _finish() -> void:

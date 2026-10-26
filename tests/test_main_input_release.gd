@@ -5,6 +5,7 @@ const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Items := preload("res://src/content/early_item_registry.gd")
 const Resolver := preload("res://src/systems/build_resolver.gd")
 const Skill := preload("res://src/systems/ranger_skill_rules.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 class DrivenMain:
 	extends Main
@@ -125,6 +126,4 @@ func _shutdown_arena(arena: Node) -> void:
 	arena.free()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

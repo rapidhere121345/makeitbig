@@ -8,6 +8,7 @@ extends SceneTree
 const Simulation := preload("res://src/systems/combat_simulation.gd")
 const EncounterDirectorScript := preload("res://src/game/encounter_director.gd")
 const EncounterRoomPortScript := preload("res://src/game/encounter_room_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -44,6 +45,4 @@ func _initialize() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

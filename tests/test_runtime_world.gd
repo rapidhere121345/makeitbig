@@ -22,6 +22,7 @@ const BuildResolverScript = preload("res://src/systems/build_resolver.gd")
 const ContentRegistryScript = preload("res://src/content/content_registry.gd")
 const ProxyBuildScript = preload("res://src/systems/proxy_build.gd")
 const WorldFactory = preload("res://tests/simulation/sim_test_world_factory.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const RING_BOUNDARY := {"kind": "ring", "center": Vector2(640.0, 434.0), "inner_radius": 97.6, "outer_radius": 209.84}
 const RING_LEGAL_START := Vector2(461.7138366699219, 515.0391845703125)
@@ -408,6 +409,4 @@ func _test_ring_real_combat_ticks() -> void:
 	print("RING_REAL_TICKS checked=120 repetitions=2")
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

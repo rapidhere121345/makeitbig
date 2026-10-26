@@ -9,6 +9,7 @@ extends SceneTree
 
 const TitleScreenScript = preload("res://src/presentation/title_screen.gd")
 const TitleArtHelperScript = preload("res://src/presentation/title_art_helper.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const TITLE_SOURCE_PATH := "res://src/presentation/title_screen.gd"
 const BACKDROP_SOURCE_PATH := "res://src/presentation/title_art_helper.gd"
@@ -316,6 +317,4 @@ func _test_unpublished_assets(screen, failures: Array[String]) -> void:
 	_expect(requested == ["ranger"], "title: pending assets broke the new-game action", failures)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

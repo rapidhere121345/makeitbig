@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ResolverScript := preload("res://src/systems/manual_aim_resolver.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 var resolver = ResolverScript.new()
@@ -142,6 +143,4 @@ func _candidate(entity_id: int, kind_id: String, position: Vector2, health: floa
 	return result
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

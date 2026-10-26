@@ -15,6 +15,7 @@ extends SceneTree
 
 const EnemyAnimationScript = preload("res://src/presentation/enemy_animation.gd")
 const PlayerFixture = preload("res://tests/helpers/player_domain_fixture.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 ## A published sheet used as fixture pixels. No art or placeholder atlas is
 ## created by this test.
 const FIXTURE_SHEET := "res://art/production/p1/calibration_v01/enemies.png"
@@ -852,6 +853,4 @@ func _authoritative_fingerprint(arena: Node) -> String:
 	return "|".join(PackedStringArray(parts))
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -2,6 +2,7 @@ extends RefCounted
 
 const GameRootScript = preload("res://src/game/game_root.gd")
 const SaveStoreScript = preload("res://src/persistence/save_store.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const TEST_ROOT: String = "user://makeitbig-prototype-debug-runtime-tests"
 const REJECTED_SAVE_DIRECTORY: String = "user://makeitbig-prototype-debug-rejected"
@@ -413,6 +414,4 @@ func _remove_directory_tree(absolute_path: String) -> void:
 	DirAccess.remove_absolute(absolute_path)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

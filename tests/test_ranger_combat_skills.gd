@@ -8,6 +8,7 @@ const ContentRegistryScript := preload("res://src/content/content_registry.gd")
 const ProxyBuildScript := preload("res://src/systems/proxy_build.gd")
 const RangerAnimationScript := preload("res://src/presentation/ranger_animation.gd")
 const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## Clear of the current whole scenery boxes, including the full upward dash.
 const SKILL_ORIGIN := Vector2(500.0, 398.0)
@@ -1046,9 +1047,7 @@ func _proxy_build(perception_id: String, movement_id: String, distance_band: Str
 	return (compiled.get("value", {}) as Dictionary).duplicate(true) if bool(compiled.get("ok", false)) else {}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _skill_room() -> Dictionary:

@@ -3,6 +3,7 @@ extends SceneTree
 const Facility = preload("res://src/presentation/facility_screen.gd")
 const Fixture = preload("res://tests/test_facility_screen.gd")
 const Comparison = preload("res://src/presentation/equipment_comparison.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -91,5 +92,4 @@ func _settle() -> void:
 	for index in 4: await process_frame
 
 
-func _expect(condition: bool, detail: String) -> void:
-	if not condition: failures.append(detail)
+func _expect(condition: bool, detail: String) -> void: Assert.expect(condition, detail, failures)

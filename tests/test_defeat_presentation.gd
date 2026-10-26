@@ -27,6 +27,7 @@ const CombatRoomRuntimeScript := preload("res://src/game/combat_room_runtime.gd"
 const DefeatPresentationScript := preload("res://src/presentation/defeat_presentation.gd")
 const EarlyItemRegistryScript := preload("res://src/content/early_item_registry.gd")
 const BuildResolverScript := preload("res://src/systems/build_resolver.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## Production melee contact damage (main.gd _update_melee_tick). A health value
 ## equal to it means one real impact is fatal; the impact is still the death.
@@ -885,9 +886,7 @@ func _resolved_fixture() -> Dictionary:
 	return BuildResolverScript.new(registry).resolve_fixture("calibration_convergent")
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(failures: Array[String]) -> void:

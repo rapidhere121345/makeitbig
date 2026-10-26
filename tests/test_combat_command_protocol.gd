@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const TICK := 42
 const ACTOR := "ranger-1"
 const EQUIPPED := ["piercing_arrow", "hunter_mark", "dash"]
@@ -141,6 +142,4 @@ func _reason_for(receipts: Array, kind: String, ability_id: String, sequence: in
 	return "missing_receipt"
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

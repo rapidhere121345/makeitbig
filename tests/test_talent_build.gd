@@ -4,6 +4,7 @@ const RegistryScript := preload("res://src/content/talent_registry.gd")
 const BuildScript := preload("res://src/systems/talent_build.gd")
 const ResolverScript := preload("res://src/systems/build_resolver.gd")
 const ItemRegistryScript := preload("res://src/content/early_item_registry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -120,6 +121,4 @@ func _base() -> Dictionary:
 	return {"p": 0.25, "T": 2.0, "v": 200.0, "d": 100.0, "turn": 0.1, "damage": 100.0, "max_health": 100.0}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

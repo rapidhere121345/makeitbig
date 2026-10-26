@@ -6,6 +6,7 @@ const Ranger := preload("res://src/presentation/ranger_animation.gd")
 const Enemy := preload("res://src/presentation/enemy_animation.gd")
 const World := preload("res://src/presentation/arena_world_view.gd")
 const Palette := preload("res://src/presentation/combat_palette.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const PACK := "res://art/production/p1/combat_style_r13/v03/"
 
 var failures: Array[String] = []
@@ -228,9 +229,7 @@ func _world() -> void:
 	facts["world"] = {"textures": all_sheets, "cells": World.CELL_CONTRACTS.size(), "layout_sha256": FileAccess.get_sha256(World.SCENE_LAYOUT_PATH), "core_retained": true}
 	facts["environment_imports"] = imports
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 func _same_visible_pixels(left: Image, right: Image) -> bool:
 	# Godot's fix_alpha_border fills RGB under zero-alpha pixels. Those pixels

@@ -5,6 +5,7 @@ extends SceneTree
 ## cannot draw a frame refuses instead of reporting a capture. No player save is
 ## touched and the auto-smoke runs under its own isolated test session.
 const Game := preload("res://src/game/game_root.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const TEST_DIRECTORY: String = "user://makeitbig-capture-contract-tests"
 
 var failures: Array[String] = []
@@ -134,6 +135,4 @@ func _cleanup_directory(directory: String) -> void:
 		DirAccess.remove_absolute(directory)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

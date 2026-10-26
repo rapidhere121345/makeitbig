@@ -8,6 +8,7 @@ const TalentFixture := preload("res://tests/helpers/talent_runtime_fixture.gd")
 const ContractPlanScript := preload("res://src/game/contract_plan.gd")
 const SnapshotBuilder := preload("res://src/game/combat_state_snapshot_builder.gd")
 const StateCodec := preload("res://src/game/combat_state_codec.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 var fixture := PlayerFixture.new()
@@ -977,9 +978,7 @@ func _cast_and_resolve_arrow(arena: Node) -> bool:
 	return true
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _mount_room(room: Dictionary, resolved: Dictionary = {}, live_input: bool = false) -> Node:

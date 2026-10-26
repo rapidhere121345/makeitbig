@@ -4,6 +4,7 @@ const EncounterScript := preload("res://src/runtime/encounter/room_encounter.gd"
 const DamageScript := preload("res://src/runtime/combat/damage_resolution.gd")
 const HitScript := preload("res://src/runtime/combat/combat_hit_record.gd")
 const StatusScript := preload("res://src/runtime/combat/status_effect_ledger.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -78,6 +79,4 @@ func _test_status(failures: Array[String]) -> void:
 	_expect(ledger.snapshot(5).effects.is_empty(), "expired status remained in snapshot", failures)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

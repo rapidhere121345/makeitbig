@@ -5,6 +5,7 @@ const Placement := preload("res://src/runtime/world/environment_object_placement
 const Baker := preload("res://src/runtime/world/environment_object_baker.gd")
 const Town := preload("res://src/runtime/world/town_scene_root.gd")
 const Spatial := preload("res://src/runtime/world/spatial_manifest.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const PREFIX := "res://build/current/environment_object_test_"
 var failures: Array[String] = []
 var created_files: Array[String] = []
@@ -350,6 +351,4 @@ func _path(id: String) -> String:
 	return PREFIX + str(OS.get_process_id()) + "_" + id + ".png"
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -5,6 +5,7 @@ const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 const ActorStateScript := preload("res://src/runtime/world/actor_state.gd")
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const WorldPresenterScript := preload("res://src/runtime/world/world_presenter.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -88,7 +89,5 @@ func _near(left: float, right: float, tolerance: float = 0.0001) -> bool:
 	return absf(left - right) <= tolerance
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 

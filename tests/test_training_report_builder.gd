@@ -1,6 +1,7 @@
 extends RefCounted
 
 const TrainingReportBuilder = preload("res://src/systems/training_report_builder.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func run() -> Array[String]:
@@ -93,9 +94,7 @@ func _test_report_shape_and_alias_isolation(failures: Array[String]) -> void:
 		"report: event count payload must be deep-copied", failures)
 
 
-func _expect(condition: bool, detail: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(detail)
+func _expect(condition: bool, detail: String, failures: Array[String]) -> void: Assert.expect(condition, detail, failures)
 
 
 func _layer0(value: BigValue) -> float:

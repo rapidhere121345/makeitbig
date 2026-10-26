@@ -4,6 +4,7 @@ const RoomRules := preload("res://src/game/combat_room_rules.gd")
 const Content := preload("res://src/content/content_registry.gd")
 const Rng := preload("res://src/core/deterministic_rng.gd")
 const RoomRewardPortScript := preload("res://src/runtime/world/room_reward_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 class CollectRewardPort extends RoomRewardPortScript:
 	var commits: Array[Dictionary] = []
@@ -92,6 +93,4 @@ func _old_reward(content, mode: String) -> Dictionary:
 	return {"id": id, "dice": dice, "rng": rng.export_state()}
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

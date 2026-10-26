@@ -21,6 +21,7 @@ const BossDamageValueScript := preload("res://src/runtime/combat/boss_damage_val
 const BossTargetScript := preload("res://src/runtime/combat/boss_target_view.gd")
 const BossHurtboxScript := preload("res://src/runtime/combat/boss_hurtbox.gd")
 const BigValueScript := preload("res://src/core/big_value.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 var worlds: Array[SimulationWorld] = []
@@ -220,6 +221,4 @@ func _teardown() -> void:
 	worlds.clear()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

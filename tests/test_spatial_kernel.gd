@@ -11,6 +11,7 @@ const ContinuousHitResolverScript := preload("res://src/runtime/spatial/continuo
 const SpatialSweepScript := preload("res://src/runtime/geometry/spatial_sweep.gd")
 const ShapeScript := preload("res://src/runtime/geometry/spatial_shape.gd")
 const Fixtures := preload("res://tests/spatial/spatial_fixtures.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -643,9 +644,7 @@ func _test_request_validation() -> void:
 	_expect(not bool(bad_channel["ok"]), "validate: non-combat channel was accepted by the hit resolver")
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _near(value: float, expected: float, epsilon: float = 0.001) -> bool:

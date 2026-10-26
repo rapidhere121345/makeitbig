@@ -1,5 +1,6 @@
 extends SceneTree
 const Screen = preload("res://src/presentation/result_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var errors: Array[String] = []
 
 func _initialize() -> void:
@@ -57,8 +58,7 @@ func _run() -> void:
 func _text(screen: Control,id: String) -> String:
 	return (screen.find_child("EvidenceBody_"+id,true,false) as Label).text
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok: errors.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, errors)
 
 func _visible(node: Control, screen: Control) -> bool:
 	if node == null or not node.is_visible_in_tree(): return false

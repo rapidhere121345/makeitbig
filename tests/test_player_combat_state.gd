@@ -14,6 +14,7 @@ const Rules := preload("res://src/systems/player_combat_rules.gd")
 const Stream := preload("res://src/systems/combat_event_stream.gd")
 const Big := preload("res://src/core/big_value.gd")
 const RoomPort := preload("res://tests/helpers/callable_combat_system_room_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -94,8 +95,7 @@ func _initialize() -> void:
 		world.kernel.shutdown()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition: failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(label: String) -> void:

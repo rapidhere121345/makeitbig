@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Geometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -227,6 +228,4 @@ func _test_repeatability() -> void:
 	_expect(bool(free.ok) and not bool(free.detour) and free.direction == Vector2.RIGHT, "repeatability: a movable direct direction was not preferred")
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

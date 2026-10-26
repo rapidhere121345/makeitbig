@@ -1,6 +1,7 @@
 extends SceneTree
 
 const DomainScript := preload("res://src/runtime/combat/combat_hazard_domain.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 class FakeRoomPort:
@@ -78,6 +79,4 @@ func _test_moving_fireline_quantization(failures: Array[String]) -> void:
 	_expect(not bool(rejected.get("ok", false)) and String(rejected.get("error", "")) == "hazard_quantization_rejected", "moving fireline accepted invalid quantization", failures)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

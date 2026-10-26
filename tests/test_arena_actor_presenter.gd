@@ -2,6 +2,7 @@ extends SceneTree
 
 const ArenaActorPresenterScript := preload("res://src/presentation/arena_actor_presenter.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -75,6 +76,4 @@ func _frame() -> Dictionary:
 	}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

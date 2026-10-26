@@ -1,5 +1,6 @@
 extends SceneTree
 const Trace = preload("res://src/presentation/training_trace_view.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 func _initialize() -> void:
@@ -32,6 +33,4 @@ func _initialize() -> void:
 	print("PASS  test_training_trace_view.gd" if failures.is_empty() else "FAIL test_training_trace_view.gd")
 	quit(0 if failures.is_empty() else 1)
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok:
-		failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

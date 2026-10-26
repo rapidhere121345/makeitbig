@@ -1,6 +1,7 @@
 extends SceneTree
 
 const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -50,6 +51,4 @@ func _test_invalid_shapes() -> void:
 		_expect(not CombatQueryScript.shape_contains(shape, Vector2.ZERO), "combat query: malformed shape was accepted: %s" % str(shape))
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

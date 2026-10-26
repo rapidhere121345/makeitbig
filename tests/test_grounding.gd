@@ -1,6 +1,7 @@
 extends SceneTree
 const Effects := preload("res://src/presentation/grounding_effects.gd")
 const Hub := preload("res://src/presentation/base_hub_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 func _initialize() -> void:
@@ -89,6 +90,4 @@ func _test_light_budget() -> void:
 	var crowded := Effects.illumination(Vector2.ZERO, lights)
 	_expect(crowded.r <= 1.161 and crowded.g <= 1.131 and crowded.b <= 1.121 and crowded.a == 1.0, "overlapping sources keep readability budget")
 
-func _expect(value: bool, message: String) -> void:
-	if not value:
-		failures.append(message)
+func _expect(value: bool, message: String) -> void: Assert.expect(value, message, failures)

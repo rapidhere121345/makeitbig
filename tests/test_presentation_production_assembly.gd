@@ -29,6 +29,7 @@ const HamletLifeAnimationScript := preload("res://src/presentation/hamlet_life_a
 const OcclusionControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
 const SilhouetteRevealScript := preload("res://src/presentation/occlusion/silhouette_reveal_controller.gd")
 const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const TICK_DELTA := 1.0 / 30.0
 const OCCLUSION_FLOOR := 0.399
@@ -614,6 +615,4 @@ func _resolved_proxy_fixture() -> Dictionary:
 	return (compiled.get("value", {}) as Dictionary).duplicate(true) if bool(compiled.get("ok", false)) else {}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

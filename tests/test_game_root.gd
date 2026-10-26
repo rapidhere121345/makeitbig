@@ -1,6 +1,7 @@
 extends RefCounted
 
 const GameRootScript = preload("res://src/game/game_root.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const TEST_DIRECTORY: String = "user://makeitbig-game-root-tests"
 
 class FakeArena:
@@ -798,9 +799,7 @@ func _cleanup_test_directory() -> void:
 		DirAccess.remove_absolute(absolute_directory)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 ## The capture harness is a contract, not a convenience: an unsupported or

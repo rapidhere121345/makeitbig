@@ -16,6 +16,7 @@ extends SceneTree
 const TownExpectations = preload("res://tests/helpers/town_scene_expectations.gd")
 const HamletLifeAnimationScript = preload("res://src/presentation/hamlet_life_animation.gd")
 const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const LIFE_DIR := "res://art/production/p1/hamlet_life_v01/"
 const LIFE_ATLAS_PATH := LIFE_DIR + "atlas.json"
@@ -86,9 +87,7 @@ func _initialize() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 ## ---------------------------------------------------------------- the package

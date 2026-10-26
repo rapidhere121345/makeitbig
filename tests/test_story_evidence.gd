@@ -5,6 +5,7 @@ const CombatRoomRuntimeScript = preload("res://src/game/combat_room_runtime.gd")
 const CombatFixture = preload("res://tests/helpers/talent_runtime_fixture.gd")
 const SkillRules = preload("res://src/systems/ranger_skill_rules.gd")
 const Encounter = preload("res://src/game/encounter_director.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 func _initialize() -> void:
@@ -119,5 +120,4 @@ func _test_actual_projectile_evidence(outcome: String) -> void:
 	_expect(state.profile.character.experience == 60, "observing growth on defeat granted completion XP")
 	runtime.free()
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok: failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

@@ -1,6 +1,7 @@
 extends SceneTree
 
 const TestConsoleScript = preload("res://src/presentation/test_console.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const RAW_SENTINEL := "PRIVATE_RAW_SENTINEL"
 
 var _provider_calls := 0
@@ -145,6 +146,4 @@ func _finish(console, failures: Array[String]) -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

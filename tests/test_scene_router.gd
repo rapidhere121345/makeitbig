@@ -1,6 +1,7 @@
 extends RefCounted
 
 const SceneRouter = preload("res://src/game/scene_router.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var _signal_events: Array[Dictionary] = []
 
@@ -184,6 +185,4 @@ func _on_route_changed(previous_route: String, current_route: String, payload: D
 	})
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

@@ -2,6 +2,7 @@ extends SceneTree
 
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const DEFAULT_ARENA := Rect2(0.0, 0.0, 640.0, 480.0)
 
@@ -518,9 +519,7 @@ func _test_quantization() -> void:
 	_expect(String(charge.request_action) == "charge" and float(charge.action_distance) > 0.0, "quantization: charge action_distance was not preserved")
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _intent_for(result: Dictionary, entity_id: int) -> Dictionary:

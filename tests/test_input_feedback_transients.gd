@@ -7,6 +7,7 @@ extends SceneTree
 
 const PlayerFixture := preload("res://tests/helpers/player_domain_fixture.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 var fixture := PlayerFixture.new()
@@ -274,6 +275,4 @@ func _release_input_actions() -> void:
 		Input.action_release(action)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -2,6 +2,7 @@ extends SceneTree
 
 const StoryScreenScript = preload("res://src/presentation/story_screen.gd")
 const ShellTheme = preload("res://src/presentation/shell_theme.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -221,6 +222,4 @@ func _settle() -> void:
 		await process_frame
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

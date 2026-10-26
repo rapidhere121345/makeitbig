@@ -5,6 +5,7 @@ extends SceneTree
 
 const RangerMotionOverlayScript = preload("res://src/presentation/ranger_motion_overlay.gd")
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -168,6 +169,4 @@ func _test_west_walk_reader_regression(failures: Array[String]) -> void:
 	_expect(RangerAnimationScript.arrow_attachment_local("west", 2) == Vector2i(12, 24), "overlay: the west release socket moved", failures)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

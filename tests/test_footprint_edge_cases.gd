@@ -2,6 +2,7 @@ extends SceneTree
 
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 const GeometryQueryScript := preload("res://src/runtime/geometry/geometry_query.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -122,9 +123,7 @@ func _test_deterministic_clearance_sweep() -> void:
 	_expect(checked >= 200, "stress: too many trials were discarded as invalid starts (%d)" % checked)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _contact_time(result: Dictionary, blocker_id: String) -> float:

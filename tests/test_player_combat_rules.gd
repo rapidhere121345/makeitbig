@@ -12,6 +12,7 @@ const Rules := preload("res://src/systems/player_combat_rules.gd")
 const Stream := preload("res://src/systems/combat_event_stream.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Big := preload("res://src/core/big_value.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 var spatial_port := RoomSpatialPortScript.new()
@@ -233,5 +234,4 @@ func _step(commands: Array) -> Dictionary:
 	return result
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition: failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

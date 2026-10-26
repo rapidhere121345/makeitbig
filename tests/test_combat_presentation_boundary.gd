@@ -3,6 +3,7 @@ extends SceneTree
 const Runtime := preload("res://src/game/combat_room_runtime.gd")
 const ItemRegistry := preload("res://src/content/early_item_registry.gd")
 const BuildResolver := preload("res://src/systems/build_resolver.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -141,6 +142,4 @@ func _run() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

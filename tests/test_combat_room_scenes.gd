@@ -5,6 +5,7 @@ extends SceneTree
 
 const SceneScript := preload("res://src/presentation/combat_room_scene.gd")
 const RoomCatalogScript := preload("res://src/runtime/world/room_catalog.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const FOCUS := Vector2(512.0, 360.0)
 const SCALE := 0.72
 const FIXTURE_DIR := "user://combat_room_scene_fixture"
@@ -227,6 +228,4 @@ func _test_production_pack_state() -> void:
 		_expect(not loaded and String(scene.pending_reason).contains("world_expansion_v01"), "absent production floor pack must fail closed")
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

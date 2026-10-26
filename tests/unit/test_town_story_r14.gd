@@ -2,6 +2,7 @@ extends SceneTree
 
 const Game = preload("res://src/game/game_root.gd")
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var errors: Array[String] = []
 
 func _initialize() -> void: call_deferred("_run")
@@ -134,5 +135,4 @@ func _key(code: Key) -> void:
 func _settle() -> void:
 	for frame in range(3): await process_frame
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok: errors.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, errors)

@@ -7,6 +7,7 @@ const CombatEventStreamScript := preload("res://src/systems/combat_event_stream.
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 const RoomCatalogScript := preload("res://src/runtime/world/room_catalog.gd")
 const EnemyProfileRegistryScript := preload("res://src/content/early_enemy_profile_registry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 class PlayerPort:
 	extends RefCounted
@@ -259,6 +260,4 @@ func _initialize() -> void:
 	for failure: String in failures:
 		printerr("- %s" % failure)
 	quit(1)
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

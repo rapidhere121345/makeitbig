@@ -5,6 +5,7 @@ const ProxyBuild := preload("res://src/systems/proxy_build.gd")
 const Decision := preload("res://src/systems/proxy_decision.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const TEST_ARENA := Rect2(-320.0, -320.0, 640.0, 640.0)
 
 var builds := {}
@@ -217,6 +218,4 @@ func _enemy(entity_id: int, position: Vector2, health: float = 10.0, targetable:
 	return enemy
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

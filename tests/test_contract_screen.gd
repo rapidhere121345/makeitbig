@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ContractScreenScript = preload("res://src/presentation/contract_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -496,9 +497,7 @@ func _finish(failures: Array[String]) -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _parameter_text(screen: Control, key: String) -> String:

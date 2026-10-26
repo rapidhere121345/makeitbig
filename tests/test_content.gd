@@ -1,6 +1,7 @@
 extends RefCounted
 
 const ContentRegistry = preload("res://src/content/content_registry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func run() -> Array[String]:
@@ -331,6 +332,4 @@ func _has_substring(errors: Array[String], needle: String) -> bool:
 	return false
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

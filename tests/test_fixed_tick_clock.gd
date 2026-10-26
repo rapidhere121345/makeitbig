@@ -1,6 +1,7 @@
 extends RefCounted
 
 const FixedTickClock = preload("res://src/core/fixed_tick_clock.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func run() -> Array[String]:
@@ -31,7 +32,5 @@ func _test_invalid_and_batched_frames(failures: Array[String]) -> void:
 	_expect(clock.phase == 0.0, "fixed clock: reset must clear fractional phase", failures)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 

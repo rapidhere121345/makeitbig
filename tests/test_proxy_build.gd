@@ -2,6 +2,7 @@ extends SceneTree
 
 const ContentRegistry := preload("res://src/content/content_registry.gd")
 const ProxyBuild := preload("res://src/systems/proxy_build.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const WHITE := ["near_enemy_horizon", "direct_gait", "single_key_execution", "short_trace_memory"]
 
 
@@ -222,6 +223,4 @@ func _reordered_dictionary(source: Dictionary) -> Dictionary:
 	return result
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

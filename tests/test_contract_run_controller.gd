@@ -4,6 +4,7 @@ const ControllerScript := preload("res://src/game/contract_run_controller.gd")
 const ApplicationStateScript := preload("res://src/game/application_state.gd")
 const ContractPlanScript := preload("res://src/game/contract_plan.gd")
 const CommitPortScript := preload("res://tests/helpers/callable_contract_room_commit_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 class FakeArena:
 	extends Node
@@ -459,6 +460,4 @@ func _result(outcome: String, ticks: int, elapsed: float, casts: int, defeated: 
 	}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

@@ -4,6 +4,7 @@ const CharacterScreenScript = preload("res://src/presentation/character_screen.g
 const TalentBoardScript = preload("res://src/presentation/ranger_talent_board.gd")
 const ApplicationStateScript = preload("res://src/game/application_state.gd")
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -317,9 +318,7 @@ func _node(id: String, name: String, tier: int, keystone: bool, description: Str
 	return {"id": id, "name": name, "tier": tier, "keystone": keystone, "description": description, "allocated": allocated, "can_allocate": can_allocate, "lock_reason": lock_reason}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _contrast_ratio(a: Color, b: Color) -> float:

@@ -4,6 +4,7 @@ const Shell = preload("res://src/presentation/shell_theme.gd")
 const GridIcon = preload("res://src/presentation/pixel_grid_icon.gd")
 const Progression = preload("res://src/presentation/progression_icons.gd")
 const Skills = preload("res://src/presentation/combat_skill_icons.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var errors: Array[String] = []
 var preserved := 0
 var contrasts: Dictionary = {}
@@ -93,8 +94,7 @@ func _luma(color: Color) -> float:
 	var c := color.srgb_to_linear()
 	return c.r*0.2126+c.g*0.7152+c.b*0.0722
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok: errors.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, errors)
 
 
 func _check_font_coverage() -> void:

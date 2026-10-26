@@ -3,6 +3,7 @@ extends SceneTree
 const Driver := preload("res://src/game/diagnostics/smoke_input_driver.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Fixture := preload("res://tests/helpers/talent_runtime_fixture.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 
@@ -83,6 +84,4 @@ func _test_main_assembly() -> void:
 	fixture.free_session(session)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

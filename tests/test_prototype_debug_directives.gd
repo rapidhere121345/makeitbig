@@ -1,6 +1,7 @@
 extends RefCounted
 
 const PrototypeDebugDirectives = preload("res://tools/prototype_debug_directives.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const DEFAULT_DEBUG_SAVE_DIR: String = "user://makeitbig-prototype-debug"
 const PROTECTED_SAVE_DIR: String = "user://framework-saves"
@@ -238,6 +239,4 @@ func _args(items: Array[String]) -> PackedStringArray:
 	return PackedStringArray(items)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

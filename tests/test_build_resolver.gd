@@ -2,6 +2,7 @@ extends SceneTree
 
 const RegistryScript = preload("res://src/content/early_item_registry.gd")
 const ResolverScript = preload("res://src/systems/build_resolver.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var registry
 var resolver
@@ -200,9 +201,7 @@ func _near(left: Variant, right: Variant, epsilon: float = 0.000001) -> bool:
 	return absf(float(left) - float(right)) <= epsilon
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(failures: Array[String]) -> void:

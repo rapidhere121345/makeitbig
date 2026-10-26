@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ResultScreenScript = preload("res://src/presentation/result_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## The approved English UI floor (approved baseline: Text 18-22 display pixels).
 const FONT_FLOOR := 18
@@ -603,9 +604,7 @@ func _open_equipment_detail_text(screen: Control) -> String:
 	return text
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _frames(count: int) -> void:

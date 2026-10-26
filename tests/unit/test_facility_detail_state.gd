@@ -9,6 +9,7 @@ extends SceneTree
 
 const FacilityScreenScript = preload("res://src/presentation/facility_screen.gd")
 const FacilityFixture = preload("res://tests/test_facility_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## Enough same-slot candidates to exercise several real backpack pages.
 const EXTRA_CANDIDATES := 30
@@ -829,6 +830,4 @@ func _finish() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -6,6 +6,7 @@ const DeathNotificationScript := preload("res://src/runtime/combat/death_settlem
 const LootScript := preload("res://src/runtime/combat/combat_room_loot_rebuild.gd")
 const PlacementPortScript := preload("res://src/runtime/world/room_loot_placement_port.gd")
 const MountedPlacementScript := preload("res://src/game/main_loot_placement_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 class FakeMaterializer:
@@ -125,6 +126,4 @@ func _test_room_loot(failures: Array[String]) -> void:
 	_expect(JSON.stringify(settled) == JSON.stringify(repeated), "room loot settlement was not idempotent", failures)
 	var snapshot: Dictionary = loot.snapshot()
 	_expect(String(((snapshot.get("entities", []) as Array)[0] as Dictionary).get("state", "")) == LootScript.PICKED_STATE, "settlement changed picked loot state", failures)
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

@@ -1,6 +1,7 @@
 extends SceneTree
 
 const GridScript = preload("res://src/presentation/equipment_backpack_grid.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -139,6 +140,4 @@ func _test_status_badges() -> void:
 	host.free()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

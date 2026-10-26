@@ -9,6 +9,7 @@ const RangerAnimationScript := preload("res://src/presentation/ranger_animation.
 const ContractPlanScript := preload("res://src/game/contract_plan.gd")
 const SimTickContextScript := preload("res://src/runtime/simulation/sim_tick_context.gd")
 const DeathSettlementNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -447,9 +448,7 @@ func _settle_first_encounter_member(arena: Node) -> Dictionary:
 
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _semantic_snapshot(arena: Node) -> Dictionary:

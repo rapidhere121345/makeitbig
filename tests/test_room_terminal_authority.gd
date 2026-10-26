@@ -3,6 +3,7 @@ extends SceneTree
 const EncounterScript := preload("res://src/runtime/encounter/room_encounter.gd")
 const PortScript := preload("res://src/runtime/world/room_encounter_port.gd")
 const ObservationScript := preload("res://src/runtime/encounter/room_terminal_observation.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -104,6 +105,4 @@ func _observation(tick: int, room: String, revision: int, alive: bool, wave: int
 	return result
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

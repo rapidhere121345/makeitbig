@@ -1,6 +1,7 @@
 extends SceneTree
 const Dressing := preload("res://src/presentation/world_dressing.gd")
 const Icons := preload("res://src/presentation/combat_skill_icons.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 func _initialize() -> void:
@@ -41,6 +42,4 @@ func _run() -> void:
 		printerr("FAIL test_world_dressing.gd ", failures)
 	quit(0 if failures.is_empty() else 1)
 
-func _expect(value: bool, message: String) -> void:
-	if not value:
-		failures.append(message)
+func _expect(value: bool, message: String) -> void: Assert.expect(value, message, failures)

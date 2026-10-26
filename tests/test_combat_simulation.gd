@@ -19,6 +19,7 @@ const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spat
 const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
 const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const SPAWN := Vector2(200.0, 200.0)
 
@@ -117,5 +118,4 @@ func check_battle_end() -> void: events.append("end")
 func check_timeout() -> void: events.append("timeout")
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition: failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

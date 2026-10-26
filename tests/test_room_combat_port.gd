@@ -16,6 +16,7 @@ const RoomActorAccessScript := preload("res://src/runtime/world/room_actor_acces
 const SimulationWorldScript := preload("res://src/runtime/world/simulation_world.gd")
 const DeathSettlementNotificationScript := preload("res://src/runtime/combat/death_settlement_notification.gd")
 const SpatialChannels := preload("res://src/runtime/spatial/spatial_channels.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## Explicit harness cleanup: shutdown severs the kernel -> port -> access ->
 ## registry borrow cycle so the engine exits without leaking the room graph.
@@ -149,6 +150,4 @@ func _finish(failures: Array[String]) -> void:
 	quit(0 if failures.is_empty() else 1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

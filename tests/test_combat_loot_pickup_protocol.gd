@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Protocol := preload("res://src/systems/combat_loot_pickup_protocol.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const TICK := 120
 const ACTOR := "ranger"
 const LOOT_ID := "drop-007"
@@ -218,6 +219,4 @@ func _reason_count(receipts: Array, reason: String) -> int:
 	return count
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

@@ -2,6 +2,7 @@ extends SceneTree
 
 const RegistryScript = preload("res://src/content/early_skill_registry.gd")
 const RulesScript = preload("res://src/systems/ranger_skill_rules.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -57,9 +58,7 @@ func _contains(errors: Array[String], needle: String) -> bool:
 	return false
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(failures: Array[String]) -> void:

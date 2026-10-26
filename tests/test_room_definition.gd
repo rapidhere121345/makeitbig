@@ -3,6 +3,7 @@ extends SceneTree
 const RoomDefinitionScript = preload("res://src/runtime/world/room_definition.gd")
 const WorldAssetScript = preload("res://src/runtime/world/world_asset.gd")
 const SpatialManifestScript = preload("res://src/runtime/world/spatial_manifest.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -143,6 +144,4 @@ func _contains(values: Array[String], expected: String) -> bool:
 	return values.has(expected)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

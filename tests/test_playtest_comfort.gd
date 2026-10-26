@@ -4,6 +4,7 @@ const Game = preload("res://src/game/game_root.gd")
 const Facility = preload("res://src/presentation/facility_screen.gd")
 const FacilityFixture = preload("res://tests/test_facility_screen.gd")
 const Result = preload("res://src/presentation/result_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -176,6 +177,4 @@ func _frames(count: int) -> void:
 		await process_frame
 
 
-func _expect(condition: bool, detail: String) -> void:
-	if not condition:
-		failures.append(detail)
+func _expect(condition: bool, detail: String) -> void: Assert.expect(condition, detail, failures)

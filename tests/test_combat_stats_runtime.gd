@@ -17,6 +17,7 @@ const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spat
 const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
 const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const START := Vector2(10.0, 20.0)
 const RADIUS := 14.0
@@ -191,9 +192,7 @@ func _session(room_id: String, move_speed: float, dodge_distance: float, dodge_d
 	return {"ok": true, "world": world, "access": access, "resolver": room.resolver, "state": state, "rules": rules}
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		_failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, _failures)
 
 
 func _finish() -> void:

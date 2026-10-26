@@ -4,6 +4,7 @@ extends SceneTree
 ## geometry is covered by test_town_geometry_rebuild.gd and test_town_runtime.gd.
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 const HubScript = preload("res://src/presentation/base_hub_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const WORLD_MARGIN := 38.0
 const HERO_RADIUS := 6.0
 var failures: Array[String] = []
@@ -23,9 +24,7 @@ func _initialize() -> void:
 		quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _geometry(shapes: Array) -> RefCounted:

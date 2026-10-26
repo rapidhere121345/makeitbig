@@ -2,6 +2,7 @@ extends SceneTree
 
 const LawForgeScript = preload("res://src/systems/law_forge.gd")
 const EarlyItemRegistryScript = preload("res://src/content/early_item_registry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -98,6 +99,4 @@ func _finish(failures: Array[String]) -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

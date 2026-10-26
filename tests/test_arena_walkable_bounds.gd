@@ -15,6 +15,7 @@ const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const SceneRuntimeScript := preload("res://src/runtime/world/scene_runtime.gd")
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const PhasePort := preload("res://tests/helpers/callable_combat_phase_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 class DrivenMain:
 	extends MainScript
@@ -442,6 +443,4 @@ func _shutdown_arena(arena: Node) -> void:
 	arena.free()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

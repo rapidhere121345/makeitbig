@@ -4,6 +4,7 @@ extends SceneTree
 const NativeScene := preload("res://content/rooms/town/hearthside.tscn")
 const TownControllerScript := preload("res://src/runtime/world/town_controller.gd")
 const Spatial := preload("res://src/runtime/world/spatial_manifest.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const ART_ROOT := "res://art/production/p1/generated_world_v02/"
 const RECIPE_PATH := "res://docs/art-production/generated-world-v02/ground_footprints.json"
 const ASSETS_PATH := "res://art/production/p1/generated_world_v02/assets.json"
@@ -276,6 +277,4 @@ func _run() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok:
-		failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

@@ -3,6 +3,7 @@ extends SceneTree
 const RouterScript := preload("res://src/systems/combat_command_router.gd")
 const ProtocolScript := preload("res://src/systems/combat_command_protocol.gd")
 const DispatchPortScript := preload("res://tests/helpers/callable_combat_command_dispatch_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const TICK := 17
 const ACTOR := "ranger"
@@ -70,6 +71,4 @@ func _on_cast(command: Dictionary) -> void:
 	cast_commands.append(command.duplicate(true))
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

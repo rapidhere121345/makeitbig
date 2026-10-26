@@ -21,6 +21,7 @@ const SpatialFixtures := preload("res://tests/spatial/spatial_fixtures.gd")
 const FakeSpatialPortScript := preload("res://tests/simulation/fake_spatial_port.gd")
 const FakeCombatPortScript := preload("res://tests/simulation/fake_combat_port.gd")
 const FakeEncounterPortScript := preload("res://tests/simulation/fake_encounter_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const ROOM_ID := "presentation-port-room"
 const REVISION := 7
@@ -337,6 +338,4 @@ func _test_presentation_churn_never_writes_simulation() -> void:
 	_expect(final_a == final_b, "presentation churn wrote simulation state", failures)
 
 
-func _expect(condition: bool, message: String, failures_list: Array[String]) -> void:
-	if not condition:
-		failures_list.append(message)
+func _expect(condition: bool, message: String, failures_list: Array[String]) -> void: Assert.expect(condition, message, failures_list)

@@ -2,6 +2,7 @@ extends SceneTree
 
 const FrameScript := preload("res://src/presentation/presentation_frame.gd")
 const ControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -74,6 +75,4 @@ func _initialize() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

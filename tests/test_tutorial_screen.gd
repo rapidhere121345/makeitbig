@@ -10,6 +10,7 @@ const TutorialScreenScript = preload("res://src/presentation/tutorial_screen.gd"
 const TutorialArtScript = preload("res://src/presentation/tutorial_art.gd")
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
 const PlayerActionTimelineScript = preload("res://src/systems/player_action_timeline.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const SCREEN_SOURCE_PATH := "res://src/presentation/tutorial_screen.gd"
 const ART_SOURCE_PATH := "res://src/presentation/tutorial_art.gd"
@@ -408,9 +409,7 @@ func _test_no_early_placeholder_art(failures: Array[String]) -> void:
 		_expect(not source.contains("user://") and not source.contains("SaveStore"), "tutorial: %s started touching persistence" % path, failures)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _advance_action_ticks(screen, ticks: int) -> void:

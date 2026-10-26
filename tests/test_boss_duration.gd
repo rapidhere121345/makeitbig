@@ -24,6 +24,7 @@ const MainScript := preload("res://src/game/main.gd")
 const EarlyRegistryScript := preload("res://src/content/early_item_registry.gd")
 const ResolverScript := preload("res://src/systems/build_resolver.gd")
 const SkillRules := preload("res://src/systems/ranger_skill_rules.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const ACCEPTANCE_MIN_SECONDS: float = 45.0
 const ACCEPTANCE_MAX_SECONDS: float = 120.0
@@ -205,6 +206,4 @@ func _finish(arena: Node) -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

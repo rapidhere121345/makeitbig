@@ -3,6 +3,7 @@ extends SceneTree
 const BuildResolverScript = preload("res://src/systems/build_resolver.gd")
 const EarlyItemRegistryScript = preload("res://src/content/early_item_registry.gd")
 const GeneratorScript = preload("res://src/systems/equipment_drop_generator.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var registry: RefCounted
 var generator: RefCounted
@@ -105,9 +106,7 @@ func _base_parameters() -> Dictionary:
 	}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(failures: Array[String]) -> void:

@@ -19,6 +19,7 @@ const TownExpectations = preload("res://tests/helpers/town_scene_expectations.gd
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
 const HearthReturnViewScript = preload("res://src/presentation/hearth_return_view.gd")
 const SilhouetteRevealScript = preload("res://src/presentation/occlusion/silhouette_reveal_controller.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 var output_dir := ""
@@ -1291,9 +1292,7 @@ class ArenaPreview:
 		view.draw_decals(self)
 		view.draw_structure_shadows(self)
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 func _test_presets() -> void:
 	for preset in ["arena", "hamlet", "hearth"]:

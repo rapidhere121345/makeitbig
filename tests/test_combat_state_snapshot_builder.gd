@@ -4,6 +4,7 @@ const Builder := preload("res://src/game/combat_state_snapshot_builder.gd")
 const Codec := preload("res://src/game/combat_state_codec.gd")
 const Enemy := preload("res://src/runtime/world/combat_enemy_state.gd")
 const Fixture := preload("res://tests/helpers/talent_runtime_fixture.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 
@@ -116,6 +117,4 @@ func _part(enemy, id: String) -> Dictionary:
 	return {}
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -26,6 +26,7 @@ const AuthoredRevealScript = preload("res://src/presentation/occlusion/authored_
 const SilhouetteRevealScript = preload("res://src/presentation/occlusion/silhouette_reveal_controller.gd")
 const PrimitiveFadeScript = preload("res://src/presentation/occlusion/primitive_fade_controller.gd")
 const PairedRevealScript = preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## Visual-overlap budget: at most this much total local opacity may sit on top of
 ## the hero's own cell, so a per-channel comparison against the source pixels can
@@ -81,9 +82,7 @@ func _run() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _test_authored_reveal() -> void:

@@ -15,6 +15,7 @@ const EarlyItemRegistryScript := preload("res://src/content/early_item_registry.
 const BuildResolverScript := preload("res://src/systems/build_resolver.gd")
 const SpatialScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const NativeScene := preload("res://content/rooms/samples/concave_hole_passage.tscn")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const MANIFEST_PATH := "res://content/rooms/samples/concave_hole_passage.spatial.json"
 const AUTHORED_ENCOUNTER_PATH := "res://content/rooms/combat/encounter_waves.json"
@@ -623,6 +624,4 @@ func _typed_death_notification(entity_key: String, tick: int, room_id: String, r
 	return notification
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

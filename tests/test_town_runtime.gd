@@ -9,6 +9,7 @@ const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_sp
 const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
 const SpatialChannelsScript := preload("res://src/runtime/spatial/spatial_channels.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 ## Generated whole-object town: authored ground footprints are final movement
 ## geometry — projected visual height is walkable behind. The motor adds the
 ## six-pixel hero footprint once; the whole visual pair/detection is unchanged.
@@ -400,8 +401,7 @@ func _test_expansion(town) -> void:
 	print("TOWN_EXPANSION bridges/water/gate/wall PASS")
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition: failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 ## Captured regression: the house slope leads into the pine's rounded corner.
 ## Retain the historical geometry after the town cleanup removes this wedge.

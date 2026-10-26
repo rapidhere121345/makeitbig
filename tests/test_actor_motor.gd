@@ -2,6 +2,7 @@ extends SceneTree
 
 const ActorMotorScript := preload("res://src/runtime/geometry/actor_motor.gd")
 const GeometryQueryScript := preload("res://src/runtime/geometry/geometry_query.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -374,6 +375,4 @@ func _near_vector(left: Vector2, right: Vector2, tolerance: float = 0.0001) -> b
 	return left.distance_to(right) <= tolerance
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

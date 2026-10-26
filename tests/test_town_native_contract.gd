@@ -3,6 +3,7 @@ extends SceneTree
 const NativeScene := preload("res://content/rooms/town/hearthside.tscn")
 const Spatial := preload("res://src/runtime/world/spatial_manifest.gd")
 const Runtime := preload("res://src/runtime/world/scene_runtime.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const MANIFEST_PATH := "res://content/rooms/town/hearthside.spatial.json"
 var failures: Array[String] = []
 var negative_cases := 0
@@ -156,6 +157,4 @@ func _test_mount_rejects_transformed_source() -> void:
 	runtime.free()
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

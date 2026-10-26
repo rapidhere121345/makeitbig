@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ArenaPresenterScript := preload("res://src/presentation/arena_presenter.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var _frame_calls := 0
 
@@ -55,9 +56,7 @@ func _invalid_frame() -> Dictionary:
 	return {}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(failures: Array[String]) -> void:

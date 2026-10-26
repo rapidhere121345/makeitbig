@@ -1,6 +1,7 @@
 extends SceneTree
 
 const PlaytestLogScript = preload("res://src/game/playtest_log.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const TEST_DIRECTORY := "user://makeitbig-playtest-log-tests"
 const TEST_SESSION_ID := "deterministic-test-session"
 
@@ -88,6 +89,4 @@ func _finish(failures: Array[String]) -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

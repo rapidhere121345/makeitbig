@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ResultScreenScript = preload("res://src/presentation/result_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -154,6 +155,4 @@ func _frames(count: int) -> void:
 		await process_frame
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

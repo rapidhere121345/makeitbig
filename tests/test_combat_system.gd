@@ -6,6 +6,7 @@ const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_st
 const CombatArrowProjectileScript := preload("res://src/runtime/world/combat_arrow_projectile.gd")
 const ManualAimResolverScript := preload("res://src/systems/manual_aim_resolver.gd")
 const RoomPortScript := preload("res://tests/helpers/callable_combat_system_room_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 class PlayerRulePortStub extends RefCounted:
 	var critical_bonus_generations := 2
@@ -171,9 +172,7 @@ func _test_player_rule_port_authority(system, player_rule_port: PlayerRulePortSt
 	_expect(emptied.aggregate.is_zero() and is_zero_approx(float(emptied.ordinary)), "combat system: retained domain values were not cleared after take")
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 class DisposableBlockedPort extends Node:

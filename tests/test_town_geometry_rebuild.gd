@@ -4,6 +4,7 @@ const NativeScene := preload("res://content/rooms/town/hearthside.tscn")
 const Spatial := preload("res://src/runtime/world/spatial_manifest.gd")
 const SpatialChannels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const TownExpectations := preload("res://tests/helpers/town_scene_expectations.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 func _initialize() -> void: call_deferred("_run")
 func _run() -> void:
@@ -43,5 +44,4 @@ func _run() -> void:
 	for failure: String in failures: printerr(failure)
 	print("TOWN_GEOMETRY_REBUILD ", "PASS" if failures.is_empty() else "FAIL")
 	quit(0 if failures.is_empty() else 1)
-func _expect(ok: bool, message: String) -> void:
-	if not ok: failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

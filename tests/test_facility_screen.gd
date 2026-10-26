@@ -6,6 +6,7 @@ const BaseHubScreenTest = preload("res://tests/test_base_hub_screen.gd")
 const LawForgeScript = preload("res://src/systems/law_forge.gd")
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const ProgressionIconsScript = preload("res://src/presentation/progression_icons.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 class ProgressionIconFixture extends "res://src/presentation/progression_icons.gd":
@@ -519,9 +520,7 @@ func _finish(failures: Array[String], script_name: String = "test_facility_scree
 	quit(1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 ## Whether two rects describe the same box within one pixel: the layout rounds to

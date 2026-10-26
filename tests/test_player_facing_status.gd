@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Status := preload("res://src/presentation/player_facing_status.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -26,9 +27,7 @@ func _initialize() -> void:
 	_finish(failures)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(failures: Array[String]) -> void:

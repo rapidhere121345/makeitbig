@@ -1,6 +1,7 @@
 extends SceneTree
 const Progress = preload("res://src/systems/character_progression.gd")
 const State = preload("res://src/game/application_state.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 func _initialize() -> void:
@@ -46,5 +47,4 @@ func _run() -> void:
 		for problem in failures: printerr(problem)
 	quit(0 if failures.is_empty() else 1)
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok: failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

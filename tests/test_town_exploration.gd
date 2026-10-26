@@ -1,6 +1,7 @@
 extends SceneTree
 ## Distance-gated navigation and session-local return positions in the real root.
 const Game = preload("res://src/game/game_root.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 
@@ -86,5 +87,4 @@ func _run() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok: failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

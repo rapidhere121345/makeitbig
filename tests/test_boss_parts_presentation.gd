@@ -8,6 +8,7 @@ const FrameBuilder := preload("res://src/presentation/combat_presentation_frame_
 const Enemy := preload("res://src/runtime/world/combat_enemy_state.gd")
 const Codec := preload("res://src/game/combat_state_codec.gd")
 const Big := preload("res://src/core/big_value.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 # Record the real production sprite dispatch, then issue the real draw command.
 # Test textures/visual-parts definitions are not substituted for the atlas.
@@ -313,6 +314,4 @@ func _entry(entries: Array[Dictionary], id: String) -> Dictionary:
 	return {}
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

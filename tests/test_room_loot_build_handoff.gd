@@ -9,6 +9,7 @@ const ContractRunControllerScript = preload("res://src/game/contract_run_control
 const GameRootScript = preload("res://src/game/game_root.gd")
 const CommitPortScript = preload("res://tests/helpers/callable_contract_room_commit_port.gd")
 const ContractRoomCommitPortScript = preload("res://src/game/contract_room_commit_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 class FakeArena:
@@ -291,6 +292,4 @@ func _destroy(node: Node) -> void:
 	node.free()
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

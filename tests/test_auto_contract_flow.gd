@@ -7,6 +7,7 @@ const BuildResolverScript := preload("res://src/systems/build_resolver.gd")
 const ContentRegistryScript := preload("res://src/content/content_registry.gd")
 const ProxyBuildScript := preload("res://src/systems/proxy_build.gd")
 const ContractPlanScript := preload("res://src/game/contract_plan.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const MAX_TICKS := 5400
 const TICK_DELTA := 1.0 / 30.0
@@ -193,9 +194,7 @@ func _resolved_proxy_build() -> Dictionary:
 	return (compiled.get("value", {}) as Dictionary).duplicate(true) if bool(compiled.get("ok", false)) else {}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(failures: Array[String]) -> void:

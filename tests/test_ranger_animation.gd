@@ -10,6 +10,7 @@ extends SceneTree
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
 const BaseHubScript = preload("res://src/presentation/base_hub_screen.gd")
 const ArenaWorldViewScript = preload("res://src/presentation/arena_world_view.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 ## A published sheet used as fixture pixels. No art or placeholder atlas is
 ## created by this test.
 const FIXTURE_SHEET := "res://art/production/p1/calibration_v01/enemies.png"
@@ -440,9 +441,7 @@ func _fixture_atlas() -> Dictionary:
 	}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _shutdown_hub(hub: Node) -> void:

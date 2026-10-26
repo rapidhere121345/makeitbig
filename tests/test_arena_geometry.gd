@@ -5,6 +5,7 @@ const RoomAssetRootScript := preload("res://src/runtime/world/room_asset_root.gd
 const SceneRuntimeScript := preload("res://src/runtime/world/scene_runtime.gd")
 const RoomSceneSetupPortScript := preload("res://src/runtime/world/room_scene_setup_port.gd")
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 
@@ -172,5 +173,4 @@ func _assign_owner(node: Node, scene_root: Node) -> void:
 	for child: Node in node.get_children():
 		_assign_owner(child, scene_root)
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition: failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

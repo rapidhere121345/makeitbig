@@ -3,6 +3,7 @@ extends SceneTree
 ## lifetime. No normal save directory and no player data writes.
 const Game := preload("res://src/game/game_root.gd")
 const Stage := preload("res://src/presentation/pixel_stage.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 func _initialize() -> void:
@@ -92,5 +93,4 @@ func _run() -> void:
 	print("GAME_ROOT_STAGE ","pass" if failures.is_empty() else "fail")
 	quit(0 if failures.is_empty() else 1)
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok: failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

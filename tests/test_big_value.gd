@@ -1,6 +1,7 @@
 extends RefCounted
 
 const BigValue = preload("res://src/core/big_value.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func run() -> Array[String]:
@@ -100,9 +101,7 @@ func _test_formatting(errors: Array[String]) -> void:
 	_check(BigValue.from_tetration10(4).to_short_string().begins_with("10^^2"), "layer 2 must use tower notation", errors)
 
 
-func _check(condition: bool, message: String, errors: Array[String]) -> void:
-	if not condition:
-		errors.append(message)
+func _check(condition: bool, message: String, errors: Array[String]) -> void: Assert.expect(condition, message, errors)
 
 
 func _near(left: float, right: float, relative_epsilon: float = 1.0e-10) -> bool:

@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Timeline := preload("res://src/systems/player_action_timeline.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -187,6 +188,4 @@ func _count_type(events: Array, event_type: String) -> int:
 	return count
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

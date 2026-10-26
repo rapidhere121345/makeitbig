@@ -14,6 +14,7 @@ extends SceneTree
 
 const BossActionPoseScript = preload("res://src/presentation/boss_action_pose.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const BOSS_WINDUP_TICKS: int = 24
 const BOSS_ACTIVE_TICKS: int = 1
@@ -65,9 +66,7 @@ func _run() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 ## The sim's window for one stage of an action that starts at action_start:

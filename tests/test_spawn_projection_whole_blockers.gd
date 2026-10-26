@@ -15,6 +15,7 @@ extends SceneTree
 
 const Fixture := preload("res://tests/helpers/player_domain_fixture.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const ENEMY_R := 16.0
 const PAIRWISE_MIN := 32.0
@@ -57,9 +58,7 @@ func _run() -> void:
 	quit(1)
 
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok:
-		failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)
 
 
 func _check_case(fixture: Variant, case: Dictionary) -> void:

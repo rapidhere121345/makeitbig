@@ -1,6 +1,7 @@
 extends SceneTree
 
 const EndingScreenScript = preload("res://src/presentation/ending_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## The dedicated early-return illustration, and the floor
 ## no English copy may fall under (approved baseline: Text 18-22 display pixels).
@@ -204,9 +205,7 @@ func _run() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _frames(count: int) -> void:

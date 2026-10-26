@@ -12,6 +12,7 @@ const SimKernelScript = preload("res://src/runtime/simulation/sim_kernel.gd")
 const SimCommandScript = preload("res://src/runtime/simulation/sim_command.gd")
 const SimEntityHandleScript = preload("res://src/runtime/simulation/sim_entity_handle.gd")
 const WorldFactory = preload("res://tests/simulation/sim_test_world_factory.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -152,6 +153,4 @@ func _build_production_port_probe(probe: Array) -> void:
 	probe.append(weakref(port_object))
 
 
-func _expect(condition: bool, message: String, failures_list: Array[String]) -> void:
-	if not condition:
-		failures_list.append(message)
+func _expect(condition: bool, message: String, failures_list: Array[String]) -> void: Assert.expect(condition, message, failures_list)

@@ -1,6 +1,7 @@
 extends RefCounted
 
 const ContractPlan = preload("res://src/game/contract_plan.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func run() -> Array[String]:
@@ -155,6 +156,4 @@ func _code(result: Dictionary) -> String:
 	return String(result.get("error", ""))
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

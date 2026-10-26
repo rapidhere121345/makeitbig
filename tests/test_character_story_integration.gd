@@ -1,6 +1,7 @@
 extends SceneTree
 const Game = preload("res://src/game/game_root.gd")
 const Progress = preload("res://src/systems/character_progression.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var errors: Array[String] = []
 func _initialize() -> void: call_deferred("_run")
 func _run() -> void:
@@ -70,5 +71,4 @@ func _run() -> void:
 	for error in errors: printerr(error)
 	print("CHARACTER_STORY_INTEGRATION ","PASS" if errors.is_empty() else "FAIL")
 	quit(0 if errors.is_empty() else 1)
-func _expect(value:bool,message:String)->void:
-	if not value: errors.append(message)
+func _expect(value:bool,message:String)->void: Assert.expect(value, message, errors)

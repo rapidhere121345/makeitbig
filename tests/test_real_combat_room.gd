@@ -3,6 +3,7 @@ extends SceneTree
 const Items := preload("res://src/content/early_item_registry.gd")
 const Resolver := preload("res://src/systems/build_resolver.gd")
 const RoomRuntime := preload("res://src/game/combat_room_runtime.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var _failures: Array[String] = []
 var _completed: Array[Dictionary] = []
@@ -168,9 +169,7 @@ func _advance_until(arena: Node, predicate: Callable, limit: int) -> bool:
 	return bool(predicate.call())
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		_failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, _failures)
 
 
 ## Authored static blockers own spawn clearance now, so fixed fixture offsets

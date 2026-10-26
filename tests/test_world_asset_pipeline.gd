@@ -14,6 +14,7 @@ const EnvironmentDefinitionScript := preload("res://src/runtime/world/environmen
 const EnvironmentPlacementScript := preload("res://src/runtime/world/environment_object_placement.gd")
 const EnvironmentBakerScript := preload("res://src/runtime/world/environment_object_baker.gd")
 const TownSceneRootScript := preload("res://src/runtime/world/town_scene_root.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const RING_SCENE := "res://content/rooms/combat/ring.tscn"
 const RING_MANIFEST := "res://content/rooms/combat/ring.spatial.json"
@@ -48,9 +49,7 @@ func _run() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _contains(errors: Variant, needle: String) -> bool:

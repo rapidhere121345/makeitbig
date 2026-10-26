@@ -1,4 +1,5 @@
 extends RefCounted
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func run() -> Array[String]:
@@ -32,6 +33,4 @@ func _check_state(failures: Array[String], p: float, expected_state: String, exp
 	_expect(failures, absf(float(result["total_events_float"]) - expected_total) < 0.00001, "unexpected finite event sum for p=%s" % p)
 
 
-func _expect(failures: Array[String], condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(failures: Array[String], condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -7,6 +7,7 @@ extends SceneTree
 ## checked by source so the fix cannot silently regress to a closed box or a full
 ## circle.
 const CombatMarks = preload("res://src/presentation/combat_marks.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const MAIN_SOURCE_PATH := "res://src/game/main.gd"
 const CONTROLLER_SOURCE_PATH := "res://src/presentation/combat_presentation_controller.gd"
@@ -200,6 +201,4 @@ func _has_gaps(frame: Rect2, segments: Array) -> bool:
 	return top < frame.size.x - EPSILON and bottom < frame.size.x - EPSILON and left < frame.size.y - EPSILON and right < frame.size.y - EPSILON
 
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok:
-		failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

@@ -4,6 +4,7 @@ const ContentRegistryScript := preload("res://src/content/content_registry.gd")
 const ProxyBuildScript := preload("res://src/systems/proxy_build.gd")
 const ProxyIntentSystemScript := preload("res://src/systems/proxy_intent_system.gd")
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -81,6 +82,4 @@ func _snapshot(tick: int) -> Dictionary:
 	}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

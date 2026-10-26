@@ -2,6 +2,7 @@ extends RefCounted
 
 const DeterministicRng = preload("res://src/core/deterministic_rng.gd")
 const SaveStore = preload("res://src/persistence/save_store.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const TEST_DIRECTORY: String = "user://makeitbig-persistence-tests"
 
 
@@ -188,6 +189,4 @@ func _cleanup_test_directory() -> void:
 		DirAccess.remove_absolute(absolute_directory)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

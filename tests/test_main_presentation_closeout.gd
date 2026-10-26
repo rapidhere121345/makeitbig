@@ -12,6 +12,7 @@ const CommandSource := preload("res://src/systems/combat_command_source.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Snapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
 const ThemeScript := preload("res://src/presentation/shell_theme.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -348,6 +349,4 @@ func _fixture_snapshot() -> Dictionary:
 	})
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -4,6 +4,7 @@ extends SceneTree
 ## anchors, source identity and real animation poses instead of changing it.
 
 const Life = preload("res://src/presentation/hamlet_life_animation.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const STYLE := "res://art/production/p1/hamlet_style_r13/"
 const CYCLES := "res://art/production/p1/hamlet_life_r13/"
 var failures: Array[String] = []
@@ -41,6 +42,4 @@ func _init() -> void:
 func _read(path: String) -> Dictionary:
 	return JSON.parse_string(FileAccess.get_file_as_string(path))
 
-func _expect(ok: bool, label: String) -> void:
-	if not ok:
-		failures.append(label)
+func _expect(ok: bool, label: String) -> void: Assert.expect(ok, label, failures)

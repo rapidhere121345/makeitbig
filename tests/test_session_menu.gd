@@ -2,6 +2,7 @@ extends SceneTree
 const Game = preload("res://src/game/game_root.gd")
 const Menu = preload("res://src/presentation/session_menu.gd")
 const Stage = preload("res://src/presentation/pixel_stage.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 var errors: Array[String] = []
 
 func _initialize() -> void:
@@ -98,8 +99,7 @@ func _parse(text: String) -> Vector2i:
 	var parts := text.split("×")
 	return Vector2i(int(parts[0].strip_edges()), int(parts[1].strip_edges())) if parts.size() == 2 else Vector2i.ZERO
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok: errors.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, errors)
 
 func _check_launcher_stage_bounds() -> void:
 	for window_size in [Vector2i(1280,720), Vector2i(1920,1080), Vector2i(3440,1440), Vector2i(3840,2160), Vector2i(1600,1000)]:

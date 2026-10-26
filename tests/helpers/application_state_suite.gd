@@ -5,6 +5,7 @@ extends SceneTree
 ## list the former monolithic test_application_state.gd used; the base turns
 ## that list into a PASS line and a process exit code for test discovery.
 const ApplicationState = preload("res://src/game/application_state.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -121,6 +122,4 @@ func _is_fingerprint(value: String) -> bool:
 	return true
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

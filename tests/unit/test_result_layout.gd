@@ -17,6 +17,7 @@ extends SceneTree
 
 const PixelStageScript = preload("res://src/presentation/pixel_stage.gd")
 const ResultScreenScript = preload("res://src/presentation/result_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const RESOLUTIONS: Array[Vector2] = [Vector2(1280.0, 720.0), Vector2(1600.0, 900.0), Vector2(1920.0, 1080.0), Vector2(1024.0, 576.0)]
 const BODY_FOOTER_EPSILON := 1.0
@@ -417,9 +418,7 @@ func _visible_controls(node: Node) -> Array[Control]:
 	return found
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _collect_layout(node: Node, lines: Array[String]) -> void:

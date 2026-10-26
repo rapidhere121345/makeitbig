@@ -2,6 +2,7 @@ extends SceneTree
 
 const ManualInput := preload("res://src/systems/manual_combat_input.gd")
 const MainScript := preload("res://src/game/main.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 class FakeHud extends Control:
@@ -240,6 +241,4 @@ func _mouse_event(pressed: bool) -> InputEventMouseButton:
 	return event
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

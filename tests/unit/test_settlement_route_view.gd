@@ -16,6 +16,7 @@ extends SceneTree
 ## the code's own constants.
 
 const RouteView = preload("res://src/presentation/settlement_route_view.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## The approved English UI floor (approved baseline: Text 18-22 display pixels).
 const FONT_FLOOR := 18
@@ -377,6 +378,4 @@ func _frames(count: int) -> void:
 	for _index in count:
 		await process_frame
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

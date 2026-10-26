@@ -13,6 +13,7 @@ const BakeCore := preload("res://tools/world_manifest/bake_core.gd")
 const SpatialScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const SceneRuntimeScript := preload("res://src/runtime/world/scene_runtime.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const ROOMS: Array[String] = ["rectangle_arena", "corridor", "ring"]
 const LAYOUT_PATH := "res://art/production/p1/combat_style_r13/v03/layout.json"
@@ -269,6 +270,4 @@ func _point(value: Variant) -> Vector2:
 	return Vector2(INF, INF)
 
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok:
-		failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

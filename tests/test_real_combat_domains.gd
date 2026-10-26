@@ -6,6 +6,7 @@ const LootScript := preload("res://src/runtime/combat/combat_room_loot_rebuild.g
 const ItemRegistryScript := preload("res://src/content/early_item_registry.gd")
 const GeneratorScript := preload("res://src/systems/equipment_drop_generator.gd")
 const PlacementPortScript := preload("res://src/runtime/world/room_loot_placement_port.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 class AlwaysClearPlacement:
@@ -152,6 +153,4 @@ func _stats_data() -> Dictionary:
 	}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

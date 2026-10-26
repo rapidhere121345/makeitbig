@@ -4,6 +4,7 @@ const DestinyForge = preload("res://src/systems/destiny_forge.gd")
 const ProxyRuntime = preload("res://src/systems/proxy_runtime.gd")
 const ContentRegistry = preload("res://src/content/content_registry.gd")
 const ProxyBuild = preload("res://src/systems/proxy_build.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func run() -> Array[String]:
@@ -139,6 +140,4 @@ func _resolved_white(failures: Array[String]) -> Dictionary:
 	return compiled.value if compiled.ok else {}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

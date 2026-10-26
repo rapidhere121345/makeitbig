@@ -3,6 +3,7 @@ extends SceneTree
 ## and the real contract signal in the real game root.
 const Game = preload("res://src/game/game_root.gd")
 const TownController = preload("res://src/runtime/world/town_controller.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const GATE := {"id": "expedition", "label": "Expedition Gate", "position": [576.0, 595.3125], "radius": 48.0, "action": "contract"}
 var failures: Array[String] = []
 var _contract_signals := 0
@@ -185,6 +186,4 @@ func _configure(town, base_content: Dictionary, gateways: Variant) -> Dictionary
 	return town.configure(town.simulation, town.registry, content)
 
 
-func _expect(ok: bool, message: String) -> void:
-	if not ok:
-		failures.append(message)
+func _expect(ok: bool, message: String) -> void: Assert.expect(ok, message, failures)

@@ -6,6 +6,7 @@ const ArrowOrigin := preload("res://src/game/ranger_arrow_origin.gd")
 const Items := preload("res://src/content/early_item_registry.gd")
 const Resolver := preload("res://src/systems/build_resolver.gd")
 const RoomRuntime := preload("res://src/game/combat_room_runtime.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var _failures: Array[String] = []
 var _completed: Array[Dictionary] = []
@@ -194,9 +195,7 @@ func _find_valid_attack_position(arena: Node, target_position: Vector2, target: 
 	return {"ok": false, "position": Vector2.ZERO}
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		_failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, _failures)
 
 
 func _finish() -> void:

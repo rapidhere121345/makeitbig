@@ -2,6 +2,7 @@ extends SceneTree
 
 const StoryScreenScript = preload("res://src/presentation/story_screen.gd")
 const TownDialogueScript = preload("res://src/presentation/town_dialogue.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const OPENING := {"completed_node_ids": ["tutorial_ranger_basics"]}
 const COMPLETE := {
 	"completed_node_ids": ["tutorial_ranger_basics", "mainline_01_first_hunt", "mainline_02_priority_under_pressure", "mainline_03_first_elite", "mainline_04_hazard_and_forge", "mainline_05_growth_gate", "threshold_colossus", "auto_certification"],
@@ -307,5 +308,4 @@ func _settle() -> void:
 	for _frame in range(3): await process_frame
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition: failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -6,6 +6,7 @@ extends RefCounted
 const TownExpectations = preload("res://tests/helpers/town_scene_expectations.gd")
 const BaseHubScreenScript = preload("res://src/presentation/base_hub_screen.gd")
 const ApplicationStateScript = preload("res://src/game/application_state.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 ## The layout's five interaction routes. Immortality keeps its legacy API but has
 ## no placement, so it must never appear as an invisible hotspot.
@@ -1004,9 +1005,7 @@ func _post_boss_profile() -> Dictionary:
 	}}
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _visible_landmark_count(hub) -> int:

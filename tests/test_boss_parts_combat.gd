@@ -21,6 +21,7 @@ const BossTargetScript := preload("res://src/runtime/combat/boss_target_view.gd"
 const BossHurtboxScript := preload("res://src/runtime/combat/boss_hurtbox.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const HandleScript := preload("res://src/runtime/simulation/sim_entity_handle.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -190,6 +191,4 @@ func _part_ids(contacts: Array) -> Array:
 	return result
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

@@ -1,6 +1,7 @@
 extends SceneTree
 
 const RoomCatalogScript := preload("res://src/runtime/world/room_catalog.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -135,6 +136,4 @@ func _expect_offsets(actual: Array[Vector2], expected: Array[Vector2], label: St
 		_expect(actual[index].distance_to(expected[index]) <= 0.0001, "catalog: %s offset %d was %s, expected %s" % [label, index, actual[index], expected[index]])
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

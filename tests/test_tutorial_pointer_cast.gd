@@ -8,6 +8,7 @@ const TutorialScreenScript = preload("res://src/presentation/tutorial_screen.gd"
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
 const PlayerActionTimelineScript = preload("res://src/systems/player_action_timeline.gd")
 const Game := preload("res://src/game/game_root.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -177,6 +178,4 @@ func _frames(count: int) -> void:
 		await process_frame
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)

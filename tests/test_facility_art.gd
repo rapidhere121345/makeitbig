@@ -15,6 +15,7 @@ extends SceneTree
 
 const FacilityScreenScript = preload("res://src/presentation/facility_screen.gd")
 const FacilityArtScript = preload("res://src/presentation/facility_art.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const ICON_NATIVE_SIZE := Vector2i(32, 32)
 const ICON_DISPLAY_SIZE := Vector2(64.0, 64.0)
@@ -826,6 +827,4 @@ func _finish(failures: Array[String]) -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

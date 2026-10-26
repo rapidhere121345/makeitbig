@@ -17,6 +17,7 @@ const PresentationSnapshot := preload("res://src/presentation/combat_presentatio
 const Encounter := preload("res://src/game/encounter_director.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 const ShellThemeScript := preload("res://src/presentation/shell_theme.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 const SKILL_CELLS: Array[String] = ["Skill1Button", "Skill2Button", "Skill3Button", "DodgeButton"]
 ## Cells that carry the default strip. All of them must be visible, inside the top
 ## strip and disjoint, because the concept reads the strip as one band.
@@ -1189,6 +1190,4 @@ func _all_copy(node: Node) -> String:
 	return "\n".join(parts)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

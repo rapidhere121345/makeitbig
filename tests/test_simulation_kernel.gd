@@ -13,6 +13,7 @@ const SimCommandScript = preload("res://src/runtime/simulation/sim_command.gd")
 const SimEntityHandleScript = preload("res://src/runtime/simulation/sim_entity_handle.gd")
 const ActorStateScript = preload("res://src/runtime/world/actor_state.gd")
 const WorldFactory = preload("res://tests/simulation/sim_test_world_factory.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const EXPECTED_PHASES: Array[String] = [
 	"begin_tick_read_view",
@@ -372,6 +373,4 @@ func _test_full_tick_with_fake_ports_without_main() -> void:
 		"the full fake-port run must be byte-reproducible without Main", failures)
 
 
-func _expect(condition: bool, message: String, failures_list: Array[String]) -> void:
-	if not condition:
-		failures_list.append(message)
+func _expect(condition: bool, message: String, failures_list: Array[String]) -> void: Assert.expect(condition, message, failures_list)

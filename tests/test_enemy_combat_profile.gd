@@ -2,6 +2,7 @@ extends SceneTree
 
 const ProfileScript := preload("res://src/game/enemy_combat_profile.gd")
 const RegistryScript := preload("res://src/content/early_enemy_profile_registry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -58,6 +59,4 @@ func _initialize() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

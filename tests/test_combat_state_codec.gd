@@ -2,6 +2,7 @@ extends RefCounted
 
 const CombatStateCodec = preload("res://src/game/combat_state_codec.gd")
 const SaveStore = preload("res://src/persistence/save_store.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func run() -> Array[String]:
@@ -58,6 +59,4 @@ func _test_canonical_hash(failures: Array[String]) -> void:
 		"hash: canonical SHA-256 must use SaveStore byte ordering", failures)
 
 
-func _expect(condition: bool, detail: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(detail)
+func _expect(condition: bool, detail: String, failures: Array[String]) -> void: Assert.expect(condition, detail, failures)

@@ -16,6 +16,7 @@ extends SceneTree
 ## headless run: the layout contracts of the same pages are asserted by
 ## tests/test_facility_screen.gd, which runs in the normal suite.
 const FacilityScreenScript = preload("res://src/presentation/facility_screen.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const LONG_ID := "stress_drop_00_0123456789abcdef0123456789abcdef0123456789abcdef"
 
@@ -166,9 +167,7 @@ func _finish() -> void:
 	quit(1)
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 
 func _loadout_fixture() -> Dictionary:

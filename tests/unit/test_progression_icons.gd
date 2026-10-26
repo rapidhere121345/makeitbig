@@ -5,6 +5,7 @@ extends SceneTree
 const ProgressionIconsScript = preload("res://src/presentation/progression_icons.gd")
 const CharacterScreenScript = preload("res://src/presentation/character_screen.gd")
 const TalentRegistryScript = preload("res://src/content/talent_registry.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 const TALENT_TEXTURE := "ranger_talents.png"
 const LAW_TEXTURE := "law_tokens.png"
@@ -218,6 +219,4 @@ func _match_fixture_field(fixture: Fixture, key: String, value: Variant) -> void
 		"texture": fixture.atlas.sprites[0].texture = value
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)

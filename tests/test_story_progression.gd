@@ -2,6 +2,7 @@ extends SceneTree
 
 const StoryRegistryScript = preload("res://src/content/story_registry.gd")
 const StoryProgressionScript = preload("res://src/systems/story_progression.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []
 
@@ -148,9 +149,7 @@ func _has(errors: Array[String], fragment: String) -> bool:
 	return false
 
 
-func _expect(condition: bool, message: String) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String) -> void: Assert.expect(condition, message, failures)
 
 func _test_real_evidence_gates(progression: StoryProgression) -> void:
 	var snapshot := {"completed_node_ids":["tutorial_ranger_basics", "mainline_01_first_hunt", "mainline_02_priority_under_pressure", "mainline_03_first_elite", "mainline_04_hazard_and_forge", "mainline_05_growth_gate"]}

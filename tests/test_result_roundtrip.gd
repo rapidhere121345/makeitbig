@@ -1,6 +1,7 @@
 extends SceneTree
 
 const GameRootScript = preload("res://src/game/game_root.gd")
+const Assert := preload("res://tests/helpers/assert.gd")
 
 
 func _initialize() -> void:
@@ -114,9 +115,7 @@ func _frames(count: int) -> void:
 		await process_frame
 
 
-func _expect(condition: bool, message: String, failures: Array[String]) -> void:
-	if not condition:
-		failures.append(message)
+func _expect(condition: bool, message: String, failures: Array[String]) -> void: Assert.expect(condition, message, failures)
 
 
 func _finish(game: Node, failures: Array[String]) -> void:
