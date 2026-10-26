@@ -74,10 +74,33 @@ never use `-ac` or `xhost +`. Clean only owned processes and their temporary
 IPC/authentication files. File mode `0600` does not isolate mutually untrusted
 processes sharing the same UID.
 
+## Rendered-Run Evidence Hygiene
+
+Lessons from earlier rendered lanes that still apply to every windowed or
+`--gpu` fixture run:
+
+- Scan the raw engine log yourself for `compilation failed`, `unable to bind`,
+  `CanvasShaderGLES3` and `SCRIPT ERROR`. A harness summary counter that counts
+  only literal `SHADER ERROR` strings can read 0 while a shader failed to compile.
+- A tool exit code of 0 is not a pass. A runtime `SCRIPT ERROR` can abort a
+  coroutine after its prologue and still exit 0 (a hollow pass). Gate each run
+  on a verifier that also checks the raw log, the positive check inventory, the
+  exact capture set and per-PNG SHA256 values against the report.
+- After placing a hero or actor in a fixture, wait one authoritative tick before
+  reading the published plan snapshot or comparing pixels.
+- Record unreachable or untouchable targets as INFO with the geometry reason,
+  not as a pass; fixture saves are not human-playtime evidence.
+- Keep failed and interrupted attempts beside the passing run; never relabel an
+  invalid pass. Do not edit runtime or content while a frozen full gate runs.
+- Generated textures must keep `process/fix_alpha_border=false` in their `.import`
+  sidecars; see the import-identity section of
+  [generated-world-v02/README.md](art-production/generated-world-v02/README.md).
+
 ## Retained Acceptance
 
 See [acceptance records](playtest/README.md) for the devbox migration,
-modular-town foundation, and historical gaps to recheck. Historical host
+current world records, the archive of superseded town-fade work, and historical
+gaps to recheck. Historical host
 commands and screenshots are not instructions to resume work in the rollback
 checkout or expose the host desktop.
 

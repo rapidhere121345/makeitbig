@@ -35,7 +35,7 @@ infrastructure changes.
   originals recoverable from `1d7e013`; [index](README.md) retained).
 - `check.sh` Python launcher contract: done, bounded check verified.
 - Modular greybox calibration (plan step 2): done —
-  [calibration record](TOWN_MODULAR_CALIBRATION_20261022.md).
+  [calibration record](ARCHIVE_TOWN_FADE_AND_WORLD_V02_20261022-23.md#town_modular_calibration_20261022).
 - Two raw Loadout base candidates: generation review done — verbatim
   [requests](../art-production/p1-town-modular-v01/PROMPTS.md), matching
   source/copy hashes and [provenance](../art-production/p1-town-modular-v01/PROVENANCE.md),
