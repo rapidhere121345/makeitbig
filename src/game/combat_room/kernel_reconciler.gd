@@ -498,7 +498,7 @@ func _reconcile_kernel_hit(projectile, record: Variant, hit: Dictionary, outcome
 	enemy.hit_flash_until_tick = _main.sim_tick + MainArena.ENEMY_HIT_FLASH_TICKS
 	projectile.position = contact
 	_main.combat_system.apply_kernel_contact(projectile, enemy, contact, hit, health_before, enemy.health, record.aggregate)
-	_main._maybe_summon_reinforcements(enemy)
+	_main._enemy_ai._maybe_summon_reinforcements(enemy)
 	if enemy.health <= 0.0:
 		_finalize_kernel_enemy_death(enemy)
 

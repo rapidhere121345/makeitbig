@@ -72,6 +72,7 @@ const MainEncounterSpawnPortScript := preload("res://src/game/ports/main_encount
 const KernelReconcilerScript := preload("res://src/game/combat_room/kernel_reconciler.gd")
 const RoomHazardsScript := preload("res://src/game/combat_room/room_hazards.gd")
 const PiercingArrowsScript := preload("res://src/game/combat_room/piercing_arrows.gd")
+const EnemyAiTicksScript := preload("res://src/game/combat_room/enemy_ai_ticks.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -350,6 +351,8 @@ var _kernel_reconciler := KernelReconcilerScript.new(self)
 var _hazards := RoomHazardsScript.new(self)
 ## PiercingArrows lives in src/game/combat_room/piercing_arrows.gd.
 var _arrows := PiercingArrowsScript.new(self)
+## EnemyAiTicks lives in src/game/combat_room/enemy_ai_ticks.gd.
+var _enemy_ai := EnemyAiTicksScript.new(self)
 
 
 func _init() -> void:
@@ -1678,32 +1681,6 @@ func _encounter_report(previous_report: String) -> void:
 		battle_report = report
 
 
-func _update_enemies_tick() -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director.update_tick()
-	_encounter_report(previous_report)
-
-
-func _enemy_tactics_snapshot() -> Dictionary:
-	_encounter_context()
-	return encounter_director.enemy_tactics_snapshot()
-
-
-func _enemy_tactics_hazards() -> Array[Dictionary]:
-	if _hazard_domain != null and _hazard_domain.is_configured():
-		return _hazard_domain.active_geometry()
-	_encounter_context()
-	return encounter_director.enemy_tactics_hazards()
-
-
-func _maybe_summon_reinforcements(elite: CombatEnemyState) -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director._maybe_summon_reinforcements(elite)
-	_encounter_report(previous_report)
-
-
 func _update_room_rules_tick() -> void:
 	# CombatSimulation submits the kernel tick through SimulationWorld directly,
 	# bypassing SceneRuntime.step_tick(). Drain pending kernel encounter spawn
@@ -1732,69 +1709,6 @@ func _allocate_entity_id() -> int:
 	return encounter_director._allocate_entity_id()
 
 
-func _update_enemy_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director._update_enemy_tick(enemy, intent)
-	_encounter_report(previous_report)
-
-
-func _advance_action_state(enemy: CombatEnemyState, active_ticks: int, recovery_ticks: int) -> bool:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	var result: bool = bool(encounter_director._advance_action_state(enemy, active_ticks, recovery_ticks))
-	_encounter_report(previous_report)
-	return result
-
-
-func _finish_enemy_recovery_if_due(enemy: CombatEnemyState) -> bool:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	var result: bool = bool(encounter_director._finish_enemy_recovery_if_due(enemy))
-	_encounter_report(previous_report)
-	return result
-
-
-func _begin_action(enemy: CombatEnemyState, action_id: String, windup_ticks: int) -> void:
-	_encounter_context()
-	encounter_director._begin_action(enemy, action_id, windup_ticks)
-
-
-func _emit_enemy_action_accepted(enemy: CombatEnemyState) -> void:
-	_encounter_context()
-	encounter_director._emit_enemy_action_accepted(enemy)
-
-
-func _enemy_breath_ticks(kind_id: String) -> int:
-	_encounter_context()
-	return encounter_director._enemy_breath_ticks(kind_id)
-
-
-func _intent_for_enemy(enemy: CombatEnemyState) -> Dictionary:
-	_encounter_context()
-	return encounter_director._intent_for_enemy(enemy)
-
-
-func _update_melee_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director._update_melee_tick(enemy, intent)
-	_encounter_report(previous_report)
-
-
-func _start_melee_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	_encounter_context()
-	encounter_director._start_melee_action(enemy, direction)
-
-
-func _start_charger_action(enemy: CombatEnemyState, direction: Vector2, action_distance: float) -> bool:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	var result: bool = bool(encounter_director._start_charger_action(enemy, direction, action_distance))
-	_encounter_report(previous_report)
-	return result
-
-
 func _set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
 	if enemy == null or actor_registry == null or not actor_registry.has_method("set_collision_class"):
 		return false
@@ -1803,60 +1717,6 @@ func _set_enemy_collision_class(enemy: CombatEnemyState, collision_class: String
 		push_error("enemy_collision_class_update_failed:%d:%s" % [enemy.entity_id, String(result.get("error", "unknown"))])
 		return false
 	return true
-
-
-func _update_charger_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director._update_charger_tick(enemy, intent)
-	_encounter_report(previous_report)
-
-
-func _start_fan_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	_encounter_context()
-	encounter_director._start_fan_action(enemy, direction)
-
-
-func _update_fan_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director._update_fan_tick(enemy, intent)
-	_encounter_report(previous_report)
-
-
-func _commit_normal_enemy_intent(enemy: CombatEnemyState, intent: Dictionary) -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director._commit_normal_enemy_intent(enemy, intent)
-	_encounter_report(previous_report)
-
-
-func _resolve_hostile_attack(enemy: CombatEnemyState, amount: float, shape_hit: bool) -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director._resolve_hostile_attack(enemy, amount, shape_hit)
-	_encounter_report(previous_report)
-
-
-func _update_boss_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	_encounter_context()
-	var previous_report := String(encounter_director.battle_report)
-	encounter_director._update_boss_tick(enemy, intent)
-	_encounter_report(previous_report)
-
-
-func _start_boss_action(enemy: CombatEnemyState, action: String, planned_direction: Vector2 = Vector2.ZERO) -> void:
-	_encounter_context()
-	encounter_director._start_boss_action(enemy, action, planned_direction)
-
-
-func _update_boss_hands(enemy: CombatEnemyState) -> void:
-	_encounter_context()
-	encounter_director._update_boss_hands(enemy)
-
-
-func _boss_shape_contains(shape: Dictionary, point: Vector2) -> bool:
-	return CombatQueryScript.shape_contains(shape, point)
 
 
 func _quantize_position(value: Vector2) -> Vector2:

@@ -373,7 +373,7 @@ func _test_ring_enemy_boundary(arena: Node) -> void:
 		arena._simulate_tick()
 		if _tick == 0:
 			var first_position: Vector2 = enemy.position
-			arena._commit_normal_enemy_intent(enemy, {"move_direction": Vector2.RIGHT, "speed_scale": 1.0, "reason": "bounds_test_duplicate"})
+			arena._enemy_ai._commit_normal_enemy_intent(enemy, {"move_direction": Vector2.RIGHT, "speed_scale": 1.0, "reason": "bounds_test_duplicate"})
 			_expect(enemy.position == first_position, "ring: duplicate enemy movement committed twice in one simulation tick")
 	_expect(_near(float(enemy.position.distance_to(center)), outer - enemy_radius), "ring: enemy crossed the outer boundary or lost footprint clearance")
 
@@ -389,7 +389,7 @@ func _test_ring_boss_target(arena: Node) -> void:
 	var rejected_outside: Dictionary = arena.teleport_actor("ranger", outside)
 	_expect(not bool(rejected_outside.get("ok", false)), "ring: out-of-bound setup teleport was accepted")
 	_expect(bool(arena.teleport_actor("ranger", Vector2(expected_outside["position"])).get("ok", false)), "ring: projected outer setup teleport was rejected")
-	arena._start_boss_action(boss, "slam")
+	arena._enemy_ai._start_boss_action(boss, "slam")
 	var outside_shape: Dictionary = boss.target_shape
 	_expect(String(outside_shape.get("type", "")) == "rect", "ring: boss slam target shape changed")
 	_expect(_near_vector(Rect2(outside_shape.get("rect", Rect2())).get_center(), Vector2(expected_outside["position"])), "ring: boss slam target ignored the annulus outer edge")
@@ -398,7 +398,7 @@ func _test_ring_boss_target(arena: Node) -> void:
 	var center: Vector2 = arena._arena_rect().get_center()
 	var expected_center: Dictionary = ArenaGeometryScript.project(center, arena._collision_geometry(28.0))
 	_expect(bool(arena.teleport_actor("ranger", Vector2(expected_center["position"])).get("ok", false)), "ring: projected inner setup teleport was rejected")
-	arena._start_boss_action(boss, "slam")
+	arena._enemy_ai._start_boss_action(boss, "slam")
 	_expect(_near_vector(Rect2(boss.target_shape.get("rect", Rect2())).get_center(), Vector2(expected_center["position"])), "ring: boss slam target entered the inner hole")
 
 

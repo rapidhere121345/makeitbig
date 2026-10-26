@@ -115,10 +115,10 @@ func _test_charger_sequence(arena: Node, failures: Array[String]) -> void:
 	fixture.advance_to(arena, 10)
 	arena.teleport_actor("ranger", charger.position + Vector2(100.0, 0.0))
 	var contact_distance: float = charger.position.distance_to(arena.player_position)
-	var accepted: bool = arena._start_charger_action(charger, charger.position.direction_to(arena.player_position), contact_distance)
+	var accepted: bool = arena._enemy_ai._start_charger_action(charger, charger.position.direction_to(arena.player_position), contact_distance)
 	_expect(accepted and charger.action_state == "windup" and charger.impact_tick == 28, "charger: explicit-distance windup was not accepted", failures)
 	_expect(is_equal_approx(charger.charge_length, 100.0), "charger: direct sequence did not freeze its explicit distance", failures)
-	fixture.drive(arena, {"enemy_step": func() -> void: arena._update_charger_tick(charger)})
+	fixture.drive(arena, {"enemy_step": func() -> void: arena._enemy_ai._update_charger_tick(charger)})
 	fixture.advance_to(arena, charger.impact_tick - 1)
 	var active_steps := 0
 	while charger.action_state != "recovery" and arena.sim_tick <= charger.impact_tick + arena.CHARGE_ACTIVE_TICKS:
@@ -139,9 +139,9 @@ func _test_fan_sequence(arena: Node, failures: Array[String]) -> void:
 	var fan = arena.enemies[0]
 	fixture.advance_to(arena, 40)
 	arena.teleport_actor("ranger", fan.position + Vector2(140.0, 0.0))
-	arena._start_fan_action(fan)
+	arena._enemy_ai._start_fan_action(fan)
 	_expect(fan.action_state == "windup" and fan.impact_tick == 61, "fan: windup or impact tick is wrong", failures)
-	fixture.drive(arena, {"enemy_step": func() -> void: arena._update_fan_tick(fan)})
+	fixture.drive(arena, {"enemy_step": func() -> void: arena._enemy_ai._update_fan_tick(fan)})
 	fixture.advance_to(arena, fan.impact_tick)
 	var recovery_tick: int = fan.state_ends_tick
 	_expect(fan.action_state == "active" and fan.impact_resolved, "fan: did not enter resolved active state", failures)
@@ -151,7 +151,7 @@ func _test_fan_sequence(arena: Node, failures: Array[String]) -> void:
 	var after_impact: float = arena.player_health
 	_expect(is_equal_approx(after_impact, 92.0), "fan: authoritative cone did not deal expected impact damage", failures)
 	# Repeated resolver submission at the same committed world tick cannot hit twice.
-	arena._update_fan_tick(fan)
+	arena._enemy_ai._update_fan_tick(fan)
 	_expect(is_equal_approx(arena.player_health, after_impact), "fan: impact dealt damage more than once", failures)
 	fixture.advance_to(arena, recovery_tick)
 	_expect(fan.action_state == "recovery", "fan: active did not advance to recovery", failures)
@@ -258,7 +258,7 @@ func _test_boss_runtime(arena: Node, failures: Array[String]) -> void:
 	_expect(_cast_and_resolve_arrow(arena), "boss: real threshold arrow setup failed", failures)
 	_expect(arena.boss_damage.compare(arena.boss_maximum.multiply(BigValue.from_float(0.5))) == 0 and arena.arrow_hits == 1, "boss: real contact did not establish exactly 50% damage", failures)
 	fixture.advance_to(arena, 99)
-	fixture.drive(arena, {"enemy_step": func() -> void: arena._update_boss_tick(boss)})
+	fixture.drive(arena, {"enemy_step": func() -> void: arena._enemy_ai._update_boss_tick(boss)})
 	fixture.step(arena)
 	_expect(boss.phase_id == "sealed" and boss.phase_state == "transition", "boss: 50% threshold did not start sealed transition", failures)
 	_expect(is_equal_approx(arena.player_health, 77.0), "boss: phase transition dealt damage", failures)
@@ -358,7 +358,7 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 	fixture.drive(arena, {"enemies": true})
 	for tick in range(1, 241):
 
-		var planned: Dictionary = arena.enemy_tactics.plan(arena._enemy_tactics_snapshot())
+		var planned: Dictionary = arena.enemy_tactics.plan(arena._enemy_ai._enemy_tactics_snapshot())
 		var intents_by_id := {}
 		for intent: Dictionary in planned.get("intents", []):
 			intents_by_id[int(intent.get("entity_id", 0))] = intent
@@ -422,7 +422,7 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	_expect(initial_distance >= arena.EnemyTacticsScript.CHARGER_LAUNCH_MIN_RANGE and initial_distance <= arena.EnemyTacticsScript.CHARGER_LAUNCH_MAX_RANGE, "ring runtime: launch fixture is outside the charge band", failures)
 	var direct_chord: Dictionary = arena.ArenaGeometryScript.line_segment_walkable(charger.position, arena.player_position, enemy_geometry)
 	_expect(bool(direct_chord.ok) and bool(direct_chord.walkable), "ring runtime: the chord within the authored band is not walkable", failures)
-	var initial_plan: Dictionary = arena.enemy_tactics.plan(arena._enemy_tactics_snapshot())
+	var initial_plan: Dictionary = arena.enemy_tactics.plan(arena._enemy_ai._enemy_tactics_snapshot())
 	var initial_intent: Dictionary = initial_plan.intents[0]
 	_expect(String(initial_intent.request_action) == "charge" and String(initial_intent.reason) == "charger_launch_band", "ring runtime: a legal in-band chord did not launch immediately", failures)
 
@@ -446,7 +446,7 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	fixture.drive(arena, {"enemies": true})
 	for tick in range(1, 1201):
 
-		var planned: Dictionary = arena.enemy_tactics.plan(arena._enemy_tactics_snapshot())
+		var planned: Dictionary = arena.enemy_tactics.plan(arena._enemy_ai._enemy_tactics_snapshot())
 		var intent: Dictionary = planned.intents[0]
 		var before: Vector2 = charger.position
 		var state_before: String = charger.action_state
@@ -593,12 +593,12 @@ func _test_invalid_charge_distance_runtime(arena: Node, failures: Array[String])
 			"action_distance": cases[index],
 			"reason": "invalid_distance_probe",
 		}
-		arena._commit_normal_enemy_intent(charger, intent)
+		arena._enemy_ai._commit_normal_enemy_intent(charger, intent)
 		_expect(charger.action_state == "none" and charger.action_instance_id == 0 and String(charger.tactic_reason) == "invalid_charge_execution", "invalid charge distance: case %d was not rejected" % index, failures)
 
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
 	var charger = arena.enemies[0]
-	arena._commit_normal_enemy_intent(charger, {
+	arena._enemy_ai._commit_normal_enemy_intent(charger, {
 		"entity_id": charger.entity_id,
 		"move_direction": Vector2.ZERO,
 		"speed_scale": 0.0,

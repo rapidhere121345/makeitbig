@@ -221,7 +221,7 @@ static func pose(
 	return frame
 
 
-## Recovery bridge. main._update_boss_hands publishes its active hand deltas only
+## Recovery bridge. main._enemy_ai._update_boss_hands publishes its active hand deltas only
 ## while the state is "windup" or "active": on the first recovery tick both fists
 ## are back at the base, while the frame before it drew the hit. pose() already
 ## retracts its own share of the strike, so this returns the share the sim
@@ -233,7 +233,7 @@ static func pose(
 ## strike_hand is what the active tick really drew: the authoritative delta the
 ## sim published on that tick times the world scale. The mirror lives in
 ## _sim_active_left()/_sim_active_right() and test_boss_action_pose.gd compares
-## them against the real main._update_boss_hands output, so a change to the sim's
+## them against the real main._enemy_ai._update_boss_hands output, so a change to the sim's
 ## strike formula fails the suite instead of silently leaving a seam.
 ##
 ## Every other stage returns zero, so windup and active draw exactly what they

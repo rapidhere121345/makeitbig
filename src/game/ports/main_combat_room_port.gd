@@ -40,7 +40,7 @@ func target_blocked(target: CombatEnemyState) -> Dictionary:
 
 
 func maybe_summon(target: CombatEnemyState) -> void:
-	_owner._maybe_summon_reinforcements(target)
+	_owner._enemy_ai._maybe_summon_reinforcements(target)
 
 
 func remove_target(target: CombatEnemyState) -> void:

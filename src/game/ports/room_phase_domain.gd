@@ -52,7 +52,7 @@ func route_commands(commands: Array[Dictionary]) -> Dictionary:
 
 
 func update_enemies() -> void:
-	_owner._update_enemies_tick()
+	_owner._enemy_ai._update_enemies_tick()
 
 
 func advance_projectiles() -> void:

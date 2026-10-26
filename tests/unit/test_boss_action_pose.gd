@@ -346,7 +346,7 @@ func _test_render_rate_equivalence() -> void:
 ##
 ## Everything above drives the pure helper. This last check drives the sim: a bare
 ## main.gd harness replays the real state machine into the real
-## main._update_boss_hands, and the real arena view's boss_draw_parts() decodes the
+## main._enemy_ai._update_boss_hands, and the real arena view's boss_draw_parts() decodes the
 ## frame, so the seam between the authoritative active tick and the first recovery
 ## tick is measured on the numbers the draw call consumes.
 
@@ -425,7 +425,7 @@ func _bridge_case(action: String, phase: int, facing: Vector2) -> bool:
 	var enemy = bridge_harness.boss
 	_expect(bool(bridge_harness.teleport_actor("enemy/%d" % enemy.entity_id, bridge_harness._arena_rect().get_center()).get("ok", false)), "bridge boss deployment failed")
 	var awakened := phase >= 2
-	## Each fist has its own base, exactly the pair main._update_boss_hands() and
+	## Each fist has its own base, exactly the pair main._enemy_ai._update_boss_hands() and
 	## the world view use: measuring one against the other reads a 68px phantom.
 	var base_left: Vector2 = enemy.position + Vector2(-43.0 if awakened else -34.0, -8.0 if awakened else 0.0)
 	var base_right: Vector2 = enemy.position + Vector2(38.0 if awakened else 34.0, 12.0 if awakened else 0.0)
