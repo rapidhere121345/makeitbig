@@ -66,7 +66,7 @@ func _test_main_assembly() -> void:
 	var observation := {"player": fixture.player(arena), "targets": arena._read_only_targets(), "hazards": arena.hazard_states.duplicate(true), "boss": {}, "targeting_distance": arena.locked_targeting_distance}
 	var before: String = arena._semantic_state_hash("smoke-read")
 	var expected: Dictionary = arena.smoke_input_driver.decide(observation, arena.command_sequence)
-	var commands: Array[Dictionary] = arena._simulation_collect_commands()
+	var commands: Array[Dictionary] = arena._player_commands._simulation_collect_commands()
 	_expect(commands == expected.commands and arena.command_sequence == expected.next_sequence, "Main did not assemble the independent smoke input driver")
 	# Sequence is intentionally consumed; all player and encounter observations remain detached.
 	var sequence_after: int = arena.command_sequence

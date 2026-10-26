@@ -86,7 +86,7 @@ func _test_loadout_gate(arena: Node, failures: Array[String]) -> void:
 	arena.selected_mode = "Auto"
 	_start_proxy(arena, _white_proxy_build())
 	var auto_abilities: Array[String] = []
-	for command in arena._auto_commands():
+	for command in arena._player_commands._auto_commands():
 		if String(command.get("kind", "")) == "cast":
 			auto_abilities.append(String(command.get("ability_id", "")))
 	_expect("hunter_mark" not in auto_abilities and "dash" not in auto_abilities, "Auto issued a hidden skill 2/3 command", failures)
@@ -364,19 +364,19 @@ func _test_proxy_decision_state_runtime(arena: Node, failures: Array[String]) ->
 	var second = arena.enemies[1]
 	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(50.0, 0.0))
 	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(80.0, 0.0))
-	var first_commands: Array[Dictionary] = arena._auto_commands()
+	var first_commands: Array[Dictionary] = arena._player_commands._auto_commands()
 	_expect(_cast_target(first_commands) == first.entity_id and _cast_has_aim(first_commands), "proxy: first perception did not emit an explicit target and aim", failures)
 	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(90.0, 0.0))
 	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(20.0, 0.0))
 	fixture.advance_to(arena, 29)
-	arena._auto_commands()
+	arena._player_commands._auto_commands()
 	var retained_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
 	_expect(int(retained_state.get("target_entity_id", 0)) == first.entity_id
 			and int(retained_state.get("next_perception_tick", 0)) == 30
-			and arena._proxy_trace_snapshot().has("perception:retain_target"),
+			and arena._player_commands._proxy_trace_snapshot().has("perception:retain_target"),
 		"proxy: target changed before the 30-tick perception refresh", failures)
 	fixture.advance_to(arena, 30)
-	var refreshed_commands: Array[Dictionary] = arena._auto_commands()
+	var refreshed_commands: Array[Dictionary] = arena._player_commands._auto_commands()
 	_expect(_cast_target(refreshed_commands) == second.entity_id, "proxy: target did not refresh on the public perception tick", failures)
 	arena.selected_mode = "Manual"
 
@@ -405,7 +405,7 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 	arena.selected_mode = "Auto"
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
 	arena._update_room_rules_tick()
-	var public_snapshot: Dictionary = arena._public_proxy_snapshot()
+	var public_snapshot: Dictionary = arena._player_commands._public_proxy_snapshot()
 	var elite_is_publicly_blocked := false
 	for visible_enemy: Dictionary in public_snapshot.visible_enemies:
 		if int(visible_enemy.get("entity_id", 0)) == elite.entity_id:
@@ -415,19 +415,19 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 		and "periodic_barrier" not in str(public_snapshot)
 		and "classification_tags" not in str(public_snapshot),
 		"proxy legality: hidden barrier identity, classification, or phase leaked into the white snapshot", failures)
-	_expect(_cast_target(arena._auto_commands()) == secondary.entity_id, "proxy legality: agent attacked the nearer shielded elite instead of the farther legal target", failures)
+	_expect(_cast_target(arena._player_commands._auto_commands()) == secondary.entity_id, "proxy legality: agent attacked the nearer shielded elite instead of the farther legal target", failures)
 
 	## Opening the barrier does not grant the white core an extra perception sample.
 	## It may reacquire only on the next public 30-tick horizon.
 	arena.enemies.erase(secondary)
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
 	arena._update_room_rules_tick()
-	_expect(_cast_target(arena._auto_commands()) == 0, "proxy legality: only shielded target still produced an attack", failures)
+	_expect(_cast_target(arena._player_commands._auto_commands()) == 0, "proxy legality: only shielded target still produced an attack", failures)
 	fixture.advance_to(arena, 20)
 	arena._update_room_rules_tick()
-	_expect(not arena.elite_barrier_active and _cast_target(arena._auto_commands()) == 0, "proxy legality: barrier opening leaked an out-of-cadence perception refresh", failures)
+	_expect(not arena.elite_barrier_active and _cast_target(arena._player_commands._auto_commands()) == 0, "proxy legality: barrier opening leaked an out-of-cadence perception refresh", failures)
 	fixture.advance_to(arena, 30)
-	_expect(_cast_target(arena._auto_commands()) == elite.entity_id, "proxy legality: next public horizon did not reacquire the opened elite", failures)
+	_expect(_cast_target(arena._player_commands._auto_commands()) == elite.entity_id, "proxy legality: next public horizon did not reacquire the opened elite", failures)
 	arena.selected_mode = "Manual"
 
 
@@ -441,12 +441,12 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 	arena.elite_entity_id = elite.entity_id
 	var marking_build := _proxy_build("marking_prism", "direct_gait")
 	_start_proxy(arena, marking_build)
-	var marking_snapshot: Dictionary = arena._public_proxy_snapshot()
+	var marking_snapshot: Dictionary = arena._player_commands._public_proxy_snapshot()
 	var elite_tags: Array = []
 	for enemy_view: Dictionary in marking_snapshot.visible_enemies:
 		if int(enemy_view.entity_id) == elite.entity_id:
 			elite_tags = (enemy_view.get("classification_tags", []) as Array).duplicate()
-	_expect("elite" in elite_tags and _cast_target(arena._auto_commands()) == elite.entity_id,
+	_expect("elite" in elite_tags and _cast_target(arena._player_commands._auto_commands()) == elite.entity_id,
 		"resolved proxy: marking prism did not receive public classification and prioritize the elite", failures)
 
 	_place(arena, "enemy/%d" % ordinary.entity_id, arena.player_position + Vector2(55.0, 0.0))
@@ -456,10 +456,10 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 	var near_build := _proxy_build("near_enemy_horizon", "distance_keeping_gait", "near")
 	var far_build := _proxy_build("near_enemy_horizon", "distance_keeping_gait", "far")
 	_start_proxy(arena, near_build)
-	var near_commands: Array[Dictionary] = arena._auto_commands()
+	var near_commands: Array[Dictionary] = arena._player_commands._auto_commands()
 	var near_hash: String = arena._semantic_state_hash("proxy_variant")
 	_start_proxy(arena, far_build)
-	var far_commands: Array[Dictionary] = arena._auto_commands()
+	var far_commands: Array[Dictionary] = arena._player_commands._auto_commands()
 	var far_hash: String = arena._semantic_state_hash("proxy_variant")
 	_expect(not near_commands.is_empty() and String(near_commands[0].kind) == Protocol.KIND_STOP_MOVE,
 		"resolved proxy: near distance band did not hold at 55% targeting distance", failures)
@@ -491,7 +491,7 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	var start_target: Vector2 = target.position
 	var start_distance: float = start_player.distance_to(start_target)
 	var retreat_exit_distance: float = arena.locked_targeting_distance * 0.38
-	var public_snapshot: Dictionary = arena._public_proxy_snapshot()
+	var public_snapshot: Dictionary = arena._player_commands._public_proxy_snapshot()
 	var public_enemy: Dictionary = public_snapshot.visible_enemies[0]
 	_expect(not public_snapshot.has("enemy_tactics") and not public_snapshot.has("room_id") and not public_enemy.has("kind_id") and not public_enemy.has("action_state"), "proxy retreat: runtime exposed hidden enemy or room state", failures)
 

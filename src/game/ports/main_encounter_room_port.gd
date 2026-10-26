@@ -46,13 +46,13 @@ func collision_geometry(padding: float) -> Dictionary:
 func static_blocker_bounds() -> Array[Dictionary]:
 	if not _ready():
 		return []
-	return _owner._static_blocker_bounds()
+	return _owner._geometry._static_blocker_bounds()
 
 
 func layout_spawn_offsets(layout_id: String, count: int) -> Array[Vector2]:
 	if not _ready():
 		return []
-	return _owner._layout_spawn_offsets(layout_id, count)
+	return _owner._geometry._layout_spawn_offsets(layout_id, count)
 
 
 func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
@@ -64,7 +64,7 @@ func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 func quantize_position(value: Vector2) -> Vector2:
 	if not _ready():
 		return Vector2(INF, INF)
-	return _owner._quantize_position(value)
+	return _owner._geometry._quantize_position(value)
 
 
 func queue_player_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:

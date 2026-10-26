@@ -19,19 +19,19 @@ func bind(main_owner: Node2D, input_adapter: RefCounted) -> Dictionary:
 
 
 func make_move(direction: Vector2, speed_scale: float) -> Dictionary:
-	return owner._move_command(direction, speed_scale) if owner != null else {}
+	return owner._player_commands._move_command(direction, speed_scale) if owner != null else {}
 
 
 func make_dodge(direction: Vector2) -> Dictionary:
-	return owner._dodge_command(direction) if owner != null else {}
+	return owner._player_commands._dodge_command(direction) if owner != null else {}
 
 
 func make_cast(ability: String, target_entity_id: int, direction: Vector2) -> Dictionary:
-	return owner._cast_command(ability, target_entity_id, direction) if owner != null else {}
+	return owner._player_commands._cast_command(ability, target_entity_id, direction) if owner != null else {}
 
 
 func make_loot_pickup(loot_entity_id: String) -> Dictionary:
-	return owner._loot_pickup_command(loot_entity_id) if owner != null else {}
+	return owner._player_commands._loot_pickup_command(loot_entity_id) if owner != null else {}
 
 
 func player_position() -> Vector2:

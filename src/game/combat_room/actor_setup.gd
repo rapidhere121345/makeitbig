@@ -96,10 +96,10 @@ func _configure_actor_registry() -> bool:
 			return false
 		spawn_position = authored_spawn
 	else:
-		var projected: Dictionary = _main._project_actor_spawn_position(_main._arena_rect().get_center() + Vector2(-220.0, 100.0), 14.0)
+		var projected: Dictionary = _main._geometry._project_actor_spawn_position(_main._arena_rect().get_center() + Vector2(-220.0, 100.0), 14.0)
 		if not bool(projected.get("ok", false)):
 			return false
-		spawn_position = _main._quantize_position(projected["position"])
+		spawn_position = _main._geometry._quantize_position(projected["position"])
 	var player_result: Dictionary = _main.actor_registry.register_actor("ranger", spawn_position, 14.0, 1, &"soft", [&"movement", &"hurtbox"])
 	if not bool(player_result.get("ok", false)):
 		push_error("actor_registry_configuration_failed:player_registration:%s" % str(player_result))
@@ -223,7 +223,7 @@ func _register_enemy_actor(enemy: CombatEnemyState) -> bool:
 	if _main.actor_registry == null or enemy == null:
 		push_error("enemy_actor_registration_failed:missing_dependency")
 		return false
-	var projected: Dictionary = _main._project_actor_spawn_position(enemy.position, 16.0)
+	var projected: Dictionary = _main._geometry._project_actor_spawn_position(enemy.position, 16.0)
 	if not bool(projected.get("ok", false)):
 		push_error("enemy_actor_registration_failed:projection:%d:%s" % [enemy.entity_id, str(projected)])
 		return false

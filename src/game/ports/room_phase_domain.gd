@@ -44,7 +44,7 @@ func refresh_hazard_states() -> void:
 
 
 func collect_commands() -> Array[Dictionary]:
-	return _owner._simulation_collect_commands()
+	return _owner._player_commands._simulation_collect_commands()
 
 
 func route_commands(commands: Array[Dictionary]) -> Dictionary:
@@ -64,7 +64,7 @@ func resolve_hazard_hits() -> void:
 
 
 func check_battle_end() -> void:
-	_owner._check_battle_end()
+	_owner._terminal._check_battle_end()
 
 
 func room_terminal_locked() -> bool:

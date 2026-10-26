@@ -10,12 +10,10 @@ const CombatInterfaceTheme := preload("res://src/presentation/combat_interface_t
 
 const ContentRegistryScript = preload("res://src/content/content_registry.gd")
 const ProxyRuntimeScript = preload("res://src/systems/proxy_runtime.gd")
-const ProxyDecisionScript = preload("res://src/systems/proxy_decision.gd")
 const ProxyIntentSystemScript = preload("res://src/systems/proxy_intent_system.gd")
 const CombatCommandProtocolScript = preload("res://src/systems/combat_command_protocol.gd")
 const ManualAimResolverScript = preload("res://src/systems/manual_aim_resolver.gd")
 const EnemyTacticsScript = preload("res://src/systems/enemy_tactics.gd")
-const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 const CombatEventStreamScript = preload("res://src/systems/combat_event_stream.gd")
 const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
 const PiercingArrowModelScript = preload("res://src/systems/piercing_arrow_model.gd")
@@ -28,7 +26,6 @@ const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const EncounterDirectorScript = preload("res://src/game/encounter_director.gd")
 const EncounterSpawnRequestScript := preload("res://src/runtime/encounter/encounter_spawn_request.gd")
 const EncounterSpawnResultScript := preload("res://src/runtime/encounter/encounter_spawn_result.gd")
-const RoomTerminalObservationScript := preload("res://src/runtime/encounter/room_terminal_observation.gd")
 const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
 const CombatRoomRulesScript := preload("res://src/game/combat_room_rules.gd")
 const CombatSystemScript = preload("res://src/systems/combat_system.gd")
@@ -41,7 +38,6 @@ const RangerArrowFlightScript := preload("res://src/runtime/combat/ranger_arrow_
 const BossArrowFlightScript := preload("res://src/runtime/combat/boss_arrow_flight.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
-const CombatLootPickupProtocolScript := preload("res://src/systems/combat_loot_pickup_protocol.gd")
 const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const MainCombatRoomPortScript := preload("res://src/game/ports/main_combat_room_port.gd")
@@ -53,6 +49,9 @@ const RoomHazardsScript := preload("res://src/game/combat_room/room_hazards.gd")
 const PiercingArrowsScript := preload("res://src/game/combat_room/piercing_arrows.gd")
 const EnemyAiTicksScript := preload("res://src/game/combat_room/enemy_ai_ticks.gd")
 const RoomActorSetupScript := preload("res://src/game/combat_room/actor_setup.gd")
+const RoomPlayerCommandsScript := preload("res://src/game/combat_room/player_commands.gd")
+const RoomTerminalScript := preload("res://src/game/combat_room/room_terminal.gd")
+const RoomGeometryScript := preload("res://src/game/combat_room/room_geometry.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -325,16 +324,16 @@ var manual_pointer_target_entity_id: int:
 	get:
 		return input_adapter.manual_pointer_target_entity_id if input_adapter != null else 0
 
-## KernelReconciler lives in src/game/combat_room/kernel_reconciler.gd.
+## Room collaborators live in src/game/combat_room/; they hold no state of their
+## own and reach the room state through the typed owner reference.
 var _kernel_reconciler := KernelReconcilerScript.new(self)
-## RoomHazards lives in src/game/combat_room/room_hazards.gd.
 var _hazards := RoomHazardsScript.new(self)
-## PiercingArrows lives in src/game/combat_room/piercing_arrows.gd.
 var _arrows := PiercingArrowsScript.new(self)
-## EnemyAiTicks lives in src/game/combat_room/enemy_ai_ticks.gd.
 var _enemy_ai := EnemyAiTicksScript.new(self)
-## RoomActorSetup lives in src/game/combat_room/actor_setup.gd.
 var _actor_setup := RoomActorSetupScript.new(self)
+var _player_commands := RoomPlayerCommandsScript.new(self)
+var _terminal := RoomTerminalScript.new(self)
+var _geometry := RoomGeometryScript.new(self)
 
 
 func _init() -> void:
@@ -901,77 +900,9 @@ func _simulation_set_elapsed(value: float) -> void:
 	elapsed = value
 
 
-func _simulation_collect_commands() -> Array[Dictionary]:
-	var snapshot := gameplay_snapshot()
-	var loot_command: Dictionary = input_adapter.collect_loot_pickup_command(snapshot)
-	if loot_command.is_empty() and selected_mode == "Auto":
-		loot_command = _auto_loot_pickup_command(snapshot)
-	if not loot_command.is_empty():
-		_submit_loot_pickup_command(loot_command)
-	if automation_smoke and selected_mode == "Manual":
-		var result: Dictionary = smoke_input_driver.decide({
-			"player": player_combat_state.snapshot(sim_tick), "targets": _read_only_targets(),
-			"hazards": hazard_states.duplicate(true), "targeting_distance": locked_targeting_distance,
-			"boss": {"impact_tick": boss.impact_tick, "target_shape": boss.target_shape.duplicate(true)} if boss != null else {},
-		}, command_sequence)
-		command_sequence = int(result.next_sequence)
-		return result.commands
-	return _auto_commands() if selected_mode == "Auto" else input_adapter.collect_commands(gameplay_snapshot())
-
-
-func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
-	var arbitration: Dictionary = CombatLootPickupProtocolScript.arbitrate([command], sim_tick, "ranger")
-	var receipts: Array = arbitration.get("receipts", [])
-	var receipt: Dictionary = receipts[0].duplicate(true) if not receipts.is_empty() and receipts[0] is Dictionary else {"status": "rejected", "reason": "invalid_receipt", "command": command.duplicate(true)}
-	if String(receipt.get("status", "")) == CombatLootPickupProtocolScript.STATUS_ACCEPTED:
-		var normalized: Dictionary = receipt.get("command", {})
-		var room_receipt := request_loot_pickup(String(normalized.get("loot_entity_id", "")))
-		receipt["room_receipt"] = room_receipt.duplicate(true)
-		if not bool(room_receipt.get("accepted", false)) and selected_mode == "Manual" and presentation != null and presentation.feedback != null:
-			presentation.feedback.show_input_feedback("Loot out of reach · Move closer, then press F", sim_tick)
-	last_loot_pickup_command_receipt = receipt.duplicate(true)
-	return last_loot_pickup_command_receipt.duplicate(true)
-
-
-func _auto_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
-	if not bool(snapshot.get("in_arena", false)) or (bool(snapshot.get("battle_over", false)) and not bool(snapshot.get("battle_victory", false))):
-		return {}
-	var room_loot_value: Variant = snapshot.get("room_loot", {})
-	if not room_loot_value is Dictionary:
-		return {}
-	var room_loot: Dictionary = room_loot_value
-	var pending_ids: Dictionary = {}
-	for pending_value: Variant in room_loot.get("pending_pickup_requests", []):
-		if pending_value is Dictionary:
-			pending_ids[String((pending_value as Dictionary).get("loot_entity_id", ""))] = true
-	var player_position_value: Variant = snapshot.get("player_position", Vector2.ZERO)
-	var player_position := player_position_value as Vector2 if player_position_value is Vector2 else Vector2.ZERO
-	var nearest_id := ""
-	var nearest_distance := INF
-	for entity_value: Variant in room_loot.get("entities", []):
-		if not entity_value is Dictionary:
-			continue
-		var entity: Dictionary = entity_value
-		var loot_id := String(entity.get("loot_entity_id", "")).strip_edges()
-		if loot_id.is_empty() or String(entity.get("state", "")) != "available" or pending_ids.has(loot_id):
-			continue
-		var position_value: Variant = entity.get("position", Vector2.ZERO)
-		var position := position_value as Vector2 if position_value is Vector2 else Vector2.ZERO
-		var radius := maxf(0.0, float(entity.get("pickup_radius", 0.0)))
-		var distance := player_position.distance_squared_to(position)
-		if distance > radius * radius + 0.000001:
-			continue
-		if distance < nearest_distance or (is_equal_approx(distance, nearest_distance) and (nearest_id.is_empty() or loot_id < nearest_id)):
-			nearest_distance = distance
-			nearest_id = loot_id
-	if nearest_id.is_empty():
-		return {}
-	return _loot_pickup_command(nearest_id)
-
-
 func _simulation_check_timeout() -> void:
 	if automation_smoke and not battle_over and sim_tick >= SIM_TICKS_PER_SECOND * 180:
-		_fail_automation_smoke("timeout ticks=%d casts=%d" % [sim_tick, shots])
+		_terminal._fail_automation_smoke("timeout ticks=%d casts=%d" % [sim_tick, shots])
 
 
 func _route_commands(commands: Array[Dictionary]) -> Dictionary:
@@ -1046,121 +977,6 @@ func interrupt_player_action(reason: String) -> Dictionary:
 	presentation.feedback.forget_request(int(result.get("cleared_request_id", 0)))
 	_process_player_action_events(result.get("events", []), player_combat_state.snapshot(sim_tick))
 	return result
-
-
-func _auto_commands() -> Array[Dictionary]:
-	var observation := _public_proxy_snapshot()
-	var collision_geometry := _collision_geometry(14.0)
-	if not collision_geometry.is_empty():
-		observation["walkable_geometry"] = collision_geometry
-	var result: Dictionary = proxy_intent_system.decide(observation, command_sequence)
-	if not bool(result.get("ok", false)):
-		return []
-	command_sequence = int(result.get("next_sequence", command_sequence))
-	return (result.get("commands", []) as Array).duplicate(true)
-
-
-func _proxy_failure_snapshot() -> Dictionary:
-	if proxy_intent_system == null:
-		return {}
-	return proxy_intent_system.failure_snapshot()
-
-
-func _proxy_trace_snapshot() -> Array[String]:
-	if proxy_intent_system == null:
-		return []
-	return proxy_intent_system.trace_snapshot()
-
-
-func _public_proxy_snapshot() -> Dictionary:
-	var player := player_combat_state.snapshot(sim_tick)
-	var public_geometry := _walkable_geometry(14.0).duplicate(true)
-	## Public geometry describes only the space the actor may occupy. Route and
-	## room identifiers remain private even if a future helper revision carries
-	## spatial metadata alongside the geometric primitives.
-	public_geometry.erase("layout_id")
-	var observations: Array = framework_resolved_proxy_build.get("observation_contract", [])
-	var include_classification := "enemy.public_classification_tags" in observations
-	var visible: Array[Dictionary] = []
-	for enemy: CombatEnemyState in enemies:
-		var entry := {
-			"entity_id": enemy.entity_id,
-			"position": enemy.position,
-			"health": enemy.health,
-			## Action legality is part of enemy.basic. It reveals no barrier rule,
-			## phase duration, or future opening tick.
-			"targetable": encounter_director.is_targetable(enemy) and _is_enemy_actor_active(enemy),
-		}
-		if include_classification:
-			var classification_tags: Array[String] = []
-			if enemy.is_boss:
-				classification_tags.append("boss")
-			if enemy.entity_id == elite_entity_id:
-				classification_tags.append("elite")
-			if enemy.entity_id == player["marked_entity_id"]:
-				classification_tags.append("marked")
-			entry["classification_tags"] = classification_tags
-		visible.append(entry)
-	return {
-		"snapshot_version": ProxyDecisionScript.SNAPSHOT_VERSION,
-		"tick": sim_tick,
-		"actor_id": "ranger",
-		"player_position": player_position,
-		"facing": player["player_facing"],
-		"action_state": _player_authority_action_state(),
-		"attack_ready_tick": sim_tick + player["attack_cooldown_ticks"],
-		"targeting_distance": locked_targeting_distance,
-		"visible_enemies": visible,
-		"walkable_geometry": public_geometry,
-	}
-
-
-func _player_authority_action_state() -> String:
-	var player := player_combat_state.snapshot(sim_tick)
-	if player["dodge_remaining_ticks"] > 0:
-		return "dodge"
-	if player["dash_remaining_ticks"] > 0:
-		return "dash"
-	return String(player["action_phase"])
-
-
-func _move_command(direction: Vector2, speed_scale: float) -> Dictionary:
-	var milli := _direction_to_milli(direction)
-	var result := CombatCommandProtocolScript.move(sim_tick, "ranger", command_sequence, milli.x, milli.y, clampi(roundi(speed_scale * 1000.0), 1, 1000))
-	command_sequence += 1
-	return result
-
-
-func _dodge_command(direction: Vector2) -> Dictionary:
-	var milli := _direction_to_milli(direction)
-	var result := CombatCommandProtocolScript.dodge(sim_tick, "ranger", command_sequence, milli.x, milli.y)
-	command_sequence += 1
-	return result
-
-
-func _cast_command(ability_id: String, target_entity_id: int, direction: Vector2 = Vector2.ZERO) -> Dictionary:
-	var result: Dictionary
-	if ability_id in ["dash", "piercing_arrow"]:
-		var direction_milli := _direction_to_milli(direction)
-		result = CombatCommandProtocolScript.cast(sim_tick, "ranger", command_sequence, ability_id, target_entity_id, direction_milli.x, direction_milli.y)
-	else:
-		result = CombatCommandProtocolScript.cast(sim_tick, "ranger", command_sequence, ability_id, target_entity_id)
-	command_sequence += 1
-	return result
-
-
-func _loot_pickup_command(loot_entity_id: String) -> Dictionary:
-	var result := CombatLootPickupProtocolScript.make_request(sim_tick, "ranger", command_sequence, loot_entity_id)
-	command_sequence += 1
-	return result
-
-
-func _direction_to_milli(direction: Vector2) -> Vector2i:
-	var player := player_combat_state.snapshot(sim_tick)
-	var normalized: Vector2 = direction.normalized() if direction != Vector2.ZERO else (player["player_facing"] as Vector2).normalized()
-	if normalized == Vector2.ZERO:
-		normalized = Vector2.RIGHT
-	return Vector2i(roundi(normalized.x * 1000.0), roundi(normalized.y * 1000.0))
 
 
 func _process_player_action_events(events: Array, action_player: Dictionary) -> void:
@@ -1268,129 +1084,11 @@ func _allocate_entity_id() -> int:
 	return encounter_director._allocate_entity_id()
 
 
-func _quantize_position(value: Vector2) -> Vector2:
-	# Authority stores a 1/1000-pixel grid. Rendering may interpolate later, but
-	# identical whole-tick commands always land on identical coordinates.
-	return Vector2(snappedf(value.x, 0.001), snappedf(value.y, 0.001))
-
-
 func _framework_room_error() -> String:
 	if framework_room.is_empty():
 		return ""
 	_ensure_room_catalog()
 	return EncounterDirectorScript.validate_room(framework_room, room_catalog)
-
-
-func _layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
-	_ensure_room_catalog()
-	var spawn_room_id := String(encounter_director.room_id) if encounter_director != null else room_id
-	if room_catalog == null:
-		return []
-	return room_catalog.spawn_offsets({"layout_id": id, "room_id": spawn_room_id}, count)
-
-
-
-func _check_battle_end() -> void:
-	# Pickup is a committed post-movement phase. Requests are queued by the
-	# public input boundary and can only mutate the room ledger here.
-	_process_room_loot_pickups_tick()
-	if _mounted_encounter_terminal_active():
-		var terminal_result := _observe_mounted_encounter_terminal()
-		if not bool(terminal_result.get("ok", false)):
-			push_error("room_terminal_observation_failed:%s" % String(terminal_result.get("error", "unknown")))
-			return
-		var terminal_phase := String(terminal_result.get("phase", ""))
-		if terminal_phase not in ["victory", "defeat"] or _terminal_projection_applied:
-			return
-		_terminal_projection_applied = true
-		var victory := terminal_phase == "victory"
-		battle_report = "VICTORY — Room encounter cleared." if victory else "DEFEAT — The ranger fell. Refit at base."
-		var projected := room_rules.project_terminal(victory, timed_bonus_available, elapsed, shots, defeated)
-		if not bool(projected.get("ok", false)):
-			push_error("room_terminal_reward_projection_failed:%s" % String(projected.get("error", "unknown")))
-			return
-		if victory:
-			_spawn_room_loot_for_source("wave_clear", 0, player_position)
-		else:
-			_settle_room_loot("defeat")
-		_handle_terminal_automation(victory)
-		return
-	var observed: Dictionary = room_rules.observe(player_combat_state.snapshot(sim_tick), {
-		"has_boss": boss != null, "boss_health": boss.health if boss != null else 0.0,
-		"enemy_count": enemies.size(), "elite_entity_id": elite_entity_id,
-		"elite_alive": _enemy_by_entity_id(elite_entity_id) != null,
-		"elite_rule_ids": elite_rule_ids, "timed_bonus_available": timed_bonus_available,
-		"elapsed": elapsed, "shots": shots, "defeated": defeated,
-	})
-	if not bool(observed.changed):
-		return
-	battle_report = String(observed.state.report)
-	if battle_victory:
-		_spawn_room_loot_for_source("wave_clear", 0, player_position)
-	if not battle_victory:
-		_settle_room_loot("defeat")
-	if battle_victory:
-		if automation_smoke and not _automation_smoke_state_valid():
-			_fail_automation_smoke("integrated room/proxy/reward state is invalid")
-	elif automation_smoke:
-		automation_smoke_failure = "defeat elapsed=%.2f casts=%d" % [elapsed, shots]
-
-
-func _mounted_encounter_terminal_active() -> bool:
-	return room_encounter_port != null and room_encounter_port.encounter != null and room_encounter_port.encounter.has_method("observe_terminal")
-
-
-func _observe_mounted_encounter_terminal() -> Dictionary:
-	var observation := RoomTerminalObservationScript.new()
-	observation.tick = sim_tick
-	observation.room_instance_id = String(simulation_world.room_instance_id)
-	observation.world_revision = int(simulation_world.world_revision)
-	var player := player_combat_state.snapshot(sim_tick)
-	observation.player_alive = float(player.get("player_health", 0.0)) > 0.0
-	var encounter_state: Dictionary = room_encounter_port.encounter.snapshot()
-	observation.current_wave_index = int(encounter_state.get("current_wave_index", -1))
-	var waves: Array = encounter_state.get("waves", [])
-	var wave_id := ""
-	if observation.current_wave_index >= 0 and observation.current_wave_index < waves.size() and waves[observation.current_wave_index] is Dictionary:
-		wave_id = String((waves[observation.current_wave_index] as Dictionary).get("wave_id", ""))
-	for raw_record: Variant in encounter_state.get("spawn_records", []):
-		if not raw_record is Dictionary or String((raw_record as Dictionary).get("wave_id", "")) != wave_id:
-			continue
-		observation.requested_member_count += 1
-		var state := String((raw_record as Dictionary).get("state", ""))
-		if state == "alive":
-			observation.alive_member_count += 1
-		if state in ["requested", "alive"]:
-			observation.unresolved_member_count += 1
-	var objective := String(framework_room.get("objective_id", objective_id))
-	if objective == "hunt_elite" and elite_entity_id > 0:
-		var elite_alive := _enemy_by_entity_id(elite_entity_id) != null
-		var requires_full_clear := "summon_reinforcements" in elite_rule_ids
-		observation.objective_satisfied = not elite_alive and (not requires_full_clear or enemies.is_empty())
-	var result: RoomTerminalResult = room_encounter_port.observe_terminal(observation)
-	return result.snapshot()
-
-
-func _handle_terminal_automation(victory: bool) -> void:
-	if not automation_smoke:
-		return
-	if not victory:
-		automation_smoke_failure = "defeat elapsed=%.2f casts=%d" % [elapsed, shots]
-		return
-	if not _automation_smoke_state_valid():
-		_fail_automation_smoke("integrated room/proxy/reward state is invalid")
-
-
-func _automation_smoke_state_valid() -> bool:
-	return not framework_room.is_empty() and battle_victory and (selected_mode != "Auto" or proxy_prediction == "stable")
-
-
-## The room reports a smoke failure to its host through automation_smoke_failure;
-## the host decides whether the process exits.
-func _fail_automation_smoke(reason: String) -> void:
-	automation_smoke_failure = reason
-	room_rules.fail(reason)
-	battle_report = String(room_rules.snapshot().report)
 
 
 func _semantic_state_hash(result: String) -> String:
@@ -1478,119 +1176,23 @@ func _is_skill_equipped(slot_index: int, expected_id: String) -> bool:
 
 
 func _arena_rect() -> Rect2:
-	if scene_runtime != null:
-		var authored: Variant = scene_runtime.get("authored_arena_rect")
-		return authored as Rect2 if authored is Rect2 else Rect2()
-	return Rect2(Vector2(ARENA_MARGIN, 190.0), Vector2(
-		AUTHORITY_VIEWPORT_SIZE.x - ARENA_MARGIN * 2.0,
-		AUTHORITY_VIEWPORT_SIZE.y - 190.0 - ARENA_MARGIN))
+	return _geometry._arena_rect()
 
 
 func _walkable_geometry(padding: float) -> Dictionary:
-	var geometry: Dictionary = {}
-	if scene_runtime != null:
-		var native_boundary: Variant = scene_runtime.get("movement_boundary")
-		if native_boundary is Dictionary:
-			geometry = ArenaGeometryScript.from_native_boundary(native_boundary, _arena_rect(), padding)
-	else:
-		geometry = ArenaGeometryScript.from_layout(layout_id, _arena_rect(), padding)
-	var normalized: Dictionary = ArenaGeometryScript.normalize(geometry)
-	return (normalized.get("value", {}) as Dictionary).duplicate(true) if bool(normalized.get("ok", false)) else {}
-
-
-func _presentation_geometry() -> Dictionary:
-	var boundary: Dictionary = {}
-	if scene_runtime != null:
-		var native_boundary: Variant = scene_runtime.get("movement_boundary")
-		if native_boundary is Dictionary:
-			boundary = (native_boundary as Dictionary).duplicate(true)
-	else:
-		boundary = ArenaGeometryScript.movement_boundary(layout_id, _arena_rect())
-	if not boundary.is_empty():
-		var native_geometry := ArenaGeometryScript.from_native_boundary(boundary, _arena_rect(), 0.0)
-		if not native_geometry.is_empty():
-			return native_geometry
-	return ArenaGeometryScript.from_layout(layout_id, _arena_rect(), 0.0)
+	return _geometry._walkable_geometry(padding)
 
 
 func _collision_geometry(radius: float) -> Dictionary:
-	if not is_finite(radius) or radius < 0.0:
-		return {}
-	var boundary: Dictionary = {}
-	if scene_runtime != null:
-		var native_boundary: Variant = scene_runtime.get("movement_boundary")
-		if native_boundary is Dictionary:
-			boundary = (native_boundary as Dictionary).duplicate(true)
-	else:
-		boundary = ArenaGeometryScript.movement_boundary(layout_id, _arena_rect())
-	return ArenaGeometryScript.from_native_boundary_for_footprint(boundary, _arena_rect(), radius)
-
-
-## Bounding circles of the authored static blockers in the mounted room's
-## movement channel. Standalone fixtures without a mounted registry have no
-## authored blockers and steer on the boundary geometry alone.
-func _static_blocker_bounds() -> Array[Dictionary]:
-	if actor_registry == null:
-		return []
-	return actor_registry.static_blocker_bounds()
+	return _geometry._collision_geometry(radius)
 
 
 func _room_socket(binding: String) -> Variant:
-	if scene_runtime == null:
-		return null
-	var sockets: Variant = scene_runtime.get("spawn_socket_bindings")
-	if not sockets is Array:
-		return null
-	for socket: Dictionary in sockets:
-		if String(socket.get("binding", "")) == binding:
-			return socket.get("position")
-	return null
+	return _geometry._room_socket(binding)
 
 
 func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
-	var projected: Dictionary = ArenaGeometryScript.project(value, _walkable_geometry(padding))
-	if not bool(projected.get("ok", false)) or not projected.get("position", null) is Vector2:
-		var projection_error := "walkable_geometry_projection_failed: %s" % String(projected.get("error", "invalid_position"))
-		push_error(projection_error)
-		assert(false, projection_error)
-		return value
-	return projected.position
-
-
-func _project_actor_spawn_position(value: Vector2, radius: float) -> Dictionary:
-	## Initialization uses the same footprint-aware limits as ActorMotor. Once a
-	## room is live, all further displacement is submitted through the registry.
-	if not value.is_finite() or not is_finite(radius) or radius <= 0.0:
-		return {"ok": false, "error": "invalid_spawn_footprint"}
-	var geometry := _collision_geometry(radius)
-	if geometry.is_empty():
-		return {"ok": false, "error": "spawn_geometry_unavailable"}
-	var projected: Dictionary = ArenaGeometryScript.project(value, geometry)
-	if not bool(projected.get("ok", false)):
-		return {"ok": false, "error": "spawn_projection_failed:%s" % String(projected.get("error", "invalid_geometry"))}
-	var position := Vector2(projected["position"])
-	if actor_registry != null:
-		var static_clear: Variant = _project_static_clear(position, radius)
-		if static_clear == null:
-			return {"ok": false, "error": "spawn_static_projection_failed"}
-		position = static_clear
-	return {"ok": true, "position": position}
-
-
-## Authored static blockers and already registered actors own spawn clearance.
-## Deterministic expanding-ring search around the boundary-projected point: the
-## first clear candidate wins in a fixed ring/step order, so fixed-tick replays
-## stay byte-stable. Returns null when no candidate inside the arena clears
-## every static surface and live body, keeping the fail-closed contract.
-func _project_static_clear(position: Vector2, radius: float) -> Variant:
-	if actor_registry.is_spawn_position_clear(position, radius):
-		return position
-	for ring: float in [16.0, 32.0, 48.0, 64.0, 96.0, 128.0, 160.0, 192.0, 224.0, 256.0]:
-		for step: int in 16:
-			var candidate := position + Vector2(ring, 0.0).rotated(TAU * float(step) / 16.0)
-			if candidate.is_finite() and actor_registry.is_spawn_position_clear(candidate, radius):
-				return candidate
-	return null
+	return _geometry._clamp_to_arena(value, padding)
 
 
 func _resolved_build_is_valid(value: Variant) -> bool:
@@ -1669,11 +1271,11 @@ func gameplay_snapshot() -> Dictionary:
 		"proxy_prediction": proxy_prediction,
 		"selected_mode": selected_mode,
 		"arena_rect": _arena_rect(), "walkable_geometry": _walkable_geometry(14.0),
-		"presentation_geometry": _presentation_geometry(),
+		"presentation_geometry": _geometry._presentation_geometry(),
 		"projectiles": projectiles,
 		"equipped_parameters": content_registry.preset_equipped_parameters if content_registry != null else {},
 		"model": _current_model() if content_registry != null else {},
-		"proxy_failure": _proxy_failure_snapshot(),
+		"proxy_failure": _player_commands._proxy_failure_snapshot(),
 		"events": combat_event_stream.events_after(presentation.feedback.presentation_event_cursor) if combat_event_stream != null else [],
 	}, true)
 	return PresentationSnapshot.capture(values)
