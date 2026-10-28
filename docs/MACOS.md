@@ -6,6 +6,8 @@ The `macOS Universal` preset produces
 The template minimums are macOS 13 on Apple Silicon and macOS 11 on Intel.
 Retina rendering, English/Simplified Chinese, and the saved display settings use
 the same game resources as Linux and Windows.
+The project imports both desktop S3TC/BPTC and ARM ETC2/ASTC texture families,
+as required by Godot's Universal exporter.
 
 Unzip the download, drag `Make It Big.app` into Applications, and open it.
 The app uses Godot's built-in ad-hoc signature and is not Apple-notarized. If
@@ -37,10 +39,12 @@ Retina flag, game pack, and executable permissions. The export writes an adjacen
 
 ## Native Checks and Downloads
 
-The `desktop-build` GitHub workflow exports on Linux and uploads
+The `desktop-build` GitHub workflow has an independent Linux macOS-packaging job and uploads
 `make-it-big-macos-universal` (the ZIP and checksums). It also verifies the app
 with Apple's `codesign`, then runs headless boot and golden automation replay
 from an empty directory on both `macos-15` ARM64 and `macos-15-intel` runners.
+The native jobs compare against the pinned golden hash; the full Linux delivery
+job independently checks its exported replay against the same hash.
 Review the actual run results before claiming native acceptance. Headless smoke
 and replay do not establish GUI, audio, Retina, or sustained GPU performance.
 

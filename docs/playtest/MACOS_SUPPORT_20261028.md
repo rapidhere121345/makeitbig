@@ -1,6 +1,7 @@
 # macOS Universal Support — 2026-10-28
 
-Status: frozen local regression gate passed; macOS export and native checks pending CI.
+Status: both frozen local regression gates passed. macOS export and native
+checks are pending the corrected CI run.
 
 ## Delivery
 
@@ -41,6 +42,14 @@ no macOS executable has been produced or executed in the devbox.
 
 ## CI Acceptance
 
+The first hosted attempt, [40705437313](https://github.com/rapidhere121345/makeitbig/actions/runs/40705437313),
+passed all 216 test steps and all golden replay checks, but rejected the Mac export
+because ARM ETC2/ASTC texture imports were disabled. `ci-attempt1.log` preserves
+the full output. Both the project import flag and the Universal preset's texture
+format are now enabled. The second local gate (`astc-gate/`) freezes those final
+settings. The independent Mac packaging job lets export errors and native tests
+report without waiting for the hosted regression suite.
+
 The desktop workflow exports the Universal app on Linux, verifies ZIP CRCs,
 Mach-O architecture slices, per-slice code signature hashes, signed resource
 hashes, metadata, and executable permissions, and uploads the ZIP/checksums as
@@ -51,3 +60,13 @@ verify the app with Apple's `codesign`, then run headless smoke and the golden
 automation replay from an empty directory. Actual run URLs/results must be
 recorded before claiming native macOS acceptance. These headless checks do not
 establish GUI, audio, Retina appearance, or sustained GPU performance.
+
+## Final Local Import Gate
+
+`astc-gate/RESULT.json` records PASS from 2026-10-28T14:46:32Z to 2026-10-28T14:56:32Z. All 1486 frozen inputs remained unchanged.
+The full 216-step suite, 600 encounters, golden replay checks, Linux/Windows
+exports, and empty-directory Linux smoke passed with ARM texture imports enabled.
+`texture-probe.log` confirms the effective Godot import flag and Universal preset.
+
+- `build/current/linux/make-it-big.x86_64`: `bb0673360b6e3e82e5e720fe2ae82c03f8f31acfbfe2191fde95b72e47ac4e21`.
+- `build/current/windows/make-it-big.exe`: `0367e8070f2526e8f80f5204965171aa4af1f6fde54b7cd384351c1a8f5da369`.

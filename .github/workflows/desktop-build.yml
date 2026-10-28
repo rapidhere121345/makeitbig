@@ -94,12 +94,6 @@ jobs:
             build/golden/golden-state.sha256
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: make-it-big-macos-universal
-          path: build/current/macos/
-          if-no-files-found: error
-
   windows-smoke:
     needs: build
     runs-on: windows-2022
@@ -139,8 +133,48 @@ jobs:
             throw "Replay hash mismatch: Linux=$linuxHash Windows=$windowsHash"
           }
 
+  macos-package:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the pinned engine and macOS template
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          mkdir -p "$RUNNER_TEMP/godot" "$RUNNER_TEMP/templates"
+          curl -fL "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod 0755 "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          echo "GODOT_BIN=$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> "$GITHUB_ENV"
+          curl -fL "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o "$RUNNER_TEMP/templates.tpz"
+          unzip -q "$RUNNER_TEMP/templates.tpz" templates/macos.zip templates/version.txt -d "$RUNNER_TEMP/templates"
+          template_dir="$GITHUB_WORKSPACE/build/host-xdg/data/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$template_dir"
+          cp "$RUNNER_TEMP/templates/templates/"* "$template_dir/"
+
+      - name: Export and verify the Universal app
+        shell: bash
+        run: |
+          set -euo pipefail
+          source scripts/project_env.sh
+          timeout 180 "$GODOT_BIN" --headless --path . --import
+          ./scripts/export.sh macos
+          grep -oE '^EXPECTED_HASH="[0-9a-f]{64}"' scripts/test.sh | cut -d'"' -f2 > build/current/macos/golden-state.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: make-it-big-macos-universal
+          path: build/current/macos/
+          if-no-files-found: error
+
   macos-smoke:
-    needs: build
+    needs: macos-package
     strategy:
       fail-fast: false
       matrix:
@@ -154,7 +188,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: make-it-big-desktop
+          name: make-it-big-macos-universal
           path: artifact
 
       - name: Verify and unpack the Universal app
