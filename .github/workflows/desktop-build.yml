@@ -8,7 +8,12 @@ name: desktop-build
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*"]
   pull_request:
+
+permissions:
+  contents: read
 
 env:
   GODOT_VERSION: "4.7.2"
@@ -228,3 +233,49 @@ jobs:
           expected="$(tr -d '\r\n' < "$GOLDEN_HASH")"
           actual="$(tr -d '\r\n' < "$RUNNER_TEMP/macos-state.sha256")"
           test "$actual" = "$expected"
+
+  github-release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [build, windows-smoke, macos-package, macos-smoke]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    concurrency:
+      group: release-${{ github.ref_name }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: make-it-big-desktop
+          path: artifact/desktop
+      - uses: actions/download-artifact@v4
+        with:
+          name: make-it-big-macos-universal
+          path: artifact/macos
+
+      - name: Package and verify release downloads
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          export MIB_RELEASE_LINUX_SOURCE="$(find "$GITHUB_WORKSPACE/artifact/desktop" -name make-it-big.x86_64 -print -quit)"
+          export MIB_RELEASE_WINDOWS_SOURCE="$(find "$GITHUB_WORKSPACE/artifact/desktop" -name make-it-big.exe -print -quit)"
+          export MIB_RELEASE_MACOS_SOURCE="$(find "$GITHUB_WORKSPACE/artifact/macos" -name make-it-big-macos-universal.zip -print -quit)"
+          test -n "$MIB_RELEASE_LINUX_SOURCE" && test -n "$MIB_RELEASE_WINDOWS_SOURCE" && test -n "$MIB_RELEASE_MACOS_SOURCE"
+          ./scripts/release.sh package "$RELEASE_TAG"
+          ./scripts/release.sh verify "build/releases/$RELEASE_TAG"
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: ./scripts/release.sh publish "$RELEASE_TAG"

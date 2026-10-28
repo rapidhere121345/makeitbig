@@ -159,7 +159,7 @@ Do not copy host-specific symlinks, `.godot/`, or test saves as installation sub
 ## Troubleshooting
 
 - Missing Godot: set `GODOT_BIN` to the pinned executable or install it on PATH.
-- Missing templates: check `version.txt` and both release template files in the configured directory.
+- Missing templates: check `version.txt` and all three release template files in the configured directory.
 - Preserve uncommitted work. Never use `git reset --hard`, `git clean`, or overwrite another session's checkout.
 - Do not restart OCX, Paseo, or Jingwei from project scripts.
 

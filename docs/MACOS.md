@@ -48,6 +48,8 @@ job independently checks its exported replay against the same hash.
 Review the actual run results before claiming native acceptance. Headless smoke
 and replay do not establish GUI, audio, Retina, or sustained GPU performance.
 
-Release packaging and the download page support the `macos` platform. Older
-Windows/Linux-only builds remain readable and show macOS as unavailable. A new
-export does not automatically publish or prune the live release history.
+Versioned downloads live on [GitHub Releases](https://github.com/rapidhere121345/makeitbig/releases).
+A tagged release publishes only after the full Linux gate and native Windows,
+ARM64 Mac, and Intel Mac checks pass. The Mac ZIP is copied intact from the
+artifact verified by both native Mac jobs. There is no local release page or
+retention pruning.

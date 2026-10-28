@@ -93,31 +93,25 @@ non-zero with the failing names if any failed.
 
 The Linux executable is `build/current/linux/make-it-big.x86_64`; the Windows executable is `build/current/windows/make-it-big.exe`. The macOS ZIP is `build/current/macos/make-it-big-macos-universal.zip` (Apple Silicon ARM64 + Intel). See [macOS setup and validation](docs/MACOS.md). Cross-exporting does not establish native acceptance; CI provides native smoke and replay checks.
 
-## Release Page
+## GitHub Releases
 
-After a passing build, generate and validate the static release page:
+Download Windows, Linux, and Universal macOS builds from
+[GitHub Releases](https://github.com/rapidhere121345/makeitbig/releases).
+Each release includes platform archives, `SHA256SUMS`, and source/build metadata.
 
-```bash
-./scripts/release.sh all
-./scripts/release.sh verify
-```
-
-The ignored `release-online/` directory (the live publish root, `MIB_RELEASE_ROOT`) can be served as a static site. Each complete build includes Windows/Linux/macOS downloads, `build.json`, and `SHA256SUMS`. `all` retains the 3 newest valid builds by default and can delete older ones; review and approve retention before running it against existing release history. See [the release workflow](docs/RELEASE_WORKFLOW.md) for templates and naming.
-
-The current publish URL, supplied by the operator, is <http://192.0.2.10:18080/>.
-
-For Tailscale access, validate `release-online/` with `./deploy/tailscale/stage_release_page.sh`, then have the host operator configure exposure as described in the [Tailscale guide](deploy/tailscale/README.md).
+To publish a new version, push a new `vX.Y.Z` tag. CI builds and tests the tagged
+commit, runs native Windows/Apple Silicon/Intel checks, and publishes all assets
+only after those jobs pass. See [the release workflow](docs/RELEASE_WORKFLOW.md).
+The former HTTP release page is retired; existing binary archives are preserved.
 
 ## Documentation
 
 - [AGENTS.md](AGENTS.md): scope, sources of truth, and collaboration rules.
 - [docs/](docs/README.md): systems, narrative, environment workflow, and art production.
 - [Graphical validation](docs/GRAPHICAL_VALIDATION.md): windowed and headless acceptance.
-- [Release workflow](docs/RELEASE_WORKFLOW.md): release pages, retention, and exposure.
+- [Release workflow](docs/RELEASE_WORKFLOW.md): GitHub Releases, version tags, archives, and checksums.
 - [Devbox readiness](docs/DEVBOX_READINESS.md): target prerequisites and actual audit status.
 - [Source language and localization](docs/LANGUAGE_POLICY.md): vocabulary, compatibility, and pinned authentic originals.
 - [content/](content/) and `src/`: implemented content and runtime behavior.
 
 Save schema is 10. Production saves use Godot's `user://saves`; playtest tools use separate directories. Design documents describe targets, not promises of implemented features. Code, content, and tests determine actual behavior.
-
-<!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->

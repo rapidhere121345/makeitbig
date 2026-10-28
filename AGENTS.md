@@ -10,8 +10,8 @@ Use these sources of truth in order: runtime code in `src/`, authored data in `c
 
 - `README.md`: quick start, controls, and validation for human readers.
 - `docs/`: systems, narrative, environment workflows, and reproducible art production.
-- `release/`: release-page templates, configuration, and conventions.
-- `deploy/tailscale/`: release validation and host exposure examples; project scripts never run tailscaled.
+- `release/`: GitHub Release notes, configuration, and conventions.
+- `deploy/tailscale/`: retired-page compatibility validation; no serving scripts remain.
 - `src/`: gameplay and presentation; `content/`: chapter-one data; `tests/`: regressions.
 - `art/production/p1/`: current runtime art; retained sources must have reproducible provenance.
 - `tools/art_pipeline/`: active art packing/validation tools; recipes live in `docs/art-production/`.
@@ -54,9 +54,18 @@ processes and temporary IPC files. Never expose the host desktop.
 
 ## Release Workflow
 
-Release sources live in `release/`; generated deliverables go to the ignored live publish root `release-online/` (`MIB_RELEASE_ROOT`, set in `release/config/release.conf`). After the headless build and exports, `./scripts/release.sh all` creates metadata, refreshes the static page, validates its structure, and retains the 3 newest valid builds by default (`MIB_RELEASE_KEEP_BUILDS`). This command prunes old release builds: inspect retention candidates and obtain explicit approval before deleting existing artifacts. Each build has platform download checksums in `SHA256SUMS`.
+Downloads live on [GitHub Releases](https://github.com/rapidhere121345/makeitbig/releases).
+Release notes/configuration live in `release/`; generated packages go to ignored
+`build/releases/<version-tag>/`. `scripts/release.sh package vX.Y.Z` packages all
+three desktop exports; `verify` checks archives, metadata, and SHA256SUMS. There
+is no release page generation or retention pruning.
 
-The Tailscale release page uses the same `release-online/` root. `deploy/tailscale/stage_release_page.sh` validates it; host operators then configure tailnet-only `tailscale serve` as described in [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md) and [deploy/tailscale/README.md](deploy/tailscale/README.md). Project scripts do not modify host networking. Enabling `funnel` requires an explicit operator action.
+Push a new `vX.Y.Z` tag to publish through `desktop-build`. Publication requires
+the full Linux gate and native Windows, ARM64 Mac, and Intel Mac smoke/replay
+jobs to pass. Assets upload to a draft before publication; published releases
+are never overwritten automatically. Preserve existing binary history in the
+retired page archive under ignored `build/archive/`. Its HTTP server was stopped by the operator;
+project scripts must not restart it or change host networking.
 
 See [docs/GRAPHICAL_VALIDATION.md](docs/GRAPHICAL_VALIDATION.md) for graphical acceptance. CPU Mesa/llvmpipe on an authenticated Xvfb display is sufficient for UI, collision, sorting, and reveal correctness; discrete GPU use is optional. Never present software results as hardware-performance evidence.
 

@@ -1,6 +1,6 @@
 # Source Language and Game Localization
 
-Source copy, authored gameplay data, tests, developer tools, release pages, and
+Source copy, authored gameplay data, tests, developer tools, release notes, and
 maintained documentation use English. The game offers English and Simplified
 Chinese. Keep translations in `content/localization/zh_CN.json`; do not duplicate
 content registries or change gameplay identifiers when changing the language.

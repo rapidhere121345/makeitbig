@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
+# Compatibility check for the retired page deployment; does not touch networking.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
-for file in stage_release_page.sh serve_release_page.sh serve_host.sh.example validate.sh; do bash -n "$SCRIPT_DIR/$file"; done
-[[ -f "$PROJECT_ROOT/release/site/index.html" ]]
-[[ -f "$PROJECT_ROOT/release/site/app.js" ]]
-[[ -f "$PROJECT_ROOT/release/site/style.css" ]]
-grep -q '__RELEASE_INDEX_JSON__' "$PROJECT_ROOT/release/site/index.html"
-grep -q 'windows' "$PROJECT_ROOT/release/site/app.js"
-grep -q 'linux' "$PROJECT_ROOT/release/site/app.js"
-grep -q 'macos' "$PROJECT_ROOT/release/site/app.js"
-grep -q 'tailscale serve' "$SCRIPT_DIR/serve_host.sh.example"
-grep -q 'tailscale funnel' "$SCRIPT_DIR/serve_host.sh.example"
-grep -q 'release-online' "$SCRIPT_DIR/serve_host.sh.example"
-echo "PASS deploy/tailscale static validation"
+[[ ! -d "$PROJECT_ROOT/release/site" ]] || { echo "legacy release page sources remain" >&2; exit 1; }
+for file in serve_release_page.sh stage_release_page.sh serve_host.sh.example; do
+  [[ ! -e "$SCRIPT_DIR/$file" ]] || { echo "retired server helper remains: $file" >&2; exit 1; }
+done
+bash -n "$PROJECT_ROOT/scripts/release.sh"
+[[ -f "$PROJECT_ROOT/scripts/package_release.py" ]]
+grep -q 'scripts/release.sh publish' "$PROJECT_ROOT/.github/workflows/desktop-build.yml"
+echo "PASS retired-page/GitHub Release static validation"

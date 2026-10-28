@@ -1,54 +1,65 @@
-# Release Workflow
+# GitHub Release Workflow
 
-Release sources and page templates live in `release/`; `scripts/release.sh` generates ignored output in the live publish root `release-online/` (defaults in `release/config/release.conf`: `MIB_RELEASE_ROOT=release-online`, `MIB_RELEASE_KEEP_BUILDS=3`). Do not commit generated deliverables.
+[GitHub Releases](https://github.com/rapidhere121345/makeitbig/releases) is the
+download destination. The former HTTP page and serving scripts are retired;
+the operator stopped the server. The old `release-online/` folder was moved intact to ignored
+`build/archive/release-online-20261028/`; that binary history is never pruned.
 
-## Layout and Naming
+## Downloads
 
-`release.sh package` reads the Linux/Windows executables and `build/current/macos/make-it-big-macos-universal.zip` and creates a timestamped build directory. IDs default to `YYYYMMDD-HHMMSS-<short-git-SHA>` and can be set with `--id`. A complete desktop build contains:
+Each versioned release contains:
 
-- `build.json`: ID, revision, timestamp, platform files, sizes, and SHA256.
-- `linux/make-it-big.x86_64`: Linux x86_64 download.
-- `windows/make-it-big.exe`: Windows x86_64 download.
-- `macos/make-it-big-macos-universal.zip`: Apple Silicon ARM64 and Intel app download.
-- `SHA256SUMS`: download checksums.
+- `make-it-big-linux-x86_64.tar.gz`: Linux executable with its execute bit intact.
+- `make-it-big-windows-x86_64.zip`: Windows executable.
+- `make-it-big-macos-universal.zip`: the exact app ZIP checked on ARM64 and Intel Macs.
+- `build.json`: tag, full source commit, timestamp, asset sizes, and SHA256 hashes.
+- `RELEASE_NOTES.md`: player-facing notes and source commit.
+- `SHA256SUMS`: hashes for every archive, metadata, and notes file.
 
-`index` writes newest-first metadata to `release-online/index.json`; `site` writes the page, stylesheet, script, and embedded index to the same root. Serve this directory directly as a static site. Metadata and UI explicitly distinguish missing platform files instead of offering broken downloads.
+Windows/Linux binaries are unsigned; the Mac app is ad-hoc signed without Apple
+notarization. See [Mac launch instructions](MACOS.md). Native smoke/replay checks
+do not establish graphical, audio, or sustained GPU performance acceptance.
 
-## Standard Commands
+## Local Validation
 
-```bash
-./scripts/build.sh
-# Review and commit after the passing build so release metadata names its source.
-git diff --check
-git status --short
-# git add <reviewed-files> && git commit -m '<change-description>'
-# Review retention candidates and approve any deletion before invoking all.
-./scripts/release.sh all --note 'Change description'
-./scripts/release.sh verify --deep
-./deploy/tailscale/validate.sh
-./deploy/tailscale/stage_release_page.sh --check
-```
-
-`all` runs package → prune → index → site → verify. Against the live `release-online/` root, `all` and `prune` delete every build older than the 3 newest, so list the candidates and obtain explicit approval first. `prune` defaults to retaining the 3 newest direct child directories with valid IDs and `build.json`, and never cleans other paths. Set `MIB_RELEASE_ROOT` explicitly for an isolated validation root and inspect its contents first. To validate new packaging without pruning existing history, run `package`, `index`, `site`, and `verify --deep` separately in that fresh root.
-
-Do not publish exports after changing runtime code or assets without rebuilding. After publication, compare the served `/index.json` build ID with local metadata and verify HTTP status, size, and SHA256 for every available download. Cross-exports are not native acceptance; see [macOS validation](MACOS.md).
-
-## Tailscale Exposure
-
-The project validates generated files locally:
+After the [build gate](HOST_WORKFLOW.md) and all three exports:
 
 ```bash
-./deploy/tailscale/stage_release_page.sh
+./scripts/with_env.sh ./scripts/release.sh package vX.Y.Z
+./scripts/with_env.sh ./scripts/release.sh verify build/releases/vX.Y.Z
+./deploy/tailscale/validate.sh # retired-page compatibility check; no networking
 ```
 
-Staging validates the single `release-online/` root and requires both downloads in the latest build. History, index, and page assets share that root; there is no separate single-build page. The operator owns Tailscale/TUN and must confirm that the host can see the release root before running `deploy/tailscale/serve_host.sh.example serve`. The default is tailnet-only HTTPS; public `funnel` exposure requires a separate policy/ACL/unsigned-binary review.
+`verify` without a directory checks every local `v*` package. Packaging refuses
+to replace an existing output folder and fails if a platform is missing. Use
+`MIB_RELEASE_ROOT` for a fresh validation root. Configuration lives in
+`release/config/release.conf`; generated deliverables must not be committed.
+The former `all`, `site`, `index`, and `prune` commands are removed.
 
-Before exposure, pass both validation commands, ensure the release root contains no source checkout, confirm `tailscale serve status` targets it, and test the home page and both downloads from the tailnet. The page does not implement account authentication; Tailscale ACLs control access.
+## Publication
 
-## Existing Host Endpoint
+Review and commit the release sources and `release/notes.md`, then create and
+push a new version tag:
 
-The current publish URL, supplied by the operator, is <http://192.0.2.10:18080/>. It supersedes the former HTTPS endpoint. No endpoint check was performed, as requested by the operator. Project scripts never run `tailscaled`.
+```bash
+git tag -a vX.Y.Z -m 'Make It Big vX.Y.Z'
+git push origin vX.Y.Z
+```
 
-For a sandbox managed by AF Infra, use the sanctioned control plane and an operator-approved deployment contract rather than configuring host networking from the sandbox. Moving the checkout alone does not provision a publication endpoint.
+The `desktop-build` workflow runs the full Linux build/test/export/smoke gate,
+Windows native boot/replay, and ARM64/Intel Mac signature/boot/replay. The release
+job depends on every one of those jobs; ordinary branch/PR builds do not publish.
+Only the release job receives `contents: write`. No permanent GitHub credential
+is stored in the repository or devbox.
 
-<!-- Historical host identifiers in this document are sanitized examples; current service access comes from the approved directory or operator configuration. -->
+The publisher requires the existing tag to match the package's source commit.
+It verifies all hashes, creates a draft with all six assets, then publishes it.
+An upload failure leaves a draft rather than publishing partial downloads.
+An existing GitHub Release is never overwritten or deleted automatically; inspect
+any partial draft before retrying. Prerelease tag suffixes produce prereleases
+without replacing the latest stable release. A stable tag becomes latest.
+
+Direct downloads have durable GitHub Release URLs and do not depend on expiring
+Actions artifacts. Release tags/assets are not moved, replaced, or automatically
+pruned. Project scripts do not start an HTTP server, change host exposure, or
+restart OCX, Paseo, or Jingwei.

@@ -4,7 +4,7 @@ Long-lived references for systems, narrative, host workflows, and art production
 
 - [HOST_WORKFLOW.md](HOST_WORKFLOW.md): fixed host workspace environment and build order.
 - [GRAPHICAL_VALIDATION.md](GRAPHICAL_VALIDATION.md): host window checks and headless acceptance records.
-- [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md): Windows/Linux release pages, the `release-online/` root, the three newest builds, and Tailscale publishing boundaries.
+- [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md): versioned GitHub Releases, Windows/Linux/macOS downloads, checksums, and publication gates.
 - [DEVBOX_READINESS.md](DEVBOX_READINESS.md): devbox prerequisites, recorded baseline, and migration boundaries.
 - [LANGUAGE_POLICY.md](LANGUAGE_POLICY.md): English source language, Simplified Chinese localization, and pinned authentic originals.
 - [SYSTEMS_DESIGN.md](SYSTEMS_DESIGN.md): full-game systems model and long-term plans.

@@ -131,7 +131,7 @@ def audit(root, profile, godot=None, templates=None, software_ok=False, engine_b
         for name in ("cp", "date", "mktemp"):
             require("tool_" + name, shutil.which(name) is not None, name + " required")
         record("publication", "warn",
-               "Packaging is local. Signing, hosting, ACLs and deployment need operator review.")
+               "Packages are local; version tags publish through GitHub Actions after all platform checks. No HTTP server is used.")
         record("native_windows", "warn",
                "Linux exports do not prove native Windows behavior; run Windows CI smoke/replay.")
 
