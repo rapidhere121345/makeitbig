@@ -64,6 +64,10 @@ class PreflightTests(unittest.TestCase):
         (self.templates / "windows_release_x86_64.exe").unlink()
         self.assertIn("template_windows_release_x86_64.exe", self.failures(self.audit()))
 
+    def test_missing_macos_template_blocks_release(self):
+        (self.templates / "macos.zip").unlink()
+        self.assertIn("template_macos.zip", self.failures(self.audit()))
+
     def test_wrong_template_version_blocks_release(self):
         (self.templates / "version.txt").write_text("4.6.stable")
         self.assertIn("template_version", self.failures(self.audit()))

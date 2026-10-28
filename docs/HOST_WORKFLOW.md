@@ -94,7 +94,7 @@ on its own:
 ```bash
 ./scripts/check.sh    # bash -n, Python syntax, check_english, world_manifest --check, bounded Godot --check-only
 ./scripts/test.sh     # complete test gate
-./scripts/export.sh   # template check, Linux and Windows exports
+./scripts/export.sh   # template check, Linux, Windows, and Universal macOS exports
 ./scripts/smoke.sh    # exported Linux binary from an empty directory
 ```
 
@@ -118,7 +118,7 @@ starts with `SCRIPT ERROR:`.
 build/current/linux/make-it-big.x86_64 --headless -- --smoke
 ```
 
-Templates must exactly match the editor version. Both Linux and Windows release templates are required for the dual-platform gate.
+Templates must exactly match the editor version. The all-target gate requires `linux_release.x86_64`, `windows_release_x86_64.exe`, and `macos.zip`. `export.sh macos` selects just the Universal macOS export; `build.sh linux windows` is an explicit partial export gate for an environment without the macOS template.
 
 ## Windowed Playtesting
 

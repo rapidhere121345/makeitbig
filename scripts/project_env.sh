@@ -122,8 +122,16 @@ mib_require_export_templates() {
     echo "Unexpected Godot export template version in ${MIB_GODOT_TEMPLATE_DIR}/version.txt" >&2
     return 1
   fi
-  local template
-  for template in linux_release.x86_64 windows_release_x86_64.exe; do
+  local template target
+  local targets=("$@")
+  if [[ ${#targets[@]} -eq 0 ]]; then targets=(linux windows macos); fi
+  for target in "${targets[@]}"; do
+    case "$target" in
+      linux) template=linux_release.x86_64 ;;
+      windows) template=windows_release_x86_64.exe ;;
+      macos) template=macos.zip ;;
+      *) echo "Unknown export target: $target (expected linux, windows, macos)" >&2; return 2 ;;
+    esac
     if [[ ! -f "$MIB_GODOT_TEMPLATE_DIR/$template" ]]; then
       echo "Required export template is missing: $MIB_GODOT_TEMPLATE_DIR/$template" >&2
       return 1

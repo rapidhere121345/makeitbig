@@ -9,6 +9,7 @@ for file in stage_release_page.sh serve_release_page.sh serve_host.sh.example va
 grep -q '__RELEASE_INDEX_JSON__' "$PROJECT_ROOT/release/site/index.html"
 grep -q 'windows' "$PROJECT_ROOT/release/site/app.js"
 grep -q 'linux' "$PROJECT_ROOT/release/site/app.js"
+grep -q 'macos' "$PROJECT_ROOT/release/site/app.js"
 grep -q 'tailscale serve' "$SCRIPT_DIR/serve_host.sh.example"
 grep -q 'tailscale funnel' "$SCRIPT_DIR/serve_host.sh.example"
 grep -q 'release-online' "$SCRIPT_DIR/serve_host.sh.example"

@@ -4,11 +4,12 @@ Release sources and page templates live in `release/`; `scripts/release.sh` gene
 
 ## Layout and Naming
 
-`release.sh package` reads `build/current/linux/make-it-big.x86_64` and `build/current/windows/make-it-big.exe` and creates a timestamped build directory. IDs default to `YYYYMMDD-HHMMSS-<short-git-SHA>` and can be set with `--id`. A complete dual-platform build contains:
+`release.sh package` reads the Linux/Windows executables and `build/current/macos/make-it-big-macos-universal.zip` and creates a timestamped build directory. IDs default to `YYYYMMDD-HHMMSS-<short-git-SHA>` and can be set with `--id`. A complete desktop build contains:
 
 - `build.json`: ID, revision, timestamp, platform files, sizes, and SHA256.
 - `linux/make-it-big.x86_64`: Linux x86_64 download.
 - `windows/make-it-big.exe`: Windows x86_64 download.
+- `macos/make-it-big-macos-universal.zip`: Apple Silicon ARM64 and Intel app download.
 - `SHA256SUMS`: download checksums.
 
 `index` writes newest-first metadata to `release-online/index.json`; `site` writes the page, stylesheet, script, and embedded index to the same root. Serve this directory directly as a static site. Metadata and UI explicitly distinguish missing platform files instead of offering broken downloads.
@@ -30,7 +31,7 @@ git status --short
 
 `all` runs package → prune → index → site → verify. Against the live `release-online/` root, `all` and `prune` delete every build older than the 3 newest, so list the candidates and obtain explicit approval first. `prune` defaults to retaining the 3 newest direct child directories with valid IDs and `build.json`, and never cleans other paths. Set `MIB_RELEASE_ROOT` explicitly for an isolated validation root and inspect its contents first. To validate new packaging without pruning existing history, run `package`, `index`, `site`, and `verify --deep` separately in that fresh root.
 
-Do not publish exports after changing runtime code or assets without rebuilding. After publication, compare the served `/index.json` build ID with local metadata and verify HTTP status, size, and SHA256 for both downloads. A successful Windows export is not native Windows acceptance.
+Do not publish exports after changing runtime code or assets without rebuilding. After publication, compare the served `/index.json` build ID with local metadata and verify HTTP status, size, and SHA256 for every available download. Cross-exports are not native acceptance; see [macOS validation](MACOS.md).
 
 ## Tailscale Exposure
 

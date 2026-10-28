@@ -13,8 +13,10 @@ MIB_RELEASE_ROOT="${MIB_RELEASE_ROOT:-release-online}"
 MIB_RELEASE_KEEP_BUILDS="${MIB_RELEASE_KEEP_BUILDS:-3}"
 MIB_RELEASE_LINUX_SOURCE="${MIB_RELEASE_LINUX_SOURCE:-build/current/linux/make-it-big.x86_64}"
 MIB_RELEASE_WINDOWS_SOURCE="${MIB_RELEASE_WINDOWS_SOURCE:-build/current/windows/make-it-big.exe}"
+MIB_RELEASE_MACOS_SOURCE="${MIB_RELEASE_MACOS_SOURCE:-build/current/macos/make-it-big-macos-universal.zip}"
 MIB_RELEASE_LINUX_NAME="${MIB_RELEASE_LINUX_NAME:-make-it-big.x86_64}"
 MIB_RELEASE_WINDOWS_NAME="${MIB_RELEASE_WINDOWS_NAME:-make-it-big.exe}"
+MIB_RELEASE_MACOS_NAME="${MIB_RELEASE_MACOS_NAME:-make-it-big-macos-universal.zip}"
 BUILD_ID_RE='^[0-9]{8}-[0-9]{6}-[0-9a-f]{7,40}$'
 
 die() { printf '[release] ERROR: %s\n' "$*" >&2; exit 1; }
@@ -66,12 +68,14 @@ package_build() {
   check_id "$id"
   local dest="$RELEASE_ROOT/builds/$id"
   [[ ! -e "$dest" ]] || die "build already exists: $dest"
-  mkdir -p "$dest/linux" "$dest/windows"
+  mkdir -p "$dest/linux" "$dest/windows" "$dest/macos"
   local linux_src="$(path_in_project "$MIB_RELEASE_LINUX_SOURCE")"
   local windows_src="$(path_in_project "$MIB_RELEASE_WINDOWS_SOURCE")"
+  local macos_src="$(path_in_project "$MIB_RELEASE_MACOS_SOURCE")"
   local found=0
   if [[ -f "$linux_src" ]]; then cp -- "$linux_src" "$dest/linux/$MIB_RELEASE_LINUX_NAME"; found=1; else info "Linux export missing: $linux_src"; fi
   if [[ -f "$windows_src" ]]; then cp -- "$windows_src" "$dest/windows/$MIB_RELEASE_WINDOWS_NAME"; found=1; else info "Windows export missing: $windows_src"; fi
+  if [[ -f "$macos_src" ]]; then cp -- "$macos_src" "$dest/macos/$MIB_RELEASE_MACOS_NAME"; found=1; else info "macOS export missing: $macos_src"; fi
   if ((found == 0 && allow_empty == 0)); then rm -rf -- "$dest"; die "no export found; use --allow-empty only for a metadata fixture"; fi
   local created_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   local git_sha="$(revision)"
@@ -79,7 +83,7 @@ package_build() {
 import hashlib, json, os, sys
 root, build_id, created_at, git_sha, note = sys.argv[1:]
 files = {}
-for platform in ("linux", "windows"):
+for platform in ("linux", "windows", "macos"):
     directory = os.path.join(root, platform)
     names = sorted(n for n in os.listdir(directory) if os.path.isfile(os.path.join(directory, n)))
     if not names:
@@ -96,7 +100,7 @@ with open(os.path.join(root, "build.json"), "w", encoding="utf-8") as handle:
     json.dump(metadata, handle, ensure_ascii=False, indent=2, sort_keys=True)
     handle.write("\n")
 PY
-  ( cd "$dest"; : > SHA256SUMS; for file in linux/* windows/*; do [[ -f "$file" ]] && sha256sum "$file" >> SHA256SUMS; done )
+  ( cd "$dest"; : > SHA256SUMS; for file in linux/* windows/* macos/*; do if [[ -f "$file" ]]; then sha256sum "$file" >> SHA256SUMS; fi; done )
   info "packaged $id"
 }
 
@@ -232,8 +236,11 @@ if ids != sorted(ids, reverse=True):
     raise SystemExit("index is not newest-first")
 with open(os.path.join(root, "index.html"), encoding="utf-8") as handle:
     page = handle.read()
-if "make-it-big.exe" not in page or "make-it-big.x86_64" not in page:
-    raise SystemExit("page is missing Windows/Linux download labels")
+with open(os.path.join(root, "app.js"), encoding="utf-8") as handle:
+    script = handle.read()
+for platform in ("windows", "linux", "macos"):
+    if platform not in script:
+        raise SystemExit("page is missing platform support: " + platform)
 print(f"verified {len(ids)} build(s)" + (" with SHA256" if deep else ""))
 PY
 }

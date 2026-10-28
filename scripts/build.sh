@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Delivery gate: static checks, the complete test gate, both exports, and the
+# Delivery gate: static checks, the complete test gate, desktop exports, and the
 # empty-directory Linux smoke. Stops at the first failing stage.
+# Optional export targets are forwarded to export.sh; the default is all three.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -14,7 +15,7 @@ echo "[makeitbig] XDG data: ${XDG_DATA_HOME}"
 
 "${SCRIPT_DIR}/check.sh"
 "${SCRIPT_DIR}/test.sh"
-"${SCRIPT_DIR}/export.sh"
+"${SCRIPT_DIR}/export.sh" "$@"
 "${SCRIPT_DIR}/smoke.sh"
 
 echo "[makeitbig] build flow passed"

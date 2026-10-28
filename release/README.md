@@ -4,12 +4,12 @@ This directory contains release-page templates and configuration. Generated outp
 
 ## Quick Start
 
-After the full test gate and both platform exports, run from the project root:
+After the full test gate and all desktop exports, run from the project root:
 
     ./scripts/release.sh all
     ./scripts/release.sh verify --deep
 
-Subcommands are `package`, `index`, `prune`, `site`, `verify`, and `all`. `package` reads `build/current/linux/make-it-big.x86_64` and `build/current/windows/make-it-big.exe`, generating metadata and `SHA256SUMS`. `prune` retains the 3 newest valid builds by default; `site` produces the static site in `release-online/`. Because `all` invokes `prune`, review and approve any deletion of existing release history first.
+Subcommands are `package`, `index`, `prune`, `site`, `verify`, and `all`. `package` reads `build/current/linux/make-it-big.x86_64`, `build/current/windows/make-it-big.exe`, and `build/current/macos/make-it-big-macos-universal.zip`, generating metadata and `SHA256SUMS`. `prune` retains the 3 newest valid builds by default; `site` produces the static site in `release-online/`. Because `all` invokes `prune`, review and approve any deletion of existing release history first.
 
 Defaults live in `release/config/release.conf` (`MIB_RELEASE_ROOT=release-online`, `MIB_RELEASE_KEEP_BUILDS=3`; `scripts/release.sh` keeps matching fallbacks if the file is absent). Set `MIB_RELEASE_ROOT` to override the output root. It must be inside the checkout unless `MIB_RELEASE_ALLOW_OUTSIDE=1` explicitly permits an external test directory.
 
@@ -27,6 +27,7 @@ The default build ID is `YYYYMMDD-HHMMSS-<short-git-SHA>`; override it with `pac
         SHA256SUMS
         linux/make-it-big.x86_64
         windows/make-it-big.exe
+        macos/make-it-big-macos-universal.zip
 
 `build.json` is the metadata source of truth for a build: revision, timestamp, platform paths, sizes, and SHA256 hashes. Missing platforms remain explicit; packaging with no exported files requires `--allow-empty`.
 
@@ -34,4 +35,4 @@ The default build ID is `YYYYMMDD-HHMMSS-<short-git-SHA>`; override it with `pac
 
 ## Boundaries
 
-`release/site/` is committed page source; `release-online/` is generated output. Release scripts read current exports and write the configured release root. They do not run Docker, configure Tailscale, or restart services. Windows/Linux binaries are unsigned; the operator must review signing and access control before public distribution.
+`release/site/` is committed page source; `release-online/` is generated output. Release scripts read current exports and write the configured release root. They do not run Docker, configure Tailscale, or restart services. Windows/Linux binaries are unsigned; the macOS app is ad-hoc signed without Apple notarization; the operator must review signing and access control before public distribution.

@@ -82,7 +82,7 @@ runs the stages below in order and stops at the first failing stage.
 ```bash
 ./scripts/check.sh    # fast static checks: shell/Python syntax, English-only, manifests, Godot parse
 ./scripts/test.sh     # complete test gate (discovers tests, runs all, prints a summary)
-./scripts/export.sh   # Linux and Windows release exports
+./scripts/export.sh   # Linux, Windows, and Universal macOS exports
 ./scripts/smoke.sh    # boot the Linux export from an empty directory
 ```
 
@@ -91,7 +91,7 @@ Each stage runs standalone with the Godot environment configured (or through
 that extend `SceneTree`, runs every test even after a failure, and exits
 non-zero with the failing names if any failed.
 
-The Linux executable is `build/current/linux/make-it-big.x86_64`; the Windows executable is `build/current/windows/make-it-big.exe`. Exporting Windows is not native Windows acceptance. Public CI provides Windows smoke and cross-platform replay checks.
+The Linux executable is `build/current/linux/make-it-big.x86_64`; the Windows executable is `build/current/windows/make-it-big.exe`. The macOS ZIP is `build/current/macos/make-it-big-macos-universal.zip` (Apple Silicon ARM64 + Intel). See [macOS setup and validation](docs/MACOS.md). Cross-exporting does not establish native acceptance; CI provides native smoke and replay checks.
 
 ## Release Page
 
@@ -102,7 +102,7 @@ After a passing build, generate and validate the static release page:
 ./scripts/release.sh verify
 ```
 
-The ignored `release-online/` directory (the live publish root, `MIB_RELEASE_ROOT`) can be served as a static site. Each build includes Windows/Linux downloads, `build.json`, and `SHA256SUMS`. `all` retains the 3 newest valid builds by default and can delete older ones; review and approve retention before running it against existing release history. See [the release workflow](docs/RELEASE_WORKFLOW.md) for templates and naming.
+The ignored `release-online/` directory (the live publish root, `MIB_RELEASE_ROOT`) can be served as a static site. Each complete build includes Windows/Linux/macOS downloads, `build.json`, and `SHA256SUMS`. `all` retains the 3 newest valid builds by default and can delete older ones; review and approve retention before running it against existing release history. See [the release workflow](docs/RELEASE_WORKFLOW.md) for templates and naming.
 
 The current publish URL, supplied by the operator, is <http://192.0.2.10:18080/>.
 

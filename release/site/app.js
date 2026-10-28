@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var labels = { windows: "Windows", linux: "Linux" };
+  var labels = { windows: "Windows", linux: "Linux", macos: "macOS · Apple Silicon + Intel" };
   var latestPanel = document.getElementById("latest-panel");
   var latestId = document.getElementById("latest-id");
   var latestMeta = document.getElementById("latest-meta");
@@ -56,7 +56,7 @@
     if (!builds.length) {
       var empty = document.createElement("tr");
       var cell = document.createElement("td");
-      cell.colSpan = 4;
+      cell.colSpan = 5;
       cell.textContent = "No builds yet. After exporting, run scripts/release.sh all.";
       empty.appendChild(cell);
       historyBody.appendChild(empty);
@@ -71,6 +71,7 @@
     latestDownloads.textContent = "";
     latestDownloads.appendChild(downloadLink(latest, "windows", true));
     latestDownloads.appendChild(downloadLink(latest, "linux", true));
+    latestDownloads.appendChild(downloadLink(latest, "macos", true));
 
     builds.forEach(function (build) {
       var row = document.createElement("tr");
@@ -82,7 +83,7 @@
       var timeCell = document.createElement("td");
       timeCell.textContent = dateLabel(build.created_at);
       row.appendChild(timeCell);
-      ["windows", "linux"].forEach(function (platform) {
+      ["windows", "linux", "macos"].forEach(function (platform) {
         var fileCell = document.createElement("td");
         fileCell.appendChild(downloadLink(build, platform, false));
         row.appendChild(fileCell);
@@ -95,7 +96,7 @@
     historyBody.textContent = "";
     var row = document.createElement("tr");
     var cell = document.createElement("td");
-    cell.colSpan = 4;
+    cell.colSpan = 5;
     cell.textContent = "The release index is temporarily unavailable. Please try again later.";
     row.appendChild(cell);
     historyBody.appendChild(row);

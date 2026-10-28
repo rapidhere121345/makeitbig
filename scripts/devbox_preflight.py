@@ -17,7 +17,7 @@ import sys
 
 GODOT_VERSION = "4.7.2"
 GODOT_SHA256 = "8d106cbe6144c2dc7e881d61d2429c1a8a76e6b22ef48bd5e48dcf934953f71e"
-RELEASE_TEMPLATES = ("linux_release.x86_64", "windows_release_x86_64.exe")
+RELEASE_TEMPLATES = ("linux_release.x86_64", "windows_release_x86_64.exe", "macos.zip")
 
 
 def run(command):

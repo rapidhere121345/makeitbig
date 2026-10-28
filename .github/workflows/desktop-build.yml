@@ -2,8 +2,9 @@ name: desktop-build
 
 # The Linux job runs the same delivery gate as the devbox (scripts/build.sh:
 # check, test, export, smoke) with the same pinned engine. The Windows job
-# boots the Windows export and compares its replay hash with Linux. The project
-# builds on Linux only; Windows is a smoke target, not a build host.
+# boots the Windows export and compares its replay hash with Linux. macOS jobs
+# verify the Universal app and smoke/replay it natively on ARM64 and Intel.
+# The project builds on Linux only; other platforms are smoke targets.
 
 on:
   push:
@@ -89,7 +90,14 @@ jobs:
           path: |
             build/current/linux/
             build/current/windows/
+            build/current/macos/
             build/golden/golden-state.sha256
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: make-it-big-macos-universal
+          path: build/current/macos/
           if-no-files-found: error
 
   windows-smoke:
@@ -130,3 +138,59 @@ jobs:
           if ($linuxHash -ne $windowsHash) {
             throw "Replay hash mismatch: Linux=$linuxHash Windows=$windowsHash"
           }
+
+  macos-smoke:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: make-it-big-desktop
+          path: artifact
+
+      - name: Verify and unpack the Universal app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "${{ matrix.arch }}"
+          archive="$(find "$GITHUB_WORKSPACE/artifact" -name make-it-big-macos-universal.zip -print -quit)"
+          golden="$(find "$GITHUB_WORKSPACE/artifact" -name golden-state.sha256 -print -quit)"
+          test -n "$archive" && test -n "$golden"
+          ditto -x -k "$archive" "$RUNNER_TEMP/macos"
+          app="$RUNNER_TEMP/macos/Make It Big.app"
+          name="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")"
+          executable="$app/Contents/MacOS/$name"
+          test -x "$executable"
+          lipo -verify_arch arm64 x86_64 "$executable"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          echo "MACOS_EXE=$executable" >> "$GITHUB_ENV"
+          echo "GOLDEN_HASH=$golden" >> "$GITHUB_ENV"
+
+      - name: macOS native smoke from an empty directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/macos-smoke"
+          cd "$RUNNER_TEMP/macos-smoke"
+          /usr/bin/arch -${{ matrix.arch }} "$MACOS_EXE" --headless -- --smoke
+
+      - name: macOS native golden automation replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/macos-smoke"
+          /usr/bin/arch -${{ matrix.arch }} "$MACOS_EXE" --headless -- --auto-smoke \
+            "--replay-geometry-profile=$REPLAY_GEOMETRY_PROFILE" \
+            "--state-hash-out=$RUNNER_TEMP/macos-state.sha256"
+          expected="$(tr -d '\r\n' < "$GOLDEN_HASH")"
+          actual="$(tr -d '\r\n' < "$RUNNER_TEMP/macos-state.sha256")"
+          test "$actual" = "$expected"
