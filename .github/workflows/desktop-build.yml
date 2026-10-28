@@ -204,7 +204,7 @@ jobs:
           name="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")"
           executable="$app/Contents/MacOS/$name"
           test -x "$executable"
-          lipo -verify_arch arm64 x86_64 "$executable"
+          lipo "$executable" -verify_arch arm64 x86_64
           codesign --verify --deep --strict --verbose=2 "$app"
           echo "MACOS_EXE=$executable" >> "$GITHUB_ENV"
           echo "GOLDEN_HASH=$golden" >> "$GITHUB_ENV"
