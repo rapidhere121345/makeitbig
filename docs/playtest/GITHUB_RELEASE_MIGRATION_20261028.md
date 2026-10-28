@@ -56,3 +56,11 @@ tagged CI will rebuild all platforms and run native checks before publication.
 All 29 old publication files stayed unchanged during the gate and were then
 archived with matching hashes. Archive-location documentation was updated after
 the gate; runtime/content and packaging code were unchanged.
+
+## Tagged Source
+
+Tag `v0.1.0` was pushed at source commit `240cf7709e5f6fbcc8ef3bad53633c728ce6321f`.
+Publication is delegated to the tagged `desktop-build` run; its release job is
+gated on the full build and all native smoke/replay jobs. The following branch
+commit only records this validation and uses `[skip ci]` to avoid a duplicate
+branch build of the same runtime.
