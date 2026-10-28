@@ -1,7 +1,7 @@
 # macOS Universal Support — 2026-10-28
 
-Status: both frozen local regression gates passed. macOS export and native
-checks are pending the corrected CI run.
+Status: both frozen local regression gates, Universal macOS packaging, and
+native ARM64/Intel signature, smoke, and replay checks passed.
 
 ## Delivery
 
@@ -70,3 +70,47 @@ exports, and empty-directory Linux smoke passed with ARM texture imports enabled
 
 - `build/current/linux/make-it-big.x86_64`: `bb0673360b6e3e82e5e720fe2ae82c03f8f31acfbfe2191fde95b72e47ac4e21`.
 - `build/current/windows/make-it-big.exe`: `0367e8070f2526e8f80f5204965171aa4af1f6fde54b7cd384351c1a8f5da369`.
+
+## Final Native macOS Acceptance
+
+Source commit: `763057965efca4c8342c7e5b31b71eba0d40d5e1`.
+[Run 40711416180](https://github.com/rapidhere121345/makeitbig/actions/runs/40711416180)
+records successful `macos-package`, `macos-smoke (macos-15, arm64)`, and
+`macos-smoke (macos-15-intel, x86_64)` jobs.
+
+Both macOS 15 runners verified the two CPU slices and passed Apple's
+`codesign --verify --deep --strict`, empty-directory startup, and full automation
+replay. The replay reached Ending after the Colossus/Auto settlements and matched
+`b98adeadd44d9fb428f1cb762304f8e09c252b2f00ce00583efb40bc8147200b`
+on ARM64 and Intel. The complete hosted Linux regression job was still running
+at this native acceptance; the frozen local 216-step gate had already passed
+with the final runtime/import configuration. The last code change after that gate
+only corrected the CI `lipo` argument order.
+
+The preceding [run 40710980724](https://github.com/rapidhere121345/makeitbig/actions/runs/40710980724)
+produced a valid ZIP, but both native jobs stopped before app launch because
+`lipo` expects the executable before `-verify_arch`. Its package and failed
+ARM check logs are retained as `ci-attempt2-package.log` and
+`ci-attempt2-native-arm.log`. This was fixed without changing the app resources.
+
+Final download: `build/current/macos/make-it-big-macos-universal.zip`,
+113,310,977 bytes, SHA256
+`f0199cd6b3a7a3c45615cbdc0ee714f0a4d549529d74439d9d6ace74201aba56`.
+[GitHub artifact 12826526634](https://github.com/rapidhere121345/makeitbig/actions/runs/40711416180/artifacts/12826526634)
+contains this ZIP, `SHA256SUMS`, and the replay reference hash.
+The outer artifact ZIP SHA256 is
+`c901edfa241641a333e7a410e57569fa3aca8bee6be391122e709af8a3047326`.
+Both outer/inner hashes were verified on download; the package verifier also
+passed again locally. The earlier ZIP was moved into `ci-attempt2-artifact/`
+rather than deleted.
+
+Evidence in `final/`: `macos-package.log`, `native-arm64.log`,
+`native-intel.log`, `CI_RESULT.json`, and the downloaded ZIP/checksums.
+`macos-pack-smoke.log` additionally records the earlier equivalent game pack
+passing resource/route smoke through the Linux engine; this is not native Mac
+execution evidence. Native proof is the two actual Mac jobs above.
+
+No GUI, audio, Retina visual acceptance, or sustained GPU performance is claimed.
+The app remains ad-hoc signed without Apple notarization; launch instructions
+are in [macOS setup](../MACOS.md). No live page publication, deletion of old
+release artifacts, host networking change, or agent restart was performed.

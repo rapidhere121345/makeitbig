@@ -3,7 +3,7 @@
 The retained records describe historical runs, not the current checkout's test
 status. Consult logs and run fresh checks before making a new acceptance claim.
 
-- [macOS Universal support](MACOS_SUPPORT_20261028.md): Apple Silicon/Intel export, package integrity checks, download-page support, and native CI smoke/replay jobs; see the record for current validation status.
+- [macOS Universal support](MACOS_SUPPORT_20261028.md): Apple Silicon/Intel export, package integrity checks, download-page support, and native ARM64/Intel signature, startup, and full replay checks passed; local frozen gate passed 216/0.
 - [Release candidate play-test](RELEASE_PLAYTEST_E712CCF_20261026.md): real-input windowed play of the frozen `e712ccf` Linux export on Xvfb/llvmpipe (title to town, two Manual contracts, Training, zh_CN round trip) plus a fixture-driven Auto room, Ending and Proxy Bay install; no blocker, six cosmetic notes, no menu Quit entry and the Colossus fight not reached.
 - [Refactor acceptance](REFACTOR_ACCEPTANCE_20261026.md): frozen full gate (214/0) and exported-binary replay hash passed on `e4d1b49`; windowed Xvfb/llvmpipe play-through from title to forge, training, loadout, Chinese UI and a boss defeat found no refactor regression; Auto and the unlocked Proxy Bay were not reached (locked behind the first Colossus kill).
 - [Language, modern displays, and character contrast](LANGUAGE_DISPLAY_READABILITY_20261026.md): Simplified Chinese selection, display/menu scaling, bounded 4K rendering, and live-actor silhouettes; rendered checks and frozen full build/export/Linux smoke passed.
