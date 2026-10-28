@@ -1,7 +1,7 @@
 # GitHub Release Migration — 2026-10-28
 
-Status: packaging/static checks and the frozen local gate passed. Tagged CI
-publication is pending. Evidence is under ignored
+Status: PASS. The frozen local gate, tagged CI, all native platform checks, and
+GitHub publication completed successfully. Evidence is under ignored
 `build/current/github-release-migration-20261028/`.
 
 ## Migration
@@ -34,11 +34,13 @@ the ephemeral Actions token.
 
 ## Publication and Archive
 
-The first release is planned as `v0.1.0`, matching the current Mac application
-version and Ranger Chapter One demo. It will include Windows/Linux archives,
-the exact Universal Mac ZIP verified by native jobs, `SHA256SUMS`, `build.json`,
-and `RELEASE_NOTES.md`. Actual tag/commit, CI run, asset hashes, and release URL
-will be recorded after publication. No publication claim is made yet.
+[Release v0.1.0](https://github.com/rapidhere121345/makeitbig/releases/tag/v0.1.0)
+was published at 2026-10-28T17:44:07Z. The GitHub API confirms a published stable
+release with all six expected assets, nonzero sizes, and SHA256 digests. It includes
+Windows/Linux archives, the exact Universal Mac ZIP verified by native jobs,
+`SHA256SUMS`, `build.json`, and `RELEASE_NOTES.md`. `PUBLISHED.json` retains the
+API response and completed job results; `ci-publisher.log` records package
+verification followed by successful upload and publication.
 
 The old publication directory was moved to
 `build/archive/release-online-20261028/`. All 29 files match the complete
@@ -52,7 +54,8 @@ to describe the former page as it existed at the time.
 All 1482 frozen inputs stayed unchanged. The complete 216-step suite,
 600 encounters, replay hashes, Linux/Windows exports, and empty-directory Linux
 smoke passed. The existing Universal Mac ZIP also passed real package verification;
-tagged CI will rebuild all platforms and run native checks before publication.
+tagged CI subsequently rebuilt all platforms and passed native checks before
+publication.
 All 29 old publication files stayed unchanged during the gate and were then
 archived with matching hashes. Archive-location documentation was updated after
 the gate; runtime/content and packaging code were unchanged.
@@ -60,7 +63,29 @@ the gate; runtime/content and packaging code were unchanged.
 ## Tagged Source
 
 Tag `v0.1.0` was pushed at source commit `240cf7709e5f6fbcc8ef3bad53633c728ce6321f`.
-Publication is delegated to the tagged `desktop-build` run; its release job is
-gated on the full build and all native smoke/replay jobs. The following branch
-commit only records this validation and uses `[skip ci]` to avoid a duplicate
-branch build of the same runtime.
+[Tagged desktop-build run 40734945204](https://github.com/rapidhere121345/makeitbig/actions/runs/40734945204)
+passed all six jobs: build, macOS package, Intel macOS smoke, ARM64 macOS smoke,
+Windows smoke, and GitHub release publication. The hosted full gate passed
+216 steps with zero failures. The Linux export and native Windows, ARM64 Mac,
+and Intel Mac replays matched the pinned state hash:
+`b98adeadd44d9fb428f1cb762304f8e09c252b2f00ce00583efb40bc8147200b`.
+Both native Mac jobs verified the Universal architectures and strict ad-hoc
+signature before startup and replay. These headless checks do not establish
+GPU performance or a new graphical play-through.
+
+Following branch commits only record validation and use `[skip ci]` to avoid
+duplicate branch builds of the same runtime. Release source remains the tag above.
+
+## Published Assets
+
+These sizes and SHA256 values are reported by GitHub for the uploaded assets.
+The publisher verified archive structure and all package checksums before upload.
+
+| Asset | Bytes | SHA256 |
+| --- | ---: | --- |
+| `build.json` | 732 | `8656e2fc7f9eb4e1cb6d4f6f0f297665423c86170f6bbac6ba6c4341b2b7f721` |
+| `make-it-big-linux-x86_64.tar.gz` | 81155357 | `1c35d11b078cea118b75f005df29ea908167c3c9f956bb961e5dbb25194a46a6` |
+| `make-it-big-macos-universal.zip` | 113314370 | `211f2c2e27c3e710d32d826d06322c3549620a4ae8569cfd931430afb04a7fea` |
+| `make-it-big-windows-x86_64.zip` | 90866215 | `77e9c6a13928d10d565591f50cdd8190031a4626c6c33cecaf119109c5f69ffe` |
+| `RELEASE_NOTES.md` | 881 | `757b9bbecba7992238097bf6a4c2a25d250ae73ed5999bfdcc2be7e38820ed6b` |
+| `SHA256SUMS` | 453 | `b135300d9d47503b3efe34568290c983e97768c44617e49b0512d3525dd43214` |
