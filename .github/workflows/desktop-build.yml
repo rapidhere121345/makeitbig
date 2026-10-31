@@ -235,7 +235,7 @@ jobs:
           test "$actual" = "$expected"
 
   github-release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.event.created == true
     needs: [build, windows-smoke, macos-package, macos-smoke]
     runs-on: ubuntu-22.04
     timeout-minutes: 15
