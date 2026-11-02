@@ -64,6 +64,8 @@ var manual_aim_resolver
 var enemy_tactics
 var command_source
 var command_source_port: RefCounted = null
+## Device-command source the view hands in (null: no external commands).
+var command_intake: RoomCommandIntake = null
 var combat_event_stream
 var kernel_bindings := KernelBindingsScript.new()
 var room_loot := CombatRoomLootScript.new()

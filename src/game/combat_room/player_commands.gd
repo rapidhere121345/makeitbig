@@ -21,10 +21,10 @@ func _init(main: MainArena) -> void:
 
 
 func _simulation_collect_commands() -> Array[Dictionary]:
-	var snapshot := _main.gameplay_snapshot()
-	var loot_command: Dictionary = _main.input_adapter.collect_loot_pickup_command(snapshot)
+	var intake: RoomCommandIntake = _session.command_intake
+	var loot_command: Dictionary = intake.collect_loot_pickup_command() if intake != null else {}
 	if loot_command.is_empty() and _session.selected_mode == "Auto":
-		loot_command = _auto_loot_pickup_command(snapshot)
+		loot_command = _auto_loot_pickup_command()
 	if not loot_command.is_empty():
 		_submit_loot_pickup_command(loot_command)
 	if _session.automation_smoke and _session.selected_mode == "Manual":
@@ -35,7 +35,9 @@ func _simulation_collect_commands() -> Array[Dictionary]:
 		}, _session.command_sequence)
 		_session.command_sequence = int(result.next_sequence)
 		return result.commands
-	return _auto_commands() if _session.selected_mode == "Auto" else _main.input_adapter.collect_commands(_main.gameplay_snapshot())
+	if _session.selected_mode == "Auto":
+		return _auto_commands()
+	return intake.collect_commands() if intake != null else []
 
 
 func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
@@ -52,18 +54,15 @@ func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
 	return _session.last_loot_pickup_command_receipt.duplicate(true)
 
 
-func _auto_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
-	if not bool(snapshot.get("in_arena", false)) or (bool(snapshot.get("battle_over", false)) and not bool(snapshot.get("battle_victory", false))):
+func _auto_loot_pickup_command() -> Dictionary:
+	if not _session.in_arena or (_main.battle_over and not _main.battle_victory):
 		return {}
-	var room_loot_value: Variant = snapshot.get("room_loot", {})
-	if not room_loot_value is Dictionary:
-		return {}
-	var room_loot: Dictionary = room_loot_value
+	var room_loot: Dictionary = _session.room_loot.snapshot()
 	var pending_ids: Dictionary = {}
 	for pending_value: Variant in room_loot.get("pending_pickup_requests", []):
 		if pending_value is Dictionary:
 			pending_ids[String((pending_value as Dictionary).get("loot_entity_id", ""))] = true
-	var player_position_value: Variant = snapshot.get("player_position", Vector2.ZERO)
+	var player_position_value: Variant = _session.player_combat_state.snapshot(_session.sim_tick).get("player_position", Vector2.ZERO)
 	var player_position := player_position_value as Vector2 if player_position_value is Vector2 else Vector2.ZERO
 	var nearest_id := ""
 	var nearest_distance := INF

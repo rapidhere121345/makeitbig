@@ -527,6 +527,7 @@ func _init() -> void:
 	presentation.name = "CombatPresentation"
 	add_child(presentation)
 	input_adapter = InputAdapter.new()
+	session.command_intake = MainCommandIntake.new(self)
 
 	_ensure_simulation_world()
 	session.ensure_combat_simulation()
