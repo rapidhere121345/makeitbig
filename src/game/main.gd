@@ -314,14 +314,14 @@ var manual_pointer_target_entity_id: int:
 
 ## Room collaborators live in src/game/combat_room/; they hold no state of their
 ## own and reach the room state through the typed owner reference.
-var _kernel_reconciler := KernelReconcilerScript.new(self)
-var _hazards := RoomHazardsScript.new(self)
-var _arrows := PiercingArrowsScript.new(self)
-var _enemy_ai := EnemyAiTicksScript.new(self)
-var _actor_setup := RoomActorSetupScript.new(self)
+var kernel_reconciler := KernelReconcilerScript.new(self)
+var room_hazards := RoomHazardsScript.new(self)
+var piercing_arrows := PiercingArrowsScript.new(self)
+var enemy_ai := EnemyAiTicksScript.new(self)
+var actor_setup := RoomActorSetupScript.new(self)
 var _player_commands := RoomPlayerCommandsScript.new(self)
 var _terminal := RoomTerminalScript.new(self)
-var _geometry := RoomGeometryScript.new(self)
+var room_geometry := RoomGeometryScript.new(self)
 
 
 func _init() -> void:
@@ -644,7 +644,7 @@ func start_room() -> void:
 		return
 	if not _spawn_wave():
 		return
-	if not _actor_setup._configure_actor_registry():
+	if not actor_setup._configure_actor_registry():
 		if not last_save_message.begins_with("Deployment blocked:"):
 			last_save_message = "Deployment blocked: actor_registry_configuration_failed"
 		in_arena = false
@@ -657,7 +657,7 @@ func start_room() -> void:
 		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
 		in_arena = false
 		return
-	if not _actor_setup._start_mounted_encounter():
+	if not actor_setup._start_mounted_encounter():
 		in_arena = false
 		return
 	refresh_presentation()
@@ -723,7 +723,7 @@ func _spawn_wave() -> bool:
 		last_save_message = "Deployment blocked: %s" % String(spawned.get("error", "room_spawn_failed"))
 		in_arena = false
 		return false
-	var hazard_configured: Dictionary = _hazards._configure_hazard_domain(spawn_room.get("hazard_ids", []), origin)
+	var hazard_configured: Dictionary = room_hazards._configure_hazard_domain(spawn_room.get("hazard_ids", []), origin)
 	if not bool(hazard_configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(hazard_configured.get("error", "hazard_domain_failed"))
 		in_arena = false
@@ -820,7 +820,7 @@ func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 	if not bool(created.get("ok", false)):
 		return EncounterSpawnResultScript.failed(request, String(created.get("error", "encounter_enemy_create_failed")))
 	var enemy: CombatEnemyState = created.get("enemy", null)
-	if enemy == null or not _actor_setup._register_enemy_actor(enemy):
+	if enemy == null or not actor_setup.register_enemy_actor(enemy):
 		encounter_director.discard_encounter_enemy(enemy)
 		return EncounterSpawnResultScript.failed(request, "encounter_actor_registration_failed")
 	var actor_id := "enemy/%d" % enemy.entity_id
@@ -855,7 +855,7 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 		enemy = _enemy_by_entity_id(entity_id)
 		if enemy == null:
 			return {"ok": false, "error": "enemy_mirror_not_found"}
-	if not _actor_setup._ensure_actor_registry_ready() or not position.is_finite():
+	if not actor_setup._ensure_actor_registry_ready() or not position.is_finite():
 		return {"ok": false, "error": "actor_registry_not_ready_or_invalid_position"}
 	var result: Dictionary = actor_registry.teleport_actor(normalized_id, position)
 	if not bool(result.get("ok", false)):
@@ -885,19 +885,19 @@ func _simulation_collect_commands() -> Array[Dictionary]:
 
 
 func _update_enemies_tick() -> void:
-	_enemy_ai._update_enemies_tick()
+	enemy_ai._update_enemies_tick()
 
 
 func _advance_piercing_projectiles_tick() -> void:
-	_arrows._advance_piercing_projectiles_tick()
+	piercing_arrows._advance_piercing_projectiles_tick()
 
 
 func _refresh_hazard_states_tick() -> void:
-	_hazards._refresh_hazard_states_tick()
+	room_hazards._refresh_hazard_states_tick()
 
 
 func _resolve_hazard_hits_tick() -> void:
-	_hazards._resolve_hazard_hits_tick()
+	room_hazards._resolve_hazard_hits_tick()
 
 
 func _check_battle_end() -> void:
@@ -983,7 +983,7 @@ func _process_player_action_events(events: Array, action_player: Dictionary) -> 
 			"buffered_started", "action_started":
 				presentation.feedback.bind_action_request(action_id, int(event.get("request_id", 0)))
 			"action_impact":
-				_arrows._resolve_piercing_arrow(event, action_player)
+				piercing_arrows._resolve_piercing_arrow(event, action_player)
 			"action_ended", "action_interrupted":
 				presentation.feedback.forget_action(action_id)
 
@@ -998,7 +998,7 @@ func _combat_context(player: Dictionary = {}) -> void:
 		player["player_facing"],
 		locked_payload,
 		locked_targeting_distance,
-		_arrows._current_projectile_speed(),
+		piercing_arrows._current_projectile_speed(),
 		player["marked_entity_id"],
 		player["talent_capabilities"],
 		combat_event_stream,
@@ -1066,7 +1066,7 @@ func _update_room_rules_tick() -> void:
 	# resolved through DamageResolution, and DeathSettlement receipts. Damage
 	# and deaths commit here, before buffered casts start and before enemies,
 	# hazards or the battle-end check observe the room.
-	_kernel_reconciler._consume_kernel_room_combat()
+	kernel_reconciler._consume_kernel_room_combat()
 	_encounter_context()
 	encounter_director.update_room_rules_tick()
 
@@ -1173,23 +1173,23 @@ func _is_skill_equipped(slot_index: int, expected_id: String) -> bool:
 
 
 func _arena_rect() -> Rect2:
-	return _geometry._arena_rect()
+	return room_geometry._arena_rect()
 
 
 func _walkable_geometry(padding: float) -> Dictionary:
-	return _geometry._walkable_geometry(padding)
+	return room_geometry._walkable_geometry(padding)
 
 
 func _collision_geometry(radius: float) -> Dictionary:
-	return _geometry._collision_geometry(radius)
+	return room_geometry._collision_geometry(radius)
 
 
 func _room_socket(binding: String) -> Variant:
-	return _geometry._room_socket(binding)
+	return room_geometry._room_socket(binding)
 
 
 func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
-	return _geometry._clamp_to_arena(value, padding)
+	return room_geometry._clamp_to_arena(value, padding)
 
 
 func _ensure_command_source() -> void:
@@ -1250,7 +1250,7 @@ func gameplay_snapshot() -> Dictionary:
 		"proxy_prediction": proxy_prediction,
 		"selected_mode": selected_mode,
 		"arena_rect": _arena_rect(), "walkable_geometry": _walkable_geometry(14.0),
-		"presentation_geometry": _geometry._presentation_geometry(),
+		"presentation_geometry": room_geometry._presentation_geometry(),
 		"projectiles": projectiles,
 		"equipped_parameters": content_registry.preset_equipped_parameters if content_registry != null else {},
 		"model": _current_model() if content_registry != null else {},

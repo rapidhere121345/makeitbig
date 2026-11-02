@@ -66,7 +66,7 @@ func _configure_actor_registry() -> bool:
 		if not _configure_standalone_room_access(room_key):
 			push_error("actor_registry_configuration_failed:standalone_access_failed")
 			return false
-	if not _main._kernel_reconciler._bind_kernel_room_ports():
+	if not _main.kernel_reconciler.bind_kernel_room_ports():
 		_main.actor_registry_instance_id = ""
 		return false
 	var movement_policy_port := MainMovementPolicyPortScript.new()
@@ -96,10 +96,10 @@ func _configure_actor_registry() -> bool:
 			return false
 		spawn_position = authored_spawn
 	else:
-		var projected: Dictionary = _main._geometry._project_actor_spawn_position(_main._arena_rect().get_center() + Vector2(-220.0, 100.0), 14.0)
+		var projected: Dictionary = _main.room_geometry.project_actor_spawn_position(_main._arena_rect().get_center() + Vector2(-220.0, 100.0), 14.0)
 		if not bool(projected.get("ok", false)):
 			return false
-		spawn_position = _main._geometry._quantize_position(projected["position"])
+		spawn_position = _main.room_geometry.quantize_position(projected["position"])
 	var player_result: Dictionary = _main.actor_registry.register_actor("ranger", spawn_position, 14.0, 1, &"soft", [&"movement", &"hurtbox"])
 	if not bool(player_result.get("ok", false)):
 		push_error("actor_registry_configuration_failed:player_registration:%s" % str(player_result))
@@ -108,7 +108,7 @@ func _configure_actor_registry() -> bool:
 	if injected_runtime and _main.presentation_enabled and not _bind_runtime_actor_presentation("ranger", "ranger.south.idle", 2):
 		return false
 	for enemy: CombatEnemyState in _main.enemies:
-		if not _register_enemy_actor(enemy):
+		if not register_enemy_actor(enemy):
 			push_error("actor_registry_configuration_failed:enemy_registration:%d" % enemy.entity_id)
 			_main.actor_registry_instance_id = ""
 			return false
@@ -219,11 +219,11 @@ func _start_mounted_encounter() -> bool:
 	return true
 
 
-func _register_enemy_actor(enemy: CombatEnemyState) -> bool:
+func register_enemy_actor(enemy: CombatEnemyState) -> bool:
 	if _main.actor_registry == null or enemy == null:
 		push_error("enemy_actor_registration_failed:missing_dependency")
 		return false
-	var projected: Dictionary = _main._geometry._project_actor_spawn_position(enemy.position, 16.0)
+	var projected: Dictionary = _main.room_geometry.project_actor_spawn_position(enemy.position, 16.0)
 	if not bool(projected.get("ok", false)):
 		push_error("enemy_actor_registration_failed:projection:%d:%s" % [enemy.entity_id, str(projected)])
 		return false
@@ -257,7 +257,7 @@ func _register_enemy_actor(enemy: CombatEnemyState) -> bool:
 
 
 func _register_boss_kernel_target(enemy: CombatEnemyState, stable_key: int, ordinal: int) -> bool:
-	if not _main._kernel_reconciler._boss_domain_room_is_current():
+	if not _main.kernel_reconciler.boss_domain_room_is_current():
 		push_error("boss_domain_registration_room_mismatch")
 		return false
 	if stable_key < 1 or ordinal < 0:
@@ -412,7 +412,7 @@ func _charge_movement_policy_value() -> Variant:
 ## Main-owned mobility policy seam: an active dash/dodge crosses enemy soft
 ## bodies instead of being separated away, while contacts stay recorded for
 ## presentation. Normal movement keeps the default soft separation policy.
-func _resolve_ranger_movement_policy(actor_id: String) -> Variant:
+func resolve_ranger_movement_policy(actor_id: String) -> Variant:
 	if actor_id != "ranger" or _main.player_combat_state == null:
 		return null
 	var player: Dictionary = _main.player_combat_state.snapshot(_main.sim_tick)
@@ -441,7 +441,7 @@ func _has_active_charge() -> bool:
 	return false
 
 
-func _move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
+func move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
 	var before := enemy.position
 	var movement_policy: Variant = null
 	if enemy.action_state == "active" and enemy.action_id == "charge":
@@ -453,7 +453,7 @@ func _move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Dictio
 	return result
 
 
-func _set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
+func set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
 	if enemy == null or _main.actor_registry == null or not _main.actor_registry.has_method("set_collision_class"):
 		return false
 	var result: Dictionary = _main.actor_registry.set_collision_class("enemy/%d" % enemy.entity_id, collision_class)

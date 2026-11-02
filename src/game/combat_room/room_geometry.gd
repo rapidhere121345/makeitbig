@@ -67,7 +67,7 @@ func _collision_geometry(radius: float) -> Dictionary:
 ## Bounding circles of the authored static blockers in the mounted room's
 ## movement channel. Standalone fixtures without a mounted registry have no
 ## authored blockers and steer on the boundary geometry alone.
-func _static_blocker_bounds() -> Array[Dictionary]:
+func static_blocker_bounds() -> Array[Dictionary]:
 	if _main.actor_registry == null:
 		return []
 	return _main.actor_registry.static_blocker_bounds()
@@ -95,7 +95,7 @@ func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 	return projected.position
 
 
-func _project_actor_spawn_position(value: Vector2, radius: float) -> Dictionary:
+func project_actor_spawn_position(value: Vector2, radius: float) -> Dictionary:
 	## Initialization uses the same footprint-aware limits as ActorMotor. Once a
 	## room is live, all further displacement is submitted through the registry.
 	if not value.is_finite() or not is_finite(radius) or radius <= 0.0:
@@ -131,13 +131,13 @@ func _project_static_clear(position: Vector2, radius: float) -> Variant:
 	return null
 
 
-func _quantize_position(value: Vector2) -> Vector2:
+func quantize_position(value: Vector2) -> Vector2:
 	# Authority stores a 1/1000-pixel grid. Rendering may interpolate later, but
 	# identical whole-tick commands always land on identical coordinates.
 	return Vector2(snappedf(value.x, 0.001), snappedf(value.y, 0.001))
 
 
-func _layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
+func layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
 	_main._ensure_room_catalog()
 	var spawn_room_id := String(_main.encounter_director.room_id) if _main.encounter_director != null else _main.room_id
 	if _main.room_catalog == null:

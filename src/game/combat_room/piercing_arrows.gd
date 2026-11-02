@@ -48,7 +48,7 @@ func _advance_piercing_projectiles_tick() -> void:
 			_main.sim_tick,
 			_main.combat_system.room_port
 		)
-	if _main.room_spatial_port != null and _main.room_combat_port != null and _main.kernel_bindings.boss_flight.is_configured() and _main._kernel_reconciler._boss_domain_room_is_current():
+	if _main.room_spatial_port != null and _main.room_combat_port != null and _main.kernel_bindings.boss_flight.is_configured() and _main.kernel_reconciler.boss_domain_room_is_current():
 		var ranger_handle = _main.actor_registry.actor_handle("ranger") if _main.actor_registry != null else null
 		_main.kernel_bindings.boss_flight.submit_tick(
 			_main.combat_system.projectiles,
@@ -80,7 +80,7 @@ func _piercing_arrow_swept_contact(start: Vector2, finish: Vector2, target: Comb
 	return _main.combat_system.swept_contact(start, finish, target)
 
 
-func _remove_combat_target(target: CombatEnemyState) -> void:
+func remove_combat_target(target: CombatEnemyState) -> void:
 	_main.enemies.erase(target)
 	if target == null or target.health > 0.0:
 		return
@@ -92,10 +92,10 @@ func _remove_combat_target(target: CombatEnemyState) -> void:
 	_main._spawn_room_loot_for_source("enemy_death", target.entity_id, target.position)
 
 
-func _cancel_buffered_target(entity_id: int) -> int:
+func cancel_buffered_target(entity_id: int) -> int:
 	return _main.player_combat_rules.cancel_buffered_target(entity_id)
 
 
-func _erase_attack_request(request_id: int) -> void:
+func erase_attack_request(request_id: int) -> void:
 	if request_id > 0:
 		_main.presentation.feedback.forget_request(request_id)

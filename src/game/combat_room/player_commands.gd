@@ -157,7 +157,7 @@ func _public_proxy_snapshot() -> Dictionary:
 ## channel metadata and room identities remain private.
 func _public_static_blockers() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for blocker: Dictionary in _main._geometry._static_blocker_bounds():
+	for blocker: Dictionary in _main.room_geometry.static_blocker_bounds():
 		if blocker.has("points"):
 			result.append({"points": blocker.points})
 		else:

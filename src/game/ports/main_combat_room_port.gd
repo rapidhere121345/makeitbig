@@ -40,15 +40,15 @@ func target_blocked(target: CombatEnemyState) -> Dictionary:
 
 
 func maybe_summon(target: CombatEnemyState) -> void:
-	_owner._enemy_ai._maybe_summon_reinforcements(target)
+	_owner.enemy_ai.maybe_summon_reinforcements(target)
 
 
 func remove_target(target: CombatEnemyState) -> void:
-	_owner._arrows._remove_combat_target(target)
+	_owner.piercing_arrows.remove_combat_target(target)
 
 
 func cancel_buffered_target(entity_id: int) -> int:
-	return _owner._arrows._cancel_buffered_target(entity_id)
+	return _owner.piercing_arrows.cancel_buffered_target(entity_id)
 
 
 func update_mark() -> void:
@@ -64,7 +64,7 @@ func reset_sequence() -> void:
 
 
 func erase_attack_request(request_id: int) -> void:
-	_owner._arrows._erase_attack_request(request_id)
+	_owner.piercing_arrows.erase_attack_request(request_id)
 
 
 func consume_first_critical_bonus() -> int:
@@ -81,16 +81,16 @@ func take_retained_arrow() -> Dictionary:
 
 
 func is_normal_kernel_projectile(projectile) -> bool:
-	return _owner._kernel_reconciler._is_normal_kernel_projectile(projectile)
+	return _owner.kernel_reconciler.is_normal_kernel_projectile(projectile)
 
 
 func is_boss_kernel_projectile(projectile) -> bool:
-	return _owner._kernel_reconciler._is_boss_kernel_projectile(projectile)
+	return _owner.kernel_reconciler.is_boss_kernel_projectile(projectile)
 
 
 func sync_kernel_target_record(projectile) -> void:
-	_owner._kernel_reconciler._sync_kernel_target_record(projectile)
+	_owner.kernel_reconciler.sync_kernel_target_record(projectile)
 
 
 func sync_boss_kernel_target(projectile) -> Variant:
-	return _owner._kernel_reconciler._sync_boss_kernel_target(projectile)
+	return _owner.kernel_reconciler.sync_boss_kernel_target(projectile)

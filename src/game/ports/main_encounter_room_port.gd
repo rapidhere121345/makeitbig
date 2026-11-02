@@ -23,17 +23,17 @@ func bind(owner: MainArena, rules: RefCounted, outcome: RefCounted) -> Dictionar
 func move_enemy(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
 	if not _ready():
 		return {"ok": false, "error": "encounter_room_owner_unavailable"}
-	return _owner._actor_setup._move_enemy_actor(enemy, displacement)
+	return _owner.actor_setup.move_enemy_actor(enemy, displacement)
 
 
 func set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
-	return _ready() and _owner._actor_setup._set_enemy_collision_class(enemy, collision_class)
+	return _ready() and _owner.actor_setup.set_enemy_collision_class(enemy, collision_class)
 
 
 func register_enemy(enemy: CombatEnemyState) -> Dictionary:
 	if not _ready():
 		return {"ok": false, "error": "encounter_room_owner_unavailable"}
-	var accepted: bool = _owner._actor_setup._register_enemy_actor(enemy)
+	var accepted: bool = _owner.actor_setup.register_enemy_actor(enemy)
 	return {"ok": accepted, "error": "" if accepted else "register_enemy_rejected"}
 
 
@@ -46,13 +46,13 @@ func collision_geometry(padding: float) -> Dictionary:
 func static_blocker_bounds() -> Array[Dictionary]:
 	if not _ready():
 		return []
-	return _owner._geometry._static_blocker_bounds()
+	return _owner.room_geometry.static_blocker_bounds()
 
 
 func layout_spawn_offsets(layout_id: String, count: int) -> Array[Vector2]:
 	if not _ready():
 		return []
-	return _owner._geometry._layout_spawn_offsets(layout_id, count)
+	return _owner.room_geometry.layout_spawn_offsets(layout_id, count)
 
 
 func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
@@ -64,13 +64,13 @@ func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 func quantize_position(value: Vector2) -> Vector2:
 	if not _ready():
 		return Vector2(INF, INF)
-	return _owner._geometry._quantize_position(value)
+	return _owner.room_geometry.quantize_position(value)
 
 
 func queue_player_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
 	if not _ready():
 		return {"ok": false, "error": "encounter_room_owner_unavailable"}
-	return _owner._hazards._queue_kernel_player_hit(tick, amount, source_id, source_position)
+	return _owner.room_hazards.queue_kernel_player_hit(tick, amount, source_id, source_position)
 
 
 func _ready() -> bool:

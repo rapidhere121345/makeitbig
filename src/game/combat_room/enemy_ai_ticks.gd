@@ -34,7 +34,7 @@ func _enemy_tactics_hazards() -> Array[Dictionary]:
 	return _main.encounter_director.enemy_tactics_hazards()
 
 
-func _maybe_summon_reinforcements(elite: CombatEnemyState) -> void:
+func maybe_summon_reinforcements(elite: CombatEnemyState) -> void:
 	_main._encounter_context()
 	var previous_report := String(_main.encounter_director.battle_report)
 	_main.encounter_director._maybe_summon_reinforcements(elite)

@@ -23,7 +23,7 @@ func _init(main: MainArena) -> void:
 	_main = main
 
 
-func _bind_kernel_room_ports() -> bool:
+func bind_kernel_room_ports() -> bool:
 	if _main.room_spatial_port == null or _main.room_combat_port == null or _main.room_encounter_port == null:
 		push_error("kernel_room_ports_unavailable")
 		return false
@@ -79,7 +79,7 @@ func _bind_boss_kernel_domain() -> bool:
 	return true
 
 
-func _boss_domain_room_is_current() -> bool:
+func boss_domain_room_is_current() -> bool:
 	return (
 		_main.kernel_bindings.boss_domain != null
 		and _main.room_spatial_port != null
@@ -92,24 +92,24 @@ func _boss_domain_room_is_current() -> bool:
 	)
 
 
-func _is_boss_kernel_projectile(projectile) -> bool:
+func is_boss_kernel_projectile(projectile) -> bool:
 	if projectile == null:
 		return false
 	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
-	return enemy != null and enemy.is_boss and _boss_domain_room_is_current()
+	return enemy != null and enemy.is_boss and boss_domain_room_is_current()
 
 
-func _is_normal_kernel_projectile(projectile) -> bool:
+func is_normal_kernel_projectile(projectile) -> bool:
 	if projectile == null or _main.room_spatial_port == null or _main.room_combat_port == null:
 		return false
 	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
 	return enemy == null or not enemy.is_boss
 
 
-func _is_kernel_projectile(projectile) -> bool:
+func is_kernel_projectile(projectile) -> bool:
 	if projectile == null or _main.room_spatial_port == null or _main.room_combat_port == null:
 		return false
-	return _is_normal_kernel_projectile(projectile) or _is_boss_kernel_projectile(projectile)
+	return is_normal_kernel_projectile(projectile) or is_boss_kernel_projectile(projectile)
 
 
 ## The room-facing enemy record remains the health record other migrating
@@ -122,7 +122,7 @@ func _is_kernel_projectile(projectile) -> bool:
 ## DamageResolution always resolve the current committed room-facing record.
 ## In production the mirror is written after actor commits, so the pose sync
 ## is a no-op; a failed relocation keeps the authoritative actor pose.
-func _sync_kernel_target_record(projectile) -> void:
+func sync_kernel_target_record(projectile) -> void:
 	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
 	if enemy == null or enemy.is_boss:
 		return
@@ -147,9 +147,9 @@ func _sync_kernel_target_record(projectile) -> void:
 ## Keeps the detached BossTargetView pose/part facts equal to the actor-backed
 ## room mirror before a query. Health is deliberately not copied: once the room
 ## starts, BossCombatDomain owns BigValue health and mortality.
-func _sync_boss_kernel_target(projectile) -> BossTargetView:
+func sync_boss_kernel_target(projectile) -> BossTargetView:
 	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
-	if enemy == null or not enemy.is_boss or not _boss_domain_room_is_current():
+	if enemy == null or not enemy.is_boss or not boss_domain_room_is_current():
 		return null
 	var target: BossTargetView = _main.kernel_bindings.boss_domain_targets.get(int(enemy.entity_id), null)
 	if target == null or not target.alive:
@@ -186,7 +186,7 @@ func _sync_boss_kernel_target(projectile) -> BossTargetView:
 ## while the sweep itself moved to the kernel's typed path queries: only the
 ## locked non-boss target is admitted, and the elite periodic barrier
 ## suppresses the hit before DamageResolution.
-func _admit_kernel_hit(hit: Dictionary) -> Dictionary:
+func admit_kernel_hit(hit: Dictionary) -> Dictionary:
 	var attack_id := String(hit.get("attack_instance_id", ""))
 	if not attack_id.begins_with("arrow/"):
 		return {"allowed": true, "reason": ""}
@@ -285,7 +285,7 @@ func _retire_kernel_projectile(projectile, attack_key: String) -> void:
 func _consume_kernel_boss_combat() -> void:
 	if not _main.kernel_bindings.boss_flight.is_configured():
 		return
-	if not _boss_domain_room_is_current():
+	if not boss_domain_room_is_current():
 		push_error("boss_domain_room_mismatch:%s:%d" % [String(_main.kernel_bindings.boss_domain.room_id), int(_main.kernel_bindings.boss_domain.world_revision)])
 		_main.kernel_bindings.boss_flight.clear_pending()
 		return
@@ -405,7 +405,7 @@ func _finalize_boss_kernel_death(enemy: CombatEnemyState, target: BossTargetView
 
 
 func _settle_boss_kernel_deaths(settlement_tick: int) -> void:
-	if not _boss_domain_room_is_current():
+	if not boss_domain_room_is_current():
 		return
 	if settlement_tick < 0:
 		return
@@ -452,7 +452,7 @@ func _reconcile_kernel_hit(projectile, record: Variant, hit: Dictionary, outcome
 	enemy.hit_flash_until_tick = _main.sim_tick + MainArena.ENEMY_HIT_FLASH_TICKS
 	projectile.position = contact
 	_main.combat_system.apply_kernel_contact(projectile, enemy, contact, hit, health_before, enemy.health, record.aggregate)
-	_main._enemy_ai._maybe_summon_reinforcements(enemy)
+	_main.enemy_ai.maybe_summon_reinforcements(enemy)
 	if enemy.health <= 0.0:
 		_finalize_kernel_enemy_death(enemy)
 
@@ -460,9 +460,9 @@ func _reconcile_kernel_hit(projectile, record: Variant, hit: Dictionary, outcome
 func _finalize_kernel_enemy_death(enemy: CombatEnemyState) -> void:
 	_main.enemies.erase(enemy)
 	_main.combat_system.note_kernel_death(enemy)
-	var canceled_request_id: int = _main._arrows._cancel_buffered_target(enemy.entity_id)
+	var canceled_request_id: int = _main.piercing_arrows.cancel_buffered_target(enemy.entity_id)
 	if canceled_request_id > 0:
-		_main._arrows._erase_attack_request(canceled_request_id)
+		_main.piercing_arrows.erase_attack_request(canceled_request_id)
 	_main._refresh_player_mark()
 
 

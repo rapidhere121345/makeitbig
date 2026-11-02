@@ -97,13 +97,13 @@ func _resolve_hazard_hits_tick() -> void:
 
 
 func _queue_kernel_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
-	return _queue_kernel_player_hit(tick, amount, source_id, source_position)
+	return queue_kernel_player_hit(tick, amount, source_id, source_position)
 
 
 ## Stages one room-owned player contact for the next kernel tick. Hazard
 ## amounts stay integer-valued; enemy impacts use milli units so the existing
 ## 1.2/1.8 damage values cross SimHit without rounding.
-func _queue_kernel_player_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
+func queue_kernel_player_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
 	if _main.room_spatial_port == null or _main.actor_registry == null:
 		return {"ok": false, "error": "kernel_player_contact_port_unavailable"}
 	if tick != _main.sim_tick or not is_finite(amount) or amount <= 0.0 or not source_position.is_finite():
