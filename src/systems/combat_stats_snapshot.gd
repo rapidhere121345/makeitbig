@@ -86,7 +86,7 @@ static func from_data(value: Variant) -> Dictionary:
 		errors.append("invalid_movement_model")
 	if not errors.is_empty():
 		return {"ok": false, "error": ";".join(errors), "errors": errors, "value": {}}
-	var result: RefCounted = load("res://src/game/combat_stats_snapshot.gd").new()
+	var result: RefCounted = load("res://src/systems/combat_stats_snapshot.gd").new()
 	result._assign(data)
 	return {"ok": true, "error": "", "errors": [], "value": result}
 

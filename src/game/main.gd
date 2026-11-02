@@ -40,7 +40,7 @@ const RangerArrowFlightScript := preload("res://src/runtime/combat/ranger_arrow_
 const BossArrowFlightScript := preload("res://src/runtime/combat/boss_arrow_flight.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
-const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
+const CombatStatsSnapshotScript := preload("res://src/systems/combat_stats_snapshot.gd")
 const BuildResolution := preload("res://src/game/application/build_resolution.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const MainCombatRoomPortScript := preload("res://src/game/ports/main_combat_room_port.gd")
@@ -888,17 +888,6 @@ func _simulate_tick() -> void:
 		push_error("combat_simulation_step_failed:%s" % String(result.get("error", "unknown")))
 
 
-func _room_domain_is_ready() -> bool:
-	return (
-		in_arena
-		and simulation_world != null
-		and player_combat_rules != null
-		and combat_system != null
-		and encounter_director != null
-		and input_adapter != null
-	)
-
-
 func _simulation_set_elapsed(value: float) -> void:
 	elapsed = value
 
@@ -1000,13 +989,6 @@ func _present_mark_receipt(receipt: Dictionary, player: Dictionary) -> void:
 	var target := _enemy_by_entity_id(int(player["marked_entity_id"]))
 	if target != null and target.health > 0.0:
 		battle_report = "Hunter's Mark locked: %s." % presentation.frame_builder.enemy_public_label(target)
-
-
-func interrupt_player_action(reason: String) -> Dictionary:
-	var result: Dictionary = player_combat_rules.interrupt_action(sim_tick, reason)
-	presentation.feedback.forget_request(int(result.get("cleared_request_id", 0)))
-	_process_player_action_events(result.get("events", []), player_combat_state.snapshot(sim_tick))
-	return result
 
 
 func _process_player_action_events(events: Array, action_player: Dictionary) -> void:

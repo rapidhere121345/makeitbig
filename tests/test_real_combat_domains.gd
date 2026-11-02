@@ -1,6 +1,6 @@
 extends SceneTree
 
-const StatsScript := preload("res://src/game/combat_stats_snapshot.gd")
+const StatsScript := preload("res://src/systems/combat_stats_snapshot.gd")
 const WaveScript := preload("res://src/runtime/encounter/wave_definition.gd")
 const LootScript := preload("res://src/runtime/combat/combat_room_loot_rebuild.gd")
 const ItemRegistryScript := preload("res://src/content/early_item_registry.gd")
