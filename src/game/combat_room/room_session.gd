@@ -266,6 +266,86 @@ func current_model() -> Dictionary:
 	)
 
 
+## Authority half of the player domain's tick result: cast receipts and the
+## report text, the command receipts, and the combat context pushes around the
+## action events. Presentation effects are only logged (record_event). Both the
+## pre-command and post-command timelines have their own pre-motor context, so
+## later mark expiry or movement never alters an arrow release.
+func consume_player_events(result: Dictionary) -> void:
+	var player: Dictionary = result["player"]
+	var action_player: Dictionary = result.get("action_player", player)
+	for receipt: Dictionary in result.get("receipts", []):
+		var command: Dictionary = receipt.get("command", {})
+		if String(command.get("ability_id", "")) == "piercing_arrow":
+			var default_source := ATTACK_SOURCE_PROXY if selected_mode == "Auto" else ATTACK_SOURCE_ASSISTED
+			present_cast_receipt(receipt, default_source, int(command.get("sequence", -1)), true)
+		else:
+			if String(command.get("ability_id", "")) == "hunter_mark":
+				present_mark_receipt(receipt, player)
+			record_event(RoomPresentationEvent.command_discarded(int(command.get("sequence", -1))))
+	if result.has("protocol_receipts"):
+		last_command_receipts.assign((result["protocol_receipts"] as Array).duplicate(true))
+	sync_combat_context(action_player)
+	process_player_action_events(result.get("action_events", []), action_player)
+	sync_combat_context(player)
+
+
+## Records the Piercing Arrow receipt: the report text is authority, the input
+## feedback and request-source bookkeeping travel as a presentation event. When
+## `resolve_source` is set the view swaps `source` (the fallback) for the source
+## its input adapter registered for `sequence`.
+func present_cast_receipt(receipt: Dictionary, source: String, sequence: int = -1, resolve_source: bool = false) -> void:
+	var accepted := bool(receipt.get("accepted", false))
+	var status := String(receipt.get("status", ""))
+	if accepted:
+		battle_report = "Piercing Arrow buffered; waiting for an action window." if status in ["buffered", "replaced"] else "Drawing Piercing Arrow."
+	record_event(RoomPresentationEvent.cast_receipt(
+		sim_tick, sequence, source, resolve_source, accepted, status == "started",
+		not accepted and String(receipt.get("reason", "")) == "target_out_of_range" and selected_mode == "Manual",
+		int(receipt.get("request_id", 0)), int(receipt.get("replaced_request_id", 0)), int(receipt.get("action_instance_id", 0))))
+
+
+func present_mark_receipt(receipt: Dictionary, player: Dictionary) -> void:
+	if not bool(receipt.get("accepted", false)):
+		return
+	var target := enemy_by_entity_id(int(player["marked_entity_id"]))
+	if target != null and target.health > 0.0:
+		battle_report = "Hunter's Mark locked: %s." % target.public_label()
+
+
+func process_player_action_events(events: Array, action_player: Dictionary) -> void:
+	for event: Dictionary in events:
+		var action_id := int(event.get("action_instance_id", 0))
+		match String(event.get("type", "")):
+			"buffered_started", "action_started":
+				record_event(RoomPresentationEvent.action_request_bound(action_id, int(event.get("request_id", 0))))
+			"action_impact":
+				resolve_piercing_arrow(event, action_player)
+			"action_ended", "action_interrupted":
+				record_event(RoomPresentationEvent.action_forgotten(action_id))
+
+
+## Resolves one released arrow against the combat system.
+func resolve_piercing_arrow(action_event: Dictionary, action_player: Dictionary) -> void:
+	sync_combat_context(action_player)
+	var previous_report := String(combat_system.battle_report)
+	var previous_event_id: int = combat_event_stream.latest_event_id()
+	combat_system.resolve_piercing_arrow(action_event)
+	adopt_combat_report(previous_report, previous_event_id)
+
+
+## Explicit diagnostic cast: enters the same domain as device and replay
+## commands. The caller applies the logged presentation events afterwards.
+func request_player_cast(ability_id: String, target_entity_id: int, direction: Vector2, source: String) -> Dictionary:
+	var receipt: Dictionary = player_combat_rules.request_cast(sim_tick, ability_id, target_entity_id, direction, read_only_targets())
+	if ability_id == "piercing_arrow":
+		present_cast_receipt(receipt, source)
+	elif ability_id == "hunter_mark":
+		present_mark_receipt(receipt, player_combat_state.snapshot(sim_tick))
+	process_player_action_events(receipt.get("action_events", []), player_combat_state.snapshot(sim_tick))
+	return receipt
+
+
 ## Fails an automation-smoke run that outlives three simulated minutes.
 func check_timeout() -> void:
 	if automation_smoke and not is_battle_over() and sim_tick >= SIM_TICKS_PER_SECOND * 180:

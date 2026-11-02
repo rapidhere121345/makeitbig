@@ -16,14 +16,6 @@ func _init(main: MainArena) -> void:
 	_session = main.session
 
 
-func _resolve_piercing_arrow(action_event: Dictionary, action_player: Dictionary) -> void:
-	_main.sync_combat_context(action_player)
-	var previous_report := String(_session.combat_system.battle_report)
-	var previous_event_id: int = _session.combat_event_stream.latest_event_id()
-	_session.combat_system.resolve_piercing_arrow(action_event)
-	_main.adopt_combat_report(previous_report, previous_event_id)
-
-
 func _advance_piercing_projectiles_tick() -> void:
 	_main.sync_combat_context()
 	var previous_report := String(_session.combat_system.battle_report)
