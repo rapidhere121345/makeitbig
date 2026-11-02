@@ -18,6 +18,10 @@ const EnemyCombatProfileScript := preload("res://src/content/enemy_combat_profil
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
 const HazardReadPortScript := preload("res://src/runtime/combat/combat_hazard_read_port.gd")
+const MeleePursuerBehaviorScript := preload("res://src/game/encounter/melee_pursuer_behavior.gd")
+const ChargingRaiderBehaviorScript := preload("res://src/game/encounter/charging_raider_behavior.gd")
+const FanRangedBehaviorScript := preload("res://src/game/encounter/fan_ranged_behavior.gd")
+const ThresholdColossusBehaviorScript := preload("res://src/game/encounter/threshold_colossus_behavior.gd")
 
 const VALID_OBJECTIVE_IDS: Array[String] = ["clear", "hunt_elite", "timed_break"]
 const VALID_ENEMY_IDS: Array[String] = ["melee_pursuer", "charging_raider", "fan_ranged"]
@@ -86,6 +90,36 @@ var player_rule_port: RefCounted
 var _configured := false
 var _active_entity_filter_enabled := false
 var _active_entity_ids: Dictionary = {}
+## Per-archetype execution behaviors (room session migration item 9), built
+## once: kind_id -> behavior and planner request_action id -> behavior. The
+## behaviors are stateless; all per-enemy state lives on CombatEnemyState.
+var _behaviors_by_kind: Dictionary = {}
+var _behaviors_by_action: Dictionary = {}
+
+
+func _init() -> void:
+	var behaviors: Array[EnemyBehavior] = [
+		MeleePursuerBehaviorScript.new(),
+		ChargingRaiderBehaviorScript.new(),
+		FanRangedBehaviorScript.new(),
+		ThresholdColossusBehaviorScript.new(),
+	]
+	for behavior: EnemyBehavior in behaviors:
+		_behaviors_by_kind[behavior.kind_id()] = behavior
+		for action_id: String in behavior.action_ids():
+			_behaviors_by_action[action_id] = behavior
+
+
+## The behavior that executes one enemy kind. Unknown kinds fall back to the
+## melee behavior, exactly like the previous `match` default branch.
+func behavior_for_kind(kind_id: String) -> EnemyBehavior:
+	return _behaviors_by_kind.get(kind_id, _behaviors_by_kind["melee_pursuer"])
+
+
+## The behavior that starts one planner request_action id, or null when the
+## request is not an enemy action and commit falls through to movement.
+func behavior_for_action(action_id: String) -> EnemyBehavior:
+	return _behaviors_by_action.get(action_id, null)
 
 
 static func validate_room(room: Variant, room_catalog: Variant) -> String:
@@ -738,15 +772,9 @@ func _update_enemy_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> voi
 	if enemy.health <= 0.0:
 		return
 	if enemy.is_boss:
-		_update_boss_tick(enemy, intent)
+		behavior_for_kind("threshold_colossus").update_tick(self, enemy, intent)
 		return
-	match enemy.kind_id:
-		"charging_raider":
-			_update_charger_tick(enemy, intent)
-		"fan_ranged":
-			_update_fan_tick(enemy, intent)
-		_:
-			_update_melee_tick(enemy, intent)
+	behavior_for_kind(enemy.kind_id).update_tick(self, enemy, intent)
 
 
 func _advance_action_state(enemy: CombatEnemyState, active_ticks: int, recovery_ticks: int) -> bool:
@@ -840,106 +868,34 @@ func _intent_for_enemy(enemy: CombatEnemyState) -> Dictionary:
 	return {}
 
 
+## Compatibility routes to the per-archetype behaviors (migration item 9).
+## The bodies live in src/game/encounter/*_behavior.gd; these members keep the
+## existing mirror entry points (src/game/combat_room/enemy_ai_ticks.gd and
+## the isolated fixtures) on identical behavior.
+
+
 func _update_melee_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	var previous_state := enemy.action_state
-	var action := _action_profile(enemy, "contact")
-	_advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
-	if enemy.action_state == "active" and not enemy.impact_resolved:
-		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), CombatQueryScript.shape_contains(enemy.target_shape, player_position))
-	if previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
-		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
-	if enemy.action_state == "none":
-		_commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else _intent_for_enemy(enemy))
-	else:
-		enemy.motion_state = "idle"
+	behavior_for_kind("melee_pursuer").update_tick(self, enemy, intent)
 
 
 func _start_melee_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	var action := _action_profile(enemy, "contact")
-	_begin_action(enemy, "contact", int(action.get("windup_ticks", 0)))
-	enemy.facing = direction.normalized() if direction != Vector2.ZERO else enemy.position.direction_to(player_position)
-	if enemy.facing == Vector2.ZERO:
-		enemy.facing = Vector2.RIGHT
-	enemy.target_shape = {"type": "circle", "origin": enemy.position, "radius": EnemyTacticsScript.MELEE_ATTACK_RANGE}
-	_emit_enemy_action_accepted(enemy)
+	(behavior_for_kind("melee_pursuer") as MeleePursuerBehavior).start_melee_action(self, enemy, direction)
 
 
 func _start_charger_action(enemy: CombatEnemyState, direction: Vector2, action_distance: float) -> bool:
-	if not is_finite(direction.x) or not is_finite(direction.y) or direction.is_zero_approx() or not is_finite(action_distance) or action_distance <= 0.0:
-		return false
-	var action := _action_profile(enemy, "charge")
-	if action.is_empty():
-		return false
-	_begin_action(enemy, "charge", int(action.get("windup_ticks", 0)))
-	_set_enemy_collision_class(enemy, &"ghost")
-	enemy.charge_origin = enemy.position
-	enemy.charge_direction = direction.normalized()
-	enemy.facing = enemy.charge_direction
-	enemy.charge_length = action_distance
-	enemy.charge_width = EnemyTacticsScript.CHARGER_CONTACT_RADIUS * 2.0
-	enemy.target_shape = {"type": "lane", "origin": enemy.charge_origin, "direction": enemy.charge_direction, "length": enemy.charge_length, "width": enemy.charge_width}
-	_emit_enemy_action_accepted(enemy)
-	return true
+	return (behavior_for_kind("charging_raider") as ChargingRaiderBehavior).start_charger_action(self, enemy, direction, action_distance)
 
 
 func _update_charger_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	var previous_state := enemy.action_state
-	var action := _action_profile(enemy, "charge")
-	_advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
-	if enemy.action_state == "active":
-		enemy.motion_state = "moving"
-		var before := enemy.position
-		var step := enemy.charge_length / float(maxi(1, int(action.get("active_ticks", 1))))
-		var movement_result := _move_enemy_actor(enemy, enemy.charge_direction * step)
-		if not bool(movement_result.get("ok", false)):
-			enemy.motion_state = "idle"
-		if not enemy.impact_resolved:
-			var contact := CombatQueryScript.distance_to_segment(player_position, before, enemy.position) <= EnemyTacticsScript.CHARGER_CONTACT_RADIUS
-			if contact:
-				enemy.impact_resolved = true
-				_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), true)
-	elif previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
-		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
-	elif enemy.action_state == "none":
-		_commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else _intent_for_enemy(enemy))
-	else:
-		enemy.motion_state = "idle"
+	behavior_for_kind("charging_raider").update_tick(self, enemy, intent)
 
 
 func _start_fan_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	var action := _action_profile(enemy, "fan")
-	_begin_action(enemy, "fan", int(action.get("windup_ticks", 0)))
-	var fan_direction := direction.normalized() if direction != Vector2.ZERO else enemy.position.direction_to(player_position)
-	if fan_direction == Vector2.ZERO:
-		fan_direction = enemy.facing
-	enemy.target_shape = EnemyTacticsScript.fan_attack_shape(enemy.position, fan_direction)
-	## Keep the compact action-state mirrors available to existing diagnostics and
-	## semantic hashing. Presentation and hit resolution below read target_shape.
-	enemy.fan_origin = enemy.target_shape["origin"]
-	enemy.fan_direction = enemy.target_shape["direction"]
-	enemy.fan_half_angle = enemy.target_shape["half_angle"]
-	enemy.fan_radius = enemy.target_shape["radius"]
-	enemy.facing = enemy.fan_direction
-	_emit_enemy_action_accepted(enemy)
+	(behavior_for_kind("fan_ranged") as FanRangedBehavior).start_fan_action(self, enemy, direction)
 
 
 func _update_fan_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	var previous_state := enemy.action_state
-	var action := _action_profile(enemy, "fan")
-	_advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
-	if enemy.action_state == "active" and not enemy.impact_resolved:
-		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), EnemyTacticsScript.fan_attack_contains(enemy.target_shape, player_position))
-	if previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
-		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
-	if enemy.action_state == "none":
-		_commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else _intent_for_enemy(enemy))
-	else:
-		enemy.motion_state = "idle"
+	behavior_for_kind("fan_ranged").update_tick(self, enemy, intent)
 
 
 func _commit_normal_enemy_intent(enemy: CombatEnemyState, intent: Dictionary) -> void:
@@ -949,23 +905,10 @@ func _commit_normal_enemy_intent(enemy: CombatEnemyState, intent: Dictionary) ->
 		return
 	enemy.tactic_reason = String(intent.get("reason", "unknown"))
 	var action := String(intent.get("request_action", ""))
-	var action_direction_value: Variant = intent.get("action_direction", Vector2.ZERO)
-	var action_direction := Vector2(action_direction_value) if action_direction_value is Vector2 else Vector2.ZERO
-	match action:
-		"melee_attack":
-			_start_melee_action(enemy, action_direction)
-			return
-		"charge":
-			var action_distance_value: Variant = intent.get("action_distance", null)
-			var valid_direction := is_finite(action_direction.x) and is_finite(action_direction.y) and not action_direction.is_zero_approx()
-			var valid_distance := (action_distance_value is int or action_distance_value is float) and not (action_distance_value is bool) and is_finite(float(action_distance_value)) and float(action_distance_value) > 0.0
-			if not valid_direction or not valid_distance or not _start_charger_action(enemy, action_direction, float(action_distance_value)):
-				enemy.motion_state = "idle"
-				enemy.tactic_reason = "invalid_charge_execution"
-			return
-		"fan_attack":
-			_start_fan_action(enemy, action_direction)
-			return
+	var behavior := behavior_for_action(action)
+	if behavior != null:
+		behavior.start_requested_action(self, enemy, action, intent)
+		return
 	var direction: Vector2 = intent.get("move_direction", Vector2.ZERO)
 	var speed_scale := clampf(float(intent.get("speed_scale", 0.0)), 0.0, 1.0)
 	if direction == Vector2.ZERO or speed_scale <= 0.0:
@@ -1034,72 +977,12 @@ func _resolve_hostile_attack(enemy: CombatEnemyState, amount: float, shape_hit: 
 
 
 func _update_boss_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	if enemy.phase_id == "sealed" and enemy.phase_state == "stable" and boss_damage.compare(boss_maximum.multiply(BigValue.from_float(0.5))) >= 0:
-		if enemy.action_instance_id > 0:
-			combat_event_stream.emit(tick, "action_interrupted", {
-				"action_instance_id": enemy.action_instance_id, "actor_id": "enemy/%d" % enemy.entity_id,
-				"action_id": enemy.action_id, "reason": "phase_transition",
-			})
-		enemy.phase_state = "transition"
-		enemy.action_id = "none"
-		enemy.action_instance_id = 0
-		enemy.action_state = "none"
-		enemy.state_started_tick = tick
-		enemy.state_ends_tick = tick + BOSS_TRANSITION_TICKS
-		enemy.impact_tick = -1
-		enemy.impact_resolved = false
-		enemy.target_shape = {}
-	if enemy.phase_state == "transition":
-		if tick >= enemy.state_ends_tick:
-			enemy.phase_id = "awakened"
-			enemy.phase_state = "stable"
-			enemy.core_open = true
-			enemy.core_vulnerable = true
-			enemy.left_hand_position = enemy.position + Vector2(-43.0, -8.0)
-			enemy.right_hand_position = enemy.position + Vector2(38.0, 12.0)
-		return
-	_advance_action_state(enemy, BOSS_ACTIVE_TICKS, BOSS_RECOVERY_TICKS)
-	if enemy.action_state == "none":
-		var chosen := intent if not intent.is_empty() else _intent_for_enemy(enemy)
-		var requested := String(chosen.get("request_action", ""))
-		if requested in ["slam", "sweep", "lane"]:
-			_start_boss_action(enemy, requested, chosen.get("action_direction", Vector2.ZERO))
-			if enemy.phase_id == "awakened":
-				enemy.next_action_index += 1
-	if enemy.action_state == "active" and not enemy.impact_resolved:
-		enemy.impact_resolved = true
-		_resolve_hostile_attack(enemy, 1.8 if enemy.phase_id == "awakened" else 1.2, CombatQueryScript.shape_contains(enemy.target_shape, player_position))
-	_update_boss_hands(enemy)
+	behavior_for_kind("threshold_colossus").update_tick(self, enemy, intent)
 
 
 func _start_boss_action(enemy: CombatEnemyState, action: String, planned_direction: Vector2 = Vector2.ZERO) -> void:
-	_begin_action(enemy, action, BOSS_WINDUP_TICKS)
-	var direction := planned_direction.normalized() if planned_direction != Vector2.ZERO else enemy.position.direction_to(player_position)
-	if direction == Vector2.ZERO:
-		direction = Vector2.LEFT
-	enemy.facing = direction
-	match action:
-		"sweep":
-			enemy.target_shape = {"type": "fan", "origin": enemy.position, "direction": direction, "half_angle": deg_to_rad(48.0), "radius": 190.0}
-		"lane":
-			enemy.target_shape = {"type": "lane", "origin": enemy.position, "direction": direction, "length": 230.0, "width": 52.0}
-		_:
-			var target := _clamp_to_arena(player_position, 28.0)
-			enemy.target_shape = {"type": "rect", "rect": Rect2(target - Vector2(38.0, 30.0), Vector2(76.0, 60.0))}
-	_emit_enemy_action_accepted(enemy)
+	(behavior_for_kind("threshold_colossus") as ThresholdColossusBehavior).start_boss_action(self, enemy, action, planned_direction)
 
 
 func _update_boss_hands(enemy: CombatEnemyState) -> void:
-	var left_base := enemy.position + Vector2(-43.0 if enemy.phase_id == "awakened" else -34.0, -8.0 if enemy.phase_id == "awakened" else 0.0)
-	var right_base := enemy.position + Vector2(38.0 if enemy.phase_id == "awakened" else 34.0, 12.0 if enemy.phase_id == "awakened" else 0.0)
-	enemy.left_hand_position = left_base
-	enemy.right_hand_position = right_base
-	if enemy.action_state in ["windup", "active"]:
-		match enemy.action_id:
-			"slam":
-				enemy.left_hand_position += Vector2(0.0, -20.0 if enemy.action_state == "windup" else 18.0)
-			"sweep":
-				enemy.right_hand_position += enemy.facing.rotated(-PI * 0.5) * (18.0 if enemy.action_state == "windup" else -18.0)
-			"lane":
-				enemy.left_hand_position += Vector2(-8.0, 10.0)
-				enemy.right_hand_position += Vector2(8.0, -10.0)
+	(behavior_for_kind("threshold_colossus") as ThresholdColossusBehavior).update_boss_hands(enemy)
