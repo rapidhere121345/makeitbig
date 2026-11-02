@@ -40,17 +40,17 @@ func _advance_piercing_projectiles_tick() -> void:
 	# targets use PathQuery/SimHit; Boss targets use BossAttackQuery and the
 	# multipart BossHitBuffer. Both paths resolve in the fixed
 	# CONTINUOUS_QUERIES/DAMAGE_STATUS phases; neither may settle here.
-	if _main.room_spatial_port != null and _main.room_combat_port != null and _main._kernel_arrow_flight.is_configured():
+	if _main.room_spatial_port != null and _main.room_combat_port != null and _main.kernel_bindings.arrow_flight.is_configured():
 		var ranger_handle = _main.actor_registry.actor_handle("ranger") if _main.actor_registry != null else null
-		_main._kernel_arrow_flight.submit_tick(
+		_main.kernel_bindings.arrow_flight.submit_tick(
 			_main.combat_system.projectiles,
 			ranger_handle,
 			_main.sim_tick,
 			_main.combat_system.room_port
 		)
-	if _main.room_spatial_port != null and _main.room_combat_port != null and _main._kernel_boss_flight.is_configured() and _main._kernel_reconciler._boss_domain_room_is_current():
+	if _main.room_spatial_port != null and _main.room_combat_port != null and _main.kernel_bindings.boss_flight.is_configured() and _main._kernel_reconciler._boss_domain_room_is_current():
 		var ranger_handle = _main.actor_registry.actor_handle("ranger") if _main.actor_registry != null else null
-		_main._kernel_boss_flight.submit_tick(
+		_main.kernel_bindings.boss_flight.submit_tick(
 			_main.combat_system.projectiles,
 			ranger_handle,
 			_main.sim_tick,

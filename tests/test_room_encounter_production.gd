@@ -449,7 +449,7 @@ func _test_mixed_boss_encounter_authority() -> void:
 	if not normal_dead:
 		runtime.free()
 		return
-	var boss_target = arena._boss_combat_domain.target(arena._enemy_stable_keys.find_key(int(boss.entity_id)))
+	var boss_target = arena.kernel_bindings.boss_domain.target(arena.kernel_bindings.enemy_stable_keys.find_key(int(boss.entity_id)))
 	_expect(boss_target != null, "mixed boss: Boss detached target was not registered")
 	if boss_target == null:
 		runtime.free()

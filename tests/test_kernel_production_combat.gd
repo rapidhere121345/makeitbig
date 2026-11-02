@@ -104,8 +104,8 @@ func _run_kernel_kill_scenario(arena) -> void:
 	var enemy = enemies[0]
 	var actor_id := "enemy/%d" % int(enemy.entity_id)
 	var stable_key := ""
-	for key: Variant in arena._enemy_stable_keys.keys():
-		if int(arena._enemy_stable_keys[key]) == int(enemy.entity_id):
+	for key: Variant in arena.kernel_bindings.enemy_stable_keys.keys():
+		if int(arena.kernel_bindings.enemy_stable_keys[key]) == int(enemy.entity_id):
 			stable_key = String(key)
 	_expect(not stable_key.is_empty(), "kernel combat: enemy stable key mapping missing at registration")
 
@@ -132,8 +132,8 @@ func _run_kernel_kill_scenario(arena) -> void:
 		if not bool(stepped.get("ok", false)):
 			break
 		ticks = int(arena.sim_tick)
-		max_submitted = maxi(max_submitted, int(arena._kernel_arrow_flight.submitted_queries))
-		any_rejection = any_rejection or not arena._kernel_arrow_flight.last_queue_rejections.is_empty()
+		max_submitted = maxi(max_submitted, int(arena.kernel_bindings.arrow_flight.submitted_queries))
+		any_rejection = any_rejection or not arena.kernel_bindings.arrow_flight.last_queue_rejections.is_empty()
 		consumed_hits = maxi(consumed_hits, int(arena.room_combat_port.consumed_hits))
 		for hit: Dictionary in arena.room_combat_port.last_hits:
 			if String(hit.get("target_key", "")) == stable_key:

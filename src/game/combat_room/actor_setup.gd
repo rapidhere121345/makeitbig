@@ -243,7 +243,7 @@ func _register_enemy_actor(enemy: CombatEnemyState) -> bool:
 		push_error("enemy_actor_registration_failed:register:%d:%s" % [enemy.entity_id, str(registered)])
 	if bool(registered.get("ok", false)):
 		enemy.position = position
-		_main._enemy_stable_keys["actor/%d" % int(registered.stable_key)] = enemy.entity_id
+		_main.kernel_bindings.enemy_stable_keys["actor/%d" % int(registered.stable_key)] = enemy.entity_id
 		if enemy.is_boss and not _register_boss_kernel_target(enemy, int(registered.stable_key), _main.enemies.find(enemy)):
 			return false
 		if _main.scene_runtime != null and _main.presentation_enabled:
@@ -293,11 +293,11 @@ func _register_boss_kernel_target(enemy: CombatEnemyState, stable_key: int, ordi
 		if not bool(added.get("ok", false)):
 			push_error("boss_domain_part_registration_failed:%s" % String(added.get("error", "unknown")))
 			return false
-	var registered: Dictionary = _main._boss_combat_domain.register_target(target)
+	var registered: Dictionary = _main.kernel_bindings.boss_domain.register_target(target)
 	if not bool(registered.get("ok", false)):
 		push_error("boss_domain_target_registration_failed:%s" % String(registered.get("error", "unknown")))
 		return false
-	_main._boss_domain_targets[int(enemy.entity_id)] = target
+	_main.kernel_bindings.boss_domain_targets[int(enemy.entity_id)] = target
 	return true
 
 
@@ -346,7 +346,6 @@ func _bind_boss_production_encounter() -> bool:
 		push_error("boss_encounter_start_failed:%s" % String(started.get("error", "unknown")))
 		return false
 	_main.room_encounter_port = _main.scene_runtime.get("encounter_port")
-	_main._boss_encounter_authority = true
 	return true
 
 

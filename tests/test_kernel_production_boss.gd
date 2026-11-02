@@ -82,11 +82,11 @@ func _run() -> void:
 func _run_boss_kill(arena) -> void:
 	_expect(arena.scene_runtime != null and arena.scene_runtime.is_ready(), "kernel boss: native room was not mounted")
 	_expect(arena.simulation_world == arena.scene_runtime.simulation, "kernel boss: Main did not adopt the mounted SimulationWorld")
-	_expect(arena._boss_combat_domain != null, "kernel boss: production did not create a BossCombatDomain")
-	_expect(arena.room_spatial_port.boss_domain == arena._boss_combat_domain, "kernel boss: spatial port did not bind the production Boss domain")
-	_expect(arena.room_combat_port.boss_domain == arena._boss_combat_domain, "kernel boss: combat port did not bind the same Boss domain")
+	_expect(arena.kernel_bindings.boss_domain != null, "kernel boss: production did not create a BossCombatDomain")
+	_expect(arena.room_spatial_port.boss_domain == arena.kernel_bindings.boss_domain, "kernel boss: spatial port did not bind the production Boss domain")
+	_expect(arena.room_combat_port.boss_domain == arena.kernel_bindings.boss_domain, "kernel boss: combat port did not bind the same Boss domain")
 	_expect(arena._kernel_reconciler._boss_domain_room_is_current(), "kernel boss: Boss domain identity does not match the mounted room")
-	_expect(arena._kernel_boss_flight.is_configured(), "kernel boss: Boss flight driver was not configured")
+	_expect(arena.kernel_bindings.boss_flight.is_configured(), "kernel boss: Boss flight driver was not configured")
 	if not _failures.is_empty():
 		return
 	_expect(arena.boss != null and arena.boss.is_boss, "kernel boss: production Boss failed to spawn")
@@ -94,11 +94,11 @@ func _run_boss_kill(arena) -> void:
 		return
 	var boss = arena.boss
 	var stable_key := ""
-	for key: Variant in arena._enemy_stable_keys.keys():
-		if int(arena._enemy_stable_keys[key]) == int(boss.entity_id):
+	for key: Variant in arena.kernel_bindings.enemy_stable_keys.keys():
+		if int(arena.kernel_bindings.enemy_stable_keys[key]) == int(boss.entity_id):
 			stable_key = String(key)
 	_expect(not stable_key.is_empty(), "kernel boss: Boss actor stable key mapping missing")
-	var domain_target = arena._boss_combat_domain.target(stable_key) if not stable_key.is_empty() else null
+	var domain_target = arena.kernel_bindings.boss_domain.target(stable_key) if not stable_key.is_empty() else null
 	_expect(domain_target != null, "kernel boss: Boss actor was not registered as a detached domain target")
 	if domain_target != null:
 		_expect(domain_target.maximum_health.compare(BigValue.from_power10(12.0)) == 0, "kernel boss: detached Boss lost the production BigValue maximum")
@@ -174,8 +174,8 @@ func _run_boss_kill(arena) -> void:
 		ticks = int(arena.sim_tick)
 		if cast_aggregate == "none" and not arena.projectiles.is_empty():
 			cast_aggregate = (arena.projectiles[0] as CombatArrowProjectile).aggregate_damage.to_short_string(12)
-		submitted = maxi(submitted, int(arena._kernel_boss_flight.submitted_queries))
-		queue_rejected = queue_rejected or not arena._kernel_boss_flight.last_queue_rejections.is_empty()
+		submitted = maxi(submitted, int(arena.kernel_bindings.boss_flight.submitted_queries))
+		queue_rejected = queue_rejected or not arena.kernel_bindings.boss_flight.last_queue_rejections.is_empty()
 		if not arena.room_spatial_port.take_boss_path_results().is_empty():
 			result_seen = true
 		var batch: Dictionary = arena.room_combat_port.last_boss_batch

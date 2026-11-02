@@ -40,18 +40,14 @@ func _bind_kernel_room_ports() -> bool:
 	if not bool(player_damage_bound.get("ok", false)):
 		push_error("kernel_player_damage_port_bind_failed:%s" % String(player_damage_bound.get("error", "unknown")))
 		return false
-	var flight_configured: Dictionary = _main._kernel_arrow_flight.configure(_main.room_spatial_port)
+	var flight_configured: Dictionary = _main.kernel_bindings.arrow_flight.configure(_main.room_spatial_port)
 	if not bool(flight_configured.get("ok", false)):
 		push_error("kernel_arrow_flight_configure_failed:%s" % String(flight_configured.get("error", "unknown")))
 		return false
 	if not _bind_boss_kernel_domain():
 		return false
 	_published_tick = -1
-	_main._enemy_stable_keys.clear()
-	_main._kernel_settlement_cursor = 0
-	_main._boss_domain_targets.clear()
-	_main._boss_settlement_cursor = 0
-	_main._boss_encounter_authority = false
+	_main.kernel_bindings.reset_room_state()
 	return true
 
 
@@ -75,24 +71,24 @@ func _bind_boss_kernel_domain() -> bool:
 	if _main.room_spatial_port.boss_domain != domain or _main.room_combat_port.boss_domain != domain:
 		push_error("boss_domain_instance_mismatch")
 		return false
-	var boss_flight_configured: Dictionary = _main._kernel_boss_flight.configure(_main.room_spatial_port)
+	var boss_flight_configured: Dictionary = _main.kernel_bindings.boss_flight.configure(_main.room_spatial_port)
 	if not bool(boss_flight_configured.get("ok", false)):
 		push_error("kernel_boss_flight_configure_failed:%s" % String(boss_flight_configured.get("error", "unknown")))
 		return false
-	_main._boss_combat_domain = domain
+	_main.kernel_bindings.boss_domain = domain
 	return true
 
 
 func _boss_domain_room_is_current() -> bool:
 	return (
-		_main._boss_combat_domain != null
+		_main.kernel_bindings.boss_domain != null
 		and _main.room_spatial_port != null
-		and _main.room_spatial_port.boss_domain == _main._boss_combat_domain
+		and _main.room_spatial_port.boss_domain == _main.kernel_bindings.boss_domain
 		and _main.room_combat_port != null
-		and _main.room_combat_port.boss_domain == _main._boss_combat_domain
+		and _main.room_combat_port.boss_domain == _main.kernel_bindings.boss_domain
 		and _main.simulation_world != null
-		and _main._boss_combat_domain.room_id == String(_main.simulation_world.room_instance_id)
-		and int(_main._boss_combat_domain.world_revision) == int(_main.simulation_world.world_revision)
+		and _main.kernel_bindings.boss_domain.room_id == String(_main.simulation_world.room_instance_id)
+		and int(_main.kernel_bindings.boss_domain.world_revision) == int(_main.simulation_world.world_revision)
 	)
 
 
@@ -155,7 +151,7 @@ func _sync_boss_kernel_target(projectile) -> BossTargetView:
 	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
 	if enemy == null or not enemy.is_boss or not _boss_domain_room_is_current():
 		return null
-	var target: BossTargetView = _main._boss_domain_targets.get(int(enemy.entity_id), null)
+	var target: BossTargetView = _main.kernel_bindings.boss_domain_targets.get(int(enemy.entity_id), null)
 	if target == null or not target.alive:
 		return null
 	var actor_id := "enemy/%d" % enemy.entity_id
@@ -205,7 +201,7 @@ func _admit_kernel_hit(hit: Dictionary) -> Dictionary:
 	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
 	if enemy == null or enemy.is_boss:
 		return {"allowed": false, "reason": "legacy_big_value_target"}
-	var hit_entity_id := int(_main._enemy_stable_keys.get(String(hit.get("target_key", "")), 0))
+	var hit_entity_id := int(_main.kernel_bindings.enemy_stable_keys.get(String(hit.get("target_key", "")), 0))
 	if hit_entity_id != int(projectile.target_entity_id):
 		return {"allowed": false, "reason": "not_locked_target"}
 	if _main.encounter_director != null and _main.encounter_director.is_target_blocked(enemy):
@@ -214,14 +210,14 @@ func _admit_kernel_hit(hit: Dictionary) -> Dictionary:
 
 
 func _enemy_by_stable_key(target_key: String) -> CombatEnemyState:
-	var entity_id := int(_main._enemy_stable_keys.get(target_key, 0))
+	var entity_id := int(_main.kernel_bindings.enemy_stable_keys.get(target_key, 0))
 	if entity_id <= 0:
 		return null
 	return _main._enemy_by_entity_id(entity_id)
 
 
 func _consume_kernel_room_combat() -> void:
-	if _main.room_spatial_port == null or _main.room_combat_port == null or not _main._kernel_arrow_flight.is_configured():
+	if _main.room_spatial_port == null or _main.room_combat_port == null or not _main.kernel_bindings.arrow_flight.is_configured():
 		return
 	var published_snapshot = _main.simulation_world.latest_snapshot() if _main.simulation_world != null else null
 	if published_snapshot != null:
@@ -230,7 +226,7 @@ func _consume_kernel_room_combat() -> void:
 	var previous_report := String(_main.combat_system.battle_report)
 	var previous_event_id: int = _main.combat_event_stream.latest_event_id()
 	var results: Array = _main.room_spatial_port.take_path_results()
-	var records: Array = _main._kernel_arrow_flight.pending_records()
+	var records: Array = _main.kernel_bindings.arrow_flight.pending_records()
 	var admitted: Dictionary = {}
 	for hit: Dictionary in _main.room_combat_port.last_hits:
 		admitted[String(hit.get("attack_instance_id", ""))] = hit
@@ -275,7 +271,7 @@ func _consume_kernel_room_combat() -> void:
 		if projectile.distance_travelled >= projectile.maximum_range:
 			_main.combat_system.resolve_projectile_miss(projectile)
 			_retire_kernel_projectile(projectile, attack_key)
-	_main._kernel_arrow_flight.clear_pending()
+	_main.kernel_bindings.arrow_flight.clear_pending()
 	_reconcile_kernel_deaths()
 	_consume_kernel_boss_combat()
 	_main._combat_report(previous_report, previous_event_id)
@@ -283,18 +279,18 @@ func _consume_kernel_room_combat() -> void:
 
 func _retire_kernel_projectile(projectile, attack_key: String) -> void:
 	_main.combat_system.remove_projectile(projectile)
-	_main._kernel_arrow_flight.forget_arrow(attack_key)
+	_main.kernel_bindings.arrow_flight.forget_arrow(attack_key)
 
 
 func _consume_kernel_boss_combat() -> void:
-	if not _main._kernel_boss_flight.is_configured():
+	if not _main.kernel_bindings.boss_flight.is_configured():
 		return
 	if not _boss_domain_room_is_current():
-		push_error("boss_domain_room_mismatch:%s:%d" % [String(_main._boss_combat_domain.room_id), int(_main._boss_combat_domain.world_revision)])
-		_main._kernel_boss_flight.clear_pending()
+		push_error("boss_domain_room_mismatch:%s:%d" % [String(_main.kernel_bindings.boss_domain.room_id), int(_main.kernel_bindings.boss_domain.world_revision)])
+		_main.kernel_bindings.boss_flight.clear_pending()
 		return
 	var results: Array = _main.room_spatial_port.take_boss_path_results()
-	var records: Array = _main._kernel_boss_flight.pending_records()
+	var records: Array = _main.kernel_bindings.boss_flight.pending_records()
 	var batch: Dictionary = _main.room_combat_port.last_boss_batch
 	if not (batch.get("rejected", []) as Array).is_empty():
 		push_error("boss_damage_resolution_rejected:%s" % str(batch.get("rejected", [])))
@@ -339,7 +335,7 @@ func _consume_kernel_boss_combat() -> void:
 		if enemy == null or not enemy.is_boss:
 			push_error("boss_kernel_target_mirror_unresolved:%s" % attack_key)
 			continue
-		var target: BossTargetView = _main._boss_domain_targets.get(int(enemy.entity_id), null)
+		var target: BossTargetView = _main.kernel_bindings.boss_domain_targets.get(int(enemy.entity_id), null)
 		if target == null or record.health_before == null:
 			push_error("boss_kernel_target_domain_unresolved:%s" % attack_key)
 			continue
@@ -369,7 +365,7 @@ func _consume_kernel_boss_combat() -> void:
 		if bool(outcome.get("lethal", false)):
 			enemy.health = 0.0
 			_finalize_boss_kernel_death(enemy, target)
-	_main._kernel_boss_flight.clear_pending()
+	_main.kernel_bindings.boss_flight.clear_pending()
 	_settle_boss_kernel_deaths(_published_tick)
 
 
@@ -395,7 +391,7 @@ func _big_value_from_snapshot(value: Variant) -> BigValue:
 
 func _retire_boss_kernel_projectile(projectile, attack_key: String) -> void:
 	_main.combat_system.remove_projectile(projectile)
-	_main._kernel_boss_flight.forget_arrow(attack_key)
+	_main.kernel_bindings.boss_flight.forget_arrow(attack_key)
 
 
 func _finalize_boss_kernel_death(enemy: CombatEnemyState, target: BossTargetView) -> void:
@@ -404,7 +400,7 @@ func _finalize_boss_kernel_death(enemy: CombatEnemyState, target: BossTargetView
 		var unregistered: Dictionary = _main.actor_registry.unregister_actor(actor_id)
 		if not bool(unregistered.get("ok", false)):
 			push_error("boss_actor_unregister_failed:%d:%s" % [enemy.entity_id, String(unregistered.get("error", "unknown"))])
-	_main._boss_domain_targets.erase(int(enemy.entity_id))
+	_main.kernel_bindings.boss_domain_targets.erase(int(enemy.entity_id))
 	_finalize_kernel_enemy_death(enemy)
 
 
@@ -423,17 +419,17 @@ func _settle_boss_kernel_deaths(settlement_tick: int) -> void:
 	context.tick = settlement_tick
 	context.room_instance_id = String(_main.simulation_world.room_instance_id)
 	context.world_revision = int(_main.simulation_world.world_revision)
-	while _main._boss_settlement_cursor < settlements.size():
-		var settlement: Dictionary = settlements[_main._boss_settlement_cursor]
-		var notification: Variant = notifications[_main._boss_settlement_cursor] if _main._boss_settlement_cursor < notifications.size() else null
-		_main._boss_settlement_cursor += 1
+	while _main.kernel_bindings.boss_settlement_cursor < settlements.size():
+		var settlement: Dictionary = settlements[_main.kernel_bindings.boss_settlement_cursor]
+		var notification: Variant = notifications[_main.kernel_bindings.boss_settlement_cursor] if _main.kernel_bindings.boss_settlement_cursor < notifications.size() else null
+		_main.kernel_bindings.boss_settlement_cursor += 1
 		if _main.room_encounter_port != null and notification is DeathSettlementNotificationScript:
 			_main.room_encounter_port.on_death_settlement(notification, context)
 		elif _main.room_encounter_port != null:
 			push_error("boss_death_notification_missing:%s" % String(settlement.get("entity_key", "")))
 		var loot_value: Variant = settlement.get("loot_spawn_request", {})
 		if loot_value is Dictionary and not (loot_value as Dictionary).is_empty():
-			var entity_id := int(_main._enemy_stable_keys.get(String(settlement.get("entity_key", "")), 0))
+			var entity_id := int(_main.kernel_bindings.enemy_stable_keys.get(String(settlement.get("entity_key", "")), 0))
 			if entity_id <= 0:
 				push_error("boss_death_loot_entity_unresolved:%s" % String(settlement.get("entity_key", "")))
 				continue
@@ -472,13 +468,13 @@ func _finalize_kernel_enemy_death(enemy: CombatEnemyState) -> void:
 
 func _reconcile_kernel_deaths() -> void:
 	var settlements: Array[Dictionary] = _main.room_combat_port.last_settlements
-	while _main._kernel_settlement_cursor < settlements.size():
-		var settlement: Dictionary = settlements[_main._kernel_settlement_cursor]
-		_main._kernel_settlement_cursor += 1
+	while _main.kernel_bindings.settlement_cursor < settlements.size():
+		var settlement: Dictionary = settlements[_main.kernel_bindings.settlement_cursor]
+		_main.kernel_bindings.settlement_cursor += 1
 		var loot_value: Variant = settlement.get("loot_spawn_request", {})
 		if not loot_value is Dictionary or (loot_value as Dictionary).is_empty():
 			continue
-		var entity_id := int(_main._enemy_stable_keys.get(String(settlement.get("entity_key", "")), 0))
+		var entity_id := int(_main.kernel_bindings.enemy_stable_keys.get(String(settlement.get("entity_key", "")), 0))
 		if entity_id <= 0:
 			push_error("kernel_death_loot_entity_unresolved:%s" % String(settlement.get("entity_key", "")))
 			continue

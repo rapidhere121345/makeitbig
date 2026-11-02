@@ -36,8 +36,6 @@ const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.
 const CombatCommandSourceScript = preload("res://src/systems/combat_command_source.gd")
 const MainCombatCommandSourcePortScript: Script = preload("res://src/game/main_combat_command_source_port.gd")
 const CombatSimulationScript = preload("res://src/systems/combat_simulation.gd")
-const RangerArrowFlightScript := preload("res://src/runtime/combat/ranger_arrow_flight.gd")
-const BossArrowFlightScript := preload("res://src/runtime/combat/boss_arrow_flight.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
 const CombatStatsSnapshotScript := preload("res://src/systems/combat_stats_snapshot.gd")
@@ -47,6 +45,7 @@ const MainCombatRoomPortScript := preload("res://src/game/ports/main_combat_room
 const RoomPhaseDomainScript := preload("res://src/game/ports/room_phase_domain.gd")
 const MainEncounterRoomPortScript := preload("res://src/game/ports/main_encounter_room_port.gd")
 const MainEncounterSpawnPortScript := preload("res://src/game/ports/main_encounter_spawn_port.gd")
+const KernelBindingsScript := preload("res://src/game/combat_room/kernel_bindings.gd")
 const KernelReconcilerScript := preload("res://src/game/combat_room/kernel_reconciler.gd")
 const RoomHazardsScript := preload("res://src/game/combat_room/room_hazards.gd")
 const PiercingArrowsScript := preload("res://src/game/combat_room/piercing_arrows.gd")
@@ -215,17 +214,8 @@ var room_combat_port = null
 var room_encounter_port = null
 var encounter_spawn_port: RefCounted = null
 var _hazard_domain = null
-var _kernel_arrow_flight := RangerArrowFlightScript.new()
-var _kernel_boss_flight := BossArrowFlightScript.new()
-var _boss_combat_domain: BossCombatDomain = null
-var _boss_domain_targets: Dictionary = {}
-var _boss_settlement_cursor := 0
-var _boss_encounter_authority := false
+var kernel_bindings := KernelBindingsScript.new()
 var _terminal_projection_applied := false
-## Stable entity key ("actor/<key>") to legacy enemy entity id, rebuilt at
-## every room registration boundary for death settlement reconciliation.
-var _enemy_stable_keys: Dictionary = {}
-var _kernel_settlement_cursor := 0
 var combat_event_stream
 var startup_errors: Array[String] = []
 var proxy_prediction: String = "unknown"
