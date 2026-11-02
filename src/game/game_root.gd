@@ -85,10 +85,6 @@ var _current_screen: Node
 ## Town browsing is transient presentation state, separate from the save schema.
 var _town_travel: Dictionary = {}
 var _pixel_stage: Control
-var _test_console: CanvasLayer
-var _session_menu: CanvasLayer
-var _menu_paused_screen: Node
-var _menu_previous_process_mode: int = Node.PROCESS_MODE_INHERIT
 var _last_contract: Dictionary = {}
 ## The result screen waiting for a defeat clip that is still playing on the arena
 ## screen, plus how it was released. The settlement is never part of this state.
@@ -113,6 +109,8 @@ var route_snapshots: RouteSnapshots = RouteSnapshots.new(self)
 var capture: CaptureHarness = CaptureHarness.new(self)
 ## The deterministic --auto-smoke replay driver and its state (src/game/root/).
 var auto_smoke: AutoSmokeHarness = AutoSmokeHarness.new(self)
+## The F10 test console and the in-game session menu (src/game/root/).
+var test_console_host: TestConsoleHost = TestConsoleHost.new(self)
 ## Display, audio and player settings, and the shared stage window lease
 ## (src/game/root/).
 var display_settings: DisplaySettings = DisplaySettings.new(self)
@@ -129,8 +127,8 @@ func _ready() -> void:
 	Locale.acquire()
 	_ensure_pixel_stage()
 	initialize()
-	_ensure_test_console()
-	_ensure_session_menu()
+	test_console_host.ensure_test_console()
+	test_console_host.ensure_session_menu()
 	# Some tests prepare the route before entering the SceneTree. Keep that
 	# supported, but once mounted use the same logical viewport as normal play.
 	if _current_screen != null and _current_screen.get_parent() == self:
@@ -152,38 +150,12 @@ func _ensure_pixel_stage() -> void:
 	_pixel_stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 
-## The F10 test console and the session menu service live in
-## src/game/root/test_console_host.gd; these thin forwarders keep the owner's
-## method names for the remaining call sites.
-var _test_console_host_impl  # untyped to avoid a preload cycle
-func _test_console_host() -> TestConsoleHost:
-	if _test_console_host_impl == null:
-		_test_console_host_impl = TestConsoleHost.new(self)
-	return _test_console_host_impl
-
-
-func _ensure_test_console() -> void:
-	_test_console_host()._ensure_test_console()
-
-
 func get_test_console() -> CanvasLayer:
-	return _test_console_host().get_test_console()
+	return test_console_host.test_console
 
 
 func get_session_menu() -> CanvasLayer:
-	return _test_console_host().get_session_menu()
-
-
-func _ensure_session_menu() -> void:
-	_test_console_host()._ensure_session_menu()
-
-
-func _resume_current_route() -> void:
-	_test_console_host()._resume_current_route()
-
-
-func _refresh_test_console() -> void:
-	_test_console_host()._refresh_test_console()
+	return test_console_host.session_menu
 
 
 ## Pixel-authored routes use a fixed 1280x720 canvas. Information-heavy shell
@@ -214,7 +186,7 @@ func _apply_presentation_policy(route: String) -> void:
 
 func _exit_tree() -> void:
 	Locale.release()
-	_resume_current_route()
+	test_console_host.resume_current_route()
 	playtest_recorder.finish("tree_exit")
 	display_settings.release_stage_window()
 
@@ -223,15 +195,15 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		playtest_recorder.finish("object_freed")
 	elif what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and not _test_session \
-			and current_route == SceneRouterScript.ROUTE_ARENA and _session_menu != null:
-		_session_menu.open_menu()
+			and current_route == SceneRouterScript.ROUTE_ARENA:
+		test_console_host.open_session_menu()
 
 
 ## Drives the deferred result screen. Nothing authoritative happens here: the
 ## only work is asking the mounted screen whether its defeat clip is done and
 ## enforcing this layer's own fallback bound.
 func _process(delta: float) -> void:
-	if _session_menu != null and _session_menu.is_open():
+	if test_console_host.is_session_menu_open():
 		return
 	if _pending_visual_route.is_empty():
 		return
@@ -533,13 +505,11 @@ func _on_route_changed(previous_route: String, route: String, payload: Dictionar
 	_pending_visual_route = {}
 	playtest_recorder.record_route_change(previous_route, route)
 	flow_route_changed.emit(previous_route, route)
-	_refresh_test_console()
+	test_console_host.refresh_test_console()
 
 
 func _render_route(route: String, payload: Dictionary = {}) -> void:
-	if _session_menu != null:
-		_session_menu.close_menu()
-		_session_menu.set_route(route)
+	test_console_host.sync_route(route)
 	_retire_current_screen()
 	if route in [SceneRouterScript.ROUTE_TITLE, SceneRouterScript.ROUTE_TUTORIAL]:
 		_town_travel.clear()

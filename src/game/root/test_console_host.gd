@@ -3,18 +3,25 @@ extends RefCounted
 
 ## Test and verification surface extracted from GameRoot. This collaborator owns
 ## the F10 test console, the in-game session menu and its pause, resume and
-## abandon handlers, and the raw F10 snapshot builder, reaching owner state and
-## presentation through the untyped owner reference.
+## abandon handlers, and the raw F10 snapshot builder. It owns that state and
+## reaches the shell through GameRoot's public API.
 const SceneRouterScript = preload("res://src/game/scene_router.gd")
 const ApplicationStateScript = preload("res://src/game/application_state.gd")
 const TestConsoleScript = preload("res://src/presentation/test_console.gd")
 const SessionMenuScript = preload("res://src/presentation/session_menu.gd")
 const DisplayPolicyScript = preload("res://src/presentation/display_policy.gd")
 
-var _root
+## The hidden F10 console, created once the root is in the tree.
+var test_console: CanvasLayer
+## The in-game session menu, created once the root is in the tree.
+var session_menu: CanvasLayer
+
+var _root: GameRoot
+var _menu_paused_screen: Node
+var _menu_previous_process_mode: int = Node.PROCESS_MODE_INHERIT
 
 
-func _init(root) -> void:
+func _init(root: GameRoot) -> void:
 	_root = root
 
 
@@ -22,83 +29,93 @@ func _init(root) -> void:
 ## root viewport rather than inside a routed SubViewport, so changing routes or
 ## presentation policies cannot duplicate it. It is hidden and does not query a
 ## snapshot until the tester presses F10.
-func _ensure_test_console() -> void:
-	if _root._test_console != null or not _root.is_inside_tree():
+func ensure_test_console() -> void:
+	if test_console != null or not _root.is_inside_tree():
 		return
-	_root._test_console = TestConsoleScript.new()
-	_root._test_console.name = "TestConsole"
-	_root._test_console.layer = 100
-	_root.add_child(_root._test_console)
-	_root._test_console.call("configure", Callable(self, "_test_console_snapshot"))
+	test_console = TestConsoleScript.new()
+	test_console.name = "TestConsole"
+	test_console.layer = 100
+	_root.add_child(test_console)
+	test_console.call("configure", Callable(self, "_test_console_snapshot"))
 
 
-func get_test_console() -> CanvasLayer:
-	return _root._test_console
+## True while the session menu is open, which pauses the deferred route clock.
+func is_session_menu_open() -> bool:
+	return session_menu != null and session_menu.is_open()
 
 
-func get_session_menu() -> CanvasLayer:
-	return _root._session_menu
+## Opens the session menu when it exists, e.g. when the window loses focus.
+func open_session_menu() -> void:
+	if session_menu != null:
+		session_menu.open_menu()
 
 
-func _ensure_session_menu() -> void:
-	if _root._session_menu != null or not _root.is_inside_tree():
+## Closes the session menu and tells it which route is now current.
+func sync_route(route: String) -> void:
+	if session_menu != null:
+		session_menu.close_menu()
+		session_menu.set_route(route)
+
+
+func ensure_session_menu() -> void:
+	if session_menu != null or not _root.is_inside_tree():
 		return
-	_root._session_menu = SessionMenuScript.new()
-	_root._session_menu.name = "SessionMenu"
+	session_menu = SessionMenuScript.new()
+	session_menu.name = "SessionMenu"
 	# The console gets first refusal on Escape when it is open.
-	_root.add_child(_root._session_menu)
-	_root.move_child(_root._session_menu, _root._test_console.get_index() if _root._test_console != null else 0)
-	_root._session_menu.opened.connect(_pause_current_route)
-	_root._session_menu.resumed.connect(_resume_current_route)
-	_root._session_menu.abandon_requested.connect(_abandon_from_menu)
-	_root._session_menu.quit_requested.connect(func() -> void: _root.request_exit(0, "quit_to_desktop"))
-	_root._session_menu.display_requested.connect(_root.display_settings.apply_display_settings)
-	_root._session_menu.effects_volume_changed.connect(_root.display_settings.set_effects_volume)
-	_root._session_menu.language_requested.connect(_root.display_settings.set_language)
-	_root._session_menu.menu_scale_requested.connect(_root.display_settings.set_menu_scale)
-	_root._session_menu.render_quality_requested.connect(_root.display_settings.set_render_quality)
+	_root.add_child(session_menu)
+	_root.move_child(session_menu, test_console.get_index() if test_console != null else 0)
+	session_menu.opened.connect(_pause_current_route)
+	session_menu.resumed.connect(resume_current_route)
+	session_menu.abandon_requested.connect(_abandon_from_menu)
+	session_menu.quit_requested.connect(func() -> void: _root.request_exit(0, "quit_to_desktop"))
+	session_menu.display_requested.connect(_root.display_settings.apply_display_settings)
+	session_menu.effects_volume_changed.connect(_root.display_settings.set_effects_volume)
+	session_menu.language_requested.connect(_root.display_settings.set_language)
+	session_menu.menu_scale_requested.connect(_root.display_settings.set_menu_scale)
+	session_menu.render_quality_requested.connect(_root.display_settings.set_render_quality)
 	_root.display_settings.load_player_settings()
-	_root._session_menu.set_route(_root.current_route)
-	_root._session_menu.set_resolution_options(DisplayPolicyScript.menu_options(_root.display_settings.usable_display_size(), _root.display_settings.windowed_resolution), _root.display_settings.windowed_resolution)
-	_root._session_menu.sync_settings(_root.display_settings.windowed_resolution, _root.get_window().mode == Window.MODE_FULLSCREEN, _root.display_settings.effects_volume)
-	_root._session_menu.sync_accessibility(_root.display_settings.language_code, _root.display_settings.menu_scale, _root.display_settings.render_quality)
+	session_menu.set_route(_root.current_route)
+	session_menu.set_resolution_options(DisplayPolicyScript.menu_options(_root.display_settings.usable_display_size(), _root.display_settings.windowed_resolution), _root.display_settings.windowed_resolution)
+	session_menu.sync_settings(_root.display_settings.windowed_resolution, _root.get_window().mode == Window.MODE_FULLSCREEN, _root.display_settings.effects_volume)
+	session_menu.sync_accessibility(_root.display_settings.language_code, _root.display_settings.menu_scale, _root.display_settings.render_quality)
 	_root.display_settings.apply_route_preferences()
 
 
 func _pause_current_route() -> void:
-	if _root._current_screen == null or not is_instance_valid(_root._current_screen):
+	if _root.current_screen == null or not is_instance_valid(_root.current_screen):
 		return
-	_root._menu_paused_screen = _root._current_screen
-	_root._menu_previous_process_mode = _root._current_screen.process_mode
-	if _root._current_screen.has_method("release_manual_controls"):
-		_root._current_screen.call("release_manual_controls")
+	_menu_paused_screen = _root.current_screen
+	_menu_previous_process_mode = _root.current_screen.process_mode
+	if _root.current_screen.has_method("release_manual_controls"):
+		_root.current_screen.call("release_manual_controls")
 	# This stops the fixed clock at the route boundary. Time spent paused is not
 	# added to it, and other mounted roots/test fixtures keep their own lifetime.
-	_root._current_screen.process_mode = Node.PROCESS_MODE_DISABLED
-	if _root._pixel_stage != null:
+	_root.current_screen.process_mode = Node.PROCESS_MODE_DISABLED
+	if _root.get_pixel_stage() != null:
 		_root.get_presentation_viewport().render_target_update_mode = SubViewport.UPDATE_ONCE
 
 
-func _resume_current_route() -> void:
-	if _root._pixel_stage != null:
+func resume_current_route() -> void:
+	if _root.get_pixel_stage() != null:
 		_root.get_presentation_viewport().render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
-	if is_instance_valid(_root._menu_paused_screen):
-		if _root._menu_paused_screen.has_method("release_manual_controls"):
-			_root._menu_paused_screen.call("release_manual_controls")
-		_root._menu_paused_screen.process_mode = _root._menu_previous_process_mode
-	_root._menu_paused_screen = null
+	if is_instance_valid(_menu_paused_screen):
+		if _menu_paused_screen.has_method("release_manual_controls"):
+			_menu_paused_screen.call("release_manual_controls")
+		_menu_paused_screen.process_mode = _menu_previous_process_mode
+	_menu_paused_screen = null
 
 
 func _abandon_from_menu() -> void:
-	if _root.current_route == SceneRouterScript.ROUTE_ARENA and _root._current_screen != null and _root._current_screen.has_method("request_abandon"):
-		_root._current_screen.call("request_abandon")
+	if _root.current_route == SceneRouterScript.ROUTE_ARENA and _root.current_screen != null and _root.current_screen.has_method("request_abandon"):
+		_root.current_screen.call("request_abandon")
 
 
-func _refresh_test_console() -> void:
-	if _root._test_console != null \
-		and _root._test_console.has_method("is_console_open") \
-		and bool(_root._test_console.call("is_console_open")):
-		_root._test_console.call("refresh")
+func refresh_test_console() -> void:
+	if test_console != null \
+		and test_console.has_method("is_console_open") \
+		and bool(test_console.call("is_console_open")):
+		test_console.call("refresh")
 
 
 ## Raw ids, fingerprints, deterministic seeds, protocol unions and settlement
@@ -108,7 +125,7 @@ func _test_console_snapshot() -> Dictionary:
 	var window_size := Vector2i.ZERO
 	if _root.is_inside_tree() and _root.get_window() != null:
 		window_size = _root.get_window().size
-	var layout: Dictionary = _root._pixel_stage.call("layout_snapshot") if _root._pixel_stage != null else {}
+	var layout: Dictionary = _root.get_pixel_stage().call("layout_snapshot") if _root.get_pixel_stage() != null else {}
 	var logical_size: Vector2i = layout.get("ui_logic_size", Vector2i(1280, 720))
 	var snapshot := {
 		"route": _root.current_route,
@@ -132,7 +149,7 @@ func _test_console_snapshot() -> Dictionary:
 		},
 		"log_path": _root.playtest_log.call("log_path") if _root.playtest_log != null and _root.playtest_log.has_method("log_path") else "",
 		"sections": [
-			{"title": "Full current contract data", "content": _root._last_contract.duplicate(true)},
+			{"title": "Full current contract data", "content": _root.last_contract},
 			{"title": "Presentation layout", "content": layout.duplicate(true)},
 		],
 	}

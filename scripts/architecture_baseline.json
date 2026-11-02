@@ -53,7 +53,6 @@
     "src/game/ports/main_movement_policy_port.gd": 1,
     "src/game/ports/room_phase_domain.gd": 12,
     "src/game/root/contract_flow.gd": 23,
-    "src/game/root/test_console_host.gd": 55,
     "src/presentation/facility/forge_page.gd": 125,
     "src/presentation/facility/item_detail.gd": 44,
     "src/presentation/facility/loadout_page.gd": 272,
