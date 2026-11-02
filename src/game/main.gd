@@ -541,7 +541,7 @@ func _init() -> void:
 	_ensure_command_source()
 	presentation.skill_requested.connect(_on_skill_requested)
 	presentation.return_requested.connect(_on_return_requested)
-	input_adapter.report_requested.connect(func(text: String) -> void: battle_report = text)
+	input_adapter.report_requested.connect(session.set_status_report)
 	session.record_combat_system_events()
 
 

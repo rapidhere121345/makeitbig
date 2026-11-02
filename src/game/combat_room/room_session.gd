@@ -100,6 +100,12 @@ var room_drop_tags: Array = []
 var framework_seed: int = FATE_SEED
 
 
+## Replaces the battle report text. The view calls this for status lines the
+## player's input produces outside the fixed tick (pointer lock messages).
+func set_status_report(text: String) -> void:
+	battle_report = text
+
+
 ## Presentation events produced by the ticks since the last drain, in emission
 ## order. The authority only appends; the view drains after each step().
 var _presentation_events: Array[RoomPresentationEvent] = []
