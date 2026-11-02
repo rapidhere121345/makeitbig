@@ -4,7 +4,7 @@ extends SceneTree
 ## only SimHit facts, RoomCombatPort applies resistance and resolved health, and
 ## the fixed death phase settles one encounter notification for one lethal key.
 
-const Fixtures := preload("res://tests/spatial/spatial_fixtures.gd")
+const Fixtures := preload("res://tests/helpers/spatial_fixtures.gd")
 const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spatial_index.gd")
 const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")

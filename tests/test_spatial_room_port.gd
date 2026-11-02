@@ -11,7 +11,7 @@ extends SceneTree
 # swept hurtbox bucket. Self-hit suppression is still a port contract, while
 # the geometry kernel separately rejects separating and negative-entry roots.
 
-const Fixtures := preload("res://tests/spatial/spatial_fixtures.gd")
+const Fixtures := preload("res://tests/helpers/spatial_fixtures.gd")
 const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spatial_index.gd")
 const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_spatial_index.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")

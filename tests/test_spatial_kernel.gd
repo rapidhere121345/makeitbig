@@ -10,7 +10,7 @@ const MovementResolverScript := preload("res://src/runtime/spatial/movement_reso
 const ContinuousHitResolverScript := preload("res://src/runtime/spatial/continuous_hit_resolver.gd")
 const SpatialSweepScript := preload("res://src/runtime/geometry/spatial_sweep.gd")
 const ShapeScript := preload("res://src/runtime/geometry/spatial_shape.gd")
-const Fixtures := preload("res://tests/spatial/spatial_fixtures.gd")
+const Fixtures := preload("res://tests/helpers/spatial_fixtures.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []

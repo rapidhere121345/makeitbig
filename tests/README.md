@@ -11,8 +11,8 @@ gate; this page explains how it finds tests and where new ones belong.
 - A `test_*.gd` that is not a SceneTree script (`extends RefCounted` with
   `run() -> Array[String]`) must be preloaded by `tests/run_all.gd`, which runs
   them as one batch. Otherwise the gate fails it as an orphan.
-- Python tests, art-pipeline verifiers, and the replay hash checks run in the
-  same gate.
+- Python tests, art-pipeline verifiers (Python and Godot-side), and the replay
+  hash checks run in the same gate.
 - A test passes only with exit 0 and no output line starting with
   `SCRIPT ERROR:` (a runtime error can abort a test early while Godot still
   exits 0, so the gate scans the log for it).
@@ -29,11 +29,15 @@ gate; this page explains how it finds tests and where new ones belong.
   equipment, campaign, result and drop settlement).
 - `tests/simulation/`: fakes and the world factory for the simulation kernel
   suites (not tests themselves).
-- `tests/spatial/`, `tests/world_asset/`: shared fixtures for spatial and
-  world-asset suites (not tests themselves).
 - `tests/helpers/`: shared test support: `assert.gd`, state-suite and domain
-  fixtures, callable ports, scene expectations.
-- `tests/python/`: Python tests for repo tooling (English check, devbox, play session).
+  fixtures, spatial and world-asset manifest fixtures, callable ports, scene
+  expectations.
+- `tests/python/`: Python tests for repo tooling (English check, devbox
+  preflight, play session, macOS export, release platforms, battleground
+  authoring). The gate runs every `tests/python/test_*.py`.
+
+Name a suite after its subject, not after an art or review round (`_r13`,
+`_r14`); names that match a runtime art pack such as `ui_style_r13` are fine.
 
 ## Where new tests go
 

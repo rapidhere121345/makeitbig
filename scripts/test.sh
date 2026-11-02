@@ -101,7 +101,7 @@ godot_script() {  # godot_script <res:// relative path>
 }
 
 # ---------------------------------------------------------------- Python ----
-for python_test in tools/test_*.py tests/*.py tests/python/test_*.py; do
+for python_test in tests/python/test_*.py; do
   [[ -f "$python_test" ]] || continue
   step "$python_test" "$MIB_TEST_PYTHON" -B "$python_test"
 done
@@ -137,6 +137,7 @@ verify_art p1_ranger_actions_v01/verify.py --output art/production/p1/ranger_act
   --config docs/art-production/p1-ranger-actions-v01/recipe.final.json
 verify_art p1_ranger_actions_v01/verify.py --output art/production/p1/enemy_actions_v01 \
   --config docs/art-production/p1-enemy-actions-v01/recipe.final.json
+verify_art ui_crafted_v01/build.py --verify
 
 # ------------------------------------------------------- repository policy ----
 RUNTIME_RESOURCE_VIOLATIONS="$(grep -R -n -E --include='*.gd' --include='*.tscn' 'preload\([[:space:]]*"res://(tools|build)/|load\([[:space:]]*"res://build/' src || true)"
@@ -210,6 +211,15 @@ done
 # does not find it. test_combat_room_result.gd and test_result_roundtrip.gd are
 # plain SceneTree tests and run in the discovered batch above.
 godot_script tests/run_game_flow_smoke.gd
+
+# Godot-side art verifiers need the imported textures, so they run after
+# `godot --import`. The portrait check writes its report into test state.
+step "verify p1_icon_expansion_v01/verify.gd" "$GODOT_BIN" --headless --path . \
+  --script res://tools/art_pipeline/p1_icon_expansion_v01/verify.gd \
+  -- "--out=$(pwd -P)/art/production/p1/icon_expansion_v01"
+step "verify p1_story_portraits_r14/verify_imports.gd" "$GODOT_BIN" --headless --path . \
+  --script res://tools/art_pipeline/p1_story_portraits_r14/verify_imports.gd \
+  -- "--report=${MIB_TEST_STATE_DIR:-$(pwd -P)/build/test-state}/story_portraits_r14_imports.json"
 
 # ---------------------------------------------------------------- replay ----
 STATE_DIR="${MIB_TEST_STATE_DIR:-$(pwd -P)/build/test-state}"
