@@ -13,6 +13,7 @@ const EncounterDirectorScript := preload("res://src/game/encounter_director.gd")
 const RoomEncounterScript := preload("res://src/runtime/encounter/room_encounter.gd")
 const WaveDefinitionScript := preload("res://src/runtime/encounter/wave_definition.gd")
 const CombatRoomResultScript := preload("res://src/game/combat_room_result.gd")
+const BuildResolution := preload("res://src/game/application/build_resolution.gd")
 const AUTHORED_ENCOUNTER_PATH := "res://content/rooms/combat/encounter_waves.json"
 const AUTHORED_ENCOUNTER_SCHEMA_VERSION := 1
 const VALID_MODES := ["Manual", "Auto"]
@@ -84,7 +85,7 @@ func start_session(config: Dictionary) -> Dictionary:
 	if not (framework_context as Dictionary).get("active_build", {}) is Dictionary:
 		return _error("invalid_framework_context")
 	var resolved_value: Variant = (framework_context as Dictionary).get("resolved_build", {})
-	if not _is_valid_resolved_build(resolved_value):
+	if not BuildResolution.is_valid_resolved_build(resolved_value):
 		return _error("invalid_resolved_build")
 	var resolved_build: Dictionary = (resolved_value as Dictionary).duplicate(true)
 	var resolved_proxy_value: Variant = (framework_context as Dictionary).get("resolved_proxy_build", {})
@@ -535,28 +536,6 @@ func _connect_return_requested() -> void:
 	var callback := Callable(self, "_on_return_requested")
 	if not _room_instance.is_connected("return_requested", callback):
 		_room_instance.connect("return_requested", callback)
-
-
-func _is_valid_resolved_build(value: Variant) -> bool:
-	if not value is Dictionary:
-		return false
-	var build: Dictionary = value
-	if not bool(build.get("ok", false)):
-		return false
-	var fingerprint := String(build.get("build_fingerprint", ""))
-	if fingerprint.length() != 64:
-		return false
-	for character in fingerprint:
-		if character not in "0123456789abcdef":
-			return false
-	var parameters: Variant = build.get("final_parameters", {})
-	if not parameters is Dictionary:
-		return false
-	for key in ["p", "T", "v", "d", "turn", "damage", "max_health"]:
-		var parameter: Variant = (parameters as Dictionary).get(key, null)
-		if typeof(parameter) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(parameter)):
-			return false
-	return true
 
 
 func _disconnect_return_requested() -> void:

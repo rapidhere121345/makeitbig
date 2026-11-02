@@ -187,6 +187,36 @@ static func resolved_tag_ids(resolved: Dictionary) -> Array[String]:
 	return tags
 
 
+## Shared structural gate for resolver output, used by Main and
+## CombatRoomRuntime. This is the union of the checks the two made separately:
+## production fingerprints come from `_sha256`'s `hex_encode()` (lowercase) and
+## successful resolver output always carries a Dictionary `total_events`, so
+## the union admits exactly the builds the former private validators accepted
+## from production data.
+static func is_valid_resolved_build(value: Variant) -> bool:
+	if not value is Dictionary:
+		return false
+	var build: Dictionary = value
+	if not bool(build.get("ok", false)):
+		return false
+	var fingerprint := String(build.get("build_fingerprint", ""))
+	if fingerprint.length() != 64:
+		return false
+	for character in fingerprint:
+		if character not in "0123456789abcdef":
+			return false
+	var parameters: Variant = build.get("final_parameters", {})
+	if not parameters is Dictionary:
+		return false
+	for key in ["p", "T", "v", "d", "turn", "damage", "max_health"]:
+		var parameter: Variant = (parameters as Dictionary).get(key, null)
+		if typeof(parameter) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(parameter)):
+			return false
+	if not build.get("total_events", {}) is Dictionary:
+		return false
+	return true
+
+
 static func is_valid_active_build(build: Dictionary) -> bool:
 	if not ProfileRules.has_exact_keys(build, ["skills", "equipped_item_ids"]):
 		return false

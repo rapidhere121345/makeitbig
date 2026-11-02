@@ -41,6 +41,7 @@ const BossArrowFlightScript := preload("res://src/runtime/combat/boss_arrow_flig
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
 const CombatStatsSnapshotScript := preload("res://src/game/combat_stats_snapshot.gd")
+const BuildResolution := preload("res://src/game/application/build_resolution.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const MainCombatRoomPortScript := preload("res://src/game/ports/main_combat_room_port.gd")
 const RoomPhaseDomainScript := preload("res://src/game/ports/room_phase_domain.gd")
@@ -588,7 +589,7 @@ func start_room() -> void:
 	if not startup_errors.is_empty():
 		last_save_message = "Deployment blocked by content validation"
 		return
-	if not _resolved_build_is_valid(framework_resolved_build):
+	if not BuildResolution.is_valid_resolved_build(framework_resolved_build):
 		last_save_message = "Deployment blocked: invalid_resolved_build"
 		return
 	var room_error := _framework_room_error()
@@ -678,7 +679,7 @@ func start_room() -> void:
 
 
 func _freeze_room_build() -> void:
-	if _resolved_build_is_valid(framework_resolved_build):
+	if BuildResolution.is_valid_resolved_build(framework_resolved_build):
 		locked_build = framework_resolved_build.duplicate(true)
 		locked_build["skills"] = (framework_active_build.get("skills", [String(locked_build.get("skill_id", "piercing_arrow"))]) as Array).duplicate()
 	else:
@@ -1222,24 +1223,6 @@ func _room_socket(binding: String) -> Variant:
 
 func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 	return _geometry._clamp_to_arena(value, padding)
-
-
-func _resolved_build_is_valid(value: Variant) -> bool:
-	if not value is Dictionary:
-		return false
-	var build: Dictionary = value
-	if not bool(build.get("ok", false)) or String(build.get("build_fingerprint", "")).length() != 64:
-		return false
-	var parameters: Variant = build.get("final_parameters", {})
-	if not parameters is Dictionary:
-		return false
-	for key in ["p", "T", "v", "d", "turn", "damage", "max_health"]:
-		var parameter: Variant = (parameters as Dictionary).get(key, null)
-		if typeof(parameter) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(parameter)):
-			return false
-	if not build.get("total_events", {}) is Dictionary:
-		return false
-	return true
 
 
 func _ensure_command_source() -> void:
