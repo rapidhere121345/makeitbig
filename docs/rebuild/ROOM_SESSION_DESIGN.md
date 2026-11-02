@@ -1,6 +1,6 @@
 # Room Session Design (redesign Step 2-4)
 
-Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 7 and 9 are implemented.
+Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 7 and 9 are implemented; item 8 is in progress (8a done).
 
 ## Problem
 
