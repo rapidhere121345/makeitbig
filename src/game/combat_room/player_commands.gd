@@ -41,7 +41,7 @@ func _simulation_collect_commands() -> Array[Dictionary]:
 
 
 func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
-	var arbitration: Dictionary = CombatLootPickupProtocolScript.arbitrate([command], _session.sim_tick, "ranger")
+	var arbitration: Dictionary = CombatLootPickupProtocolScript.arbitrate([command], _session.sim_tick, _session.kit.actor_id())
 	var receipts: Array = arbitration.get("receipts", [])
 	var receipt: Dictionary = receipts[0].duplicate(true) if not receipts.is_empty() and receipts[0] is Dictionary else {"status": "rejected", "reason": "invalid_receipt", "command": command.duplicate(true)}
 	if String(receipt.get("status", "")) == CombatLootPickupProtocolScript.STATUS_ACCEPTED:
@@ -143,7 +143,7 @@ func _public_proxy_snapshot() -> Dictionary:
 	return {
 		"snapshot_version": ProxyDecisionScript.SNAPSHOT_VERSION,
 		"tick": _session.sim_tick,
-		"actor_id": "ranger",
+		"actor_id": _session.kit.actor_id(),
 		"player_position": _main.player_position,
 		"facing": player["player_facing"],
 		"action_state": _player_authority_action_state(),
@@ -178,14 +178,14 @@ func _player_authority_action_state() -> String:
 
 func _move_command(direction: Vector2, speed_scale: float) -> Dictionary:
 	var milli := _direction_to_milli(direction)
-	var result := CombatCommandProtocolScript.move(_session.sim_tick, "ranger", _session.command_sequence, milli.x, milli.y, clampi(roundi(speed_scale * 1000.0), 1, 1000))
+	var result := CombatCommandProtocolScript.move(_session.sim_tick, _session.kit.actor_id(), _session.command_sequence, milli.x, milli.y, clampi(roundi(speed_scale * 1000.0), 1, 1000))
 	_session.command_sequence += 1
 	return result
 
 
 func _dodge_command(direction: Vector2) -> Dictionary:
 	var milli := _direction_to_milli(direction)
-	var result := CombatCommandProtocolScript.dodge(_session.sim_tick, "ranger", _session.command_sequence, milli.x, milli.y)
+	var result := CombatCommandProtocolScript.dodge(_session.sim_tick, _session.kit.actor_id(), _session.command_sequence, milli.x, milli.y)
 	_session.command_sequence += 1
 	return result
 
@@ -194,15 +194,15 @@ func _cast_command(ability_id: String, target_entity_id: int, direction: Vector2
 	var result: Dictionary
 	if ability_id in ["dash", "piercing_arrow"]:
 		var direction_milli := _direction_to_milli(direction)
-		result = CombatCommandProtocolScript.cast(_session.sim_tick, "ranger", _session.command_sequence, ability_id, target_entity_id, direction_milli.x, direction_milli.y)
+		result = CombatCommandProtocolScript.cast(_session.sim_tick, _session.kit.actor_id(), _session.command_sequence, ability_id, target_entity_id, direction_milli.x, direction_milli.y)
 	else:
-		result = CombatCommandProtocolScript.cast(_session.sim_tick, "ranger", _session.command_sequence, ability_id, target_entity_id)
+		result = CombatCommandProtocolScript.cast(_session.sim_tick, _session.kit.actor_id(), _session.command_sequence, ability_id, target_entity_id)
 	_session.command_sequence += 1
 	return result
 
 
 func _loot_pickup_command(loot_entity_id: String) -> Dictionary:
-	var result := CombatLootPickupProtocolScript.make_request(_session.sim_tick, "ranger", _session.command_sequence, loot_entity_id)
+	var result := CombatLootPickupProtocolScript.make_request(_session.sim_tick, _session.kit.actor_id(), _session.command_sequence, loot_entity_id)
 	_session.command_sequence += 1
 	return result
 

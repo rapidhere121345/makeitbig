@@ -25,7 +25,7 @@ func _advance_piercing_projectiles_tick() -> void:
 	# multipart BossHitBuffer. Both paths resolve in the fixed
 	# CONTINUOUS_QUERIES/DAMAGE_STATUS phases; neither may settle here.
 	if _session.room_spatial_port != null and _session.room_combat_port != null and _session.kernel_bindings.arrow_flight.is_configured():
-		var ranger_handle = _session.actor_registry.actor_handle("ranger") if _session.actor_registry != null else null
+		var ranger_handle = _session.actor_registry.actor_handle(_session.kit.actor_id()) if _session.actor_registry != null else null
 		_session.kernel_bindings.arrow_flight.submit_tick(
 			_session.combat_system.projectiles,
 			ranger_handle,
@@ -33,7 +33,7 @@ func _advance_piercing_projectiles_tick() -> void:
 			_session.combat_system.room_port
 		)
 	if _session.room_spatial_port != null and _session.room_combat_port != null and _session.kernel_bindings.boss_flight.is_configured() and _main.kernel_reconciler.boss_domain_room_is_current():
-		var ranger_handle = _session.actor_registry.actor_handle("ranger") if _session.actor_registry != null else null
+		var ranger_handle = _session.actor_registry.actor_handle(_session.kit.actor_id()) if _session.actor_registry != null else null
 		_session.kernel_bindings.boss_flight.submit_tick(
 			_session.combat_system.projectiles,
 			ranger_handle,

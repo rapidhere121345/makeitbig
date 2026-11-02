@@ -111,12 +111,12 @@ func _configure_actor_registry() -> bool:
 		if not bool(projected.get("ok", false)):
 			return false
 		spawn_position = _main.room_geometry.quantize_position(projected["position"])
-	var player_result: Dictionary = _session.actor_registry.register_actor("ranger", spawn_position, 14.0, 1, &"soft", [&"movement", &"hurtbox"])
+	var player_result: Dictionary = _session.actor_registry.register_actor(_session.kit.actor_id(), spawn_position, 14.0, 1, &"soft", [&"movement", &"hurtbox"])
 	if not bool(player_result.get("ok", false)):
 		push_error("actor_registry_configuration_failed:player_registration:%s" % str(player_result))
 		_session.actor_registry_instance_id = ""
 		return false
-	if injected_runtime and _main.presentation_enabled and not _bind_runtime_actor_presentation("ranger", "ranger.south.idle", 2):
+	if injected_runtime and _main.presentation_enabled and not _bind_runtime_actor_presentation(_session.kit.actor_id(), "ranger.south.idle", 2):
 		return false
 	for enemy: CombatEnemyState in _main.enemies:
 		if not register_enemy_actor(enemy):
@@ -386,7 +386,7 @@ func _ensure_actor_registry_ready() -> bool:
 	if _session.actor_registry_instance_id.is_empty():
 		if not _configure_actor_registry():
 			return false
-	return _session.actor_registry != null and _session.actor_registry.has_actor("ranger")
+	return _session.actor_registry != null and _session.actor_registry.has_actor(_session.kit.actor_id())
 
 
 func _commit_actor_move(actor_id: String, displacement: Vector2, movement_policy: Variant = null) -> Dictionary:
@@ -395,7 +395,7 @@ func _commit_actor_move(actor_id: String, displacement: Vector2, movement_policy
 	var state = _session.actor_registry.actor(actor_id)
 	if state == null:
 		return {"ok": false, "error": "actor_not_registered", "position": Vector2.ZERO, "displacement": Vector2.ZERO}
-	if movement_policy == null and actor_id == "ranger" and _has_active_charge():
+	if movement_policy == null and actor_id == _session.kit.actor_id() and _has_active_charge():
 		movement_policy = _charge_movement_policy_value()
 	var result: Dictionary = _session.actor_registry.move_actor(actor_id, displacement, _session.sim_tick, movement_policy)
 	if not bool(result.get("ok", false)):
@@ -423,7 +423,7 @@ func _charge_movement_policy_value() -> Variant:
 ## bodies instead of being separated away, while contacts stay recorded for
 ## presentation. Normal movement keeps the default soft separation policy.
 func resolve_ranger_movement_policy(actor_id: String) -> Variant:
-	if actor_id != "ranger" or _session.player_combat_state == null:
+	if actor_id != _session.kit.actor_id() or _session.player_combat_state == null:
 		return null
 	var player: Dictionary = _session.player_combat_state.snapshot(_session.sim_tick)
 	if int(player.get("dash_remaining_ticks", 0)) <= 0 and int(player.get("dodge_remaining_ticks", 0)) <= 0:

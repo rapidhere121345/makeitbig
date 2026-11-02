@@ -65,7 +65,7 @@ func _resolve_hazard_hits_tick() -> void:
 				_session.combat_event_stream.emit(_session.sim_tick, "attack_resolved", {
 					"action_instance_id": 0,
 					"source_id": String(contact.get("source_id", "")),
-					"target_id": "ranger",
+					"target_id": _session.kit.actor_id(),
 					"outcome": "queued",
 					"contact_point": contact.get("contact_point", _main.player_position),
 				})
@@ -79,7 +79,7 @@ func _resolve_hazard_hits_tick() -> void:
 				_session.combat_event_stream.emit(_session.sim_tick, "attack_resolved", {
 					"action_instance_id": int(String(receipt.get("attack_instance_id", "0"))),
 					"source_id": String(receipt.get("source_id", "")),
-					"target_id": "ranger",
+					"target_id": _session.kit.actor_id(),
 					"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
 					"contact_point": _main.player_position,
 				})
@@ -95,7 +95,7 @@ func _resolve_hazard_hits_tick() -> void:
 			_session.combat_event_stream.emit(_session.sim_tick, "attack_resolved", {
 				"action_instance_id": int(String(receipt.get("attack_instance_id", "0"))),
 				"source_id": String(receipt.get("source_id", "")),
-				"target_id": "ranger",
+				"target_id": _session.kit.actor_id(),
 				"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
 				"contact_point": _main.player_position,
 			})
@@ -128,7 +128,7 @@ func queue_kernel_player_hit(tick: int, amount: float, source_id: String, source
 		attack_instance_id = str(action_instance_id) if action_instance_id > 0 else "hostile/%s/%d" % [source_id, tick]
 	else:
 		return {"ok": false, "error": "invalid_kernel_player_contact_source"}
-	var target: Variant = _session.actor_registry.actor_handle("ranger")
+	var target: Variant = _session.actor_registry.actor_handle(_session.kit.actor_id())
 	if target == null:
 		return {"ok": false, "error": "player_actor_unavailable"}
 	return _session.room_spatial_port.queue_player_hit(

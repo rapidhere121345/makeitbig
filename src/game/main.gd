@@ -589,7 +589,7 @@ func _ensure_combat_system() -> void:
 
 
 func configure_player_domain(start_tick: int) -> bool:
-	var reset: Dictionary = player_combat_state.reset_for_room(locked_build, actor_registry, "ranger", start_tick)
+	var reset: Dictionary = player_combat_state.reset_for_room(locked_build, actor_registry, session.kit.actor_id(), start_tick)
 	if not bool(reset.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(reset.get("error", "player_reset_failed"))
 		return false
@@ -908,10 +908,11 @@ func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 
 func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 	var normalized_id := actor_id.strip_edges()
-	if normalized_id != "ranger" and not normalized_id.begins_with("enemy/"):
+	var player_actor_id := session.kit.actor_id()
+	if normalized_id != player_actor_id and not normalized_id.begins_with("enemy/"):
 		return {"ok": false, "error": "unsupported_actor_id"}
 	var enemy: CombatEnemyState = null
-	if normalized_id != "ranger":
+	if normalized_id != player_actor_id:
 		var entity_id := int(normalized_id.trim_prefix("enemy/"))
 		enemy = enemy_by_entity_id(entity_id)
 		if enemy == null:
@@ -921,7 +922,7 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 	var result: Dictionary = actor_registry.teleport_actor(normalized_id, position)
 	if not bool(result.get("ok", false)):
 		return result
-	if normalized_id == "ranger":
+	if normalized_id == player_actor_id:
 		return result
 	enemy.position = position
 	return result
