@@ -105,13 +105,41 @@ const ATTACK_SOURCE_PROXY: String = "proxy"
 ## Room authority (see src/game/combat_room/room_session.gd). The properties below
 ## forward to it under their historical names.
 var session := RoomSessionScript.new()
-var selected_preset: String = "convergent"
-var selected_mode: String = "Manual"
-var locked_p: float = PiercingArrowModel.BASE_P
-var locked_payload: float = BASE_PAYLOAD
-var locked_targeting_distance: float = AUTO_RANGE
-var locked_build: Dictionary = {}
-var in_arena: bool = false
+var selected_preset: String:
+	get:
+		return session.selected_preset
+	set(value):
+		session.selected_preset = value
+var selected_mode: String:
+	get:
+		return session.selected_mode
+	set(value):
+		session.selected_mode = value
+var locked_p: float:
+	get:
+		return session.locked_p
+	set(value):
+		session.locked_p = value
+var locked_payload: float:
+	get:
+		return session.locked_payload
+	set(value):
+		session.locked_payload = value
+var locked_targeting_distance: float:
+	get:
+		return session.locked_targeting_distance
+	set(value):
+		session.locked_targeting_distance = value
+var locked_build: Dictionary:
+	get:
+		return session.locked_build
+	set(value):
+		session.locked_build = value
+var in_arena: bool:
+	get:
+		return session.in_arena
+	set(value):
+		session.in_arena = value
 var encounter_director
 var room_catalog
 var enemies: Array[CombatEnemyState]:
@@ -144,7 +172,11 @@ var player_health: float:
 var projectiles: Array[CombatArrowProjectile]:
 	get:
 		return combat_system.projectiles
-var elapsed: float = 0.0
+var elapsed: float:
+	get:
+		return session.elapsed
+	set(value):
+		session.elapsed = value
 var sim_tick: int:
 	get:
 		return int(simulation_world.tick) if simulation_world != null else 0
@@ -178,7 +210,11 @@ var battle_victory: bool:
 			if String(terminal.get("phase", "")) in ["victory", "defeat"]:
 				return bool(terminal.get("victory", false))
 		return bool(room_rules.snapshot().battle_victory)
-var battle_report: String = ""
+var battle_report: String:
+	get:
+		return session.battle_report
+	set(value):
+		session.battle_report = value
 var attack_requested: bool:
 	get:
 		return command_source.attack_requested if command_source != null else false
@@ -191,9 +227,21 @@ var attack_requested_target_entity_id: int:
 var attack_requested_pointer_gameplay: Vector2:
 	get:
 		return command_source.attack_requested_pointer_gameplay if command_source != null else Vector2.ZERO
-var command_sequence: int = 0
-var last_command_receipts: Array[Dictionary] = []
-var last_loot_pickup_command_receipt: Dictionary = {}
+var command_sequence: int:
+	get:
+		return session.command_sequence
+	set(value):
+		session.command_sequence = value
+var last_command_receipts: Array[Dictionary]:
+	get:
+		return session.last_command_receipts
+	set(value):
+		session.last_command_receipts = value
+var last_loot_pickup_command_receipt: Dictionary:
+	get:
+		return session.last_loot_pickup_command_receipt
+	set(value):
+		session.last_loot_pickup_command_receipt = value
 var last_attack_outcome: Dictionary:
 	get:
 		return combat_system.last_attack_outcome
@@ -294,8 +342,16 @@ var room_reward_snapshot: Dictionary:
 		return room_rules.snapshot().room_reward_snapshot
 
 
-var automation_smoke: bool = false
-var automation_smoke_failure: String = ""
+var automation_smoke: bool:
+	get:
+		return session.automation_smoke
+	set(value):
+		session.automation_smoke = value
+var automation_smoke_failure: String:
+	get:
+		return session.automation_smoke_failure
+	set(value):
+		session.automation_smoke_failure = value
 var presentation
 var input_adapter
 ## Production fixed-tick phase owner. CombatSimulation never receives Main as a
