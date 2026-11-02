@@ -1,6 +1,6 @@
 extends SceneTree
 
-const ManualInput := preload("res://src/systems/manual_combat_input.gd")
+const ManualInput := preload("res://src/presentation/manual_combat_input.gd")
 const MainScript := preload("res://src/game/main.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 

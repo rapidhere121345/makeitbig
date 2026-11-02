@@ -5,7 +5,7 @@ const Assert := preload("res://tests/helpers/assert.gd")
 
 
 class FakeRoomPort:
-	extends "res://src/game/encounter_room_port.gd"
+	extends "res://src/runtime/combat/encounter_room_port.gd"
 
 	var queue_calls: Array[Dictionary] = []
 	var reject_quantize := false

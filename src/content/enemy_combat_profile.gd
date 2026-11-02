@@ -81,7 +81,7 @@ static func from_data(value: Variant) -> Dictionary:
 				errors.append("invalid_action_damage:%s" % String(action_id))
 	if not errors.is_empty():
 		return {"ok": false, "error": ";".join(errors), "errors": errors, "value": {}}
-	var result: RefCounted = load("res://src/game/enemy_combat_profile.gd").new()
+	var result: RefCounted = load("res://src/content/enemy_combat_profile.gd").new()
 	result._assign(data)
 	return {"ok": true, "error": "", "errors": [], "value": result}
 

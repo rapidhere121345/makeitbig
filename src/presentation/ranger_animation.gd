@@ -58,7 +58,7 @@ const STYLE_ATLAS_PATH := "res://art/production/p1/actors_v02/ranger_atlas.json"
 const STYLE_TEXTURE_PATH := "res://art/production/p1/actors_v02/ranger.png"
 const NATIVE_VIEW := Vector2i(640, 360)
 const SCHEMA_VERSION := 1
-const ArrowOrigin := preload("res://src/game/ranger_arrow_origin.gd")
+const ArrowOrigin := preload("res://src/systems/ranger_arrow_origin.gd")
 ## The action cell. 48x48 with a (24,44) foot anchor holds the approved 38px
 ## hero body at the same height and the same ground contact as the old 32x48
 ## idle cell; the extra width is padding for poses that reach sideways.

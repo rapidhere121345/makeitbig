@@ -1,4 +1,4 @@
-extends "res://src/game/encounter_room_port.gd"
+extends "res://src/runtime/combat/encounter_room_port.gd"
 
 ## Typed EncounterDirector composition owned by Main.  The director receives
 ## this object once at construction and never receives a callback dictionary;

@@ -6,7 +6,7 @@ extends RefCounted
 ## JSON owns authored values. The registry validates and resolves them into
 ## EnemyCombatProfile objects; it never stores room health or action progress.
 
-const ProfileScript := preload("res://src/game/enemy_combat_profile.gd")
+const ProfileScript := preload("res://src/content/enemy_combat_profile.gd")
 const CONTENT_PATH := "res://content/early_enemy_profiles.json"
 const SCHEMA_VERSION: int = 1
 const TOP_LEVEL_FIELDS: Array[String] = ["schema_version", "profiles"]

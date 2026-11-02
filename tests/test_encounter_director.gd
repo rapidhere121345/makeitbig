@@ -1,7 +1,7 @@
 extends SceneTree
 
 const EncounterDirectorScript := preload("res://src/game/encounter_director.gd")
-const EncounterRoomPortScript := preload("res://src/game/encounter_room_port.gd")
+const EncounterRoomPortScript := preload("res://src/runtime/combat/encounter_room_port.gd")
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
 const CombatEventStreamScript := preload("res://src/systems/combat_event_stream.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")

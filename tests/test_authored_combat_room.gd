@@ -2,7 +2,7 @@ extends SceneTree
 
 const ContractPlan := preload("res://src/game/contract_plan.gd")
 const AimResolver := preload("res://src/systems/manual_aim_resolver.gd")
-const ArrowOrigin := preload("res://src/game/ranger_arrow_origin.gd")
+const ArrowOrigin := preload("res://src/systems/ranger_arrow_origin.gd")
 const Items := preload("res://src/content/early_item_registry.gd")
 const Resolver := preload("res://src/systems/build_resolver.gd")
 const RoomRuntime := preload("res://src/game/combat_room_runtime.gd")

@@ -14,7 +14,7 @@ extends RefCounted
 
 const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
-const EnemyCombatProfileScript := preload("res://src/game/enemy_combat_profile.gd")
+const EnemyCombatProfileScript := preload("res://src/content/enemy_combat_profile.gd")
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
 const HazardReadPortScript := preload("res://src/runtime/combat/combat_hazard_read_port.gd")
