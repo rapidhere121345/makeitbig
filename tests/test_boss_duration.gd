@@ -14,7 +14,7 @@ extends SceneTree
 ##    CombatRoomRuntime (test_session, framework_room with boss
 ##    threshold_colossus, framework_resolved_build, automation_smoke=false) and
 ##    entered via start_room(), then advanced one authoritative
-##    _simulate_tick() at a time — ticks are never skipped or rewound;
+##    step_tick() at a time — ticks are never skipped or rewound;
 ##  * the player is driven only through the public request flags that the real
 ##    HUD / keyboard handlers write (attack_requested = Skill 1 button / SPACE,
 ##    dodge_requested = SHIFT), casting exactly on the fixed cooldown;
@@ -109,7 +109,7 @@ func _run() -> void:
 		# PlayerCombatRules is the gate, so this casts exactly on cooldown.
 		arena.command_source.attack_requested = true
 		var health_before: float = float(player.player_health)
-		arena._simulate_tick()
+		arena.step_tick()
 		player = arena.player_combat_state.snapshot(arena.sim_tick)
 		if not pressed_action.is_empty():
 			Input.action_release(pressed_action)
@@ -149,7 +149,7 @@ func _moving_fireline_near_next_tick(arena: Node) -> bool:
 	var cycle_tick := next_tick % int(arena.HAZARD_CYCLE_TICKS)
 	if cycle_tick < int(arena.HAZARD_WARNING_TICKS) or cycle_tick >= int(arena.HAZARD_WARNING_TICKS + arena.HAZARD_ACTIVE_TICKS):
 		return false
-	var rect: Rect2 = arena._arena_rect()
+	var rect: Rect2 = arena.arena_rect()
 	var progress := float(cycle_tick) / float(int(arena.HAZARD_CYCLE_TICKS) - 1)
 	var line_x := lerpf(rect.position.x, rect.end.x, progress)
 	var dodge_step := SkillRules.DODGE_SPEED * float(arena.SIM_STEP_SECONDS)

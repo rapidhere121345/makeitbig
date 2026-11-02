@@ -66,7 +66,7 @@ func _run() -> void:
 	arena.framework_active_build.skills[1] = "dash"
 	arena.framework_resolved_build.final_parameters.max_health = 1.0
 	_expect(arena.player_combat_state.snapshot(0).equipped_skills[1] == "hunter_mark" and arena.player_health == initial_maximum, "mutable profile changed the frozen player")
-	var position := arena._arena_rect().get_center()
+	var position := arena.arena_rect().get_center()
 	_expect(bool(arena.teleport_actor("ranger", position).get("ok", false)), "player teleport failed")
 	var target = arena.enemies[0]
 	target.health = 1.0e12
@@ -87,7 +87,7 @@ func _run() -> void:
 			release_feet = arena.player_position
 			arena.supplied_commands.append(Protocol.move(tick, "ranger", 41, 1000, 0, 1000))
 			expected_receipts = Protocol.arbitrate(arena.supplied_commands, tick, arena.player_combat_state.equipped_ability_ids()).receipts
-		arena._simulate_tick()
+		arena.step_tick()
 	_expect(arena.sim_tick == impact_tick and int(arena.actor_registry.actor("ranger").last_movement_tick) == impact_tick, "Main did not use the committed world tick")
 	_expect(arena.last_command_receipts == expected_receipts, "Main saved gameplay receipts instead of protocol receipts")
 	_expect(arena.shots == 1 and arena.projectiles.size() == 1, "action impact did not resolve through CombatSystem")
@@ -116,7 +116,7 @@ func _run() -> void:
 	# Hostile contacts are queued during the room phase and committed by the
 	# next fixed tick through RoomCombatPort; direct invocation must not bypass
 	# that boundary.
-	arena._simulate_tick()
+	arena.step_tick()
 	var damage_slice: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
 	_expect(damage_slice.last_damage_source_id == "enemy/%d/%s" % [target.entity_id, target.kind_id] and damage_slice.last_damage_direction.is_equal_approx(target.position.direction_to(arena.player_position)), "hostile source position did not pass directly into Rules")
 	var authoritative: Dictionary = Builder.build_runtime_state(arena, "wiring")
@@ -159,7 +159,7 @@ func _test_mounted_reset(resolved: Dictionary) -> void:
 		var arena = runtime.room_instance
 		arena.set_process(false)
 		var scene = runtime.scene_runtime
-		var spawn: Vector2 = arena._room_socket("combat/spawn")
+		var spawn: Vector2 = arena.room_socket("combat/spawn")
 		_expect(arena.actor_registry == scene.actor_registry and arena.simulation_world == scene.simulation, "mounted Main replaced native authorities")
 		_expect(arena.player_position == spawn, "domain position did not read the authored native socket")
 		_expect(arena.combat_simulation.get("_rules") == arena.player_combat_rules and arena.combat_system.get("room_port") != null, "mounted services did not share the typed room authority")
@@ -180,7 +180,7 @@ func _test_mounted_reset(resolved: Dictionary) -> void:
 
 func _test_mark_report(arena) -> void:
 	const EXPECTED := "Hunter's Mark locked: Melee Pursuer."
-	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
+	var center: Vector2 = arena.arena_rect().get_center() + Vector2(0, -36)
 	var target = arena.enemies[0]
 	_expect(arena.teleport_actor("ranger", center).get("ok", false) and arena.teleport_actor("enemy/%d" % target.entity_id, center + Vector2.RIGHT * 100.0).get("ok", false), "mounted mark report fixture placement failed")
 	var before_event: int = arena.combat_event_stream.latest_event_id()
@@ -192,7 +192,7 @@ func _test_mark_report(arena) -> void:
 	arena.combat_system.battle_report = "stale combat report"
 	arena.encounter_director.battle_report = "stale encounter report"
 	for _tick in 2:
-		arena._simulate_tick()
+		arena.step_tick()
 	_expect(arena.battle_report == EXPECTED, "an idle tick replaced the mark report with stale component output")
 	arena.battle_report = "rejection sentinel"
 	receipt = arena.request_player_cast("hunter_mark", target.entity_id)
@@ -206,7 +206,7 @@ func _test_mark_report(arena) -> void:
 	_expect(not receipt.get("accepted", false) and arena.battle_report == "invalid target sentinel", "missing mark target fabricated a success report")
 	arena.command_source.hunter_mark_requested = true
 	before_event = arena.combat_event_stream.latest_event_id()
-	arena._simulate_tick()
+	arena.step_tick()
 	_expect(arena.battle_report == EXPECTED and arena.player_combat_state.snapshot(arena.sim_tick).marked_entity_id == target.entity_id, "command hunter mark diverged from the direct public cast report")
 	var receipts: Array[Dictionary] = []
 	for event: Dictionary in arena.combat_event_stream.events_after(before_event):
@@ -216,7 +216,7 @@ func _test_mark_report(arena) -> void:
 	var arrow: Dictionary = arena.request_player_cast("piercing_arrow", target.entity_id)
 	_expect(arrow.get("accepted", false), "fresh arrow report setup failed")
 	for _tick in Rules.PIERCING_ARROW_WINDUP_TICKS:
-		arena._simulate_tick()
+		arena.step_tick()
 	_expect(arena.battle_report != EXPECTED and not arena.combat_system.battle_report.is_empty(), "fresh arrow output did not supersede the mark report")
 
 
@@ -255,14 +255,14 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 			key.physical_keycode = KEY_Q
 			key.pressed = true
 			arena.input_adapter.capture_actions(key, arena.gameplay_snapshot())
-			arena._simulate_tick()
+			arena.step_tick()
 		else:
 			_expect(arena.request_player_cast("hunter_mark", target.entity_id).get("accepted", false), "direct HUD mark was rejected")
 		_expect("Full Combat Feedback  " + EXPECTED in _hud_summary(arena), "accepted mark missing from real HUD summary (routed=%s)" % routed)
 		arena.combat_system.battle_report = "stale combat report"
 		arena.encounter_director.battle_report = "stale encounter report"
 		for _tick in 3:
-			arena._simulate_tick()
+			arena.step_tick()
 		_expect(EXPECTED in _hud_summary(arena), "idle ticks replaced the HUD mark (routed=%s)" % routed)
 		var rejected: Dictionary = arena.request_player_cast("hunter_mark", arena.enemies[1].entity_id)
 		_expect(not rejected.get("accepted", false) and EXPECTED in _hud_summary(arena) and "Locked: Melee Pursuer" not in _hud_summary(arena), "cooldown rejection fabricated a different successful HUD target")
@@ -272,7 +272,7 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 		_expect(arena.request_player_cast("piercing_arrow", target.entity_id).get("accepted", false), "HUD arrow replacement was rejected")
 		_expect("Drawing Piercing Arrow" in _hud_summary(arena) and EXPECTED not in _hud_summary(arena), "new arrow windup did not replace HUD mark")
 		for _tick in Rules.PIERCING_ARROW_WINDUP_TICKS + 30:
-			arena._simulate_tick()
+			arena.step_tick()
 		_expect(not arena.last_attack_outcome.is_empty() and "Piercing Arrow" in _hud_summary(arena) and EXPECTED not in _hud_summary(arena), "fresh arrow result did not replace HUD mark")
 
 	arena.start_room()
@@ -287,7 +287,7 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 	arena.battle_report = EXPECTED
 	var expiry: int = arena.player_combat_state.snapshot(arena.sim_tick).hunter_mark_expires_tick
 	while arena.sim_tick < expiry:
-		arena._simulate_tick()
+		arena.step_tick()
 	arena.battle_report = EXPECTED
 	_expect(arena.player_combat_state.snapshot(arena.sim_tick).marked_entity_id == 0 and EXPECTED not in _hud_summary(arena), "expired mark survived in the HUD")
 
@@ -298,7 +298,7 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 	_expect(arena.request_player_cast("hunter_mark", target.entity_id).get("accepted", false), "death HUD mark setup failed")
 	_expect(arena.request_player_cast("piercing_arrow", target.entity_id).get("accepted", false), "death HUD arrow setup failed")
 	for _tick in 45:
-		arena._simulate_tick()
+		arena.step_tick()
 		if target.health <= 0.0:
 			break
 	arena.battle_report = EXPECTED
@@ -313,7 +313,7 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 
 
 func _place_hud_targets(arena):
-	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
+	var center: Vector2 = arena.arena_rect().get_center() + Vector2(0, -36)
 	_expect(arena.teleport_actor("ranger", center).get("ok", false), "HUD player placement failed")
 	for index in arena.enemies.size():
 		var enemy = arena.enemies[index]

@@ -68,7 +68,7 @@ func _run() -> void:
 		return
 
 	# Keep the first projectile lane clear of the whole wall without changing range.
-	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
+	var center: Vector2 = arena.arena_rect().get_center() + Vector2(0, -36)
 	var first = enemies[0]
 	var second = enemies[1]
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "real room: ranger fixture placement failed")
@@ -158,7 +158,7 @@ func _run() -> void:
 
 
 func _arena_step(arena: Node) -> void:
-	arena.call("_simulate_tick")
+	arena.step_tick()
 
 
 func _advance_until(arena: Node, predicate: Callable, limit: int) -> bool:
@@ -176,12 +176,12 @@ func _expect(condition: bool, message: String) -> void: Assert.expect(condition,
 ## can land on a ruin. Deterministic nearest-clear search keeps the fixture
 ## semantics without pinning coordinates to the current blocker layout.
 func _clear_near(arena: Node, desired: Vector2, radius: float = 16.0) -> Vector2:
-	if arena.actor_registry.is_position_clear(desired, arena._arena_rect(), radius):
+	if arena.actor_registry.is_position_clear(desired, arena.arena_rect(), radius):
 		return desired
 	for ring: float in [16.0, 32.0, 48.0, 64.0, 96.0]:
 		for step: int in 16:
 			var candidate := desired + Vector2(ring, 0.0).rotated(TAU * float(step) / 16.0)
-			if arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), radius):
+			if arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), radius):
 				return candidate
 	return desired
 
@@ -195,7 +195,7 @@ func _valid_attack_position(arena: Node, target: Vector2) -> Dictionary:
 	var offsets: Array[Vector2] = [Vector2(-100.0, 0.0), Vector2(100.0, 0.0), Vector2(0.0, -100.0), Vector2(0.0, 100.0)]
 	for offset: Vector2 in offsets:
 		var candidate := _clear_near(arena, target + offset, 14.0)
-		if not arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), 14.0):
+		if not arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
 			continue
 		if index == null:
 			return {"ok": true, "position": candidate}

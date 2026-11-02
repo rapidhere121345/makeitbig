@@ -35,7 +35,7 @@ func _run() -> void:
 		for _tick in 1800:
 			if bool(arena.get("battle_over")):
 				break
-			arena.call("_simulate_tick")
+			arena.step_tick()
 		_expect(bool(arena.get("battle_victory")), "real first-hunt room did not reach victory", failures)
 		await _frames(4)
 	_expect(game.current_route == "result", "real combat did not settle all authored rooms", failures)

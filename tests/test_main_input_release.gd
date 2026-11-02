@@ -15,7 +15,7 @@ class DrivenMain:
 	func simulation_collect_commands() -> Array[Dictionary]:
 		if supplied_mobility.is_empty():
 			return []
-		var command: Dictionary = _player_commands._dodge_command(supplied_direction) if supplied_mobility == "dodge" else _player_commands._cast_command("dash", 0, supplied_direction)
+		var command: Dictionary = player_commands._dodge_command(supplied_direction) if supplied_mobility == "dodge" else player_commands._cast_command("dash", 0, supplied_direction)
 		supplied_mobility = ""
 		last_supplied_command = command.duplicate(true)
 		return [command]
@@ -62,7 +62,7 @@ func _test_tail_buffer(resolved: Dictionary, initial: String, release: bool) -> 
 	if not arena.in_arena:
 		_shutdown_arena(arena)
 		return
-	_expect(bool(arena.teleport_actor("ranger", arena._arena_rect().get_center()).get("ok", false)), label + "player teleport failed")
+	_expect(bool(arena.teleport_actor("ranger", arena.arena_rect().get_center()).get("ok", false)), label + "player teleport failed")
 	var buffered_kind := "dash" if initial == "dodge" else "dodge"
 	var duration := Skill.DODGE_DURATION_TICKS if initial == "dodge" else Skill.DASH_DURATION_TICKS
 	var buffer_tick := duration - 1
@@ -77,7 +77,7 @@ func _test_tail_buffer(resolved: Dictionary, initial: String, release: bool) -> 
 		elif tick == buffer_tick:
 			arena.supplied_mobility = buffered_kind
 			arena.supplied_direction = Vector2.UP
-		arena._simulate_tick()
+		arena.step_tick()
 	queued = arena.last_supplied_command
 	var before: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
 	_expect(not before.mobility_input_buffer.is_empty() and before.mobility_input_buffer.sequence == queued.sequence, label + "late conflict did not create real Rules buffer")
@@ -100,7 +100,7 @@ func _test_tail_buffer(resolved: Dictionary, initial: String, release: bool) -> 
 		for key: String in ["player_health", "player_facing", "player_last_displacement", "dodge_remaining_ticks", "dash_remaining_ticks", "dodge_cooldown_ticks", "dash_cooldown_ticks", "attack_cooldown_ticks", "timeline", "action_phase"]:
 			_expect(after[key] == before[key], label + "release changed " + key)
 	for tick in range(buffer_tick + 1, consume_tick + 1):
-		arena._simulate_tick()
+		arena.step_tick()
 	var final: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
 	_expect(arena.sim_tick == consume_tick and arena.actor_registry.actor("ranger").last_movement_tick == consume_tick, label + "consume used a fabricated motor tick")
 	_expect(arena.command_sequence == prior_sequence, label + "buffer consume allocated a new command sequence")

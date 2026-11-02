@@ -73,7 +73,7 @@ func _run() -> void:
 	# Periodic barrier is active at ticks 0..19. Reach the first legal window
 	# through real ticks so the test exercises target blocking rather than bypassing it.
 	while arena.sim_tick < 20:
-		arena.call("_simulate_tick")
+		arena.step_tick()
 	var elite = enemies[0]
 	var elite_position: Vector2 = elite.position
 	var placement := _find_valid_attack_position(arena, elite_position)
@@ -105,7 +105,7 @@ func _run() -> void:
 		rejected_pickup_event.pressed = true
 		arena.input_adapter.capture_actions(rejected_pickup_event, arena.gameplay_snapshot())
 		for _tick in 3:
-			arena.call("_simulate_tick")
+			arena.step_tick()
 		var rejected_receipts: Array = arena.room_loot_snapshot.get("pickup_receipts", [])
 		_expect(not rejected_receipts.is_empty() and String((rejected_receipts[rejected_receipts.size() - 1] as Dictionary).get("error", "")) == "loot_out_of_range", "mainline loot: room accepted an out-of-range F pickup")
 		_expect(String((arena.room_loot_snapshot.get("entities", [])[0] as Dictionary).get("state", "")) == "available", "mainline loot: rejected pickup changed the room entity")
@@ -117,7 +117,7 @@ func _run() -> void:
 		arena.input_adapter.capture_actions(pickup_event, arena.gameplay_snapshot())
 		_expect(String(arena.input_adapter.view_state(arena.gameplay_snapshot()).get("loot_pickup_pending_id", "")) == loot_id, "mainline loot: F input did not queue the nearest room drop")
 		for _tick in 3:
-			arena.call("_simulate_tick")
+			arena.step_tick()
 			if String((arena.room_loot_snapshot.get("entities", [])[0] as Dictionary).get("state", "")) == "picked":
 				break
 		var picked: Array = arena.room_loot_snapshot.get("entities", [])
@@ -157,13 +157,13 @@ func _run() -> void:
 		auto_arena.set_process(false)
 		auto_arena.selected_mode = "Auto"
 		var auto_position: Vector2 = auto_arena.player_combat_state.snapshot(auto_arena.sim_tick).player_position
-		var blocked_spawn: Dictionary = auto_arena.spawn_room_loot_for_source("enemy_death", 1000, auto_arena._arena_rect().position)
+		var blocked_spawn: Dictionary = auto_arena.spawn_room_loot_for_source("enemy_death", 1000, auto_arena.arena_rect().position)
 		_expect(not bool(blocked_spawn.get("ok", false)) and String(blocked_spawn.get("error", "")) == "loot_spawn_position_blocked", "mainline loot: production placement port accepted a blocked drop")
 		var spawned: Dictionary = auto_arena.spawn_room_loot_for_source("enemy_death", 1001, auto_position)
 		_expect(bool(spawned.get("ok", false)), "mainline loot: Auto pickup fixture did not spawn its room entity")
-		auto_arena.call("_simulate_tick")
+		auto_arena.step_tick()
 		_expect(String(auto_arena.last_loot_pickup_command_receipt.get("status", "")) == "accepted" and bool(auto_arena.last_loot_pickup_command_receipt.get("room_receipt", {}).get("accepted", false)), "mainline loot: Auto did not submit the shared pickup protocol")
-		auto_arena.call("_simulate_tick")
+		auto_arena.step_tick()
 		var auto_entities: Array = auto_arena.room_loot_snapshot.get("entities", [])
 		_expect(not auto_entities.is_empty() and String((auto_entities[0] as Dictionary).get("state", "")) == "picked", "mainline loot: Auto shared pickup did not commit on the next tick")
 	auto_runtime.request_abandon()
@@ -223,7 +223,7 @@ func _find_valid_attack_position(arena: Node, target_position: Vector2) -> Dicti
 			continue
 		for angle_index in 32:
 			var candidate := target_position + Vector2.RIGHT.rotated(TAU * float(angle_index) / 32.0) * distance
-			if arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), 14.0):
+			if arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
 				return {"ok": true, "position": candidate}
 	return {"ok": false, "position": Vector2.ZERO}
 
@@ -232,7 +232,7 @@ func _advance_until(arena: Node, predicate: Callable, limit: int) -> bool:
 	for _index in limit:
 		if bool(predicate.call()):
 			return true
-		arena.call("_simulate_tick")
+		arena.step_tick()
 	return bool(predicate.call())
 
 

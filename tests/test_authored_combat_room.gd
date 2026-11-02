@@ -74,7 +74,7 @@ func _run() -> void:
 		return
 	var enemy = enemies[0]
 	var enemy_position: Vector2 = enemy.position
-	_expect(arena.actor_registry.is_position_clear(enemy_position, arena._arena_rect(), 16.0), "authored room: authored enemy spawn is not clear")
+	_expect(arena.actor_registry.is_position_clear(enemy_position, arena.arena_rect(), 16.0), "authored room: authored enemy spawn is not clear")
 	var player_placement := _find_valid_attack_position(arena, enemy_position, enemy)
 	_expect(bool(player_placement.get("ok", false)), "authored room: no valid player position near authored enemy spawn")
 	if not bool(player_placement.get("ok", false)):
@@ -156,7 +156,7 @@ func _advance_until(arena: Node, predicate: Callable, limit: int) -> bool:
 	for _index in limit:
 		if bool(predicate.call()):
 			return true
-		arena.call("_simulate_tick")
+		arena.step_tick()
 	return bool(predicate.call())
 
 
@@ -183,7 +183,7 @@ func _find_valid_attack_position(arena: Node, target_position: Vector2, target: 
 			continue
 		for angle_index in 32:
 			var candidate := target_position + Vector2.RIGHT.rotated(TAU * float(angle_index) / 32.0) * distance
-			if not arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), 14.0):
+			if not arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
 				continue
 			var facing := (target_position - candidate).normalized()
 			var origin := candidate + ArrowOrigin.release_offset(facing)
