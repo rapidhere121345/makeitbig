@@ -1,9 +1,9 @@
 class_name AutoSmokeHarness
 extends RefCounted
 
-## Drives the deterministic --auto-smoke replay on behalf of GameRoot. The
-## replay's stage state stays on the owner; this harness reads and advances it
-## through the untyped owner reference.
+## Drives the deterministic --auto-smoke replay on behalf of GameRoot. This
+## harness owns the replay's session flag and stage state and reaches the shell
+## through GameRoot's public API.
 const SceneRouterScript = preload("res://src/game/scene_router.gd")
 const ContractPlanScript = preload("res://src/game/contract_plan.gd")
 const EarlyCampaignRegistryScript = preload("res://src/content/early_campaign_registry.gd")
@@ -16,16 +16,59 @@ const AUTO_SMOKE_WHITE_CORES: Array[String] = [
 	"short_trace_memory",
 ]
 const AUTO_SMOKE_SEED := 52969
+const TIME_SCALE := 20.0
+## Mainline contracts the setup settles in memory before the real Boss and Auto runs.
+const SETUP_NODE_IDS: Array[String] = [
+	"mainline_01_first_hunt",
+	"mainline_02_priority_under_pressure",
+	"mainline_03_first_elite",
+	"mainline_04_hazard_and_forge",
+	"mainline_05_growth_gate",
+]
 
-var _root
+## True when the command line passed --auto-smoke.
+var session: bool = false
+## setup, boss, auto or complete; empty before the replay starts.
+var stage: String = ""
+var state_hash_output_path: String = ""
+var boss_result: Dictionary = {}
+## Framework settlements counted so far (Boss, then Auto).
+var settlement_count := 0
+var previous_time_scale := 1.0
+var finished := false
+
+var _root: GameRoot
 
 
-func _init(root) -> void:
+func _init(root: GameRoot) -> void:
 	_root = root
 
 
-func _start_auto_smoke() -> void:
-	_root._auto_smoke_stage = "setup"
+## Reads --state-hash-out=<path>; the last occurrence wins.
+func read_state_hash_argument(arguments: PackedStringArray) -> void:
+	for argument: String in arguments:
+		if argument.begins_with("--state-hash-out="):
+			state_hash_output_path = argument.trim_prefix("--state-hash-out=")
+
+
+## Runs the replay at AutoSmokeHarness.TIME_SCALE and remembers the previous scale.
+func accelerate() -> void:
+	previous_time_scale = Engine.time_scale
+	Engine.time_scale = TIME_SCALE
+
+
+## Counts a settled arena result and schedules the replay continuation. The stage
+## is the one that was current before the settlement.
+func on_arena_settled(settled_stage: String, result: Dictionary, settled: Dictionary) -> void:
+	if not session or finished:
+		return
+	if bool(settled.get("ok", false)):
+		settlement_count += 1
+	_continue_auto_smoke.call_deferred(settled_stage, result.duplicate(true), settled.duplicate(true))
+
+
+func start() -> void:
+	stage = "setup"
 	if not _auto_smoke_require_ok("route_title", _root.transition(SceneRouterScript.ROUTE_TITLE)):
 		return
 	if not _auto_smoke_require_ok("new_profile", _root.start_new_game("ranger")):
@@ -51,7 +94,7 @@ func _start_auto_smoke() -> void:
 		return
 	var progress: Dictionary = _root.application_state.campaign_progress_snapshot()
 	var completed: Array = progress.get("completed_node_ids", []) if bool(progress.get("ok", false)) else []
-	for node_id: String in _root.AUTO_SMOKE_SETUP_NODE_IDS:
+	for node_id: String in SETUP_NODE_IDS:
 		if node_id not in completed:
 			_auto_smoke_fail("setup", "missing completed node %s" % node_id)
 			return
@@ -64,7 +107,7 @@ func _start_auto_smoke() -> void:
 
 	if not _auto_smoke_require_ok("open_boss_contract", _root.open_contract()):
 		return
-	_root._auto_smoke_stage = "boss"
+	stage = "boss"
 	var launched: Dictionary = _root.launch_contract({
 		"contract_id": "threshold_colossus",
 		"mode": "Manual",
@@ -82,7 +125,7 @@ func _prepare_auto_smoke_mainline() -> Dictionary:
 	var load_errors: Array[String] = campaign_registry.load_campaign()
 	if not load_errors.is_empty():
 		return {"ok": false, "step": "campaign_load", "error": "; ".join(load_errors)}
-	for contract_id: String in _root.AUTO_SMOKE_SETUP_NODE_IDS:
+	for contract_id: String in SETUP_NODE_IDS:
 		var progress: Dictionary = _root.application_state.campaign_progress_snapshot()
 		if not bool(progress.get("ok", false)):
 			return {"ok": false, "step": contract_id, "error": String(progress.get("error", "campaign_progress_invalid"))}
@@ -124,15 +167,15 @@ func _prepare_auto_smoke_mainline() -> Dictionary:
 func _auto_smoke_require_ok(step: String, result: Dictionary) -> bool:
 	if bool(result.get("ok", false)):
 		return true
-	_auto_smoke_fail(_root._auto_smoke_stage, "%s failed: %s" % [step, String(result.get("error", "unknown_error"))])
+	_auto_smoke_fail(stage, "%s failed: %s" % [step, String(result.get("error", "unknown_error"))])
 	return false
 
 
 func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, settlement: Dictionary) -> void:
-	if _root._auto_smoke_finished:
+	if finished:
 		return
-	if completed_stage != _root._auto_smoke_stage:
-		_auto_smoke_fail(completed_stage, "stale settlement while current stage is %s" % _root._auto_smoke_stage)
+	if completed_stage != stage:
+		_auto_smoke_fail(completed_stage, "stale settlement while current stage is %s" % stage)
 		return
 	if not bool(settlement.get("ok", false)):
 		_auto_smoke_fail(completed_stage, "framework settlement failed: %s" % String(settlement.get("error", "unknown_error")))
@@ -146,8 +189,8 @@ func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, set
 		return
 
 	if completed_stage == "boss":
-		if _root._auto_smoke_settlement_count != 1:
-			_auto_smoke_fail("boss", "expected first framework settlement, got %d" % _root._auto_smoke_settlement_count)
+		if settlement_count != 1:
+			_auto_smoke_fail("boss", "expected first framework settlement, got %d" % settlement_count)
 			return
 		var boss_progress: Dictionary = _root.application_state.campaign_progress_snapshot()
 		var boss_completed: Array = boss_progress.get("completed_node_ids", []) if bool(boss_progress.get("ok", false)) else []
@@ -166,7 +209,7 @@ func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, set
 		if bool((profile.get("progression", {}) as Dictionary).get("early_game_complete", false)):
 			_auto_smoke_fail("boss", "Boss settlement completed the early game before Auto")
 			return
-		_root._auto_smoke_boss_result = _root.application_state.last_result.duplicate(true)
+		boss_result = _root.application_state.last_result.duplicate(true)
 		if _root.capture.requested_stage() == "boss":
 			# Settled already: photograph Result before leaving it.
 			_auto_smoke_capture_stage.call_deferred("boss")
@@ -177,8 +220,8 @@ func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, set
 	if completed_stage != "auto":
 		_auto_smoke_fail(completed_stage, "unexpected completed stage")
 		return
-	if _root._auto_smoke_settlement_count != 2:
-		_auto_smoke_fail("auto", "expected two framework settlements, got %d" % _root._auto_smoke_settlement_count)
+	if settlement_count != 2:
+		_auto_smoke_fail("auto", "expected two framework settlements, got %d" % settlement_count)
 		return
 	var final_progress: Dictionary = _root.application_state.campaign_progress_snapshot()
 	var final_completed: Array = final_progress.get("completed_node_ids", []) if bool(final_progress.get("ok", false)) else []
@@ -207,7 +250,7 @@ func _auto_smoke_advance_after_boss_result() -> void:
 		return
 	if not _auto_smoke_require_ok("open_auto_contract", _root.open_contract()):
 		return
-	_root._auto_smoke_stage = "auto"
+	stage = "auto"
 	var launched: Dictionary = _root.launch_contract({
 		"contract_id": "auto_certification",
 		"mode": "Auto",
@@ -264,16 +307,16 @@ func _auto_smoke_finish_after_auto_result() -> void:
 	if not _write_auto_smoke_state_hash(state_hash):
 		_auto_smoke_fail("finalize", "could not write semantic hash")
 		return
-	_root._auto_smoke_finished = true
-	_root._auto_smoke_stage = "complete"
+	finished = true
+	stage = "complete"
 	print("AUTO_SMOKE_PASS framework_settlements=%d route=%s boss_ticks=%d auto_ticks=%d early_game_complete=true state_hash=%s" % [
-		_root._auto_smoke_settlement_count,
+		settlement_count,
 		_root.current_route,
-		int(_root._auto_smoke_boss_result.get("ticks", 0)),
+		int(boss_result.get("ticks", 0)),
 		int(final_result.get("ticks", 0)),
 		state_hash,
 	])
-	Engine.time_scale = _root._auto_smoke_previous_time_scale
+	Engine.time_scale = previous_time_scale
 	_root.get_tree().quit(0)
 
 
@@ -284,14 +327,14 @@ func _auto_smoke_semantic_hash(final_result: Dictionary) -> String:
 	var semantic := {
 		"protocol": "wp4-a-real-arena-v1",
 		"route": _root.current_route,
-		"framework_settlements": _root._auto_smoke_settlement_count,
+		"framework_settlements": settlement_count,
 		"completed_node_ids": (progression.get("completed_node_ids", []) as Array).duplicate(),
 		"proxy_unlocked": bool(progression.get("proxy_unlocked", false)),
 		"proxy_cores": (proxy_build.get("cores", []) as Array).duplicate(),
-		"proxy_inventory_ids": _proxy_inventory_ids(profile),
+		"proxy_inventory_ids": proxy_inventory_ids(profile),
 		"early_game_complete": bool(progression.get("early_game_complete", false)),
-		"boss": _auto_smoke_result_summary(_root._auto_smoke_boss_result),
-		"auto": _auto_smoke_result_summary(final_result),
+		"boss": result_summary(boss_result),
+		"auto": result_summary(final_result),
 	}
 	var context := HashingContext.new()
 	if context.start(HashingContext.HASH_SHA256) != OK:
@@ -301,7 +344,7 @@ func _auto_smoke_semantic_hash(final_result: Dictionary) -> String:
 	return context.finish().hex_encode()
 
 
-func _auto_smoke_result_summary(result: Dictionary) -> Dictionary:
+func result_summary(result: Dictionary) -> Dictionary:
 	var proxy_drops: Array[String] = []
 	for drop_value in (result.get("proxy_component_drops", []) as Array if result.get("proxy_component_drops", null) is Array else []):
 		if drop_value is Dictionary:
@@ -320,7 +363,7 @@ func _auto_smoke_result_summary(result: Dictionary) -> Dictionary:
 	}
 
 
-func _proxy_inventory_ids(profile: Dictionary) -> Array[String]:
+func proxy_inventory_ids(profile: Dictionary) -> Array[String]:
 	var inventory_value: Variant = profile.get("inventory", {})
 	var inventory: Dictionary = inventory_value if inventory_value is Dictionary else {}
 	var components_value: Variant = inventory.get("proxy_components", [])
@@ -334,9 +377,9 @@ func _proxy_inventory_ids(profile: Dictionary) -> Array[String]:
 
 
 func _write_auto_smoke_state_hash(state_hash: String) -> bool:
-	if _root._auto_smoke_state_hash_output_path.is_empty():
+	if state_hash_output_path.is_empty():
 		return true
-	var output_path: String = _root._auto_smoke_state_hash_output_path
+	var output_path: String = state_hash_output_path
 	if not output_path.is_absolute_path() and not output_path.begins_with("user://") and not output_path.begins_with("res://"):
 		output_path = ProjectSettings.globalize_path("res://" + output_path)
 	var output_directory := ProjectSettings.globalize_path(output_path).get_base_dir()
@@ -351,9 +394,9 @@ func _write_auto_smoke_state_hash(state_hash: String) -> bool:
 
 
 func _auto_smoke_fail(stage: String, reason: String) -> void:
-	if _root._auto_smoke_finished:
+	if finished:
 		return
-	_root._auto_smoke_finished = true
-	printerr("AUTO_SMOKE_FAIL stage=%s reason=%s route=%s framework_settlements=%d" % [stage, reason, _root.current_route, _root._auto_smoke_settlement_count])
-	Engine.time_scale = _root._auto_smoke_previous_time_scale
+	finished = true
+	printerr("AUTO_SMOKE_FAIL stage=%s reason=%s route=%s framework_settlements=%d" % [stage, reason, _root.current_route, settlement_count])
+	Engine.time_scale = previous_time_scale
 	_root.request_exit(1, "auto_smoke_fail:%s:%s" % [stage, reason])

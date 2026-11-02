@@ -226,7 +226,7 @@ func _route_to_result(completed_result: Dictionary) -> Dictionary:
 ## layer only. Victories, abandons, the smoke driver's own route expectations and
 ## any screen without the readiness relay are never held.
 func _defeat_window_holds_screen(completed_result: Dictionary) -> bool:
-	if _root._auto_smoke_session:
+	if _root.auto_smoke.session:
 		return false
 	if String(completed_result.get("outcome", "")) != "defeat":
 		return false

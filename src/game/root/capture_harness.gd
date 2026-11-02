@@ -241,8 +241,8 @@ func settlement_stage(stage: String) -> Dictionary:
 		return _capture_refusal(String(environment.get("error", "capture_environment_invalid")), String(environment.get("detail", "")))
 	if _root.current_route != _root.CAPTURE_STAGE_ROUTE:
 		return _capture_refusal("route_mismatch", "settlement evidence requires the committed %s route; actual=%s" % [_root.CAPTURE_STAGE_ROUTE, _root.current_route])
-	if _root._auto_smoke_stage != stage:
-		return _capture_refusal("stage_mismatch", "requested stage=%s is not the settled stage=%s" % [stage, _root._auto_smoke_stage])
+	if _root.auto_smoke.stage != stage:
+		return _capture_refusal("stage_mismatch", "requested stage=%s is not the settled stage=%s" % [stage, _root.auto_smoke.stage])
 	var path := String(request.get("capture_path", ""))
 	var target: Dictionary = capture_evidence_target_available(path)
 	if not bool(target.get("ok", false)):
@@ -265,14 +265,14 @@ func settlement_stage(stage: String) -> Dictionary:
 	print("CAPTURE_PASS %s capture_kind=settlement requested_stage=%s actual_stage=%s requested_route=%s actual_route=%s contract_id=%s outcome=%s ticks=%d framework_settlements=%d setup_synthetic_wins=%d png_sha256=%s evidence=%s" % [
 		path,
 		stage,
-		_root._auto_smoke_stage,
+		_root.auto_smoke.stage,
 		_root.CAPTURE_STAGE_ROUTE,
 		_root.current_route,
 		String(result.get("contract_id", "")),
 		String(result.get("outcome", "")),
 		int(result.get("ticks", 0)),
-		_root._auto_smoke_settlement_count,
-		_root.AUTO_SMOKE_SETUP_NODE_IDS.size(),
+		_root.auto_smoke.settlement_count,
+		AutoSmokeHarness.SETUP_NODE_IDS.size(),
 		png_sha,
 		evidence_path,
 	])
@@ -284,7 +284,7 @@ func settlement_stage(stage: String) -> Dictionary:
 		"evidence": evidence_path,
 		"png_sha256": png_sha,
 		"requested_stage": stage,
-		"actual_stage": _root._auto_smoke_stage,
+		"actual_stage": _root.auto_smoke.stage,
 		"requested_route": _root.CAPTURE_STAGE_ROUTE,
 		"actual_route": _root.current_route,
 	}
@@ -305,7 +305,7 @@ func _capture_settlement_evidence(stage: String, absolute_path: String, evidence
 		"protocol": CAPTURE_EVIDENCE_PROTOCOL,
 		"capture_kind": "real_arena_simulation_settlement",
 		"requested_stage": stage,
-		"actual_stage": _root._auto_smoke_stage,
+		"actual_stage": _root.auto_smoke.stage,
 		"requested_route": _root.CAPTURE_STAGE_ROUTE,
 		"actual_route": _root.current_route,
 		"screen": screen_name,
@@ -316,14 +316,14 @@ func _capture_settlement_evidence(stage: String, absolute_path: String, evidence
 		"display": DisplayServer.get_name(),
 		"presentation_enabled": _root.presentation_enabled,
 		"injected_result_or_state": false,
-		"setup_synthetic_wins": _root.AUTO_SMOKE_SETUP_NODE_IDS.size(),
-		"framework_settlements": _root._auto_smoke_settlement_count,
-		"settlement": _root._auto_smoke_result_summary(result),
+		"setup_synthetic_wins": AutoSmokeHarness.SETUP_NODE_IDS.size(),
+		"framework_settlements": _root.auto_smoke.settlement_count,
+		"settlement": _root.auto_smoke.result_summary(result),
 		"progression": {
 			"completed_node_ids": (progression.get("completed_node_ids", []) as Array).duplicate(),
 			"proxy_unlocked": bool(progression.get("proxy_unlocked", false)),
 			"proxy_cores": (proxy_build.get("cores", []) as Array).duplicate(),
-			"proxy_inventory_ids": _root._proxy_inventory_ids(profile),
+			"proxy_inventory_ids": _root.auto_smoke.proxy_inventory_ids(profile),
 			"early_game_complete": bool(progression.get("early_game_complete", false)),
 		},
 	}

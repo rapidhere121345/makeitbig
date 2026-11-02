@@ -477,10 +477,10 @@ func _test_unchanged_outcomes(failures: Array[String]) -> void:
 		_teardown_game(session)
 		return
 	## The smoke driver owns its own route expectations outright.
-	game.set("_auto_smoke_session", true)
+	game.auto_smoke.session = true
 	_expect(not bool(game.call("_defeat_window_holds_screen", {"outcome": "defeat"})),
 		"game root: a smoke session would have held a defeat screen", failures)
-	game.set("_auto_smoke_session", false)
+	game.auto_smoke.session = false
 	## A victory on a screen that never reports readiness still routes at once.
 	screen.call("resolve", {"outcome": "victory", "room_results": [{"room_id": "room.source", "outcome": "victory"}]})
 	_expect(game.current_route == "result", "game root: a victory waited for a defeat window", failures)

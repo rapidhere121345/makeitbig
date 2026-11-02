@@ -125,9 +125,9 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	_expect(skill_label != null and skill_label.text == "Piercing Arrow" and "Breeding Split" in build_details and "Pack Hunt Mark" in build_details, "game root: contract Build did not use the player-facing component names", failures)
 	_expect(mode_picker != null and mode_picker.selected == 0 and mode_picker.is_item_disabled(1), "game root: fresh contract was not Manual with Auto disabled", failures)
 	_expect(contract_picker != null and _selected_contract_id(contract_picker) == "mainline_01_first_hunt", "game root: contract board did not select the first available authored node", failures)
-	game.set("_auto_smoke_session", true)
+	game.auto_smoke.session = true
 	var locked_auto: Dictionary = game.launch_contract({"contract_id": "auto_certification", "mode": "Auto", "preset_id": "critical", "seed": 5, "room_count": 1})
-	game.set("_auto_smoke_session", false)
+	game.auto_smoke.session = false
 	_expect(String(locked_auto.get("error", "")) == "proxy_locked" and game.current_route == "contract", "game root: locked Auto did not stay on contract route", failures)
 	_expect(bool(game.cancel_contract().get("ok", false)), "game root: locked contract could not be cancelled", failures)
 

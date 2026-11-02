@@ -66,7 +66,7 @@ func _run() -> void:
 	game.room_runtime_factory = func() -> Node: return FakeArena.new()
 	var observed: Array[Dictionary] = []
 	game.exit_code_hook = func(code: int, reason: String) -> void:
-		observed.append({"code": code, "reason": reason, "route": game.current_route, "stage": game._auto_smoke_stage})
+		observed.append({"code": code, "reason": reason, "route": game.current_route, "stage": game.auto_smoke.stage})
 	var previous_time_scale := Engine.time_scale
 	game.initialize(PackedStringArray(["--auto-smoke", "--capture-stage=boss", "--capture=" + png_path]))
 	_expect(game.current_route == "arena", "the Boss contract was not launched: " + game.current_route)

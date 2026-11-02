@@ -31,14 +31,6 @@ const ADAPTIVE_SHELL_ROUTES: Array[String] = [
 	"contract", "result", "ending", "character", "story",
 ]
 const EARLY_SIDE_NODE_IDS: Array[String] = ["side_targeted_equipment", "side_affix_and_law_tallies"]
-const AUTO_SMOKE_SETUP_NODE_IDS: Array[String] = [
-	"mainline_01_first_hunt",
-	"mainline_02_priority_under_pressure",
-	"mainline_03_first_elite",
-	"mainline_04_hazard_and_forge",
-	"mainline_05_growth_gate",
-]
-const AUTO_SMOKE_TIME_SCALE := 20.0
 ## Shared by GameRoot and the capture harness; settlement captures only accept it.
 const CAPTURE_STAGE_ROUTE: String = "result"
 ## The published defeat clip may hold the result *screen*, never the result: the
@@ -122,13 +114,6 @@ var status_message: String = ""
 ## transition payload; this value only preserves truthful navigation copy.
 var _facility_return_route: String = SceneRouterScript.ROUTE_BASE
 var _test_session: bool = false
-var _auto_smoke_session: bool = false
-var _auto_smoke_stage: String = ""
-var _auto_smoke_state_hash_output_path: String = ""
-var _auto_smoke_boss_result: Dictionary = {}
-var _auto_smoke_settlement_count := 0
-var _auto_smoke_previous_time_scale := 1.0
-var _auto_smoke_finished := false
 var _initialized: bool = false
 var _presentation_enabled := true
 ## Playtest telemetry and the timers it keeps (src/game/root/).
@@ -138,6 +123,8 @@ var route_snapshots: RouteSnapshots = RouteSnapshots.new(self)
 ## The capture and evidence harness: request validation, route preparation and
 ## settlement evidence (src/game/root/).
 var capture: CaptureHarness = CaptureHarness.new(self)
+## The deterministic --auto-smoke replay driver and its state (src/game/root/).
+var auto_smoke: AutoSmokeHarness = AutoSmokeHarness.new(self)
 ## The --mib-* prototype debug tooling and the state it owns (src/game/root/).
 var prototype_debug: PrototypeDebug = PrototypeDebug.new(self)
 
@@ -327,22 +314,19 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 	if not scene_router.route_changed.is_connected(_on_route_changed):
 		scene_router.route_changed.connect(_on_route_changed)
 	var capture_path := ""
-	for argument: String in arguments:
-		if argument.begins_with("--state-hash-out="):
-			_auto_smoke_state_hash_output_path = argument.trim_prefix("--state-hash-out=")
+	auto_smoke.read_state_hash_argument(arguments)
 	var request: Dictionary = capture_request_report(arguments)
 	if not bool(request.get("ok", false)):
 		capture.contract_fail(request)
 		return
 	capture.request = request
 	capture_path = String(request.get("capture_path", ""))
-	_auto_smoke_session = arguments.has("--auto-smoke")
-	_test_session = _auto_smoke_session or arguments.has("--smoke") or arguments.has("--game-flow-smoke") or not capture_path.is_empty()
+	auto_smoke.session = arguments.has("--auto-smoke")
+	_test_session = auto_smoke.session or arguments.has("--smoke") or arguments.has("--game-flow-smoke") or not capture_path.is_empty()
 	if playtest_logging_enabled and not _test_session and not arguments.has("--no-playtest-log") and not prototype_debug.no_persist:
 		playtest_recorder.start_session()
-	if _auto_smoke_session:
-		_auto_smoke_previous_time_scale = Engine.time_scale
-		Engine.time_scale = AUTO_SMOKE_TIME_SCALE
+	if auto_smoke.session:
+		auto_smoke.accelerate()
 	_bootstrap(arguments)
 	prototype_debug.apply_runtime()
 	if not String(request.get("capture_route", "")).is_empty():
@@ -551,7 +535,7 @@ func leave_ending_to_title() -> Dictionary:
 
 func _bootstrap(arguments: PackedStringArray) -> void:
 	if arguments.has("--auto-smoke"):
-		_start_auto_smoke()
+		auto_smoke.start()
 		return
 	if prototype_debug.rejected:
 		transition(SceneRouterScript.ROUTE_TITLE)
@@ -573,31 +557,6 @@ func _bootstrap(arguments: PackedStringArray) -> void:
 
 func _parse_presentation_flag(arguments: PackedStringArray) -> void:
 	_presentation_enabled = not arguments.has("--presentation-off")
-
-
-## The --auto-smoke replay driver lives in src/game/root/auto_smoke_harness.gd;
-## these thin forwarders keep the owner's method names for the remaining call sites.
-var _auto_smoke_harness  # untyped to avoid a preload cycle
-func _auto_smoke() -> AutoSmokeHarness:
-	if _auto_smoke_harness == null:
-		_auto_smoke_harness = AutoSmokeHarness.new(self)
-	return _auto_smoke_harness
-
-
-func _start_auto_smoke() -> void:
-	_auto_smoke()._start_auto_smoke()
-
-
-func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, settlement: Dictionary) -> void:
-	_auto_smoke()._continue_auto_smoke(completed_stage, arena_result, settlement)
-
-
-func _auto_smoke_result_summary(result: Dictionary) -> Dictionary:
-	return _auto_smoke()._auto_smoke_result_summary(result)
-
-
-func _proxy_inventory_ids(profile: Dictionary) -> Array[String]:
-	return _auto_smoke()._proxy_inventory_ids(profile)
 
 
 ## True for --smoke, --game-flow-smoke, --auto-smoke and capture runs, which never
@@ -767,13 +726,9 @@ func _on_arena_abandoned(result: Dictionary) -> void:
 
 
 func _settle_arena_result(result: Dictionary) -> void:
-	var stage := _auto_smoke_stage
+	var stage := auto_smoke.stage
 	var settled: Dictionary = finish_contract(result)
-	if not _auto_smoke_session or _auto_smoke_finished:
-		return
-	if bool(settled.get("ok", false)):
-		_auto_smoke_settlement_count += 1
-	_continue_auto_smoke.call_deferred(stage, result.duplicate(true), settled.duplicate(true))
+	auto_smoke.on_arena_settled(stage, result, settled)
 
 
 func _on_feature_requested(feature_id: String) -> void:

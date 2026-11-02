@@ -125,7 +125,7 @@ func _test_console_snapshot() -> Dictionary:
 		],
 		"test_flags": {
 			"test_session": _root.is_test_session(),
-			"auto_smoke": _root._auto_smoke_session,
+			"auto_smoke": _root.auto_smoke.session,
 			"capture": not _root.capture.request.is_empty(),
 			"prototype_debug": not _root.prototype_debug.dto.is_empty(),
 			"presentation_enabled": _root.presentation_enabled,
