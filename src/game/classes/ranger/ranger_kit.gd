@@ -10,6 +10,7 @@ extends ClassKit
 
 const BuildResolution := preload("res://src/game/application/build_resolution.gd")
 const CombatStateCodecScript := preload("res://src/game/combat_state_codec.gd")
+const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
 
 
 func class_id() -> String:
@@ -132,7 +133,7 @@ func resolve_action_impact(session: RoomSession, action_event: Dictionary, actio
 
 ## True when a combat event stream entry is one of this kit's own attacks.
 func owns_attack_event(event: Dictionary) -> bool:
-	return String(event.get("type", "")) == "attack_resolved" and String(event.get("source_id", "")) == "ranger/piercing_arrow"
+	return String(event.get("type", "")) == "attack_resolved" and String(event.get("source_id", "")) == RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID
 
 
 ## The Ranger's keys of the authoritative state hash, merged at the top level

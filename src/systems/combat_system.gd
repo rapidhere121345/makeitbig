@@ -230,7 +230,7 @@ func resolve_piercing_arrow(action_event: Dictionary) -> void:
 	_shots += 1
 	if projectiles.size() >= MAX_ACTIVE_PIERCING_PROJECTILES:
 		last_attack_outcome = combat_event_stream.emit(release_tick, "attack_resolved", {
-			"action_instance_id": action_instance_id, "source_id": "ranger/piercing_arrow",
+			"action_instance_id": action_instance_id, "source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 			"target_entity_id": target_entity_id, "outcome": "miss",
 			"contact_point": origin, "reason": "projectile_limit",
 		})
@@ -267,7 +267,7 @@ func resolve_piercing_arrow(action_event: Dictionary) -> void:
 	projectiles.append(projectile)
 	combat_event_stream.emit(release_tick, "projectile_spawned", {
 		"action_instance_id": action_instance_id,
-		"source_id": "ranger/piercing_arrow",
+		"source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_entity_id": target_entity_id,
 		"origin": origin,
 		"direction": aim,
@@ -352,13 +352,13 @@ func apply_kernel_contact(
 	impact_trace_requested.emit(contact_point, projectile.direction, int(_current_model()["g"]))
 	var outcome := "killed" if health_after <= 0.0 else "damage"
 	last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
-		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"action_instance_id": projectile.action_instance_id, "source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_entity_id": target.entity_id,
 		"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"), "outcome": outcome,
 		"contact_point": contact_point, "aggregate_damage": aggregate.to_short_string(6),
 	})
 	combat_event_stream.emit(tick, "damage_applied", {
-		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"action_instance_id": projectile.action_instance_id, "source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_id": "enemy/%d" % target.entity_id, "target_entity_id": target.entity_id,
 		"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"),
 		"amount": aggregate.to_short_string(6),
@@ -390,7 +390,7 @@ func apply_kernel_blocked(
 	_reset_sequence()
 	impact_trace_requested.emit(contact_point, projectile.direction, 1)
 	last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
-		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"action_instance_id": projectile.action_instance_id, "source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_entity_id": target.entity_id,
 		"part_id": "body", "damage_group_id": "body", "outcome": "blocked",
 		"contact_point": contact_point, "barrier_id": "periodic_barrier",
@@ -444,7 +444,7 @@ func apply_boss_kernel_contact(
 	var outcome := "killed" if health_after.is_zero() else "damage"
 	last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
 		"action_instance_id": projectile.action_instance_id,
-		"source_id": "ranger/piercing_arrow",
+		"source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_entity_id": target.entity_id,
 		"part_id": part_hit.get("part_id", "body"),
 		"damage_group_id": part_hit.get("damage_group_id", "body"),
@@ -454,7 +454,7 @@ func apply_boss_kernel_contact(
 	})
 	combat_event_stream.emit(tick, "damage_applied", {
 		"action_instance_id": projectile.action_instance_id,
-		"source_id": "ranger/piercing_arrow",
+		"source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_id": "enemy/%d" % target.entity_id,
 		"target_entity_id": target.entity_id,
 		"part_id": part_hit.get("part_id", "body"),
@@ -482,7 +482,7 @@ func note_kernel_death(target: CombatEnemyState) -> void:
 		return
 	_defeated += 1
 	combat_event_stream.emit(tick, "death_applied", {
-		"source_id": "ranger/piercing_arrow", "target_id": "enemy/%d" % target.entity_id,
+		"source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID, "target_id": "enemy/%d" % target.entity_id,
 		"target_entity_id": target.entity_id,
 		"part_id": "body", "damage_group_id": "body", "position": target.position,
 	})
@@ -566,7 +566,7 @@ func _apply_projectile_contact(projectile: CombatArrowProjectile, target: Combat
 		_reset_sequence()
 		impact_trace_requested.emit(contact_point, projectile.direction, 1)
 		last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
-			"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+			"action_instance_id": projectile.action_instance_id, "source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 			"target_entity_id": target.entity_id,
 			"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"), "outcome": "blocked",
 			"contact_point": contact_point, "barrier_id": "periodic_barrier",
@@ -589,13 +589,13 @@ func _apply_projectile_contact(projectile: CombatArrowProjectile, target: Combat
 	impact_trace_requested.emit(contact_point, projectile.direction, int(_current_model()["g"]))
 	var outcome := "killed" if target.health <= 0.0 else "damage"
 	last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
-		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"action_instance_id": projectile.action_instance_id, "source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_entity_id": target.entity_id,
 		"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"), "outcome": outcome,
 		"contact_point": contact_point, "aggregate_damage": projectile.aggregate_damage.to_short_string(6),
 	})
 	combat_event_stream.emit(tick, "damage_applied", {
-		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"action_instance_id": projectile.action_instance_id, "source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_id": "enemy/%d" % target.entity_id, "target_entity_id": target.entity_id,
 		"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"),
 		"amount": projectile.aggregate_damage.to_short_string(6),
@@ -608,7 +608,7 @@ func _apply_projectile_contact(projectile: CombatArrowProjectile, target: Combat
 	if target.health <= 0.0:
 		_defeated += 1
 		combat_event_stream.emit(tick, "death_applied", {
-			"source_id": "ranger/piercing_arrow", "target_id": "enemy/%d" % target.entity_id,
+			"source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID, "target_id": "enemy/%d" % target.entity_id,
 			"target_entity_id": target.entity_id,
 			"part_id": part_hit.get("part_id", "body"), "damage_group_id": part_hit.get("damage_group_id", "body"), "position": target.position,
 		})
@@ -644,7 +644,7 @@ func resolve_projectile_miss(projectile: CombatArrowProjectile) -> void:
 		_reject_player_rule_action(projectile.action_instance_id, projectile.target_entity_id)
 		return
 	last_attack_outcome = combat_event_stream.emit(tick, "attack_resolved", {
-		"action_instance_id": projectile.action_instance_id, "source_id": "ranger/piercing_arrow",
+		"action_instance_id": projectile.action_instance_id, "source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_entity_id": projectile.target_entity_id, "outcome": "miss",
 		"contact_point": projectile.position, "reason": reason,
 		"retained_payload_ratio": clampf(float(talent_capabilities.get("expiry_payload_retention", 0.0)), 0.0, 1.0),
@@ -764,7 +764,7 @@ func _reject_player_rule_action(action_instance_id: int = 0, target_entity_id: i
 	var reason := _configuration_error if not _configuration_error.is_empty() else "player_rule_port_unavailable"
 	last_attack_outcome = {
 		"action_instance_id": action_instance_id,
-		"source_id": "ranger/piercing_arrow",
+		"source_id": RangerSkillRulesScript.PIERCING_ARROW_SOURCE_ID,
 		"target_entity_id": target_entity_id,
 		"outcome": "rejected",
 		"reason": reason,
