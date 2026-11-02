@@ -288,7 +288,7 @@ func review_result_drop(instance_id: String, slot: String) -> Dictionary:
 		return CoreResult.failure("wrong_route")
 	var normalized_id := instance_id.strip_edges()
 	var normalized_slot := slot.strip_edges()
-	var item: Dictionary = _root._owned_equipment_for_telemetry(normalized_id)
+	var item: Dictionary = _root.facility_actions.owned_equipment_for_telemetry(normalized_id)
 	if item.is_empty():
 		return CoreResult.failure("item_not_owned")
 	var settled_drop := _settled_result_equipment(normalized_id)

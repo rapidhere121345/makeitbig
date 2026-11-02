@@ -3,8 +3,8 @@ extends RefCounted
 
 ## Facility action dispatch extracted from GameRoot. This collaborator owns the
 ## request dispatcher, the forge finishers, the player-facing label helpers, and
-## the loadout telemetry builders, reaching owner state and presentation through
-## the untyped owner reference.
+## the loadout telemetry builders, reaching the shell through GameRoot's public
+## API.
 const SceneRouterScript = preload("res://src/game/scene_router.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const CoreResult := preload("res://src/core/result.gd")
@@ -18,10 +18,10 @@ const SLOT_LABELS := {
 }
 const PRESET_LABELS := {"convergent": "Convergent", "critical": "Critical", "exponential": "Exponential"}
 
-var _root
+var _root: GameRoot
 
 
-func _init(root) -> void:
+func _init(root: GameRoot) -> void:
 	_root = root
 
 
@@ -34,7 +34,7 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 	if normalized_facility == SceneRouterScript.ROUTE_LOADOUT and action_id in ["equip_item", "unequip_item", "salvage_item"]:
 		var before: Dictionary = _loadout_telemetry_snapshot() if action_id in ["equip_item", "unequip_item"] else {}
 		var subject := String(payload.get("instance_id", payload.get("slot", "")))
-		var subject_item := _owned_equipment_for_telemetry(String(payload.get("instance_id", "")))
+		var subject_item := owned_equipment_for_telemetry(String(payload.get("instance_id", "")))
 		if action_id == "unequip_item":
 			var slot := String(payload.get("slot", ""))
 			subject_item = _equipped_item_for_slot(slot)
@@ -250,10 +250,11 @@ func _equipped_item_for_slot(slot: String) -> Dictionary:
 	var active: Dictionary = active_value if active_value is Dictionary else {}
 	var equipped_value: Variant = active.get("equipped_item_ids", {})
 	var equipped: Dictionary = equipped_value if equipped_value is Dictionary else {}
-	return _owned_equipment_for_telemetry(String(equipped.get(slot, "")))
+	return owned_equipment_for_telemetry(String(equipped.get(slot, "")))
 
 
-func _owned_equipment_for_telemetry(instance_id: String) -> Dictionary:
+## A copy of the owned equipment instance, or an empty dictionary when it is not owned.
+func owned_equipment_for_telemetry(instance_id: String) -> Dictionary:
 	var inventory_value: Variant = _root.application_state.profile.get("inventory", {})
 	var inventory: Dictionary = inventory_value if inventory_value is Dictionary else {}
 	var equipment_value: Variant = inventory.get("equipment", [])
@@ -286,7 +287,7 @@ func _build_loadout_telemetry(action_id: String, subject: String, before: Dictio
 	if action_id == "unequip_item":
 		slot = String(subject)
 	else:
-		var item: Dictionary = _owned_equipment_for_telemetry(subject)
+		var item: Dictionary = owned_equipment_for_telemetry(subject)
 		slot = String(item.get("slot", ""))
 	var previous_equipped: Dictionary = before.get("equipped", {}) if before.get("equipped", {}) is Dictionary else {}
 	var next_equipped: Dictionary = after.get("equipped", {}) if after.get("equipped", {}) is Dictionary else {}

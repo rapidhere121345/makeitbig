@@ -111,6 +111,8 @@ var capture: CaptureHarness = CaptureHarness.new(self)
 var auto_smoke: AutoSmokeHarness = AutoSmokeHarness.new(self)
 ## The F10 test console and the in-game session menu (src/game/root/).
 var test_console_host: TestConsoleHost = TestConsoleHost.new(self)
+## The facility action dispatcher and loadout telemetry (src/game/root/).
+var facility_actions: FacilityActions = FacilityActions.new(self)
 ## Display, audio and player settings, and the shared stage window lease
 ## (src/game/root/).
 var display_settings: DisplaySettings = DisplaySettings.new(self)
@@ -365,21 +367,9 @@ func leave_facility() -> Dictionary:
 	return transition(SceneRouterScript.ROUTE_BASE)
 
 
-## The facility action dispatcher lives in src/game/root/facility_actions.gd;
-## these thin forwarders keep the owner's method names for the remaining call sites.
-var _facility_actions_impl  # untyped to avoid a preload cycle
-func _facility_actions() -> FacilityActions:
-	if _facility_actions_impl == null:
-		_facility_actions_impl = FacilityActions.new(self)
-	return _facility_actions_impl
-
-
+## Dispatches a facility screen action to the facility action service.
 func request_facility_action(facility_id: String, action_id: String, payload: Dictionary = {}) -> Dictionary:
-	return _facility_actions().request_facility_action(facility_id, action_id, payload)
-
-
-func _owned_equipment_for_telemetry(instance_id: String) -> Dictionary:
-	return _facility_actions()._owned_equipment_for_telemetry(instance_id)
+	return facility_actions.request_facility_action(facility_id, action_id, payload)
 
 
 func return_to_title() -> Dictionary:
