@@ -13,6 +13,10 @@ const SimTickContextScript := preload("res://src/runtime/simulation/sim_tick_con
 const MainHitAdmissionPortScript := preload("res://src/game/ports/main_hit_admission_port.gd")
 
 var _main: MainArena
+## Tick of the newest kernel snapshot published before the current reconcile
+## pass, or -1 before the first publication. Boss death settlement is stamped
+## with it.
+var _published_tick := -1
 
 
 func _init(main: MainArena) -> void:
@@ -42,9 +46,7 @@ func _bind_kernel_room_ports() -> bool:
 		return false
 	if not _bind_boss_kernel_domain():
 		return false
-	_main.last_kernel_snapshot = null
-	_main.kernel_snapshot_publications.clear()
-	_main.kernel_reconcile_events.clear()
+	_published_tick = -1
 	_main._enemy_stable_keys.clear()
 	_main._kernel_settlement_cursor = 0
 	_main._boss_domain_targets.clear()
@@ -222,32 +224,13 @@ func _consume_kernel_room_combat() -> void:
 	if _main.room_spatial_port == null or _main.room_combat_port == null or not _main._kernel_arrow_flight.is_configured():
 		return
 	var published_snapshot = _main.simulation_world.latest_snapshot() if _main.simulation_world != null else null
-	if published_snapshot != null and published_snapshot.has_method("sha256_hex"):
-		var published_tick := int(published_snapshot.tick)
-		if _main.last_kernel_snapshot == null or int(_main.last_kernel_snapshot.tick) != published_tick:
-			_main.last_kernel_snapshot = published_snapshot
-			_main.kernel_snapshot_publications.append({
-				"tick": published_tick,
-				"room_instance_id": String(published_snapshot.room_instance_id),
-				"world_revision": int(published_snapshot.world_revision),
-				"phase": "kernel.snapshot.published",
-				"hash": published_snapshot.sha256_hex(),
-			})
+	if published_snapshot != null:
+		_published_tick = int(published_snapshot.tick)
 	_main._combat_context()
 	var previous_report := String(_main.combat_system.battle_report)
 	var previous_event_id: int = _main.combat_event_stream.latest_event_id()
 	var results: Array = _main.room_spatial_port.take_path_results()
 	var records: Array = _main._kernel_arrow_flight.pending_records()
-	var published_tick := int(_main.last_kernel_snapshot.tick) if _main.last_kernel_snapshot != null else -1
-	var published_hash: String = _main.last_kernel_snapshot.sha256_hex() if _main.last_kernel_snapshot != null and _main.last_kernel_snapshot.has_method("sha256_hex") else ""
-	_main.kernel_reconcile_events.append({
-		"phase": "room.reconcile.begin",
-		"tick": _main.sim_tick,
-		"snapshot_tick": published_tick,
-		"snapshot_hash": published_hash,
-		"path_results": results.size(),
-		"pending_arrows": records.size(),
-	})
 	var admitted: Dictionary = {}
 	for hit: Dictionary in _main.room_combat_port.last_hits:
 		admitted[String(hit.get("attack_instance_id", ""))] = hit
@@ -269,14 +252,6 @@ func _consume_kernel_room_combat() -> void:
 		var attack_key: String = record.attack_key
 		if admitted.has(attack_key) and outcome_by_attack.has(attack_key):
 			_reconcile_kernel_hit(projectile, record, admitted[attack_key], outcome_by_attack[attack_key])
-			_main.kernel_reconcile_events.append({
-				"phase": "room.reconcile.arrow_hit",
-				"tick": _main.sim_tick,
-				"snapshot_tick": published_tick,
-				"snapshot_hash": published_hash,
-				"attack_instance_id": attack_key,
-				"target_key": String(admitted[attack_key].get("target_key", "")),
-			})
 			_retire_kernel_projectile(projectile, attack_key)
 			continue
 		if suppressed.has(attack_key):
@@ -302,15 +277,7 @@ func _consume_kernel_room_combat() -> void:
 			_retire_kernel_projectile(projectile, attack_key)
 	_main._kernel_arrow_flight.clear_pending()
 	_reconcile_kernel_deaths()
-	_consume_kernel_boss_combat(published_tick, published_hash)
-	_main.kernel_reconcile_events.append({
-		"phase": "room.reconcile.end",
-		"tick": _main.sim_tick,
-		"snapshot_tick": published_tick,
-		"snapshot_hash": published_hash,
-		"path_results": results.size(),
-		"pending_arrows": records.size(),
-	})
+	_consume_kernel_boss_combat()
 	_main._combat_report(previous_report, previous_event_id)
 
 
@@ -319,7 +286,7 @@ func _retire_kernel_projectile(projectile, attack_key: String) -> void:
 	_main._kernel_arrow_flight.forget_arrow(attack_key)
 
 
-func _consume_kernel_boss_combat(published_tick: int, published_hash: String) -> void:
+func _consume_kernel_boss_combat() -> void:
 	if not _main._kernel_boss_flight.is_configured():
 		return
 	if not _boss_domain_room_is_current():
@@ -398,21 +365,12 @@ func _consume_kernel_boss_combat(published_tick: int, published_hash: String) ->
 			remaining,
 			record.aggregate
 		)
-		_main.kernel_reconcile_events.append({
-			"phase": "room.reconcile.boss_arrow_hit",
-			"tick": _main.sim_tick,
-			"snapshot_tick": published_tick,
-			"snapshot_hash": published_hash,
-			"attack_instance_id": attack_key,
-			"target_key": target.target_key,
-			"part_id": String(outcome.get("part_id", "body")),
-		})
 		_retire_boss_kernel_projectile(projectile, attack_key)
 		if bool(outcome.get("lethal", false)):
 			enemy.health = 0.0
 			_finalize_boss_kernel_death(enemy, target)
 	_main._kernel_boss_flight.clear_pending()
-	_settle_boss_kernel_deaths(published_tick)
+	_settle_boss_kernel_deaths(_published_tick)
 
 
 func _boss_contact_for_outcome(result: Variant, outcome: Dictionary) -> Dictionary:

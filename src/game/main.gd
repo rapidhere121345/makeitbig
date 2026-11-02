@@ -222,11 +222,6 @@ var _boss_domain_targets: Dictionary = {}
 var _boss_settlement_cursor := 0
 var _boss_encounter_authority := false
 var _terminal_projection_applied := false
-## Detached authority evidence: publication is recorded before any room-domain
-## reconcile mutates legacy room mirrors.
-var last_kernel_snapshot = null
-var kernel_snapshot_publications: Array[Dictionary] = []
-var kernel_reconcile_events: Array[Dictionary] = []
 ## Stable entity key ("actor/<key>") to legacy enemy entity id, rebuilt at
 ## every room registration boundary for death settlement reconciliation.
 var _enemy_stable_keys: Dictionary = {}
