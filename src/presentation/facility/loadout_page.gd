@@ -14,6 +14,7 @@ const EquipmentBackpackGridScript = preload("res://src/presentation/equipment_ba
 const EquipmentFilterBarScript = preload("res://src/presentation/equipment_filter_bar.gd")
 const PlayerReadableBuildScript = preload("res://src/presentation/player_readable_build.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
+const FacilityWidgets := preload("res://src/presentation/facility_widgets.gd")
 const FacilityItemText := preload("res://src/presentation/facility/item_text.gd")
 
 ## Two authored skill lines plus a 32px icon need this much logical lane width
@@ -115,17 +116,17 @@ func _build_real_loadout() -> void:
 	var hero := _workbench_region(stage,"LoadoutHeroRegion",regions.hero)
 	slot_column.add_theme_constant_override("separation", 2)
 	_build_slot_grid(slot_column, slots, open, equipped, inventory, {})
-	var character_note: Label = _screen._note_label("Select a slot to compare and replace equipment in your backpack")
+	var character_note: Label = FacilityWidgets.note_label("Select a slot to compare and replace equipment in your backpack")
 	character_note.name = "LoadoutCharacterDescription"
 	slot_column.add_child(character_note)
 	_build_loadout_skill_strip(left)
-	var locked: VBoxContainer = _screen._section_in(left, "Backpack and Progression", "ClosedEquipmentSlots")
-	var locked_style: StyleBoxFlat = _screen._recessed_panel_style("well")
+	var locked: VBoxContainer = FacilityWidgets.section_in(left, "Backpack and Progression", "ClosedEquipmentSlots")
+	var locked_style: StyleBoxFlat = FacilityWidgets.recessed_panel_style("well")
 	locked_style.content_margin_top = 4
 	locked_style.content_margin_bottom = 4
 	_screen._section_panel(locked).add_theme_stylebox_override("panel", locked_style)
 	locked.add_theme_constant_override("separation", 2)
-	var reason: Label = _screen._note_label("Main Hand · Off Hand · Gloves · Ring\n" + _resolved_build_fact_lines()[1].get_slice("    Class:", 0))
+	var reason: Label = FacilityWidgets.note_label("Main Hand · Off Hand · Gloves · Ring\n" + _resolved_build_fact_lines()[1].get_slice("    Class:", 0))
 	reason.name = "ClosedSlotReason"
 	locked.add_child(reason)
 	var slot_reference := Button.new()
@@ -354,7 +355,7 @@ func _resolved_build_fact_lines() -> Array[String]:
 ## works out how many columns it needs from the frame the page froze, so a 1024-wide
 ## frame stacks the strip instead of shrinking a cell below the 64px icon display.
 func _build_slot_grid(parent: Container, equipment_slots: Array, open_slots: Array, equipped_ids: Dictionary, inventory: Array, _composition: Dictionary) -> void:
-	var section: VBoxContainer = _screen._section_in(parent, "", "OpenSlotStrip")
+	var section: VBoxContainer = FacilityWidgets.section_in(parent, "", "OpenSlotStrip")
 	var row := GridContainer.new()
 	row.name = "OpenSlotRow"
 	row.columns = 4
@@ -374,22 +375,22 @@ func _slot_cell(slot: String, equipped_ids: Dictionary, inventory: Array, _open_
 	var cell := PanelContainer.new()
 	cell.name = "LoadoutSlotCell_" + token
 	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cell.add_theme_stylebox_override("panel", _screen._slot_cell_box(focused,item.is_empty()))
+	cell.add_theme_stylebox_override("panel", FacilityWidgets.slot_cell_box(focused,item.is_empty()))
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation",2)
 	cell.add_child(column)
-	var title: Label = _screen._note_label(_slot_title(slot))
+	var title: Label = FacilityWidgets.note_label(_slot_title(slot))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
 	var canonical: String = _screen._art.canonical_id("equipment_slot",slot) if item.is_empty() else _screen._art.canonical_id("equipment_base",String(item.get("base_item_id","")))
 	var texture: Texture2D = _screen._body_icon_texture(canonical)
 	if texture != null:
-		var icon: TextureRect = _screen._icon_node(texture,FacilityArtScript.ICON_NATIVE_SIZE,true)
+		var icon: TextureRect = FacilityWidgets.icon_node(texture,FacilityArtScript.ICON_NATIVE_SIZE,true)
 		icon.name = "SlotIcon_" + token
 		icon.set_meta("canonical_id",canonical)
 		icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		column.add_child(icon)
-	var state: Label = _screen._note_label("Unequipped" if item.is_empty() else "Equipped")
+	var state: Label = FacilityWidgets.note_label("Unequipped" if item.is_empty() else "Equipped")
 	state.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(state)
 	var button := Button.new()
@@ -402,12 +403,12 @@ func _slot_cell(slot: String, equipped_ids: Dictionary, inventory: Array, _open_
 
 
 func _build_slot_compare(open_slots: Array, equipped_ids: Dictionary, inventory: Array, composition: Dictionary) -> void:
-	var section: VBoxContainer = _screen._section_in(composition.get("parent", _screen._cards), "", "SlotCompareSection")
+	var section: VBoxContainer = FacilityWidgets.section_in(composition.get("parent", _screen._cards), "", "SlotCompareSection")
 	_screen._section_panel(section).add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	if _screen._focus_slot.is_empty() or _screen._focus_slot not in open_slots:
-		section.add_child(_screen._note_label("No available slots on this page can be compared."))
+		section.add_child(FacilityWidgets.note_label("No available slots on this page can be compared."))
 		return
-	var candidates_panel: VBoxContainer = _screen._section_in(section, "Equipment Backpack · %s" % _slot_title(_screen._focus_slot), "CandidateListPanel_%s" % UiKit.stable_node_token(_screen._focus_slot))
+	var candidates_panel: VBoxContainer = FacilityWidgets.section_in(section, "Equipment Backpack · %s" % _slot_title(_screen._focus_slot), "CandidateListPanel_%s" % UiKit.stable_node_token(_screen._focus_slot))
 	var panel_style := _screen._section_panel(candidates_panel).get_theme_stylebox("panel").duplicate() as StyleBox
 	panel_style.content_margin_top = 6
 	panel_style.content_margin_bottom = 6
@@ -439,7 +440,7 @@ func _refresh_candidate_results() -> void:
 	var alternatives := _filter_sort_candidates(all_alternatives)
 	_screen._candidate_filter_bar.set_result_count(alternatives.size(), all_alternatives.size())
 	if current.is_empty() and alternatives.is_empty():
-		_screen._candidate_results.add_child(_screen._note_label("No candidates match. Click Reset to view all." if not all_alternatives.is_empty() else "No replacement candidates for this slot."))
+		_screen._candidate_results.add_child(FacilityWidgets.note_label("No candidates match. Click Reset to view all." if not all_alternatives.is_empty() else "No replacement candidates for this slot."))
 		return
 	# Inventory density lives in one icon grid. Hover, keyboard focus, and controller
 	# focus all select the same one-item detail pane, so long prose is instantiated
@@ -452,7 +453,7 @@ func _refresh_candidate_results() -> void:
 	if not _screen._loadout_backpack_pinned_id.is_empty() and _screen._inventory_item_by_id(_screen._loadout_backpack_items, _screen._loadout_backpack_pinned_id).is_empty():
 		_screen._loadout_backpack_pinned_id = ""
 	_screen._loadout_backpack_selection = _screen._loadout_review_instance_id if not _screen._inventory_item_by_id(_screen._loadout_backpack_items, _screen._loadout_review_instance_id).is_empty() else _screen._loadout_backpack_pinned_id
-	var backpack_row: HBoxContainer = _screen._make_row("CandidateBackpackRow")
+	var backpack_row: HBoxContainer = FacilityWidgets.make_row("CandidateBackpackRow")
 	# Keep pointer travel from an icon into its shared action pane continuous.
 	backpack_row.add_theme_constant_override("separation", 0)
 	_screen._candidate_results.add_child(backpack_row)
@@ -474,10 +475,10 @@ func _refresh_candidate_results() -> void:
 	_screen._loadout_empty_hint.alignment = BoxContainer.ALIGNMENT_CENTER
 	_screen._loadout_empty_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_screen._loadout_empty_hint.custom_minimum_size.y = 246
-	var hint_title: Label = _screen._body_label("No Matching Candidates" if alternatives.is_empty() and not all_alternatives.is_empty() else "Choose a piece of loot to see what it changes")
+	var hint_title: Label = FacilityWidgets.body_label("No Matching Candidates" if alternatives.is_empty() and not all_alternatives.is_empty() else "Choose a piece of loot to see what it changes")
 	hint_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_screen._loadout_empty_hint.add_child(hint_title)
-	var hint_note: Label = _screen._note_label("Click Reset to view all\nEquipped items can still be inspected" if alternatives.is_empty() and not all_alternatives.is_empty() else "Hover to inspect · Click to pin comparison\nReview both gains and costs before equipping")
+	var hint_note: Label = FacilityWidgets.note_label("Click Reset to view all\nEquipped items can still be inspected" if alternatives.is_empty() and not all_alternatives.is_empty() else "Hover to inspect · Click to pin comparison\nReview both gains and costs before equipping")
 	hint_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_screen._loadout_empty_hint.add_child(hint_note)
 	backpack_row.add_child(_screen._loadout_empty_hint)
@@ -584,14 +585,14 @@ func _add_current_item_backpack_detail(item: Dictionary) -> void:
 	var instance_id := String(item.get("instance_id", ""))
 	var slot := String(item.get("slot", _screen._focus_slot))
 	var token := UiKit.stable_node_token(instance_id)
-	var title: Label = _screen._body_label("Equipped · %s" % _screen._item_display_name(item))
+	var title: Label = FacilityWidgets.body_label("Equipped · %s" % _screen._item_display_name(item))
 	title.name = "BackpackDetailName"
 	_screen._loadout_backpack_detail.add_child(title)
-	var summary: Label = _screen._note_label(_item_inline_summary_text(item))
+	var summary: Label = FacilityWidgets.note_label(_item_inline_summary_text(item))
 	summary.name = "CurrentItemSummary_%s" % UiKit.stable_node_token(slot)
 	summary.add_theme_color_override("font_color", ShellThemeScript.BONE)
 	_screen._loadout_backpack_detail.add_child(summary)
-	var actions: HBoxContainer = _screen._make_row("BackpackActions")
+	var actions: HBoxContainer = FacilityWidgets.make_row("BackpackActions")
 	_screen._loadout_backpack_detail.add_child(actions)
 	_screen._action_button(actions, "Unequip", "unequip_item", {"slot": slot}, "Unequip_%s" % UiKit.stable_node_token(slot))
 	_screen._add_full_item_detail_button(
@@ -626,11 +627,11 @@ func _add_current_item_backpack_detail(item: Dictionary) -> void:
 ## words, and says plainly that this is the hero body rather than a paper doll whose
 ## appearance follows the equipped items. No second class is offered or drawn.
 func _build_character_column(parent: Container) -> void:
-	var content: VBoxContainer = _screen._section_in(parent, "", "LoadoutCharacterPanel")
+	var content: VBoxContainer = FacilityWidgets.section_in(parent, "", "LoadoutCharacterPanel")
 	content.add_theme_constant_override("separation", 0)
 	var box := StyleBoxEmpty.new()
 	_screen._section_panel(content).add_theme_stylebox_override("panel",box)
-	var row: HBoxContainer = _screen._make_row("LoadoutCharacterRow")
+	var row: HBoxContainer = FacilityWidgets.make_row("LoadoutCharacterRow")
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	content.add_child(row)
 	var view := LoadoutCharacterViewScript.new()
@@ -643,7 +644,7 @@ func _build_character_column(parent: Container) -> void:
 	# visible without reducing the authored portrait cell.
 	view.tooltip_text = "Current Ranger · White Hood · Longbow and Backpack\nEquipment changes stats, not the current appearance."
 	view.mouse_filter = Control.MOUSE_FILTER_STOP
-	var caption: Label = _screen._note_label("Current Ranger · White Hood\nLongbow and Backpack · Fixed Appearance")
+	var caption: Label = FacilityWidgets.note_label("Current Ranger · White Hood\nLongbow and Backpack · Fixed Appearance")
 	caption.name = "LoadoutCharacterCaption"
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	caption.visible = false
@@ -681,23 +682,23 @@ func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	headline.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	headline.add_theme_constant_override("separation", 8)
 	header.add_child(headline)
-	var name_label: Label = _screen._body_label(_screen._item_display_name(item))
+	var name_label: Label = FacilityWidgets.body_label(_screen._item_display_name(item))
 	name_label.name = "CandidateName_%s" % token
 	headline.add_child(name_label)
 	if instance_id == _screen._loadout_review_instance_id:
-		var located: Label = _screen._note_label("This Run's Drop · Located")
+		var located: Label = FacilityWidgets.note_label("This Run's Drop · Located")
 		located.name = "ReviewedDrop_%s" % token
 		located.add_theme_color_override("font_color", ShellThemeScript.AMBER)
 		headline.add_child(located)
 	var preview_state_text := _candidate_preview_state_text(item)
-	var preview_summary: Label = _screen._note_label("Verified" if preview_state_text.begins_with("Sacred Law Preview: Verified") else "Unverified")
+	var preview_summary: Label = FacilityWidgets.note_label("Verified" if preview_state_text.begins_with("Sacred Law Preview: Verified") else "Unverified")
 	preview_summary.name = "CandidatePreviewStateSummary_%s" % token
 	preview_summary.tooltip_text = preview_state_text
 	preview_summary.size_flags_horizontal = Control.SIZE_SHRINK_END
 	preview_summary.custom_minimum_size.x = 112.0
 	preview_summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	headline.add_child(preview_summary)
-	var actions: HBoxContainer = _screen._make_row("BackpackActions")
+	var actions: HBoxContainer = FacilityWidgets.make_row("BackpackActions")
 	content.add_child(actions)
 	var equip: Button = _screen._action_button(actions, "Equip", "equip_item", {"instance_id": instance_id}, "Equip_%s" % token)
 	equip.tooltip_text = "Equip and Apply · " + _screen._item_display_name(item)
@@ -724,7 +725,7 @@ func _add_candidate_block(parent: Container, item: Dictionary) -> void:
 	comparison.tooltip_text = decision_text
 	comparison.present(_screen._facility_data.resolved_build.final_parameters, _equip_preview_data(instance_id).get("final_parameters", {}))
 	comparison_body.add_child(comparison)
-	var summary: Label = _screen._note_label(_candidate_inline_item_facts(item))
+	var summary: Label = FacilityWidgets.note_label(_candidate_inline_item_facts(item))
 	summary.name = "CandidateSummary_%s" % token
 	comparison_body.add_child(summary)
 	var detail_text := "%s\n\nEquipment Conclusion\n%s\n\nSacred Law Preview\n%s\n%s" % [

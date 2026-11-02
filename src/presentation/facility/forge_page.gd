@@ -13,6 +13,7 @@ const EquipmentBackpackGridScript = preload("res://src/presentation/equipment_ba
 ## public contract only to stop offering a reveal the authority will reject.
 const LawForgeScript = preload("res://src/systems/law_forge.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
+const FacilityWidgets := preload("res://src/presentation/facility_widgets.gd")
 const FacilityItemText := preload("res://src/presentation/facility/item_text.gd")
 
 const FORGE_OPERATION_EXPLANATIONS: Dictionary = {
@@ -30,7 +31,7 @@ func _init(screen) -> void:
 
 func _build_forge() -> void:
 	if _screen._facility_data.is_empty():
-		_screen._section("Forge State Unavailable","ForgeUnavailable").add_child(_screen._body_label("Forge data is not yet available."))
+		_screen._section("Forge State Unavailable","ForgeUnavailable").add_child(FacilityWidgets.body_label("Forge data is not yet available."))
 		return
 	var session := _forge_session()
 	var candidates := _forge_candidates()
@@ -49,8 +50,8 @@ func _build_forge() -> void:
 	var workflow: VBoxContainer = columns[1]
 	var target := UiKit.as_dictionary(_screen._facility_data.get("target_item",{}))
 	var tallies := UiKit.as_dictionary(_screen._facility_data.get("law_tallies", {}))
-	var target_panel: VBoxContainer = _screen._section_in(input,"","ForgeTargetPanel")
-	var target_row: HBoxContainer = _screen._make_row("ForgeTargetCompactRow")
+	var target_panel: VBoxContainer = FacilityWidgets.section_in(input,"","ForgeTargetPanel")
+	var target_row: HBoxContainer = FacilityWidgets.make_row("ForgeTargetCompactRow")
 	target_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	target_panel.add_child(target_row)
 	_screen._add_facility_mark(target_row, Vector2i(64, 54))
@@ -59,7 +60,7 @@ func _build_forge() -> void:
 	if target_texture != null:
 		# The compact target summary keeps the authored cell at native 32x32. The
 		# backpack below uses the larger 2x cells for browsing.
-		var target_icon: TextureRect = _screen._icon_node(target_texture, FacilityArtScript.ICON_NATIVE_SIZE, false)
+		var target_icon: TextureRect = FacilityWidgets.icon_node(target_texture, FacilityArtScript.ICON_NATIVE_SIZE, false)
 		target_icon.name = "ForgeTargetIcon_%s" % UiKit.stable_node_token(canonical)
 		target_icon.set_meta("canonical_id", canonical)
 		target_row.add_child(target_icon)
@@ -67,11 +68,11 @@ func _build_forge() -> void:
 	target_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	target_copy.add_theme_constant_override("separation", 2)
 	target_row.add_child(target_copy)
-	var label: Label = _screen._body_label("Target · %s" % _forge_item_title(target))
+	var label: Label = FacilityWidgets.body_label("Target · %s" % _forge_item_title(target))
 	label.name = "ForgeTargetItem"
 	label.tooltip_text = _forge_readable_item_text(target)
 	target_copy.add_child(label)
-	var target_note: Label = _screen._note_label("Hover over Backpack Items to Inspect Affixes")
+	var target_note: Label = FacilityWidgets.note_label("Hover over Backpack Items to Inspect Affixes")
 	target_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	target_note.tooltip_text = "Hover over or focus equipment in the backpack below to see all affixes."
 	target_copy.add_child(target_note)
@@ -82,7 +83,7 @@ func _build_forge() -> void:
 	setup_panel.name = "ForgeSetupPanel"
 	setup_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	target_panel.add_child(setup_panel)
-	var operation_row: HBoxContainer = _screen._make_row("ForgeOperationRow")
+	var operation_row: HBoxContainer = FacilityWidgets.make_row("ForgeOperationRow")
 	setup_panel.add_child(operation_row)
 	for operation in _screen.FORGE_TRACKS:
 		var operation_button := Button.new()
@@ -121,15 +122,15 @@ func _build_forge() -> void:
 		operation_row.add_child(operation_button)
 	_build_forge_inventory(input,UiKit.as_array(_screen._facility_data.get("inventory_items",[])),String(_screen._facility_data.get("target_instance_id","")))
 	if not bool(_screen._facility_data.get("unlocked",false)):
-		var locked: VBoxContainer = _screen._section_in(workflow,"Law Token Forge Locked","ForgeLocked")
-		locked.add_child(_screen._body_label(String(_screen._facility_data.get("locked_reason","Unlock requirements not yet met"))))
+		var locked: VBoxContainer = FacilityWidgets.section_in(workflow,"Law Token Forge Locked","ForgeLocked")
+		locked.add_child(FacilityWidgets.body_label(String(_screen._facility_data.get("locked_reason","Unlock requirements not yet met"))))
 	else:
 		if candidates.is_empty():
-			var reveal_panel: VBoxContainer = _screen._section_in(workflow,"Forecast a Future with Law Tokens","ForgeRevealPanel")
-			reveal_panel.add_child(_screen._note_label(String(FORGE_OPERATION_EXPLANATIONS[_screen._forge_operation])))
+			var reveal_panel: VBoxContainer = FacilityWidgets.section_in(workflow,"Forecast a Future with Law Tokens","ForgeRevealPanel")
+			reveal_panel.add_child(FacilityWidgets.note_label(String(FORGE_OPERATION_EXPLANATIONS[_screen._forge_operation])))
 			var block_reason := _forge_operation_block_reason(_screen._forge_operation)
 			if not block_reason.is_empty():
-				reveal_panel.add_child(_screen._body_label(block_reason, ShellThemeScript.WARNING))
+				reveal_panel.add_child(FacilityWidgets.body_label(block_reason, ShellThemeScript.WARNING))
 		_build_forge_browse(workflow)
 	_build_forge_dock()
 
@@ -153,16 +154,16 @@ func _forge_stage_columns(node_name: String, weights: Array, stages: Array) -> A
 		panel.name = node_name + "Column" + str(index)
 		panel.position = rect.position
 		panel.size = rect.size
-		panel.add_theme_stylebox_override("panel", _screen._grid_cell_box())
+		panel.add_theme_stylebox_override("panel", FacilityWidgets.grid_cell_box())
 		stage.add_child(panel)
 		var shell := VBoxContainer.new()
 		shell.add_theme_constant_override("separation", 6)
 		panel.add_child(shell)
 		var stage_data: Dictionary = stages[index] if index < stages.size() and stages[index] is Dictionary else {}
-		var title: Label = _screen._heading_label(String(stage_data.get("title", "")))
+		var title: Label = FacilityWidgets.heading_label(String(stage_data.get("title", "")))
 		title.name = "ForgeStage%dTitle" % (index + 1)
 		shell.add_child(title)
-		var status: Label = _screen._note_label(String(stage_data.get("status", "")))
+		var status: Label = FacilityWidgets.note_label(String(stage_data.get("status", "")))
 		status.name = "ForgeStage%dStatus" % (index + 1)
 		status.add_theme_color_override("font_color", ShellThemeScript.BONE)
 		shell.add_child(status)
@@ -188,9 +189,9 @@ func _on_forge_operation_selected(operation: String) -> void:
 
 
 func _build_forge_browse(parent: Container) -> void:
-	var panel: VBoxContainer = _screen._section_in(parent, "Future Outcome", "ForgeBrowsePanel")
+	var panel: VBoxContainer = FacilityWidgets.section_in(parent, "Future Outcome", "ForgeBrowsePanel")
 	var candidates := _forge_candidates()
-	var browse: Label = _screen._body_label("No future has been forecast. Choose equipment and Law Tokens, then use the button below.")
+	var browse: Label = FacilityWidgets.body_label("No future has been forecast. Choose equipment and Law Tokens, then use the button below.")
 	browse.name = "ForgeBrowseSelectionState"
 	panel.add_child(browse)
 	if candidates.is_empty():
@@ -209,7 +210,7 @@ func _build_forge_browse(parent: Container) -> void:
 		_forge_candidate_change_text(candidate),
 	]
 	var equipped := bool(candidate.get("target_is_equipped", false))
-	panel.add_child(_screen._note_label("Current Build Changes After Commit" if equipped else "Commit leaves current build unchanged; expected changes when equipped"))
+	panel.add_child(FacilityWidgets.note_label("Current Build Changes After Commit" if equipped else "Commit leaves current build unchanged; expected changes when equipped"))
 	var impact := UiKit.as_dictionary(candidate.get("build_comparison", {}))
 	_screen._add_interface_changes(panel, impact)
 	var comparison = preload("res://src/presentation/equipment_comparison.gd").new()
@@ -244,7 +245,7 @@ func _on_forge_cancel_selection() -> void:
 
 ## Target inventory inside the first lane of the two-column forge composition.
 func _build_forge_inventory(parent: Container, inventory: Array, target_id: String) -> void:
-	var section: VBoxContainer = _screen._section_in(parent, "Select Forge Target", "ForgeInventorySection")
+	var section: VBoxContainer = FacilityWidgets.section_in(parent, "Select Forge Target", "ForgeInventorySection")
 	var panel: PanelContainer = _screen._section_panel(section)
 	if panel != null:
 		panel.custom_minimum_size.x = 0.0
@@ -319,9 +320,9 @@ func _render_forge_backpack_detail(instance_id: String) -> void:
 		_screen._forge_backpack_detail_region.visible = true
 	var instance_token := UiKit.stable_node_token(instance_id)
 	var selected := instance_id == String(_screen._facility_data.get("target_instance_id", ""))
-	var action_row: HBoxContainer = _screen._make_row("BackpackActions")
+	var action_row: HBoxContainer = FacilityWidgets.make_row("BackpackActions")
 	_screen._forge_backpack_detail.add_child(action_row)
-	var name_label: Label = _screen._body_label(_forge_item_title(item))
+	var name_label: Label = FacilityWidgets.body_label(_forge_item_title(item))
 	name_label.name = "BackpackDetailName"
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.max_lines_visible = 2

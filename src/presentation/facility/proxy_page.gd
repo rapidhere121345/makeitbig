@@ -7,6 +7,7 @@ extends RefCounted
 ## through the untyped owner reference.
 const FacilityArtScript = preload("res://src/presentation/facility_art.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
+const FacilityWidgets := preload("res://src/presentation/facility_widgets.gd")
 const FacilityItemText := preload("res://src/presentation/facility/item_text.gd")
 
 ## The player-facing proxy surface only lists the six behaviors implemented by
@@ -43,21 +44,21 @@ func _build_proxy() -> void:
 	if not unlocked:
 		_build_proxy_core_strip(CORE_ORDER.duplicate(), false)
 		var locked: VBoxContainer = _screen._section("Proxy Bay · Sealed", "ProxyLocked")
-		locked.add_child(_screen._body_label("Unlock requirement: defeat the Threshold Colossus in Manual.\nAuto cannot be selected before the first kill."))
-		locked.add_child(_screen._note_label("Actions and configuration are unavailable while sealed."))
+		locked.add_child(FacilityWidgets.body_label("Unlock requirement: defeat the Threshold Colossus in Manual.\nAuto cannot be selected before the first kill."))
+		locked.add_child(FacilityWidgets.note_label("Actions and configuration are unavailable while sealed."))
 		var capability: VBoxContainer = _screen._section("Abilities After Unlock", "ProxyUnlockPreview")
-		capability.add_child(_screen._body_label("The first-kill reward previews four Common cores: find the nearest target -> maintain distance along the shortest viable path (retreat at close range) -> cast skill slot 1."))
+		capability.add_child(FacilityWidgets.body_label("The first-kill reward previews four Common cores: find the nearest target -> maintain distance along the shortest viable path (retreat at close range) -> cast skill slot 1."))
 		return
 	var core_ids := _proxy_core_ids(proxy)
 	_build_proxy_core_strip(core_ids, true)
 	var status: VBoxContainer = _screen._section("Auto Available", "ProxyAuto")
-	status.add_child(_screen._body_label("The Proxy Bay is unlocked for Auto contracts. Your four-slot build freezes at contract start; later changes do not affect an active contract."))
-	status.add_child(_screen._note_label("Attachments Not Yet Available"))
+	status.add_child(FacilityWidgets.body_label("The Proxy Bay is unlocked for Auto contracts. Your four-slot build freezes at contract start; later changes do not affect an active contract."))
+	status.add_child(FacilityWidgets.note_label("Attachments Not Yet Available"))
 	_build_proxy_inventory(proxy, core_ids)
 	_build_proxy_distance_settings(proxy, core_ids)
 	var progress: VBoxContainer = _screen._section("Early Progress", "ProxyProgress")
-	_screen._fact_label(progress, "Auto Wins", str(int(progression.get("auto_contract_wins", 0))))
-	_screen._fact_label(progress, "Early Chapter Complete", "Yes" if bool(progression.get("early_game_complete", false)) else "No")
+	FacilityWidgets.fact_label(progress, "Auto Wins", str(int(progression.get("auto_contract_wins", 0))))
+	FacilityWidgets.fact_label(progress, "Early Chapter Complete", "Yes" if bool(progression.get("early_game_complete", false)) else "No")
 
 
 ## The four fixed cores of the first-kill reward, each in its own slot cell. The
@@ -67,8 +68,8 @@ func _build_proxy_core_strip(core_ids: Array[String], unlocked: bool) -> void:
 	var heading := "First-Kill Reward · Four Common Cores (Sealed Preview)"
 	if unlocked:
 		heading = "Current Assembly · Perception -> Action -> Execution -> Memory"
-	var section: VBoxContainer = _screen._section_in(_screen._page_lead_row(), heading, "ProxyCoreStrip")
-	var row: HBoxContainer = _screen._make_row("ProxyCoreRow")
+	var section: VBoxContainer = FacilityWidgets.section_in(_screen._page_lead_row(), heading, "ProxyCoreStrip")
+	var row: HBoxContainer = FacilityWidgets.make_row("ProxyCoreRow")
 	section.add_child(row)
 	for core_id in core_ids:
 		row.add_child(_proxy_core_cell(core_id, unlocked))
@@ -78,19 +79,19 @@ func _proxy_core_cell(core_id: String, unlocked: bool) -> PanelContainer:
 	var cell := PanelContainer.new()
 	cell.name = "ProxyCoreCell_%s" % UiKit.stable_node_token(core_id)
 	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cell.add_theme_stylebox_override("panel", _screen._plain_cell_box())
+	cell.add_theme_stylebox_override("panel", FacilityWidgets.plain_cell_box())
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 6)
 	cell.add_child(content)
 	var canonical: String = _screen._art.canonical_id("proxy_core", core_id)
 	var texture: Texture2D = _screen._body_icon_texture(canonical)
 	if texture != null:
-		var icon: TextureRect = _screen._icon_node(texture, FacilityArtScript.ICON_NATIVE_SIZE, true)
+		var icon: TextureRect = FacilityWidgets.icon_node(texture, FacilityArtScript.ICON_NATIVE_SIZE, true)
 		icon.name = "%s_%s" % ["CoreIcon" if unlocked else "RewardCoreIcon", UiKit.stable_node_token(canonical)]
 		icon.set_meta("canonical_id", canonical)
 		content.add_child(icon)
-	content.add_child(_screen._body_label("%s · %s" % [_proxy_core_display_name(core_id, {}), String(CORE_ROLES.get(core_id, "Core"))]))
-	content.add_child(_screen._note_label("Connected" if unlocked else "Sealed"))
+	content.add_child(FacilityWidgets.body_label("%s · %s" % [_proxy_core_display_name(core_id, {}), String(CORE_ROLES.get(core_id, "Core"))]))
+	content.add_child(FacilityWidgets.note_label("Connected" if unlocked else "Sealed"))
 	return cell
 
 
@@ -142,8 +143,8 @@ func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> 
 			state = "Installed"
 		elif owned.has(core_id):
 			state = "In Storage"
-		row.add_child(_screen._body_label("%s · %s · %s" % [_proxy_core_display_name(core_id, definition), String(PROXY_SLOT_LABELS.get(slot, slot)), state]))
-		row.add_child(_screen._note_label("Protocol: %s" % String(definition.get("protocol", UiKit.as_dictionary(owned.get(core_id, {})).get("protocol", "Not Recorded")))))
+		row.add_child(FacilityWidgets.body_label("%s · %s · %s" % [_proxy_core_display_name(core_id, definition), String(PROXY_SLOT_LABELS.get(slot, slot)), state]))
+		row.add_child(FacilityWidgets.note_label("Protocol: %s" % String(definition.get("protocol", UiKit.as_dictionary(owned.get(core_id, {})).get("protocol", "Not Recorded")))))
 		if owned.has(core_id) and core_id not in installed_ids:
 			var button := Button.new()
 			button.name = "ProxyEquip_%s" % UiKit.stable_node_token(core_id)
@@ -158,7 +159,7 @@ func _build_proxy_distance_settings(proxy: Dictionary, installed_ids: Array[Stri
 	if "distance_keeping_gait" not in installed_ids:
 		return
 	var section: VBoxContainer = _screen._section("Distance Band", "ProxyDistanceBand")
-	section.add_child(_screen._note_label("All distance bands scale with Piercing Arrow's actual range."))
+	section.add_child(FacilityWidgets.note_label("All distance bands scale with Piercing Arrow's actual range."))
 	var settings := UiKit.as_dictionary(UiKit.as_dictionary(proxy.get("build", {})).get("settings", {}))
 	var current := String(UiKit.as_dictionary(settings.get("distance_keeping_gait", {})).get("distance_band", "mid"))
 	if current not in ["near", "mid", "far"]:

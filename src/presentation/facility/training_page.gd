@@ -8,6 +8,7 @@ extends RefCounted
 const PlayerReadableBuildScript = preload("res://src/presentation/player_readable_build.gd")
 const TrainingTraceViewScript = preload("res://src/presentation/training_trace_view.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
+const FacilityWidgets := preload("res://src/presentation/facility_widgets.gd")
 const FacilityItemText := preload("res://src/presentation/facility/item_text.gd")
 
 var _screen
@@ -29,7 +30,7 @@ func _build_training() -> void:
 	var resolved := _training_resolved_build()
 	if resolved.is_empty():
 		var unavailable: VBoxContainer = _screen._section("Training Data Unavailable", "TrainingUnavailable")
-		unavailable.add_child(_screen._body_label("The current build cannot be resolved: stats, connected interfaces, and growth conclusions are unavailable."))
+		unavailable.add_child(FacilityWidgets.body_label("The current build cannot be resolved: stats, connected interfaces, and growth conclusions are unavailable."))
 		_screen._add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
 		return
 	var training := UiKit.as_dictionary(_screen._facility_data.get("training", {}))
@@ -37,31 +38,31 @@ func _build_training() -> void:
 	var matched := FacilityItemText.matched_training_report(training, fingerprint)
 	var verified := not matched.is_empty()
 	var row: HBoxContainer = _screen._page_lead_row()
-	var current_panel: VBoxContainer = _screen._section_in(row, "Current Build", "TrainingActiveBuild")
+	var current_panel: VBoxContainer = FacilityWidgets.section_in(row, "Current Build", "TrainingActiveBuild")
 	var growth_conclusion := "Unverified"
 	if verified:
 		var classification := String(matched.get("state", "")).strip_edges()
 		if not classification.is_empty():
 			growth_conclusion = String(_screen.TRAINING_GROWTH_NAMES.get(classification, classification))
 	_training_card(current_panel, "Growth Conclusion", growth_conclusion, true, "TrainingConclusionCard")
-	current_panel.add_child(_screen._note_label("Growth conclusions appear only after this fingerprint passes Training; unverified does not mean failure."))
+	current_panel.add_child(FacilityWidgets.note_label("Growth conclusions appear only after this fingerprint passes Training; unverified does not mean failure."))
 	_training_card(current_panel, "Connected Interfaces", FacilityItemText.training_interface_text(resolved.get("connected_interfaces", [])), false, "TrainingConnectedCard")
 	_training_card(current_panel, "Missing Interfaces", FacilityItemText.training_interface_text(resolved.get("missing_interfaces", [])), false, "TrainingMissingCard")
-	var report_panel: VBoxContainer = _screen._section_in(row, "Current Build Training Report", "TrainingLastReport")
-	var identity: Label = _screen._note_label("Status: Complete · This report belongs to the current build") if verified else _screen._note_label("Status: Not Yet Trained\nNext Step: Run Training Trial")
+	var report_panel: VBoxContainer = FacilityWidgets.section_in(row, "Current Build Training Report", "TrainingLastReport")
+	var identity: Label = FacilityWidgets.note_label("Status: Complete · This report belongs to the current build") if verified else FacilityWidgets.note_label("Status: Not Yet Trained\nNext Step: Run Training Trial")
 	identity.name = "TrainingReportIdentity"
 	report_panel.add_child(identity)
 	var action := String(matched.get("action", "")).strip_edges()
 	if not action.is_empty():
 		_training_card(report_panel, "Next Step", action, false, "TrainingNextStepCard")
-	var readings: Label = _screen._body_label(FacilityItemText.training_readings_text(matched))
+	var readings: Label = FacilityWidgets.body_label(FacilityItemText.training_readings_text(matched))
 	readings.name = "TrainingReading"
 	report_panel.add_child(readings)
 	_add_growth_trace(report_panel, matched)
 	if matched.is_empty():
-		report_panel.add_child(_screen._note_label("Unknown does not mean failure: no growth conclusion is given until training completes."))
+		report_panel.add_child(FacilityWidgets.note_label("Unknown does not mean failure: no growth conclusion is given until training completes."))
 	else:
-		report_panel.add_child(_screen._note_label("These readings come from the current build's training results."))
+		report_panel.add_child(FacilityWidgets.note_label("These readings come from the current build's training results."))
 	_build_training_details(resolved, training, fingerprint, verified)
 	_screen._add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
 
@@ -70,13 +71,13 @@ func _training_card(parent: Container, title_text: String, value_text: String, _
 	var card := PanelContainer.new()
 	card.name = node_name
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_theme_stylebox_override("panel", _screen._plain_cell_box())
+	card.add_theme_stylebox_override("panel", FacilityWidgets.plain_cell_box())
 	parent.add_child(card)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 4)
 	card.add_child(content)
-	content.add_child(_screen._note_label(title_text))
-	content.add_child(_screen._body_label(value_text))
+	content.add_child(FacilityWidgets.note_label(title_text))
+	content.add_child(FacilityWidgets.body_label(value_text))
 	return card
 
 
@@ -100,10 +101,10 @@ func _build_training_details(resolved: Dictionary, training: Dictionary, fingerp
 	var parameter_lines: Array[String] = []
 	for parameter in PlayerReadableBuildScript.PARAMETER_ORDER:
 		parameter_lines.append(_screen._readable_build.format_parameter(parameter, parameters.get(parameter, null)))
-	_screen._fact_label(section, "Final Stats", "  ·  ".join(parameter_lines))
-	_screen._fact_label(section, "Connected Interfaces", FacilityItemText.training_interface_text(resolved.get("connected_interfaces", [])))
-	_screen._fact_label(section, "Missing Interfaces", FacilityItemText.training_interface_text(resolved.get("missing_interfaces", [])))
-	section.add_child(_screen._body_label(FacilityItemText.training_report_text(training, fingerprint, verified)))
+	FacilityWidgets.fact_label(section, "Final Stats", "  ·  ".join(parameter_lines))
+	FacilityWidgets.fact_label(section, "Connected Interfaces", FacilityItemText.training_interface_text(resolved.get("connected_interfaces", [])))
+	FacilityWidgets.fact_label(section, "Missing Interfaces", FacilityItemText.training_interface_text(resolved.get("missing_interfaces", [])))
+	section.add_child(FacilityWidgets.body_label(FacilityItemText.training_report_text(training, fingerprint, verified)))
 
 
 func _on_training_details_toggled() -> void:
@@ -126,12 +127,12 @@ func _add_growth_trace(parent: Container, matched: Dictionary) -> void:
 	parent.add_child(trace)
 	trace.present(points)
 	_screen._training_trace = trace
-	var axis: Label = _screen._note_label(trace.axis_caption())
+	var axis: Label = FacilityWidgets.note_label(trace.axis_caption())
 	axis.name = "TrainingGrowthTraceAxis"
 	parent.add_child(axis)
 	# The trace always draws every point of the reading line; only its labels thin out
 	# when they would collide, so the rule is stated instead of implied.
-	parent.add_child(_screen._note_label("The curve retains every sample from this trial."))
+	parent.add_child(FacilityWidgets.note_label("The curve retains every sample from this trial."))
 
 
 ## The generational trace the training page really drew, for tests and the report.

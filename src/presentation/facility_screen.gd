@@ -24,6 +24,7 @@ const EarlyInterfaceVocabularyScript = preload("res://src/content/early_interfac
 ## public contract only to stop offering a reveal the authority will reject.
 const LawForgeScript = preload("res://src/systems/law_forge.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
+const FacilityWidgets := preload("res://src/presentation/facility_widgets.gd")
 const FacilityItemText := preload("res://src/presentation/facility/item_text.gd")
 
 const FACILITY_TITLES: Dictionary = {
@@ -881,7 +882,7 @@ func _add_facility_mark(parent: Container, compact_size: Vector2i = Vector2i.ZER
 	var mark: Texture2D = _art.mark(_facility_id) if _art.is_ready() else null
 	if mark != null:
 		var mark_size: Vector2i = compact_size if compact_size.x > 0 and compact_size.y > 0 else _art.mark_size(_facility_id)
-		_facility_icon = _icon_node(mark, mark_size, false)
+		_facility_icon = FacilityWidgets.icon_node(mark, mark_size, false)
 		_facility_icon.name = "FacilityMark"
 		_facility_icon.set_meta("canonical_id", "facility.%s" % _art.facility_key(_facility_id))
 		parent.add_child(_facility_icon)
@@ -901,7 +902,7 @@ func _mark_cell(caption: String) -> VBoxContainer:
 		cell.free()
 		return null
 	if not caption.is_empty():
-		cell.add_child(_note_label(caption))
+		cell.add_child(FacilityWidgets.note_label(caption))
 	return cell
 
 
@@ -916,7 +917,7 @@ func _has_page_mark() -> bool:
 func _page_lead_row() -> HBoxContainer:
 	if _lead_row != null:
 		return _lead_row
-	_lead_row = _make_row("FacilityOverview")
+	_lead_row = FacilityWidgets.make_row("FacilityOverview")
 	_cards.add_child(_lead_row)
 	var cell := _mark_cell("")
 	if cell != null:
@@ -924,74 +925,14 @@ func _page_lead_row() -> HBoxContainer:
 	return _lead_row
 
 
-## An open workspace section with a 22px heading. `parent` receives the panel
-## and the returned VBox is its content, so a page lays out its own rows inside
-## instead of feeding a generic card framework.
-func _section_in(parent: Container, heading_text: String, node_name: String = "") -> VBoxContainer:
-	var panel := PanelContainer.new()
-	if not node_name.is_empty():
-		panel.name = node_name
-	panel.add_theme_stylebox_override("panel", ShellThemeScript.section_style())
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	parent.add_child(panel)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 8)
-	panel.add_child(content)
-	if not heading_text.is_empty():
-		content.add_child(_heading_label(heading_text))
-	return content
-
-
 func _section(heading_text: String, node_name: String = "") -> VBoxContainer:
-	return _section_in(_cards, heading_text, node_name)
+	return FacilityWidgets.section_in(_cards, heading_text, node_name)
 
 
 ## The panel that wraps a section's content, for the few rows that have to bound
 ## or weigh a whole section.
 func _section_panel(content: VBoxContainer) -> PanelContainer:
 	return content.get_parent() as PanelContainer
-
-
-func _make_row(node_name: String = "") -> HBoxContainer:
-	var row := HBoxContainer.new()
-	if not node_name.is_empty():
-		row.name = node_name
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
-	return row
-
-
-func _heading_label(text: String) -> Label:
-	var label := _body_label(text)
-	label.add_theme_font_size_override("font_size", 22)
-	label.add_theme_color_override("font_color", Color("dcc494"))
-	return label
-
-
-## Page copy at the approved 20px body step. Every label wraps: a semantic name
-## is never trimmed away to keep a column narrow.
-func _body_label(text: String, color: Color = ShellThemeScript.BONE) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_color_override("font_color", color)
-	return label
-
-
-## Secondary copy: states, reasons and hints. Never below the 18px floor.
-func _note_label(text: String) -> Label:
-	var label := _body_label(text, ShellThemeScript.NEUTRAL)
-	label.add_theme_font_size_override("font_size", 18)
-	return label
-
-
-## "Key: Value" stays one Label so the value cannot be read without the key that
-## names it, and text collection sees exactly what the screen shows.
-func _fact_label(parent: Container, key: String, value: String, color: Color = ShellThemeScript.BONE) -> Label:
-	var label := _body_label("%s: %s" % [key, value], color)
-	parent.add_child(label)
-	return label
 
 
 ## A real action button: same emitter, node name and payload contract as before,
@@ -1010,41 +951,15 @@ func _action_button(parent: Container, label_text: String, action_id: String, pa
 	return button
 
 
-## Slot emphasis: the focused slot uses the bright copper edge, an empty one a
-## dim edge, a filled one the idle copper. The state word in the cell is what
-## actually says which case this is; the edge only reinforces it.
+## Kept on the screen because tests call it by name.
 func _slot_cell_box(focused: bool, empty: bool) -> StyleBox:
-	var box := ShellThemeScript.panel_style("selected") if focused else ShellThemeScript.panel_style("disabled" if empty else "button")
-	box.content_margin_left = 0
-	box.content_margin_right = 0
-	box.content_margin_top = 0
-	box.content_margin_bottom = 0
-	return box
+	return FacilityWidgets.slot_cell_box(focused, empty)
 
 
-## Informational rows keep compact spacing without looking like selected slots.
-func _plain_cell_box() -> StyleBoxFlat:
-	var box := _recessed_panel_style("well")
-	box.content_margin_left = 0
-	box.content_margin_right = 0
-	box.content_margin_top = 0
-	box.content_margin_bottom = 0
-	return box
-
-
-## Shared flat surfaces replace the old pixel-processed nine-slice borders.
+## Kept on the screen because tests call it by name.
 func _recessed_panel_style(kind: String = "well") -> StyleBoxFlat:
-	return ShellThemeScript.panel_style(kind)
+	return FacilityWidgets.recessed_panel_style(kind)
 
-
-## Builds one real TextureRect over a published atlas region. `scaled` is the
-## integer 2x that only the 32x32 icon batch may use; a facility mark passes
-## false and keeps its native pixel size so it is never resampled smaller.
-func _icon_node(texture: Texture2D, native_size: Vector2i, scaled: bool) -> TextureRect:
-	var display_size := native_size
-	if scaled:
-		display_size = native_size * FacilityArtScript.ICON_DISPLAY_SCALE
-	return UiKit.icon_node(texture, Vector2(display_size), scaled, TextureRect.STRETCH_KEEP_ASPECT_CENTERED)
 
 ## The 64x64 display rect of a canonical id, or null when the package publishes
 ## nothing under it. Null means no image: the caller's own text stays the only
@@ -1073,50 +988,12 @@ func _add_icon_row(parent: Container, canonical_ids: Array, node_prefix: String)
 	row.add_theme_constant_override("separation", 8)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for index in icons.size():
-		var icon := _icon_node(icons[index], FacilityArtScript.ICON_NATIVE_SIZE, true)
+		var icon := FacilityWidgets.icon_node(icons[index], FacilityArtScript.ICON_NATIVE_SIZE, true)
 		icon.name = "%s_%s" % [node_prefix, UiKit.stable_node_token(resolved[index])]
 		icon.set_meta("canonical_id", resolved[index])
 		row.add_child(icon)
 	parent.add_child(row)
 	return row
-
-
-## One 64x64 icon beside a text label, added as a row so the label keeps its own
-## name, wording and wrap. Returns the row, or the untouched label in `parent`
-## when the id resolves to nothing.
-func _add_text_icon_row(
-	parent: Container,
-	canonical_id: String,
-	label_node: Label,
-	node_prefix: String,
-	icon_name: String
-) -> Control:
-	var texture := _body_icon_texture(canonical_id)
-	if texture == null:
-		parent.add_child(label_node)
-		return label_node
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var icon := _icon_node(texture, FacilityArtScript.ICON_NATIVE_SIZE, true)
-	icon.name = "%s_%s" % [node_prefix, icon_name]
-	icon.set_meta("canonical_id", canonical_id)
-	row.add_child(icon)
-	label_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(label_node)
-	parent.add_child(row)
-	return row
-
-
-## Bounded columns: children never feed their content minimum back into the
-## root page width. Each content lane scrolls locally if the text grows.
-func _grid_cell_box() -> StyleBox:
-	var box := _recessed_panel_style("well")
-	box.content_margin_left = 8.0
-	box.content_margin_top = 6.0
-	box.content_margin_right = 8.0
-	box.content_margin_bottom = 6.0
-	return box
 
 
 func _compact_skill_text(skill: Dictionary, slot_index: int) -> String:
@@ -1166,7 +1043,7 @@ func _add_interface_changes(parent: Container, preview: Dictionary) -> void:
 		for value in preview.get(key, []):
 			names.append(EarlyInterfaceVocabularyScript.player_name(String(value)))
 		if not names.is_empty():
-			var note := _note_label(("Gained: " if key == "interfaces_gained" else "Lost: ") + ", ".join(names))
+			var note := FacilityWidgets.note_label(("Gained: " if key == "interfaces_gained" else "Lost: ") + ", ".join(names))
 			note.name = "InterfaceGained" if key == "interfaces_gained" else "InterfaceLost"
 			note.add_theme_color_override("font_color", ShellThemeScript.PROXY if key == "interfaces_gained" else ShellThemeScript.WARNING)
 			parent.add_child(note)
@@ -1191,16 +1068,16 @@ func _on_backpack_detail_action_focus_exited(route: String) -> void:
 
 func _build_immortality() -> void:
 	var section := _section("Midgame Content", "ImmortalityMidgame")
-	section.add_child(_body_label("Immortality is a midgame system, not required for early quests.\nThis page is a roadmap only; no actions are available."))
+	section.add_child(FacilityWidgets.body_label("Immortality is a midgame system, not required for early quests.\nThis page is a roadmap only; no actions are available."))
 
 
 func _build_research() -> void:
 	var discoveries := _section("Discovered Conclusions", "ResearchDiscoveries")
-	discoveries.add_child(_body_label("Convergent / Critical / Exponential and higher growth entries appear only after dummy or combat verification.\nProfile discovery tracking is not yet implemented."))
+	discoveries.add_child(FacilityWidgets.body_label("Convergent / Critical / Exponential and higher growth entries appear only after dummy or combat verification.\nProfile discovery tracking is not yet implemented."))
 	var targets := _section("Target Research", "ResearchTargets")
-	targets.add_child(_body_label("Choose mechanic tags and target Laws to track contract sources and guaranteed-drop progress.\nTarget selection and tracking are not yet implemented."))
+	targets.add_child(FacilityWidgets.body_label("Choose mechanic tags and target Laws to track contract sources and guaranteed-drop progress.\nTarget selection and tracking are not yet implemented."))
 	var missing := _section("Missing Interfaces", "ResearchMissingInterfaces")
-	missing.add_child(_body_label("Requires: breedable events\nRequires: full-chain refresh\nRequires: result feedback\n\nItems should state what is missing, not present inactive terms as usable."))
+	missing.add_child(FacilityWidgets.body_label("Requires: breedable events\nRequires: full-chain refresh\nRequires: result feedback\n\nItems should state what is missing, not present inactive terms as usable."))
 	_add_action("View Discovered Conclusions", "inspect_discoveries")
 	_add_action("Set as Research Target", "set_research_target")
 	_add_action("Check Missing Interfaces", "inspect_missing_interfaces")
@@ -1278,13 +1155,6 @@ func facility_mark() -> TextureRect:
 ## production packages were read.
 func art_errors() -> Array[String]:
 	return _art_errors.duplicate()
-
-
-## Progression icons are a separately delivered expansion. Their wait state is
-## reported on its own channel, so an unpublished expansion cannot fail the
-## already-accepted facility art package.
-func progression_icon_errors() -> Array[String]:
-	return [] if _progression_icons.is_ready() else [_progression_icons.pending_reason]
 
 
 ## Canonical ids this screen asked for and the packages do not publish, in
