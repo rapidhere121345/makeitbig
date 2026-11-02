@@ -20,6 +20,10 @@ enum Kind {
 	ACTION_FORGOTTEN,
 	## An attack request was erased (request_id).
 	REQUEST_FORGOTTEN,
+	## Arrow impact sparks (position, direction, generations).
+	IMPACT_TRACE,
+	## A killed enemy's detached death visual (visual).
+	CORPSE_DETACHED,
 }
 
 var kind: Kind = Kind.INPUT_FEEDBACK
@@ -38,6 +42,10 @@ var out_of_range_hint: bool = false
 var request_id: int = 0
 var replaced_request_id: int = 0
 var action_id: int = 0
+var position: Vector2 = Vector2.ZERO
+var direction: Vector2 = Vector2.ZERO
+var generations: int = 0
+var visual: Dictionary = {}
 
 
 static func input_feedback(feedback_text: String, at_tick: int) -> RoomPresentationEvent:
@@ -92,4 +100,20 @@ static func request_forgotten(erased_request_id: int) -> RoomPresentationEvent:
 	var event := RoomPresentationEvent.new()
 	event.kind = Kind.REQUEST_FORGOTTEN
 	event.request_id = erased_request_id
+	return event
+
+
+static func impact_trace(contact_point: Vector2, aim: Vector2, trace_generations: int) -> RoomPresentationEvent:
+	var event := RoomPresentationEvent.new()
+	event.kind = Kind.IMPACT_TRACE
+	event.position = contact_point
+	event.direction = aim
+	event.generations = trace_generations
+	return event
+
+
+static func corpse_detached(corpse_visual: Dictionary) -> RoomPresentationEvent:
+	var event := RoomPresentationEvent.new()
+	event.kind = Kind.CORPSE_DETACHED
+	event.visual = corpse_visual
 	return event

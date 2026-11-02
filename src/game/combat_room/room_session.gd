@@ -117,6 +117,23 @@ func drain_events() -> Array[RoomPresentationEvent]:
 	return drained
 
 
+## Routes the combat system's impact-trace and corpse signals into the event
+## log. Call once after the combat system exists.
+func record_combat_system_events() -> void:
+	if combat_system == null:
+		return
+	combat_system.impact_trace_requested.connect(_record_impact_trace)
+	combat_system.corpse_requested.connect(_record_corpse)
+
+
+func _record_impact_trace(position: Vector2, direction: Vector2, generations: int) -> void:
+	record_event(RoomPresentationEvent.impact_trace(position, direction, generations))
+
+
+func _record_corpse(visual: Dictionary) -> void:
+	record_event(RoomPresentationEvent.corpse_detached(visual))
+
+
 ## Creates the fixed-tick simulation on first use.
 func ensure_combat_simulation() -> void:
 	if combat_simulation == null:

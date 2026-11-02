@@ -42,3 +42,7 @@ func apply(events: Array[RoomPresentationEvent]) -> void:
 				feedback.forget_action(event.action_id)
 			RoomPresentationEvent.Kind.REQUEST_FORGOTTEN:
 				feedback.forget_request(event.request_id)
+			RoomPresentationEvent.Kind.IMPACT_TRACE:
+				feedback.add_impact_traces(event.position, event.direction, event.generations)
+			RoomPresentationEvent.Kind.CORPSE_DETACHED:
+				presentation.animations.detach_corpse(event.visual)

@@ -542,8 +542,7 @@ func _init() -> void:
 	presentation.skill_requested.connect(_on_skill_requested)
 	presentation.return_requested.connect(_on_return_requested)
 	input_adapter.report_requested.connect(func(text: String) -> void: battle_report = text)
-	combat_system.impact_trace_requested.connect(presentation.feedback.add_impact_traces)
-	combat_system.corpse_requested.connect(presentation.animations.detach_corpse)
+	session.record_combat_system_events()
 
 
 func _ensure_simulation_world() -> void:
