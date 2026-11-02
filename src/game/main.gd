@@ -12,7 +12,6 @@ const ContentRegistryScript = preload("res://src/content/content_registry.gd")
 const ProxyRuntimeScript = preload("res://src/systems/proxy_runtime.gd")
 const ProxyDecisionScript = preload("res://src/systems/proxy_decision.gd")
 const ProxyIntentSystemScript = preload("res://src/systems/proxy_intent_system.gd")
-const CombatCommandProtocolScript = preload("res://src/systems/combat_command_protocol.gd")
 const ManualAimResolverScript = preload("res://src/systems/manual_aim_resolver.gd")
 const EnemyTacticsScript = preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
@@ -23,7 +22,6 @@ const SimulationWorldScript = preload("res://src/runtime/world/simulation_world.
 const SimOutcomeScript = preload("res://src/runtime/simulation/sim_outcome.gd")
 const CombatStateSnapshotBuilderScript = preload("res://src/game/combat_state_snapshot_builder.gd")
 const CombatEnemyStateScript = preload("res://src/runtime/world/combat_enemy_state.gd")
-const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const EncounterDirectorScript = preload("res://src/game/encounter_director.gd")
 const EncounterSpawnRequestScript := preload("res://src/runtime/encounter/encounter_spawn_request.gd")
 const EncounterSpawnResultScript := preload("res://src/runtime/encounter/encounter_spawn_result.gd")
@@ -35,8 +33,6 @@ const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.
 const CombatCommandSourceScript = preload("res://src/systems/combat_command_source.gd")
 const MainCombatCommandSourcePortScript: Script = preload("res://src/game/main_combat_command_source_port.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
-const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
-const CombatStatsSnapshotScript := preload("res://src/systems/combat_stats_snapshot.gd")
 const BuildResolution := preload("res://src/game/application/build_resolution.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const MainCombatRoomPortScript := preload("res://src/game/ports/main_combat_room_port.gd")
@@ -360,7 +356,11 @@ var combat_event_stream:
 	set(value):
 		session.combat_event_stream = value
 var startup_errors: Array[String] = []
-var proxy_prediction: String = "unknown"
+var proxy_prediction: String:
+	get:
+		return session.proxy_prediction
+	set(value):
+		session.proxy_prediction = value
 var last_save_message: String = ""
 var test_session: bool = false
 var presentation_enabled: bool = true
@@ -554,8 +554,7 @@ func _ensure_simulation_world() -> void:
 
 
 func ensure_room_catalog() -> void:
-	if room_catalog == null:
-		room_catalog = RoomCatalogScript.new()
+	session.ensure_room_catalog()
 
 
 func _ensure_encounter_director() -> void:
@@ -747,15 +746,10 @@ func _preset_display_name(preset_id: String) -> String:
 ## Puts a freshly constructed room into its idle state: no contract running,
 ## room rules and loot cleared, and no held manual input.
 func _reset_idle_state() -> void:
-	in_arena = false
-	room_rules.reset()
-	_reset_room_loot()
+	session.reset_idle()
 	presentation.leave_arena()
 	release_manual_controls()
-	if proxy_runtime != null:
-		proxy_runtime.end_contract()
-	if proxy_intent_system != null:
-		proxy_intent_system.reset()
+	session.end_proxy_contract()
 	refresh_presentation()
 
 
@@ -769,54 +763,22 @@ func start_room() -> void:
 	if not BuildResolution.is_valid_resolved_build(framework_resolved_build):
 		last_save_message = "Deployment blocked: invalid_resolved_build"
 		return
-	var room_error := _framework_room_error()
+	var room_error := session.framework_room_error()
 	if not room_error.is_empty():
 		last_save_message = "Deployment blocked: %s" % room_error
 		return
-	_freeze_room_build()
-	var room_stats := _apply_room_combat_stats()
+	session.freeze_room_build()
+	var room_stats := session.apply_room_combat_stats()
 	if not bool(room_stats.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(room_stats.get("error", "invalid_room_combat_stats"))
 		return
-	proxy_runtime.end_contract()
-	if selected_mode == "Auto":
-		var proxy_install: Dictionary = proxy_runtime.install_resolved(
-			framework_resolved_proxy_build,
-			"nearest_enemy"
-		)
-		if not bool(proxy_install.get("ok", false)):
-			last_save_message = "Deployment blocked: proxy_%s" % String(proxy_install.get("error", "invalid_build"))
-			return
-		var proxy_start: Dictionary = proxy_intent_system.begin_contract(framework_resolved_proxy_build)
-		if not bool(proxy_start.get("ok", false)):
-			last_save_message = "Deployment blocked: proxy_%s" % String(proxy_start.get("error", "invalid_initial_state"))
-			proxy_runtime.end_contract()
-			return
-	else:
-		proxy_intent_system.reset()
-	var contract_start: Dictionary = proxy_runtime.begin_contract(selected_mode.to_lower())
-	if not bool(contract_start.get("ok", false)):
-		last_save_message = "Deployment blocked: %s" % String(contract_start.get("error", "unknown error"))
+	var proxy_error := session.begin_proxy_contract()
+	if not proxy_error.is_empty():
+		last_save_message = proxy_error
 		return
-	var requirements := {
-		"perception": {"target_count": 1},
-		"movement": {"pathing": 1.0, "range_control": 1.0},
-		"execution": {"skill_count": 1, "timing": 1.0},
-		"memory": {"target_memory": 1, "rotation_steps": 1},
-	}
-	proxy_prediction = proxy_runtime.predict(requirements) if selected_mode == "Auto" else "manual"
-	in_arena = true
-	room_rules.reset()
-	_reset_room_loot()
 	input_adapter.reset_intent()
-	command_sequence = 0
-	last_command_receipts.clear()
-	last_loot_pickup_command_receipt.clear()
 	presentation.reset_battle()
-	combat_event_stream.reset()
-	automation_smoke_failure = ""
-	room_entry_start_tick = 0
-	elapsed = 0.0
+	session.reset_for_contract()
 	_terminal.projection_applied = false
 	if scene_runtime != null and scene_runtime.is_ready() and simulation_world != null and sim_tick > 0:
 		var restarted: Dictionary = scene_runtime.restart_room_instance(SIM_TICKS_PER_SECOND)
@@ -844,7 +806,7 @@ func start_room() -> void:
 	var loot_room: Dictionary = framework_room.duplicate(true)
 	if loot_room.is_empty() and test_session:
 		loot_room = _load_test_room_fixture()
-	var loot_configured: Dictionary = _configure_room_loot(loot_room)
+	var loot_configured: Dictionary = session.configure_room_loot(loot_room)
 	if not bool(loot_configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
 		in_arena = false
@@ -855,51 +817,11 @@ func start_room() -> void:
 	refresh_presentation()
 
 
-func _freeze_room_build() -> void:
-	if BuildResolution.is_valid_resolved_build(framework_resolved_build):
-		locked_build = framework_resolved_build.duplicate(true)
-		locked_build["skills"] = (framework_active_build.get("skills", [String(locked_build.get("skill_id", "piercing_arrow"))]) as Array).duplicate()
-	else:
-		# The diagnostic model keeps its historical calibrated generation count;
-		# its gameplay range remains the old Main AUTO_RANGE, frozen for Rules.
-		var equipped: Dictionary = content_registry.preset_equipped_parameters
-		var preset_p := float(content_registry.presets[selected_preset].p)
-		var model: Dictionary = PiercingArrowModel.evaluate(preset_p, float(equipped.shared_lifetime), float(equipped.distance), float(equipped.speed), float(equipped.minimum_turn_time), true, true)
-		var events: BigValue = model.total_events
-		locked_build = {
-			"skills": ["piercing_arrow"], "talent_capabilities": {},
-			"final_parameters": {"p": preset_p, "T": float(equipped.shared_lifetime), "d": AUTO_RANGE, "v": float(equipped.speed), "turn": float(equipped.minimum_turn_time), "damage": BASE_PAYLOAD, "max_health": 100.0},
-			"total_events": {"layer": events.layer, "magnitude": events.magnitude},
-			"total_events_float": model.total_events_float, "generation_count": model.g,
-			"R": model.R, "generation_time": model.generation_time, "growth_classification": model.state,
-		}
-	var parameters: Dictionary = locked_build.final_parameters
-	locked_p = float(parameters.p)
-	locked_payload = float(parameters.damage)
-	locked_targeting_distance = float(parameters.d)
-
-
-func _apply_room_combat_stats() -> Dictionary:
-	if not framework_room.has("combat_stats"):
-		return {"ok": true, "error": "", "enabled": false}
-	var authored_room_id := room_id if not room_id.is_empty() else String(framework_room.get("room_id", framework_room.get("id", "")))
-	var result := CombatStatsSnapshotScript.from_room_overlay(locked_build, framework_room.get("combat_stats"), authored_room_id)
-	if not bool(result.get("ok", false)):
-		return result
-	var stats: Variant = result.get("value", null)
-	if not stats is RefCounted or not stats.has_method("snapshot"):
-		return {"ok": false, "error": "invalid_room_combat_stats_snapshot"}
-	locked_build["combat_stats"] = stats.snapshot()
-	return {"ok": true, "error": "", "enabled": true, "combat_stats": locked_build["combat_stats"].duplicate(true)}
-
-
 func _spawn_wave() -> bool:
 	## A new wave is a route reset: the enemy action presentation starts over.
-	actor_registry_instance_id = ""
 	presentation.reset_battle()
 	input_adapter.reset_intent()
-	if combat_event_stream != null:
-		combat_event_stream.reset()
+	session.begin_wave_reset()
 	sync_encounter_context()
 	var spawn_room: Dictionary = framework_room.duplicate(true)
 	if spawn_room.is_empty() and test_session:
@@ -936,48 +858,20 @@ func _spawn_wave() -> bool:
 	return true
 
 
-func _reset_room_loot() -> void:
-	session.room_loot.reset()
-
-
-func _configure_room_loot(room: Dictionary) -> Dictionary:
-	if content_registry == null or content_registry.early_item_registry == null:
-		session.room_loot.reset()
-		return {"ok": false, "error": "loot_item_registry_unavailable"} if room.has("loot_slots") else {"ok": true, "error": "", "enabled": false}
-	var placement_room: Variant = scene_runtime if scene_runtime != null and scene_runtime.is_ready() else actor_registry
-	var placement_port := MainLootPlacementPortScript.new()
-	var placement_bound: Dictionary = placement_port.configure(placement_room)
-	if not bool(placement_bound.get("ok", false)):
-		session.room_loot.reset()
-		return placement_bound
-	return session.room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry, placement_port)
-
-
 func spawn_room_loot_for_source(source: String, source_entity_id: int, position: Vector2) -> Dictionary:
-	return session.room_loot.spawn_for_source(sim_tick, source, source_entity_id, position)
+	return session.spawn_room_loot_for_source(source, source_entity_id, position)
 
 
 func request_loot_pickup(loot_entity_id: String) -> Dictionary:
-	return session.room_loot.request_pickup(sim_tick, in_arena, battle_over, battle_victory, loot_entity_id)
+	return session.request_loot_pickup(loot_entity_id)
 
 
 func process_room_loot_pickups_tick() -> void:
-	var player := player_combat_state.snapshot(sim_tick)
-	var receipts_before: Array = (session.room_loot.snapshot().get("pickup_receipts", []) as Array).duplicate(true)
-	session.room_loot.process_pickups(sim_tick, float(player.get("player_health", 0.0)), player.player_position, battle_over, battle_victory)
-	var receipts_after: Array = session.room_loot.snapshot().get("pickup_receipts", [])
-	if receipts_after.size() > receipts_before.size():
-		var receipt_value: Variant = receipts_after[receipts_after.size() - 1]
-		if receipt_value is Dictionary and bool((receipt_value as Dictionary).get("ok", false)):
-			session.record_event(RoomPresentationEvent.input_feedback("Loot picked up · Added to rewards on exit", sim_tick))
-		elif receipt_value is Dictionary:
-			session.record_event(RoomPresentationEvent.input_feedback("Loot not picked up · %s" % String({"loot_out_of_range": "Too far away; move closer and press F", "loot_pickup_already_queued": "Pickup requested", "loot_pickup_window_closed": "Pickup window closed"}.get(String((receipt_value as Dictionary).get("error", "")), "Request expired")), sim_tick))
+	session.process_room_loot_pickups_tick()
 
 
 func settle_room_loot(outcome: String) -> Dictionary:
-	if outcome not in ["victory", "defeat", "abandoned"]:
-		return {"ok": false, "error": "invalid_loot_outcome"}
-	return session.room_loot.settle(outcome)
+	return session.settle_room_loot(outcome)
 
 
 func _load_test_room_fixture() -> Dictionary:
@@ -1165,10 +1059,7 @@ func _allocate_entity_id() -> int:
 
 
 func _framework_room_error() -> String:
-	if framework_room.is_empty():
-		return ""
-	ensure_room_catalog()
-	return EncounterDirectorScript.validate_room(framework_room, room_catalog)
+	return session.framework_room_error()
 
 
 func _semantic_state_hash(result: String) -> String:

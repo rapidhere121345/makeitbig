@@ -18,6 +18,11 @@ const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.
 const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
 const CombatSystemScript := preload("res://src/systems/combat_system.gd")
 const CombatSimulationScript := preload("res://src/systems/combat_simulation.gd")
+const BuildResolution := preload("res://src/game/application/build_resolution.gd")
+const CombatStatsSnapshotScript := preload("res://src/systems/combat_stats_snapshot.gd")
+const EncounterDirectorScript := preload("res://src/game/encounter_director.gd")
+const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
+const RoomCatalogScript := preload("res://src/runtime/world/room_catalog.gd")
 const CombatCommandProtocolScript := preload("res://src/systems/combat_command_protocol.gd")
 const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
 
@@ -49,6 +54,9 @@ var locked_build: Dictionary = {}
 var in_arena: bool = false
 var elapsed: float = 0.0
 var battle_report: String = ""
+## Stability prediction of the proxy build for this contract ("manual" in
+## Manual mode, "unknown" before a contract starts).
+var proxy_prediction: String = "unknown"
 var command_sequence: int = 0
 var last_command_receipts: Array[Dictionary] = []
 var last_loot_pickup_command_receipt: Dictionary = {}
@@ -358,6 +366,177 @@ func fail_automation_smoke(reason: String) -> void:
 	automation_smoke_failure = reason
 	room_rules.fail(reason)
 	battle_report = String(room_rules.snapshot().report)
+
+
+## Creates the room catalog on first use.
+func ensure_room_catalog() -> void:
+	if room_catalog == null:
+		room_catalog = RoomCatalogScript.new()
+
+
+## Authored-room validation error for the framework room ("" when valid).
+func framework_room_error() -> String:
+	if framework_room.is_empty():
+		return ""
+	ensure_room_catalog()
+	return EncounterDirectorScript.validate_room(framework_room, room_catalog)
+
+
+## Freezes the rule inputs of the contract: the resolved build (or the
+## calibrated preset model), its payload, probability and targeting range.
+func freeze_room_build() -> void:
+	if BuildResolution.is_valid_resolved_build(framework_resolved_build):
+		locked_build = framework_resolved_build.duplicate(true)
+		locked_build["skills"] = (framework_active_build.get("skills", [String(locked_build.get("skill_id", "piercing_arrow"))]) as Array).duplicate()
+	else:
+		# The diagnostic model keeps its historical calibrated generation count;
+		# its gameplay range remains the old Main AUTO_RANGE, frozen for Rules.
+		var equipped: Dictionary = content_registry.preset_equipped_parameters
+		var preset_p := float(content_registry.presets[selected_preset].p)
+		var model: Dictionary = PiercingArrowModel.evaluate(preset_p, float(equipped.shared_lifetime), float(equipped.distance), float(equipped.speed), float(equipped.minimum_turn_time), true, true)
+		var events: BigValue = model.total_events
+		locked_build = {
+			"skills": ["piercing_arrow"], "talent_capabilities": {},
+			"final_parameters": {"p": preset_p, "T": float(equipped.shared_lifetime), "d": AUTO_RANGE, "v": float(equipped.speed), "turn": float(equipped.minimum_turn_time), "damage": BASE_PAYLOAD, "max_health": 100.0},
+			"total_events": {"layer": events.layer, "magnitude": events.magnitude},
+			"total_events_float": model.total_events_float, "generation_count": model.g,
+			"R": model.R, "generation_time": model.generation_time, "growth_classification": model.state,
+		}
+	var parameters: Dictionary = locked_build.final_parameters
+	locked_p = float(parameters.p)
+	locked_payload = float(parameters.damage)
+	locked_targeting_distance = float(parameters.d)
+
+
+## Applies the room's combat-stat overlay to the frozen build.
+func apply_room_combat_stats() -> Dictionary:
+	if not framework_room.has("combat_stats"):
+		return {"ok": true, "error": "", "enabled": false}
+	var authored_room_id := room_id if not room_id.is_empty() else String(framework_room.get("room_id", framework_room.get("id", "")))
+	var result := CombatStatsSnapshotScript.from_room_overlay(locked_build, framework_room.get("combat_stats"), authored_room_id)
+	if not bool(result.get("ok", false)):
+		return result
+	var stats: Variant = result.get("value", null)
+	if not stats is CombatStatsSnapshot:
+		return {"ok": false, "error": "invalid_room_combat_stats_snapshot"}
+	locked_build["combat_stats"] = stats.snapshot()
+	return {"ok": true, "error": "", "enabled": true, "combat_stats": locked_build["combat_stats"].duplicate(true)}
+
+
+## Installs the Auto proxy build (or resets the proxy for Manual) and starts
+## the proxy contract. Returns the "Deployment blocked" reason, or "" on
+## success; `proxy_prediction` receives the stability prediction.
+func begin_proxy_contract() -> String:
+	proxy_runtime.end_contract()
+	if selected_mode == "Auto":
+		var proxy_install: Dictionary = proxy_runtime.install_resolved(
+			framework_resolved_proxy_build,
+			"nearest_enemy"
+		)
+		if not bool(proxy_install.get("ok", false)):
+			return "Deployment blocked: proxy_%s" % String(proxy_install.get("error", "invalid_build"))
+		var proxy_start: Dictionary = proxy_intent_system.begin_contract(framework_resolved_proxy_build)
+		if not bool(proxy_start.get("ok", false)):
+			proxy_runtime.end_contract()
+			return "Deployment blocked: proxy_%s" % String(proxy_start.get("error", "invalid_initial_state"))
+	else:
+		proxy_intent_system.reset()
+	var contract_start: Dictionary = proxy_runtime.begin_contract(selected_mode.to_lower())
+	if not bool(contract_start.get("ok", false)):
+		return "Deployment blocked: %s" % String(contract_start.get("error", "unknown error"))
+	var requirements := {
+		"perception": {"target_count": 1},
+		"movement": {"pathing": 1.0, "range_control": 1.0},
+		"execution": {"skill_count": 1, "timing": 1.0},
+		"memory": {"target_memory": 1, "rotation_steps": 1},
+	}
+	proxy_prediction = proxy_runtime.predict(requirements) if selected_mode == "Auto" else "manual"
+	return ""
+
+
+## Authority resets of a contract start: the live flag, room rules, loot, command
+## receipts, event stream, run clock, and any presentation events still pending
+## from before the reset.
+func reset_for_contract() -> void:
+	in_arena = true
+	room_rules.reset()
+	room_loot.reset()
+	command_sequence = 0
+	last_command_receipts.clear()
+	last_loot_pickup_command_receipt.clear()
+	combat_event_stream.reset()
+	automation_smoke_failure = ""
+	room_entry_start_tick = 0
+	elapsed = 0.0
+	_presentation_events = []
+
+
+## Idle room: no contract running, room rules and loot cleared.
+func reset_idle() -> void:
+	in_arena = false
+	room_rules.reset()
+	room_loot.reset()
+	_presentation_events = []
+
+
+## Ends the proxy contract and clears the proxy intent state.
+func end_proxy_contract() -> void:
+	if proxy_runtime != null:
+		proxy_runtime.end_contract()
+	if proxy_intent_system != null:
+		proxy_intent_system.reset()
+
+
+## Starts a new wave: the actor registry identity is re-derived and the combat
+## event stream starts over.
+func begin_wave_reset() -> void:
+	actor_registry_instance_id = ""
+	if combat_event_stream != null:
+		combat_event_stream.reset()
+
+
+## Configures the room's loot slots against the mounted room's (or the actor
+## registry's) spatial placement.
+func configure_room_loot(room: Dictionary) -> Dictionary:
+	if content_registry == null or content_registry.early_item_registry == null:
+		room_loot.reset()
+		return {"ok": false, "error": "loot_item_registry_unavailable"} if room.has("loot_slots") else {"ok": true, "error": "", "enabled": false}
+	var placement_room: Variant = scene_runtime if scene_runtime != null and scene_runtime.is_ready() else actor_registry
+	var placement_port := MainLootPlacementPortScript.new()
+	var placement_bound: Dictionary = placement_port.configure(placement_room)
+	if not bool(placement_bound.get("ok", false)):
+		room_loot.reset()
+		return placement_bound
+	return room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry, placement_port)
+
+
+func spawn_room_loot_for_source(source: String, source_entity_id: int, position: Vector2) -> Dictionary:
+	return room_loot.spawn_for_source(sim_tick, source, source_entity_id, position)
+
+
+func request_loot_pickup(loot_entity_id: String) -> Dictionary:
+	return room_loot.request_pickup(sim_tick, in_arena, is_battle_over(), is_battle_victory(), loot_entity_id)
+
+
+## Commits the queued pickups at the post-movement phase and logs the player
+## feedback for the newest receipt.
+func process_room_loot_pickups_tick() -> void:
+	var player := player_combat_state.snapshot(sim_tick)
+	var receipts_before: Array = (room_loot.snapshot().get("pickup_receipts", []) as Array).duplicate(true)
+	room_loot.process_pickups(sim_tick, float(player.get("player_health", 0.0)), player.player_position, is_battle_over(), is_battle_victory())
+	var receipts_after: Array = room_loot.snapshot().get("pickup_receipts", [])
+	if receipts_after.size() > receipts_before.size():
+		var receipt_value: Variant = receipts_after[receipts_after.size() - 1]
+		if receipt_value is Dictionary and bool((receipt_value as Dictionary).get("ok", false)):
+			record_event(RoomPresentationEvent.input_feedback("Loot picked up · Added to rewards on exit", sim_tick))
+		elif receipt_value is Dictionary:
+			record_event(RoomPresentationEvent.input_feedback("Loot not picked up · %s" % String({"loot_out_of_range": "Too far away; move closer and press F", "loot_pickup_already_queued": "Pickup requested", "loot_pickup_window_closed": "Pickup window closed"}.get(String((receipt_value as Dictionary).get("error", "")), "Request expired")), sim_tick))
+
+
+func settle_room_loot(outcome: String) -> Dictionary:
+	if outcome not in ["victory", "defeat", "abandoned"]:
+		return {"ok": false, "error": "invalid_loot_outcome"}
+	return room_loot.settle(outcome)
 
 
 ## Creates the combat system on first use.

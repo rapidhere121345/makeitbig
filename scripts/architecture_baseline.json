@@ -53,7 +53,7 @@
     "src/game/contract_run_controller.gd": 14,
     "src/game/encounter_director.gd": 6,
     "src/game/game_root.gd": 9,
-    "src/game/main.gd": 3,
+    "src/game/main.gd": 2,
     "src/game/main_loot_placement_port.gd": 1,
     "src/game/ports/main_encounter_room_port.gd": 2,
     "src/game/root/auto_smoke_harness.gd": 2,
