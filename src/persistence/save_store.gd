@@ -7,9 +7,10 @@ extends RefCounted
 ## clock and never interprets exit-time fields, so offline progress belongs to a
 ## separate, explicitly invoked game system rather than the persistence layer.
 
+const CanonicalJsonScript := preload("res://src/core/canonical_json.gd")
 const FORMAT_VERSION: int = 1
 const CHECKSUM_ALGORITHM: String = "sha256"
-const MAX_SAFE_JSON_INTEGER: int = 9007199254740991
+const MAX_SAFE_JSON_INTEGER: int = CanonicalJsonScript.MAX_SAFE_JSON_INTEGER
 const SLOT_NAMES: Array[String] = ["a", "b"]
 
 var directory_path: String
@@ -20,7 +21,7 @@ func _init(p_directory_path: String = "user://saves") -> void:
 
 
 func save(payload: Variant) -> Dictionary:
-	var payload_encoding: Dictionary = _encode_json(payload)
+	var payload_encoding: Dictionary = CanonicalJsonScript.encode(payload)
 	if not bool(payload_encoding.ok):
 		return {"ok": false, "error": str(payload_encoding.error)}
 
@@ -40,7 +41,7 @@ func save(payload: Variant) -> Dictionary:
 		"generation": generation,
 		"payload": payload,
 	}
-	var protected_encoding: Dictionary = _encode_json(protected_document)
+	var protected_encoding: Dictionary = CanonicalJsonScript.encode(protected_document)
 	if not bool(protected_encoding.ok):
 		return {"ok": false, "error": str(protected_encoding.error)}
 	var checksum: String = _sha256(str(protected_encoding.text))
@@ -49,7 +50,7 @@ func save(payload: Variant) -> Dictionary:
 
 	var envelope: Dictionary = protected_document.duplicate(true)
 	envelope["checksum"] = checksum
-	var envelope_encoding: Dictionary = _encode_json(envelope)
+	var envelope_encoding: Dictionary = CanonicalJsonScript.encode(envelope)
 	if not bool(envelope_encoding.ok):
 		return {"ok": false, "error": str(envelope_encoding.error)}
 	var write_error: String = _write_slot(target_name, str(envelope_encoding.text))
@@ -107,8 +108,7 @@ func delete_all() -> Dictionary:
 
 
 static func canonical_json(value: Variant) -> String:
-	var encoded: Dictionary = _encode_json(value)
-	return str(encoded.text) if bool(encoded.ok) else ""
+	return CanonicalJsonScript.text(value)
 
 
 func _read_slots() -> Array[Dictionary]:
@@ -150,7 +150,7 @@ func _read_slot(slot_name: String) -> Dictionary:
 		"generation": int(generation_value),
 		"payload": envelope.payload,
 	}
-	var protected_encoding: Dictionary = _encode_json(protected_document)
+	var protected_encoding: Dictionary = CanonicalJsonScript.encode(protected_document)
 	if not bool(protected_encoding.ok):
 		return invalid
 	if _sha256(str(protected_encoding.text)) != expected_checksum:
@@ -216,77 +216,6 @@ static func _delete_target_names() -> Array[String]:
 		names.append("save_%s.json" % slot_name)
 		names.append("save_%s.json.tmp" % slot_name)
 	return names
-
-
-static func _encode_json(value: Variant) -> Dictionary:
-	match typeof(value):
-		TYPE_NIL:
-			return {"ok": true, "text": "null"}
-		TYPE_BOOL:
-			return {"ok": true, "text": "true" if bool(value) else "false"}
-		TYPE_INT:
-			if absi(int(value)) > MAX_SAFE_JSON_INTEGER:
-				return {"ok": false, "error": "integer exceeds JSON's exact range"}
-			return {"ok": true, "text": str(int(value))}
-		TYPE_FLOAT:
-			var number: float = float(value)
-			if is_nan(number) or is_inf(number):
-				return {"ok": false, "error": "non-finite numbers are not valid save data"}
-			if number == 0.0:
-				return {"ok": true, "text": "0"}
-			if absf(number) <= float(MAX_SAFE_JSON_INTEGER) and floor(number) == number:
-				return {"ok": true, "text": str(int(number))}
-			return {"ok": true, "text": JSON.stringify(number)}
-		TYPE_STRING, TYPE_STRING_NAME:
-			return {"ok": true, "text": _encode_string(str(value))}
-		TYPE_ARRAY:
-			var parts: Array[String] = []
-			for item in value:
-				var item_encoding: Dictionary = _encode_json(item)
-				if not bool(item_encoding.ok):
-					return item_encoding
-				parts.append(str(item_encoding.text))
-			return {"ok": true, "text": "[" + ",".join(parts) + "]"}
-		TYPE_DICTIONARY:
-			var keys: Array[String] = []
-			for key in value.keys():
-				if typeof(key) != TYPE_STRING and typeof(key) != TYPE_STRING_NAME:
-					return {"ok": false, "error": "save dictionaries require string keys"}
-				keys.append(str(key))
-			keys.sort()
-			var members: Array[String] = []
-			for key in keys:
-				var member_encoding: Dictionary = _encode_json(value[key])
-				if not bool(member_encoding.ok):
-					return member_encoding
-				members.append(_encode_string(key) + ":" + str(member_encoding.text))
-			return {"ok": true, "text": "{" + ",".join(members) + "}"}
-		_:
-			return {"ok": false, "error": "unsupported save-data type: %s" % type_string(typeof(value))}
-
-
-static func _encode_string(value: String) -> String:
-	var result: String = "\""
-	for index in value.length():
-		var codepoint: int = value.unicode_at(index)
-		match codepoint:
-			0x08:
-				result += "\\b"
-			0x09:
-				result += "\\t"
-			0x0a:
-				result += "\\n"
-			0x0c:
-				result += "\\f"
-			0x0d:
-				result += "\\r"
-			0x22:
-				result += "\\\""
-			0x5c:
-				result += "\\\\"
-			_:
-				result += "\\u%04x" % codepoint if codepoint < 0x20 else value.substr(index, 1)
-	return result + "\""
 
 
 static func _sha256(value: String) -> String:

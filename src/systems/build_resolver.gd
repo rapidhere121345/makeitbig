@@ -5,7 +5,7 @@ const EarlyRegistry = preload("res://src/content/early_item_registry.gd")
 const ArrowModel = preload("res://src/systems/piercing_arrow_model.gd")
 const TalentBuildScript = preload("res://src/systems/talent_build.gd")
 const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
-const SaveStoreScript = preload("res://src/persistence/save_store.gd")
+const CanonicalJsonScript := preload("res://src/core/canonical_json.gd")
 
 const REQUIRED_PARAMETERS: Array[String] = ["p", "T", "v", "d", "turn", "damage"]
 const OPTIONAL_DEFAULTS := {"critical_chance": 0.0, "max_health": 1.0}
@@ -174,7 +174,7 @@ func resolve(
 	if not (talent_compiled.get("talents", {}) as Dictionary).get("allocated_ids", []).is_empty():
 		fingerprint_payload["talents"] = talent_compiled.talents
 		fingerprint_payload["talent_capabilities"] = talent_compiled.talent_capabilities
-	var build_fingerprint := _sha256(SaveStoreScript.canonical_json(fingerprint_payload))
+	var build_fingerprint := _sha256(CanonicalJsonScript.text(fingerprint_payload))
 	if build_fingerprint.is_empty():
 		return _error_result(["build: could not calculate build fingerprint"])
 	return {
