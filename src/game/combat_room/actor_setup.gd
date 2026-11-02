@@ -25,6 +25,10 @@ const BossHurtboxScript := preload("res://src/runtime/combat/boss_hurtbox.gd")
 const RoomEncounterScript := preload("res://src/runtime/encounter/room_encounter.gd")
 const MainMovementPolicyPortScript := preload("res://src/game/ports/main_movement_policy_port.gd")
 
+## Visual ids the room binds into the presentation projector (the player and
+## the three enemy roles).
+const ACTOR_VISUAL_IDS: Array[String] = ["ranger.south.idle", "enemy.melee.idle", "enemy.charger.idle", "enemy.ranged.idle"]
+
 var _main: MainArena
 ## The room authority; read at use time, never cache its replaced members.
 var _session: RoomSession
@@ -62,6 +66,8 @@ func _configure_actor_registry() -> bool:
 		_session.room_combat_port = _main.scene_runtime.get("combat_port")
 		_session.room_encounter_port = _main.scene_runtime.get("encounter_port")
 		if _main.presentation_enabled:
+			# Art boxes are read once here, never while a tick spawns an enemy.
+			_session.actor_art_boxes = _main.actor_art_boxes(ACTOR_VISUAL_IDS)
 			_main.scene_runtime.clear_actor_presentation_bindings()
 			var presentation_ready: Dictionary = _main.scene_runtime.prepare_presentation()
 			if not bool(presentation_ready.get("ok", false)):
@@ -357,11 +363,10 @@ func _bind_boss_production_encounter() -> bool:
 func _bind_runtime_actor_presentation(actor_id: String, visual_id: String, rank: int) -> bool:
 	if _main.scene_runtime == null or not _main.presentation_enabled:
 		return true
-	var world_view: Variant = _main.presentation.world_view if _main.presentation != null else null
-	if world_view == null or not world_view.has_method("sprite_art_box"):
+	if not _session.actor_art_boxes.has(visual_id):
 		push_error("presentation_art_box_unavailable:%s" % visual_id)
 		return false
-	var world_box: Rect2 = world_view.sprite_art_box(visual_id, Vector2.ZERO)
+	var world_box: Rect2 = _session.actor_art_boxes[visual_id]
 	if world_box.size.x <= 0.0 or world_box.size.y <= 0.0:
 		push_error("presentation_art_box_missing:%s" % visual_id)
 		return false

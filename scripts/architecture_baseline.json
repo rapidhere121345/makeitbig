@@ -48,7 +48,7 @@
     "src/runtime/world/scene_runtime.gd": 1
   },
   "string_dispatch": {
-    "src/game/combat_room/actor_setup.gd": 7,
+    "src/game/combat_room/actor_setup.gd": 6,
     "src/game/combat_room/room_terminal.gd": 1,
     "src/game/combat_room_runtime.gd": 13,
     "src/game/combat_state_snapshot_builder.gd": 5,

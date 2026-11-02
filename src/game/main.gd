@@ -1460,6 +1460,19 @@ func gameplay_snapshot() -> Dictionary:
 	return PresentationSnapshot.capture(values)
 
 
+## World-pixel art boxes of the requested actor visuals, read from the world
+## view once at room setup so tick-time spawns never query the presentation.
+## Visuals the world view cannot describe are left out.
+func actor_art_boxes(visual_ids: Array[String]) -> Dictionary:
+	var boxes: Dictionary = {}
+	var world_view = presentation.world_view if presentation != null else null
+	if world_view == null:
+		return boxes
+	for visual_id: String in visual_ids:
+		boxes[visual_id] = world_view.sprite_art_box(visual_id, Vector2.ZERO)
+	return boxes
+
+
 func refresh_presentation(delta: float = 0.0) -> void:
 	# Ticks stepped without _simulate_tick (tests, tools) leave events pending.
 	apply_presentation_events()

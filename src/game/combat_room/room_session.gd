@@ -97,6 +97,10 @@ var layout_id: String = "rectangle_arena"
 var objective_id: String = "clear"
 var room_entry_start_tick: int = 0
 var room_drop_tags: Array = []
+## Art boxes (world pixels) of the actor visuals the room binds into the
+## presentation projector, captured by the view when the room is configured so
+## spawning during a tick never queries the presentation. Keyed by visual id.
+var actor_art_boxes: Dictionary = {}
 var framework_seed: int = FATE_SEED
 
 
