@@ -3,9 +3,11 @@ extends RefCounted
 
 ## The single place a player class lives (docs/rebuild/ROOM_SESSION_DESIGN.md,
 ## "ClassKit"). This is the room half: the class-specific rules RoomSession
-## needs while a contract runs. The progression half (talents, growth model
-## outside the room) and the combat-resolution half (attack shapes, flights,
-## hash slice) are separate seams added in later steps.
+## needs while a contract runs, including its slice of the state hash. The
+## progression half (talents, growth model outside the room) is
+## ClassProgression (src/systems/class_progression.gd). Combat resolution
+## (CombatSystem's arrow lifecycle) is still the Ranger's own code and gets a
+## kit seam when the second class is built.
 ##
 ## A kit holds no room state and no RoomSession reference: the session owns
 ## the kit, so a back-reference would form a RefCounted cycle. Every method that
@@ -71,3 +73,12 @@ func resolve_action_impact(_session: RoomSession, _action_event: Dictionary, _ac
 ## the session adopts the combat system's report for it.
 func owns_attack_event(_event: Dictionary) -> bool:
 	return false
+
+
+## The class-owned keys of the authoritative state hash, merged at the top level
+## of CombatStateSnapshotBuilder's state. `player` is the player domain snapshot
+## and `outcome` the combat system's outcome snapshot of the same tick. Keys must
+## not collide with the builder's generic keys; the codec sorts keys, so moving
+## a key between the builder and a kit leaves the hash unchanged.
+func hash_slice(_player: Dictionary, _outcome: Dictionary) -> Dictionary:
+	return {}

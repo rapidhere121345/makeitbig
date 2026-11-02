@@ -73,6 +73,17 @@ static func hash_safe(value: Variant) -> Variant:
 			return value
 
 
+## Canonical authority encoding of a BigValue: integer layer and a
+## fixed-precision magnitude. Null collapses to the zero value.
+static func big_value_state(value: Variant) -> Dictionary:
+	if value == null:
+		return {"layer": 0, "magnitude": "0"}
+	return {
+		"layer": value.layer,
+		"magnitude": String.num(value.magnitude, 12),
+	}
+
+
 static func sha256_canonical(value: Variant) -> String:
 	var canonical := SaveStoreScript.canonical_json(value)
 	var context := HashingContext.new()

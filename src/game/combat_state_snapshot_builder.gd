@@ -7,9 +7,12 @@ extends RefCounted
 ## neither should also define which fields constitute gameplay state. This
 ## service reads the runtime after a committed tick, orders entity collections,
 ## preserves the existing replay geometry encoding and delegates the final byte ordering to CombatStateCodec.
-## Presentation-only fields are intentionally absent from this snapshot.
+## Class-owned keys are not listed here: the runtime's kit provides them as its
+## `hash_slice`, merged at the top level. Presentation-only fields are
+## intentionally absent from this snapshot.
 
 const CombatStateCodecScript := preload("res://src/game/combat_state_codec.gd")
+const RangerKitScript := preload("res://src/game/classes/ranger/ranger_kit.gd")
 
 
 static func hash_runtime(runtime: Object, result: String) -> String:
@@ -142,8 +145,8 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"maximum_range_milli": roundi(projectile.maximum_range * 1000.0),
 			"speed_milli": roundi(projectile.speed * 1000.0),
 			"ordinary_damage_milli": roundi(projectile.ordinary_damage * 1000.0),
-			"aggregate_damage": _big_value_state(projectile.aggregate_damage),
-			"event_count": _big_value_state(projectile.event_count),
+			"aggregate_damage": CombatStateCodecScript.big_value_state(projectile.aggregate_damage),
+			"event_count": CombatStateCodecScript.big_value_state(projectile.event_count),
 			"payload_milli": roundi(projectile.payload * 1000.0),
 		})
 
@@ -163,35 +166,17 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"player": geometry_callback.call(14.0),
 			"enemy": geometry_callback.call(16.0),
 		}),
-		"boss_damage": _big_value_state(boss_damage),
+		"boss_damage": CombatStateCodecScript.big_value_state(boss_damage),
 		"boss_health_milli": roundi(boss.health * 1000.0) if boss != null else -1,
 		"boss_x_millipixels": roundi(boss.position.x * 1000.0) if boss != null else 0,
 		"boss_y_millipixels": roundi(boss.position.y * 1000.0) if boss != null else 0,
 		"battle_victory": bool(_runtime_value(runtime, "battle_victory", false)),
 		"action_timeline": CombatStateCodecScript.hash_safe(player.get("timeline", {})),
-		"attack_origins": CombatStateCodecScript.hash_safe(player.get("attack_origins", {})),
-		"casts": int(outcome.shots),
-		"arrow_hits": int(outcome.arrow_hits),
 		"command_sequence": int(_runtime_value(runtime, "command_sequence", 0)),
 		"command_receipts": CombatStateCodecScript.hash_safe(_runtime_value(runtime, "last_command_receipts", [])),
 		"combat_events": CombatStateCodecScript.hash_safe(_object_snapshot(combat_event_stream, "snapshot")),
 		"content_hash": String(content_callback.call()),
 		"contract_wins": int(_runtime_value(runtime, "contract_wins", 0)),
-		"cooldowns": {
-			"attack": int(player.get("attack_cooldown_ticks", 0)),
-			"dash": int(player.get("dash_cooldown_ticks", 0)),
-			"dash_remaining": int(player.get("dash_remaining_ticks", 0)),
-			"dodge": int(player.get("dodge_cooldown_ticks", 0)),
-			"dodge_remaining": int(player.get("dodge_remaining_ticks", 0)),
-			"hunter_mark": int(player.get("hunter_mark_cooldown_ticks", 0)),
-		},
-		"dash_direction_x_milli": roundi((player.get("dash_direction", Vector2.RIGHT) as Vector2).x * 1000.0),
-		"dash_direction_y_milli": roundi((player.get("dash_direction", Vector2.RIGHT) as Vector2).y * 1000.0),
-		"dash_started_tick": int(player.get("dash_started_tick", -1)),
-		"dodge_direction_x_milli": roundi((player.get("dodge_direction", Vector2.RIGHT) as Vector2).x * 1000.0),
-		"dodge_direction_y_milli": roundi((player.get("dodge_direction", Vector2.RIGHT) as Vector2).y * 1000.0),
-		"dodge_started_tick": int(player.get("dodge_started_tick", -1)),
-		"mobility_input_buffer": CombatStateCodecScript.hash_safe(player.get("mobility_input_buffer", {})),
 		"defeated": int(outcome.defeated),
 		"enemies": enemy_state,
 		"elite_barrier_active": bool(_runtime_value(runtime, "elite_barrier_active", false)),
@@ -220,10 +205,6 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"edge_target_entity_id": int(_runtime_value(runtime, "attack_requested_target_entity_id", 0)),
 			"pointer_target_entity_id": int(_runtime_value(runtime, "manual_pointer_target_entity_id", 0)),
 		},
-		"marked_entity_id": int(player.get("marked_entity_id", 0)),
-		"hunter_mark_candidate_entity_id": int(player.get("hunter_mark_candidate_entity_id", 0)),
-		"hunter_mark_candidate_expires_tick": int(player.get("hunter_mark_candidate_expires_tick", 0)),
-		"hunter_mark_expires_tick": int(player.get("hunter_mark_expires_tick", 0)),
 		"next_entity_id": int(_runtime_value(runtime, "next_entity_id", 0)),
 		"next_enemy_action_instance_id": int(_runtime_value(runtime, "next_enemy_action_instance_id", 0)),
 		"payload_milli": roundi(float(_runtime_value(runtime, "locked_payload", 0.0)) * 1000.0),
@@ -254,18 +235,15 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			var velocity: Vector2 = player.get("player_velocity", Vector2.ZERO)
 			state["player_velocity_x_milli"] = roundi(velocity.x * 1000.0)
 			state["player_velocity_y_milli"] = roundi(velocity.y * 1000.0)
-	var talent_capabilities: Variant = player.get("talent_capabilities", {})
-	if talent_capabilities is Dictionary and not (talent_capabilities as Dictionary).is_empty():
-		state["talent_runtime"] = {
-			"first_critical_bonus_used": bool(player.get("first_critical_bonus_used", false)),
-			"three_skill_sequence_stage": int(player.get("three_skill_sequence_stage", 0)),
-			"three_skill_bonus_ready": bool(player.get("three_skill_bonus_ready", false)),
-			"retained_arrow_damage": _big_value_state(player.get("retained_arrow_damage")),
-			"retained_arrow_ordinary_damage": String.num(float(player.get("retained_arrow_ordinary_damage", 0.0)), 12),
-		}
 	var room_loot_value: Variant = _runtime_value(runtime, "room_loot_snapshot", {})
 	if room_loot_value is Dictionary and bool((room_loot_value as Dictionary).get("enabled", false)):
 		state["room_loot"] = CombatStateCodecScript.hash_safe(room_loot_value)
+	var kit := _state_kit(runtime)
+	var kit_slice: Dictionary = kit.hash_slice(player, outcome)
+	for key: String in kit_slice:
+		if state.has(key):
+			push_error("combat_state_snapshot_builder_kit_key_collision:%s" % key)
+	state.merge(kit_slice, false)
 	return state
 
 
@@ -311,10 +289,14 @@ static func _object_snapshot(value: Variant, method: String) -> Dictionary:
 	return snapshot.duplicate(true) if snapshot is Dictionary else {}
 
 
-static func _big_value_state(value: Variant) -> Dictionary:
-	if value == null:
-		return {"layer": 0, "magnitude": "0"}
-	return {
-		"layer": value.layer,
-		"magnitude": String.num(value.magnitude, 12),
-	}
+## The runtime's class kit owns the class slice of the hash. A mounted room
+## forwards `session`, so the slice comes from the session's kit; a bare
+## runtime (test doubles) falls back to the Ranger kit so the hash is
+## unchanged.
+static func _state_kit(runtime: Object) -> ClassKit:
+	var session: Variant = _runtime_value(runtime, "session")
+	if session is Object:
+		var kit: Variant = session.get("kit")
+		if kit is ClassKit:
+			return kit
+	return RangerKitScript.new()

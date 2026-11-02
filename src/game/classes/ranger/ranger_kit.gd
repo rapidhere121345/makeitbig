@@ -9,6 +9,7 @@ extends ClassKit
 ## replay contract.
 
 const BuildResolution := preload("res://src/game/application/build_resolution.gd")
+const CombatStateCodecScript := preload("res://src/game/combat_state_codec.gd")
 
 
 func class_id() -> String:
@@ -132,6 +133,49 @@ func resolve_action_impact(session: RoomSession, action_event: Dictionary, actio
 ## True when a combat event stream entry is one of this kit's own attacks.
 func owns_attack_event(event: Dictionary) -> bool:
 	return String(event.get("type", "")) == "attack_resolved" and String(event.get("source_id", "")) == "ranger/piercing_arrow"
+
+
+## The Ranger's keys of the authoritative state hash, merged at the top level
+## of CombatStateSnapshotBuilder's state (docs/rebuild/ROOM_SESSION_DESIGN.md,
+## "ClassKit"): cooldowns and mobility, hunter's mark targets, attack origins,
+## cast/hit totals and the talent runtime. The value expressions are the ones
+## the snapshot builder used before the kit seam; the codec sorts keys, so the
+## replay hash is unchanged.
+func hash_slice(player: Dictionary, outcome: Dictionary) -> Dictionary:
+	var slice := {
+		"attack_origins": CombatStateCodecScript.hash_safe(player.get("attack_origins", {})),
+		"casts": int(outcome.shots),
+		"arrow_hits": int(outcome.arrow_hits),
+		"cooldowns": {
+			"attack": int(player.get("attack_cooldown_ticks", 0)),
+			"dash": int(player.get("dash_cooldown_ticks", 0)),
+			"dash_remaining": int(player.get("dash_remaining_ticks", 0)),
+			"dodge": int(player.get("dodge_cooldown_ticks", 0)),
+			"dodge_remaining": int(player.get("dodge_remaining_ticks", 0)),
+			"hunter_mark": int(player.get("hunter_mark_cooldown_ticks", 0)),
+		},
+		"dash_direction_x_milli": roundi((player.get("dash_direction", Vector2.RIGHT) as Vector2).x * 1000.0),
+		"dash_direction_y_milli": roundi((player.get("dash_direction", Vector2.RIGHT) as Vector2).y * 1000.0),
+		"dash_started_tick": int(player.get("dash_started_tick", -1)),
+		"dodge_direction_x_milli": roundi((player.get("dodge_direction", Vector2.RIGHT) as Vector2).x * 1000.0),
+		"dodge_direction_y_milli": roundi((player.get("dodge_direction", Vector2.RIGHT) as Vector2).y * 1000.0),
+		"dodge_started_tick": int(player.get("dodge_started_tick", -1)),
+		"mobility_input_buffer": CombatStateCodecScript.hash_safe(player.get("mobility_input_buffer", {})),
+		"marked_entity_id": int(player.get("marked_entity_id", 0)),
+		"hunter_mark_candidate_entity_id": int(player.get("hunter_mark_candidate_entity_id", 0)),
+		"hunter_mark_candidate_expires_tick": int(player.get("hunter_mark_candidate_expires_tick", 0)),
+		"hunter_mark_expires_tick": int(player.get("hunter_mark_expires_tick", 0)),
+	}
+	var talent_capabilities: Variant = player.get("talent_capabilities", {})
+	if talent_capabilities is Dictionary and not (talent_capabilities as Dictionary).is_empty():
+		slice["talent_runtime"] = {
+			"first_critical_bonus_used": bool(player.get("first_critical_bonus_used", false)),
+			"three_skill_sequence_stage": int(player.get("three_skill_sequence_stage", 0)),
+			"three_skill_bonus_ready": bool(player.get("three_skill_bonus_ready", false)),
+			"retained_arrow_damage": CombatStateCodecScript.big_value_state(player.get("retained_arrow_damage")),
+			"retained_arrow_ordinary_damage": String.num(float(player.get("retained_arrow_ordinary_damage", 0.0)), 12),
+		}
+	return slice
 
 
 ## Records the Piercing Arrow receipt: the report text is authority, the input
