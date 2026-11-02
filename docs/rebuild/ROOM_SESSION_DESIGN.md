@@ -1,6 +1,6 @@
 # Room Session Design (redesign Step 2-4)
 
-Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 4 are implemented.
+Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 5 are implemented.
 
 ## Problem
 
@@ -139,9 +139,24 @@ becomes `kit.actor_spec().id`.
    helpers, `MainCombatRoomPort` and `MainArena`'s per-tick methods read plain
    session fields (and the new `sim_tick`) directly, and the three frozen
    constants live in `RoomSession` with `MainArena` re-exporting them.
-5. Cut presentation out of the tick: commands come from a source the view hands
-   in; feedback/impact/corpse calls become session events drained by the view;
-   `gameplay_snapshot` moves to the view.
+5. Cut presentation out of the tick. Done: the collect phase calls a
+   `RoomCommandIntake` (`session.command_intake`; `MainCommandIntake` is the
+   view-side implementation owning the input adapter and the snapshot read, called
+   at the same phase so timing is unchanged) and the auto-loot search reads
+   authority state. Tick feedback (cast receipts, input hints, action/request
+   bookkeeping, impact traces, corpses) is appended to the session as
+   `RoomPresentationEvent` records (`session.record_event()`) and
+   `MainArena._simulate_tick()` drains and applies them through
+   `MainPresentationEvents` right after `session.step()`, before the refresh.
+   The per-command attack source is resolved by the view when it applies the
+   event; it only feeds feedback request sources and the out-of-range hint, never
+   authority or the state hash. Actor art boxes are captured at room setup
+   (`session.actor_art_boxes`) so tick-time spawns do not query the world view.
+   Input status reports go through `session.set_status_report()`.
+   `gameplay_snapshot()` stays on `MainArena` until item 6. The kernel's one-way
+   snapshot publication and the `scene_runtime.bind_actor_presentation()` call
+   for reinforcement spawns still run in the tick through the runtime's
+   presentation port; they are not `src/presentation` reads.
 6. Extract `RoomView`; `MainArena` becomes the view script plus compatibility
    getters. `CombatRoomRuntime` talks to `session` with typed calls.
 7. Introduce `ClassKit` with `RangerKit` as a wrapper; keep identical hash keys.
