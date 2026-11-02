@@ -9,14 +9,15 @@ const Life = preload("res://src/presentation/hamlet_life_animation.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
 const AtmosphereLayerScript = preload("res://src/presentation/scene_atmosphere_layer.gd")
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
-const BACKGROUND_PATH := "res://art/production/p1/world_expansion_v01/town_ground.png"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const BACKGROUND_PATH := ArtSets.WORLD_EXPANSION_V01 + "/town_ground.png"
 const NATIVE_SIZE := Vector2i(640, 360)
 ## A native-size window onto the dry town roads, without resampling the map.
 const GROUND_REGION := Rect2i(448, 144, 640, 360)
 const PLACEMENTS := [
-	{"id":"return.forge", "path":"res://art/production/p1/town_order_v01/forge_west_opaque.png",
+	{"id":"return.forge", "path":ArtSets.TOWN_ORDER_V01 + "/forge_west_opaque.png",
 		"canvas":Vector2i(320,288), "anchor":Vector2i(160,264), "feet":Vector2i(448,272)},
-	{"id":"return.hearth", "path":"res://art/production/p1/generated_world_v02/hearth_opaque.png",
+	{"id":"return.hearth", "path":ArtSets.GENERATED_WORLD_V02 + "/hearth_opaque.png",
 		"canvas":Vector2i(160,176), "anchor":Vector2i(80,160), "feet":Vector2i(160,240)},
 ]
 ## Resident work clips are the same published actors used by the town.
@@ -28,7 +29,7 @@ const RANGER_FEET := Vector2i(176,280)
 const ATMOSPHERE_PRESET := "hearth"
 const ATMOSPHERE_BOUNDS := Rect2(Vector2.ZERO, Vector2(NATIVE_SIZE))
 const HEARTH_LIGHT_FEET := Vector2(160.0, 150.0)
-const NPC_LIFE_DIR := "res://art/production/p1/actors_v02/residents/"
+const NPC_LIFE_DIR := ArtSets.ACTORS_V02 + "/residents/"
 var _errors: Array[String] = []
 var _art_root: Node2D
 var _atmosphere_layer: AtmosphereLayerScript

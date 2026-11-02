@@ -24,17 +24,18 @@ extends RefCounted
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
 ## Shared raw-file and integer-list helpers of the actor atlas readers.
 const ClipReader := preload("res://src/presentation/actor_clip_reader.gd")
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 
 const NATIVE_VIEW := Vector2i(640, 360)
 ## Art pixels are shown at integer 2x throughout this slice.
 const SCALE := 2
 
-const RANGER_ATLAS_PATH := "res://art/production/p1/actors_v02/scene_atlas.json"
-const TARGET_ATLAS_PATH := "res://art/production/p1/actors_v02/legacy_atlas.json"
-const GROUND_ATLAS_PATH := "res://art/production/p1/ground_refine_v01/atlas.json"
-const RANGER_TEXTURE_PATH := "res://art/production/p1/actors_v02/ranger_idle.png"
-const TARGET_TEXTURE_PATH := "res://art/production/p1/actors_v02/legacy_enemies.png"
-const GROUND_TEXTURE_PATH := "res://art/production/p1/ground_refine_v01/ground.png"
+const RANGER_ATLAS_PATH := ArtSets.ACTORS_V02 + "/scene_atlas.json"
+const TARGET_ATLAS_PATH := ArtSets.ACTORS_V02 + "/legacy_atlas.json"
+const GROUND_ATLAS_PATH := ArtSets.GROUND_REFINE_V01 + "/atlas.json"
+const RANGER_TEXTURE_PATH := ArtSets.ACTORS_V02 + "/ranger_idle.png"
+const TARGET_TEXTURE_PATH := ArtSets.ACTORS_V02 + "/legacy_enemies.png"
+const GROUND_TEXTURE_PATH := ArtSets.GROUND_REFINE_V01 + "/ground.png"
 
 const RANGER_FACING_SPRITES := {
 	"east": "ranger.east.idle",

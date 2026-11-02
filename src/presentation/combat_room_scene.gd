@@ -18,11 +18,12 @@ const PaletteScript = preload("res://src/presentation/combat_palette.gd")
 const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
 const Definition := preload("res://src/runtime/world/environment_object_definition.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 
-const PACK_PATH := "res://art/production/p1/world_expansion_v01/assets.json"
+const PACK_PATH := ArtSets.WORLD_EXPANSION_V01 + "/assets.json"
 const SCENES_PATH := "res://content/presentation/combat_room_scenes.json"
 const CATALOG_PATH := "res://content/rooms/combat/room_catalog.json"
-const DRESS_ASSETS_PATH := "res://art/production/p1/world_polish_v01/assets.json"
+const DRESS_ASSETS_PATH := ArtSets.WORLD_POLISH_V01 + "/assets.json"
 const BOUNDARY_BINDING := "combat/movement-boundary"
 const LAYOUT_BOUNDARY_TYPES := {"rectangle_arena": "rect", "corridor": "corridor", "ring": "ring"}
 const LAYOUT_EDGE_STYLES := {"rectangle_arena": "court", "corridor": "causeway", "ring": "ritual"}

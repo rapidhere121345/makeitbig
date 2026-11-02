@@ -4,9 +4,10 @@ extends RefCounted
 ## texture and structure tables. The view owns those tables, the JSON/PNG
 ## readers and view.pending_reason, so each step takes it as its first argument.
 
-const SCENE_ATLAS_PATH: String = "res://art/production/p1/actors_v02/scene_atlas.json"
-const SCENE_LAYOUT_PATH: String = "res://art/production/p1/combat_style_r13/v03/layout.json"
-const LEGACY_ATLAS_PATH: String = "res://art/production/p1/actors_v02/legacy_atlas.json"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const SCENE_ATLAS_PATH: String = ArtSets.ACTORS_V02 + "/scene_atlas.json"
+const SCENE_LAYOUT_PATH: String = ArtSets.COMBAT_STYLE_R13 + "/v03/layout.json"
+const LEGACY_ATLAS_PATH: String = ArtSets.ACTORS_V02 + "/legacy_atlas.json"
 const APPROVED_GROUND_KEY: String = "approved_ground"
 const GROUND_SPRITE_ID: String = "scene.ground"
 ## Only these calibration_v01 sprites are reused read-only; the reworked atlas

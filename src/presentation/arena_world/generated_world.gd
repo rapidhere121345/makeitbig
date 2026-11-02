@@ -7,8 +7,9 @@ extends RefCounted
 ## the sprite/texture tables and pending_reason the loader fills.
 
 const PairedReveal := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 
-const GENERATED_WORLD_PATH := "res://art/production/p1/generated_world_v02/assets.json"
+const GENERATED_WORLD_PATH := ArtSets.GENERATED_WORLD_V02 + "/assets.json"
 const GENERATED_GROUND_ID := "arena_ground"
 ## Pack asset id -> live arena sprite id. The whole-object entries replace
 ## the scene atlas cells; sections.arena.complete must be true.

@@ -3,7 +3,8 @@ extends RefCounted
 ## simulation authority. Drawn below actors, telegraphs and authored scenery.
 const Definition := preload("res://src/runtime/world/environment_object_definition.gd")
 const Grounding := preload("res://src/presentation/grounding_effects.gd")
-const ASSETS := "res://art/production/p1/world_polish_v01/assets.json"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const ASSETS := ArtSets.WORLD_POLISH_V01 + "/assets.json"
 const PLACEMENTS := "res://content/presentation/world_dressing.json"
 const FAMILIES := ["fern", "mushrooms", "votives", "relic"]
 var pending_reason := ""

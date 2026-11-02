@@ -18,15 +18,16 @@ extends RefCounted
 ## all instead of drawing the superseded cell: the superseded pixels are not a
 ## valid substitute.
 
-const ICON_ATLAS_PATH: String = "res://art/production/p1/early_loop_v01/atlas.json"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const ICON_ATLAS_PATH: String = ArtSets.EARLY_LOOP_V01 + "/atlas.json"
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
-const ICON_ATLAS_DIRECTORY: String = "res://art/production/p1/early_loop_v01"
+const ICON_ATLAS_DIRECTORY: String = ArtSets.EARLY_LOOP_V01
 const MARK_SOURCES := {
-	"contract": {"path": "res://art/production/p1/generated_world_v02/board_opaque.png", "size": Vector2i(112, 112)},
-	"loadout": {"path": "res://art/production/p1/town_order_v01/loadout_east_opaque.png", "size": Vector2i(112, 112)},
-	"forge": {"path": "res://art/production/p1/town_order_v01/forge_west_opaque.png", "size": Vector2i(160, 144)},
-	"training": {"path": "res://art/production/p1/generated_world_v02/training_dummy_opaque.png", "size": Vector2i(112, 112)},
-	"proxy": {"path": "res://art/production/p1/generated_world_v02/proxy_opaque.png", "size": Vector2i(112, 112)},
+	"contract": {"path": ArtSets.GENERATED_WORLD_V02 + "/board_opaque.png", "size": Vector2i(112, 112)},
+	"loadout": {"path": ArtSets.TOWN_ORDER_V01 + "/loadout_east_opaque.png", "size": Vector2i(112, 112)},
+	"forge": {"path": ArtSets.TOWN_ORDER_V01 + "/forge_west_opaque.png", "size": Vector2i(160, 144)},
+	"training": {"path": ArtSets.GENERATED_WORLD_V02 + "/training_dummy_opaque.png", "size": Vector2i(112, 112)},
+	"proxy": {"path": ArtSets.GENERATED_WORLD_V02 + "/proxy_opaque.png", "size": Vector2i(112, 112)},
 }
 
 ## Native cell contract of the icon batch, and the one display scale this module
@@ -39,7 +40,7 @@ const ICON_DISPLAY_SCALE: int = 2
 ## The bounded overlay package: six reviewed equipment-readability cells. Its
 ## directory, canvas, texture name, cell order and anchor are pinned here, and
 ## the atlas on disk has to agree with every one of them.
-const OVERRIDE_DIRECTORY: String = "res://art/production/p1/equipment_readability_v02"
+const OVERRIDE_DIRECTORY: String = ArtSets.EQUIPMENT_READABILITY_V02
 const OVERRIDE_ATLAS_FILE: String = "atlas.json"
 const OVERRIDE_TEXTURE_ID: String = "overrides"
 const OVERRIDE_TEXTURE_FILE: String = "overrides.png"

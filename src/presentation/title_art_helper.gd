@@ -18,15 +18,16 @@ const NATIVE_VIEW := Vector2i(640, 360)
 const JsonIO := preload("res://src/core/json_io.gd")
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const DISPLAY_SCALE := 2
 const DISPLAY_SIZE := Vector2i(1280, 720)
 
 ## The produced, word-free title plate. Contract: native 640x360, drawn 1:1 into
 ## the 640x360 viewport and shown at nearest integer 2x, so the 1280x720 UI layer
 ## never resamples it and the left menu column never covers the tower.
-const TITLE_PLATE_PATH := "res://art/production/p1/title_world_v03/background.png"
+const TITLE_PLATE_PATH := ArtSets.TITLE_WORLD_V03 + "/background.png"
 const TITLE_PLATE_SIZE := Vector2i(640, 360)
-const TITLE_PLATE_ATLAS_PATH := "res://art/production/p1/title_world_v03/atlas.json"
+const TITLE_PLATE_ATLAS_PATH := ArtSets.TITLE_WORLD_V03 + "/atlas.json"
 const TITLE_PLATE_SPRITE_ID := "title.background"
 const PLATE_STATUS_READY := "ready"
 const PLATE_STATUS_PENDING := "pending"
@@ -42,7 +43,7 @@ const LOOP_STATUS_READY := "ready"
 ## The produced life package: real flame and steam frames drawn as an independent
 ## overlay Node2D in this same integer-scaled 640x360 world layer, above the plate.
 ## Nothing is drawn when the frames are absent, and no flame is ever faked.
-const TITLE_LIFE_ATLAS_PATH := "res://art/production/p1/title_life_v01/atlas.json"
+const TITLE_LIFE_ATLAS_PATH := ArtSets.TITLE_LIFE_V01 + "/atlas.json"
 ## One overlay per published animation, placed on the plate's own pixel anchors:
 ## the flame sits on the foreground brazier, and smoke leaves the forge chimney.
 ## Both were read off the plate, so a re-cut plate has to move them deliberately.

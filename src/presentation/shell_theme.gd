@@ -6,8 +6,9 @@ extends RefCounted
 
 const SharedPalette := preload("res://src/presentation/palette.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
-const EXPLORATION_ART := "res://art/production/p1/ui_exploration_v01"
-const CRAFTED_ART := "res://art/production/p1/ui_crafted_v01"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const EXPLORATION_ART := ArtSets.UI_EXPLORATION_V01
+const CRAFTED_ART := ArtSets.UI_CRAFTED_V01
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 static var _materials: Dictionary = {}
 

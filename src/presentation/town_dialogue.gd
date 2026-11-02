@@ -7,7 +7,8 @@ signal dismissed
 
 const ShellTheme = preload("res://src/presentation/shell_theme.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
-const PORTRAIT_ROOT := "res://art/production/p1/story_portraits_r14/"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const PORTRAIT_ROOT := ArtSets.STORY_PORTRAITS_R14 + "/"
 const NPC_ROLES := {"mira":"Winter Tower Keeper", "iven":"Chronicler", "taren":"Traveling Merchant", "leia":"Keeper's Apprentice", "oren":"Mender"}
 const NPC_NAMES := {"mira":"Mira", "iven":"Iven", "taren":"Taren", "leia":"Leia", "oren":"Oren"}
 

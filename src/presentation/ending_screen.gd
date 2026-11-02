@@ -24,6 +24,7 @@ signal title_requested
 const ShellThemeScript = preload("res://src/presentation/shell_theme.gd")
 const HearthReturnScript = preload("res://src/presentation/hearth_return_view.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 
 ## The shell's one UI resolution; the project's canvas_items stretch keeps the same
 ## layout at 1600x900 and 1024x576.
@@ -41,7 +42,7 @@ const TITLE_BUTTON_TEXT := "Return to Title"
 
 ## The approved illustration and the place it shows, named exactly as the base hub
 ## names it. Drawn at native size: any other scale would resample the pixel grid.
-const ILLUSTRATION_PATH := "res://art/production/p1/world_expansion_v01/town_ground.png"
+const ILLUSTRATION_PATH := ArtSets.WORLD_EXPANSION_V01 + "/town_ground.png"
 const ILLUSTRATION_SIZE := Vector2(640.0, 360.0)
 const ILLUSTRATION_CAPTION := "Hamlet · Hearthside"
 

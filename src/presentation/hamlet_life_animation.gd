@@ -27,7 +27,8 @@ extends RefCounted
 ## bands) and publishes every approved number in life_report(); the exact cell,
 ## anchor, frame count and cadence are pinned by tests/unit/test_hamlet_life_animation.gd.
 
-const LIFE_DIR := "res://art/production/p1/actors_v02/residents/"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const LIFE_DIR := ArtSets.ACTORS_V02 + "/residents/"
 const JsonIO := preload("res://src/core/json_io.gd")
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const LIFE_ATLAS_PATH := LIFE_DIR + "atlas.json"
@@ -45,7 +46,7 @@ const MIN_UNIQUE_FRAMES := 2
 ## ever pulling a frame early by a measurable amount.
 const CLOCK_EPSILON := 0.000000001
 
-const EFFECT_ATLAS_PATH := "res://art/production/p1/title_life_v01/atlas.json"
+const EFFECT_ATLAS_PATH := ArtSets.TITLE_LIFE_V01 + "/atlas.json"
 const EFFECT_CLIPS: Array[String] = ["life.fire", "life.steam"]
 const EFFECT_CELLS := {"life.fire": Vector2i(8, 10), "life.steam": Vector2i(12, 18)}
 const EFFECT_ANCHORS := {"life.fire": Vector2i(4, 9), "life.steam": Vector2i(6, 17)}

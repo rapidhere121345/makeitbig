@@ -4,9 +4,10 @@ extends RefCounted
 ## arena HUD draws at an integer 2x (64 display pixels). No icon, frame or state
 ## is generated here, and no gameplay value is derived from the art.
 
-const ATLAS_PATH: String = "res://art/production/p1/world_polish_v01/combat_atlas.json"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const ATLAS_PATH: String = ArtSets.WORLD_POLISH_V01 + "/combat_atlas.json"
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
-const ATLAS_DIRECTORY: String = "res://art/production/p1/world_polish_v01"
+const ATLAS_DIRECTORY: String = ArtSets.WORLD_POLISH_V01
 const NATIVE_ICON_SIZE := Vector2i(32, 32)
 const DISPLAY_ICON_SIZE := Vector2i(64, 64)
 const DISPLAY_SCALE: int = 2

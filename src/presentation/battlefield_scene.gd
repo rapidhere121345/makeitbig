@@ -8,8 +8,9 @@ extends RefCounted
 ## keep their production anchors; no painted shape becomes collision authority.
 const Geometry := preload("res://src/runtime/geometry/arena_geometry.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const IDS: Array[String] = Geometry.BATTLEFIELDS
-const MATERIAL_PACK := "res://art/production/p1/battlefields_v01/assets.json"
+const MATERIAL_PACK := ArtSets.BATTLEFIELDS_V01 + "/assets.json"
 var pending_reason := ""
 var _fields: Dictionary = {}
 var _textures: Dictionary = {}
@@ -74,7 +75,7 @@ func _load_materials() -> bool:
 	for id: String in required:
 		var entry: Dictionary = (pack.assets as Dictionary).get(id, {})
 		var path := String(entry.get("path", ""))
-		if String(entry.get("status", "")) != "packed" or not path.begins_with("res://art/production/p1/battlefields_v01/"):
+		if String(entry.get("status", "")) != "packed" or not path.begins_with(ArtSets.BATTLEFIELDS_V01 + "/"):
 			return _fail("unpacked material " + id)
 		var expected := Vector2(1536, 1024) if id.ends_with("_extension") else Vector2(1024, 640)
 		var texture := load(path) as Texture2D

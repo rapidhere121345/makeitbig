@@ -52,14 +52,15 @@ extends "res://src/presentation/actor_clip_reader.gd"
 ## and ignores every repeat, so redrawing can never restart a reaction clip and
 ## the same hp drop only ever fires once. latched_ticks() then reports its age.
 
-const ATLAS_PATH := "res://art/production/p1/enemy_actions_v01/atlas.json"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const ATLAS_PATH := ArtSets.ENEMY_ACTIONS_V01 + "/atlas.json"
 const TEXTURE_KEY := "enemies"
-const TEXTURE_PATH := "res://art/production/p1/enemy_actions_v01/enemies.png"
-const PACK_PREFIX := "res://art/production/p1/enemy_actions_v01/"
+const TEXTURE_PATH := ArtSets.ENEMY_ACTIONS_V01 + "/enemies.png"
+const PACK_PREFIX := ArtSets.ENEMY_ACTIONS_V01 + "/"
 ## Keep the published action identity; the explicit skin binding changes only
 ## same-size texture pixels and is also reported on each resolved frame.
-const STYLE_ATLAS_PATH := "res://art/production/p1/actors_v02/enemy_atlas.json"
-const STYLE_TEXTURE_PATH := "res://art/production/p1/actors_v02/enemies.png"
+const STYLE_ATLAS_PATH := ArtSets.ACTORS_V02 + "/enemy_atlas.json"
+const STYLE_TEXTURE_PATH := ArtSets.ACTORS_V02 + "/enemies.png"
 const NATIVE_VIEW := Vector2i(640, 360)
 const SCHEMA_VERSION := 1
 ## The action cell. 48x48 with a (24,44) foot anchor is the same cell the

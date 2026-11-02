@@ -48,14 +48,15 @@ extends "res://src/presentation/actor_clip_reader.gd"
 ## pair and ignores every repeat, so redrawing can never restart a clip and the
 ## same cast only ever fires once. latched_ticks() then reports its age.
 
-const ATLAS_PATH := "res://art/production/p1/ranger_actions_v01/atlas.json"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const ATLAS_PATH := ArtSets.RANGER_ACTIONS_V01 + "/atlas.json"
 const TEXTURE_KEY := "ranger"
-const TEXTURE_PATH := "res://art/production/p1/ranger_actions_v01/ranger.png"
+const TEXTURE_PATH := ArtSets.RANGER_ACTIONS_V01 + "/ranger.png"
 ## The original paths remain the animation contract's provenance. The live
 ## material skin is the actors_v02 pack, which keeps that contract and
 ## explicitly binds a same-size material skin.
-const STYLE_ATLAS_PATH := "res://art/production/p1/actors_v02/ranger_atlas.json"
-const STYLE_TEXTURE_PATH := "res://art/production/p1/actors_v02/ranger.png"
+const STYLE_ATLAS_PATH := ArtSets.ACTORS_V02 + "/ranger_atlas.json"
+const STYLE_TEXTURE_PATH := ArtSets.ACTORS_V02 + "/ranger.png"
 const NATIVE_VIEW := Vector2i(640, 360)
 const SCHEMA_VERSION := 1
 const ArrowOrigin := preload("res://src/systems/ranger_arrow_origin.gd")

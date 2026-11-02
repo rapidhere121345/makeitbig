@@ -7,9 +7,10 @@ extends RefCounted
 ## malformed package leaves every icon null and reports one explicit reason; this
 ## reader never generates, substitutes, or interprets art.
 
-const ATLAS_DIRECTORY := "res://art/production/p1/icon_expansion_v01"
+const ArtSets := preload("res://src/presentation/art/art_sets.gd")
+const ATLAS_DIRECTORY := ArtSets.ICON_EXPANSION_V01
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
-const ATLAS_PATH := "res://art/production/p1/icon_expansion_v01/atlas.json"
+const ATLAS_PATH := ArtSets.ICON_EXPANSION_V01 + "/atlas.json"
 const SCHEMA_VERSION := 1
 const NATIVE_ICON_SIZE := Vector2i(32, 32)
 const ICON_ANCHOR := Vector2i(16, 16)
