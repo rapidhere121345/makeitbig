@@ -23,8 +23,9 @@ right:
 A dependency is a `res://src/<layer>/` path or a reference to another layer's
 global `class_name`. `scripts/check_architecture.py` (run by `check.sh`)
 enforces the table. It also ratchets string dispatch (`has_method("x")`,
-`.call("x")`, `.call_deferred("x")`, `.callv("x")`), which typed ports should
-replace. Existing debt is listed in `scripts/architecture_baseline.json` and
+`.call("x")`, `.call_deferred("x")`, `.callv("x")`) and private reach-ins
+(`_root._x`, `_main._x`, `_screen._x`, `_owner._x`, `_host._x`), which typed
+ports and owners' public APIs should replace. Existing debt is listed in `scripts/architecture_baseline.json` and
 may only shrink: a new violation fails, an exception that is no longer needed
 fails, and `--update-baseline` records reductions but never growth.
 

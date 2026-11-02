@@ -68,6 +68,15 @@ class ArchitectureCheckTests(unittest.TestCase):
         self.write("src/presentation/calls.gd", 'func f(x):\n\tx.a()\n\tx.call(name)\n')
         self.assertEqual(self.run_check(), 1, "a lower count must be recorded in the baseline")
 
+    def test_private_reach_ins_are_ratcheted(self):
+        self.write("src/game/helper.gd", "func f():\n\t_root._status = 1\n\t_root.transition()\n\t_main._tick()\n")
+        _, counts = checker.scan(self.root)
+        self.assertEqual(counts["private_reach_ins"], {"src/game/helper.gd": 2})
+        self.baseline({"private_reach_ins": {"src/game/helper.gd": 2}})
+        self.assertEqual(self.run_check(), 0)
+        self.write("src/game/helper.gd", "func f():\n\t_root._status = 1\n\t_root._a()\n\t_main._tick()\n")
+        self.assertEqual(self.run_check(), 1)
+
     def test_update_baseline_records_reductions_but_refuses_growth(self):
         self.write("src/presentation/calls.gd", 'func f(x):\n\tx.call("a")\n')
         self.baseline({"string_dispatch": {"src/presentation/calls.gd": 3}})

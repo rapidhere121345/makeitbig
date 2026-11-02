@@ -4,8 +4,9 @@
 Layers may only depend on the layers listed in ALLOWED. A dependency is either
 a `res://src/<layer>/` path (preload, load, extends) or a reference to another
 layer's global `class_name`. String dispatch (`has_method("x")`, `.call("x")`,
-`.call_deferred("x")`, `.callv("x")`) bypasses typed interfaces, so its count
-per file may only go down.
+`.call_deferred("x")`, `.callv("x")`) bypasses typed interfaces, and so does a
+helper reaching into its owner's private members (`_root._x`, `_main._x`,
+`_screen._x`, `_owner._x`, `_host._x`); both counts per file may only go down.
 
 Known debt lives in scripts/architecture_baseline.json and only shrinks: a new
 violation fails, and so does an exception that is no longer needed. After
@@ -41,6 +42,11 @@ STRING_LITERAL = re.compile(r'"(?:[^"\\\n]|\\.)*"')
 COMMENT = re.compile(r"#.*")
 IDENTIFIER = re.compile(r"\b([A-Z]\w+)\b")
 STRING_DISPATCH = re.compile(r'(?:\bhas_method|\.call|\.call_deferred|\.callv)\(\s*&?"')
+PRIVATE_REACH_IN = re.compile(r"\b_(?:root|main|screen|owner|host)\._[A-Za-z]")
+RATCHETS = {
+    "string_dispatch": ("string dispatch calls", "use a typed interface"),
+    "private_reach_ins": ("private reach-ins", "use the owner's public API"),
+}
 
 
 def layer_of(relative: Path) -> str:
@@ -61,7 +67,7 @@ def scan(root: Path):
         if match:
             class_layers[match.group(1)] = layer_of(relative)
     violations = {}
-    dispatch = {}
+    counts = {key: {} for key in RATCHETS}
     for relative, text in texts.items():
         source_layer = layer_of(relative)
         if source_layer not in ALLOWED:
@@ -75,13 +81,14 @@ def scan(root: Path):
         bad = sorted(t for t in targets if t != source_layer and t not in ALLOWED[source_layer])
         if bad:
             violations[relative.as_posix()] = bad
-        count = len(STRING_DISPATCH.findall(text))
-        if count:
-            dispatch[relative.as_posix()] = count
-    return violations, dispatch
+        for key, pattern in (("string_dispatch", STRING_DISPATCH), ("private_reach_ins", PRIVATE_REACH_IN)):
+            count = len(pattern.findall(text))
+            if count:
+                counts[key][relative.as_posix()] = count
+    return violations, counts
 
 
-def compare(violations, dispatch, baseline):
+def compare(violations, counts, baseline):
     errors = []
     allowed_layers = baseline.get("layer_exceptions", {})
     for path, targets in violations.items():
@@ -92,16 +99,23 @@ def compare(violations, dispatch, baseline):
         stale = sorted(set(targets) - set(violations.get(path, [])))
         if stale:
             errors.append(f"{path}: no longer imports {', '.join(stale)}; remove it from layer_exceptions")
-    allowed_dispatch = baseline.get("string_dispatch", {})
-    for path, count in dispatch.items():
-        limit = allowed_dispatch.get(path, 0)
-        if count > limit:
-            errors.append(f"{path}: {count} string dispatch calls (baseline {limit}); use a typed interface")
-    for path, limit in allowed_dispatch.items():
-        count = dispatch.get(path, 0)
-        if count < limit:
-            errors.append(f"{path}: string dispatch fell to {count} (baseline {limit}); run --update-baseline")
+    for key, (label, advice) in RATCHETS.items():
+        allowed = baseline.get(key, {})
+        current = counts.get(key, {})
+        for path, count in current.items():
+            limit = allowed.get(path, 0)
+            if count > limit:
+                errors.append(f"{path}: {count} {label} (baseline {limit}); {advice}")
+        for path, limit in allowed.items():
+            count = current.get(path, 0)
+            if count < limit:
+                errors.append(f"{path}: {label} fell to {count} (baseline {limit}); run --update-baseline")
     return errors
+
+
+def summary(violations, counts) -> str:
+    return f"layer_exceptions={len(violations)} " + " ".join(
+        f"{key}={sum(counts.get(key, {}).values())}" for key in RATCHETS)
 
 
 def main(argv=None) -> int:
@@ -113,23 +127,21 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     baseline_path = args.baseline or args.root / "scripts/architecture_baseline.json"
     baseline = json.loads(baseline_path.read_text(encoding="utf-8")) if baseline_path.exists() else {}
-    violations, dispatch = scan(args.root)
-    errors = compare(violations, dispatch, baseline)
+    violations, counts = scan(args.root)
+    errors = compare(violations, counts, baseline)
     if args.update_baseline:
         growth = [e for e in errors if "no longer" not in e and "fell to" not in e]
         if growth:
             print("\n".join("FAIL  " + e for e in growth), file=sys.stderr)
             return 1
-        updated = {"layer_exceptions": violations, "string_dispatch": dispatch}
+        updated = {"layer_exceptions": violations, **counts}
         baseline_path.write_text(json.dumps(updated, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        print(f"ARCHITECTURE_BASELINE updated: {len(violations)} layer exceptions, "
-              f"{sum(dispatch.values())} string dispatch calls")
+        print("ARCHITECTURE_BASELINE updated: " + summary(violations, counts))
         return 0
     if errors:
         print("\n".join("FAIL  " + e for e in errors), file=sys.stderr)
         return 1
-    print(f"ARCHITECTURE_CHECK PASS layer_exceptions={len(violations)} "
-          f"string_dispatch={sum(dispatch.values())}")
+    print("ARCHITECTURE_CHECK PASS " + summary(violations, counts))
     return 0
 
 
