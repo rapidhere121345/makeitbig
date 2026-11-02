@@ -54,3 +54,14 @@ var command_source_port: RefCounted = null
 var combat_event_stream
 var kernel_bindings := KernelBindingsScript.new()
 var room_loot := CombatRoomLootScript.new()
+
+## Mounted-room authorities adopted from SceneRuntime (or the standalone room
+## assembly) and the typed ports built over them.
+var actor_registry
+var simulation_world
+var actor_registry_instance_id := ""
+var actor_registry_revision := 0
+var room_spatial_port = null
+var room_combat_port = null
+var room_encounter_port = null
+var encounter_spawn_port: RefCounted = null

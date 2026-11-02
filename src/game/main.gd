@@ -308,17 +308,49 @@ var command_source_port: RefCounted:
 		return session.command_source_port
 	set(value):
 		session.command_source_port = value
-var actor_registry
+var actor_registry:
+	get:
+		return session.actor_registry
+	set(value):
+		session.actor_registry = value
 var scene_runtime
-var simulation_world
-var actor_registry_instance_id := ""
-var actor_registry_revision := 0
+var simulation_world:
+	get:
+		return session.simulation_world
+	set(value):
+		session.simulation_world = value
+var actor_registry_instance_id: String:
+	get:
+		return session.actor_registry_instance_id
+	set(value):
+		session.actor_registry_instance_id = value
+var actor_registry_revision: int:
+	get:
+		return session.actor_registry_revision
+	set(value):
+		session.actor_registry_revision = value
 ## Mounted-room typed ports adopted from SceneRuntime (or the standalone room
 ## assembly). The fixed-tick kernel owns combat authority through them.
-var room_spatial_port = null
-var room_combat_port = null
-var room_encounter_port = null
-var encounter_spawn_port: RefCounted = null
+var room_spatial_port:
+	get:
+		return session.room_spatial_port
+	set(value):
+		session.room_spatial_port = value
+var room_combat_port:
+	get:
+		return session.room_combat_port
+	set(value):
+		session.room_combat_port = value
+var room_encounter_port:
+	get:
+		return session.room_encounter_port
+	set(value):
+		session.room_encounter_port = value
+var encounter_spawn_port: RefCounted:
+	get:
+		return session.encounter_spawn_port
+	set(value):
+		session.encounter_spawn_port = value
 var kernel_bindings: KernelBindings:
 	get:
 		return session.kernel_bindings
