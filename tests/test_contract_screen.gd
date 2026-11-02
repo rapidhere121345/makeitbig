@@ -264,7 +264,7 @@ func _run() -> void:
 	real_snapshot["resolved_build"] = app.resolved_build_snapshot()
 	var game = load("res://src/game/game_root.gd").new()
 	game.application_state = app
-	real_snapshot["campaign"] = game.call("_campaign_contract_snapshot")
+	real_snapshot["campaign"] = game.route_snapshots.campaign_contract_snapshot()
 	game.free()
 	var experience: int = load("res://src/systems/character_progression.gd").contract_experience("mainline_01_first_hunt", true)
 	screen.present(app.profile, {}, "", real_snapshot)

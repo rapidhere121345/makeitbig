@@ -29,7 +29,7 @@ func launch_contract(config: Dictionary) -> Dictionary:
 	if _root.current_route != SceneRouterScript.ROUTE_CONTRACT:
 		return CoreResult.failure("wrong_route")
 	var active_snapshot: Dictionary = _root.application_state.active_build_snapshot()
-	var active_build: Dictionary = _root._active_build_from_snapshot(active_snapshot)
+	var active_build: Dictionary = _root.route_snapshots.active_build_from_snapshot(active_snapshot)
 	var resolved_build: Dictionary = _root.application_state.resolved_build_snapshot()
 	if not bool(resolved_build.get("ok", false)) or String(resolved_build.get("build_fingerprint", "")).length() != 64:
 		_root.present_contract("active_build_invalid")

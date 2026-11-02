@@ -3,20 +3,20 @@ extends RefCounted
 
 ## Route snapshot builders extracted from GameRoot. These assemble the loadout
 ## facility data, the campaign contract board, and the active-build view,
-## reaching application state and the owner's last-contract and prototype-debug
-## state through the untyped owner reference.
+## reading application state, the last contract and the prototype-debug seed
+## override through GameRoot's public API.
 const CharacterProgressionScript = preload("res://src/systems/character_progression.gd")
 const EarlyCampaignRegistryScript = preload("res://src/content/early_campaign_registry.gd")
 const EarlyItemRegistryScript = preload("res://src/content/early_item_registry.gd")
 
-var _root
+var _root: GameRoot
 
 
-func _init(root) -> void:
+func _init(root: GameRoot) -> void:
 	_root = root
 
 
-func _loadout_facility_snapshot() -> Dictionary:
+func loadout_facility_snapshot() -> Dictionary:
 	var snapshot: Dictionary = _root.application_state.early_game_snapshot().duplicate(true)
 	if not bool(snapshot.get("ok", false)):
 		return snapshot
@@ -52,7 +52,7 @@ func _loadout_facility_snapshot() -> Dictionary:
 	return snapshot
 
 
-func _campaign_contract_snapshot() -> Dictionary:
+func campaign_contract_snapshot() -> Dictionary:
 	var progress: Dictionary = _root.application_state.campaign_progress_snapshot()
 	if not bool(progress.get("ok", false)):
 		return progress
@@ -72,6 +72,7 @@ func _campaign_contract_snapshot() -> Dictionary:
 	var node_ids: Array[String] = registry.mainline_order()
 	for side_id in _root.EARLY_SIDE_NODE_IDS:
 		node_ids.append(side_id)
+	var last_contract: Dictionary = _root.last_contract
 	var nodes: Array[Dictionary] = []
 	for node_id in node_ids:
 		var node: Dictionary = registry.get_node(node_id)
@@ -98,8 +99,8 @@ func _campaign_contract_snapshot() -> Dictionary:
 		if bool(node_snapshot.repeatable):
 			var completion_count := maxi(0, int(repeatable_counts.get(node_id, 0)))
 			var suggested_seed := int(_root.DEFAULT_CONTRACT.seed) + completion_count
-			if String(_root._last_contract.get("contract_id", "")) == node_id:
-				suggested_seed = int(_root._last_contract.get("seed", suggested_seed))
+			if String(last_contract.get("contract_id", "")) == node_id:
+				suggested_seed = int(last_contract.get("seed", suggested_seed))
 				var last_outcome := String(_root.application_state.last_result.get("outcome", "")).to_lower()
 				if last_outcome in ["victory", "final_victory"]:
 					suggested_seed = suggested_seed + 1 if suggested_seed < 2147483647 else -2147483648
@@ -114,6 +115,6 @@ func _campaign_contract_snapshot() -> Dictionary:
 	return result
 
 
-func _active_build_from_snapshot(snapshot: Dictionary) -> Dictionary:
+func active_build_from_snapshot(snapshot: Dictionary) -> Dictionary:
 	var nested: Variant = snapshot.get("active_build", snapshot)
 	return (nested as Dictionary).duplicate(true) if nested is Dictionary else {}

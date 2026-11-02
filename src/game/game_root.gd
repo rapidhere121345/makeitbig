@@ -134,6 +134,8 @@ var _initialized: bool = false
 var _presentation_enabled := true
 ## Playtest telemetry and the timers it keeps (src/game/root/).
 var playtest_recorder: PlaytestRecorder = PlaytestRecorder.new(self)
+## Route snapshot builders for the loadout facility and the contract board.
+var route_snapshots: RouteSnapshots = RouteSnapshots.new(self)
 ## The --mib-* prototype debug tooling and the state it owns (src/game/root/).
 var prototype_debug: PrototypeDebug = PrototypeDebug.new(self)
 
@@ -807,7 +809,7 @@ func present_title(message: String) -> void:
 ## Presents the base hub with the given message when it is the current screen.
 func present_base(message: String) -> void:
 	if _current_screen != null and _current_screen.has_method("present"):
-		_current_screen.call("present", application_state.profile, application_state.last_result, message, _campaign_contract_snapshot())
+		_current_screen.call("present", application_state.profile, application_state.last_result, message, route_snapshots.campaign_contract_snapshot())
 
 		_current_screen.present_adventure(application_state.character_snapshot(), application_state.story_snapshot())
 
@@ -818,7 +820,7 @@ func present_contract(message: String) -> void:
 		if bool(build_snapshot.get("ok", false)):
 			build_snapshot["resolved_build"] = application_state.resolved_build_snapshot().duplicate(true)
 		build_snapshot["auto_mode_unlocked"] = application_state.is_auto_mode_unlocked()
-		build_snapshot["campaign"] = _campaign_contract_snapshot()
+		build_snapshot["campaign"] = route_snapshots.campaign_contract_snapshot()
 		_current_screen.call("present", application_state.profile, _last_contract, message, build_snapshot)
 
 
@@ -830,7 +832,7 @@ func present_facility(facility_id: String, message: String, presentation_context
 			application_state.forge_ensure_context()
 			facility_data = application_state.forge_snapshot()
 		elif facility_id == SceneRouterScript.ROUTE_LOADOUT:
-			facility_data = _loadout_facility_snapshot()
+			facility_data = route_snapshots.loadout_facility_snapshot()
 			facility_data["return_route"] = _facility_return_route
 			if not presentation_context.is_empty():
 				facility_data["initial_focus"] = presentation_context.duplicate(true)
@@ -841,27 +843,6 @@ func present_facility(facility_id: String, message: String, presentation_context
 		elif facility_id == SceneRouterScript.ROUTE_PROXY:
 			facility_data = application_state.early_game_snapshot()
 		_current_screen.call("present", facility_id, application_state.profile, application_state.last_result, message, facility_data)
-
-## The route snapshot builders live in src/game/root/route_snapshots.gd;
-## these thin forwarders keep the owner's method names for the remaining call sites.
-var _route_snapshots_impl  # untyped to avoid a preload cycle
-func _route_snapshots() -> RouteSnapshots:
-	if _route_snapshots_impl == null:
-		_route_snapshots_impl = RouteSnapshots.new(self)
-	return _route_snapshots_impl
-
-
-func _loadout_facility_snapshot() -> Dictionary:
-	return _route_snapshots()._loadout_facility_snapshot()
-
-
-func _campaign_contract_snapshot() -> Dictionary:
-	return _route_snapshots()._campaign_contract_snapshot()
-
-
-func _active_build_from_snapshot(snapshot: Dictionary) -> Dictionary:
-	return _route_snapshots()._active_build_from_snapshot(snapshot)
-
 
 func _retire_current_screen() -> void:
 	if _current_screen == null or not is_instance_valid(_current_screen):
