@@ -68,7 +68,7 @@ func check_battle_end() -> void:
 
 
 func room_terminal_locked() -> bool:
-	return _owner != null and is_instance_valid(_owner) and bool(_owner.battle_over)
+	return _owner != null and is_instance_valid(_owner) and bool(_owner.session.is_battle_over())
 
 
 func check_timeout() -> void:

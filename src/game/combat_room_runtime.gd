@@ -221,7 +221,7 @@ func configure_room_instance(instance: Node) -> void:
 		room_session.framework_active_build = (active_build as Dictionary).duplicate(true)
 		room_session.framework_resolved_build = (_current_config.get("resolved_build", {}) as Dictionary).duplicate(true)
 		room_session.framework_resolved_proxy_build = (framework_context.get("resolved_proxy_build", {}) as Dictionary).duplicate(true)
-	room.scene_runtime = scene_runtime
+	room.session.scene_runtime = scene_runtime
 
 
 class RoomSetupPort extends "res://src/runtime/world/room_scene_setup_port.gd":
@@ -445,7 +445,7 @@ static func _encounter_roster(room: Dictionary) -> Array:
 func request_abandon() -> void:
 	if not _session_is_active():
 		return
-	if _room.battle_over:
+	if _room.session.is_battle_over():
 		_finish_completed()
 		return
 	_finish_abandoned()
@@ -454,12 +454,12 @@ func request_abandon() -> void:
 func _process(_delta: float) -> void:
 	if not _session_is_active():
 		return
-	if _room.battle_over:
+	if _room.session.is_battle_over():
 		# Victory and room settlement are separate phases when the room spawned
 		# loot. Keep the mounted room alive until the player explicitly leaves so
 		# queued pickups can commit against the room ledger. Defeat still closes
 		# immediately because its loot is forfeited.
-		if _room.battle_victory and _room.room_loot_window_open:
+		if _room.session.is_battle_victory() and _room.room_loot_window_open:
 			return
 		_finish_completed()
 
@@ -476,14 +476,14 @@ func defeat_presentation_ready() -> bool:
 func _on_return_requested() -> void:
 	if not _session_is_active():
 		return
-	if _room.battle_over:
+	if _room.session.is_battle_over():
 		_finish_completed()
 		return
 	_finish_abandoned()
 
 
 func _finish_completed() -> void:
-	var victory := _room.battle_victory
+	var victory := _room.session.is_battle_victory()
 	_finalize(&"completed", "victory" if victory else "defeat")
 
 
@@ -518,20 +518,20 @@ func _finalize(signal_name: StringName, outcome: String) -> void:
 func build_result(outcome: String) -> Dictionary:
 	if not _room_is_valid():
 		return _error("room_instance_unavailable")
-	var state: PlayerCombatState = _room.player_combat_state
+	var state: PlayerCombatState = _room.session.player_combat_state
 	if state == null:
 		return _error("player_combat_state_unavailable")
-	var player: Dictionary = state.snapshot(_room.sim_tick)
+	var player: Dictionary = state.snapshot(_room.session.sim_tick)
 	var room_snapshot := {
 		"room_reward_snapshot": _room.room_reward_snapshot,
-		"room_loot_settlement": _room.room_loot_settlement,
-		"sim_tick": _room.sim_tick,
-		"elapsed": _room.elapsed,
+		"room_loot_settlement": _room.session.room_loot.settlement_snapshot(),
+		"sim_tick": _room.session.sim_tick,
+		"elapsed": _room.session.elapsed,
 		"shots": _room.shots,
 		"arrow_hits": _room.arrow_hits,
 		"defeated": _room.defeated,
-		"battle_report": _room.battle_report,
-		"automation_smoke_failure": _room.automation_smoke_failure,
+		"battle_report": _room.session.battle_report,
+		"automation_smoke_failure": _room.session.automation_smoke_failure,
 	}
 	for field: String in ["last_damage_source_id", "last_damage_tick"]:
 		if player.has(field):

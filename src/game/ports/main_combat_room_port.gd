@@ -11,7 +11,7 @@ var _owner: MainArena = null
 func bind(owner: MainArena) -> Dictionary:
 	if owner == null or not is_instance_valid(owner):
 		return {"ok": false, "error": "combat_room_owner_unavailable"}
-	if owner.player_combat_rules == null or owner.encounter_director == null:
+	if owner.session.player_combat_rules == null or owner.session.encounter_director == null:
 		return {"ok": false, "error": "combat_room_dependencies_unavailable"}
 	_owner = owner
 	return {"ok": true, "error": ""}

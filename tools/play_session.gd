@@ -188,8 +188,8 @@ func _snapshot(id: int) -> void:
 	if game.current_screen is Node2D: mains.push_front(game.current_screen)
 	for node in mains:
 		if node.get_script() != null and node.get_script().resource_path == "res://src/game/main.gd":
-			result.combat = {"tick": node.sim_tick, "health": node.player_health, "position": str(node.player_position), "enemies": []}
-			for enemy in node.enemies:
+			result.combat = {"tick": node.session.sim_tick, "health": node.player_health, "position": str(node.session.player_position()), "enemies": []}
+			for enemy in node.session.encounter_director.enemies:
 				result.combat.enemies.append({"id": enemy.entity_id, "health": enemy.health, "position": str(enemy.position), "kind": enemy.kind_id})
 	var file := FileAccess.open(directory + "/state.json", FileAccess.WRITE)
 	file.store_string(JSON.stringify(result))

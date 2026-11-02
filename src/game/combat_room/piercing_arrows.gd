@@ -65,7 +65,7 @@ func _piercing_arrow_swept_contact(start: Vector2, finish: Vector2, target: Comb
 
 
 func remove_combat_target(target: CombatEnemyState) -> void:
-	_main.enemies.erase(target)
+	_main.session.encounter_director.enemies.erase(target)
 	if target == null or target.health > 0.0:
 		return
 	var actor_id := "enemy/%d" % target.entity_id

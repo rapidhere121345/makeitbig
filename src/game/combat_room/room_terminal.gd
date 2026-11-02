@@ -36,31 +36,31 @@ func _check_battle_end() -> void:
 		projection_applied = true
 		var victory := terminal_phase == "victory"
 		_session.battle_report = "VICTORY — Room encounter cleared." if victory else "DEFEAT — The ranger fell. Refit at base."
-		var projected := _session.room_rules.project_terminal(victory, _main.timed_bonus_available, _session.elapsed, _main.shots, _main.defeated)
+		var projected := _session.room_rules.project_terminal(victory, _main.session.encounter_director.timed_bonus_available, _session.elapsed, _main.shots, _main.defeated)
 		if not bool(projected.get("ok", false)):
 			push_error("room_terminal_reward_projection_failed:%s" % String(projected.get("error", "unknown")))
 			return
 		if victory:
-			_main.spawn_room_loot_for_source("wave_clear", 0, _main.player_position)
+			_main.spawn_room_loot_for_source("wave_clear", 0, _main.session.player_position())
 		else:
 			_main.settle_room_loot("defeat")
 		_handle_terminal_automation(victory)
 		return
 	var observed: Dictionary = _session.room_rules.observe(_session.player_combat_state.snapshot(_session.sim_tick), {
-		"has_boss": _main.boss != null, "boss_health": _main.boss.health if _main.boss != null else 0.0,
-		"enemy_count": _main.enemies.size(), "elite_entity_id": _main.elite_entity_id,
-		"elite_alive": _main.enemy_by_entity_id(_main.elite_entity_id) != null,
-		"elite_rule_ids": _main.elite_rule_ids, "timed_bonus_available": _main.timed_bonus_available,
+		"has_boss": _main.session.encounter_director.boss != null, "boss_health": _main.session.encounter_director.boss.health if _main.session.encounter_director.boss != null else 0.0,
+		"enemy_count": _main.session.encounter_director.enemies.size(), "elite_entity_id": _main.session.encounter_director.elite_entity_id,
+		"elite_alive": _main.enemy_by_entity_id(_main.session.encounter_director.elite_entity_id) != null,
+		"elite_rule_ids": _main.session.encounter_director.elite_rule_ids, "timed_bonus_available": _main.session.encounter_director.timed_bonus_available,
 		"elapsed": _session.elapsed, "shots": _main.shots, "defeated": _main.defeated,
 	})
 	if not bool(observed.changed):
 		return
 	_session.battle_report = String(observed.state.report)
-	if _main.battle_victory:
-		_main.spawn_room_loot_for_source("wave_clear", 0, _main.player_position)
-	if not _main.battle_victory:
+	if _main.session.is_battle_victory():
+		_main.spawn_room_loot_for_source("wave_clear", 0, _main.session.player_position())
+	if not _main.session.is_battle_victory():
 		_main.settle_room_loot("defeat")
-	if _main.battle_victory:
+	if _main.session.is_battle_victory():
 		if _session.automation_smoke and not _automation_smoke_state_valid():
 			_fail_automation_smoke("integrated room/proxy/reward state is invalid")
 	elif _session.automation_smoke:
@@ -94,10 +94,10 @@ func _observe_mounted_encounter_terminal() -> Dictionary:
 		if state in ["requested", "alive"]:
 			observation.unresolved_member_count += 1
 	var objective := String(_session.framework_room.get("objective_id", _session.objective_id))
-	if objective == "hunt_elite" and _main.elite_entity_id > 0:
-		var elite_alive := _main.enemy_by_entity_id(_main.elite_entity_id) != null
-		var requires_full_clear := "summon_reinforcements" in _main.elite_rule_ids
-		observation.objective_satisfied = not elite_alive and (not requires_full_clear or _main.enemies.is_empty())
+	if objective == "hunt_elite" and _main.session.encounter_director.elite_entity_id > 0:
+		var elite_alive := _main.enemy_by_entity_id(_main.session.encounter_director.elite_entity_id) != null
+		var requires_full_clear: bool = "summon_reinforcements" in _main.session.encounter_director.elite_rule_ids
+		observation.objective_satisfied = not elite_alive and (not requires_full_clear or _main.session.encounter_director.enemies.is_empty())
 	var result: RoomTerminalResult = _session.room_encounter_port.observe_terminal(observation)
 	return result.snapshot()
 
@@ -113,7 +113,7 @@ func _handle_terminal_automation(victory: bool) -> void:
 
 
 func _automation_smoke_state_valid() -> bool:
-	return not _session.framework_room.is_empty() and _main.battle_victory and (_session.selected_mode != "Auto" or _main.proxy_prediction == "stable")
+	return not _session.framework_room.is_empty() and _main.session.is_battle_victory() and (_session.selected_mode != "Auto" or _main.session.proxy_prediction == "stable")
 
 
 ## The room reports a smoke failure to its host through automation_smoke_failure;

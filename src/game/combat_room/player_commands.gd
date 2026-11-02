@@ -31,7 +31,7 @@ func _simulation_collect_commands() -> Array[Dictionary]:
 		var result: Dictionary = _session.smoke_input_driver.decide({
 			"player": _session.player_combat_state.snapshot(_session.sim_tick), "targets": _main.read_only_targets(),
 			"hazards": _main.hazard_states.duplicate(true), "targeting_distance": _session.locked_targeting_distance,
-			"boss": {"impact_tick": _main.boss.impact_tick, "target_shape": _main.boss.target_shape.duplicate(true)} if _main.boss != null else {},
+			"boss": {"impact_tick": _main.session.encounter_director.boss.impact_tick, "target_shape": _main.session.encounter_director.boss.target_shape.duplicate(true)} if _main.session.encounter_director.boss != null else {},
 		}, _session.command_sequence)
 		_session.command_sequence = int(result.next_sequence)
 		return result.commands
@@ -55,7 +55,7 @@ func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
 
 
 func _auto_loot_pickup_command() -> Dictionary:
-	if not _session.in_arena or (_main.battle_over and not _main.battle_victory):
+	if not _session.in_arena or (_main.session.is_battle_over() and not _main.session.is_battle_victory()):
 		return {}
 	var room_loot: Dictionary = _session.room_loot.snapshot()
 	var pending_ids: Dictionary = {}
@@ -121,7 +121,7 @@ func _public_proxy_snapshot() -> Dictionary:
 	var observations: Array = _session.framework_resolved_proxy_build.get("observation_contract", [])
 	var include_classification := "enemy.public_classification_tags" in observations
 	var visible: Array[Dictionary] = []
-	for enemy: CombatEnemyState in _main.enemies:
+	for enemy: CombatEnemyState in _main.session.encounter_director.enemies:
 		var entry := {
 			"entity_id": enemy.entity_id,
 			"position": enemy.position,
@@ -134,7 +134,7 @@ func _public_proxy_snapshot() -> Dictionary:
 			var classification_tags: Array[String] = []
 			if enemy.is_boss:
 				classification_tags.append("boss")
-			if enemy.entity_id == _main.elite_entity_id:
+			if enemy.entity_id == _main.session.encounter_director.elite_entity_id:
 				classification_tags.append("elite")
 			if enemy.entity_id == player["marked_entity_id"]:
 				classification_tags.append("marked")
@@ -144,7 +144,7 @@ func _public_proxy_snapshot() -> Dictionary:
 		"snapshot_version": ProxyDecisionScript.SNAPSHOT_VERSION,
 		"tick": _session.sim_tick,
 		"actor_id": _session.kit.actor_id(),
-		"player_position": _main.player_position,
+		"player_position": _main.session.player_position(),
 		"facing": player["player_facing"],
 		"action_state": _player_authority_action_state(),
 		"attack_ready_tick": _session.sim_tick + player["attack_cooldown_ticks"],
