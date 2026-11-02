@@ -468,7 +468,7 @@ func reset_for_contract() -> void:
 	automation_smoke_failure = ""
 	room_entry_start_tick = 0
 	elapsed = 0.0
-	_presentation_events = []
+	clear_events()
 
 
 ## Idle room: no contract running, room rules and loot cleared.
@@ -476,7 +476,7 @@ func reset_idle() -> void:
 	in_arena = false
 	room_rules.reset()
 	room_loot.reset()
-	_presentation_events = []
+	clear_events()
 
 
 ## Ends the proxy contract and clears the proxy intent state.
@@ -649,12 +649,34 @@ func set_status_report(text: String) -> void:
 
 
 ## Presentation events produced by the ticks since the last drain, in emission
-## order. The authority only appends; the view drains after each step().
+## order. The authority only appends.
+##
+## Drain contract: the session never drains itself. Whoever runs step() owns the
+## log and calls drain_events() after every step. MainArena (the room view)
+## drains after each fixed tick, before every presentation refresh and after a
+## diagnostic cast, whether or not presentation is enabled: with presentation
+## off the events are still drained and the view-side applier hands them to a
+## disabled feedback controller (or drops them when there is none), so the log
+## stays empty between ticks. A host that steps a session with no view must call
+## drain_events() and discard the result, or clear_events(). As a safety net the
+## log is bounded: past MAX_PENDING_EVENTS the oldest half is discarded and
+## counted in dropped_events, so a session stepped directly never grows without
+## bound. Dropping affects presentation only, never authority or the state hash.
+## Contract start and idle reset clear the log, since the view resets its own
+## feedback state at the same moments.
+const MAX_PENDING_EVENTS: int = 4096
 var _presentation_events: Array[RoomPresentationEvent] = []
+## Events discarded by the bound since the session was created (diagnostic).
+var dropped_events: int = 0
 
 
 ## Appends one presentation effect to the event log.
 func record_event(event: RoomPresentationEvent) -> void:
+	if _presentation_events.size() >= MAX_PENDING_EVENTS:
+		var kept: Array[RoomPresentationEvent] = []
+		kept.assign(_presentation_events.slice(MAX_PENDING_EVENTS / 2))
+		dropped_events += _presentation_events.size() - kept.size()
+		_presentation_events = kept
 	_presentation_events.append(event)
 
 
@@ -663,6 +685,16 @@ func drain_events() -> Array[RoomPresentationEvent]:
 	var drained := _presentation_events
 	_presentation_events = []
 	return drained
+
+
+## Discards the pending presentation events without applying them.
+func clear_events() -> void:
+	_presentation_events = []
+
+
+## Number of presentation events waiting for a drain.
+func pending_event_count() -> int:
+	return _presentation_events.size()
 
 
 ## Routes the combat system's impact-trace and corpse signals into the event
