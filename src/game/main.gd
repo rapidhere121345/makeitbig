@@ -524,10 +524,6 @@ var piercing_arrows := PiercingArrowsScript.new(self)
 var enemy_ai := EnemyAiTicksScript.new(self)
 var actor_setup := RoomActorSetupScript.new(self)
 var player_commands := RoomPlayerCommandsScript.new(self)
-## Compatibility alias for `_player_commands` callers that are not migrated yet.
-var _player_commands: RoomPlayerCommandsScript:
-	get:
-		return player_commands
 var _terminal := RoomTerminalScript.new(self)
 var room_geometry := RoomGeometryScript.new(session)
 
@@ -941,11 +937,6 @@ func step_tick() -> void:
 	apply_presentation_events()
 
 
-## Compatibility alias for `_simulate_tick` callers that are not migrated yet.
-func _simulate_tick() -> void:
-	step_tick()
-
-
 ## Applies the presentation effects the authority logged since the last call.
 ## The view calls this right after each fixed tick and before it refreshes.
 func apply_presentation_events() -> void:
@@ -1049,18 +1040,9 @@ func _allocate_entity_id() -> int:
 	return session.allocate_entity_id()
 
 
-func _framework_room_error() -> String:
-	return session.framework_room_error()
-
-
 ## Semantic replay hash of the room authority; `result` labels the check site.
 func state_hash(result: String) -> String:
 	return CombatStateSnapshotBuilderScript.hash_runtime(self, result)
-
-
-## Compatibility alias for `_semantic_state_hash` callers that are not migrated yet.
-func _semantic_state_hash(result: String) -> String:
-	return state_hash(result)
 
 
 func current_model() -> Dictionary:
@@ -1069,10 +1051,6 @@ func current_model() -> Dictionary:
 
 func manual_aim_candidate(enemy: CombatEnemyState) -> Dictionary:
 	return session.manual_aim_candidate(enemy)
-
-
-func _preferred_skill_one_target() -> CombatEnemyState:
-	return session.preferred_skill_one_target()
 
 
 func _nearest_enemy(maximum_distance: float = INF) -> CombatEnemyState:
@@ -1109,24 +1087,10 @@ func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 	return room_geometry.clamp_to_arena(value, padding)
 
 
-func _arena_rect() -> Rect2:
-	return arena_rect()
-
-
+## The snapshot builder binds `_walkable_geometry` by name, so this alias stays
+## until that binding moves to the public name.
 func _walkable_geometry(padding: float) -> Dictionary:
 	return walkable_geometry(padding)
-
-
-func _collision_geometry(radius: float) -> Dictionary:
-	return collision_geometry(radius)
-
-
-func _room_socket(binding: String) -> Variant:
-	return room_socket(binding)
-
-
-func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
-	return clamp_to_arena(value, padding)
 
 
 func _ensure_command_source() -> void:
