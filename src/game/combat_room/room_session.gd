@@ -15,6 +15,7 @@ const KernelBindingsScript := preload("res://src/game/combat_room/kernel_binding
 const PlayerCombatStateScript := preload("res://src/runtime/world/player_combat_state.gd")
 const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.gd")
 const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
+const CombatSystemScript := preload("res://src/systems/combat_system.gd")
 
 ## Build lock: the rule inputs frozen when a contract starts.
 var selected_preset: String = "convergent"
@@ -65,3 +66,16 @@ var room_spatial_port = null
 var room_combat_port = null
 var room_encounter_port = null
 var encounter_spawn_port: RefCounted = null
+
+## Room definition and identity (set by the room runtime before start_room()).
+var replay_geometry_profile: String = CombatSystemScript.QUERY_PROFILE_MULTIPART_V2
+var framework_active_build: Dictionary = {}
+var framework_resolved_build: Dictionary = {}
+var framework_resolved_proxy_build: Dictionary = {}
+var framework_room: Dictionary = {}
+var room_id: String = ""
+var layout_id: String = "rectangle_arena"
+var objective_id: String = "clear"
+var room_entry_start_tick: int = 0
+var room_drop_tags: Array = []
+var framework_seed: int = MainArena.FATE_SEED

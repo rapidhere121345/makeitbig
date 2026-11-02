@@ -366,17 +366,61 @@ var proxy_prediction: String = "unknown"
 var last_save_message: String = ""
 var test_session: bool = false
 var presentation_enabled: bool = true
-var replay_geometry_profile: String = CombatSystemScript.QUERY_PROFILE_MULTIPART_V2
-var framework_active_build: Dictionary = {}
-var framework_resolved_build: Dictionary = {}
-var framework_resolved_proxy_build: Dictionary = {}
-var framework_room: Dictionary = {}
-var room_id: String = ""
-var layout_id: String = "rectangle_arena"
-var objective_id: String = "clear"
-var room_entry_start_tick: int = 0
-var room_drop_tags: Array = []
-var framework_seed: int = FATE_SEED
+var replay_geometry_profile: String:
+	get:
+		return session.replay_geometry_profile
+	set(value):
+		session.replay_geometry_profile = value
+var framework_active_build: Dictionary:
+	get:
+		return session.framework_active_build
+	set(value):
+		session.framework_active_build = value
+var framework_resolved_build: Dictionary:
+	get:
+		return session.framework_resolved_build
+	set(value):
+		session.framework_resolved_build = value
+var framework_resolved_proxy_build: Dictionary:
+	get:
+		return session.framework_resolved_proxy_build
+	set(value):
+		session.framework_resolved_proxy_build = value
+var framework_room: Dictionary:
+	get:
+		return session.framework_room
+	set(value):
+		session.framework_room = value
+var room_id: String:
+	get:
+		return session.room_id
+	set(value):
+		session.room_id = value
+var layout_id: String:
+	get:
+		return session.layout_id
+	set(value):
+		session.layout_id = value
+var objective_id: String:
+	get:
+		return session.objective_id
+	set(value):
+		session.objective_id = value
+var room_entry_start_tick: int:
+	get:
+		return session.room_entry_start_tick
+	set(value):
+		session.room_entry_start_tick = value
+var room_drop_tags: Array:
+	get:
+		return session.room_drop_tags
+	set(value):
+		session.room_drop_tags = value
+var framework_seed: int:
+	get:
+		return session.framework_seed
+	set(value):
+		session.framework_seed = value
 var room_loot_enabled: bool:
 	get:
 		return session.room_loot.enabled()
