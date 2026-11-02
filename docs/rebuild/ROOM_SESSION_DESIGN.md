@@ -1,6 +1,6 @@
 # Room Session Design (redesign Step 2-4)
 
-Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 3 are implemented.
+Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 4 are implemented.
 
 ## Problem
 
@@ -129,7 +129,16 @@ becomes `kit.actor_spec().id`.
    `content_registry`, `startup_errors`, `last_save_message`, `proxy_prediction`,
    `room_phase_owner`, the phase hooks and all presentation members stay on
    `MainArena` until items 4 to 6.
-4. Move `CombatSimulation` and the phase domain into the session.
+4. Move `CombatSimulation` and the phase domain into the session. Done:
+   `RoomSession` creates `CombatSimulation` (`ensure_combat_simulation()`),
+   holds `room_phase_owner` typed as `CombatPhasePort`, binds the tick with
+   `configure_simulation(phase_port)` and runs one fixed tick with `step()`.
+   `MainArena` still creates `RoomPhaseDomain`, binds it to itself and passes
+   it in, so the phase hooks stay overridable on `MainArena` until item 6;
+   `_simulate_tick()` is a thin call to `session.step()`. The combat_room
+   helpers, `MainCombatRoomPort` and `MainArena`'s per-tick methods read plain
+   session fields (and the new `sim_tick`) directly, and the three frozen
+   constants live in `RoomSession` with `MainArena` re-exporting them.
 5. Cut presentation out of the tick: commands come from a source the view hands
    in; feedback/impact/corpse calls become session events drained by the view;
    `gameplay_snapshot` moves to the view.
