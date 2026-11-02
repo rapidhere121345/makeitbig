@@ -128,8 +128,6 @@ var boss_damage: BigValue:
 		return combat_system.outcome_snapshot().boss_damage
 var combat_system
 var combat_simulation
-var _charge_movement_policy = null
-var _mobility_movement_policy = null
 var player_combat_state := PlayerCombatStateScript.new()
 var player_combat_rules := PlayerCombatRulesScript.new()
 ## Narrow, read-only observations used by room diagnostics and play_session.
@@ -213,9 +211,7 @@ var room_spatial_port = null
 var room_combat_port = null
 var room_encounter_port = null
 var encounter_spawn_port: RefCounted = null
-var _hazard_domain = null
 var kernel_bindings := KernelBindingsScript.new()
-var _terminal_projection_applied := false
 var combat_event_stream
 var startup_errors: Array[String] = []
 var proxy_prediction: String = "unknown"
@@ -248,11 +244,11 @@ var room_loot_window_open: bool:
 		return battle_victory and _room_loot != null and _room_loot.has_unsettled_entities()
 var hazard_states: Array[Dictionary]:
 	get:
-		if _hazard_domain != null and _hazard_domain.is_configured():
-			return _hazard_domain.snapshots()
+		if room_hazards.domain != null and room_hazards.domain.is_configured():
+			return room_hazards.domain.snapshots()
 		return encounter_director.hazard_states
 	set(value):
-		if _hazard_domain == null:
+		if room_hazards.domain == null:
 			encounter_director.hazard_states = value
 var elite_rule_ids: Array[String]:
 	get:
@@ -625,7 +621,7 @@ func start_room() -> void:
 	automation_smoke_failure = ""
 	room_entry_start_tick = 0
 	elapsed = 0.0
-	_terminal_projection_applied = false
+	_terminal.projection_applied = false
 	if scene_runtime != null and scene_runtime.is_ready() and simulation_world != null and sim_tick > 0:
 		var restarted: Dictionary = scene_runtime.restart_room_instance(SIM_TICKS_PER_SECOND)
 		if not bool(restarted.get("ok", false)):

@@ -26,6 +26,8 @@ const RoomEncounterScript := preload("res://src/runtime/encounter/room_encounter
 const MainMovementPolicyPortScript := preload("res://src/game/ports/main_movement_policy_port.gd")
 
 var _main: MainArena
+var _charge_movement_policy = null
+var _mobility_movement_policy = null
 
 
 func _init(main: MainArena) -> void:
@@ -397,16 +399,16 @@ func _commit_actor_move(actor_id: String, displacement: Vector2, movement_policy
 
 
 func _charge_movement_policy_value() -> Variant:
-	if _main._charge_movement_policy != null:
-		return _main._charge_movement_policy
+	if _charge_movement_policy != null:
+		return _charge_movement_policy
 	var built: Dictionary = BodyCollisionPolicyScript.make({
 		"solid": {"response": BodyCollisionPolicyScript.RESPONSE_BLOCK, "record": true},
 		"soft": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
 		"ghost": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
 	})
 	if bool(built.get("ok", false)):
-		_main._charge_movement_policy = built.get("value")
-	return _main._charge_movement_policy
+		_charge_movement_policy = built.get("value")
+	return _charge_movement_policy
 
 
 ## Main-owned mobility policy seam: an active dash/dodge crosses enemy soft
@@ -422,16 +424,16 @@ func resolve_ranger_movement_policy(actor_id: String) -> Variant:
 
 
 func _mobility_policy_value() -> Variant:
-	if _main._mobility_movement_policy != null:
-		return _main._mobility_movement_policy
+	if _mobility_movement_policy != null:
+		return _mobility_movement_policy
 	var built: Dictionary = BodyCollisionPolicyScript.make({
 		"solid": {"response": BodyCollisionPolicyScript.RESPONSE_BLOCK, "record": true},
 		"soft": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
 		"ghost": {"response": BodyCollisionPolicyScript.RESPONSE_IGNORE, "record": true},
 	})
 	if bool(built.get("ok", false)):
-		_main._mobility_movement_policy = built.get("value")
-	return _main._mobility_movement_policy
+		_mobility_movement_policy = built.get("value")
+	return _mobility_movement_policy
 
 
 func _has_active_charge() -> bool:

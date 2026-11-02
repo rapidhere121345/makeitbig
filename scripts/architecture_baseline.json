@@ -38,14 +38,14 @@
     ]
   },
   "private_reach_ins": {
-    "src/game/combat_room/actor_setup.gd": 12,
-    "src/game/combat_room/enemy_ai_ticks.gd": 37,
+    "src/game/combat_room/actor_setup.gd": 4,
+    "src/game/combat_room/enemy_ai_ticks.gd": 34,
     "src/game/combat_room/kernel_reconciler.gd": 13,
     "src/game/combat_room/piercing_arrows.gd": 10,
     "src/game/combat_room/player_commands.gd": 4,
     "src/game/combat_room/room_geometry.gd": 1,
-    "src/game/combat_room/room_hazards.gd": 16,
-    "src/game/combat_room/room_terminal.gd": 9,
+    "src/game/combat_room/room_hazards.gd": 6,
+    "src/game/combat_room/room_terminal.gd": 7,
     "src/game/combat_room_runtime.gd": 1,
     "src/game/ports/main_combat_room_port.gd": 4,
     "src/game/ports/main_encounter_room_port.gd": 2,

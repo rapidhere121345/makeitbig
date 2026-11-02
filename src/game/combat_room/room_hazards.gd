@@ -1,13 +1,16 @@
 class_name RoomHazards
 extends RefCounted
 
-## Hazard ticks and player-contact staging extracted from MainArena. The hazard
-## domain, encounter director and kernel ports remain owned by MainArena and are
-## reached through the typed owner reference.
+## Hazard ticks and player-contact staging extracted from MainArena. This
+## helper owns the hazard domain; the encounter director and kernel ports remain
+## owned by MainArena and are reached through the typed owner reference.
 
 const CombatHazardDomainScript := preload("res://src/runtime/combat/combat_hazard_domain.gd")
 
 var _main: MainArena
+## The configured CombatHazardDomain, or null while the room runs on the
+## EncounterDirector's own hazard states.
+var domain: RefCounted = null
 
 
 func _init(main: MainArena) -> void:
@@ -19,18 +22,18 @@ func _configure_hazard_domain(hazard_ids: Variant, center: Vector2) -> Dictionar
 		return {"ok": false, "error": "hazard_room_port_unavailable"}
 	if not hazard_ids is Array:
 		return {"ok": false, "error": "invalid_hazard_ids"}
-	var domain: RefCounted = CombatHazardDomainScript.new()
-	var configured: Dictionary = domain.configure_ids(_main.encounter_director.room_port, _main._arena_rect(), hazard_ids, center)
+	var candidate: RefCounted = CombatHazardDomainScript.new()
+	var configured: Dictionary = candidate.configure_ids(_main.encounter_director.room_port, _main._arena_rect(), hazard_ids, center)
 	if not bool(configured.get("ok", false)):
 		return configured
-	_main._hazard_domain = domain
+	domain = candidate
 	var read_bound: Dictionary = _main.encounter_director.set_hazard_read_port(domain)
 	if not bool(read_bound.get("ok", false)):
 		return read_bound
 	# The director's tactics snapshot consumes the same detached view objects;
 	# it no longer advances or resolves them in production.
-	_main.encounter_director.hazard_states = _main._hazard_domain.snapshots()
-	return {"ok": true, "error": "", "count": _main._hazard_domain.hazards.size()}
+	_main.encounter_director.hazard_states = domain.snapshots()
+	return {"ok": true, "error": "", "count": domain.hazards.size()}
 
 
 func _update_hazards_tick() -> void:
@@ -39,19 +42,19 @@ func _update_hazards_tick() -> void:
 
 
 func _refresh_hazard_states_tick() -> void:
-	if _main._hazard_domain != null and _main._hazard_domain.is_configured():
-		var refreshed: Dictionary = _main._hazard_domain.refresh(_main.sim_tick)
+	if domain != null and domain.is_configured():
+		var refreshed: Dictionary = domain.refresh(_main.sim_tick)
 		if not bool(refreshed.get("ok", false)):
 			_main.battle_report = "hazard_refresh_failed:%s" % String(refreshed.get("error", "unknown"))
-		_main.encounter_director.hazard_states = _main._hazard_domain.snapshots()
+		_main.encounter_director.hazard_states = domain.snapshots()
 		return
 	_main._encounter_context()
 	_main.encounter_director.refresh_hazard_states_tick()
 
 
 func _resolve_hazard_hits_tick() -> void:
-	if _main._hazard_domain != null and _main._hazard_domain.is_configured():
-		var resolved: Dictionary = _main._hazard_domain.resolve(_main.sim_tick, _main.player_position)
+	if domain != null and domain.is_configured():
+		var resolved: Dictionary = domain.resolve(_main.sim_tick, _main.player_position)
 		if not bool(resolved.get("ok", false)):
 			_main.battle_report = "hazard_resolve_failed:%s" % String(resolved.get("error", "unknown"))
 		else:

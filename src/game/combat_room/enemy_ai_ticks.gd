@@ -28,8 +28,9 @@ func _enemy_tactics_snapshot() -> Dictionary:
 
 
 func _enemy_tactics_hazards() -> Array[Dictionary]:
-	if _main._hazard_domain != null and _main._hazard_domain.is_configured():
-		return _main._hazard_domain.active_geometry()
+	var hazard_domain: RefCounted = _main.room_hazards.domain
+	if hazard_domain != null and hazard_domain.is_configured():
+		return hazard_domain.active_geometry()
 	_main._encounter_context()
 	return _main.encounter_director.enemy_tactics_hazards()
 

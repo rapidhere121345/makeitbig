@@ -9,6 +9,9 @@ extends RefCounted
 const RoomTerminalObservationScript := preload("res://src/runtime/encounter/room_terminal_observation.gd")
 
 var _main: MainArena
+## True once the mounted encounter's victory or defeat has been projected onto
+## the room rules, so the projection runs once per deployment.
+var projection_applied := false
 
 
 func _init(main: MainArena) -> void:
@@ -25,9 +28,9 @@ func _check_battle_end() -> void:
 			push_error("room_terminal_observation_failed:%s" % String(terminal_result.get("error", "unknown")))
 			return
 		var terminal_phase := String(terminal_result.get("phase", ""))
-		if terminal_phase not in ["victory", "defeat"] or _main._terminal_projection_applied:
+		if terminal_phase not in ["victory", "defeat"] or projection_applied:
 			return
-		_main._terminal_projection_applied = true
+		projection_applied = true
 		var victory := terminal_phase == "victory"
 		_main.battle_report = "VICTORY — Room encounter cleared." if victory else "DEFEAT — The ranger fell. Refit at base."
 		var projected := _main.room_rules.project_terminal(victory, _main.timed_bonus_available, _main.elapsed, _main.shots, _main.defeated)
