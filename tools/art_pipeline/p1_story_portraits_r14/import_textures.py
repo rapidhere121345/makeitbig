@@ -22,7 +22,7 @@ sha = common.sha256_file
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--godot", default=os.environ.get("GODOT_BIN", "/data/paseo-makeitbig/bin/godot"))
+    parser.add_argument("--godot", default=os.environ.get("GODOT_BIN", "godot"))
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[3]
     out = args.out.resolve()

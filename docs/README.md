@@ -2,10 +2,10 @@
 
 Long-lived references for systems, narrative, host workflows, and art production live here. See the root [README.md](../README.md) for current status and quick operations, and [AGENTS.md](../AGENTS.md) for collaboration rules.
 
-- [HOST_WORKFLOW.md](HOST_WORKFLOW.md): fixed host workspace environment and build order.
+- [HOST_WORKFLOW.md](HOST_WORKFLOW.md): fixed host workspace environment, build order, and moving to a new host.
 - [GRAPHICAL_VALIDATION.md](GRAPHICAL_VALIDATION.md): host window checks and headless acceptance records.
 - [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md): versioned GitHub Releases, Windows/Linux/macOS downloads, checksums, and publication gates.
-- [DEVBOX_READINESS.md](DEVBOX_READINESS.md): devbox prerequisites, recorded baseline, and migration boundaries.
+- [MACOS.md](MACOS.md): macOS download, Linux-side export, and package verification.
 - [LANGUAGE_POLICY.md](LANGUAGE_POLICY.md): English source language, Simplified Chinese localization, and pinned authentic originals.
 - [SYSTEMS_DESIGN.md](SYSTEMS_DESIGN.md): full-game systems model and long-term plans.
 - [narrative/](narrative/README.md): world, story, and experience units.

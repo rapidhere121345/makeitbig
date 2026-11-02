@@ -39,7 +39,9 @@ Check project loading, scene-tree visibility, and major screens. Run the game in
 "$GODOT_BIN" --display-driver x11 --rendering-method gl_compatibility --path "$MIB_PROJECT_ROOT"
 ```
 
-Use `tools/play_session.gd` and `tools/play_session.py` for input and captures. Set `MIB_PLAY_SESSION_DIR` to an ignored `build/current/` directory first. Window checks do not replace `./scripts/build.sh`: require headless regression, both exports, and empty-directory Linux smoke too.
+Use `tools/play_session.gd` and `tools/play_session.py` for input and captures. Set `MIB_PLAY_SESSION_DIR` to an ignored `build/current/` directory first. Window checks do not replace `./scripts/build.sh`: require headless regression, all three exports (Linux, Windows, Universal macOS), and empty-directory Linux smoke too.
+
+Two display-only tests are skipped by the headless gate (the `SKIP_TESTS` array in `scripts/test.sh`) and belong to graphical validation: `tests/test_presentation_production_assembly.gd` (windowed mounted production assembly; run it under a connected or CPU virtual display) and `tests/unit/test_facility_concept_detail.gd` (screenshot probe that needs a display and `--out=<dir>`; its layout contracts are asserted by the headless `tests/test_facility_screen.gd`).
 
 ## CPU Rendering in the Devbox
 
@@ -99,10 +101,9 @@ Lessons from earlier rendered lanes that still apply to every windowed or
 ## Retained Acceptance
 
 See [acceptance records](playtest/README.md) for the devbox migration,
-current world records, the archive of superseded town-fade work, and historical
-gaps to recheck. Historical host
-commands and screenshots are not instructions to resume work in the rollback
-checkout or expose the host desktop.
+current world records, the archives of superseded town-fade and
+environment/release-migration work, and historical gaps to recheck. Historical
+host commands and screenshots are not instructions to expose the host desktop.
 
 ## Delivery Records
 

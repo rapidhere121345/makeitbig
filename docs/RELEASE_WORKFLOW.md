@@ -1,9 +1,10 @@
 # GitHub Release Workflow
 
 [GitHub Releases](https://github.com/rapidhere121345/makeitbig/releases) is the
-download destination. The former HTTP page and serving scripts are retired;
-the operator stopped the server. The old `release-online/` folder was moved intact to ignored
-`build/archive/release-online-20261028/`; that binary history is never pruned.
+download destination. The former HTTP page, its Tailscale serving scripts and
+`deploy/tailscale/validate.sh` are retired (the operator stopped the server); the
+old `release-online/` folder lives intact in ignored
+`build/archive/release-online-20261028/`, and that binary history is never pruned.
 
 ## Downloads
 
@@ -27,7 +28,6 @@ After the [build gate](HOST_WORKFLOW.md) and all three exports:
 ```bash
 ./scripts/with_env.sh ./scripts/release.sh package vX.Y.Z
 ./scripts/with_env.sh ./scripts/release.sh verify build/releases/vX.Y.Z
-./deploy/tailscale/validate.sh # retired-page compatibility check; no networking
 ```
 
 `verify` without a directory checks every local `v*` package. Packaging refuses
@@ -58,6 +58,22 @@ An upload failure leaves a draft rather than publishing partial downloads.
 An existing GitHub Release is never overwritten or deleted automatically; inspect
 any partial draft before retrying. Prerelease tag suffixes produce prereleases
 without replacing the latest stable release. A stable tag becomes latest.
+
+## Native Checks
+
+The `desktop-build` workflow has an independent Linux macOS-packaging job that
+uploads `make-it-big-macos-universal` (the ZIP and checksums). It verifies the
+app with Apple's `codesign`, then runs headless boot and golden automation replay
+from an empty directory on both `macos-15` ARM64 and `macos-15-intel` runners.
+The native jobs compare against the pinned golden hash; the full Linux delivery
+job independently checks its exported replay against the same hash. The
+published Mac ZIP is copied intact from the artifact both native Mac jobs
+verified. Review the actual run results before claiming native acceptance.
+Headless smoke and replay do not establish GUI, audio, Retina, or sustained GPU
+performance. Local macOS checks (`scripts/verify_macos_export.py`) are described
+in [macOS download and validation](MACOS.md).
+
+## Durability
 
 Direct downloads have durable GitHub Release URLs and do not depend on expiring
 Actions artifacts. Release tags/assets are not moved, replaced, or automatically

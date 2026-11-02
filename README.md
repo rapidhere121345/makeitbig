@@ -14,24 +14,19 @@ cd makeitbig
 godot --path .
 ```
 
-The authorized devbox checkout uses the existing isolated CPU toolchain:
+The authorized devbox checkout uses the existing isolated CPU toolchain; run
+everything through `scripts/with_env.sh`:
 
 ```bash
 cd /data/claude/workspace/makeitbig
 ./scripts/with_env.sh ./scripts/build.sh
 ```
 
-`scripts/with_env.sh <command...>` sources the portable toolchain and
-`scripts/project_env.sh`, then runs the command, so agents and humans can run
-single tests without `source` (for example
-`./scripts/with_env.sh godot --headless --path . --script res://tests/test_x.gd`).
-
-See the [environment workflow](docs/HOST_WORKFLOW.md) for the pinned version,
-writable directories, export templates, and staged commands. The original
-`/data/paseo-makeitbig/project` checkout is retained for rollback. Preparing
-another environment? Check [devbox readiness](docs/DEVBOX_READINESS.md) first.
-Project scripts do not migrate files, install system packages, or change the
-devbox's network and visibility restrictions.
+The [environment workflow](docs/HOST_WORKFLOW.md) is the single reference for the
+pinned Godot version, writable directories, export templates, single-test
+commands, and moving to a new host. Project scripts do not migrate files,
+install system packages, or change the devbox's network and visibility
+restrictions.
 
 ## Controls
 
@@ -79,32 +74,25 @@ increases reading size where the window has enough space for the two-column page
 ## Test and Export
 
 The project builds on Linux only. `./scripts/build.sh` is the delivery gate: it
-runs the stages below in order and stops at the first failing stage.
+runs `check.sh` (static checks), `test.sh` (complete test gate), `export.sh`
+(Linux, Windows, and Universal macOS exports) and `smoke.sh` (empty-directory
+Linux boot) in order and stops at the first failure. Stage details, timeouts and
+logs are in the [environment workflow](docs/HOST_WORKFLOW.md); test discovery
+and layout are in [tests/README.md](tests/README.md).
 
-```bash
-./scripts/check.sh    # fast static checks: shell/Python syntax, English-only, manifests, Godot parse
-./scripts/test.sh     # complete test gate (discovers tests, runs all, prints a summary)
-./scripts/export.sh   # Linux, Windows, and Universal macOS exports
-./scripts/smoke.sh    # boot the Linux export from an empty directory
-```
-
-Each stage runs standalone with the Godot environment configured (or through
-`scripts/with_env.sh`). `scripts/test.sh` discovers `tests/**/test_*.gd` scripts
-that extend `SceneTree`, runs every test even after a failure, and exits
-non-zero with the failing names if any failed.
-
-The Linux executable is `build/current/linux/make-it-big.x86_64`; the Windows executable is `build/current/windows/make-it-big.exe`. The macOS ZIP is `build/current/macos/make-it-big-macos-universal.zip` (Apple Silicon ARM64 + Intel). See [macOS setup and validation](docs/MACOS.md). Cross-exporting does not establish native acceptance; CI provides native smoke and replay checks.
+Exports land in `build/current/`: `linux/make-it-big.x86_64`,
+`windows/make-it-big.exe` and `macos/make-it-big-macos-universal.zip` (Apple
+Silicon ARM64 + Intel; see [macOS setup and validation](docs/MACOS.md)).
+Cross-exporting does not establish native acceptance; CI provides native smoke
+and replay checks.
 
 ## GitHub Releases
 
 Download Windows, Linux, and Universal macOS builds from
-[GitHub Releases](https://github.com/rapidhere121345/makeitbig/releases).
-Each release includes platform archives, `SHA256SUMS`, and source/build metadata.
-
-To publish a new version, push a new `vX.Y.Z` tag. CI builds and tests the tagged
-commit, runs native Windows/Apple Silicon/Intel checks, and publishes all assets
-only after those jobs pass. See [the release workflow](docs/RELEASE_WORKFLOW.md).
-The former HTTP release page is retired; existing binary archives are preserved.
+[GitHub Releases](https://github.com/rapidhere121345/makeitbig/releases); each
+release includes platform archives, `SHA256SUMS`, and source/build metadata.
+Pushing a new `vX.Y.Z` tag publishes after the CI gates pass; see the
+[release workflow](docs/RELEASE_WORKFLOW.md).
 
 ## Documentation
 
@@ -112,7 +100,7 @@ The former HTTP release page is retired; existing binary archives are preserved.
 - [docs/](docs/README.md): systems, narrative, environment workflow, and art production.
 - [Graphical validation](docs/GRAPHICAL_VALIDATION.md): windowed and headless acceptance.
 - [Release workflow](docs/RELEASE_WORKFLOW.md): GitHub Releases, version tags, archives, and checksums.
-- [Devbox readiness](docs/DEVBOX_READINESS.md): target prerequisites and actual audit status.
+- [Environment workflow](docs/HOST_WORKFLOW.md): pinned toolchain, build gate stages, and moving to a new host.
 - [Source language and localization](docs/LANGUAGE_POLICY.md): vocabulary, compatibility, and pinned authentic originals.
 - [content/](content/) and `src/`: implemented content and runtime behavior.
 

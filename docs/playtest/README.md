@@ -3,13 +3,12 @@
 The retained records describe historical runs, not the current checkout's test
 status. Consult logs and run fresh checks before making a new acceptance claim.
 
+- [Crafted UI materials](CRAFTED_UI_20261101.md): generated workshop backdrop, primary-action plaque and Ranger crest with exact prompts and deterministic packing, warm charcoal controls; rendered English/Chinese fixtures, 222/0 gate, 600/600 encounters, matching replays, three exports and Linux smoke passed, local `v0.1.1-ui.2` packaged. No native Windows/macOS execution.
 - [Modern UI refinement](MODERN_UI_20261101.md): open workspaces, fewer frames, shared sans-serif reading text and clear primary/focus states; rendered and localized layout evidence.
-
 - [Art consistency refresh](ART_REFRESH_20261101.md): new title plate, current-world facility marks and epilogue, scoped retirement of superseded runtime art with source provenance retained.
-
+- [Linux playtest and optimization](PLAYTEST_OPTIMIZATION_20261101.md): device-input playtest and three bounded refinement rounds (result metrics above the fold, compact skill copy, quit/cancel, save persistence across relaunch); 221/0 gate, 600/600 encounters, matching replays, local candidate `v0.1.1-playtest.1` verified.
 - [Battlefield completion and refinement](REFINEMENT_20261101.md): terrain-aware Auto retreat, safe presentation reloads, pure terrain authoring, source-hash reconciliation with unchanged runtime PNGs; 221/0 gate, 600/600 encounters, unchanged replay hash, all three desktop exports and Linux smoke passed. Closes the earlier macOS-template blocker.
 - [Terrain battlegrounds and task stages](BATTLEFIELDS_20261028.md): five generated environments and painted camera extensions, native terrain contacts, two/three-stage tasks, bridge routing and pointer fixes; 29 rendered fixtures, 220/0 tests, 600/600 encounters, matching replays, Linux/Windows exports and Linux smoke passed. Local macOS export is blocked by the missing matching template.
-- [GitHub Release migration](GITHUB_RELEASE_MIGRATION_20261028.md): HTTP page/serving helpers retired, 29 legacy files archived intact, full gate and native platform checks passed, and v0.1.0 published with all six assets.
 - [macOS Universal support](MACOS_SUPPORT_20261028.md): Apple Silicon/Intel export, package integrity checks, download-page support, and native ARM64/Intel signature, startup, and full replay checks passed; local frozen gate passed 216/0.
 - [Release candidate play-test](RELEASE_PLAYTEST_E712CCF_20261026.md): real-input windowed play of the frozen `e712ccf` Linux export on Xvfb/llvmpipe (title to town, two Manual contracts, Training, zh_CN round trip) plus a fixture-driven Auto room, Ending and Proxy Bay install; no blocker, six cosmetic notes, no menu Quit entry and the Colossus fight not reached.
 - [Refactor acceptance](REFACTOR_ACCEPTANCE_20261026.md): frozen full gate (214/0) and exported-binary replay hash passed on `e4d1b49`; windowed Xvfb/llvmpipe play-through from title to forge, training, loadout, Chinese UI and a boss defeat found no refactor regression; Auto and the unlocked Proxy Bay were not reached (locked behind the first Colossus kill).
@@ -21,22 +20,9 @@ status. Consult logs and run fresh checks before making a new acceptance claim.
 - [Actor redraw](ACTOR_REDRAW_20261024.md): new Ranger, residents, enemy families and articulated boss; actor and mounted-combat rendered acceptance passed. Frozen gate and local release `20261025-054740-5f4edd733ff5` passed.
 - [Angled-world demo](ANGLED_WORLD_DEMO_20261024.md): certified angled scenery and ground footprints; previous published build `20261024-172341-5f4edd733ff5`.
 - [2.5D world traversal](TOWN_2P5D_TRAVERSAL_20261024.md): ground footprints across town and battlefield scenery; 810 town and 129 required arena render checks, frozen full gate and local release `20261024-153604-5f4edd733ff5` passed.
-- [Town and battlefield visual-quality pass](VISUAL_QUALITY_PASS_20261023.md):
-  bounded mounted visual acceptance, 600/600 encounter matrix, frozen full
-  build/export/smoke PASS and local publication `20261023-141101-5f4edd733ff5`.
-
-- [Devbox migration](DEVBOX_MIGRATION_20261022.md): actual target full gate,
-  English UI captures, export hashes, local packaging, and environment boundaries.
-- [Archive: town fade and world v02 records](ARCHIVE_TOWN_FADE_AND_WORLD_V02_20261022-23.md):
-  ten superseded reports (modular foundation and calibration, Loadout sample,
-  silhouette fixture, primitive and native fade with the 20261023-105532 gate,
-  Round-2 runs, generated world v02 with the 20261023-195126 build, and the
-  rejected coarse scenery polish) condensed to date, scope, outcome, build id and
-  the work that superseded them.
-- [Cleanup and launcher fix acceptance](CLEANUP_LAUNCHER_ACCEPTANCE_20261022.md):
-  final post-fix full gate PASS (600/600 victories, replay matched at
-  30/60/144 Hz, both exports, smoke, frozen 1204-file manifest) and this
-  pass's closed checklist.
+- [Town and battlefield visual-quality pass](VISUAL_QUALITY_PASS_20261023.md): bounded mounted visual acceptance, 600/600 encounter matrix, frozen full build/export/smoke PASS and local publication `20261023-141101-5f4edd733ff5`.
+- [Archive: devbox migration, cleanup gate and GitHub Release migration](ARCHIVE_ENVIRONMENT_AND_RELEASE_MIGRATION_20261022-28.md): three superseded reports (devbox transfer, English/network checks, target full gate with export hashes and graphical captures; the post-launcher-fix 1204-file frozen gate; retirement of the HTTP page, the 29-file archive, and the `v0.1.0` release with all six asset hashes) condensed to scope, commands, results, hashes and remaining limits.
+- [Archive: town fade and world v02 records](ARCHIVE_TOWN_FADE_AND_WORLD_V02_20261022-23.md): ten superseded reports (modular foundation and calibration, Loadout sample, silhouette fixture, primitive and native fade with the 20261023-105532 gate, Round-2 runs, generated world v02 with the 20261023-195126 build, and the rejected coarse scenery polish) condensed to date, scope, outcome, build id and the work that superseded them.
 
 ## Earlier Reviews
 
@@ -87,5 +73,3 @@ Historical raw-evidence roots include `build/current/gpu-ux-review-20261018-*`,
 `gpu-visual-r3-glm/`, `town-cutout-r4d/`, and `english-visual-20261024/` beneath
 `build/current/`. Names are evidence identifiers; the last tag is not the actual
 run date. Availability of these old local directories is not assumed after migration.
-
-- [Linux playtest and three optimization rounds, 2026-11-01](PLAYTEST_OPTIMIZATION_20261101.md).

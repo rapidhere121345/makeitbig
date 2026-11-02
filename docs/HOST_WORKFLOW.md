@@ -2,7 +2,6 @@
 
 This guide describes the authorized devbox checkout at
 `/data/claude/workspace/makeitbig` and the portable environment contract.
-The original `/data/paseo-makeitbig/project` remains a rollback copy.
 Paseo manages agents and workspaces; project scripts validate source and produce
 deliverables. They do not create containers, install packages, or change networking.
 
@@ -145,12 +144,35 @@ display processes and remove only their own IPC/authentication artifacts.
 
 Playtest tools share the checkout and `build/current/play-session/`. Record the actual display and renderer for X11/Xvfb runs. A virtual display is not a physical desktop session. See [graphical validation](GRAPHICAL_VALIDATION.md).
 
-## Moving to Another Environment
+## Moving to a New Host
 
-After the operator moves the checkout, run the read-only prerequisite checker before sourcing the environment:
+The migration to this devbox is complete; do not migrate again or recreate the
+container as part of ordinary project work. If the operator moves the checkout
+to another host, the new environment must regenerate imports and pass its own
+gate. Do not copy host-specific symlinks, `.godot/`, or test saves as
+installation substitutes. The recorded migration evidence is condensed in the
+[environment and release migration archive](playtest/ARCHIVE_ENVIRONMENT_AND_RELEASE_MIGRATION_20261022-28.md).
+
+Prerequisites the new host must supply (accepted devbox configuration in parentheses):
+
+- Resources: 16 CPU-equivalents, 32 GiB RAM, 8 GiB swap allowance (limits, not
+  dedicated capacity), running as UID/GID `1000:1000`.
+- Godot 4.7.2 with matching Linux, Windows, and macOS release templates.
+- Python 3 with Pillow (3.14.4 / 12.1.1) for art tooling; keep the scoped
+  loader/launchers when the host and toolchain glibc versions differ, and never
+  install the bundled libraries system-wide or set global library paths.
+- Mesa llvmpipe and an owned, authenticated Xvfb with TCP disabled for rendered
+  checks; confirm the renderer in Godot's startup output, because a GL probe or
+  `nvidia-smi` alone does not prove game rendering.
+- Isolation: no published ports, private IPC, dropped capabilities,
+  no-new-privileges.
+
+Run the read-only prerequisite checker before sourcing the environment. It does
+not install, migrate, build, or publish:
 
 ```bash
 python3 scripts/devbox_preflight.py --profile all --json
+python3 scripts/devbox_preflight.py --profile visual --software-ok --json  # rendered acceptance
 ```
 
 Configure portable paths explicitly when needed:
@@ -162,7 +184,12 @@ source scripts/project_env.sh
 ./scripts/build.sh
 ```
 
-Do not copy host-specific symlinks, `.godot/`, or test saves as installation substitutes. The new environment must regenerate imports and pass its own tests. See [devbox readiness](DEVBOX_READINESS.md) for current acceptance and separate follow-up work.
+Operator follow-up outside this repository: persist the authorized checkout and
+resource settings in the authoritative infrastructure configuration before any
+future recreation. Long-run memory/performance and signing remain separate
+work; native platform smoke runs in CI. Preparing a new host must not change
+another project's configuration or credentials. See
+[release workflow](RELEASE_WORKFLOW.md) for publication.
 
 ## Troubleshooting
 

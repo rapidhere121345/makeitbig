@@ -74,9 +74,12 @@ contact are both acceptance requirements, along with the existing route tests.
 Environment canvas/anchor/source pins live in
 `tools/art_pipeline/generated_world_v02/packing_config.json`. The runtime manifest
 is `art/production/p1/generated_world_v02/assets.json`. The packer verifies exact
-output bytes and pair geometry. Residents are built from the `npc_*_raw.png` sources by
-`tools/art_pipeline/actors_v02/build.py` (the former `npc_pack.py` compiler and its
-`residents/` output under this directory were retired).
+output bytes and pair geometry. Residents are built by
+`tools/art_pipeline/actors_v02/build.py` from the `npc_*_raw.png` sheets in
+`../actor-redraw-20261024/sources/`, not from this directory's `npc_*_raw.png`
+files, which are the earlier first-generation sheets retained for provenance (the
+former `npc_pack.py` compiler and its `residents/` output under this directory
+were retired).
 
 Resident IDs, clip names, work cadence and cell layout are retained as metadata
 from the previous animation package. All 20 resident frame images are new.

@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "retired": "2026-11-01",
   "resource_prefix": "res://art/production/p1/hearth_return_v01",
   "native_view": [
     640,

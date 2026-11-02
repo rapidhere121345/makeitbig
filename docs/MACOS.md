@@ -27,10 +27,7 @@ No Xcode, Apple SDK, or Developer ID is needed for the ad-hoc build.
 ./scripts/with_env.sh ./scripts/export.sh macos # macOS export only
 ```
 
-Explicit targets also support `linux` and `windows`. For a partial environment
-without the macOS template, `build.sh linux windows` runs the full test suite,
-those two exports, and Linux smoke. It does not validate or produce macOS.
-All-target exports fail if any required template is missing.
+A partial `build.sh linux windows` gate (see the environment workflow) does not validate or produce macOS.
 
 `scripts/verify_macos_export.py` verifies the ZIP CRCs, ARM64/Intel Mach-O slices,
 per-slice executable signature hashes, resource manifest hashes, app metadata,
@@ -39,17 +36,6 @@ Retina flag, game pack, and executable permissions. The export writes an adjacen
 
 ## Native Checks and Downloads
 
-The `desktop-build` GitHub workflow has an independent Linux macOS-packaging job and uploads
-`make-it-big-macos-universal` (the ZIP and checksums). It also verifies the app
-with Apple's `codesign`, then runs headless boot and golden automation replay
-from an empty directory on both `macos-15` ARM64 and `macos-15-intel` runners.
-The native jobs compare against the pinned golden hash; the full Linux delivery
-job independently checks its exported replay against the same hash.
-Review the actual run results before claiming native acceptance. Headless smoke
-and replay do not establish GUI, audio, Retina, or sustained GPU performance.
-
-Versioned downloads live on [GitHub Releases](https://github.com/rapidhere121345/makeitbig/releases).
-A tagged release publishes only after the full Linux gate and native Windows,
-ARM64 Mac, and Intel Mac checks pass. The Mac ZIP is copied intact from the
-artifact verified by both native Mac jobs. There is no local release page or
-retention pruning.
+Native macOS CI checks, publication gates and download locations are described in
+the [release workflow](RELEASE_WORKFLOW.md). Headless smoke and replay do not
+establish GUI, audio, Retina, or sustained GPU performance.

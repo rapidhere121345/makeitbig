@@ -10,27 +10,30 @@ ownership.
 ## Runtime graph
 
 ```text
-Native world and content definitions
-    -> WorldAssetBaker
-    -> immutable WorldAsset
-        -> static spatial indexes, navigation graph, vision/projectile data,
-           occlusion data, sockets, gameplay/presentation digests
-    -> GameApplication
-        -> RoomRuntime
-            -> SimulationKernel
-            -> EntityStore
+Native room scenes (content/rooms/**/*.tscn) and content definitions
+    -> tools/world_manifest bake (bake_core.gd, bake_spatial.gd)
+    -> immutable WorldAsset (scene path, manifest path, gameplay and
+       presentation digests) + generated SpatialManifest
+        -> static spatial indexes, vision/projectile data, occlusion data,
+           sockets
+    -> RoomCatalog selects the asset for a layout
+    -> GameRoot (routes, contracts, save)
+        -> SceneRuntime (mounts one room)
+            -> SimulationWorld
+                -> SimKernel
+                -> SimEntityStore
+                -> SimHitBuffer and the other typed buffers
             -> DynamicSpatialIndex
             -> MovementResolver
             -> ContinuousHitResolver
-            -> VisionResolver
             -> RoomEncounter
             -> DamageResolution
             -> StatusEffectLedger
             -> DeathSettlement
             -> CombatRoomLoot
-        -> detached AuthoritativeSnapshot
+        -> detached SimSnapshot
             -> PresentationFrame
-                -> OcclusionPresentationController
+                -> OcclusionController
 ```
 
 `RoomDefinition` identifies a room and its rules. `WorldAsset` points to the
@@ -55,7 +58,7 @@ SceneRuntime
 `SimulationWorld` owns the room's fixed-tick accumulator and versioned command
 boundary. A room supplies its gameplay phases after `step()` commits a tick;
 rendering may continue to resolve presentation frames after the authority has
-reached a terminal state. `Main` is initialized with that same configured
+reached a terminal state. `MainArena` is initialized with that same configured
 `SimulationWorld` for explicit test fixtures and mounted rooms; there is no
 detached tick counter or implicit combat wave.
 
@@ -122,7 +125,7 @@ Every room uses the same code-defined order:
 4. commit actions, casts, projectiles and hazards;
 5. resolve movement and dynamic contact;
 6. refresh the dynamic spatial index from committed poses;
-7. advance projectiles, attacks and hazards and fill `HitBuffer`;
+7. advance projectiles, attacks and hazards and fill `SimHitBuffer`;
 8. sort and resolve damage, status applications and periodic effects;
 9. mark deaths and produce settlement, loot and encounter commands;
 10. commit spawns, removals, overlays and terminal state;
@@ -131,7 +134,7 @@ Every room uses the same code-defined order:
 The scheduler is fixed and explicit rather than configurable. Structural
 changes never remove an entity in the middle of a query phase. Every entity
 reference contains a generation and room revision; stale references fail
-closed. A per-room `StableEntityKey` is monotonic and never reused.
+closed. A per-room `SimStableKey` is monotonic and never reused.
 
 ## Combat ownership
 
@@ -148,7 +151,7 @@ Kernel domains:
 - `StatusEffectLedger` owns effect instances, stacking, refresh, expiry and
   periodic damage requests.
 - `DeathSettlement` converts a death exactly once into loot, encounter and
-  removal requests, keyed by `StableEntityKey`. A death request carries room
+  removal requests, keyed by `SimStableKey`. A death request carries room
   revision, committed tick, source and spawn identity, feet position,
   archetype and drop tags; repeating the same key returns the original
   receipt. It never rolls an item and never calls `RoomEncounter`.
@@ -169,11 +172,11 @@ Room services and player domain:
   terminal checks and automation timeout. It calls `PlayerCombatRules`
   directly for player phases; its ports connect room, input, target, encounter
   and projectile services without handing player timers or damage authority
-  back to `Main`.
+  back to `MainArena`.
 - `PlayerCombatState` stores health, cooldowns, mobility, marks, talents and
   the action timeline for a frozen room build; `PlayerCombatRules` advances
   them and owns damage, cast requests and talent consumption. Position is read
-  from `ActorRegistry`; there is no writable player position copy in `Main`.
+  from `ActorRegistry`; there is no writable player position copy in `MainArena`.
 - `PlayerMotionSystem` computes displacement and submits it to the shared
   registry/motor once per committed world tick, including stationary ticks. A
   repeated motor submission fails before state mutation.
@@ -187,7 +190,7 @@ Room services and player domain:
   replay input is unchanged.
 - `ProxyIntentSystem` is the Auto-only decision boundary: it consumes the
   published observation and proxy build and returns intent candidates; it does
-  not read device input or move actors. `Main` remains the owner of the single
+  not read device input or move actors. `MainArena` remains the owner of the single
   command sequence. `SmokeInputDriver` is a separate diagnostic input policy
   over detached observations.
 - `EncounterDirector` owns enemy intent execution, enemy action phases, boss
@@ -198,10 +201,10 @@ Room services and player domain:
   applies player damage through the same configured rules instance with an
   explicit source position.
 - `CombatRoomRules` owns terminal decisions and reward calculation, including
-  same-tick victory-before-defeat priority and loot RNG order. `Main` does not
+  same-tick victory-before-defeat priority and loot RNG order. `MainArena` does not
   roll rewards or decide victory.
 - `CombatRoomRuntime` owns room mounting, input relay, terminal observation
-  and one-shot signal delivery through `Main.start_room()` and
+  and one-shot signal delivery through `MainArena.start_room()` and
   `return_requested`. `CombatRoomResult` is a pure result projection from the
   immutable room configuration and an authoritative snapshot; it filters
   internal reward fields and emits the public Law Tally shape.
@@ -232,10 +235,62 @@ channels; visual bounds do not define movement or attack shapes.
 the concave/hole/passage sample uses `NativeStaticRoomRoot` with the same
 generic `static_blocker` bindings, whose convex pieces register before READY.
 
+## Battlefields and proxy terrain navigation
+
+Five campaign battlefields (`snowbound_road`, `river_crossing`, `ruined_village`,
+`quarry_pass`, `colossus_approach`; `ArenaGeometry.BATTLEFIELDS`) are native
+combat scenes in `content/rooms/combat/*.tscn` with baked
+`*.spatial.json` manifests, registered in `room_catalog.json` like the other
+combat rooms. They use the whole authored `arena_rect` as a rectangular movement
+boundary — never an annular arena — and each scene's `Sockets/CombatSpawn`
+marker positions the encounter. Terrain and structures are convex
+`Polygon2D` static blockers under `GeometrySources/Static`, bound by
+`binding_id`:
+
+- `combat/terrain/water/*` and `combat/structure/ruin.low_pier#*` block
+  movement only; arrows cross them.
+- `combat/terrain/cliff/*` and wall-shaped structures (`ruin.gate`,
+  `ruin.wall_corner`, `ruin.broken_wall`, `tower`) block movement and
+  projectiles.
+- Terrain and structure blockers publish no navigation, vision or occlusion
+  channel; only the whole-map movement boundary does.
+
+`tools/world_manifest/author_battlegrounds.py` authors these polygons from the
+reviewed terrain contacts and the manifest is baked from the scene, so painted
+art is never collision authority.
+
+`BattlefieldScene` (`src/presentation/battlefield_scene.gd`) is a read-only
+presentation loader used by `ArenaWorldView`. It resolves each battlefield
+through `RoomCatalog`, instantiates the native scene, validates its
+`RoomAssetRoot` contract, and records bounds, spawn socket, terrain polygons
+(`combat/terrain/*`) and reused structure feet (`combat/structure/*`). It then
+checks `art/production/p1/battlefields_v01/assets.json`: every field needs a
+packed 1024x640 floor plate and a 1536x1024 `_extension` plate whose SHA256
+matches the pack. Any failure leaves `pending_reason` set ("ASSETS PENDING")
+and no partial state; missing art is a load error, not a fallback.
+`ArenaWorldView` also uses a battlefield-specific camera that centres on the map
+and allows a small overscan so the hero stays visible at the edge.
+
+The proxy navigation script (`src/systems/proxy_navigation.gd`, preloaded by `ProxyDecision`
+for Auto mode) is static, footprint-aware routing over the observation
+snapshot's `walkable_geometry` and `static_blockers`; it does not read the
+spatial manifest's navigation channel and the actor motor remains the only
+authority on movement. `direction()` returns the straight line when the
+segment is clear (arena boundary plus every blocker, swept with a 15-pixel
+clearance circle). Otherwise it builds, and caches per geometry/blocker set, an
+`AStarGrid2D` with 24-pixel cells whose blocked cells are solid, snaps start and
+goal to the nearest connected cell within two cells, and steers to the furthest
+path point still reachable by a clear segment. `retreat_direction()` does not
+route to a goal: it takes the first clear local step from a stable angular
+ordering of candidate directions (`ArenaGeometry.candidate_directions`) with a
+caller-supplied side sign, so retreats are deterministic without per-tick
+randomness. A sweep that merely starts in contact and moves away from the
+surface is treated as clear so a legal actor touching a blocker can leave it.
+
 ## Presentation and occlusion
 
 The presentation frame contains detached actor poses, feet anchors, baseline,
-rank, stable key and actual art boxes. `OcclusionPresentationController`
+rank, stable key and actual art boxes. `OcclusionController`
 calculates local cutaway and alpha transitions from that frame. Interpolation,
 alpha and Y-sort never enter the authoritative hash and never feed back into
 movement, vision or combat.

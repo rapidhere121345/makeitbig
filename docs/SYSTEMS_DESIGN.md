@@ -635,10 +635,10 @@ Packet merge key includes payload, tags, source lineage, visited laws, target hi
 - Unmigratable encounter safely returns to current room start; never guess huge-state conversion.
 - Bounded rings for logs/presentation objects/lineage caches; release room temporaries.
 
-### 15.5 Linux/Windows Delivery
+### 15.5 Linux/Windows/macOS Delivery
 
 - Commit project.godot/export_presets.cfg; export templates match Godot 4.7.2.
-- CI: import → headless units → content validation → golden replay → both exports → both-platform smoke replay → final-state hash comparison.
+- CI: import → headless units → content validation → golden replay → Linux, Windows and Universal macOS exports → native smoke replay on each platform → final-state hash comparison.
 - Windows artifact must actually launch on Windows runner; Linux exe export is not Windows validation.
 - No required network/account server/platform SDK; core progress is locally recoverable.
 
@@ -836,7 +836,7 @@ First playable slice is Ranger only, testing highest-risk shared lifetime, branc
 | Milestone | Definition of done |
 |---|---|
 | M0 semantic kernel | Headless-testable numbers, packets, deterministic Forge, proxy capabilities |
-| M1 Ranger slice | One Contract per mode, reproducible three p regimes, both exports launch |
+| M1 Ranger slice | One Contract per mode, reproducible three p regimes, all three desktop exports launch |
 | M2 early game | Three classes/nine skills, initial runes/laws, Colossus,0–4h loop |
 | M3 middle game | Chains, Law Mirror, full proxy drops, four proofs, immortality |
 | M4 late game | Two/three nesting layers, feedback, Spire Zero, ending g₁ teaser |
