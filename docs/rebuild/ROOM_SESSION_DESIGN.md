@@ -201,6 +201,12 @@ becomes `kit.actor_spec().id`.
 8. Move tests from `MainArena` privates (`_simulate_tick`, `_semantic_state_hash`,
    `_arena_rect`, `_enemy_by_entity_id`, ...) to the session, then delete the
    compatibility getters.
+   8a done: `MainArena` publishes the driver API (`step_tick()`, `state_hash()`,
+   `arena_rect()`, `walkable_geometry()`, `collision_geometry()`,
+   `clamp_to_arena()`, `room_socket()`, the `player_commands` helper) and every
+   test uses it; the preferred-skill and framework-error checks read the session
+   directly. The migrated privates are deleted; `_walkable_geometry` stays as an
+   alias because the snapshot builder still binds it by name.
 9. Split `EncounterDirector` into per-archetype behaviors (melee, charger,
    ranged, boss) behind one interface (Step 4 of the redesign).
 
