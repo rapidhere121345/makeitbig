@@ -52,12 +52,12 @@ func _run() -> void:
 	var arena = MainScript.new()
 	# Same embedded configuration order as the production CombatRoomRuntime.
 	arena.test_session = true
-	arena.automation_smoke = false
-	arena.selected_mode = "Manual"
-	arena.selected_preset = "exponential"
-	arena.framework_resolved_build = build.duplicate(true)
-	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
-	arena.framework_room = {
+	arena.session.automation_smoke = false
+	arena.session.selected_mode = "Manual"
+	arena.session.selected_preset = "exponential"
+	arena.session.framework_resolved_build = build.duplicate(true)
+	arena.session.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
+	arena.session.framework_room = {
 		"room_id": "acceptance.threshold_colossus",
 		"layout_id": "rectangle_arena",
 		"objective_id": "hunt_elite",
@@ -71,81 +71,81 @@ func _run() -> void:
 	await process_frame
 
 	arena.start_room()
-	if not arena.in_arena:
+	if not arena.session.in_arena:
 		_expect(false, "arena deployment was blocked: %s" % String(arena.last_save_message))
 		_finish(arena)
 		return
-	_expect(arena.boss != null and arena.boss.kind_id == "threshold_colossus" and arena.boss.entity_id == 1,
+	_expect(arena.session.encounter_director.boss != null and arena.session.encounter_director.boss.kind_id == "threshold_colossus" and arena.session.encounter_director.boss.entity_id == 1,
 		"embedded room did not spawn the authoritative threshold colossus")
-	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	var player: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 	_expect(is_equal_approx(float(player.player_maximum_health), 112.0),
 		"qualified build did not grant the 112 vitality pool")
 
 	# Deterministic qualified-player placement: stand at a fixed in-range point
 	# before the first tick. All motion afterwards flows through real tick
 	# commands (dodge displacement) — this single write is deployment setup.
-	arena.teleport_actor("ranger", arena.boss.position + Vector2(-RANGE_HOLD_DISTANCE, 0.0))
+	arena.teleport_actor("ranger", arena.session.encounter_director.boss.position + Vector2(-RANGE_HOLD_DISTANCE, 0.0))
 
 	var tick_cap: int = int(ACCEPTANCE_MAX_SECONDS) * int(arena.SIM_TICKS_PER_SECOND)
 	var transition_tick: int = -1
 	var phase_two_tick: int = -1
 	var damage_events: Array[String] = []
-	while not arena.battle_over and arena.sim_tick < tick_cap:
-		player = arena.player_combat_state.snapshot(arena.sim_tick)
+	while not arena.session.is_battle_over() and arena.session.sim_tick < tick_cap:
+		player = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 		var pressed_action := ""
-		if arena.boss != null and arena.boss.health > 0.0:
-			if transition_tick < 0 and arena.boss.phase_state == "transition":
-				transition_tick = arena.sim_tick
-			if phase_two_tick < 0 and arena.boss.phase_id == "awakened":
-				phase_two_tick = arena.sim_tick
+		if arena.session.encounter_director.boss != null and arena.session.encounter_director.boss.health > 0.0:
+			if transition_tick < 0 and arena.session.encounter_director.boss.phase_state == "transition":
+				transition_tick = arena.session.sim_tick
+			if phase_two_tick < 0 and arena.session.encounter_director.boss.phase_id == "awakened":
+				phase_two_tick = arena.session.sim_tick
 			# Dodge one tick before each telegraphed impact, exactly like a
 			# player reacting to the fixed windup telegraph (SHIFT handler).
-			var boss_impact_next: bool = int(arena.boss.impact_tick) == int(arena.sim_tick) + 1
+			var boss_impact_next: bool = int(arena.session.encounter_director.boss.impact_tick) == int(arena.session.sim_tick) + 1
 			var fireline_near_next: bool = _moving_fireline_near_next_tick(arena)
 			if (boss_impact_next or fireline_near_next) and int(player.dodge_cooldown_ticks) == 0:
-				pressed_action = _press_vertical_dodge(player.player_position, arena.boss.position)
-				arena.command_source.dodge_requested = true
+				pressed_action = _press_vertical_dodge(player.player_position, arena.session.encounter_director.boss.position)
+				arena.session.command_source.dodge_requested = true
 		# Hold the Skill 1 request every tick; the fixed 13-tick cooldown in
 		# PlayerCombatRules is the gate, so this casts exactly on cooldown.
-		arena.command_source.attack_requested = true
+		arena.session.command_source.attack_requested = true
 		var health_before: float = float(player.player_health)
 		arena.step_tick()
-		player = arena.player_combat_state.snapshot(arena.sim_tick)
+		player = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 		if not pressed_action.is_empty():
 			Input.action_release(pressed_action)
 		if float(player.player_health) < health_before:
 			damage_events.append("tick=%d amount=%.1f boss=%s/%s dodge_cd=%d" % [
-				arena.sim_tick, health_before - float(player.player_health),
-				String(arena.boss.action_id) if arena.boss != null else "none",
-				String(arena.boss.action_state) if arena.boss != null else "none",
+				arena.session.sim_tick, health_before - float(player.player_health),
+				String(arena.session.encounter_director.boss.action_id) if arena.session.encounter_director.boss != null else "none",
+				String(arena.session.encounter_director.boss.action_state) if arena.session.encounter_director.boss != null else "none",
 				player.dodge_cooldown_ticks,
 			])
 
-	var elapsed: float = float(arena.sim_tick) / float(arena.SIM_TICKS_PER_SECOND)
-	var phase_two_reached: bool = arena.boss != null and arena.boss.phase_id == "awakened" and arena.boss.core_open
-	_expect(arena.battle_over and arena.battle_victory,
-		"battle did not end in victory (over=%s victory=%s tick=%d report=%s)" % [arena.battle_over, arena.battle_victory, arena.sim_tick, arena.battle_report])
+	var elapsed: float = float(arena.session.sim_tick) / float(arena.SIM_TICKS_PER_SECOND)
+	var phase_two_reached: bool = arena.session.encounter_director.boss != null and arena.session.encounter_director.boss.phase_id == "awakened" and arena.session.encounter_director.boss.core_open
+	_expect(arena.session.is_battle_over() and arena.session.is_battle_victory(),
+		"battle did not end in victory (over=%s victory=%s tick=%d report=%s)" % [arena.session.is_battle_over(), arena.session.is_battle_victory(), arena.session.sim_tick, arena.session.battle_report])
 	_expect(elapsed >= ACCEPTANCE_MIN_SECONDS and elapsed <= ACCEPTANCE_MAX_SECONDS,
 		"kill elapsed %.3fs is outside [%.0f, %.0f]" % [elapsed, ACCEPTANCE_MIN_SECONDS, ACCEPTANCE_MAX_SECONDS])
 	_expect(phase_two_reached,
-		"boss never reached phase 2 before death (phase_id=%s core_open=%s)" % [arena.boss.phase_id if arena.boss != null else "<null>", arena.boss.core_open if arena.boss != null else false])
+		"boss never reached phase 2 before death (phase_id=%s core_open=%s)" % [arena.session.encounter_director.boss.phase_id if arena.session.encounter_director.boss != null else "<null>", arena.session.encounter_director.boss.core_open if arena.session.encounter_director.boss != null else false])
 	_expect(arena.boss_damage.compare(arena.boss_maximum) >= 0,
 		"accumulated damage %s did not reach the 1e12 threshold" % arena.boss_damage.to_short_string(6))
 	_expect(float(player.player_health) > 0.0,
 		"qualified driver died before the kill (health=%.1f)" % player.player_health)
 	_expect(arena.shots >= 100, "qualified driver did not execute a sustained real Skill 1 rotation")
 	print("BOSSDUR elapsed=%.3f ticks=%d casts=%d damage=%s health=%.1f distance=%.1f position=%s transition_tick=%d phase_two_tick=%d" % [
-		elapsed, arena.sim_tick, arena.shots, arena.boss_damage.to_short_string(6),
-		player.player_health, (player.player_position as Vector2).distance_to(arena.boss.position) if arena.boss != null else -1.0,
+		elapsed, arena.session.sim_tick, arena.shots, arena.boss_damage.to_short_string(6),
+		player.player_health, (player.player_position as Vector2).distance_to(arena.session.encounter_director.boss.position) if arena.session.encounter_director.boss != null else -1.0,
 		str(player.player_position), transition_tick, phase_two_tick,
 	])
-	if not arena.battle_victory:
+	if not arena.session.is_battle_victory():
 		print("BOSSDUR_DAMAGE %s" % "; ".join(damage_events))
 	_finish(arena)
 
 
 func _moving_fireline_near_next_tick(arena: Node) -> bool:
-	var next_tick := int(arena.sim_tick) + 1
+	var next_tick := int(arena.session.sim_tick) + 1
 	var cycle_tick := next_tick % int(arena.HAZARD_CYCLE_TICKS)
 	if cycle_tick < int(arena.HAZARD_WARNING_TICKS) or cycle_tick >= int(arena.HAZARD_WARNING_TICKS + arena.HAZARD_ACTIVE_TICKS):
 		return false
@@ -153,7 +153,7 @@ func _moving_fireline_near_next_tick(arena: Node) -> bool:
 	var progress := float(cycle_tick) / float(int(arena.HAZARD_CYCLE_TICKS) - 1)
 	var line_x := lerpf(rect.position.x, rect.end.x, progress)
 	var dodge_step := SkillRules.DODGE_SPEED * float(arena.SIM_STEP_SECONDS)
-	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	var player: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 	return absf(float((player.player_position as Vector2).x) - line_x) <= 17.0 + dodge_step
 
 
@@ -191,7 +191,7 @@ func _resolve_qualified_build() -> Dictionary:
 
 func _finish(arena: Node) -> void:
 	if arena != null and is_instance_valid(arena):
-		var runtime: Variant = arena.get("scene_runtime")
+		var runtime: Variant = arena.session.scene_runtime
 		if runtime != null and runtime.has_method("unmount"):
 			runtime.unmount()
 		if arena.get_parent() != null:

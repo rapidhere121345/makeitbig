@@ -80,25 +80,25 @@ func _run() -> void:
 
 
 func _run_boss_kill(arena) -> void:
-	_expect(arena.scene_runtime != null and arena.scene_runtime.is_ready(), "kernel boss: native room was not mounted")
-	_expect(arena.simulation_world == arena.scene_runtime.simulation, "kernel boss: Main did not adopt the mounted SimulationWorld")
-	_expect(arena.kernel_bindings.boss_domain != null, "kernel boss: production did not create a BossCombatDomain")
-	_expect(arena.room_spatial_port.boss_domain == arena.kernel_bindings.boss_domain, "kernel boss: spatial port did not bind the production Boss domain")
-	_expect(arena.room_combat_port.boss_domain == arena.kernel_bindings.boss_domain, "kernel boss: combat port did not bind the same Boss domain")
+	_expect(arena.session.scene_runtime != null and arena.session.scene_runtime.is_ready(), "kernel boss: native room was not mounted")
+	_expect(arena.session.simulation_world == arena.session.scene_runtime.simulation, "kernel boss: Main did not adopt the mounted SimulationWorld")
+	_expect(arena.session.kernel_bindings.boss_domain != null, "kernel boss: production did not create a BossCombatDomain")
+	_expect(arena.session.room_spatial_port.boss_domain == arena.session.kernel_bindings.boss_domain, "kernel boss: spatial port did not bind the production Boss domain")
+	_expect(arena.session.room_combat_port.boss_domain == arena.session.kernel_bindings.boss_domain, "kernel boss: combat port did not bind the same Boss domain")
 	_expect(arena.kernel_reconciler.boss_domain_room_is_current(), "kernel boss: Boss domain identity does not match the mounted room")
-	_expect(arena.kernel_bindings.boss_flight.is_configured(), "kernel boss: Boss flight driver was not configured")
+	_expect(arena.session.kernel_bindings.boss_flight.is_configured(), "kernel boss: Boss flight driver was not configured")
 	if not _failures.is_empty():
 		return
-	_expect(arena.boss != null and arena.boss.is_boss, "kernel boss: production Boss failed to spawn")
-	if arena.boss == null:
+	_expect(arena.session.encounter_director.boss != null and arena.session.encounter_director.boss.is_boss, "kernel boss: production Boss failed to spawn")
+	if arena.session.encounter_director.boss == null:
 		return
-	var boss = arena.boss
+	var boss = arena.session.encounter_director.boss
 	var stable_key := ""
-	for key: Variant in arena.kernel_bindings.enemy_stable_keys.keys():
-		if int(arena.kernel_bindings.enemy_stable_keys[key]) == int(boss.entity_id):
+	for key: Variant in arena.session.kernel_bindings.enemy_stable_keys.keys():
+		if int(arena.session.kernel_bindings.enemy_stable_keys[key]) == int(boss.entity_id):
 			stable_key = String(key)
 	_expect(not stable_key.is_empty(), "kernel boss: Boss actor stable key mapping missing")
-	var domain_target = arena.kernel_bindings.boss_domain.target(stable_key) if not stable_key.is_empty() else null
+	var domain_target = arena.session.kernel_bindings.boss_domain.target(stable_key) if not stable_key.is_empty() else null
 	_expect(domain_target != null, "kernel boss: Boss actor was not registered as a detached domain target")
 	if domain_target != null:
 		_expect(domain_target.maximum_health.compare(BigValue.from_power10(12.0)) == 0, "kernel boss: detached Boss lost the production BigValue maximum")
@@ -113,30 +113,30 @@ func _run_boss_kill(arena) -> void:
 	_expect(bool(arena.teleport_actor(boss_actor_id, center + Vector2(110.0, 54.0)).get("ok", false)), "kernel boss: Boss placement failed")
 	if not _failures.is_empty():
 		return
-	_expect(arena.locked_build.get("total_events", {}) == {"layer": 1, "magnitude": 12.0}, "kernel boss: frozen build payload changed: %s" % str(arena.locked_build.get("total_events", {})))
+	_expect(arena.session.locked_build.get("total_events", {}) == {"layer": 1, "magnitude": 12.0}, "kernel boss: frozen build payload changed: %s" % str(arena.session.locked_build.get("total_events", {})))
 	var cast_model: Dictionary = arena.current_model()
 	_expect(cast_model.get("total_events", null) != null and (cast_model["total_events"] as BigValue).compare(BigValue.from_power10(12.0)) == 0, "kernel boss: cast model did not read frozen BigValue events: %s" % str(cast_model.get("total_events", {})))
 	# Drive the real EncounterDirector barrier window onto the mounted Boss so
 	# the production kernel path proves admission at the current fixed tick.
 	var barrier_rules: Array[String] = ["periodic_barrier"]
-	arena.encounter_director.elite_rule_ids = barrier_rules
-	arena.encounter_director.elite_entity_id = int(boss.entity_id)
+	arena.session.encounter_director.elite_rule_ids = barrier_rules
+	arena.session.encounter_director.elite_entity_id = int(boss.entity_id)
 	# Pin the current fixed tick inside the active window before submitting the
 	# cast. EncounterDirector recomputes this field during the room phase; the
 	# explicit assignment keeps this mounted seam test deterministic at tick 0.
-	arena.encounter_director.elite_barrier_active = true
+	arena.session.encounter_director.elite_barrier_active = true
 	var health_before_barrier: BigValue = domain_target.health.duplicate_value()
-	var settlements_before_barrier: int = arena.room_combat_port.last_boss_settlements.size()
-	var loot_before_barrier: int = (arena.room_loot_snapshot.get("entities", []) as Array).size()
+	var settlements_before_barrier: int = arena.session.room_combat_port.last_boss_settlements.size()
+	var loot_before_barrier: int = (arena.session.room_loot.snapshot().get("entities", []) as Array).size()
 	var blocked_cast: Dictionary = arena.request_player_cast("piercing_arrow", int(boss.entity_id), Vector2.RIGHT)
 	_expect(bool(blocked_cast.get("accepted", false)), "kernel boss: production barrier cast rejected: %s" % str(blocked_cast))
 	var blocked_seen := false
 	var blocked_steps := 0
 	while blocked_steps < 12:
-		var blocked_tick_before := int(arena.sim_tick)
+		var blocked_tick_before := int(arena.session.sim_tick)
 		arena.step_tick()
-		_expect(int(arena.sim_tick) == blocked_tick_before + 1, "kernel boss: production barrier tick failed")
-		var blocked_batch: Dictionary = arena.room_combat_port.last_boss_batch
+		_expect(int(arena.session.sim_tick) == blocked_tick_before + 1, "kernel boss: production barrier tick failed")
+		var blocked_batch: Dictionary = arena.session.room_combat_port.last_boss_batch
 		for suppression: Variant in blocked_batch.get("suppressed", []):
 			if suppression is Dictionary and String((suppression as Dictionary).get("reason", "")) == "periodic_barrier":
 				blocked_seen = true
@@ -145,13 +145,13 @@ func _run_boss_kill(arena) -> void:
 			break
 	_expect(blocked_seen, "kernel boss: mounted production barrier window did not suppress the Boss hit")
 	_expect(domain_target.health.compare(health_before_barrier) == 0 and domain_target.alive, "kernel boss: blocked production hit changed Boss health/alive")
-	_expect(arena.room_combat_port.last_boss_settlements.size() == settlements_before_barrier, "kernel boss: blocked production hit changed settlements")
-	_expect((arena.room_loot_snapshot.get("entities", []) as Array).size() == loot_before_barrier, "kernel boss: blocked production hit changed loot")
-	while arena.sim_tick < arena.encounter_director.ELITE_BARRIER_ACTIVE_TICKS:
-		var cooldown_tick_before := int(arena.sim_tick)
+	_expect(arena.session.room_combat_port.last_boss_settlements.size() == settlements_before_barrier, "kernel boss: blocked production hit changed settlements")
+	_expect((arena.session.room_loot.snapshot().get("entities", []) as Array).size() == loot_before_barrier, "kernel boss: blocked production hit changed loot")
+	while arena.session.sim_tick < arena.session.encounter_director.ELITE_BARRIER_ACTIVE_TICKS:
+		var cooldown_tick_before := int(arena.session.sim_tick)
 		arena.step_tick()
-		_expect(int(arena.sim_tick) == cooldown_tick_before + 1, "kernel boss: production barrier cooldown tick failed")
-	_expect(not arena.encounter_director.elite_barrier_active, "kernel boss: production fixed tick did not leave the barrier window")
+		_expect(int(arena.session.sim_tick) == cooldown_tick_before + 1, "kernel boss: production barrier cooldown tick failed")
+	_expect(not arena.session.encounter_director.elite_barrier_active, "kernel boss: production fixed tick did not leave the barrier window")
 	# The exponential calibration fixture is the real production-scale BigValue
 	# payload source; the room/player rules freeze it before this cast.
 	var cast: Dictionary = arena.request_player_cast("piercing_arrow", int(boss.entity_id), Vector2.RIGHT)
@@ -168,33 +168,33 @@ func _run_boss_kill(arena) -> void:
 	var encounter_spawn_seen := false
 	var encounter_death_seen := false
 	var ticks := 0
-	while ticks < 150 and not bool(arena.battle_over):
-		var stepped_tick_before := int(arena.sim_tick)
+	while ticks < 150 and not bool(arena.session.is_battle_over()):
+		var stepped_tick_before := int(arena.session.sim_tick)
 		arena.step_tick()
-		_expect(int(arena.sim_tick) == stepped_tick_before + 1, "kernel boss: production tick failed")
-		if int(arena.sim_tick) != stepped_tick_before + 1:
+		_expect(int(arena.session.sim_tick) == stepped_tick_before + 1, "kernel boss: production tick failed")
+		if int(arena.session.sim_tick) != stepped_tick_before + 1:
 			break
-		ticks = int(arena.sim_tick)
+		ticks = int(arena.session.sim_tick)
 		if cast_aggregate == "none" and not arena.projectiles.is_empty():
 			cast_aggregate = (arena.projectiles[0] as CombatArrowProjectile).aggregate_damage.to_short_string(12)
-		submitted = maxi(submitted, int(arena.kernel_bindings.boss_flight.submitted_queries))
-		queue_rejected = queue_rejected or not arena.kernel_bindings.boss_flight.last_queue_rejections.is_empty()
-		if not arena.room_spatial_port.take_boss_path_results().is_empty():
+		submitted = maxi(submitted, int(arena.session.kernel_bindings.boss_flight.submitted_queries))
+		queue_rejected = queue_rejected or not arena.session.kernel_bindings.boss_flight.last_queue_rejections.is_empty()
+		if not arena.session.room_spatial_port.take_boss_path_results().is_empty():
 			result_seen = true
-		var batch: Dictionary = arena.room_combat_port.last_boss_batch
+		var batch: Dictionary = arena.session.room_combat_port.last_boss_batch
 		if not (batch.get("outcomes", []) as Array).is_empty():
 			outcome_seen = true
 			last_outcome = (batch.get("outcomes", []) as Array)[0]
-		for settlement: Dictionary in arena.room_combat_port.last_boss_settlements:
+		for settlement: Dictionary in arena.session.room_combat_port.last_boss_settlements:
 			if String(settlement.get("entity_key", "")) == stable_key:
 				settlement_seen = true
-		for notification: Dictionary in arena.room_encounter_port.spawned_notifications:
+		for notification: Dictionary in arena.session.room_encounter_port.spawned_notifications:
 			if String(notification.get("entity_key", "")) == stable_key:
 				encounter_spawn_seen = true
-		for notification: Dictionary in arena.room_encounter_port.received_death_notifications:
+		for notification: Dictionary in arena.session.room_encounter_port.received_death_notifications:
 			if String(notification.get("entity_key", "")) == stable_key:
 				encounter_death_seen = true
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "damage_applied" and int(event.get("target_entity_id", 0)) == int(boss.entity_id):
 			damage_event_seen = not String(event.get("boss_remaining_after", "")).is_empty()
 
@@ -206,19 +206,19 @@ func _run_boss_kill(arena) -> void:
 	_expect(settlement_seen, "kernel boss: Boss death did not produce a settlement receipt")
 	_expect(encounter_spawn_seen, "kernel boss: real RoomEncounter never adopted the Boss actor")
 	_expect(encounter_death_seen, "kernel boss: Boss settlement never reached RoomEncounterPort")
-	_expect(arena.room_combat_port.last_boss_death_notifications.size() == 1, "kernel boss: Boss settlement did not expose a typed death notification")
-	_expect(arena.room_encounter_port.failed_spawn_notifications.is_empty(), "kernel boss: Boss encounter deployment failed")
+	_expect(arena.session.room_combat_port.last_boss_death_notifications.size() == 1, "kernel boss: Boss settlement did not expose a typed death notification")
+	_expect(arena.session.room_encounter_port.failed_spawn_notifications.is_empty(), "kernel boss: Boss encounter deployment failed")
 	_expect(int(arena.defeated) == 1 and int(arena.arrow_hits) == 1, "kernel boss: player telemetry did not record exactly one Boss hit/death: projectile=%s outcome=%s" % [cast_aggregate, str(last_outcome)])
 	_expect(arena.boss_damage.compare(arena.boss_maximum) >= 0, "kernel boss: Boss damage mirror did not reach the BigValue maximum")
 	_expect(not domain_target.alive and domain_target.health.is_zero(), "kernel boss: detached Boss health was not canonically zero")
-	_expect(not arena.actor_registry.has_actor(boss_actor_id), "kernel boss: dead Boss actor stayed registered")
-	_expect(bool(arena.battle_over) and bool(arena.battle_victory), "kernel boss: room did not reach terminal victory")
-	_expect(not (arena.room_loot_snapshot.get("entities", []) as Array).is_empty(), "kernel boss: Boss settlement produced no room loot")
-	for drop: Dictionary in arena.room_loot_snapshot.get("entities", []):
+	_expect(not arena.session.actor_registry.has_actor(boss_actor_id), "kernel boss: dead Boss actor stayed registered")
+	_expect(bool(arena.session.is_battle_over()) and bool(arena.session.is_battle_victory()), "kernel boss: room did not reach terminal victory")
+	_expect(not (arena.session.room_loot.snapshot().get("entities", []) as Array).is_empty(), "kernel boss: Boss settlement produced no room loot")
+	for drop: Dictionary in arena.session.room_loot.snapshot().get("entities", []):
 		var drop_position: Vector2 = drop["position"]
-		_expect(arena.actor_registry.is_position_clear(drop_position, float(drop["pickup_radius"])), "kernel boss: drop lacks pickup clearance")
+		_expect(arena.session.actor_registry.is_position_clear(drop_position, float(drop["pickup_radius"])), "kernel boss: drop lacks pickup clearance")
 		_expect(drop_position.distance_to(boss.position) <= 64.0, "kernel boss: drop moved too far from the Boss")
-	var encounter_snapshot: Dictionary = arena.scene_runtime.encounter_domain.snapshot()
+	var encounter_snapshot: Dictionary = arena.session.scene_runtime.encounter_domain.snapshot()
 	var records: Array = encounter_snapshot.get("spawn_records", [])
 	_expect(records.size() == 1, "kernel boss: real RoomEncounter lost the Boss spawn record")
 	if records.size() == 1:
@@ -226,19 +226,19 @@ func _run_boss_kill(arena) -> void:
 	# RoomEncounter evaluates wave clear on the step after the death receipt. The
 	# legacy terminal projection may stop Main's loop first, so advance once more.
 	if String(encounter_snapshot.get("phase", "")) != "victory":
-		var terminal_tick_before := int(arena.sim_tick)
+		var terminal_tick_before := int(arena.session.sim_tick)
 		arena.step_tick()
-		_expect(int(arena.sim_tick) == terminal_tick_before + 1, "kernel boss: post-terminal encounter tick failed")
-		encounter_snapshot = arena.scene_runtime.encounter_domain.snapshot()
+		_expect(int(arena.session.sim_tick) == terminal_tick_before + 1, "kernel boss: post-terminal encounter tick failed")
+		encounter_snapshot = arena.session.scene_runtime.encounter_domain.snapshot()
 	_expect(String(encounter_snapshot.get("phase", "")) == "victory", "kernel boss: real RoomEncounter did not reach terminal victory")
-	_expect(arena.room_combat_port.last_boss_settlements.size() == 1, "kernel boss: Boss settlement receipt duplicated")
+	_expect(arena.session.room_combat_port.last_boss_settlements.size() == 1, "kernel boss: Boss settlement receipt duplicated")
 
 
 func _run_stale_identity_fail_closed(arena) -> void:
 	var stale := BossDomainScript.new()
-	_expect(bool(stale.configure("stale.kernel.boss.room", int(arena.simulation_world.world_revision)).get("ok", false)), "kernel boss: stale domain fixture failed")
-	_expect(bool(arena.room_spatial_port.bind_boss_domain(stale).get("ok", false)), "kernel boss: stale fixture could not exercise the typed port")
-	_expect(bool(arena.room_combat_port.bind_boss_domain(stale).get("ok", false)), "kernel boss: stale fixture could not exercise the combat port")
+	_expect(bool(stale.configure("stale.kernel.boss.room", int(arena.session.simulation_world.world_revision)).get("ok", false)), "kernel boss: stale domain fixture failed")
+	_expect(bool(arena.session.room_spatial_port.bind_boss_domain(stale).get("ok", false)), "kernel boss: stale fixture could not exercise the typed port")
+	_expect(bool(arena.session.room_combat_port.bind_boss_domain(stale).get("ok", false)), "kernel boss: stale fixture could not exercise the combat port")
 	_expect(not arena.kernel_reconciler.boss_domain_room_is_current(), "kernel boss: a stale room identity was accepted as current")
 
 

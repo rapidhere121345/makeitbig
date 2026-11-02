@@ -83,23 +83,23 @@ func _check_case(fixture: Variant, case: Dictionary) -> void:
 	if arena == null:
 		_expect(false, "%s/%s: mount produced no arena" % [layout, room_id])
 		return
-	var index: Variant = arena.scene_runtime.get("static_spatial_index") \
-		if arena.get("scene_runtime") != null else null
+	var index: Variant = arena.session.scene_runtime.get("static_spatial_index") \
+		if arena.session.scene_runtime != null else null
 	if index == null:
 		_expect(false, "%s/%s: static spatial index unavailable" % [layout, room_id])
 		fixture.free_session(session)
 		return
-	var enemies: Array = arena.enemies
+	var enemies: Array = arena.session.encounter_director.enemies
 	_expect(enemies.size() == count,
 		"%s/%s: expected %d spawned enemies, got %d" % [layout, room_id, count, enemies.size()])
-	var hero_actor: Variant = arena.actor_registry.actor("ranger")
+	var hero_actor: Variant = arena.session.actor_registry.actor("ranger")
 	_expect(hero_actor != null, "%s/%s: ranger missing from actor registry" % [layout, room_id])
 	var hero_position: Vector2 = hero_actor.feet_position if hero_actor != null else Vector2.ZERO
 	var positions: Array[Vector2] = []
 	var ids: Array[String] = []
 	for enemy: Variant in enemies:
 		var actor_id := "enemy/%d" % int(enemy.entity_id)
-		var actor: Variant = arena.actor_registry.actor(actor_id)
+		var actor: Variant = arena.session.actor_registry.actor(actor_id)
 		_expect(actor != null, "%s/%s: %s missing from actor registry" % [layout, room_id, actor_id])
 		if actor == null:
 			continue

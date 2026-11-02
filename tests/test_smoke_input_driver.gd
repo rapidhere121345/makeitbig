@@ -63,24 +63,24 @@ func _test_main_assembly() -> void:
 	session.runtime.set_process(false)
 	fixture.configure_target(arena)
 	fixture.advance_to(arena, 12)
-	arena.automation_smoke = true
-	var observation := {"player": fixture.player(arena), "targets": arena.read_only_targets(), "hazards": arena.hazard_states.duplicate(true), "boss": {}, "targeting_distance": arena.locked_targeting_distance}
+	arena.session.automation_smoke = true
+	var observation := {"player": fixture.player(arena), "targets": arena.read_only_targets(), "hazards": arena.hazard_states.duplicate(true), "boss": {}, "targeting_distance": arena.session.locked_targeting_distance}
 	var before: String = arena.state_hash("smoke-read")
-	var expected: Dictionary = arena.smoke_input_driver.decide(observation, arena.command_sequence)
+	var expected: Dictionary = arena.session.smoke_input_driver.decide(observation, arena.session.command_sequence)
 	var commands: Array[Dictionary] = arena.simulation_collect_commands()
-	_expect(commands == expected.commands and arena.command_sequence == expected.next_sequence, "Main did not assemble the independent smoke input driver")
+	_expect(commands == expected.commands and arena.session.command_sequence == expected.next_sequence, "Main did not assemble the independent smoke input driver")
 	# Sequence is intentionally consumed; all player and encounter observations remain detached.
-	var sequence_after: int = arena.command_sequence
-	arena.command_sequence -= commands.size()
+	var sequence_after: int = arena.session.command_sequence
+	arena.session.command_sequence -= commands.size()
 	_expect(arena.state_hash("smoke-read") == before, "collecting smoke inputs mutated gameplay authority")
-	arena.command_sequence = sequence_after
+	arena.session.command_sequence = sequence_after
 	var next_tick_commands: Array[Dictionary] = []
 	for command: Dictionary in commands:
 		var copy := command.duplicate(true)
 		copy.tick += 1
 		next_tick_commands.append(copy)
 	fixture.step(arena, next_tick_commands)
-	_expect(fixture.player(arena).timeline.active.get("target_entity_id", 0) == arena.enemies[0].entity_id and fixture.player(arena).timeline.active.get("start_tick", -1) == 13, "smoke commands failed the real Simulation/Rules input path")
+	_expect(fixture.player(arena).timeline.active.get("target_entity_id", 0) == arena.session.encounter_director.enemies[0].entity_id and fixture.player(arena).timeline.active.get("start_tick", -1) == 13, "smoke commands failed the real Simulation/Rules input path")
 	fixture.free_session(session)
 
 

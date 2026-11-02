@@ -116,7 +116,7 @@ func _observe_actors(arena, registry, world) -> Dictionary:
 		var actor = registry.actor(id)
 		var position: Vector2 = actor.feet_position
 		var radius = float(actor.footprint_radius)
-		_expect(registry.is_position_clear(position, arena.scene_runtime.authored_arena_rect, radius),
+		_expect(registry.is_position_clear(position, arena.session.scene_runtime.authored_arena_rect, radius),
 			"actor footprint outside authored walkable domain", {"actor_id": id, "tick": world.tick, "position": position, "radius": radius})
 		_expect(actor.room_instance_id == world.room_instance_id and actor.world_revision == world.world_revision,
 			"actor identity differs from shared world", {"actor_id": id, "tick": world.tick})
@@ -161,15 +161,15 @@ func _manual_input(arena, tick: int) -> void:
 		# second so short natural victories do not truncate the 30-tick probe.
 		Input.action_press("move_left")
 		return
-	var player: Dictionary = arena.player_combat_state.snapshot(tick)
+	var player: Dictionary = arena.session.player_combat_state.snapshot(tick)
 	var position: Vector2 = player.player_position
 	var nearest = Vector2.INF
 	var distance = INF
-	for enemy in arena.enemies:
+	for enemy in arena.session.encounter_director.enemies:
 		if float(enemy.health) > 0.0 and position.distance_to(enemy.position) < distance:
 			nearest = enemy.position
 			distance = position.distance_to(nearest)
-	if nearest.is_finite() and distance > float(arena.locked_targeting_distance) * 0.8:
+	if nearest.is_finite() and distance > float(arena.session.locked_targeting_distance) * 0.8:
 		var direction = position.direction_to(nearest)
 		Input.action_press("move_left" if direction.x < 0 else "move_right", absf(direction.x))
 		Input.action_press("move_up" if direction.y < 0 else "move_down", absf(direction.y))
@@ -207,10 +207,10 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 	arena.set_process(false)
 	runtime.set_process(false)
 	_expect(arena.get_script().resource_path == "res://src/game/main.gd", "Main was replaced or stripped")
-	_expect(scene.is_ready() and scene.mounted_scene == arena and arena.scene_runtime == scene, "native SceneRuntime ownership missing")
-	_expect(arena.actor_registry == registry and arena.simulation_world == world, "registry/world was duplicated")
-	_expect(arena.player_combat_rules != null and arena.player_combat_state != null and arena.combat_simulation != null, "production domain wiring missing")
-	_expect(arena.player_combat_state.actor_snapshot().actor_id == "ranger", "player State not bound to registry actor")
+	_expect(scene.is_ready() and scene.mounted_scene == arena and arena.session.scene_runtime == scene, "native SceneRuntime ownership missing")
+	_expect(arena.session.actor_registry == registry and arena.session.simulation_world == world, "registry/world was duplicated")
+	_expect(arena.session.player_combat_rules != null and arena.session.player_combat_state != null and arena.session.combat_simulation != null, "production domain wiring missing")
+	_expect(arena.session.player_combat_state.actor_snapshot().actor_id == "ranger", "player State not bound to registry actor")
 	var asset: Dictionary = scene.world_asset.snapshot()
 	var expected_path = "res://content/rooms/combat/" + String(room.layout_id)
 	_expect(asset.world_scene_path == expected_path + ".tscn" and asset.manifest_path == expected_path + ".spatial.json", "wrong native asset selected", asset)
@@ -257,12 +257,12 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 	var minimum_enemy_distance = INF
 	var tick = 0
 	var terminal = false
-	while tick < MAX_TICKS and not bool(arena.battle_over) and failures.is_empty():
+	while tick < MAX_TICKS and not bool(arena.session.is_battle_over()) and failures.is_empty():
 		var before_tick = int(world.tick)
 		_manual_input(arena, before_tick)
-		var stepped: Dictionary = arena.combat_simulation.step()
+		var stepped: Dictionary = arena.session.combat_simulation.step()
 		tick = int(world.tick)
-		_expect(bool(stepped.get("ok", false)) and tick == before_tick + 1 and int(arena.sim_tick) == tick,
+		_expect(bool(stepped.get("ok", false)) and tick == before_tick + 1 and int(arena.session.sim_tick) == tick,
 			"production simulation did not commit one real tick", stepped)
 		if not bool(stepped.get("ok", false)):
 			break
@@ -280,21 +280,21 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 			else:
 				rejected_receipts += 1
 		total_ticks += 1
-	terminal = bool(arena.battle_over)
+	terminal = bool(arena.session.is_battle_over())
 	_expect(tick >= MIN_TICKS, "encounter did not reach 30 real ticks", {"ticks": tick, "natural_terminal": terminal})
 	_expect(not changed_actors.is_empty(), "real encounter never moved any actor")
 	_expect(command_count > 0 and accepted_receipts > 0, "Manual device commands produced no accepted receipt", {"commands": command_count})
-	_expect(arena.automation_smoke_failure.is_empty(), "production reported automation failure", {"failure": arena.automation_smoke_failure})
+	_expect(arena.session.automation_smoke_failure.is_empty(), "production reported automation failure", {"failure": arena.session.automation_smoke_failure})
 	var ring_result: Dictionary = {}
 	if String(room.layout_id) == "ring" and failures.is_empty():
 		ring_result = _ring_probe(scene, registry, tick)
 	_release_movement()
 	var final_registry = registry.snapshot()
-	var final_player: Dictionary = arena.player_combat_state.snapshot(tick)
-	var combat_totals: Dictionary = arena.combat_system.outcome_snapshot()
-	var room_rules: Dictionary = arena.room_rules.snapshot()
+	var final_player: Dictionary = arena.session.player_combat_state.snapshot(tick)
+	var combat_totals: Dictionary = arena.session.combat_system.outcome_snapshot()
+	var room_rules: Dictionary = arena.session.room_rules.snapshot()
 	var presentation_before = scene.presenter.presentation_report()
-	var rules_before = arena.room_rules.snapshot()
+	var rules_before = arena.session.room_rules.snapshot()
 	# Exercise the real public return signal, duplicate return and public abandon.
 	# Natural terminal rooms complete; bounded ongoing encounters are abandoned.
 	arena.emit_signal("return_requested")
@@ -309,7 +309,7 @@ func _room(template: String, seed: int, index: int, plan: Dictionary, builds: Di
 		_expect(int(result.get("ticks", -1)) == tick and result.get("room_id") == room.room_id
 			and result.get("seed") == seed and result.get("contract_id") == template, "result identity/tick mismatch", result)
 		_expect(not runtime.is_processing() and not arena.is_processing(), "terminal observer or abandoned arena kept processing")
-		_expect(arena.room_rules.snapshot() == rules_before, "repeated return recommitted room reward")
+		_expect(arena.session.room_rules.snapshot() == rules_before, "repeated return recommitted room reward")
 	outcomes[outcome] = int(outcomes.get(outcome, 0)) + 1
 	var tick_after = int(world.tick)
 	await process_frame

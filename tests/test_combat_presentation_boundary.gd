@@ -38,37 +38,37 @@ func _run() -> void:
 	var hidden = runtimes[1].room_instance
 	await process_frame
 	_expect(visible.presentation.sort_report().binding_mode == "mounted" and hidden.presentation.sort_report().binding_mode == "mounted", "visible/off fixtures did not use mounted production controller binding")
-	_expect(visible.scene_runtime.presenter.sort_root.visible and not hidden.scene_runtime.presenter.sort_root.visible, "off mode did not hide native drawing layers")
+	_expect(visible.session.scene_runtime.presenter.sort_root.visible and not hidden.session.scene_runtime.presenter.sort_root.visible, "off mode did not hide native drawing layers")
 	_expect(visible.presentation.hud.visible and hidden.presentation.hud.visible and is_zero_approx(hidden.presentation.hud.modulate.a), "off mode removed HUD input participation")
 	for arena in [visible, hidden]:
-		arena.selected_mode = "Manual"
-		arena.in_arena = true
-		arena.locked_targeting_distance = 500.0
-		arena.framework_room = {
+		arena.session.selected_mode = "Manual"
+		arena.session.in_arena = true
+		arena.session.locked_targeting_distance = 500.0
+		arena.session.framework_room = {
 			"room_id": "test.presentation.boundary", "layout_id": "rectangle_arena",
 			"objective_id": "clear", "hazard_ids": [],
 			"enemy_ids": ["melee_pursuer"], "elite_rule_ids": [],
 			"boss_id": "", "drop_tags": [],
 		}
-		_expect(not arena.enemies.is_empty(), "mounted fixture did not materialize its first encounter wave")
+		_expect(not arena.session.encounter_director.enemies.is_empty(), "mounted fixture did not materialize its first encounter wave")
 		_expect(bool(arena.teleport_actor("ranger", arena.arena_rect().get_center() + Vector2(0, -36)).get("ok", false)), "fixture failed to place player")
-		var enemy = arena.enemies[0]
-		_expect(bool(arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(100.0, 0.0)).get("ok", false)), "fixture failed to place target")
+		var enemy = arena.session.encounter_director.enemies[0]
+		_expect(bool(arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.session.player_position() + Vector2(100.0, 0.0)).get("ok", false)), "fixture failed to place target")
 		enemy.health = 1.0e12
 		enemy.maximum_health = enemy.health
 
 	var authority_hash: String = visible.state_hash("boundary")
 	var snapshot: Dictionary = visible.gameplay_snapshot()
-	var original: Vector2 = visible.enemies[0].position
+	var original: Vector2 = visible.session.encounter_director.enemies[0].position
 	snapshot.enemies[0].position += Vector2(400.0, 300.0)
 	snapshot.enemies[0].target_shape["test_mutation"] = true
 	snapshot["player_position"] = Vector2.ZERO
 	snapshot["boss_damage"].magnitude += 900.0
-	_expect(visible.enemies[0].position == original and not visible.enemies[0].target_shape.has("test_mutation"), "presentation snapshot retained a live enemy reference")
+	_expect(visible.session.encounter_director.enemies[0].position == original and not visible.session.encounter_director.enemies[0].target_shape.has("test_mutation"), "presentation snapshot retained a live enemy reference")
 	_expect(visible.state_hash("boundary") == authority_hash, "detached snapshot mutation reached gameplay authority")
 
 	var view = visible.presentation.world_view
-	view.begin_frame(Rect2(Vector2.ZERO, visible.get_viewport_rect().size), visible.player_position, visible.arena_rect())
+	view.begin_frame(Rect2(Vector2.ZERO, visible.get_viewport_rect().size), visible.session.player_position(), visible.arena_rect())
 	var point: Vector2 = view.gameplay_to_screen(original + Vector2(0.0, -22.0))
 	# Identical physical press/release trajectory must mean the same entity even
 	# when every renderer is disabled. A quick release preserves the pending edge.
@@ -79,7 +79,7 @@ func _run() -> void:
 			event.position = point
 			event.pressed = pressed
 			arena.input_adapter.capture_attack_event(event, false, arena.gameplay_snapshot())
-		_expect(arena.command_source.attack_requested_target_entity_id == 1, "physical pointing lost its stable entity id")
+		_expect(arena.session.command_source.attack_requested_target_entity_id == 1, "physical pointing lost its stable entity id")
 
 	Input.action_press("move_right")
 	for index in 30:
@@ -88,7 +88,7 @@ func _run() -> void:
 		for arena in [visible, hidden]:
 			arena.step_tick()
 		visible.refresh_presentation(1.0 / 144.0)
-		_expect(visible.state_hash("boundary") == hidden.state_hash("boundary"), "drawing changed gameplay at fixed tick %d" % visible.sim_tick)
+		_expect(visible.state_hash("boundary") == hidden.state_hash("boundary"), "drawing changed gameplay at fixed tick %d" % visible.session.sim_tick)
 	Input.action_release("move_right")
 	_expect(visible.shots == 1 and visible.arrow_hits == 1, "input trajectory did not retain one resolved cast")
 
@@ -97,17 +97,17 @@ func _run() -> void:
 	for arena in [visible, hidden]:
 		arena.step_tick()
 	Input.action_release("move_right")
-	_expect(int(visible.actor_registry.actor("ranger").last_movement_tick) == visible.sim_tick, "fixture did not commit movement at the current simulation tick")
-	var before_tick: int = visible.sim_tick
-	var before_position: Vector2 = visible.actor_registry.actor("ranger").feet_position
+	_expect(int(visible.session.actor_registry.actor("ranger").last_movement_tick) == visible.session.sim_tick, "fixture did not commit movement at the current simulation tick")
+	var before_tick: int = visible.session.sim_tick
+	var before_position: Vector2 = visible.session.actor_registry.actor("ranger").feet_position
 	var before_hash: String = visible.state_hash("boundary")
 	var duplicate: Dictionary = visible.actor_setup._commit_actor_move("ranger", Vector2(40.0, 0.0))
 	_expect(not bool(duplicate.get("ok", true)) and duplicate.get("error") == "non_monotonic_movement_tick", "same-tick movement was accepted through Main")
-	_expect(visible.sim_tick == before_tick and visible.actor_registry.actor("ranger").feet_position == before_position and visible.state_hash("boundary") == before_hash, "rejected movement changed a tick, actor or replay state")
-	var advanced: SimOutcome = visible.simulation_world.step_tick()
+	_expect(visible.session.sim_tick == before_tick and visible.session.actor_registry.actor("ranger").feet_position == before_position and visible.state_hash("boundary") == before_hash, "rejected movement changed a tick, actor or replay state")
+	var advanced: SimOutcome = visible.session.simulation_world.step_tick()
 	_expect(advanced.ok, "real SimulationWorld advancement failed")
 	var next: Dictionary = visible.actor_setup._commit_actor_move("ranger", Vector2(4.0, 0.0))
-	_expect(bool(next.get("ok", false)) and int(visible.actor_registry.actor("ranger").last_movement_tick) == visible.sim_tick, "real SimulationWorld advancement did not permit the next movement")
+	_expect(bool(next.get("ok", false)) and int(visible.session.actor_registry.actor("ranger").last_movement_tick) == visible.session.sim_tick, "real SimulationWorld advancement did not permit the next movement")
 
 	# Exercise the mounted snapshot -> controller -> world-frame boundary. Defeat
 	# and an unfinished encounter must never lower the victory ward.
@@ -116,9 +116,9 @@ func _run() -> void:
 		{"over": true, "victory": false, "cleared": false},
 		{"over": true, "victory": true, "cleared": true},
 	]:
-		visible.room_rules.reset()
+		visible.session.room_rules.reset()
 		if state.over:
-			var projected: Dictionary = visible.room_rules.project_terminal(state.victory, false, 0.0, 0, 0)
+			var projected: Dictionary = visible.session.room_rules.project_terminal(state.victory, false, 0.0, 0, 0)
 			_expect(bool(projected.get("ok", false)), "controlled terminal projection failed")
 		var ward_hash: String = visible.state_hash("ward_projection")
 		visible.refresh_presentation(0.0)

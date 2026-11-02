@@ -220,7 +220,7 @@ func _test_mounted_boss_sort_and_cleanup() -> void:
 	var domain: WorldPresenter = scene.presenter
 	var controller: Controller = arena.presentation
 	_expect(controller.sort_report().binding_mode == "mounted" and controller.sort_report().ok, "Main did not bind controller to injected mounted SceneRuntime")
-	var boss: CombatEnemyState = arena.boss
+	var boss: CombatEnemyState = arena.session.encounter_director.boss
 	_expect(boss != null, "mounted room did not create the logical Boss")
 	_expect(arena.teleport_actor("enemy/%d" % boss.entity_id, Vector2(640, 430)).ok, "failed to position mounted Boss")
 	_expect(arena.teleport_actor("ranger", Vector2(640, 418)).ok, "failed to position mounted player")
@@ -251,7 +251,7 @@ func _test_mounted_boss_sort_and_cleanup() -> void:
 	print("MOUNTED_SORT hand=%.3f native=%.3f player=%.3f body=%.3f" % [hand.position.y, marker.position.y, player.position.y, body.position.y])
 	_expect(domain.get_global_transform().is_equal_approx(controller.world_view.gameplay_transform()), "mounted native world did not use gameplay camera transform")
 	_expect(controller.get_global_transform().is_equal_approx(Transform2D.IDENTITY), "controller inherited a second native camera transform")
-	var expected_screen: Vector2 = controller.world_view.gameplay_to_screen(arena.player_position)
+	var expected_screen: Vector2 = controller.world_view.gameplay_to_screen(arena.session.player_position())
 	_expect(player.get_global_transform_with_canvas().origin.is_equal_approx(expected_screen), "real mounted player was projected twice or used a different camera")
 	for node: Node2D in nodes.values():
 		_expect(node.z_index == 0, "mounted part used a z-index sorting shortcut")

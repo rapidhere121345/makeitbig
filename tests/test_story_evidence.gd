@@ -92,7 +92,7 @@ func _test_actual_projectile_evidence(outcome: String) -> void:
 		# Cast in the open interval and release one tick before the next real
 		# barrier window. Projectile travel starts on the following tick.
 		fixture.advance_to(arena, Encounter.ELITE_BARRIER_PERIOD_TICKS - SkillRules.PIERCING_ARROW_WINDUP_TICKS - 2)
-		_expect(not arena.encounter_director.is_target_blocked(target), "blocked fixture did not cast in the barrier's open interval")
+		_expect(not arena.session.encounter_director.is_target_blocked(target), "blocked fixture did not cast in the barrier's open interval")
 	## "miss" aims into open space north of the player: the released line holds
 	## no target regardless of how the melee AI walks after the release.
 	var aim := Vector2.ZERO
@@ -105,11 +105,11 @@ func _test_actual_projectile_evidence(outcome: String) -> void:
 		## approach line the released arrow could still cross.
 		_expect(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena.arena_rect().get_center() + Vector2(120.0, 200.0)).get("ok", false)), "miss fixture could not park the target clear of the line")
 	if outcome == "blocked":
-		_expect(arena.sim_tick == Encounter.ELITE_BARRIER_PERIOD_TICKS - 1 and not arena.encounter_director.is_target_blocked(target), "blocked fixture did not release before the barrier transition")
+		_expect(arena.session.sim_tick == Encounter.ELITE_BARRIER_PERIOD_TICKS - 1 and not arena.session.encounter_director.is_target_blocked(target), "blocked fixture did not release before the barrier transition")
 	fixture.advance_projectiles(arena)
 	if outcome == "blocked":
-		var contact: Dictionary = arena.combat_event_stream.latest("attack_resolved")
-		_expect(contact.get("outcome", "") == "blocked" and contact.get("barrier_id", "") == "periodic_barrier" and int(contact.get("tick", -1)) >= Encounter.ELITE_BARRIER_PERIOD_TICKS and arena.encounter_director.is_target_blocked(target), "actual projectile contact did not meet the live periodic barrier")
+		var contact: Dictionary = arena.session.combat_event_stream.latest("attack_resolved")
+		_expect(contact.get("outcome", "") == "blocked" and contact.get("barrier_id", "") == "periodic_barrier" and int(contact.get("tick", -1)) >= Encounter.ELITE_BARRIER_PERIOD_TICKS and arena.session.encounter_director.is_target_blocked(target), "actual projectile contact did not meet the live periodic barrier")
 		print("STORY_BARRIER_TRACE release_tick=", Encounter.ELITE_BARRIER_PERIOD_TICKS - 1, " contact_tick=", contact.get("tick", -1), " outcome=", contact.get("outcome", ""))
 	var room: Dictionary = runtime.build_result("defeat")
 	_expect(int(room.casts) == 1, "actual projectile was not cast")

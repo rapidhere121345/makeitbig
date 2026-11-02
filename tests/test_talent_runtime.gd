@@ -35,7 +35,7 @@ func _test_capabilities_come_from_locked_build(fixture, failures: Array[String])
 	var arena = session.arena
 	var expected: Dictionary = session.build.talent_capabilities
 	_expect(fixture.player(arena).talent_capabilities == expected, "runtime talents still follow the framework_talent_build bypass", failures)
-	_expect(arena.locked_build.talent_capabilities == expected, "locked build lost its compiled talent capabilities", failures)
+	_expect(arena.session.locked_build.talent_capabilities == expected, "locked build lost its compiled talent capabilities", failures)
 	fixture.free_session(session)
 
 
@@ -51,7 +51,7 @@ func _test_critical_hunter_once_after_pure_reads(fixture, failures: Array[String
 	_expect(is_equal_approx(float(arena.current_model().total_events_float), base_events), "model/HUD reads consumed the once-per-battle critical bonus", failures)
 	_expect(fixture.release_arrow(arena, target), "critical hunter: first arrow did not release", failures)
 	var first = arena.projectiles[0]
-	var expected_first: float = (base_events + 2.0) * arena.locked_payload
+	var expected_first: float = (base_events + 2.0) * arena.session.locked_payload
 	_expect(is_equal_approx(float(first.ordinary_damage), expected_first), "first critical arrow did not add exactly two generations (got %.3f want %.3f)" % [float(first.ordinary_damage), expected_first], failures)
 	var damage_before := _normal_target_damage(arena, target)
 	fixture.advance_projectiles(arena)
@@ -60,27 +60,27 @@ func _test_critical_hunter_once_after_pure_reads(fixture, failures: Array[String
 	target.health = 1000000000.0
 	_expect(fixture.release_arrow(arena, target), "critical hunter: second arrow did not release", failures)
 	var second = arena.projectiles[0]
-	_expect(is_equal_approx(float(second.ordinary_damage), base_events * arena.locked_payload), "critical hunter bonus repeated on the second arrow", failures)
+	_expect(is_equal_approx(float(second.ordinary_damage), base_events * arena.session.locked_payload), "critical hunter bonus repeated on the second arrow", failures)
 	fixture.free_session(session)
 
 
 func _test_last_generation_pool(fixture, failures: Array[String]) -> void:
 	var session: Dictionary = fixture.start_session(["ranger_last_generation_loading"])
 	var arena = session.arena
-	var base_damage: float = float(arena.locked_build.total_events_float) * arena.locked_payload
+	var base_damage: float = float(arena.session.locked_build.total_events_float) * arena.session.locked_payload
 	var target = fixture.configure_target(arena, Vector2(120.0, 0.0))
 	_expect(fixture.release_arrow(arena, target), "last generation: expiring arrow did not release", failures)
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(arena.locked_targeting_distance + 80.0, 220.0))
+	arena.teleport_actor("enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(arena.session.locked_targeting_distance + 80.0, 220.0))
 	var expiring = arena.projectiles[0]
 	var health_before: float = target.health
 	fixture.advance_projectiles(arena)
-	_expect(String(arena.last_attack_outcome.get("outcome", "")) == "miss", "last generation: aimed-away arrow did not naturally expire (outcome=%s reason=%s tick=%d)" % [String(arena.last_attack_outcome.get("outcome", "")), String(arena.last_attack_outcome.get("reason", "")), arena.sim_tick], failures)
+	_expect(String(arena.last_attack_outcome.get("outcome", "")) == "miss", "last generation: aimed-away arrow did not naturally expire (outcome=%s reason=%s tick=%d)" % [String(arena.last_attack_outcome.get("outcome", "")), String(arena.last_attack_outcome.get("reason", "")), arena.session.sim_tick], failures)
 	_expect(is_equal_approx(target.health, health_before), "last generation: expired arrow directly damaged a target", failures)
 	_expect(_boss_damage_float(arena) < 0.001, "last generation: miss directly added boss damage", failures)
 	_expect(_near(float(expiring.ordinary_damage), base_damage, 0.001), "unexpected base arrow payload", failures)
 
 	fixture.wait_for_cast_ready(arena)
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(120.0, 0.0))
+	arena.teleport_actor("enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(120.0, 0.0))
 	target.health = 1000000000.0
 	var before_hit: float = target.health
 	_expect(fixture.release_arrow(arena, target), "last generation: consuming arrow did not release", failures)
@@ -89,14 +89,14 @@ func _test_last_generation_pool(fixture, failures: Array[String]) -> void:
 	_expect(_near(first_consumption, base_damage * 1.15, 0.05), "next valid hit did not consume the 15%% pool exactly once (got %.3f want %.3f)" % [first_consumption, base_damage * 1.15], failures)
 
 	fixture.wait_for_cast_ready(arena)
-	arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2(120.0, 0.0))
+	arena.teleport_actor("enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(120.0, 0.0))
 	target.health = 1000000000.0
 	before_hit = target.health
 	_expect(fixture.release_arrow(arena, target), "last generation: post-consumption arrow did not release", failures)
 	fixture.advance_projectiles(arena)
 	_expect(_near(before_hit - target.health, base_damage, 0.05), "retained payload was recursively retained after one consumption", failures)
 
-	arena.framework_resolved_build = session.build
+	arena.session.framework_resolved_build = session.build
 	arena.start_room()
 	var reset_target = fixture.configure_target(arena)
 	_expect(fixture.release_arrow(arena, reset_target), "last generation: new-encounter arrow did not release", failures)
@@ -143,26 +143,26 @@ func _test_defocused_tracking_candidate(fixture, failures: Array[String]) -> voi
 	var session: Dictionary = fixture.start_session([])
 	var arena = session.arena
 	var marked_target = fixture.configure_target(arena)
-	var nearer_target = arena.enemies[1]
-	arena.teleport_actor("enemy/%d" % nearer_target.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	var nearer_target = arena.session.encounter_director.enemies[1]
+	arena.teleport_actor("enemy/%d" % nearer_target.entity_id, arena.session.player_position() + Vector2(80.0, 0.0))
 	nearer_target.health = 1000000000.0
 	nearer_target.maximum_health = nearer_target.health
 	_expect(fixture.cast(arena, "hunter_mark", marked_target.entity_id).get("accepted", false), "defocused tracking: initial mark was rejected", failures)
-	arena.teleport_actor("enemy/%d" % marked_target.entity_id, arena.player_position + Vector2(arena.locked_targeting_distance * Skill.HUNTER_MARK_RANGE_MULTIPLIER + 10.0, 0.0))
+	arena.teleport_actor("enemy/%d" % marked_target.entity_id, arena.session.player_position() + Vector2(arena.session.locked_targeting_distance * Skill.HUNTER_MARK_RANGE_MULTIPLIER + 10.0, 0.0))
 	fixture.step(arena)
 	_expect(fixture.player(arena).marked_entity_id == 0 and fixture.player(arena).hunter_mark_expires_tick == 0,
 		"defocused tracking: lost mark remained active", failures)
 	_expect(fixture.player(arena).hunter_mark_candidate_entity_id == marked_target.entity_id
-		and fixture.player(arena).hunter_mark_candidate_expires_tick == arena.sim_tick + 15,
+		and fixture.player(arena).hunter_mark_candidate_expires_tick == arena.session.sim_tick + 15,
 		"defocused tracking: lost target did not retain the exact 15-tick candidate window", failures)
 
-	arena.teleport_actor("enemy/%d" % marked_target.entity_id, arena.player_position + Vector2(180.0, 0.0))
+	arena.teleport_actor("enemy/%d" % marked_target.entity_id, arena.session.player_position() + Vector2(180.0, 0.0))
 	var preferred = arena.session.preferred_skill_one_target()
 	_expect(preferred != null and preferred.entity_id == marked_target.entity_id,
 		"defocused tracking: candidate did not outrank the nearer unmarked target", failures)
 	_expect(fixture.release_arrow(arena, marked_target), "defocused tracking: candidate arrow did not release", failures)
 	var arrow = arena.projectiles[0]
-	var base_damage: float = float(arena.locked_build.total_events_float) * arena.locked_payload
+	var base_damage: float = float(arena.session.locked_build.total_events_float) * arena.session.locked_payload
 	_expect(_near(float(arrow.ordinary_damage), base_damage, 0.001),
 		"defocused tracking: candidate restored hunter-mark damage multiplier", failures)
 
@@ -177,17 +177,17 @@ func _test_light_step_keen_eye_recovery_pose(fixture, failures: Array[String]) -
 	var arena = session.arena
 	var target = fixture.configure_target(arena)
 	_expect(fixture.cast(arena, "hunter_mark", target.entity_id).get("accepted", false), "keen eye: mark was rejected", failures)
-	_expect(fixture.player(arena).hunter_mark_expires_tick == arena.sim_tick + int(round(Skill.HUNTER_MARK_DURATION_TICKS * 1.10)), "keen eye did not extend the real mark expiry tick", failures)
+	_expect(fixture.player(arena).hunter_mark_expires_tick == arena.session.sim_tick + int(round(Skill.HUNTER_MARK_DURATION_TICKS * 1.10)), "keen eye did not extend the real mark expiry tick", failures)
 	_expect(fixture.cast(arena, "dodge").get("accepted", false), "recovery pose: dodge was rejected", failures)
 	_expect(fixture.player(arena).dodge_cooldown_ticks == int(round(Skill.DODGE_COOLDOWN_TICKS * 0.92)), "recovery pose did not reduce the real dodge cooldown", failures)
-	fixture.advance_to(arena, int(arena.sim_tick) + int(fixture.player(arena).dodge_remaining_ticks))
-	var start: Vector2 = arena.player_position
+	fixture.advance_to(arena, int(arena.session.sim_tick) + int(fixture.player(arena).dodge_remaining_ticks))
+	var start: Vector2 = arena.session.player_position()
 	_expect(fixture.cast(arena, "dash").get("accepted", false), "light step: dash was rejected", failures)
 	var duration: int = fixture.player(arena).dash_remaining_ticks
 	_expect(duration == int(round(Skill.DASH_DURATION_TICKS * 1.10)), "light step did not lengthen the real dash duration", failures)
 	for _index in duration - 1:
 		fixture.step(arena)
-	_expect(_near(arena.player_position.distance_to(start), Skill.DASH_TOTAL_DISTANCE, 0.10), "light step changed total dash displacement (distance=%.3f)" % arena.player_position.distance_to(start), failures)
+	_expect(_near(arena.session.player_position().distance_to(start), Skill.DASH_TOTAL_DISTANCE, 0.10), "light step changed total dash displacement (distance=%.3f)" % arena.session.player_position().distance_to(start), failures)
 	fixture.free_session(session)
 
 
@@ -204,7 +204,7 @@ func _test_three_skill_rhythm(fixture, failures: Array[String]) -> void:
 	var snapshot: Dictionary = fixture.player(arena).timeline
 	var request: Dictionary = snapshot.active if not snapshot.active.is_empty() else snapshot.buffered
 	_expect(bool(receipt.get("accepted", false)) and int(request.get("windup_ticks", 5)) == 4, "three rhythm did not consume one 4-tick windup while wind walker retained it (status=%s windup=%s)" % [String(receipt.get("status", "")), str(request.get("windup_ticks", -1))], failures)
-	fixture.advance_to(arena, int(request.get("start_tick", arena.sim_tick)) + int(request.get("windup_ticks", 4)))
+	fixture.advance_to(arena, int(request.get("start_tick", arena.session.sim_tick)) + int(request.get("windup_ticks", 4)))
 	_expect(not arena.projectiles.is_empty(), "three rhythm accelerated arrow did not leave the bow", failures)
 	fixture.free_session(session)
 
@@ -225,7 +225,7 @@ func _test_render_rates_and_presentation_switch(fixture, failures: Array[String]
 			arena.current_model()
 			arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 		var guard := 0
-		while int(arena.sim_tick) < 270 and guard < 64:
+		while int(arena.session.sim_tick) < 270 and guard < 64:
 			arena._process(float(setting.delta))
 			guard += 1
 		sessions.append(session)
@@ -247,7 +247,7 @@ func _boss_damage_float(arena) -> float:
 
 func _semantic_snapshot(arena) -> Dictionary:
 	var enemy_states: Array[Dictionary] = []
-	for enemy in arena.enemies:
+	for enemy in arena.session.encounter_director.enemies:
 		enemy_states.append({
 			"id": int(enemy.entity_id),
 			"kind": String(enemy.kind_id),
@@ -257,12 +257,12 @@ func _semantic_snapshot(arena) -> Dictionary:
 			"state": String(enemy.action_state),
 		})
 	return {
-		"tick": int(arena.sim_tick),
+		"tick": int(arena.session.sim_tick),
 		"shots": int(arena.shots),
 		"defeated": int(arena.defeated),
 		"health": float(arena.player_health),
-		"x": float(arena.player_position.x),
-		"y": float(arena.player_position.y),
+		"x": float(arena.session.player_position().x),
+		"y": float(arena.session.player_position().y),
 		"boss_damage": String(arena.boss_damage.to_short_string(10)),
 		"enemies": enemy_states,
 	}

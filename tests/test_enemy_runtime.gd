@@ -68,11 +68,11 @@ func _run() -> void:
 func _test_spawn_roles(arena: Node, failures: Array[String]) -> void:
 	var counts := {"melee_pursuer": 0, "charging_raider": 0, "fan_ranged": 0, "threshold_colossus": 0}
 	var ids: Array[int] = []
-	for enemy in arena.enemies:
+	for enemy in arena.session.encounter_director.enemies:
 		counts[enemy.kind_id] = int(counts.get(enemy.kind_id, 0)) + 1
 		ids.append(enemy.entity_id)
 	_expect(counts.melee_pursuer == 2 and counts.charging_raider == 2 and counts.fan_ranged == 2, "spawn: normal role distribution is not 2/2/2", failures)
-	_expect(counts.threshold_colossus == 1 and arena.boss.kind_id == "threshold_colossus", "spawn: threshold colossus kind is missing", failures)
+	_expect(counts.threshold_colossus == 1 and arena.session.encounter_director.boss.kind_id == "threshold_colossus", "spawn: threshold colossus kind is missing", failures)
 	_expect(ids == [1, 2, 3, 4, 5, 6, 7], "spawn: entity IDs are not stable and ordered", failures)
 
 
@@ -84,7 +84,7 @@ func _test_damage_source_tracking(_arena: Node, failures: Array[String]) -> void
 	session.runtime.set_process(false)
 	var target = fixture.configure_target(arena)
 	fixture.advance_to(arena, 17)
-	var rules = arena.player_combat_rules
+	var rules = arena.session.player_combat_rules
 	var applied: Dictionary = rules.apply_damage(17, 11.0, "enemy/charging_raider", target.position)
 	var player := fixture.player(arena)
 	_expect(applied.get("accepted", false) and player.last_damage_source_id == "enemy/charging_raider" and player.last_damage_tick == 17,
@@ -94,11 +94,11 @@ func _test_damage_source_tracking(_arena: Node, failures: Array[String]) -> void
 	_expect(not avoided.get("accepted", false) and fixture.player(arena).last_damage_source_id == player.last_damage_source_id and fixture.player(arena).last_damage_tick == player.last_damage_tick,
 		"damage source: avoided damage updated the last source", failures)
 	fixture.advance_to(arena, 17 + int(fixture.player(arena).dodge_remaining_ticks))
-	rules.apply_damage(arena.sim_tick, 7.0, "hazard/exposed_ground_zone", target.position)
-	rules.apply_damage(arena.sim_tick, 1.2, "boss/slam", target.position)
+	rules.apply_damage(arena.session.sim_tick, 7.0, "hazard/exposed_ground_zone", target.position)
+	rules.apply_damage(arena.session.sim_tick, 1.2, "boss/slam", target.position)
 	_expect(fixture.player(arena).last_damage_source_id == "boss/slam", "damage source: boss action source was not authoritative", failures)
 	fixture.step(arena)
-	var fatal_tick: int = arena.sim_tick
+	var fatal_tick: int = arena.session.sim_tick
 	rules.apply_damage(fatal_tick, float(fixture.player(arena).player_health) + 1.0, "enemy/melee_pursuer", target.position)
 	player = fixture.player(arena)
 	_expect(player.player_health == 0.0 and player.last_damage_source_id == "enemy/melee_pursuer" and player.last_damage_tick == fatal_tick,
@@ -112,17 +112,17 @@ func _test_damage_source_tracking(_arena: Node, failures: Array[String]) -> void
 
 func _test_charger_sequence(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-	var charger = arena.enemies[0]
+	var charger = arena.session.encounter_director.enemies[0]
 	fixture.advance_to(arena, 10)
 	arena.teleport_actor("ranger", charger.position + Vector2(100.0, 0.0))
-	var contact_distance: float = charger.position.distance_to(arena.player_position)
-	var accepted: bool = arena.enemy_ai._start_charger_action(charger, charger.position.direction_to(arena.player_position), contact_distance)
+	var contact_distance: float = charger.position.distance_to(arena.session.player_position())
+	var accepted: bool = arena.enemy_ai._start_charger_action(charger, charger.position.direction_to(arena.session.player_position()), contact_distance)
 	_expect(accepted and charger.action_state == "windup" and charger.impact_tick == 28, "charger: explicit-distance windup was not accepted", failures)
 	_expect(is_equal_approx(charger.charge_length, 100.0), "charger: direct sequence did not freeze its explicit distance", failures)
 	fixture.drive(arena, {"enemy_step": func() -> void: arena.enemy_ai._update_charger_tick(charger)})
 	fixture.advance_to(arena, charger.impact_tick - 1)
 	var active_steps := 0
-	while charger.action_state != "recovery" and arena.sim_tick <= charger.impact_tick + arena.CHARGE_ACTIVE_TICKS:
+	while charger.action_state != "recovery" and arena.session.sim_tick <= charger.impact_tick + arena.CHARGE_ACTIVE_TICKS:
 		var before: Vector2 = charger.position
 		fixture.step(arena)
 		if charger.action_state == "active":
@@ -137,7 +137,7 @@ func _test_charger_sequence(arena: Node, failures: Array[String]) -> void:
 
 func _test_fan_sequence(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["fan_ranged"])
-	var fan = arena.enemies[0]
+	var fan = arena.session.encounter_director.enemies[0]
 	fixture.advance_to(arena, 40)
 	arena.teleport_actor("ranger", fan.position + Vector2(140.0, 0.0))
 	arena.enemy_ai._start_fan_action(fan)
@@ -160,16 +160,16 @@ func _test_fan_sequence(arena: Node, failures: Array[String]) -> void:
 
 func _test_fan_attack_radius_runtime(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["fan_ranged"])
-	var fan = arena.enemies[0]
+	var fan = arena.session.encounter_director.enemies[0]
 	arena.teleport_actor("ranger", arena.arena_rect().get_center())
-	arena.teleport_actor("enemy/%d" % fan.entity_id, arena.player_position - Vector2.RIGHT * 200.0)
+	arena.teleport_actor("enemy/%d" % fan.entity_id, arena.session.player_position() - Vector2.RIGHT * 200.0)
 	var outside_before: Vector2 = fan.position
 	fixture.drive(arena, {"enemies": true})
 	fixture.step(arena)
 	_expect(fan.action_state == "none" and fan.motion_state == "moving" and fan.position != outside_before and String(fan.tactic_reason) == "fan_strafe_hold", "fan radius: target at 200 started an empty attack instead of moving", failures)
 	fixture.drive(arena)
 	fixture.advance_to(arena, 39)
-	arena.teleport_actor("enemy/%d" % fan.entity_id, arena.player_position - Vector2.RIGHT * arena.EnemyTacticsScript.FAN_ATTACK_RADIUS)
+	arena.teleport_actor("enemy/%d" % fan.entity_id, arena.session.player_position() - Vector2.RIGHT * arena.EnemyTacticsScript.FAN_ATTACK_RADIUS)
 	fixture.drive(arena, {"enemies": true})
 	fixture.step(arena)
 	_expect(fan.action_state == "windup" and is_equal_approx(float(fan.target_shape.get("radius", 0.0)), arena.EnemyTacticsScript.FAN_ATTACK_RADIUS), "fan radius: legal start did not freeze the shared target shape", failures)
@@ -181,16 +181,16 @@ func _test_fan_attack_radius_runtime(arena: Node, failures: Array[String]) -> vo
 
 func _test_same_role_action_lane_runtime(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["fan_ranged", "fan_ranged"])
-	arena.combat_event_stream.reset()
+	arena.session.combat_event_stream.reset()
 	## Use the open eastern floor so whole-object blockers cannot redirect
 	## the waiting fan; retain exact 150-unit distances and lane timing.
 	if not _place_fixture_actor(arena, "ranger", Vector2(1100.0, 434.0), failures):
 		return
-	var first = arena.enemies[0]
-	var waiting = arena.enemies[1]
-	if not _place_fixture_actor(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(0.0, -150.0), failures):
+	var first = arena.session.encounter_director.enemies[0]
+	var waiting = arena.session.encounter_director.enemies[1]
+	if not _place_fixture_actor(arena, "enemy/%d" % first.entity_id, arena.session.player_position() + Vector2(0.0, -150.0), failures):
 		return
-	if not _place_fixture_actor(arena, "enemy/%d" % waiting.entity_id, arena.player_position + Vector2(0.0, 150.0), failures):
+	if not _place_fixture_actor(arena, "enemy/%d" % waiting.entity_id, arena.session.player_position() + Vector2(0.0, 150.0), failures):
 		return
 
 	fixture.drive(arena, {"enemies": true})
@@ -204,7 +204,7 @@ func _test_same_role_action_lane_runtime(arena: Node, failures: Array[String]) -
 	# Tick 22 queues the contact; tick 23 commits it through RoomCombatPort.
 	fixture.step(arena)
 	var damage_events_at_first_impact := 0
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "attack_resolved" and String(event.get("outcome", "")) == "damage" and int(event.get("tick", -1)) == 23:
 			damage_events_at_first_impact += 1
 	_expect(is_equal_approx(arena.player_health, 92.0) and damage_events_at_first_impact == 1, "action lane: one telegraph still produced stacked same-tick fan damage", failures)
@@ -223,8 +223,8 @@ func _test_same_role_action_lane_runtime(arena: Node, failures: Array[String]) -
 func _test_recovery_end_has_same_tick_intent(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
 	arena.teleport_actor("ranger", arena.arena_rect().get_center())
-	var enemy = arena.enemies[0]
-	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(100.0, 0.0))
+	var enemy = arena.session.encounter_director.enemies[0]
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.session.player_position() + Vector2(100.0, 0.0))
 	enemy.action_state = "recovery"
 	enemy.action_id = "contact"
 	enemy.action_instance_id = 77
@@ -236,7 +236,7 @@ func _test_recovery_end_has_same_tick_intent(arena: Node, failures: Array[String
 	fixture.step(arena)
 	_expect(enemy.action_state == "none" and enemy.motion_state == "moving" and enemy.position != before and String(enemy.tactic_reason) != "action_locked", "recovery boundary: ending tick discarded the newly available movement intent", failures)
 	arena = _default_room()
-	var boss = arena.boss
+	var boss = arena.session.encounter_director.boss
 	boss.action_state = "recovery"
 	boss.action_id = "slam"
 	boss.action_instance_id = 78
@@ -253,9 +253,9 @@ func _test_boss_runtime(arena: Node, failures: Array[String]) -> void:
 	# A real frozen build/contact supplies the exact 50% threshold. No totals writes.
 	fixture.reset(arena, {}, fixture.build({"p": 0.0, "damage": 5.0e11, "d": 225.0}))
 	fixture.drive(arena)
-	var boss = arena.boss
+	var boss = arena.session.encounter_director.boss
 	arena.teleport_actor("ranger", boss.position + Vector2(-140.0, 0.0))
-	arena.player_combat_rules.apply_damage(arena.sim_tick, 23.0, "fixture/setup", boss.position)
+	arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 23.0, "fixture/setup", boss.position)
 	_expect(_cast_and_resolve_arrow(arena), "boss: real threshold arrow setup failed", failures)
 	_expect(arena.boss_damage.compare(arena.boss_maximum.multiply(BigValue.from_float(0.5))) == 0 and arena.arrow_hits == 1, "boss: real contact did not establish exactly 50% damage", failures)
 	fixture.advance_to(arena, 99)
@@ -296,12 +296,12 @@ func _test_room_rosters_and_layouts(arena: Node, failures: Array[String]) -> voi
 		arena = _configure_room(arena, layout, "clear", ["melee_pursuer", "charging_raider", "fan_ranged"])
 		var kinds: Array[String] = []
 		var ids: Array[int] = []
-		for enemy in arena.enemies:
+		for enemy in arena.session.encounter_director.enemies:
 			kinds.append(enemy.kind_id)
 			ids.append(enemy.entity_id)
 		_expect(kinds == ["melee_pursuer", "charging_raider", "fan_ranged"] and ids == [1, 2, 3], "room roster/order/entity IDs changed for %s" % layout, failures)
-		_expect(arena.boss == null, "normal room unexpectedly spawned a Boss", failures)
-		positions[layout] = arena.enemies[0].position
+		_expect(arena.session.encounter_director.boss == null, "normal room unexpectedly spawned a Boss", failures)
+		positions[layout] = arena.session.encounter_director.enemies[0].position
 	_expect(positions.rectangle_arena != positions.corridor and positions.corridor != positions.ring and positions.rectangle_arena != positions.ring, "layouts do not produce distinct deterministic spawn geometry", failures)
 	var center: Vector2 = arena.arena_rect().get_center()
 	var ring_clamp: Vector2 = arena.clamp_to_arena(center, 14.0)
@@ -340,9 +340,9 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 	var center: Vector2 = arena.arena_rect().get_center()
 	if not _place_fixture_actor(arena, "ranger", center + Vector2.LEFT * 160.0, failures):
 		return
-	var charger = arena.enemies[0]
-	var fan = arena.enemies[3]
-	var melee = arena.enemies[5]
+	var charger = arena.session.encounter_director.enemies[0]
+	var fan = arena.session.encounter_director.enemies[3]
+	var melee = arena.session.encounter_director.enemies[5]
 	if not _place_fixture_actor(arena, "enemy/%d" % charger.entity_id, center + Vector2.DOWN * 120.0, failures):
 		return
 	if not _place_fixture_actor(arena, "enemy/%d" % fan.entity_id, center + Vector2.UP * 120.0, failures):
@@ -359,16 +359,16 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 	fixture.drive(arena, {"enemies": true})
 	for tick in range(1, 241):
 
-		var planned: Dictionary = arena.enemy_tactics.plan(arena.enemy_ai._enemy_tactics_snapshot())
+		var planned: Dictionary = arena.session.enemy_tactics.plan(arena.enemy_ai._enemy_tactics_snapshot())
 		var intents_by_id := {}
 		for intent: Dictionary in planned.get("intents", []):
 			intents_by_id[int(intent.get("entity_id", 0))] = intent
 		var before := {}
-		for enemy in arena.enemies:
+		for enemy in arena.session.encounter_director.enemies:
 			before[enemy.entity_id] = enemy.position
 		fixture.step(arena)
 
-		var fan_distance: float = fan.position.distance_to(arena.player_position)
+		var fan_distance: float = fan.position.distance_to(arena.session.player_position())
 		var fan_in_band: bool = fan_distance >= arena.EnemyTacticsScript.FAN_ATTACK_MIN_RANGE and fan_distance <= arena.EnemyTacticsScript.FAN_ATTACK_RADIUS
 		if fan_in_band and not fan_entered_band:
 			fan_band_tick = tick
@@ -383,7 +383,7 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 			if not radial.is_zero_approx():
 				melee_tangent_displacement += absf(melee_step.dot(radial.normalized().rotated(PI * 0.5)))
 
-		for enemy in arena.enemies:
+		for enemy in arena.session.encounter_director.enemies:
 			var intent: Dictionary = intents_by_id.get(enemy.entity_id, {})
 			var requested_move := (intent.get("move_direction", Vector2.ZERO) as Vector2).length_squared() > 0.000001 and float(intent.get("speed_scale", 0.0)) > 0.0
 			var actual_distance: float = enemy.position.distance_to(before[enemy.entity_id])
@@ -409,21 +409,21 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	var center: Vector2 = enemy_geometry["center"]
 	var fixture_standoff: float = clampf(120.0, arena.EnemyTacticsScript.CHARGER_LAUNCH_MIN_RANGE, arena.EnemyTacticsScript.CHARGER_LAUNCH_MAX_RANGE)
 
-	var charger = arena.enemies[0]
+	var charger = arena.session.encounter_director.enemies[0]
 	var arc_half_angle := asin(fixture_standoff / 320.0)
 	## The east band hosts an authored low-pier blocker; the antipodal west
 	## chord keeps the fixture geometry clear of every authored structure.
 	arena.teleport_actor("enemy/%d" % charger.entity_id, center + Vector2.from_angle(PI - arc_half_angle) * 160.0)
 	arena.teleport_actor("ranger", center + Vector2.from_angle(PI + arc_half_angle) * 160.0)
-	var player_projection: Dictionary = arena.ArenaGeometryScript.project(arena.player_position, player_geometry)
+	var player_projection: Dictionary = arena.ArenaGeometryScript.project(arena.session.player_position(), player_geometry)
 	var charger_projection: Dictionary = arena.ArenaGeometryScript.project(charger.position, enemy_geometry)
-	_expect(bool(player_projection.ok) and Vector2(player_projection.position).is_equal_approx(arena.player_position), "ring runtime: in-band player start is illegal under padding 14", failures)
+	_expect(bool(player_projection.ok) and Vector2(player_projection.position).is_equal_approx(arena.session.player_position()), "ring runtime: in-band player start is illegal under padding 14", failures)
 	_expect(bool(charger_projection.ok) and Vector2(charger_projection.position).is_equal_approx(charger.position), "ring runtime: in-band charger start is illegal under padding 16", failures)
-	var initial_distance: float = charger.position.distance_to(arena.player_position)
+	var initial_distance: float = charger.position.distance_to(arena.session.player_position())
 	_expect(initial_distance >= arena.EnemyTacticsScript.CHARGER_LAUNCH_MIN_RANGE and initial_distance <= arena.EnemyTacticsScript.CHARGER_LAUNCH_MAX_RANGE, "ring runtime: launch fixture is outside the charge band", failures)
-	var direct_chord: Dictionary = arena.ArenaGeometryScript.line_segment_walkable(charger.position, arena.player_position, enemy_geometry)
+	var direct_chord: Dictionary = arena.ArenaGeometryScript.line_segment_walkable(charger.position, arena.session.player_position(), enemy_geometry)
 	_expect(bool(direct_chord.ok) and bool(direct_chord.walkable), "ring runtime: the chord within the authored band is not walkable", failures)
-	var initial_plan: Dictionary = arena.enemy_tactics.plan(arena.enemy_ai._enemy_tactics_snapshot())
+	var initial_plan: Dictionary = arena.session.enemy_tactics.plan(arena.enemy_ai._enemy_tactics_snapshot())
 	var initial_intent: Dictionary = initial_plan.intents[0]
 	_expect(String(initial_intent.request_action) == "charge" and String(initial_intent.reason) == "charger_launch_band", "ring runtime: a legal in-band chord did not launch immediately", failures)
 
@@ -440,14 +440,14 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	var maximum_setup_stalled_run := 0
 	var setup_stalled_run := 0
 	var player_after_init_direct_moves := 0
-	var initial_player_position: Vector2 = arena.player_position
+	var initial_player_position: Vector2 = arena.session.player_position()
 	var charge_action_instance_ids: Array[int] = []
 	var frozen_distance_sum := 0.0
 	var health_before_first_action := -1.0
 	fixture.drive(arena, {"enemies": true})
 	for tick in range(1, 1201):
 
-		var planned: Dictionary = arena.enemy_tactics.plan(arena.enemy_ai._enemy_tactics_snapshot())
+		var planned: Dictionary = arena.session.enemy_tactics.plan(arena.enemy_ai._enemy_tactics_snapshot())
 		var intent: Dictionary = planned.intents[0]
 		var before: Vector2 = charger.position
 		var state_before: String = charger.action_state
@@ -461,13 +461,13 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 				health_before_first_action = arena.player_health
 			if launch_tick < 0:
 				launch_tick = tick
-				launch_distance = charger.position.distance_to(arena.player_position)
+				launch_distance = charger.position.distance_to(arena.session.player_position())
 		fixture.step(arena)
 		if requested_charge:
 			charge_action_instance_ids.append(charger.action_instance_id)
 			frozen_distance_sum += charger.charge_length
 			_expect(is_equal_approx(charger.charge_length, float(intent.action_distance)), "ring runtime: Main charge_length drifted from action_distance", failures)
-		if not arena.player_position.is_equal_approx(initial_player_position):
+		if not arena.session.player_position().is_equal_approx(initial_player_position):
 			player_after_init_direct_moves += 1
 		var actual_step: float = charger.position.distance_to(before)
 		if launch_tick < 0:
@@ -496,7 +496,7 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	var first_resolution: Dictionary = {}
 	if charge_action_instance_ids.size() >= 1:
 		var first_action_instance_id := charge_action_instance_ids[0]
-		for event: Dictionary in arena.combat_event_stream.snapshot().events:
+		for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 			if String(event.get("type", "")) == "attack_resolved" and int(event.get("action_instance_id", -1)) == first_action_instance_id and String(event.get("outcome", "")) == "damage":
 				first_resolution = event
 				break
@@ -521,7 +521,7 @@ func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) ->
 	## edge; slide the edge fixture south so the projected charge lane stays
 	## clear of it.
 	var player_start := Vector2(float(player_geometry.bounds.position.x), 460.0)
-	var charger = arena.enemies[0]
+	var charger = arena.session.encounter_director.enemies[0]
 	_expect(bool(arena.teleport_actor("ranger", player_start).get("ok", false)), "padding runtime: ranger fixture placement failed", failures)
 	_expect(bool(arena.teleport_actor("enemy/%d" % charger.entity_id, player_start + Vector2.RIGHT * 100.0).get("ok", false)), "padding runtime: charger fixture placement failed", failures)
 	var player_check: Dictionary = arena.ArenaGeometryScript.project(player_start, player_geometry)
@@ -560,7 +560,7 @@ func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) ->
 			break
 
 	var authoritative_resolution := false
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "attack_resolved" and int(event.get("action_instance_id", -1)) == charge_action_instance_id and String(event.get("source_id", "")) == "enemy/%d/charging_raider" % charger.entity_id and String(event.get("target_id", "")) == "ranger":
 			authoritative_resolution = String(event.get("outcome", "")) == "damage"
 	_expect(start_tick > 0 and start_tick < 600, "padding runtime: legal edge target did not start charge", failures)
@@ -570,13 +570,13 @@ func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) ->
 	## only travel to the padded boundary for the charger's registered
 	## footprint, so the expected body displacement is the reachable portion of
 	## the frozen lane. Drift beyond that clip stays a failure.
-	var charger_state = arena.actor_registry.actor("enemy/%d" % charger.entity_id)
+	var charger_state = arena.session.actor_registry.actor("enemy/%d" % charger.entity_id)
 	var charger_footprint: float = float(charger_state.footprint_radius) if charger_state != null else 18.0
 	var motor_reach: float = (player_start.x + 100.0) - float(arena.walkable_geometry(charger_footprint).bounds.position.x)
 	_expect(absf(active_displacement - minf(frozen_charge_length, motor_reach)) <= 0.02, "padding runtime: body displacement did not equal the reachable frozen charge_length", failures)
 	_expect(charger.impact_resolved and authoritative_resolution, "padding runtime: charge produced no authoritative hit/miss resolution", failures)
 	_expect(is_equal_approx(arena.player_health, 89.0), "padding runtime: projected contact charge did not hit the static edge player", failures)
-	_expect(arena.player_position.is_equal_approx(player_start), "padding runtime: player moved after fixture initialization", failures)
+	_expect(arena.session.player_position().is_equal_approx(player_start), "padding runtime: player moved after fixture initialization", failures)
 	print("ENEMY_RUNTIME_PADDING_EDGE_METRICS start_tick=%d recovery_tick=%d charge_length=%.3f active_steps=%d active_nonzero=%d active_swallowed=%d active_displacement=%.3f contact_offset=%.3f outcome_health=%.1f player_after_init_direct_moves=0" % [start_tick, recovery_tick, frozen_charge_length, active_steps, active_nonzero_steps, active_swallowed_steps, active_displacement, player_start.distance_to(Vector2(contact.position)), arena.player_health])
 
 
@@ -584,7 +584,7 @@ func _test_invalid_charge_distance_runtime(arena: Node, failures: Array[String])
 	var cases: Array = [null, 0.0, -1.0, INF]
 	for index in cases.size():
 		arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-		var charger = arena.enemies[0]
+		var charger = arena.session.encounter_director.enemies[0]
 		var intent := {
 			"entity_id": charger.entity_id,
 			"move_direction": Vector2.ZERO,
@@ -598,7 +598,7 @@ func _test_invalid_charge_distance_runtime(arena: Node, failures: Array[String])
 		_expect(charger.action_state == "none" and charger.action_instance_id == 0 and String(charger.tactic_reason) == "invalid_charge_execution", "invalid charge distance: case %d was not rejected" % index, failures)
 
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-	var charger = arena.enemies[0]
+	var charger = arena.session.encounter_director.enemies[0]
 	arena.enemy_ai._commit_normal_enemy_intent(charger, {
 		"entity_id": charger.entity_id,
 		"move_direction": Vector2.ZERO,
@@ -615,7 +615,7 @@ func _test_rectangle_runtime_does_not_detour(arena: Node, failures: Array[String
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
 	var center := Vector2(450.0, 630.0)
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "rectangle runtime: ranger fixture placement failed", failures)
-	var charger = arena.enemies[0]
+	var charger = arena.session.encounter_director.enemies[0]
 	_expect(bool(arena.teleport_actor("enemy/%d" % charger.entity_id, center + Vector2(250.0, 0.0)).get("ok", false)), "rectangle runtime: charger fixture placement failed", failures)
 	var before: Vector2 = charger.position
 
@@ -628,32 +628,32 @@ func _test_rectangle_runtime_does_not_detour(arena: Node, failures: Array[String
 
 func _test_room_completion_and_validation(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
-	_defeat_target(arena, arena.enemies[0], failures)
+	_defeat_target(arena, arena.session.encounter_director.enemies[0], failures)
 	arena.check_battle_end()
-	_expect(arena.battle_over and arena.battle_victory, "normal clear room did not win with no living targets", failures)
+	_expect(arena.session.is_battle_over() and arena.session.is_battle_victory(), "normal clear room did not win with no living targets", failures)
 	arena = _configure_room(arena, "rectangle_arena", "timed_break", ["melee_pursuer"])
 	fixture.advance_to(arena, 901)
 	arena.update_room_rules_tick()
-	_expect(not arena.timed_bonus_available and not arena.battle_over, "timed_break timeout incorrectly failed the room", failures)
+	_expect(not arena.session.encounter_director.timed_bonus_available and not arena.session.is_battle_over(), "timed_break timeout incorrectly failed the room", failures)
 	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", ["melee_pursuer", "fan_ranged"])
-	var elite = arena.enemies[0]
+	var elite = arena.session.encounter_director.enemies[0]
 	_defeat_target(arena, elite, failures)
 	arena.check_battle_end()
-	_expect(arena.battle_over and arena.battle_victory and arena.enemies.size() == 1, "hunt_elite did not use the first enemy as authoritative objective", failures)
+	_expect(arena.session.is_battle_over() and arena.session.is_battle_victory() and arena.session.encounter_director.enemies.size() == 1, "hunt_elite did not use the first enemy as authoritative objective", failures)
 	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", [], "threshold_colossus")
-	_expect(arena.boss != null and arena.enemies.size() == 1 and arena.boss.entity_id == 1, "Boss room did not spawn authoritative threshold colossus", failures)
-	arena.framework_room.enemy_ids = ["unknown_enemy"]
+	_expect(arena.session.encounter_director.boss != null and arena.session.encounter_director.enemies.size() == 1 and arena.session.encounter_director.boss.entity_id == 1, "Boss room did not spawn authoritative threshold colossus", failures)
+	arena.session.framework_room.enemy_ids = ["unknown_enemy"]
 	_expect(arena.session.framework_room_error() == "unknown_enemy_id", "unknown enemy did not fail closed", failures)
-	arena.framework_room.enemy_ids = []
-	arena.framework_room.boss_id = "unknown_boss"
+	arena.session.framework_room.enemy_ids = []
+	arena.session.framework_room.boss_id = "unknown_boss"
 	_expect(arena.session.framework_room_error() == "unknown_boss_id", "unknown Boss did not fail closed", failures)
 
 
 func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [], [], ["equipment_general", "damage", "add_dice", "rewrite_dice", "refine_dice"])
-	_defeat_target(arena, arena.enemies[0], failures)
+	_defeat_target(arena, arena.session.encounter_director.enemies[0], failures)
 	arena.check_battle_end()
-	_expect(arena.battle_victory, "embedded rewards: clear room did not remain a victory", failures)
+	_expect(arena.session.is_battle_victory(), "embedded rewards: clear room did not remain a victory", failures)
 	_expect(arena.room_reward_snapshot == {
 		"add_dice_delta": 1,
 		"rewrite_dice_delta": 1,
@@ -665,9 +665,9 @@ func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "timed_break", ["melee_pursuer"], "", [], [], ["equipment_general"])
 	fixture.advance_to(arena, 901)
 	arena.update_room_rules_tick()
-	_defeat_target(arena, arena.enemies[0], failures)
+	_defeat_target(arena, arena.session.encounter_director.enemies[0], failures)
 	arena.check_battle_end()
-	_expect(arena.battle_victory and arena.room_reward_snapshot == {
+	_expect(arena.session.is_battle_victory() and arena.room_reward_snapshot == {
 		"add_dice_delta": 0,
 		"rewrite_dice_delta": 0,
 		"refine_dice_delta": 0,
@@ -714,35 +714,35 @@ func _test_hazard_decision_boundaries(arena: Node, failures: Array[String]) -> v
 	fixture.advance_to(arena, arena.HAZARD_WARNING_TICKS + arena.HAZARD_ACTIVE_TICKS - 1)
 	var fireline: Dictionary = arena.hazard_states[0]
 	arena.teleport_actor("ranger", fireline.origin + Vector2(0.0, fireline.length * 0.5))
-	_expect(arena.smoke_input_driver.requires_dodge({"player": arena.player_combat_state.snapshot(arena.sim_tick), "hazards": arena.hazard_states.duplicate(true), "boss": {"impact_tick": arena.boss.impact_tick, "target_shape": arena.boss.target_shape.duplicate(true)} if arena.boss != null else {}}), "moving_fireline decision boundary: player logic ignored the final active tick", failures)
+	_expect(arena.session.smoke_input_driver.requires_dodge({"player": arena.session.player_combat_state.snapshot(arena.session.sim_tick), "hazards": arena.hazard_states.duplicate(true), "boss": {"impact_tick": arena.session.encounter_director.boss.impact_tick, "target_shape": arena.session.encounter_director.boss.target_shape.duplicate(true)} if arena.session.encounter_director.boss != null else {}}), "moving_fireline decision boundary: player logic ignored the final active tick", failures)
 
 
 func _test_elite_rules(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", ["melee_pursuer", "fan_ranged"], "", [], ["periodic_barrier"])
-	var elite = arena.enemies[0]
+	var elite = arena.session.encounter_director.enemies[0]
 	arena.teleport_actor("ranger", elite.position)
 	arena.update_room_rules_tick()
 	var health_before: float = elite.health
 	_cast_and_resolve_arrow(arena)
-	_expect(arena.elite_barrier_active and is_equal_approx(elite.health, health_before), "periodic barrier did not truly block damage", failures)
+	_expect(arena.session.encounter_director.elite_barrier_active and is_equal_approx(elite.health, health_before), "periodic barrier did not truly block damage", failures)
 	fixture.advance_to(arena, 20)
 	arena.update_room_rules_tick()
 	_cast_and_resolve_arrow(arena)
-	_expect(not arena.elite_barrier_active and elite.health < health_before, "periodic barrier did not open at fixed tick", failures)
+	_expect(not arena.session.encounter_director.elite_barrier_active and elite.health < health_before, "periodic barrier did not open at fixed tick", failures)
 
 	arena = _configure_room(arena, "ring", "hunt_elite", ["melee_pursuer"], "", [], ["summon_reinforcements"])
-	elite = arena.enemies[0]
+	elite = arena.session.encounter_director.enemies[0]
 	elite.health = elite.maximum_health * 0.5
 	fixture.drive(arena, {"enemies": true})
 	fixture.step(arena)
-	var count_after_summon: int = arena.enemies.size()
+	var count_after_summon: int = arena.session.encounter_director.enemies.size()
 	fixture.step(arena)
-	_expect(arena.reinforcements_summoned and count_after_summon == 2 and arena.enemies.size() == 2 and arena.enemies[1].entity_id == 2
-		and arena.enemies[1].health == 720.0 and arena.enemies[1].maximum_health == 720.0,
+	_expect(arena.session.encounter_director.reinforcements_summoned and count_after_summon == 2 and arena.session.encounter_director.enemies.size() == 2 and arena.session.encounter_director.enemies[1].entity_id == 2
+		and arena.session.encounter_director.enemies[1].health == 720.0 and arena.session.encounter_director.enemies[1].maximum_health == 720.0,
 		"reinforcement rule did not summon exactly once with stable ID and normal melee durability", failures)
 
 	arena = _configure_room(arena, "ring", "hunt_elite", ["melee_pursuer"], "", [], ["summon_reinforcements"])
-	elite = arena.enemies[0]
+	elite = arena.session.encounter_director.enemies[0]
 	## A point-blank teleport onto the elite drops the arrow's frozen bow-socket
 	## path inside the target's hurtbox, where the kernel sweep skips the
 	## initially-overlapping body and the shot always strafes. Hold a clear
@@ -753,34 +753,34 @@ func _test_elite_rules(arena: Node, failures: Array[String]) -> void:
 	elite.health = 1.0
 	_cast_and_resolve_arrow(arena)
 	arena.check_battle_end()
-	_expect(arena.reinforcements_summoned and arena.enemies.size() == 1 and arena.enemies[0].entity_id == 2, "lethal threshold crossing skipped the reinforcement", failures)
-	_expect(not arena.battle_over, "hunt elite ended before summoned reinforcement was cleared", failures)
-	_defeat_target(arena, arena.enemies[0], failures)
+	_expect(arena.session.encounter_director.reinforcements_summoned and arena.session.encounter_director.enemies.size() == 1 and arena.session.encounter_director.enemies[0].entity_id == 2, "lethal threshold crossing skipped the reinforcement", failures)
+	_expect(not arena.session.is_battle_over(), "hunt elite ended before summoned reinforcement was cleared", failures)
+	_defeat_target(arena, arena.session.encounter_director.enemies[0], failures)
 	arena.check_battle_end()
-	_expect(arena.battle_over and arena.battle_victory, "hunt elite did not finish after summoned reinforcement was cleared", failures)
+	_expect(arena.session.is_battle_over() and arena.session.is_battle_victory(), "hunt elite did not finish after summoned reinforcement was cleared", failures)
 
 
 func _test_room_hash_sensitivity(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "corridor", "timed_break", ["melee_pursuer"], "", ["moving_fireline"], ["periodic_barrier"])
 	var first: String = arena.state_hash("test")
-	arena.layout_id = "ring"
+	arena.session.layout_id = "ring"
 	var layout_hash: String = arena.state_hash("test")
-	arena.layout_id = "corridor"
+	arena.session.layout_id = "corridor"
 	arena.hazard_states[0].origin += Vector2(1.0, 0.0)
 	var hazard_hash: String = arena.state_hash("test")
 	arena.hazard_states[0].origin -= Vector2(1.0, 0.0)
-	arena.room_id = "hash.changed"
+	arena.session.room_id = "hash.changed"
 	var room_hash: String = arena.state_hash("test")
-	arena.room_id = "test.corridor.timed_break"
-	arena.room_drop_tags.append("damage")
+	arena.session.room_id = "test.corridor.timed_break"
+	arena.session.room_drop_tags.append("damage")
 	var drop_hash: String = arena.state_hash("test")
-	arena.room_drop_tags.pop_back()
-	arena.elite_barrier_active = not arena.elite_barrier_active
+	arena.session.room_drop_tags.pop_back()
+	arena.session.encounter_director.elite_barrier_active = not arena.session.encounter_director.elite_barrier_active
 	var elite_hash: String = arena.state_hash("test")
-	arena.elite_barrier_active = not arena.elite_barrier_active
-	arena.timed_bonus_available = false
+	arena.session.encounter_director.elite_barrier_active = not arena.session.encounter_director.elite_barrier_active
+	arena.session.encounter_director.timed_bonus_available = false
 	var objective_hash: String = arena.state_hash("test")
-	_defeat_target(arena, arena.enemies[0], failures)
+	_defeat_target(arena, arena.session.encounter_director.enemies[0], failures)
 	var reward_hash: String = arena.state_hash("test")
 	_expect(arena.room_reward_snapshot.bonus_lost, "room hash: real timed victory did not commit its lost bonus", failures)
 	var settled: Dictionary = SnapshotBuilder.build_runtime_state(arena, "test")
@@ -794,11 +794,11 @@ func _test_room_hash_sensitivity(arena: Node, failures: Array[String]) -> void:
 func _test_early_durability_and_first_hunt(arena: Node, failures: Array[String]) -> void:
 	for kind_id: String in ["melee_pursuer", "charging_raider", "fan_ranged"]:
 		arena = _configure_room(arena, "rectangle_arena", "clear", [kind_id])
-		var normal_health: float = arena.enemies[0].health
+		var normal_health: float = arena.session.encounter_director.enemies[0].health
 		_expect(normal_health == float(arena.EARLY_NORMAL_HEALTH_BY_KIND[kind_id]),
 			"early durability: normal %s did not use its role's base health" % kind_id, failures)
 		arena = _configure_room(arena, "rectangle_arena", "hunt_elite", [kind_id])
-		_expect(arena.enemies[0].health >= 1000.0 and arena.enemies[0].health > normal_health * 2.0,
+		_expect(arena.session.encounter_director.enemies[0].health >= 1000.0 and arena.session.encounter_director.enemies[0].health > normal_health * 2.0,
 			"early durability: elite %s lost its distinct health pool" % kind_id, failures)
 	var state = ApplicationStateScript.new()
 	state.start_new_profile("ranger")
@@ -809,10 +809,10 @@ func _test_early_durability_and_first_hunt(arena: Node, failures: Array[String])
 	if not bool(built.get("ok", false)):
 		return
 	arena.test_session = true
-	arena.automation_smoke = false
-	arena.selected_mode = "Manual"
-	arena.framework_resolved_build = state.resolved_build_snapshot()
-	arena.framework_active_build = state.profile.active_build
+	arena.session.automation_smoke = false
+	arena.session.selected_mode = "Manual"
+	arena.session.framework_resolved_build = state.resolved_build_snapshot()
+	arena.session.framework_active_build = state.profile.active_build
 	arena.set_process(false)
 	var initial_build: Dictionary = state.resolved_build_snapshot()
 	# Preserve the original input-calibration geometry and authored spawn profiles.
@@ -839,17 +839,17 @@ func _first_hunt_input_run(arena: Node, rooms: Array, react: bool, failures: Arr
 	var metrics := {"seconds": 0.0, "damage": 0.0, "warnings": 0, "dodges": 0, "move_ticks": 0, "defeated": 0}
 	for room: Dictionary in rooms:
 		arena = _mount_room(room, resolved, true)
-		_expect(arena.enemies.size() == 3 and arena.enemies[0].health == 720.0
-			and arena.enemies[0].entity_id == 1 and arena.enemies[2].entity_id == 3,
+		_expect(arena.session.encounter_director.enemies.size() == 3 and arena.session.encounter_director.enemies[0].health == 720.0
+			and arena.session.encounter_director.enemies[0].entity_id == 1 and arena.session.encounter_director.enemies[2].entity_id == 3,
 			"first hunt runtime: roster did not spawn three durable entities", failures)
-		var start := arena.player_position as Vector2
+		var start := arena.session.player_position() as Vector2
 		## Authored openings stay exactly on the profile ring; the registered
 		## body may be nudged clear of an authored static blocker (deterministic
 		## spawn projection), so the two are asserted separately.
-		var director = arena.encounter_director
+		var director = arena.session.encounter_director
 		var authored_offsets: Array = director.room_spawn_offsets
-		for index: int in range(arena.enemies.size()):
-			var enemy = arena.enemies[index]
+		for index: int in range(arena.session.encounter_director.enemies.size()):
+			var enemy = arena.session.encounter_director.enemies[index]
 			if index < authored_offsets.size():
 				var authored: Vector2 = director.room_origin + authored_offsets[index]
 				_expect(absf(start.distance_to(authored) - 350.0) < 0.01,
@@ -863,10 +863,10 @@ func _first_hunt_input_run(arena: Node, rooms: Array, react: bool, failures: Arr
 		var last_event_id := 0
 		var first_hit_observed := false
 		_early_key_input(KEY_SPACE, true)
-		while not arena.battle_over and arena.sim_tick < arena.SIM_TICKS_PER_SECOND * 60:
+		while not arena.session.is_battle_over() and arena.session.sim_tick < arena.SIM_TICKS_PER_SECOND * 60:
 			var react_now := false
-			for enemy in arena.enemies:
-				if enemy.action_state == "windup" and enemy.impact_tick == arena.sim_tick + 2:
+			for enemy in arena.session.encounter_director.enemies:
+				if enemy.action_state == "windup" and enemy.impact_tick == arena.session.sim_tick + 2:
 					react_now = true
 			if react and react_now:
 				_early_key_input(KEY_A, true)
@@ -875,11 +875,11 @@ func _first_hunt_input_run(arena: Node, rooms: Array, react: bool, failures: Arr
 					_early_dodge_input(false)
 			elif fixture.player(arena).dodge_remaining_ticks == 0:
 				_early_key_input(KEY_A, false)
-			var position_before: Vector2 = arena.player_position
+			var position_before: Vector2 = arena.session.player_position()
 			arena.step_tick()
-			if arena.player_position != position_before:
+			if arena.session.player_position() != position_before:
 				move_ticks += 1
-			for event: Dictionary in arena.combat_event_stream.events_after(last_event_id):
+			for event: Dictionary in arena.session.combat_event_stream.events_after(last_event_id):
 				last_event_id = int(event.event_id)
 				if event.type == "action_accepted" and String(event.get("actor_id", "")).begins_with("enemy/"):
 					warning_count += 1
@@ -887,17 +887,17 @@ func _first_hunt_input_run(arena: Node, rooms: Array, react: bool, failures: Arr
 					dodge_count += 1
 			if not first_hit_observed and arena.arrow_hits > 0:
 				first_hit_observed = true
-				_expect(arena.enemies.size() == 3,
+				_expect(arena.session.encounter_director.enemies.size() == 3,
 					"first hunt runtime: fresh starter arrow killed a full-health melee enemy", failures)
 		_early_key_input(KEY_SPACE, false)
 		_early_key_input(KEY_A, false)
 		var damage: float = initial_health - arena.player_health
 		print("FIRST_HUNT_INPUT mode=%s room=%s victory=%s seconds=%.2f casts=%d damage=%.1f warnings=%d dodges=%d move_ticks=%d" % [
-			"reactive" if react else "stationary", room.room_id, str(arena.battle_victory), arena.elapsed,
+			"reactive" if react else "stationary", room.room_id, str(arena.session.is_battle_victory()), arena.session.elapsed,
 			arena.shots, damage, warning_count, dodge_count, move_ticks])
-		_expect(first_hit_observed and arena.battle_victory and damage <= initial_health * 0.5,
+		_expect(first_hit_observed and arena.session.is_battle_victory() and damage <= initial_health * 0.5,
 			"first hunt runtime: real input did not clear a room within the opening damage budget", failures)
-		metrics.seconds += arena.elapsed
+		metrics.seconds += arena.session.elapsed
 		metrics.damage += damage
 		metrics.warnings += warning_count
 		metrics.dodges += dodge_count
@@ -940,32 +940,32 @@ func _test_melee_stuck_escape_intent(arena: Node, failures: Array[String]) -> vo
 	## the annulus tangent toward the player; in a rectangle it picks the wedge
 	## nearest its own bearing instead of grinding the fixed far slot forever.
 	arena = _configure_room(arena, "ring", "clear", ["melee_pursuer"])
-	var enemy = arena.enemies[0]
+	var enemy = arena.session.encounter_director.enemies[0]
 	arena.teleport_actor("ranger", arena.arena_rect().get_center() + Vector2(-180.0, 80.0))
-	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(280.0, -20.0))
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.session.player_position() + Vector2(280.0, -20.0))
 	enemy.stuck_ticks = 40
 	enemy.stuck_anchor = enemy.position
-	var ring_intent: Dictionary = arena.encounter_director.intent_for_enemy(enemy)
+	var ring_intent: Dictionary = arena.session.encounter_director.intent_for_enemy(enemy)
 	_expect(String(ring_intent.get("reason", "")) == "melee_annulus_escape" and not (ring_intent.get("move_direction", Vector2.ZERO) as Vector2).is_zero_approx(),
 		"escape: a stuck melee in a ring room did not get the annulus escape intent", failures)
 	enemy.stuck_ticks = 0
 	enemy.stuck_anchor = Vector2.INF
-	var free_intent: Dictionary = arena.encounter_director.intent_for_enemy(enemy)
+	var free_intent: Dictionary = arena.session.encounter_director.intent_for_enemy(enemy)
 	_expect(String(free_intent.get("reason", "")) == "melee_ring_slot", "escape: an unstuck melee lost its authored ring slot reason", failures)
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
-	enemy = arena.enemies[0]
+	enemy = arena.session.encounter_director.enemies[0]
 	arena.teleport_actor("ranger", arena.arena_rect().get_center())
-	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(280.0, -20.0))
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.session.player_position() + Vector2(280.0, -20.0))
 	enemy.stuck_ticks = 40
 	enemy.stuck_anchor = enemy.position
-	var escape_intent: Dictionary = arena.encounter_director.intent_for_enemy(enemy)
+	var escape_intent: Dictionary = arena.session.encounter_director.intent_for_enemy(enemy)
 	_expect(String(escape_intent.get("reason", "")) == "melee_escape_slot",
 		"escape: a stuck melee outside a ring did not get the same-side escape slot", failures)
 	_default_room()
 
 
 func _enemy_of_kind(arena: Node, kind_id: String) -> Variant:
-	for enemy in arena.enemies:
+	for enemy in arena.session.encounter_director.enemies:
 		if enemy.kind_id == kind_id:
 			return enemy
 	return null
@@ -979,7 +979,7 @@ func _cast_and_resolve_arrow(arena: Node) -> bool:
 	var receipt := fixture.cast(arena, "piercing_arrow", target.entity_id)
 	if not bool(receipt.get("accepted", false)):
 		return false
-	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
+	fixture.advance_to(arena, arena.session.sim_tick + Timeline.WINDUP_TICKS)
 	fixture.resolve_projectiles(arena)
 	return true
 
@@ -1004,26 +1004,26 @@ func _defeat_target(arena: Node, target, failures: Array[String]) -> void:
 	# A low-health enemy initial state is settled by the real arrow contact,
 	# which also increments CS totals and commits room completion normally.
 	target.health = 1.0
-	var start: Vector2 = arena.player_position
+	var start: Vector2 = arena.session.player_position()
 	## Authored blockers own static clearance, so the first lateral contact
 	## offset can land on a registered blocker surface or outside the padded
 	## walkable band (ring rooms seal the east lane). Try the four contact
 	## offsets in a fixed deterministic order and keep the first one the
 	## registry accepts; the real arrow contact itself stays unchanged.
 	var footprint: float = 18.0
-	var target_state = arena.actor_registry.actor("enemy/%d" % target.entity_id)
+	var target_state = arena.session.actor_registry.actor("enemy/%d" % target.entity_id)
 	if target_state != null:
 		footprint = float(target_state.footprint_radius)
 	var position: Vector2 = arena.clamp_to_arena(start + Vector2(60.0, 0.0), 16.0)
 	for offset: Vector2 in [Vector2(60.0, 0.0), Vector2(-60.0, 0.0), Vector2(0.0, 60.0), Vector2(0.0, -60.0)]:
 		var candidate: Vector2 = arena.clamp_to_arena(start + offset, 16.0)
-		if arena.actor_registry.is_position_clear(candidate, footprint):
+		if arena.session.actor_registry.is_position_clear(candidate, footprint):
 			position = candidate
 			break
 	arena.teleport_actor("enemy/%d" % target.entity_id, position)
 	fixture.wait_ready(arena)
 	var receipt := fixture.cast(arena, "piercing_arrow", target.entity_id)
 	_expect(bool(receipt.get("accepted", false)), "room objective: real kill setup was rejected", failures)
-	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
+	fixture.advance_to(arena, arena.session.sim_tick + Timeline.WINDUP_TICKS)
 	fixture.resolve_projectiles(arena)
-	_expect(target not in arena.enemies and arena.defeated > 0, "room objective: target did not die through CS contact", failures)
+	_expect(target not in arena.session.encounter_director.enemies and arena.defeated > 0, "room objective: target did not die through CS contact", failures)

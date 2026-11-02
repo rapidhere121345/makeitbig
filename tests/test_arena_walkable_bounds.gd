@@ -67,7 +67,7 @@ func _run() -> void:
 
 func _configure_room(arena: Node, layout: String, enemy_ids: Array, boss_id: String = "") -> void:
 	arena.test_session = true
-	arena.framework_room = {
+	arena.session.framework_room = {
 		"room_id": "bounds.%s" % layout,
 		"layout_id": layout,
 		"layout": layout,
@@ -79,12 +79,12 @@ func _configure_room(arena: Node, layout: String, enemy_ids: Array, boss_id: Str
 		"boss_id": boss_id,
 		"drop_tags": ["equipment_general"],
 	}
-	arena.framework_resolved_build = Resolver.new(arena.content_registry.early_item_registry).resolve_fixture("calibration_convergent")
-	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
+	arena.session.framework_resolved_build = Resolver.new(arena.session.content_registry.early_item_registry).resolve_fixture("calibration_convergent")
+	arena.session.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
 	arena.requested_movement = Vector2.ZERO
 	arena.drive_enemy_outward = false
 	arena.start_room()
-	_expect(arena.in_arena, "bounds fixture failed to reset a real player room")
+	_expect(arena.session.in_arena, "bounds fixture failed to reset a real player room")
 	var callbacks := {
 		"read_only_targets": Callable(arena, "read_only_targets"),
 		"set_elapsed": Callable(arena, "simulation_set_elapsed"),
@@ -102,13 +102,13 @@ func _configure_room(arena: Node, layout: String, enemy_ids: Array, boss_id: Str
 	var phase_port = PhasePort.new()
 	var port_result: Dictionary = phase_port.bind(callbacks)
 	_expect(bool(port_result.get("ok", false)), "bounds fixture failed to bind its typed phase port")
-	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, phase_port)
+	var configured: Dictionary = arena.session.combat_simulation.configure(arena.session.simulation_world, arena.session.player_combat_rules, phase_port)
 	_expect(bool(configured.get("ok", false)), "bounds fixture failed to configure its real command driver")
 
 
 func _move_player(arena: Node, direction: Vector2) -> void:
 	arena.requested_movement = direction
-	var result: Dictionary = arena.combat_simulation.step()
+	var result: Dictionary = arena.session.combat_simulation.step()
 	_expect(bool(result.get("ok", false)), "bounds movement tick failed")
 	_expect((result.get("player_step", {}).get("protocol_receipts", []) as Array).size() == 1, "bounds movement command was not arbitrated")
 	arena.requested_movement = Vector2.ZERO
@@ -125,7 +125,7 @@ func _test_ring_geometry(arena: Node) -> void:
 	var expected_bounds := arena_rect.grow(-14.0)
 	var expected_basis := minf(expected_bounds.size.x, expected_bounds.size.y)
 	var center: Vector2 = expected_bounds.get_center()
-	_expect(String(arena.layout_id) == "ring", "ring: room identity was rewritten")
+	_expect(String(arena.session.layout_id) == "ring", "ring: room identity was rewritten")
 	_expect(String(geometry.get("kind", "")) == "ring", "ring: walkable geometry is not an annulus")
 	_expect(Rect2(geometry.get("bounds", Rect2())) == expected_bounds, "ring: padded annulus bounds changed")
 	_expect(Vector2(geometry.get("center", Vector2.ZERO)) == center, "ring: annulus center changed")
@@ -331,19 +331,19 @@ func _test_ring_player_boundaries(arena: Node) -> void:
 	var inner_contact := center + Vector2.RIGHT * (inner + PLAYER_RADIUS)
 	arena.teleport_actor("ranger", inner_contact)
 	_move_player(arena, Vector2.LEFT)
-	_expect(_near_vector(arena.player_position, inner_contact), "ring: player entered the inner hole")
-	_expect(arena.player_combat_state.snapshot(arena.sim_tick).player_last_displacement == Vector2.ZERO, "ring: blocked inner-hole entry reported displacement")
+	_expect(_near_vector(arena.session.player_position(), inner_contact), "ring: player entered the inner hole")
+	_expect(arena.session.player_combat_state.snapshot(arena.session.sim_tick).player_last_displacement == Vector2.ZERO, "ring: blocked inner-hole entry reported displacement")
 
 	_configure_room(arena, "ring", ["melee_pursuer"])
 	arena.teleport_actor("ranger", inner_contact)
 	_move_player(arena, Vector2.UP)
 	var tangent_step: float = Motion.PLAYER_SPEED * Motion.SIM_STEP_SECONDS
-	_expect(_near_vector(arena.player_position, inner_contact + Vector2.UP * tangent_step), "ring: tangent movement did not continue along the inner edge (actual=%s expected=%s receipts=%s)" % [arena.player_position, inner_contact + Vector2.UP * tangent_step, arena.last_command_receipts])
+	_expect(_near_vector(arena.session.player_position(), inner_contact + Vector2.UP * tangent_step), "ring: tangent movement did not continue along the inner edge (actual=%s expected=%s receipts=%s)" % [arena.session.player_position(), inner_contact + Vector2.UP * tangent_step, arena.session.last_command_receipts])
 
 	_configure_room(arena, "ring", ["melee_pursuer"])
 	arena.teleport_actor("ranger", inner_contact)
 	_move_player(arena, Vector2.RIGHT)
-	_expect(_near_vector(arena.player_position, inner_contact + Vector2.RIGHT * tangent_step), "ring: reverse movement could not escape the inner edge (actual=%s expected=%s)" % [arena.player_position, inner_contact + Vector2.RIGHT * tangent_step])
+	_expect(_near_vector(arena.session.player_position(), inner_contact + Vector2.RIGHT * tangent_step), "ring: reverse movement could not escape the inner edge (actual=%s expected=%s)" % [arena.session.player_position(), inner_contact + Vector2.RIGHT * tangent_step])
 
 	# The outer edge has the opposite blocking normal and also includes the
 	# actor footprint clearance.
@@ -351,13 +351,13 @@ func _test_ring_player_boundaries(arena: Node) -> void:
 	var outer_contact := center + Vector2.RIGHT * (outer - PLAYER_RADIUS)
 	arena.teleport_actor("ranger", outer_contact)
 	_move_player(arena, Vector2.RIGHT)
-	_expect(_near_vector(arena.player_position, outer_contact), "ring: player crossed the outer boundary")
-	_expect(arena.player_combat_state.snapshot(arena.sim_tick).player_last_displacement == Vector2.ZERO, "ring: blocked outer-boundary exit reported displacement")
+	_expect(_near_vector(arena.session.player_position(), outer_contact), "ring: player crossed the outer boundary")
+	_expect(arena.session.player_combat_state.snapshot(arena.session.sim_tick).player_last_displacement == Vector2.ZERO, "ring: blocked outer-boundary exit reported displacement")
 
 	_configure_room(arena, "ring", ["melee_pursuer"])
 	arena.teleport_actor("ranger", outer_contact)
 	_move_player(arena, Vector2.LEFT)
-	_expect(_near_vector(arena.player_position, outer_contact - Vector2.RIGHT * tangent_step), "ring: reverse movement could not escape the outer edge (actual=%s expected=%s)" % [arena.player_position, outer_contact - Vector2.RIGHT * tangent_step])
+	_expect(_near_vector(arena.session.player_position(), outer_contact - Vector2.RIGHT * tangent_step), "ring: reverse movement could not escape the outer edge (actual=%s expected=%s)" % [arena.session.player_position(), outer_contact - Vector2.RIGHT * tangent_step])
 
 
 func _test_ring_enemy_boundary(arena: Node) -> void:
@@ -365,7 +365,7 @@ func _test_ring_enemy_boundary(arena: Node) -> void:
 	var boundary := _ring_boundary(arena)
 	var center: Vector2 = boundary["center"]
 	var outer := float(boundary["outer_radius"])
-	var enemy = arena.enemies[0]
+	var enemy = arena.session.encounter_director.enemies[0]
 	var enemy_radius := 16.0
 	arena.teleport_actor("ranger", center + Vector2.RIGHT * (float(boundary["inner_radius"]) + 14.0 + 40.0))
 	arena.teleport_actor("enemy/%d" % enemy.entity_id, center + Vector2.RIGHT * (outer - enemy_radius - 20.0))
@@ -381,7 +381,7 @@ func _test_ring_enemy_boundary(arena: Node) -> void:
 
 func _test_ring_boss_target(arena: Node) -> void:
 	_configure_room(arena, "ring", [], "threshold_colossus")
-	var boss = arena.boss
+	var boss = arena.session.encounter_director.boss
 	_expect(boss != null, "ring: boss fixture did not spawn")
 	if boss == null:
 		return
@@ -416,7 +416,7 @@ func _test_public_proxy_geometry(arena: Node) -> void:
 
 func _test_other_layouts_unchanged(arena: Node) -> void:
 	_configure_room(arena, "corridor", ["melee_pursuer"])
-	_expect(String(arena.layout_id) == "corridor", "corridor: collision layout id changed")
+	_expect(String(arena.session.layout_id) == "corridor", "corridor: collision layout id changed")
 	var corridor: Dictionary = arena.walkable_geometry(16.0)
 	_expect(String(corridor.get("kind", "")) == "corridor" and float(corridor.get("corridor_half_height", -1.0)) > 0.0, "corridor: walkable strip geometry changed")
 	_configure_room(arena, "rectangle_arena", ["melee_pursuer"])
@@ -435,7 +435,7 @@ func _near_vector(left: Vector2, right: Vector2, tolerance: float = 0.0001) -> b
 func _shutdown_arena(arena: Node) -> void:
 	if arena == null or not is_instance_valid(arena):
 		return
-	var runtime: Variant = arena.get("scene_runtime")
+	var runtime: Variant = arena.session.scene_runtime
 	if runtime != null and runtime.has_method("unmount"):
 		runtime.unmount()
 	if arena.get_parent() != null:

@@ -45,16 +45,16 @@ func _run() -> void:
 
 func _test_blank_click_feedback_after_release(arena: Node) -> void:
 	_configure_enemies(arena)
-	var blank: Vector2 = arena.player_position + Vector2(0.0, 90.0)
+	var blank: Vector2 = arena.session.player_position() + Vector2(0.0, 90.0)
 	var blank_screen: Vector2 = _gameplay_to_screen(arena, blank)
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(blank_screen, true), false, arena.gameplay_snapshot())
 	_expect(_piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot())).is_empty(),
 		"blank click: the press already queued a piercing cast")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Click an enemy to shoot · Or hold Space for aim assist",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == "Click an enemy to shoot · Or hold Space for aim assist",
 		"blank click: the press did not show the actionable hint immediately")
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(blank_screen, false), false, arena.gameplay_snapshot())
-	var transient: String = arena.presentation.feedback.active_input_feedback(arena.sim_tick)
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Click an enemy to shoot · Or hold Space for aim assist",
+	var transient: String = arena.presentation.feedback.active_input_feedback(arena.session.sim_tick)
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == "Click an enemy to shoot · Or hold Space for aim assist",
 		"blank click: a normal release erased the hint before its duration")
 	arena.refresh_presentation()
 	var notice := arena.presentation.hud.find_child("InputFeedbackLabel", true, false) as Label
@@ -66,20 +66,20 @@ func _test_blank_click_feedback_after_release(arena: Node) -> void:
 
 func _test_successful_intent_clears_feedback(arena: Node) -> void:
 	_configure_enemies(arena)
-	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.sim_tick)
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(70.0, 0.0))
+	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.session.sim_tick)
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(70.0, 0.0))
 	var target_screen := _gameplay_to_screen(arena, target.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(target_screen, true), false, arena.gameplay_snapshot())
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick).is_empty(),
 		"successful pointer lock kept the stale blank-click hint")
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(target_screen, false), false, arena.gameplay_snapshot())
 
-	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.sim_tick)
+	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.session.sim_tick)
 	arena.input_adapter.request_assisted_attack()
 	_expect(not _piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot())).is_empty(),
 		"assisted attempt in range did not queue its cast")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick).is_empty(),
 		"successful assisted intent kept the stale hint")
 	arena.refresh_presentation()
 	var notice := arena.presentation.hud.find_child("InputFeedbackLabel", true, false) as Label
@@ -90,23 +90,23 @@ func _test_successful_intent_clears_feedback(arena: Node) -> void:
 func _test_feedback_expiry_and_reset(arena: Node) -> void:
 	var hint: String = "Click an enemy to shoot · Or hold Space for aim assist"
 	_configure_enemies(arena)
-	arena.presentation.feedback.show_input_feedback(hint, arena.sim_tick)
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == hint, "the hint was not on screen before its expiry window")
-	var expiry_tick: int = arena.sim_tick + int(arena.presentation.feedback.INPUT_FEEDBACK_DURATION_TICKS)
+	arena.presentation.feedback.show_input_feedback(hint, arena.session.sim_tick)
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == hint, "the hint was not on screen before its expiry window")
+	var expiry_tick: int = arena.session.sim_tick + int(arena.presentation.feedback.INPUT_FEEDBACK_DURATION_TICKS)
 	fixture.advance_to(arena, expiry_tick - 1)
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == hint, "the hint vanished one tick before its expiry")
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == hint, "the hint vanished one tick before its expiry")
 	fixture.step(arena)
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick).is_empty(),
 		"transient feedback survived its expiry tick")
 	arena.refresh_presentation()
 	var notice := arena.presentation.hud.find_child("InputFeedbackLabel", true, false) as Label
 	_expect(notice != null and not notice.visible, "expired hint stayed on the visible HUD notice")
-	arena.presentation.feedback.show_input_feedback(hint, arena.sim_tick)
+	arena.presentation.feedback.show_input_feedback(hint, arena.session.sim_tick)
 	_configure_enemies(arena)
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick).is_empty(),
 		"a room wave reset kept the previous room's input hint")
 	arena.release_manual_controls()
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick).is_empty(),
 		"the manual intent reset kept transient input feedback alive")
 
 
@@ -114,31 +114,31 @@ func _test_unavailable_skill_feedback_without_commands(arena: Node) -> void:
 	_configure_enemies(arena, ["piercing_arrow", "", ""])
 	var commands_before: int = arena.input_adapter.collect_commands(arena.gameplay_snapshot()).size()
 	arena._unhandled_input(_key_event(KEY_Q, true))
-	_expect(not bool(arena.command_source.hunter_mark_requested), "unequipped Q still requested the mark")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Hunter's Mark is not equipped in this build · Cannot Cast Yet",
+	_expect(not bool(arena.session.command_source.hunter_mark_requested), "unequipped Q still requested the mark")
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == "Hunter's Mark is not equipped in this build · Cannot Cast Yet",
 		"unequipped Q produced no truthful feedback")
 	arena._unhandled_input(_key_event(KEY_E, true))
-	_expect(not bool(arena.command_source.dash_requested) and int(fixture.player(arena).dash_remaining_ticks) == 0,
+	_expect(not bool(arena.session.command_source.dash_requested) and int(fixture.player(arena).dash_remaining_ticks) == 0,
 		"unequipped E still dashed")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Dash is not equipped in this build · Cannot Cast Yet",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == "Dash is not equipped in this build · Cannot Cast Yet",
 		"unequipped E produced no truthful feedback")
 	_expect(arena.input_adapter.collect_commands(arena.gameplay_snapshot()).size() == commands_before,
 		"unavailable skill presses enqueued combat commands")
-	var stale_hint: String = arena.presentation.feedback.active_input_feedback(arena.sim_tick)
+	var stale_hint: String = arena.presentation.feedback.active_input_feedback(arena.session.sim_tick)
 	_configure_enemies(arena)
-	arena.presentation.feedback.show_input_feedback(stale_hint, arena.sim_tick)
+	arena.presentation.feedback.show_input_feedback(stale_hint, arena.session.sim_tick)
 	arena._unhandled_input(_key_event(KEY_Q, true))
-	_expect(bool(arena.command_source.hunter_mark_requested), "equipped Q was gated away")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
+	_expect(bool(arena.session.command_source.hunter_mark_requested), "equipped Q was gated away")
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick).is_empty(),
 		"equipped Q left the stale unavailable-skill hint on screen")
 	arena.release_manual_controls()
 
 
 func _test_assisted_rejection_cue(arena: Node) -> void:
 	_configure_enemies(arena)
-	var far = arena.enemies[0]
-	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(260.0, 0.0))
-	_place(arena, "enemy/%d" % arena.enemies[1].entity_id, arena.player_position + Vector2(300.0, 40.0))
+	var far = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % far.entity_id, arena.session.player_position() + Vector2(260.0, 0.0))
+	_place(arena, "enemy/%d" % arena.session.encounter_director.enemies[1].entity_id, arena.session.player_position() + Vector2(300.0, 40.0))
 	arena.input_adapter.request_assisted_attack()
 	## Out-of-range assists queue at their target; the authority rejects them at
 	## cast time. Targeting rules are unchanged — assert the queue, then execute.
@@ -149,30 +149,30 @@ func _test_assisted_rejection_cue(arena: Node) -> void:
 		Vector2(float(queued.get("direction_x_milli", 0)), float(queued.get("direction_y_milli", 0))).normalized(), arena.ATTACK_SOURCE_ASSISTED)
 	_expect(not bool(receipt.get("accepted", false)) and String(receipt.get("reason", "")) == "target_out_of_range",
 		"out-of-range assisted attempt was not rejected by the player domain")
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Target out of range · Move closer to shoot",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == "Target out of range · Move closer to shoot",
 		"out-of-range assisted attempt produced no actionable cue")
 	_expect(int(arena.shots) == 0 and arena.projectiles.is_empty(),
 		"the out-of-range cue accompanied a real shot")
 	_configure_enemies(arena)
-	for enemy in arena.enemies:
+	for enemy in arena.session.encounter_director.enemies:
 		enemy.health = 0.0
 	arena.input_adapter.request_assisted_attack()
 	_piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot()))
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "No target · Move closer to an enemy, then press Space",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == "No target · Move closer to an enemy, then press Space",
 		"assisted attempt without any living target produced no cue")
 
 
 func _test_pointer_out_of_range_notice(arena: Node) -> void:
 	_configure_enemies(arena)
-	var far = arena.enemies[0]
-	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(260.0, 0.0))
-	_place(arena, "enemy/%d" % arena.enemies[1].entity_id, arena.player_position + Vector2(300.0, 40.0))
+	var far = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % far.entity_id, arena.session.player_position() + Vector2(260.0, 0.0))
+	_place(arena, "enemy/%d" % arena.session.encounter_director.enemies[1].entity_id, arena.session.player_position() + Vector2(300.0, 40.0))
 	var far_screen := _gameplay_to_screen(arena, far.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(far_screen, true), false, arena.gameplay_snapshot())
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Target out of range · Move closer to shoot",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == "Target out of range · Move closer to shoot",
 		"pointer out-of-range press produced no actionable notice")
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(far_screen, false), false, arena.gameplay_snapshot())
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick) == "Target out of range · Move closer to shoot",
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick) == "Target out of range · Move closer to shoot",
 		"pointer out-of-range notice did not stay legible after release")
 	_expect(int(arena.shots) == 0 and arena.projectiles.is_empty(),
 		"the pointer out-of-range notice accompanied a real shot")
@@ -180,10 +180,10 @@ func _test_pointer_out_of_range_notice(arena: Node) -> void:
 
 func _test_assisted_indicator_snapshot_target(arena: Node) -> void:
 	_configure_enemies(arena)
-	var near = arena.enemies[0]
-	var far = arena.enemies[1]
-	_place(arena, "enemy/%d" % near.entity_id, arena.player_position + Vector2(70.0, 0.0))
-	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(120.0, 0.0))
+	var near = arena.session.encounter_director.enemies[0]
+	var far = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % near.entity_id, arena.session.player_position() + Vector2(70.0, 0.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.session.player_position() + Vector2(120.0, 0.0))
 	var state: Dictionary = arena.presentation.frame_builder.attack_target(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 	_expect(String(state.get("source", "")) == arena.ATTACK_SOURCE_ASSISTED
 		and int(state.get("target_entity_id", 0)) == int(near.entity_id),
@@ -194,7 +194,7 @@ func _test_assisted_indicator_snapshot_target(arena: Node) -> void:
 	var marked: Dictionary = fixture.cast(arena, "hunter_mark", int(far.entity_id))
 	_expect(bool(marked.get("accepted", false)) and int(fixture.player(arena).marked_entity_id) == int(far.entity_id),
 		"assisted snapshot: the domain did not establish the requested live mark")
-	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.session.player_position() + Vector2(90.0, 0.0))
 	var marked_state: Dictionary = arena.presentation.frame_builder.attack_target(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 	_expect(int(marked_state.get("target_entity_id", 0)) == int(far.entity_id),
 		"assisted snapshot: a live mark lost priority over plain nearest")
@@ -205,11 +205,11 @@ func _test_assisted_indicator_snapshot_target(arena: Node) -> void:
 func _test_feedback_never_reaches_semantic_hash(arena: Node) -> void:
 	_configure_enemies(arena)
 	var baseline: String = arena.state_hash("skills")
-	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.sim_tick)
+	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.session.sim_tick)
 	_expect(arena.state_hash("skills") == baseline,
 		"semantic hash consumed transient input feedback")
 	arena.release_manual_controls()
-	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
+	_expect(arena.presentation.feedback.active_input_feedback(arena.session.sim_tick).is_empty(),
 		"the semantic-hash reset left transient input feedback alive")
 
 
@@ -243,7 +243,7 @@ func _room() -> Dictionary:
 
 
 func _gameplay_to_screen(arena: Node, gameplay_point: Vector2) -> Vector2:
-	arena.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, arena.get_viewport_rect().size), arena.player_position, arena.arena_rect())
+	arena.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, arena.get_viewport_rect().size), arena.session.player_position(), arena.arena_rect())
 	return arena.presentation.world_view.gameplay_to_screen(gameplay_point)
 
 

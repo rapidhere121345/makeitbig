@@ -106,14 +106,14 @@ func _check_live_switch(catalog: Resource) -> void:
 	var menu: Node = game.get_session_menu()
 	menu.open_menu()
 	_expect(game.get_presentation_viewport().render_target_update_mode == SubViewport.UPDATE_ONCE, "paused game is cached instead of redrawn every frame")
-	var tick: int = arena.sim_tick
+	var tick: int = arena.session.sim_tick
 	var before: Dictionary = game.application_state.profile.duplicate(true)
 	var picker: OptionButton = menu.find_child("LanguageChoice", true, false)
 	picker.select(1)
 	picker.item_selected.emit(1)
 	await process_frame
 	_expect(Locale.current() == "zh_CN", "menu switches the live locale")
-	_expect(game.current_screen == controller and arena.sim_tick == tick, "language switch preserves paused combat instance and tick")
+	_expect(game.current_screen == controller and arena.session.sim_tick == tick, "language switch preserves paused combat instance and tick")
 	_expect(game.application_state.profile == before, "language selection does not change profile authority")
 	var resume: Button = menu.find_child("ResumeButton", true, false)
 	_expect(resume.tr(resume.text) == catalog.source_messages["Resume"], "open menu translates without rebuilding")

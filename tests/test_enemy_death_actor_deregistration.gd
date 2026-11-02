@@ -60,7 +60,7 @@ func _run() -> void:
 	runtime.set_process(false)
 	var arena: Node = runtime.room_instance
 	arena.set_process(false)
-	var enemies: Array = arena.enemies
+	var enemies: Array = arena.session.encounter_director.enemies
 	if enemies.is_empty():
 		_expect(false, "death deregistration: mounted room did not create a live enemy")
 		_sever_kernel_cycle(runtime)
@@ -71,7 +71,7 @@ func _run() -> void:
 	var enemy = enemies[0]
 	var entity_id := int(enemy.entity_id)
 	var actor_id := "enemy/%d" % entity_id
-	var registry = arena.actor_registry
+	var registry = arena.session.actor_registry
 	_expect(registry != null, "death deregistration: actor registry was not mounted")
 	_expect(registry != null and registry.has_actor(actor_id), "death deregistration: enemy actor was not registered before death")
 	var entity_handle = registry.actor_handle(actor_id) if registry != null else null
@@ -95,7 +95,7 @@ func _run() -> void:
 		runtime.free()
 		_finish()
 		return
-	_expect((arena.room_loot_snapshot.get("entities", []) as Array).size() == 1, "death deregistration: enemy death did not spawn one room loot entity")
+	_expect((arena.session.room_loot.snapshot().get("entities", []) as Array).size() == 1, "death deregistration: enemy death did not spawn one room loot entity")
 
 	# Control: the live player record must survive the enemy death settlement.
 	_expect(registry.has_actor("ranger"), "death deregistration: ranger actor record was lost during enemy death")

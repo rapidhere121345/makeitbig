@@ -354,8 +354,8 @@ func _test_ring_real_combat_ticks() -> void:
 			return
 		var arena = runtime.room_instance
 		var scene = runtime.scene_runtime
-		var registry = arena.actor_registry
-		var world = arena.simulation_world
+		var registry = arena.session.actor_registry
+		var world = arena.session.simulation_world
 		arena.set_process(false)
 		runtime.set_process(false)
 		_expect(registry != null and registry.has_actor("ranger") and world != null, "ring real ticks: Main actor access missing after start")

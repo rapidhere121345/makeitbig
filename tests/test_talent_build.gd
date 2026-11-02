@@ -106,14 +106,14 @@ func _test_three_skill_sequence(failures: Array[String]) -> void:
 	var fixture := preload("res://tests/helpers/talent_runtime_fixture.gd").new()
 	var session: Dictionary = fixture.start_session(["ranger_three_skill_rhythm"])
 	var arena = session.arena
-	var rules = arena.player_combat_rules
+	var rules = arena.session.player_combat_rules
 	rules.advance_three_skill_sequence("hunter_mark")
 	rules.advance_three_skill_sequence("piercing_arrow")
-	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	var player: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 	_expect(player.three_skill_sequence_stage == 1 and not player.three_skill_bonus_ready, "sequence: wrong-order prefix did not restart on arrow", failures)
 	rules.advance_three_skill_sequence("hunter_mark")
 	rules.advance_three_skill_sequence("dash")
-	_expect(arena.player_combat_state.snapshot(arena.sim_tick).three_skill_bonus_ready, "sequence: completed sequence did not arm the bonus", failures)
+	_expect(arena.session.player_combat_state.snapshot(arena.session.sim_tick).three_skill_bonus_ready, "sequence: completed sequence did not arm the bonus", failures)
 	fixture.free_session(session)
 
 

@@ -54,7 +54,7 @@ func _test_continuation_uses_real_input(failures: Array[String]) -> void:
 	Input.flush_buffered_events()
 	state.observe_attack_event(press, false)
 	var auto_arena = MainScript.new()
-	auto_arena.selected_mode = "Auto"
+	auto_arena.session.selected_mode = "Auto"
 	auto_arena.input_adapter.manual_combat_input = state
 	var before := state.snapshot()
 	_expect(auto_arena.take_continuous_manual_input() == null and state.snapshot() == before,
@@ -173,8 +173,8 @@ func _test_attack_source_reset_and_snapshot(failures: Array[String]) -> void:
 ## keyboard action, while retaining the HUD-origin block for the RMB binding.
 func _test_dodge_routes_by_press_origin(failures: Array[String]) -> void:
 	var arena = MainScript.new()
-	arena.in_arena = true
-	arena.selected_mode = "Manual"
+	arena.session.in_arena = true
+	arena.session.selected_mode = "Manual"
 	var hud := FakeHud.new()
 	hud.pointer_over_interface = true
 	arena.presentation.hud = hud

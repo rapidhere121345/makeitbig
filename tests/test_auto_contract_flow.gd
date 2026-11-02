@@ -70,10 +70,10 @@ func _run() -> void:
 			runtime.call("_process", 0.0)
 			if not results.is_empty():
 				break
-		_expect(String(arena.get("selected_mode")) == "Auto", "auto flow: mounted room changed the selected mode", failures)
-		_expect(String(arena.get("proxy_prediction")) == "stable", "auto flow: resolved proxy prediction was not stable", failures)
-		_expect(bool(arena.get("battle_over")), "auto flow: Auto did not reach a terminal room state", failures)
-		_expect(bool(arena.get("battle_victory")), "auto flow: Auto room ended without victory", failures)
+		_expect(String(arena.session.selected_mode) == "Auto", "auto flow: mounted room changed the selected mode", failures)
+		_expect(String(arena.session.proxy_prediction) == "stable", "auto flow: resolved proxy prediction was not stable", failures)
+		_expect(bool(arena.session.is_battle_over()), "auto flow: Auto did not reach a terminal room state", failures)
+		_expect(bool(arena.session.is_battle_victory()), "auto flow: Auto room ended without victory", failures)
 		_expect(results.size() == 1, "auto flow: production runtime did not emit one completed result", failures)
 		if results.size() == 1:
 			var result := results[0]
@@ -83,7 +83,7 @@ func _run() -> void:
 				"auto flow: Auto victory did not produce authoritative combat activity", failures)
 			_expect(String(result.get("mode", "")) == "Auto" and String(result.get("contract_id", "")) == "auto_certification",
 				"auto flow: room result lost the Auto contract identity", failures)
-			_expect(not result.has("room_loot_settlement") and not bool(arena.get("room_loot_enabled")),
+			_expect(not result.has("room_loot_settlement") and not bool(arena.session.room_loot.enabled()),
 				"auto flow: the authored certification content unexpectedly opened a loot window", failures)
 	else:
 		_expect(false, "auto flow: production room instance was unavailable", failures)

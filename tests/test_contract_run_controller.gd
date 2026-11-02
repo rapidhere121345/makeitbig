@@ -315,8 +315,8 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 		if scenario == "pointer":
 			# The river's encounter spawn can be outside the camera. Place the
 			# real enemy on the spawn bank and publish its pose before clicking.
-			var target: CombatEnemyState = first.enemies[0]
-			var placed: Dictionary = first.teleport_actor("enemy/%d" % target.entity_id, first.player_position + Vector2(120.0, 0.0))
+			var target: CombatEnemyState = first.session.encounter_director.enemies[0]
+			var placed: Dictionary = first.teleport_actor("enemy/%d" % target.entity_id, first.session.player_position() + Vector2(120.0, 0.0))
 			_expect(bool(placed.get("ok", false)), "continuous input: pointer target placement failed", failures)
 			first.step_tick()
 			first.refresh_presentation()
@@ -327,11 +327,11 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 		else:
 			_attack_key(true) # One physical Space press; no repeated press events in either room.
 		for tick in 1800:
-			if first.battle_over:
+			if first.session.is_battle_over():
 				break
 			first.step_tick()
-		_expect(first.battle_victory and first.shots > 0, "continuous input: first real room did not clear", failures)
-		if not first.battle_victory:
+		_expect(first.session.is_battle_victory() and first.shots > 0, "continuous input: first real room did not clear", failures)
+		if not first.session.is_battle_victory():
 			_attack_key(false)
 			controller.free()
 			continue
@@ -353,16 +353,16 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 			_attack_key(false)
 		if scenario == "held":
 			for tick in 1800:
-				if second.battle_over:
+				if second.session.is_battle_over():
 					break
 				second.step_tick()
 			(controller.get("_current_runtime") as Node)._process(0.0)
-			_expect(second.battle_victory and second.shots > 0 and results.size() == 1
+			_expect(second.session.is_battle_victory() and second.shots > 0 and results.size() == 1
 				and int(results[0].rooms_completed) == 2,
 				"continuous input: held Space stopped firing across two real rooms", failures)
 		else:
 			for tick in 60:
-				if second.battle_over:
+				if second.session.is_battle_over():
 					break
 				second.step_tick()
 			_expect(second.shots == 0 and not second.input_adapter.manual_combat_input.snapshot().assisted_held,

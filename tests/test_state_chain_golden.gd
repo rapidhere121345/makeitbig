@@ -81,11 +81,11 @@ func _check_room(room: Dictionary, build: Dictionary, proxy: Dictionary, mode: S
 	arena.set_process(false)
 	var chain := Builder.hash_runtime(arena, "probe")
 	var ticks := 0
-	while ticks < MAX_TICKS and not bool(arena.battle_over):
+	while ticks < MAX_TICKS and not bool(arena.session.is_battle_over()):
 		arena.step_tick()
 		ticks += 1
 		chain = (chain + Builder.hash_runtime(arena, "probe")).sha256_text()
-	var actual := [ticks, bool(arena.battle_over), bool(arena.battle_victory), chain]
+	var actual := [ticks, bool(arena.session.is_battle_over()), bool(arena.session.is_battle_victory()), chain]
 	if actual != EXPECTED[key]:
 		failures.append("%s: state chain changed: expected %s, got %s" % [key, str(EXPECTED[key]), str(actual)])
 	root.remove_child(runtime)

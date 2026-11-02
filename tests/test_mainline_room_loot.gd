@@ -62,8 +62,8 @@ func _run() -> void:
 	runtime.set_process(false)
 	var arena: Node = runtime.room_instance
 	arena.set_process(false)
-	_expect(bool(arena.room_loot_enabled), "mainline loot: room facade was not enabled")
-	var enemies: Array = arena.enemies
+	_expect(bool(arena.session.room_loot.enabled()), "mainline loot: room facade was not enabled")
+	var enemies: Array = arena.session.encounter_director.enemies
 	_expect(enemies.size() == 2, "mainline loot: authored elite roster changed")
 	if enemies.size() < 2:
 		runtime.free()
@@ -72,7 +72,7 @@ func _run() -> void:
 
 	# Periodic barrier is active at ticks 0..19. Reach the first legal window
 	# through real ticks so the test exercises target blocking rather than bypassing it.
-	while arena.sim_tick < 20:
+	while arena.session.sim_tick < 20:
 		arena.step_tick()
 	var elite = enemies[0]
 	var elite_position: Vector2 = elite.position
@@ -89,7 +89,7 @@ func _run() -> void:
 	_expect(bool(cast.get("accepted", false)), "mainline loot: real elite arrow was rejected: %s" % str(cast))
 	var elite_dead := _advance_until(arena, func() -> bool: return arena.enemy_by_entity_id(elite.entity_id) == null, 120)
 	_expect(elite_dead, "mainline loot: elite did not die through the mounted projectile path")
-	var loot: Dictionary = arena.room_loot_snapshot
+	var loot: Dictionary = arena.session.room_loot.snapshot()
 	var entities: Array = loot.get("entities", [])
 	_expect(entities.size() == 1, "mainline loot: elite death did not create one room entity")
 	var loot_id := String((entities[0] as Dictionary).get("loot_entity_id", "")) if not entities.is_empty() else ""
@@ -106,9 +106,9 @@ func _run() -> void:
 		arena.input_adapter.capture_actions(rejected_pickup_event, arena.gameplay_snapshot())
 		for _tick in 3:
 			arena.step_tick()
-		var rejected_receipts: Array = arena.room_loot_snapshot.get("pickup_receipts", [])
+		var rejected_receipts: Array = arena.session.room_loot.snapshot().get("pickup_receipts", [])
 		_expect(not rejected_receipts.is_empty() and String((rejected_receipts[rejected_receipts.size() - 1] as Dictionary).get("error", "")) == "loot_out_of_range", "mainline loot: room accepted an out-of-range F pickup")
-		_expect(String((arena.room_loot_snapshot.get("entities", [])[0] as Dictionary).get("state", "")) == "available", "mainline loot: rejected pickup changed the room entity")
+		_expect(String((arena.session.room_loot.snapshot().get("entities", [])[0] as Dictionary).get("state", "")) == "available", "mainline loot: rejected pickup changed the room entity")
 		_expect(bool(arena.teleport_actor("ranger", loot_position).get("ok", false)), "mainline loot: pickup placement failed")
 		var pickup_event := InputEventKey.new()
 		pickup_event.keycode = KEY_F
@@ -118,19 +118,19 @@ func _run() -> void:
 		_expect(String(arena.input_adapter.view_state(arena.gameplay_snapshot()).get("loot_pickup_pending_id", "")) == loot_id, "mainline loot: F input did not queue the nearest room drop")
 		for _tick in 3:
 			arena.step_tick()
-			if String((arena.room_loot_snapshot.get("entities", [])[0] as Dictionary).get("state", "")) == "picked":
+			if String((arena.session.room_loot.snapshot().get("entities", [])[0] as Dictionary).get("state", "")) == "picked":
 				break
-		var picked: Array = arena.room_loot_snapshot.get("entities", [])
+		var picked: Array = arena.session.room_loot.snapshot().get("entities", [])
 		_expect(picked.size() == 1 and String((picked[0] as Dictionary).get("state", "")) == "picked", "mainline loot: real next-tick pickup did not commit")
-		_expect(String(arena.last_loot_pickup_command_receipt.get("status", "")) == "accepted" and bool(arena.last_loot_pickup_command_receipt.get("room_receipt", {}).get("accepted", false)), "mainline loot: typed pickup receipt did not reach room authority")
+		_expect(String(arena.session.last_loot_pickup_command_receipt.get("status", "")) == "accepted" and bool(arena.session.last_loot_pickup_command_receipt.get("room_receipt", {}).get("accepted", false)), "mainline loot: typed pickup receipt did not reach room authority")
 
-	_expect(bool(arena.battle_over) and bool(arena.battle_victory), "mainline loot: hunt-elite room did not resolve after elite death")
-	var settlement: Dictionary = arena.room_loot_snapshot.get("settlement", {})
+	_expect(bool(arena.session.is_battle_over()) and bool(arena.session.is_battle_victory()), "mainline loot: hunt-elite room did not resolve after elite death")
+	var settlement: Dictionary = arena.session.room_loot.snapshot().get("settlement", {})
 	_expect(settlement.is_empty(), "mainline loot: victory settled before the player left the loot window")
 	runtime.request_abandon()
 	_expect(_completed.size() == 1, "mainline loot: mounted result was not emitted once")
 	if _completed.size() == 1:
-		settlement = arena.room_loot_snapshot.get("settlement", {})
+		settlement = arena.session.room_loot.snapshot().get("settlement", {})
 		_expect(String(settlement.get("outcome", "")) == "victory" and (settlement.get("items", []) as Array).size() == 1, "mainline loot: picked item was not settled on room exit")
 		var result: Dictionary = _completed[0]
 		var result_settlement: Dictionary = result.get("room_loot_settlement", {})
@@ -155,16 +155,16 @@ func _run() -> void:
 		auto_runtime.set_process(false)
 		var auto_arena: Node = auto_runtime.room_instance
 		auto_arena.set_process(false)
-		auto_arena.selected_mode = "Auto"
-		var auto_position: Vector2 = auto_arena.player_combat_state.snapshot(auto_arena.sim_tick).player_position
+		auto_arena.session.selected_mode = "Auto"
+		var auto_position: Vector2 = auto_arena.session.player_combat_state.snapshot(auto_arena.session.sim_tick).player_position
 		var blocked_spawn: Dictionary = auto_arena.spawn_room_loot_for_source("enemy_death", 1000, auto_arena.arena_rect().position)
 		_expect(not bool(blocked_spawn.get("ok", false)) and String(blocked_spawn.get("error", "")) == "loot_spawn_position_blocked", "mainline loot: production placement port accepted a blocked drop")
 		var spawned: Dictionary = auto_arena.spawn_room_loot_for_source("enemy_death", 1001, auto_position)
 		_expect(bool(spawned.get("ok", false)), "mainline loot: Auto pickup fixture did not spawn its room entity")
 		auto_arena.step_tick()
-		_expect(String(auto_arena.last_loot_pickup_command_receipt.get("status", "")) == "accepted" and bool(auto_arena.last_loot_pickup_command_receipt.get("room_receipt", {}).get("accepted", false)), "mainline loot: Auto did not submit the shared pickup protocol")
+		_expect(String(auto_arena.session.last_loot_pickup_command_receipt.get("status", "")) == "accepted" and bool(auto_arena.session.last_loot_pickup_command_receipt.get("room_receipt", {}).get("accepted", false)), "mainline loot: Auto did not submit the shared pickup protocol")
 		auto_arena.step_tick()
-		var auto_entities: Array = auto_arena.room_loot_snapshot.get("entities", [])
+		var auto_entities: Array = auto_arena.session.room_loot.snapshot().get("entities", [])
 		_expect(not auto_entities.is_empty() and String((auto_entities[0] as Dictionary).get("state", "")) == "picked", "mainline loot: Auto shared pickup did not commit on the next tick")
 	auto_runtime.request_abandon()
 	auto_runtime.free()
@@ -217,13 +217,13 @@ func _check_persisted_elite_result(room_result: Dictionary, runtime_settlement: 
 
 
 func _find_valid_attack_position(arena: Node, target_position: Vector2) -> Dictionary:
-	var targeting_distance := float(arena.player_combat_state.targeting_distance())
+	var targeting_distance := float(arena.session.player_combat_state.targeting_distance())
 	for distance: float in [80.0, 100.0, 120.0, 140.0, 160.0]:
 		if distance >= targeting_distance:
 			continue
 		for angle_index in 32:
 			var candidate := target_position + Vector2.RIGHT.rotated(TAU * float(angle_index) / 32.0) * distance
-			if arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
+			if arena.session.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
 				return {"ok": true, "position": candidate}
 	return {"ok": false, "position": Vector2.ZERO}
 

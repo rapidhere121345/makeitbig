@@ -436,9 +436,9 @@ func _test_arena_integration() -> void:
 		_expect(String(arena.presentation.animations.enemy_animation_pending_reason).is_empty(), "arena: a healthy pack still reports a pending reason: %s" % String(arena.presentation.animations.enemy_animation_pending_reason))
 	_configure_room(arena, ["melee_pursuer", "charging_raider", "fan_ranged"])
 	arena.presentation.animations._refresh_enemy_frames(arena.gameplay_snapshot())
-	_expect(arena.presentation.animations.enemy_frames.size() == arena.enemies.size(), "arena: %d frames for %d enemies" % [arena.presentation.animations.enemy_frames.size(), arena.enemies.size()])
+	_expect(arena.presentation.animations.enemy_frames.size() == arena.session.encounter_director.enemies.size(), "arena: %d frames for %d enemies" % [arena.presentation.animations.enemy_frames.size(), arena.session.encounter_director.enemies.size()])
 	var live_report: Array = arena.enemy_animation_report()["live"] as Array
-	_expect(live_report.size() == arena.enemies.size(), "arena: the report lost live enemies: %d of %d" % [live_report.size(), arena.enemies.size()])
+	_expect(live_report.size() == arena.session.encounter_director.enemies.size(), "arena: the report lost live enemies: %d of %d" % [live_report.size(), arena.session.encounter_director.enemies.size()])
 	for entry: Dictionary in live_report:
 		_expect(EnemyAnimationScript.ROLES.has(String(entry["role"])), "arena: %s is not a published role" % String(entry["role"]))
 		_expect(String(entry["action"]) in EnemyAnimationScript.ACTIONS, "arena: %s is not a published action" % String(entry["action"]))
@@ -451,7 +451,7 @@ func _test_arena_integration() -> void:
 
 	## Movement is inferred from the position the simulation really moved, and only
 	## on the render frames where the authoritative tick advanced.
-	var walker = arena.enemies[0]
+	var walker = arena.session.encounter_director.enemies[0]
 	_expect(bool(arena.teleport_actor("ranger", Vector2(420.0, 600.0)).get("ok", false)),
 		"arena: the player parking pose was rejected")
 	arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 0.0)
@@ -481,13 +481,13 @@ func _test_arena_integration() -> void:
 	var rate_states := {}
 	for rate in [30, 60, 144]:
 		_configure_room(arena, ["melee_pursuer", "charging_raider", "fan_ranged"])
-		var runner = arena.enemies[0]
+		var runner = arena.session.encounter_director.enemies[0]
 		## Keep the complete 36-tick eastward run (and the redraw tick) clear of
 		## whole scenery and other bodies; movement speed and clock stay unchanged.
 		_expect(bool(arena.teleport_actor("ranger", Vector2(420.0, 600.0)).get("ok", false)),
 			"rate: the player parking pose was rejected")
-		for index in range(1, arena.enemies.size()):
-			_expect(bool(arena.teleport_actor("enemy/%d" % arena.enemies[index].entity_id,
+		for index in range(1, arena.session.encounter_director.enemies.size()):
+			_expect(bool(arena.teleport_actor("enemy/%d" % arena.session.encounter_director.enemies[index].entity_id,
 				Vector2(1100.0, 360.0 + float(index - 1) * 260.0)).get("ok", false)),
 				"rate: another enemy's parking pose was rejected")
 		_expect(bool(arena.teleport_actor("enemy/%d" % runner.entity_id, Vector2(430.0, 360.0)).get("ok", false)),
@@ -517,7 +517,7 @@ func _test_arena_integration() -> void:
 	_expect(seen_frames.size() >= 4, "rate: 1.2s of walking only ever read %d walk frames" % seen_frames.size())
 	## A zero-tick redraw is what most 144Hz frames are: it must keep both the
 	## inferred motion and the frame it already read.
-	var redraw_enemy = arena.enemies[0]
+	var redraw_enemy = arena.session.encounter_director.enemies[0]
 	## Capture the held state mid-walk: one real authority tick through the
 	## motor re-establishes the inferred motion the redraws must preserve.
 	fixture.drive(arena, {"enemy_step": func() -> void:
@@ -540,14 +540,14 @@ func _test_arena_integration() -> void:
 
 	## A health delta alone is not presentation evidence. The authoritative damage
 	## event latches the reaction exactly once and carries its stable event id.
-	var reacted = arena.enemies[1]
+	var reacted = arena.session.encounter_director.enemies[1]
 	fixture.drive(arena)
 	fixture.step(arena)
 	reacted.health -= 5.0
 	arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 0.0)
 	var hit_kind: String = "enemy/%d/hit" % reacted.entity_id
-	_expect(reader.latched_ticks(hit_kind, arena.sim_tick) == -1, "arena: a bare hp delta still fabricated a hit event")
-	var damage_event: Dictionary = arena.combat_event_stream.emit(arena.sim_tick, "damage_applied", {
+	_expect(reader.latched_ticks(hit_kind, arena.session.sim_tick) == -1, "arena: a bare hp delta still fabricated a hit event")
+	var damage_event: Dictionary = arena.session.combat_event_stream.emit(arena.session.sim_tick, "damage_applied", {
 		"source_id": "ranger/piercing_arrow",
 		"target_id": "enemy/%d" % reacted.entity_id,
 		"target_entity_id": reacted.entity_id,
@@ -555,18 +555,18 @@ func _test_arena_integration() -> void:
 		"contact_point": reacted.position,
 	})
 	arena.refresh_presentation()
-	_expect(reader.latched_ticks(hit_kind, arena.sim_tick) == 0, "arena: the authority damage event was not latched on its tick")
+	_expect(reader.latched_ticks(hit_kind, arena.session.sim_tick) == 0, "arena: the authority damage event was not latched on its tick")
 	_expect(reader.latched_event_id(hit_kind) == "combat:%d" % int(damage_event.event_id), "arena: the latched token is not the combat event identity")
-	fixture.advance_to(arena, int(arena.sim_tick) + 2)
-	_expect(reader.latched_ticks(hit_kind, arena.sim_tick) == 2, "arena: the latched reaction did not age")
+	fixture.advance_to(arena, int(arena.session.sim_tick) + 2)
+	_expect(reader.latched_ticks(hit_kind, arena.session.sim_tick) == 2, "arena: the latched reaction did not age")
 	arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 0.0)
 	arena.presentation.animations._refresh_enemy_frames(arena.gameplay_snapshot())
-	_expect(reader.latched_ticks(hit_kind, arena.sim_tick) == 2, "arena: a redraw re-latched the same event")
+	_expect(reader.latched_ticks(hit_kind, arena.session.sim_tick) == 2, "arena: a redraw re-latched the same event")
 	_expect(reader.live_action(arena.presentation.animations.enemy_state(arena.gameplay_snapshot(), reacted)) == "hit", "arena: a live damage event did not select the hit reaction")
 	## ... and the authoritative telegraph still outranks it.
 	reacted.action_state = "windup"
-	reacted.state_started_tick = arena.sim_tick
-	reacted.state_ends_tick = arena.sim_tick + 18
+	reacted.state_started_tick = arena.session.sim_tick
+	reacted.state_ends_tick = arena.session.sim_tick + 18
 	_expect(reader.live_action(arena.presentation.animations.enemy_state(arena.gameplay_snapshot(), reacted)) == "windup", "arena: the hit reaction masked the authoritative windup")
 	reacted.action_state = "active"
 	_expect(reader.live_action(arena.presentation.animations.enemy_state(arena.gameplay_snapshot(), reacted)) == "active", "arena: the hit reaction masked the authoritative active tick")
@@ -576,7 +576,7 @@ func _test_arena_integration() -> void:
 	## despawn beyond the contact tick.
 	_configure_room(arena, ["melee_pursuer", "charging_raider", "fan_ranged"], "",
 		fixture.build({"d": 5000.0, "damage": 1.0e9}))
-	var victim = arena.enemies[0]
+	var victim = arena.session.encounter_director.enemies[0]
 	var victim_id: int = victim.entity_id
 	var victim_position: Vector2 = victim.position
 	_expect(bool(arena.teleport_actor("ranger", victim.position).get("ok", false)),
@@ -602,19 +602,19 @@ func _test_arena_integration() -> void:
 	_configure_room(arena, ["melee_pursuer", "charging_raider", "fan_ranged"])
 	_expect(arena.presentation.animations.enemy_corpses.is_empty(), "arena: a route reset kept a corpse")
 	_expect(_watch_is_reset(arena), "arena: a route reset kept an inferred record")
-	_expect(reader.latched_ticks("enemy/1/hit", arena.sim_tick) == -1, "arena: a route reset kept a latched reaction")
+	_expect(reader.latched_ticks("enemy/1/hit", arena.session.sim_tick) == -1, "arena: a route reset kept a latched reaction")
 	arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 1.0 / 30.0)
 	_expect(arena.presentation.animations.enemy_corpses.is_empty(), "arena: freshly spawned enemies became corpses")
-	var removed = arena.enemies[0]
+	var removed = arena.session.encounter_director.enemies[0]
 	var removed_id: int = removed.entity_id
-	arena.enemies.erase(removed)
+	arena.session.encounter_director.enemies.erase(removed)
 	arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), 1.0 / 30.0)
 	_expect(arena.presentation.animations.enemy_corpses.is_empty(), "arena: a silent despawn played a death clip")
 	_expect(not arena.presentation.animations.enemy_watch.has(removed_id), "arena: a despawn kept its inferred record")
 	## The colossus has its own art lane: it never detaches an enemy corpse.
 	_configure_room(arena, ["melee_pursuer"], "threshold_colossus")
-	_expect(arena.boss != null and arena.boss.is_boss, "arena: the probe room has no colossus")
-	arena.presentation.animations.detach_corpse({"entity_id": arena.boss.entity_id, "position": arena.boss.position, "is_boss": arena.boss.is_boss})
+	_expect(arena.session.encounter_director.boss != null and arena.session.encounter_director.boss.is_boss, "arena: the probe room has no colossus")
+	arena.presentation.animations.detach_corpse({"entity_id": arena.session.encounter_director.boss.entity_id, "position": arena.session.encounter_director.boss.position, "is_boss": arena.session.encounter_director.boss.is_boss})
 	_expect(arena.presentation.animations.enemy_corpses.is_empty(), "arena: the colossus detached an enemy corpse")
 
 	## The pass is presentation only: it never writes an authoritative field.
@@ -748,13 +748,13 @@ func _drive_render_rate(arena: Node, enemy, rate: int, seconds: float) -> Dictio
 			"rate: the real enemy motor rejected the walking tick")
 	})
 	for frame in int(round(float(rate) * seconds)):
-		for step in arena.simulation_world.ticks_for_frame(delta):
+		for step in arena.session.simulation_world.ticks_for_frame(delta):
 			fixture.step(arena)
 		arena.presentation.animations._observe_enemy_animation(arena.gameplay_snapshot(), delta)
 		arena.presentation.animations._refresh_enemy_frames(arena.gameplay_snapshot())
 		var state: Dictionary = arena.presentation.animations.enemy_state(arena.gameplay_snapshot(), enemy)
 		var frame_data: Dictionary = arena.presentation.animations.enemy_frames.get(enemy.entity_id, {})
-		states[arena.sim_tick] = {
+		states[arena.session.sim_tick] = {
 			"moving": bool(state["moving"]),
 			"phase_ticks": int(state["phase_ticks"]),
 			"action": String(frame_data.get("action", "")),
@@ -804,14 +804,14 @@ func _watch_is_reset(arena: Node) -> bool:
 		var record: Dictionary = arena.presentation.animations.enemy_watch[entity_id]
 		if int(record.get("tick", -1)) != 0 or bool(record.get("moving", true)) or int(record.get("walk_ticks", -1)) != 0:
 			return false
-		if record.get("position", Vector2.ZERO) != arena.enemies[index].position or float(record.get("health", -1.0)) != arena.enemies[index].health:
+		if record.get("position", Vector2.ZERO) != arena.session.encounter_director.enemies[index].position or float(record.get("health", -1.0)) != arena.session.encounter_director.enemies[index].health:
 			return false
 	return true
 
 
 func _enemy_index(arena: Node, entity_id: int) -> int:
-	for index in arena.enemies.size():
-		if int(arena.enemies[index].entity_id) == entity_id:
+	for index in arena.session.encounter_director.enemies.size():
+		if int(arena.session.encounter_director.enemies[index].entity_id) == entity_id:
 			return index
 	return -1
 
@@ -841,14 +841,14 @@ func _cast_and_resolve_arrow(arena: Node, target_id: int) -> bool:
 func _authoritative_fingerprint(arena: Node) -> String:
 	var parts: Array[String] = [
 		"state=%s" % arena.state_hash("enemy-animation"),
-		"tick=%d" % arena.sim_tick,
+		"tick=%d" % arena.session.sim_tick,
 		"hp=%.3f" % arena.player_health,
-		"pos=%s" % str(arena.player_position),
+		"pos=%s" % str(arena.session.player_position()),
 		"defeated=%d" % arena.defeated,
 		"shots=%d" % arena.shots,
-		"over=%s" % str(arena.battle_over),
+		"over=%s" % str(arena.session.is_battle_over()),
 	]
-	for enemy in arena.enemies:
+	for enemy in arena.session.encounter_director.enemies:
 		parts.append("%d:%s:%.3f:%s:%s:%d:%d" % [enemy.entity_id, enemy.kind_id, enemy.health, str(enemy.position), enemy.action_state, enemy.state_started_tick, enemy.state_ends_tick])
 	return "|".join(PackedStringArray(parts))
 

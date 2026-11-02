@@ -21,9 +21,9 @@ func _run() -> void:
 	fixture.configure_target(arena)
 	fixture.advance_to(arena, 5)
 	var boss := Enemy.new(Vector2(600.0, 300.0), 1.0e12, true, 7, "threshold_colossus")
-	arena.enemies.clear()
-	arena.enemies.append(boss)
-	arena.boss = boss
+	arena.session.encounter_director.enemies.clear()
+	arena.session.encounter_director.enemies.append(boss)
+	arena.session.encounter_director.boss = boss
 	var before := boss.gameplay_parts_snapshot()
 	var baseline := Builder.build_runtime_state(arena, "parts")
 	var baseline_hash := Codec.sha256_canonical(baseline)
@@ -82,9 +82,9 @@ func _run() -> void:
 	var equivalent := Enemy.new(boss.position, boss.health, true, boss.entity_id, boss.kind_id)
 	equivalent.queue_part_state("head", false, false)
 	equivalent.queue_part_state("right_hand", false, true)
-	arena.enemies.clear()
-	arena.enemies.append(equivalent)
-	arena.boss = equivalent
+	arena.session.encounter_director.enemies.clear()
+	arena.session.encounter_director.enemies.append(equivalent)
+	arena.session.encounter_director.boss = equivalent
 	_expect(Builder.hash_runtime(arena, "parts") == pending_hash, "independent part transition queue order changed replay hash")
 	equivalent.queue_part_state("head", true, true)
 	var ordered_hash := Builder.hash_runtime(arena, "parts")
@@ -92,14 +92,14 @@ func _run() -> void:
 	reversed_changes.queue_part_state("head", true, true)
 	reversed_changes.queue_part_state("head", false, false)
 	reversed_changes.queue_part_state("right_hand", false, true)
-	arena.enemies.clear()
-	arena.enemies.append(reversed_changes)
-	arena.boss = reversed_changes
+	arena.session.encounter_director.enemies.clear()
+	arena.session.encounter_director.enemies.append(reversed_changes)
+	arena.session.encounter_director.boss = reversed_changes
 	_expect(Builder.hash_runtime(arena, "parts") != ordered_hash, "same-part transition request order lost commit semantics")
-	var outcome: Dictionary = arena.combat_system.outcome_snapshot()
+	var outcome: Dictionary = arena.session.combat_system.outcome_snapshot()
 	var state := Builder.build_runtime_state(arena, "parts")
 	_expect(state.casts == outcome.shots and state.arrow_hits == outcome.arrow_hits and state.defeated == outcome.defeated and state.boss_damage.magnitude == String.num(outcome.boss_damage.magnitude, 12), "builder totals did not read CombatSystem outcome authority")
-	arena.enemies.clear()
+	arena.session.encounter_director.enemies.clear()
 	state = Builder.build_runtime_state(arena, "victory")
 	_expect(state.enemies.is_empty() and not state.has("parts") and state.sim_protocol_version == 1, "part extension changed empty-roster terminal field layout")
 	fixture.free_session(session)

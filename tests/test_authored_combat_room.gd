@@ -61,12 +61,12 @@ func _run() -> void:
 	runtime.set_process(false)
 	var arena: Node = runtime.room_instance
 	arena.set_process(false)
-	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	var player: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 	var stats: Dictionary = player.get("combat_stats", {})
-	_expect(bool(arena.room_loot_enabled), "authored room: room loot facade was not enabled")
+	_expect(bool(arena.session.room_loot.enabled()), "authored room: room loot facade was not enabled")
 	_expect(float(stats.get("move_speed", 0.0)) == 220.0 and int(stats.get("attack_cooldown_ticks", 0)) == 11 and String(stats.get("movement_model", "")) == "accelerated", "authored room: mounted player did not consume the room combat sheet")
 
-	var enemies: Array = arena.enemies
+	var enemies: Array = arena.session.encounter_director.enemies
 	_expect(enemies.size() == 1, "authored room: side room did not keep its one-enemy encounter")
 	if enemies.is_empty():
 		runtime.free()
@@ -74,7 +74,7 @@ func _run() -> void:
 		return
 	var enemy = enemies[0]
 	var enemy_position: Vector2 = enemy.position
-	_expect(arena.actor_registry.is_position_clear(enemy_position, arena.arena_rect(), 16.0), "authored room: authored enemy spawn is not clear")
+	_expect(arena.session.actor_registry.is_position_clear(enemy_position, arena.arena_rect(), 16.0), "authored room: authored enemy spawn is not clear")
 	var player_placement := _find_valid_attack_position(arena, enemy_position, enemy)
 	_expect(bool(player_placement.get("ok", false)), "authored room: no valid player position near authored enemy spawn")
 	if not bool(player_placement.get("ok", false)):
@@ -97,23 +97,23 @@ func _run() -> void:
 	var cast: Dictionary = arena.request_player_cast("piercing_arrow", enemy.entity_id, enemy.position - player_placement.position)
 	_expect(bool(cast.get("accepted", false)), "authored room: real arrow request was rejected")
 	var first_removed := _advance_until(arena, func() -> bool:
-		return arena.enemy_by_entity_id(enemy.entity_id) == null and not arena.enemies.is_empty()
+		return arena.enemy_by_entity_id(enemy.entity_id) == null and not arena.session.encounter_director.enemies.is_empty()
 	, 120)
 	_expect(first_removed, "authored room: elite did not die and summon a replacement")
-	var loot: Dictionary = arena.room_loot_snapshot
+	var loot: Dictionary = arena.session.room_loot.snapshot()
 	var entities: Array = loot.get("entities", [])
 	_expect(entities.size() == 1, "authored room: enemy death did not create its authored loot entity")
 	if not entities.is_empty():
 		_expect(String(entities[0].get("state", "")) == "available", "authored room: elite death did not leave an available drop")
 		_expect(String(entities[0].get("slot_id", "")) == "targeted_equipment_drop", "authored room: wrong loot slot settled")
-	if not first_removed or arena.enemies.is_empty():
+	if not first_removed or arena.session.encounter_director.enemies.is_empty():
 		runtime.free()
 		_finish()
 		return
-	var reinforcement = arena.enemies[0]
+	var reinforcement = arena.session.encounter_director.enemies[0]
 	reinforcement.health = 1.0
 	var ready := _advance_until(arena, func() -> bool:
-		return int(arena.player_combat_state.snapshot(arena.sim_tick).attack_cooldown_ticks) == 0
+		return int(arena.session.player_combat_state.snapshot(arena.session.sim_tick).attack_cooldown_ticks) == 0
 	, 120)
 	_expect(ready, "authored room: authored attack cooldown never became ready after summon")
 	if not ready:
@@ -130,9 +130,9 @@ func _run() -> void:
 	_expect(bool(arena.teleport_actor("ranger", reinforcement_player.position).get("ok", false)), "authored room: summoned enemy placement failed")
 	var second_cast: Dictionary = arena.request_player_cast("piercing_arrow", reinforcement.entity_id, reinforcement_position - reinforcement_player.position)
 	_expect(bool(second_cast.get("accepted", false)), "authored room: real arrow request for summon was rejected")
-	var ended := _advance_until(arena, func() -> bool: return bool(arena.battle_over), 120)
-	_expect(ended and bool(arena.battle_victory), "authored room: summoned enemy did not produce victory")
-	loot = arena.room_loot_snapshot
+	var ended := _advance_until(arena, func() -> bool: return bool(arena.session.is_battle_over()), 120)
+	_expect(ended and bool(arena.session.is_battle_victory()), "authored room: summoned enemy did not produce victory")
+	loot = arena.session.room_loot.snapshot()
 	entities = loot.get("entities", [])
 	if not entities.is_empty():
 		_expect(String(entities[0].get("state", "")) == "available", "authored room: victory closed the loot window before room exit")
@@ -140,7 +140,7 @@ func _run() -> void:
 	runtime.request_abandon()
 	_expect(_completed.size() == 1, "authored room: mounted result was not emitted once")
 	if _completed.size() == 1:
-		loot = arena.room_loot_snapshot
+		loot = arena.session.room_loot.snapshot()
 		entities = loot.get("entities", [])
 		if not entities.is_empty():
 			_expect(String(entities[0].get("state", "")) == "left_in_room", "authored room: room exit did not preserve the unpicked drop")
@@ -168,8 +168,8 @@ const ARROW_PATH_REACH := 18.0
 const AIM_CONTACT_DISTANCE := 34.0
 
 func _find_valid_attack_position(arena: Node, target_position: Vector2, target: Variant = null) -> Dictionary:
-	var targeting_distance := float(arena.player_combat_state.targeting_distance())
-	var index: Variant = arena.actor_registry.static_index
+	var targeting_distance := float(arena.session.player_combat_state.targeting_distance())
+	var index: Variant = arena.session.actor_registry.static_index
 	## A piercing arrow is released above the feet (release offset) and locks
 	## direction at the target's aim anchor (~22px above its position), so the
 	## lane the arrow really flies is origin->anchor — not feet->feet. Sweep
@@ -183,7 +183,7 @@ func _find_valid_attack_position(arena: Node, target_position: Vector2, target: 
 			continue
 		for angle_index in 32:
 			var candidate := target_position + Vector2.RIGHT.rotated(TAU * float(angle_index) / 32.0) * distance
-			if not arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
+			if not arena.session.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
 				continue
 			var facing := (target_position - candidate).normalized()
 			var origin := candidate + ArrowOrigin.release_offset(facing)

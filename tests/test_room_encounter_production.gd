@@ -361,9 +361,9 @@ func _test_production_authored_multi_wave_session() -> void:
 		runtime.free()
 		return
 	var finished := _advance_until(arena, func() -> bool:
-		return bool(arena.battle_over)
+		return bool(arena.session.is_battle_over())
 	, 120)
-	_expect(finished and bool(arena.battle_victory), "production: authored multi-wave did not finish in victory")
+	_expect(finished and bool(arena.session.is_battle_victory()), "production: authored multi-wave did not finish in victory")
 	for _post_terminal in 3:
 		arena.step_tick()
 	_expect(String(encounter.snapshot().get("phase", "")) == "victory", "production: encounter domain did not reach authored victory")
@@ -449,7 +449,7 @@ func _test_mixed_boss_encounter_authority() -> void:
 	if not normal_dead:
 		runtime.free()
 		return
-	var boss_target = arena.kernel_bindings.boss_domain.target(arena.kernel_bindings.enemy_stable_keys.find_key(int(boss.entity_id)))
+	var boss_target = arena.session.kernel_bindings.boss_domain.target(arena.session.kernel_bindings.enemy_stable_keys.find_key(int(boss.entity_id)))
 	_expect(boss_target != null, "mixed boss: Boss detached target was not registered")
 	if boss_target == null:
 		runtime.free()
@@ -460,9 +460,9 @@ func _test_mixed_boss_encounter_authority() -> void:
 	boss_target.health = BigValue.from_float(1.0)
 	_expect(boss_cast, "mixed boss: Boss production cast was rejected")
 	var mixed_finished := _advance_until(arena, func() -> bool:
-		return bool(arena.battle_over)
+		return bool(arena.session.is_battle_over())
 	, 150)
-	_expect(mixed_finished and bool(arena.battle_victory), "mixed boss: Main did not reach victory after both domains settled")
+	_expect(mixed_finished and bool(arena.session.is_battle_victory()), "mixed boss: Main did not reach victory after both domains settled")
 	var boss_entity_key := String(boss_target.target_key)
 	var boss_death_seen := false
 	for receipt: Dictionary in port.received_death_notifications:
@@ -556,7 +556,7 @@ func _collect_campaign_rooms(node: Variant, rooms: Dictionary) -> void:
 
 
 func _arena_enemy(arena: Node, archetype: String) -> Variant:
-	for enemy: Variant in arena.enemies:
+	for enemy: Variant in arena.session.encounter_director.enemies:
 		if enemy != null and String(enemy.kind_id) == archetype:
 			return enemy
 	return null
@@ -571,7 +571,7 @@ func _cast_real_arrow(arena: Node, target: Variant) -> bool:
 	target.health = 1.0
 	target.maximum_health = 1.0
 	var ready := _advance_until(arena, func() -> bool:
-		return int(arena.player_combat_state.snapshot(arena.sim_tick).attack_cooldown_ticks) == 0
+		return int(arena.session.player_combat_state.snapshot(arena.session.sim_tick).attack_cooldown_ticks) == 0
 	, 120)
 	if not ready:
 		return false
@@ -580,13 +580,13 @@ func _cast_real_arrow(arena: Node, target: Variant) -> bool:
 
 
 func _find_valid_attack_position(arena: Node, target_position: Vector2) -> Dictionary:
-	var targeting_distance: float = float(arena.player_combat_state.targeting_distance())
+	var targeting_distance: float = float(arena.session.player_combat_state.targeting_distance())
 	for distance: float in [80.0, 100.0, 120.0, 140.0, 160.0, 180.0, 200.0]:
 		if distance >= targeting_distance:
 			continue
 		for angle_index in 32:
 			var candidate := target_position + Vector2.RIGHT.rotated(TAU * float(angle_index) / 32.0) * distance
-			if arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
+			if arena.session.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
 				return {"ok": true, "position": candidate}
 	return {"ok": false, "position": Vector2.ZERO}
 

@@ -60,7 +60,7 @@ func _run() -> void:
 	runtime.set_process(false)
 	var arena: Node = runtime.room_instance
 	arena.set_process(false)
-	var enemies: Array = arena.enemies
+	var enemies: Array = arena.session.encounter_director.enemies
 	_expect(enemies.size() == 2, "real room: mounted room did not create two live enemies")
 	if enemies.size() < 2:
 		runtime.free()
@@ -85,8 +85,8 @@ func _run() -> void:
 		return arena.enemy_by_entity_id(first.entity_id) == null
 	, 120)
 	_expect(first_dead, "real room: first enemy did not die through the mounted projectile path")
-	_expect(not bool(arena.battle_over), "real room: one enemy death ended a two-enemy room")
-	var loot_snapshot: Dictionary = arena.room_loot_snapshot
+	_expect(not bool(arena.session.is_battle_over()), "real room: one enemy death ended a two-enemy room")
+	var loot_snapshot: Dictionary = arena.session.room_loot.snapshot()
 	var loot_entities: Array = loot_snapshot.get("entities", [])
 	_expect(loot_entities.size() == 1, "real room: enemy death did not spawn one room loot entity")
 	var loot_id := String(loot_entities[0].get("loot_entity_id", "")) if not loot_entities.is_empty() else ""
@@ -99,11 +99,11 @@ func _run() -> void:
 	_expect(bool(pickup.get("accepted", false)), "real room: pickup request was not queued")
 	var duplicate_pickup: Dictionary = arena.request_loot_pickup(loot_id)
 	_expect(String(duplicate_pickup.get("error", "")) == "loot_pickup_already_queued", "real room: duplicate pickup request was accepted")
-	var pickup_tick := int(arena.sim_tick) + 1
+	var pickup_tick := int(arena.session.sim_tick) + 1
 	_arena_step(arena)
-	var after_pickup: Dictionary = arena.room_loot_snapshot
+	var after_pickup: Dictionary = arena.session.room_loot.snapshot()
 	var picked_entities: Array = after_pickup.get("entities", [])
-	_expect(int(arena.sim_tick) == pickup_tick, "real room: pickup did not execute on the next committed tick")
+	_expect(int(arena.session.sim_tick) == pickup_tick, "real room: pickup did not execute on the next committed tick")
 	_expect(not picked_entities.is_empty() and String(picked_entities[0].get("state", "")) == "picked", "real room: next-tick pickup did not mark the entity picked")
 	_expect((after_pickup.get("pickup_receipts", []) as Array).size() == 1 and bool((after_pickup.pickup_receipts[0] as Dictionary).get("ok", false)), "real room: pickup receipt was not recorded once")
 
@@ -118,7 +118,7 @@ func _run() -> void:
 		return
 	_expect(bool(arena.teleport_actor("ranger", second_player_position.position).get("ok", false)), "real room: second attack fixture placement failed")
 	var ready := _advance_until(arena, func() -> bool:
-		return int(arena.player_combat_state.snapshot(arena.sim_tick).attack_cooldown_ticks) == 0
+		return int(arena.session.player_combat_state.snapshot(arena.session.sim_tick).attack_cooldown_ticks) == 0
 	, 120)
 	_expect(ready, "real room: second real attack never became ready")
 	## The second enemy walks during the cooldown wait; re-place the player on a
@@ -130,10 +130,10 @@ func _run() -> void:
 	var second_cast: Dictionary = arena.request_player_cast("piercing_arrow", second.entity_id)
 	_expect(bool(second_cast.get("accepted", false)), "real room: second real arrow was rejected: %s" % str(second_cast))
 	var second_dead := _advance_until(arena, func() -> bool:
-		return bool(arena.battle_over)
+		return bool(arena.session.is_battle_over())
 	, 120)
-	_expect(second_dead and bool(arena.battle_victory), "real room: second enemy did not produce mounted victory")
-	var in_room_settlement: Dictionary = arena.room_loot_snapshot.get("settlement", {})
+	_expect(second_dead and bool(arena.session.is_battle_victory()), "real room: second enemy did not produce mounted victory")
+	var in_room_settlement: Dictionary = arena.session.room_loot.snapshot().get("settlement", {})
 	_expect(in_room_settlement.is_empty(), "real room: victory settled loot before the player left the loot window")
 
 	runtime.completed.connect(func(result: Dictionary) -> void: _completed.append(result.duplicate(true)))
@@ -142,7 +142,7 @@ func _run() -> void:
 	if _completed.size() == 1:
 		var result: Dictionary = _completed[0]
 		var settlement: Dictionary = result.get("room_loot_settlement", {})
-		in_room_settlement = arena.room_loot_snapshot.get("settlement", {})
+		in_room_settlement = arena.session.room_loot.snapshot().get("settlement", {})
 		_expect(String(in_room_settlement.get("outcome", "")) == "victory" and (in_room_settlement.get("items", []) as Array).size() == 1, "real room: room exit did not create the one in-room loot settlement")
 		_expect(String(result.get("outcome", "")) == "victory", "real room: mounted result did not report victory")
 		_expect((settlement.get("items", []) as Array).size() == 1, "real room: picked ItemInstance was not carried into the result")
@@ -176,12 +176,12 @@ func _expect(condition: bool, message: String) -> void: Assert.expect(condition,
 ## can land on a ruin. Deterministic nearest-clear search keeps the fixture
 ## semantics without pinning coordinates to the current blocker layout.
 func _clear_near(arena: Node, desired: Vector2, radius: float = 16.0) -> Vector2:
-	if arena.actor_registry.is_position_clear(desired, arena.arena_rect(), radius):
+	if arena.session.actor_registry.is_position_clear(desired, arena.arena_rect(), radius):
 		return desired
 	for ring: float in [16.0, 32.0, 48.0, 64.0, 96.0]:
 		for step: int in 16:
 			var candidate := desired + Vector2(ring, 0.0).rotated(TAU * float(step) / 16.0)
-			if arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), radius):
+			if arena.session.actor_registry.is_position_clear(candidate, arena.arena_rect(), radius):
 				return candidate
 	return desired
 
@@ -191,11 +191,11 @@ func _clear_near(arena: Node, desired: Vector2, radius: float = 16.0) -> Vector2
 ## candidate keeps the original cardinal-offset semantics: a melee target
 ## walking straight at the player stays on the released line.
 func _valid_attack_position(arena: Node, target: Vector2) -> Dictionary:
-	var index: Variant = arena.actor_registry.static_index
+	var index: Variant = arena.session.actor_registry.static_index
 	var offsets: Array[Vector2] = [Vector2(-100.0, 0.0), Vector2(100.0, 0.0), Vector2(0.0, -100.0), Vector2(0.0, 100.0)]
 	for offset: Vector2 in offsets:
 		var candidate := _clear_near(arena, target + offset, 14.0)
-		if not arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
+		if not arena.session.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
 			continue
 		if index == null:
 			return {"ok": true, "position": candidate}

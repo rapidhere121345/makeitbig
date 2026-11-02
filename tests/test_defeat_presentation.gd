@@ -178,18 +178,18 @@ func _test_real_death(failures: Array[String], rate: int) -> int:
 	for _frame_index in MAX_ALIVE_FRAMES:
 		_advance_frame(session, delta)
 		if float(arena.get("player_health")) <= 0.0:
-			death_tick = int(arena.get("sim_tick"))
+			death_tick = int(arena.session.sim_tick)
 			break
 	if death_tick < 0:
 		_expect(false, "real death %s: the melee pursuer never landed a fatal impact" % tag, failures)
 		_teardown(session)
 		return -1
-	_expect(bool(arena.get("battle_over")) and not bool(arena.get("battle_victory")),
+	_expect(bool(arena.session.is_battle_over()) and not bool(arena.session.is_battle_victory()),
 		"real death %s: the defeat did not latch on the death tick" % tag, failures)
-	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	var player: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 	_expect(String(player.last_damage_source_id) == MELEE_CONTACT_SOURCE and int(player.last_damage_tick) == death_tick,
 		"real death %s: the lethal damage did not come from the melee pursuer on the death tick" % tag, failures)
-	_expect(String(arena.get("battle_report")).begins_with("DEFEAT"),
+	_expect(String(arena.session.battle_report).begins_with("DEFEAT"),
 		"real death %s: the defeat report was not latched with the death" % tag, failures)
 	_expect(completed.is_empty(), "real death %s: the settlement ran inside the death frame's own arena pass" % tag, failures)
 	var death_report: Dictionary = arena.call("defeat_presentation_report")
@@ -210,7 +210,7 @@ func _test_real_death(failures: Array[String], rate: int) -> int:
 		"real death %s: the settlement waited for the death clip to finish" % tag, failures)
 	_expect(not bool(runtime.call("defeat_presentation_ready")),
 		"real death %s: the arena reported the clip done while it was still playing" % tag, failures)
-	_expect(int(arena.get("sim_tick")) == death_tick,
+	_expect(int(arena.session.sim_tick) == death_tick,
 		"real death %s: the simulation kept ticking after the death" % tag, failures)
 
 	# --- phase 2: the clip finishes on the screen the session already has, and the
@@ -239,7 +239,7 @@ func _test_real_death(failures: Array[String], rate: int) -> int:
 		"real death %s: the last death frame was on screen for %.4fs, not the published 1/6s" % [tag, float(window.get("last_frame_seconds", 0.0))], failures)
 	_expect(float(window.get("closed_seconds", -1.0)) > 0.0 and float(window.get("closed_seconds", 0.0)) <= 1.0,
 		"real death %s: the window closed at %.4fs, outside its bound" % [tag, float(window.get("closed_seconds", -1.0))], failures)
-	_expect(int(arena.get("sim_tick")) == death_tick,
+	_expect(int(arena.session.sim_tick) == death_tick,
 		"real death %s: the simulation moved while the corpse was on screen" % tag, failures)
 
 	# --- repeats and exits never settle a defeat twice.
@@ -269,7 +269,7 @@ func _test_presentation_off(failures: Array[String]) -> void:
 	for _frame_index in MAX_ALIVE_FRAMES:
 		_advance_frame(session, delta)
 		if float(arena.get("player_health")) <= 0.0:
-			death_tick = int(arena.get("sim_tick"))
+			death_tick = int(arena.session.sim_tick)
 			break
 	if death_tick < 0:
 		_expect(false, "presentation off: the melee pursuer never landed a fatal impact", failures)
@@ -302,7 +302,7 @@ func _test_return_button_skip(failures: Array[String]) -> void:
 	for _frame_index in MAX_ALIVE_FRAMES:
 		_advance_frame(session, delta)
 		if float(arena.get("player_health")) <= 0.0:
-			death_tick = int(arena.get("sim_tick"))
+			death_tick = int(arena.session.sim_tick)
 			break
 	if death_tick < 0:
 		_expect(false, "return button: the melee pursuer never landed a fatal impact", failures)
@@ -645,16 +645,16 @@ func _start_death_session(failures: Array[String], presentation_enabled: bool) -
 	## The loop below owns the clock, so the engine never double-processes this
 	## arena while the test drives it frame by frame.
 	arena.set_process(false)
-	var roster: Array = arena.get("enemies")
+	var roster: Array = arena.session.encounter_director.enemies
 	if roster.size() != 1:
 		_expect(false, "fixture: the room spawned %d enemies instead of one melee pursuer" % roster.size(), failures)
 		_teardown(session)
 		return session
-	_expect(not bool(arena.get("battle_over")) and float(arena.get("player_health")) > 0.0
-		and String(arena.player_combat_state.snapshot(arena.sim_tick).last_damage_source_id).is_empty(),
+	_expect(not bool(arena.session.is_battle_over()) and float(arena.get("player_health")) > 0.0
+		and String(arena.session.player_combat_state.snapshot(arena.session.sim_tick).last_damage_source_id).is_empty(),
 		"fixture: the session was already over before the real impact", failures)
 	var enemy: Variant = roster[0]
-	arena.teleport_actor("enemy/%d" % enemy.entity_id, (arena.get("player_position") as Vector2) + Vector2(12.0, 0.0))
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, (arena.session.player_position() as Vector2) + Vector2(12.0, 0.0))
 	_prepare_contact_health(arena, failures)
 	return session
 
@@ -782,7 +782,7 @@ func _attach_production_arena(session: Dictionary, failures: Array[String]) -> v
 	## The test owns the clock for every node in the chain.
 	(runtime as Node).set_process(false)
 	arena.set_process(false)
-	var roster: Variant = arena.get("enemies")
+	var roster: Variant = arena.session.encounter_director.enemies
 	_expect(roster is Array and (roster as Array).size() == 3,
 		"production chain: first hunt must mount its three authored melee pursuers", failures)
 	if roster is Array:
@@ -791,19 +791,19 @@ func _attach_production_arena(session: Dictionary, failures: Array[String]) -> v
 
 
 func _fixture_contact_kill(arena: Node, failures: Array[String]) -> void:
-	var roster: Array = arena.get("enemies")
+	var roster: Array = arena.session.encounter_director.enemies
 	if roster.is_empty():
 		return
 	var enemy: Variant = roster[0]
-	arena.teleport_actor("enemy/%d" % enemy.entity_id, (arena.get("player_position") as Vector2) + Vector2(12.0, 0.0))
+	arena.teleport_actor("enemy/%d" % enemy.entity_id, (arena.session.player_position() as Vector2) + Vector2(12.0, 0.0))
 	_prepare_contact_health(arena, failures)
 
 
 func _prepare_contact_health(arena: Node, failures: Array[String]) -> void:
-	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
-	var receipt: Dictionary = arena.player_combat_rules.apply_damage(arena.sim_tick, float(player.player_health) - MELEE_CONTACT_DAMAGE, "fixture/contact-preparation", player.player_position)
-	var prepared: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
-	_expect(bool(receipt.get("accepted", false)) and is_equal_approx(float(prepared.player_health), MELEE_CONTACT_DAMAGE) and not arena.battle_over, "fixture: Rules did not prepare a living player for one fatal contact", failures)
+	var player: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
+	var receipt: Dictionary = arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, float(player.player_health) - MELEE_CONTACT_DAMAGE, "fixture/contact-preparation", player.player_position)
+	var prepared: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
+	_expect(bool(receipt.get("accepted", false)) and is_equal_approx(float(prepared.player_health), MELEE_CONTACT_DAMAGE) and not arena.session.is_battle_over(), "fixture: Rules did not prepare a living player for one fatal contact", failures)
 
 
 ## GameRoot processes before its children, then the router, then the arena.
@@ -818,7 +818,7 @@ func _drive_production_to_death(session: Dictionary, delta: float) -> int:
 	for _frame_index in MAX_ALIVE_FRAMES:
 		_advance_production_frame(session, delta)
 		if float(arena.get("player_health")) <= 0.0:
-			return int(arena.get("sim_tick"))
+			return int(arena.session.sim_tick)
 	return -1
 
 

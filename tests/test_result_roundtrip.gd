@@ -31,12 +31,12 @@ func _run() -> void:
 		if game.current_route != "arena":
 			break
 		var arena: Node = game.current_screen.get("_current_runtime").get("room_instance")
-		arena.set("automation_smoke", true)
+		arena.session.automation_smoke = true
 		for _tick in 1800:
-			if bool(arena.get("battle_over")):
+			if bool(arena.session.is_battle_over()):
 				break
 			arena.step_tick()
-		_expect(bool(arena.get("battle_victory")), "real first-hunt room did not reach victory", failures)
+		_expect(bool(arena.session.is_battle_victory()), "real first-hunt room did not reach victory", failures)
 		await _frames(4)
 	_expect(game.current_route == "result", "real combat did not settle all authored rooms", failures)
 	if game.current_route != "result":

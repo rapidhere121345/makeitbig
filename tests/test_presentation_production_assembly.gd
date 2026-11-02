@@ -410,7 +410,7 @@ func _check_real_actor_art_box(session: Dictionary, entries: Array) -> void:
 		var art_box: Rect2 = record["art_box"]
 		_expect(art_box.size.is_equal_approx(expected_size), "presented: ranger art box is not the real skin box (%s vs %s)" % [str(art_box.size), str(expected_size)], failures)
 		_expect(art_box.size.y > 28.0, "presented: ranger art box collapsed toward the collision footprint", failures)
-		var player: Dictionary = session.node.get("player_combat_state").snapshot(int(session.node.get("sim_tick")))
+		var player: Dictionary = session.node.session.player_combat_state.snapshot(int(session.node.session.sim_tick))
 		_expect((record["feet_anchor"] as Vector2).is_equal_approx(player.get("player_position", Vector2.INF)), "presented: ranger feet anchor left the authoritative position", failures)
 		return
 	_expect(false, "presented: frame had no ranger entry to check", failures)
@@ -420,7 +420,7 @@ func _check_real_actor_art_box(session: Dictionary, entries: Array) -> void:
 ## parks the enemy under it, and requires the detached plan to dim the drawn
 ## enemy view through the OcclusionController while the ranger stays clear.
 func _drive_occlusion_display(session: Dictionary, headless: Dictionary, enemy_id: String) -> void:
-	var runtime: Variant = session.node.get("scene_runtime")
+	var runtime: Variant = session.node.session.scene_runtime
 	var world_view: Variant = session.node.get("presentation").get("world_view")
 	var enemy: Variant = _first_enemy(session.node)
 	var scale := ArenaWorldViewScript.GAMEPLAY_TO_WORLD
@@ -430,7 +430,7 @@ func _drive_occlusion_display(session: Dictionary, headless: Dictionary, enemy_i
 	# it, so the pursuer's drift toward the ranger keeps it in front of the
 	# probe for the whole assertion window instead of crossing the baseline.
 	var anchor: Vector2 = (enemy.get("position") as Vector2) + Vector2(0.0, 8.0)
-	var player: Dictionary = session.node.get("player_combat_state").snapshot(int(session.node.get("sim_tick")))
+	var player: Dictionary = session.node.session.player_combat_state.snapshot(int(session.node.session.sim_tick))
 	var probe_world_box := Rect2(anchor + probe_box.position, probe_box.size)
 	var ranger_guard := Rect2((player.get("player_position", anchor) as Vector2) + probe_box.position, probe_box.size).grow(20.0)
 	_expect(not ranger_guard.intersects(probe_world_box), "occlusion: probe anchor overlaps the ranger box: %s vs %s" % [str(probe_world_box), str(ranger_guard)], failures)
@@ -453,8 +453,8 @@ func _drive_occlusion_display(session: Dictionary, headless: Dictionary, enemy_i
 	if bool(plan_result.get("ok", false)):
 		var report: Dictionary = (plan_result.get("value") as Variant).call("occlusion_report", enemy_id)
 		if not (bool(report.get("occluded", false)) and (report.get("occluder_ids", []) as Array).has("occlusion/probe")):
-			var enemy_position: Vector2 = (session.node.get("player_combat_state").snapshot(int(session.node.get("sim_tick"))).get("player_position", Vector2.INF))
-			printerr("occlusion-debug: enemy_id=%s tick=%s enemy_pos=%s probe=%s plan=%s" % [enemy_id, str(session.node.get("sim_tick")), str(enemy_position), str(session.node.get("scene_runtime").get("presentation_projector").call("static_binding", "occlusion/probe").art_box), str((plan_result.get("value") as Variant).call("to_payload"))])
+			var enemy_position: Vector2 = (session.node.session.player_combat_state.snapshot(int(session.node.session.sim_tick)).get("player_position", Vector2.INF))
+			printerr("occlusion-debug: enemy_id=%s tick=%s enemy_pos=%s probe=%s plan=%s" % [enemy_id, str(session.node.session.sim_tick), str(enemy_position), str(session.node.session.scene_runtime.get("presentation_projector").call("static_binding", "occlusion/probe").art_box), str((plan_result.get("value") as Variant).call("to_payload"))])
 			_expect(false, "occlusion: plan did not name the real static occluder: %s" % str(report), failures)
 	var sort_report: Dictionary = session.node.get("presentation").call("sort_report")
 	var occlusion: Dictionary = sort_report.get("occlusion", {})
@@ -536,12 +536,12 @@ func _start_session(presentation_enabled: bool) -> Dictionary:
 		runtime.queue_free()
 		return {"runtime": runtime, "node": null, "port": null}
 	var node: Variant = runtime.get("room_instance")
-	var scene_runtime: Variant = node.get("scene_runtime")
+	var scene_runtime: Variant = node.session.scene_runtime
 	return {"runtime": runtime, "node": node, "port": scene_runtime.get("presentation_port")}
 
 
 func _first_enemy(arena: Node) -> Variant:
-	var enemies: Array = arena.get("enemies")
+	var enemies: Array = arena.session.encounter_director.enemies
 	return enemies[0] if not enemies.is_empty() else null
 
 
@@ -551,10 +551,10 @@ func _enemy_stable_id(arena: Node) -> String:
 
 
 func _semantic_snapshot(arena: Node) -> Dictionary:
-	var player: Dictionary = arena.get("player_combat_state").snapshot(int(arena.get("sim_tick")))
+	var player: Dictionary = arena.session.player_combat_state.snapshot(int(arena.session.sim_tick))
 	var normalized_player: Variant = _normalize(player)
 	var enemies_state: Array[Dictionary] = []
-	for enemy in (arena.get("enemies") as Array):
+	for enemy in (arena.session.encounter_director.enemies as Array):
 		enemies_state.append({
 			"entity_id": int(enemy.entity_id),
 			"x": float(enemy.position.x),
@@ -567,12 +567,12 @@ func _semantic_snapshot(arena: Node) -> Dictionary:
 	for state in (arena.get("hazard_states") as Array):
 		hazards_state.append((state as Dictionary).duplicate(true))
 	return {
-		"sim_tick": int(arena.get("sim_tick")),
-		"elapsed": float(arena.get("elapsed")),
+		"sim_tick": int(arena.session.sim_tick),
+		"elapsed": float(arena.session.elapsed),
 		"shots": int(arena.get("shots")),
 		"defeated": int(arena.get("defeated")),
-		"battle_over": bool(arena.get("battle_over")),
-		"battle_victory": bool(arena.get("battle_victory")),
+		"battle_over": bool(arena.session.is_battle_over()),
+		"battle_victory": bool(arena.session.is_battle_victory()),
 		"player": normalized_player,
 		"enemies": enemies_state,
 		"hazards": hazards_state,

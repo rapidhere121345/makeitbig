@@ -46,10 +46,10 @@ func _test_damage_text_formatting(arena: Node, failures: Array[String]) -> void:
 
 
 func _test_event_projection(arena: Node, failures: Array[String]) -> void:
-	var first = arena.enemies[0]
-	var second = arena.enemies[1]
+	var first = arena.session.encounter_director.enemies[0]
+	var second = arena.session.encounter_director.enemies[1]
 	fixture.advance_to(arena, 12)
-	var damage_event: Dictionary = arena.combat_event_stream.emit(arena.sim_tick, "damage_applied", {
+	var damage_event: Dictionary = arena.session.combat_event_stream.emit(arena.session.sim_tick, "damage_applied", {
 		"source_id": "ranger/piercing_arrow",
 		"target_id": "enemy/%d" % first.entity_id,
 		"target_entity_id": first.entity_id,
@@ -65,7 +65,7 @@ func _test_event_projection(arena: Node, failures: Array[String]) -> void:
 	_expect(_mark_count(arena, "enemy_damage") == 1, "enemy damage did not create exactly one transient mark", failures)
 	arena.refresh_presentation()
 	_expect(_mark_count(arena, "enemy_damage") == 1, "redraw consumed the same damage event twice", failures)
-	var repeated_damage: Dictionary = arena.combat_event_stream.emit(arena.sim_tick, "damage_applied", {
+	var repeated_damage: Dictionary = arena.session.combat_event_stream.emit(arena.session.sim_tick, "damage_applied", {
 		"source_id": "ranger/piercing_arrow",
 		"target_id": "enemy/%d" % first.entity_id,
 		"target_entity_id": first.entity_id,
@@ -77,7 +77,7 @@ func _test_event_projection(arena: Node, failures: Array[String]) -> void:
 	var repeated_mark := _first_mark(arena, "enemy_damage")
 	_expect(int(repeated_mark.get("event_id", 0)) == int(repeated_damage.event_id) and String(repeated_mark.get("text", "")) == "2.50e6", "coalesced damage mark did not show the latest authority event", failures)
 
-	var blocked_event: Dictionary = arena.combat_event_stream.emit(arena.sim_tick, "attack_resolved", {
+	var blocked_event: Dictionary = arena.session.combat_event_stream.emit(arena.session.sim_tick, "attack_resolved", {
 		"action_instance_id": 9,
 		"source_id": "ranger/piercing_arrow",
 		"target_entity_id": second.entity_id,
@@ -87,16 +87,16 @@ func _test_event_projection(arena: Node, failures: Array[String]) -> void:
 	})
 	arena.refresh_presentation()
 	_expect(_mark_count(arena, "blocked") == 1 and arena.presentation.feedback.presentation_event_cursor == int(blocked_event.event_id), "blocked result did not create its distinct feedback mark", failures)
-	_expect(arena.presentation.animations.enemy_animation.latched_ticks("enemy/%d/hit" % second.entity_id, arena.sim_tick) == -1, "blocked attack fabricated an enemy hit reaction", failures)
+	_expect(arena.presentation.animations.enemy_animation.latched_ticks("enemy/%d/hit" % second.entity_id, arena.session.sim_tick) == -1, "blocked attack fabricated an enemy hit reaction", failures)
 
-	_expect(arena.player_combat_rules.apply_damage(arena.sim_tick, 7.0, "enemy/%d/%s" % [first.entity_id, first.kind_id], first.position).get("accepted", false), "player damage setup was rejected", failures)
-	var player_damage_id: int = arena.combat_event_stream.latest_event_id()
+	_expect(arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 7.0, "enemy/%d/%s" % [first.entity_id, first.kind_id], first.position).get("accepted", false), "player damage setup was rejected", failures)
+	var player_damage_id: int = arena.session.combat_event_stream.latest_event_id()
 	arena.refresh_presentation()
 	_expect(arena.presentation.animations.ranger_animation.latched_event_id(arena.presentation.animations.RANGER_EVENT_HIT) == "combat:%d" % player_damage_id, "player hit animation did not use the damage event", failures)
 	_expect(_mark_count(arena, "player_damage") == 1, "player damage did not create one reaction mark", failures)
 	_test_player_damage_overlay_during_actions(arena, first, failures)
 
-	var action_event: Dictionary = arena.combat_event_stream.emit(arena.sim_tick, "action_accepted", {
+	var action_event: Dictionary = arena.session.combat_event_stream.emit(arena.session.sim_tick, "action_accepted", {
 		"action_instance_id": 44,
 		"actor_id": "ranger",
 		"action_id": "piercing_arrow",
@@ -114,8 +114,8 @@ func _test_player_damage_overlay_during_actions(arena: Node, target, failures: A
 	## action selected while the independent impact overlay remains visible.
 	fixture.wait_for_cast_ready(arena)
 	_expect(fixture.cast(arena, "piercing_arrow", target.entity_id).get("accepted", false), "player overlay: real arrow request was rejected", failures)
-	_expect(arena.player_combat_rules.apply_damage(arena.sim_tick, 5.0, "enemy/%d/%s" % [target.entity_id, target.kind_id], target.position).get("accepted", false), "player overlay: shooting damage setup was rejected", failures)
-	var shooting_damage_id: int = arena.combat_event_stream.latest_event_id()
+	_expect(arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 5.0, "enemy/%d/%s" % [target.entity_id, target.kind_id], target.position).get("accepted", false), "player overlay: shooting damage setup was rejected", failures)
+	var shooting_damage_id: int = arena.session.combat_event_stream.latest_event_id()
 	arena.refresh_presentation()
 	var shoot_frame: Dictionary = arena.presentation.animations.ranger_animation.resolve(arena.presentation.animations.ranger_state(arena.gameplay_snapshot()))
 	var shoot_overlay: Dictionary = arena.presentation.animations._player_damage_overlay_state(arena.gameplay_snapshot())
@@ -129,8 +129,8 @@ func _test_player_damage_overlay_during_actions(arena: Node, target, failures: A
 	## well; only the overlay is added on top of it.
 	fixture.wait_for_cast_ready(arena)
 	_expect(fixture.cast(arena, "dash").get("accepted", false), "player overlay: real dash was rejected", failures)
-	_expect(arena.player_combat_rules.apply_damage(arena.sim_tick, 6.0, "enemy/%d/%s" % [target.entity_id, target.kind_id], target.position).get("accepted", false), "player overlay: dash damage setup was rejected", failures)
-	var dash_damage_id: int = arena.combat_event_stream.latest_event_id()
+	_expect(arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 6.0, "enemy/%d/%s" % [target.entity_id, target.kind_id], target.position).get("accepted", false), "player overlay: dash damage setup was rejected", failures)
+	var dash_damage_id: int = arena.session.combat_event_stream.latest_event_id()
 	arena.refresh_presentation()
 	var dash_frame: Dictionary = arena.presentation.animations.ranger_animation.resolve(arena.presentation.animations.ranger_state(arena.gameplay_snapshot()))
 	var dash_overlay: Dictionary = arena.presentation.animations._player_damage_overlay_state(arena.gameplay_snapshot())
@@ -139,16 +139,16 @@ func _test_player_damage_overlay_during_actions(arena: Node, target, failures: A
 
 	## The channel closes at a fixed tick boundary and an invulnerable dodge does
 	## not invent a damage event, mark, or overlay.
-	fixture.advance_to(arena, int(arena.sim_tick) + arena.presentation.animations.PLAYER_DAMAGE_OVERLAY_TICKS)
+	fixture.advance_to(arena, int(arena.session.sim_tick) + arena.presentation.animations.PLAYER_DAMAGE_OVERLAY_TICKS)
 	_expect(arena.presentation.animations._player_damage_overlay_state(arena.gameplay_snapshot()).is_empty(), "player overlay: damage channel outlived its fixed window", failures)
 	arena.presentation.feedback.combat_feedback_marks.clear()
 	arena.presentation.animations.ranger_animation.clear_events()
 	fixture.wait_for_cast_ready(arena)
 	_expect(fixture.cast(arena, "dodge").get("accepted", false), "player overlay: real dodge was rejected", failures)
-	var latest_before_avoid: int = arena.combat_event_stream.latest_event_id()
-	_expect(not arena.player_combat_rules.apply_damage(arena.sim_tick, 7.0, "enemy/%d/%s" % [target.entity_id, target.kind_id], target.position).get("accepted", false), "player overlay: dodge immunity allowed damage", failures)
+	var latest_before_avoid: int = arena.session.combat_event_stream.latest_event_id()
+	_expect(not arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 7.0, "enemy/%d/%s" % [target.entity_id, target.kind_id], target.position).get("accepted", false), "player overlay: dodge immunity allowed damage", failures)
 	arena.refresh_presentation()
-	_expect(arena.combat_event_stream.latest_event_id() == latest_before_avoid and arena.presentation.animations._player_damage_overlay_state(arena.gameplay_snapshot()).is_empty() and _mark_count(arena, "player_damage") == 0, "player overlay: avoided damage fabricated feedback", failures)
+	_expect(arena.session.combat_event_stream.latest_event_id() == latest_before_avoid and arena.presentation.animations._player_damage_overlay_state(arena.gameplay_snapshot()).is_empty() and _mark_count(arena, "player_damage") == 0, "player overlay: avoided damage fabricated feedback", failures)
 
 
 func _test_actual_motion_projection(arena: Node, failures: Array[String]) -> void:
@@ -157,8 +157,8 @@ func _test_actual_motion_projection(arena: Node, failures: Array[String]) -> voi
 	Input.action_press("move_right")
 	_expect(not bool(arena.presentation.animations.ranger_state(arena.gameplay_snapshot()).moving), "held input fabricated visual movement before authority moved the player", failures)
 	Input.action_release("move_right")
-	var move := Protocol.move(int(arena.sim_tick) + 1, "ranger", int(arena.command_sequence), 1000, 0, 1000)
-	arena.command_sequence += 1
+	var move := Protocol.move(int(arena.session.sim_tick) + 1, "ranger", int(arena.session.command_sequence), 1000, 0, 1000)
+	arena.session.command_sequence += 1
 	fixture.step(arena, [move])
 	_expect(bool(arena.presentation.animations.ranger_state(arena.gameplay_snapshot()).moving), "committed displacement did not drive the walk animation", failures)
 
@@ -168,22 +168,22 @@ func _test_pause_release_and_audio_projection(arena: Node, failures: Array[Strin
 	while int(fixture.player(arena).dodge_cooldown_ticks) > 0 or int(fixture.player(arena).dash_cooldown_ticks) > 0:
 		fixture.step(arena)
 	_expect(fixture.cast(arena, "dash").get("accepted", false), "pause release: real dash was rejected", failures)
-	fixture.advance_to(arena, int(arena.sim_tick) + int(fixture.player(arena).dash_remaining_ticks) - 3)
+	fixture.advance_to(arena, int(arena.session.sim_tick) + int(fixture.player(arena).dash_remaining_ticks) - 3)
 	var buffered: Dictionary = fixture.cast(arena, "dodge")
 	_expect(buffered.get("reason", "") == "mobility_buffered", "pause release: real mobility tail did not buffer", failures)
-	var target = arena.enemies[0]
-	_expect(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + Vector2.LEFT * 120.0).get("ok", false)), "pause release: target placement failed", failures)
+	var target = arena.session.encounter_director.enemies[0]
+	_expect(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena.session.player_position() + Vector2.LEFT * 120.0).get("ok", false)), "pause release: target placement failed", failures)
 	var arrow_receipt: Dictionary = fixture.cast(arena, "piercing_arrow", target.entity_id)
-	_expect(arrow_receipt.get("accepted", false), "pause release: live arrow was rejected (%s distance=%s range=%s)" % [str(arrow_receipt), arena.player_position.distance_to(target.position), arena.locked_targeting_distance], failures)
-	arena.command_source.attack_requested = true
-	arena.command_source.attack_requested_source = "assisted"
-	arena.command_source.attack_requested_target_entity_id = target.entity_id
-	arena.command_source.dodge_requested = true
-	arena.command_source.hunter_mark_requested = true
-	arena.command_source.dash_requested = true
+	_expect(arrow_receipt.get("accepted", false), "pause release: live arrow was rejected (%s distance=%s range=%s)" % [str(arrow_receipt), arena.session.player_position().distance_to(target.position), arena.session.locked_targeting_distance], failures)
+	arena.session.command_source.attack_requested = true
+	arena.session.command_source.attack_requested_source = "assisted"
+	arena.session.command_source.attack_requested_target_entity_id = target.entity_id
+	arena.session.command_source.dodge_requested = true
+	arena.session.command_source.hunter_mark_requested = true
+	arena.session.command_source.dash_requested = true
 	var accepted_before_release: bool = not fixture.player(arena).timeline.active.is_empty()
 	arena.release_manual_controls()
-	_expect(not arena.command_source.attack_requested and not arena.command_source.dodge_requested and not arena.command_source.hunter_mark_requested and not arena.command_source.dash_requested and fixture.player(arena).mobility_input_buffer.is_empty(), "pause release left ephemeral manual intent queued", failures)
+	_expect(not arena.session.command_source.attack_requested and not arena.session.command_source.dodge_requested and not arena.session.command_source.hunter_mark_requested and not arena.session.command_source.dash_requested and fixture.player(arena).mobility_input_buffer.is_empty(), "pause release left ephemeral manual intent queued", failures)
 	_expect(accepted_before_release and not fixture.player(arena).timeline.active.is_empty(), "pause release cancelled an already accepted timeline action", failures)
 	arena.set_effects_volume(0.2)
 	var report: Dictionary = arena.combat_feedback_report()

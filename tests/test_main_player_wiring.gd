@@ -41,40 +41,40 @@ func _run() -> void:
 	var arena := DrivenMain.new()
 	arena.test_session = true
 	arena.presentation_enabled = false
-	arena.framework_resolved_build = resolved.duplicate(true)
-	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
-	arena.framework_room = {
+	arena.session.framework_resolved_build = resolved.duplicate(true)
+	arena.session.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
+	arena.session.framework_room = {
 		"room_id": "test.main.player", "layout_id": "rectangle_arena", "objective_id": "clear",
 		"enemy_ids": ["melee_pursuer"], "hazard_ids": [], "elite_rule_ids": [], "boss_id": "", "drop_tags": [],
 	}
 	root.add_child(arena)
 	arena.set_process(false)
 	arena.start_room()
-	_expect(arena.in_arena, "Main start blocked: " + arena.last_save_message)
-	if not arena.in_arena:
+	_expect(arena.session.in_arena, "Main start blocked: " + arena.last_save_message)
+	if not arena.session.in_arena:
 		_shutdown_arena(arena)
 		_finish()
 		return
-	_expect(arena.command_source_port is MainCommandSourcePortScript, "Main did not install the typed command source port")
-	_expect(arena.command_source != null and arena.command_source.port == arena.command_source_port, "command source retained a callback bag instead of the typed port")
-	var combat_room_port: Variant = arena.combat_system.get("room_port")
+	_expect(arena.session.command_source_port is MainCommandSourcePortScript, "Main did not install the typed command source port")
+	_expect(arena.session.command_source != null and arena.session.command_source.port == arena.session.command_source_port, "command source retained a callback bag instead of the typed port")
+	var combat_room_port: Variant = arena.session.combat_system.get("room_port")
 	_expect(combat_room_port is CombatSystemRoomPortScript and bool(combat_room_port.is_ready()), "CombatSystem did not receive the mounted typed room port")
-	_expect(arena.actor_registry.movement_policy_port is RoomMovementPolicyPortScript, "RoomActorAccess did not receive the typed movement policy port")
-	_expect(arena.combat_simulation.get("_rules") == arena.player_combat_rules, "Simulation did not receive the same Rules")
-	var player: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
+	_expect(arena.session.actor_registry.movement_policy_port is RoomMovementPolicyPortScript, "RoomActorAccess did not receive the typed movement policy port")
+	_expect(arena.session.combat_simulation.get("_rules") == arena.session.player_combat_rules, "Simulation did not receive the same Rules")
+	var player: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 	_expect(player.equipped_skills == ["piercing_arrow", "hunter_mark", "dash"], "room assembly did not freeze skill slots")
-	arena.framework_active_build.skills[1] = "dash"
-	arena.framework_resolved_build.final_parameters.max_health = 1.0
-	_expect(arena.player_combat_state.snapshot(0).equipped_skills[1] == "hunter_mark" and arena.player_health == initial_maximum, "mutable profile changed the frozen player")
+	arena.session.framework_active_build.skills[1] = "dash"
+	arena.session.framework_resolved_build.final_parameters.max_health = 1.0
+	_expect(arena.session.player_combat_state.snapshot(0).equipped_skills[1] == "hunter_mark" and arena.player_health == initial_maximum, "mutable profile changed the frozen player")
 	var position := arena.arena_rect().get_center()
 	_expect(bool(arena.teleport_actor("ranger", position).get("ok", false)), "player teleport failed")
-	var target = arena.enemies[0]
+	var target = arena.session.encounter_director.enemies[0]
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	_expect(bool(arena.teleport_actor("enemy/%d" % target.entity_id, position + Vector2(120.0, 0.0)).get("ok", false)), "target teleport failed")
 	var mark: Dictionary = arena.request_player_cast("hunter_mark", target.entity_id)
 	_expect(bool(mark.get("accepted", false)), "Rules mark input was not routed")
-	var expiry: int = arena.player_combat_state.snapshot(0).hunter_mark_expires_tick
+	var expiry: int = arena.session.player_combat_state.snapshot(0).hunter_mark_expires_tick
 	var impact_tick := expiry
 	var cast_tick := impact_tick - Rules.PIERCING_ARROW_WINDUP_TICKS
 	var expected_receipts: Array = []
@@ -84,51 +84,51 @@ func _run() -> void:
 			arena.supplied_commands = [Protocol.cast(tick, "ranger", 40, "piercing_arrow", target.entity_id, 1000, 0)]
 			arena.presentation.feedback.register_command_source(40, "pointer")
 		if tick == impact_tick:
-			release_feet = arena.player_position
+			release_feet = arena.session.player_position()
 			arena.supplied_commands.append(Protocol.move(tick, "ranger", 41, 1000, 0, 1000))
-			expected_receipts = Protocol.arbitrate(arena.supplied_commands, tick, arena.player_combat_state.equipped_ability_ids()).receipts
+			expected_receipts = Protocol.arbitrate(arena.supplied_commands, tick, arena.session.player_combat_state.equipped_ability_ids()).receipts
 		arena.step_tick()
-	_expect(arena.sim_tick == impact_tick and int(arena.actor_registry.actor("ranger").last_movement_tick) == impact_tick, "Main did not use the committed world tick")
-	_expect(arena.last_command_receipts == expected_receipts, "Main saved gameplay receipts instead of protocol receipts")
+	_expect(arena.session.sim_tick == impact_tick and int(arena.session.actor_registry.actor("ranger").last_movement_tick) == impact_tick, "Main did not use the committed world tick")
+	_expect(arena.session.last_command_receipts == expected_receipts, "Main saved gameplay receipts instead of protocol receipts")
 	_expect(arena.shots == 1 and arena.projectiles.size() == 1, "action impact did not resolve through CombatSystem")
 	if arena.projectiles.size() == 1:
 		var arrow = arena.projectiles[0]
 		_expect(arrow.origin.is_equal_approx(release_feet + ArrowOrigin.release_offset(Vector2.RIGHT)), "arrow release used post-motor position")
-		_expect(not arrow.origin.is_equal_approx(arena.player_position + ArrowOrigin.release_offset(Vector2.RIGHT)), "release fixture did not bracket movement")
+		_expect(not arrow.origin.is_equal_approx(arena.session.player_position() + ArrowOrigin.release_offset(Vector2.RIGHT)), "release fixture did not bracket movement")
 		var model: Dictionary = arena.current_model()
-		var marked_damage := float(model.total_events_float) * arena.locked_payload * Rules.HUNTER_MARK_DAMAGE_MULTIPLIER
+		var marked_damage := float(model.total_events_float) * arena.session.locked_payload * Rules.HUNTER_MARK_DAMAGE_MULTIPLIER
 		_expect(is_equal_approx(arrow.ordinary_damage, marked_damage), "mark expiry was applied before the pre-command timeline release")
-	_expect(arena.player_combat_state.snapshot(impact_tick).marked_entity_id == 0, "post-timeline player slice did not expire mark")
+	_expect(arena.session.player_combat_state.snapshot(impact_tick).marked_entity_id == 0, "post-timeline player slice did not expire mark")
 	var kinds: Array[String] = []
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		kinds.append(String(event.type))
 	_expect(kinds.count("action_accepted") == 1 and kinds.count("projectile_spawned") == 1, "Main duplicated Rules action events")
 	var before_health: float = arena.player_health
-	_expect(arena.player_combat_rules.apply_damage(arena.sim_tick, 7.0, "enemy/%d" % target.entity_id, target.position).get("accepted", false), "damage did not reach Rules")
+	_expect(arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 7.0, "enemy/%d" % target.entity_id, target.position).get("accepted", false), "damage did not reach Rules")
 	_expect(is_equal_approx(arena.player_health, before_health - 7.0), "Main health observation did not read domain damage")
-	var ledger: Dictionary = arena.combat_system.outcome_snapshot()
+	var ledger: Dictionary = arena.session.combat_system.outcome_snapshot()
 	_expect(arena.shots == ledger.shots and arena.arrow_hits == ledger.arrow_hits and arena.defeated == ledger.defeated, "Main count observations did not read the CombatSystem outcome")
 	var maximum_before: BigValue = arena.boss_maximum
 	maximum_before.magnitude = 7.0
-	_expect(arena.boss_maximum.magnitude == 1.0e12 and arena.encounter_director.boss_maximum.magnitude == 1.0e12, "Main/Encounter exposed mutable outcome ledger values")
+	_expect(arena.boss_maximum.magnitude == 1.0e12 and arena.session.encounter_director.boss_maximum.magnitude == 1.0e12, "Main/Encounter exposed mutable outcome ledger values")
 	arena.sync_encounter_context()
-	arena.encounter_director.resolve_hostile_attack(target, 3.0, true)
+	arena.session.encounter_director.resolve_hostile_attack(target, 3.0, true)
 	# Hostile contacts are queued during the room phase and committed by the
 	# next fixed tick through RoomCombatPort; direct invocation must not bypass
 	# that boundary.
 	arena.step_tick()
-	var damage_slice: Dictionary = arena.player_combat_state.snapshot(arena.sim_tick)
-	_expect(damage_slice.last_damage_source_id == "enemy/%d/%s" % [target.entity_id, target.kind_id] and damage_slice.last_damage_direction.is_equal_approx(target.position.direction_to(arena.player_position)), "hostile source position did not pass directly into Rules")
+	var damage_slice: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
+	_expect(damage_slice.last_damage_source_id == "enemy/%d/%s" % [target.entity_id, target.kind_id] and damage_slice.last_damage_direction.is_equal_approx(target.position.direction_to(arena.session.player_position())), "hostile source position did not pass directly into Rules")
 	var authoritative: Dictionary = Builder.build_runtime_state(arena, "wiring")
-	_expect(int(authoritative.player_x_millipixels) == roundi(arena.player_position.x * 1000.0), "Builder did not consume State registry position")
+	_expect(int(authoritative.player_x_millipixels) == roundi(arena.session.player_position().x * 1000.0), "Builder did not consume State registry position")
 	var published: Dictionary = arena.gameplay_snapshot()
 	published.player_position = Vector2.ZERO
 	published.player_health = 0.0
-	_expect(arena.player_position != Vector2.ZERO and arena.player_health > 0.0, "presentation publication retained writable player authority")
+	_expect(arena.session.player_position() != Vector2.ZERO and arena.player_health > 0.0, "presentation publication retained writable player authority")
 	arena.refresh_presentation()
 	_expect(arena.presentation.get("_snapshot").player_health == arena.player_health, "refresh did not publish current domain health")
 	arena.start_room()
-	ledger = arena.combat_system.outcome_snapshot()
+	ledger = arena.session.combat_system.outcome_snapshot()
 	_expect(arena.shots == 0 and arena.arrow_hits == 0 and arena.defeated == 0 and ledger.boss_damage.magnitude == 0.0 and arena.projectiles.is_empty(), "room entry did not reset the authoritative CombatSystem outcome")
 	_shutdown_arena(arena)
 	_test_mounted_reset(resolved)
@@ -160,16 +160,16 @@ func _test_mounted_reset(resolved: Dictionary) -> void:
 		arena.set_process(false)
 		var scene = runtime.scene_runtime
 		var spawn: Vector2 = arena.room_socket("combat/spawn")
-		_expect(arena.actor_registry == scene.actor_registry and arena.simulation_world == scene.simulation, "mounted Main replaced native authorities")
-		_expect(arena.player_position == spawn, "domain position did not read the authored native socket")
-		_expect(arena.combat_simulation.get("_rules") == arena.player_combat_rules and arena.combat_system.get("room_port") != null, "mounted services did not share the typed room authority")
+		_expect(arena.session.actor_registry == scene.actor_registry and arena.session.simulation_world == scene.simulation, "mounted Main replaced native authorities")
+		_expect(arena.session.player_position() == spawn, "domain position did not read the authored native socket")
+		_expect(arena.session.combat_simulation.get("_rules") == arena.session.player_combat_rules and arena.session.combat_system.get("room_port") != null, "mounted services did not share the typed room authority")
 		var maximum: float = arena.player_health
-		_expect(arena.player_combat_rules.apply_damage(arena.sim_tick, 7.0, "fixture", arena.player_position).get("accepted", false), "mounted damage did not reach Rules")
+		_expect(arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 7.0, "fixture", arena.session.player_position()).get("accepted", false), "mounted damage did not reach Rules")
 		arena.refresh_presentation()
 		_expect(is_equal_approx(float(arena.presentation.get("_snapshot").player_health), arena.player_health) and is_equal_approx(arena.player_health, maximum - 7.0), "mounted refresh published stale player state: maximum=%s domain=%s presentation=%s" % [maximum, arena.player_health, arena.presentation.get("_snapshot").player_health])
 		arena.start_room()
-		_expect(arena.in_arena and arena.player_health == maximum and arena.player_position == spawn, "room restart failed to reset State against the native registry")
-		_expect(arena.player_combat_state.snapshot(arena.sim_tick).attack_origins.is_empty(), "room reset retained attack origins")
+		_expect(arena.session.in_arena and arena.player_health == maximum and arena.session.player_position() == spawn, "room restart failed to reset State against the native registry")
+		_expect(arena.session.player_combat_state.snapshot(arena.session.sim_tick).attack_origins.is_empty(), "room reset retained attack origins")
 		_test_mark_report(arena)
 		var abandoned := [0]
 		runtime.abandoned.connect(func(_result: Dictionary) -> void: abandoned[0] += 1)
@@ -181,35 +181,35 @@ func _test_mounted_reset(resolved: Dictionary) -> void:
 func _test_mark_report(arena) -> void:
 	const EXPECTED := "Hunter's Mark locked: Melee Pursuer."
 	var center: Vector2 = arena.arena_rect().get_center() + Vector2(0, -36)
-	var target = arena.enemies[0]
+	var target = arena.session.encounter_director.enemies[0]
 	_expect(arena.teleport_actor("ranger", center).get("ok", false) and arena.teleport_actor("enemy/%d" % target.entity_id, center + Vector2.RIGHT * 100.0).get("ok", false), "mounted mark report fixture placement failed")
-	var before_event: int = arena.combat_event_stream.latest_event_id()
+	var before_event: int = arena.session.combat_event_stream.latest_event_id()
 	var receipt: Dictionary = arena.request_player_cast("hunter_mark")
-	_expect(receipt.get("accepted", false) and arena.player_combat_state.snapshot(arena.sim_tick).marked_entity_id == target.entity_id and arena.battle_report == EXPECTED, "direct hunter mark did not publish the accepted target's player label")
-	_expect(arena.combat_event_stream.latest_event_id() == before_event, "mark report duplicated a gameplay event")
+	_expect(receipt.get("accepted", false) and arena.session.player_combat_state.snapshot(arena.session.sim_tick).marked_entity_id == target.entity_id and arena.session.battle_report == EXPECTED, "direct hunter mark did not publish the accepted target's player label")
+	_expect(arena.session.combat_event_stream.latest_event_id() == before_event, "mark report duplicated a gameplay event")
 	# Diagnostic report values are intentionally stale; the following ticks run
 	# real enemy/hazard/projectile callbacks and must not republish those values.
-	arena.combat_system.battle_report = "stale combat report"
-	arena.encounter_director.battle_report = "stale encounter report"
+	arena.session.combat_system.battle_report = "stale combat report"
+	arena.session.encounter_director.battle_report = "stale encounter report"
 	for _tick in 2:
 		arena.step_tick()
-	_expect(arena.battle_report == EXPECTED, "an idle tick replaced the mark report with stale component output")
-	arena.battle_report = "rejection sentinel"
+	_expect(arena.session.battle_report == EXPECTED, "an idle tick replaced the mark report with stale component output")
+	arena.session.battle_report = "rejection sentinel"
 	receipt = arena.request_player_cast("hunter_mark", target.entity_id)
-	_expect(not receipt.get("accepted", false) and arena.battle_report == "rejection sentinel", "rejected mark fabricated a success report")
+	_expect(not receipt.get("accepted", false) and arena.session.battle_report == "rejection sentinel", "rejected mark fabricated a success report")
 	arena.start_room()
-	target = arena.enemies[0]
+	target = arena.session.encounter_director.enemies[0]
 	arena.teleport_actor("ranger", center)
 	arena.teleport_actor("enemy/%d" % target.entity_id, center + Vector2.RIGHT * 100.0)
-	arena.battle_report = "invalid target sentinel"
+	arena.session.battle_report = "invalid target sentinel"
 	receipt = arena.request_player_cast("hunter_mark", 99999)
-	_expect(not receipt.get("accepted", false) and arena.battle_report == "invalid target sentinel", "missing mark target fabricated a success report")
-	arena.command_source.hunter_mark_requested = true
-	before_event = arena.combat_event_stream.latest_event_id()
+	_expect(not receipt.get("accepted", false) and arena.session.battle_report == "invalid target sentinel", "missing mark target fabricated a success report")
+	arena.session.command_source.hunter_mark_requested = true
+	before_event = arena.session.combat_event_stream.latest_event_id()
 	arena.step_tick()
-	_expect(arena.battle_report == EXPECTED and arena.player_combat_state.snapshot(arena.sim_tick).marked_entity_id == target.entity_id, "command hunter mark diverged from the direct public cast report")
+	_expect(arena.session.battle_report == EXPECTED and arena.session.player_combat_state.snapshot(arena.session.sim_tick).marked_entity_id == target.entity_id, "command hunter mark diverged from the direct public cast report")
 	var receipts: Array[Dictionary] = []
-	for event: Dictionary in arena.combat_event_stream.events_after(before_event):
+	for event: Dictionary in arena.session.combat_event_stream.events_after(before_event):
 		if event.type == "command_receipt":
 			receipts.append(event)
 	_expect(receipts.size() == 1 and receipts[0].get("status", "") == "accepted", "command mark produced duplicate receipts/events")
@@ -217,7 +217,7 @@ func _test_mark_report(arena) -> void:
 	_expect(arrow.get("accepted", false), "fresh arrow report setup failed")
 	for _tick in Rules.PIERCING_ARROW_WINDUP_TICKS:
 		arena.step_tick()
-	_expect(arena.battle_report != EXPECTED and not arena.combat_system.battle_report.is_empty(), "fresh arrow output did not supersede the mark report")
+	_expect(arena.session.battle_report != EXPECTED and not arena.session.combat_system.battle_report.is_empty(), "fresh arrow output did not supersede the mark report")
 
 
 func _test_mark_hud(resolved: Dictionary) -> void:
@@ -259,12 +259,12 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 		else:
 			_expect(arena.request_player_cast("hunter_mark", target.entity_id).get("accepted", false), "direct HUD mark was rejected")
 		_expect("Full Combat Feedback  " + EXPECTED in _hud_summary(arena), "accepted mark missing from real HUD summary (routed=%s)" % routed)
-		arena.combat_system.battle_report = "stale combat report"
-		arena.encounter_director.battle_report = "stale encounter report"
+		arena.session.combat_system.battle_report = "stale combat report"
+		arena.session.encounter_director.battle_report = "stale encounter report"
 		for _tick in 3:
 			arena.step_tick()
 		_expect(EXPECTED in _hud_summary(arena), "idle ticks replaced the HUD mark (routed=%s)" % routed)
-		var rejected: Dictionary = arena.request_player_cast("hunter_mark", arena.enemies[1].entity_id)
+		var rejected: Dictionary = arena.request_player_cast("hunter_mark", arena.session.encounter_director.enemies[1].entity_id)
 		_expect(not rejected.get("accepted", false) and EXPECTED in _hud_summary(arena) and "Locked: Melee Pursuer" not in _hud_summary(arena), "cooldown rejection fabricated a different successful HUD target")
 		# The existing pointer warning outranks a live mark, in the real HUD.
 		arena.presentation.commit(arena.gameplay_snapshot(), {"device": {"pointer_world_held": true}, "pointer_status": "no_pointer_target"})
@@ -279,17 +279,17 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 	var target = _place_hud_targets(arena)
 	_expect(not arena.request_player_cast("hunter_mark", 99999).get("accepted", false) and "Hunter's Mark locked" not in _hud_summary(arena), "missing target produced a successful HUD mark")
 	# A report alone is not evidence of an active mark, nor raw internal copy.
-	arena.battle_report = EXPECTED
+	arena.session.battle_report = EXPECTED
 	_expect(EXPECTED not in _hud_summary(arena), "a stale success string fabricated a HUD mark without State")
 	_expect(arena.request_player_cast("hunter_mark", target.entity_id).get("accepted", false), "expiry HUD setup failed")
-	arena.battle_report = "internal report: target=1"
+	arena.session.battle_report = "internal report: target=1"
 	_expect("internal report" not in _hud_summary(arena), "HUD leaked an internal English report")
-	arena.battle_report = EXPECTED
-	var expiry: int = arena.player_combat_state.snapshot(arena.sim_tick).hunter_mark_expires_tick
-	while arena.sim_tick < expiry:
+	arena.session.battle_report = EXPECTED
+	var expiry: int = arena.session.player_combat_state.snapshot(arena.session.sim_tick).hunter_mark_expires_tick
+	while arena.session.sim_tick < expiry:
 		arena.step_tick()
-	arena.battle_report = EXPECTED
-	_expect(arena.player_combat_state.snapshot(arena.sim_tick).marked_entity_id == 0 and EXPECTED not in _hud_summary(arena), "expired mark survived in the HUD")
+	arena.session.battle_report = EXPECTED
+	_expect(arena.session.player_combat_state.snapshot(arena.session.sim_tick).marked_entity_id == 0 and EXPECTED not in _hud_summary(arena), "expired mark survived in the HUD")
 
 	arena.start_room()
 	target = _place_hud_targets(arena)
@@ -301,10 +301,10 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 		arena.step_tick()
 		if target.health <= 0.0:
 			break
-	arena.battle_report = EXPECTED
+	arena.session.battle_report = EXPECTED
 	_expect(target.health <= 0.0 and EXPECTED not in _hud_summary(arena), "dead target retained a successful HUD mark")
 	# No live target exists for the next mark request.
-	for enemy in arena.enemies:
+	for enemy in arena.session.encounter_director.enemies:
 		enemy.health = 0.0
 	_expect(not arena.request_player_cast("hunter_mark").get("accepted", false) and EXPECTED not in _hud_summary(arena), "no-target refusal fabricated a successful HUD mark")
 	arena.start_room()
@@ -315,12 +315,12 @@ func _test_mark_hud(resolved: Dictionary) -> void:
 func _place_hud_targets(arena):
 	var center: Vector2 = arena.arena_rect().get_center() + Vector2(0, -36)
 	_expect(arena.teleport_actor("ranger", center).get("ok", false), "HUD player placement failed")
-	for index in arena.enemies.size():
-		var enemy = arena.enemies[index]
+	for index in arena.session.encounter_director.enemies.size():
+		var enemy = arena.session.encounter_director.enemies[index]
 		enemy.health = 1.0e12
 		enemy.maximum_health = enemy.health
 		_expect(arena.teleport_actor("enemy/%d" % enemy.entity_id, center + Vector2(100.0 + index * 90.0, 0.0)).get("ok", false), "HUD target placement failed")
-	return arena.enemies[0]
+	return arena.session.encounter_director.enemies[0]
 
 
 func _summary_label(arena) -> Label:
@@ -348,7 +348,7 @@ func _finish() -> void:
 func _shutdown_arena(arena: Node) -> void:
 	if arena == null or not is_instance_valid(arena):
 		return
-	var runtime: Variant = arena.get("scene_runtime")
+	var runtime: Variant = arena.session.scene_runtime
 	if runtime != null and runtime.has_method("unmount"):
 		runtime.unmount()
 	if arena.get_parent() != null:

@@ -79,39 +79,39 @@ func _test_loadout_gate(arena: Node, failures: Array[String]) -> void:
 	_expect(not _cast(arena, "hunter_mark") and not _dash(arena, Vector2.RIGHT), "skills in the wrong slots bypassed fixed-slot gating", failures)
 	arena.presentation.skill_requested.emit("hunter_mark")
 	arena.presentation.skill_requested.emit("dash")
-	_expect(not arena.command_source.hunter_mark_requested and not arena.command_source.dash_requested, "unequipped HUD actions bypassed loadout", failures)
+	_expect(not arena.session.command_source.hunter_mark_requested and not arena.session.command_source.dash_requested, "unequipped HUD actions bypassed loadout", failures)
 	_configure_enemies(arena)
 	_expect(_cast(arena, "hunter_mark"), "equipped hunter mark was rejected", failures)
 	_expect(_dash(arena, Vector2.RIGHT), "equipped dash was rejected", failures)
 	fixture.wait_ready(arena, "dash_cooldown_ticks")
-	arena.selected_mode = "Auto"
+	arena.session.selected_mode = "Auto"
 	_start_proxy(arena, _white_proxy_build())
 	var auto_abilities: Array[String] = []
 	for command in arena.player_commands._auto_commands():
 		if String(command.get("kind", "")) == "cast":
 			auto_abilities.append(String(command.get("ability_id", "")))
 	_expect("hunter_mark" not in auto_abilities and "dash" not in auto_abilities, "Auto issued a hidden skill 2/3 command", failures)
-	arena.selected_mode = "Manual"
+	arena.session.selected_mode = "Manual"
 
 
 func _test_hunter_mark(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var near = arena.enemies[0]
-	var far = arena.enemies[1]
-	_place(arena, "enemy/%d" % near.entity_id, arena.player_position + Vector2(70.0, 0.0))
-	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(120.0, 0.0))
+	var near = arena.session.encounter_director.enemies[0]
+	var far = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % near.entity_id, arena.session.player_position() + Vector2(70.0, 0.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.session.player_position() + Vector2(120.0, 0.0))
 	_expect(_cast(arena, "hunter_mark") and _player(arena).marked_entity_id == near.entity_id, "hunter mark did not select nearest in-range living enemy", failures)
-	_expect(arena.battle_report == "Hunter's Mark locked: Melee Pursuer." and "entity" not in arena.battle_report and "#" not in arena.battle_report, "hunter mark report exposed an internal entity id: %s" % arena.battle_report, failures)
+	_expect(arena.session.battle_report == "Hunter's Mark locked: Melee Pursuer." and "entity" not in arena.session.battle_report and "#" not in arena.session.battle_report, "hunter mark report exposed an internal entity id: %s" % arena.session.battle_report, failures)
 	var expiry: int = _player(arena).hunter_mark_expires_tick
-	_expect(expiry == arena.sim_tick + Skill.HUNTER_MARK_DURATION_TICKS, "hunter mark expiry tick is not fixed", failures)
+	_expect(expiry == arena.session.sim_tick + Skill.HUNTER_MARK_DURATION_TICKS, "hunter mark expiry tick is not fixed", failures)
 	_expect(not _cast(arena, "hunter_mark") and _player(arena).hunter_mark_expires_tick == expiry, "hunter mark ignored independent cooldown", failures)
 	fixture.advance_to(arena, expiry)
 	_expect(_player(arena).marked_entity_id == 0 and _player(arena).hunter_mark_expires_tick == 0, "hunter mark did not clear at expiry tick", failures)
 	fixture.wait_ready(arena, "hunter_mark_cooldown_ticks")
-	_place(arena, "enemy/%d" % near.entity_id, arena.player_position + Vector2(151.0, 0.0))
-	_place(arena, "enemy/%d" % far.entity_id, arena.player_position + Vector2(180.0, 0.0))
+	_place(arena, "enemy/%d" % near.entity_id, arena.session.player_position() + Vector2(151.0, 0.0))
+	_place(arena, "enemy/%d" % far.entity_id, arena.session.player_position() + Vector2(180.0, 0.0))
 	_expect(not _cast(arena, "hunter_mark") and _player(arena).marked_entity_id == 0, "hunter mark accepted a target outside 1.5x range", failures)
-	_place(arena, "enemy/%d" % near.entity_id, arena.player_position + Vector2(150.0, 0.0))
+	_place(arena, "enemy/%d" % near.entity_id, arena.session.player_position() + Vector2(150.0, 0.0))
 	_expect(_cast(arena, "hunter_mark"), "hunter mark rejected a target on the range boundary", failures)
 	near.health = 0.0
 	fixture.step(arena)
@@ -120,13 +120,13 @@ func _test_hunter_mark(arena: Node, failures: Array[String]) -> void:
 
 func _test_mark_priority_and_damage(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var first = arena.enemies[0]
-	var marked = arena.enemies[1]
-	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(140.0, 0.0))
-	_place(arena, "enemy/%d" % marked.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	var first = arena.session.encounter_director.enemies[0]
+	var marked = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % first.entity_id, arena.session.player_position() + Vector2(140.0, 0.0))
+	_place(arena, "enemy/%d" % marked.entity_id, arena.session.player_position() + Vector2(80.0, 0.0))
 	_expect(_cast(arena, "hunter_mark") and _player(arena).marked_entity_id == marked.entity_id, "priority setup failed to mark requested target", failures)
-	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(20.0, 0.0))
-	var base_damage: float = float(arena.locked_payload) * float(arena.current_model().total_events_float)
+	_place(arena, "enemy/%d" % first.entity_id, arena.session.player_position() + Vector2(20.0, 0.0))
+	var base_damage: float = float(arena.session.locked_payload) * float(arena.current_model().total_events_float)
 	first.health = base_damage * 4.0
 	marked.health = base_damage * 4.0
 	var first_before: float = first.health
@@ -138,8 +138,8 @@ func _test_mark_priority_and_damage(arena: Node, failures: Array[String]) -> voi
 
 func _test_action_timeline_and_buffer(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena, {"v": 400.0})
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(90.0, 0.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	var health_before: float = target.health
@@ -149,28 +149,28 @@ func _test_action_timeline_and_buffer(arena: Node, failures: Array[String]) -> v
 	var windup_ui: Dictionary = arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 	_expect(String(windup_ui.label) == "Draw" and int(windup_ui.phase_remaining_ticks) == Timeline.WINDUP_TICKS, "timeline: HUD did not expose the full windup window", failures)
 	_expect(int(arena.presentation.animations.ranger_state(arena.gameplay_snapshot()).shoot_ticks) == 0, "timeline: shoot animation did not start on the accepted action", failures)
-	var start_tick: int = arena.sim_tick
+	var start_tick: int = arena.session.sim_tick
 	var frozen_aim: Vector2 = (_player(arena).attack_origins.values()[0] as Dictionary).get("direction", Vector2.RIGHT)
 	# Reduced windup motion uses ordinary commands and the one registry motor.
 	for _tick in Timeline.WINDUP_TICKS - 1:
 		fixture.step(arena, [fixture.command(arena, "move", 0, frozen_aim)])
 	_expect(is_equal_approx(target.health, health_before), "timeline: arrow resolved before the impact tick", failures)
-	var moved_feet: Vector2 = arena.player_position
+	var moved_feet: Vector2 = arena.session.player_position()
 	var expected_release_origin: Vector2 = moved_feet + RangerAnimationScript.arrow_attachment_offset(
 		RangerAnimationScript.facing_key(_player(arena).player_facing),
 		RangerAnimationScript.shoot_frame_at_tick(Timeline.WINDUP_TICKS),
 		ArenaWorldViewScript.GAMEPLAY_TO_WORLD)
 	fixture.step(arena)
-	_expect(arena.sim_tick == start_tick + Timeline.WINDUP_TICKS and is_equal_approx(target.health, health_before) and arena.projectiles.size() == 1, "timeline: release did not create one in-flight authoritative projectile", failures)
+	_expect(arena.session.sim_tick == start_tick + Timeline.WINDUP_TICKS and is_equal_approx(target.health, health_before) and arena.projectiles.size() == 1, "timeline: release did not create one in-flight authoritative projectile", failures)
 	var released_projectile = arena.projectiles[0]
 	# Observe the spawn boundary before the same production tick advances flight.
 	var release_frame := fixture.release_frame(arena, released_projectile.action_instance_id)
 	_expect(release_frame.position == release_frame.origin and release_frame.previous_position == release_frame.origin, "timeline: release frame jumped the arrow away from the authored bow-hand socket", failures)
 	_expect(released_projectile.origin.is_equal_approx(expected_release_origin), "timeline: windup movement left the released arrow behind the current bow-hand socket", failures)
 	_expect(String(arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot())).label) == "Release", "timeline: impact tick was not exposed as Release", failures)
-	var release_tick: int = arena.sim_tick
+	var release_tick: int = arena.session.sim_tick
 	_advance_arrow_until_resolved(arena)
-	_expect(target.health < health_before and String(arena.last_attack_outcome.get("outcome", "")) == "damage" and arena.sim_tick > release_tick, "timeline: damage did not wait for projectile contact (release=%d resolved=%d outcome=%s health=%.3f/%.3f)" % [release_tick, arena.sim_tick, String(arena.last_attack_outcome.get("outcome", "")), target.health, health_before], failures)
+	_expect(target.health < health_before and String(arena.last_attack_outcome.get("outcome", "")) == "damage" and arena.session.sim_tick > release_tick, "timeline: damage did not wait for projectile contact (release=%d resolved=%d outcome=%s health=%.3f/%.3f)" % [release_tick, arena.session.sim_tick, String(arena.last_attack_outcome.get("outcome", "")), target.health, health_before], failures)
 	_expect(String(arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot())).label) == "Recovery", "timeline: recovery was not exposed as Recovery", failures)
 	var ready_tick := start_tick + Skill.PIERCING_ARROW_COOLDOWN_TICKS
 	fixture.advance_to(arena, ready_tick - Timeline.INPUT_BUFFER_TICKS)
@@ -182,151 +182,151 @@ func _test_action_timeline_and_buffer(arena: Node, failures: Array[String]) -> v
 
 func _test_piercing_arrow_frozen_impact_geometry(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var target = arena.enemies[0]
-	var actor_origin: Vector2 = arena.player_position
+	var target = arena.session.encounter_director.enemies[0]
+	var actor_origin: Vector2 = arena.session.player_position()
 	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(90.0, 22.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	var health_before: float = target.health
 	_expect(_start_frozen_arrow(arena, target, Vector2.RIGHT), "frozen impact: on-ray setup was rejected", failures)
-	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
+	fixture.advance_to(arena, arena.session.sim_tick + Timeline.WINDUP_TICKS)
 	_expect(arena.projectiles.size() == 1 and is_equal_approx(target.health, health_before), "frozen impact: release did not leave damage pending behind a real projectile", failures)
 	var projectile = arena.projectiles[0]
-	var release_tick: int = arena.sim_tick
+	var release_tick: int = arena.session.sim_tick
 	var frozen_origin: Vector2 = projectile.origin
 	var frozen_direction: Vector2 = projectile.direction
 	var frozen_speed: float = projectile.speed
 	var frozen_range: float = projectile.maximum_range
 	var frozen_damage: float = projectile.ordinary_damage
-	var frozen_build: Dictionary = arena.framework_resolved_build.duplicate(true)
+	var frozen_build: Dictionary = arena.session.framework_resolved_build.duplicate(true)
 	## Contract state cannot retarget or rescale an arrow after release.
-	arena.framework_resolved_build = fixture.build({"d": 1.0, "damage": 1.0, "v": 1.0})
+	arena.session.framework_resolved_build = fixture.build({"d": 1.0, "damage": 1.0, "v": 1.0})
 	_advance_arrow_until_resolved(arena)
-	arena.framework_resolved_build = frozen_build
+	arena.session.framework_resolved_build = frozen_build
 	_expect(target.health < health_before and String(arena.last_attack_outcome.get("outcome", "")) == "damage", "frozen impact: swept projectile did not damage its intended target", failures)
 	_expect(is_equal_approx(health_before - target.health, frozen_damage), "frozen impact: post-release build changes altered projectile damage", failures)
-	_expect(arena.sim_tick > release_tick and arena.projectiles.is_empty(), "frozen impact: projectile resolved without fixed-tick travel", failures)
-	_expect(frozen_speed > 0.0 and is_equal_approx(frozen_range, arena.locked_targeting_distance), "frozen impact: release did not freeze speed and range", failures)
+	_expect(arena.session.sim_tick > release_tick and arena.projectiles.is_empty(), "frozen impact: projectile resolved without fixed-tick travel", failures)
+	_expect(frozen_speed > 0.0 and is_equal_approx(frozen_range, arena.session.locked_targeting_distance), "frozen impact: release did not freeze speed and range", failures)
 	var contact: Vector2 = arena.last_attack_outcome.get("contact_point", Vector2.ZERO)
 	_expect(absf((contact - frozen_origin).cross(frozen_direction)) < 0.01, "frozen impact: contact left the frozen arrow path", failures)
 	_expect(not arena.presentation.feedback.traces.is_empty() and arena.presentation.feedback.traces[0].from == contact, "frozen impact: hit effect redrew an instant origin-to-target trace", failures)
 
 	_configure_enemies(arena)
-	target = arena.enemies[0]
-	actor_origin = arena.player_position
+	target = arena.session.encounter_director.enemies[0]
+	actor_origin = arena.session.player_position()
 	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 22.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	health_before = target.health
 	_expect(_start_frozen_arrow(arena, target, Vector2.RIGHT), "frozen impact: lateral-miss setup was rejected", failures)
 	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 220.0))
-	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
+	fixture.advance_to(arena, arena.session.sim_tick + Timeline.WINDUP_TICKS)
 	projectile = arena.projectiles[0]
 	frozen_origin = projectile.origin
 	frozen_direction = projectile.direction
 	_advance_arrow_until_resolved(arena)
 	_expect(is_equal_approx(target.health, health_before) and String(arena.last_attack_outcome.get("outcome", "")) == "miss", "frozen impact: laterally moved target was damaged", failures)
-	_expect((arena.last_attack_outcome.get("contact_point", Vector2.ZERO) as Vector2).is_equal_approx(frozen_origin + frozen_direction * arena.locked_targeting_distance), "frozen impact: lateral miss did not stop at frozen world range", failures)
+	_expect((arena.last_attack_outcome.get("contact_point", Vector2.ZERO) as Vector2).is_equal_approx(frozen_origin + frozen_direction * arena.session.locked_targeting_distance), "frozen impact: lateral miss did not stop at frozen world range", failures)
 	_expect(arena.presentation.feedback.traces.is_empty(), "frozen impact: a miss fabricated an impact trace", failures)
 
 	_configure_enemies(arena)
-	target = arena.enemies[0]
-	actor_origin = arena.player_position
+	target = arena.session.encounter_director.enemies[0]
+	actor_origin = arena.session.player_position()
 	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(60.0, 22.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	health_before = target.health
 	_expect(_start_frozen_arrow(arena, target, Vector2.RIGHT), "frozen impact: range-miss setup was rejected", failures)
-	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(arena.locked_targeting_distance + 40.0, 22.0))
-	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
+	_place(arena, "enemy/%d" % target.entity_id, actor_origin + Vector2(arena.session.locked_targeting_distance + 40.0, 22.0))
+	fixture.advance_to(arena, arena.session.sim_tick + Timeline.WINDUP_TICKS)
 	projectile = arena.projectiles[0]
 	frozen_origin = projectile.origin
 	frozen_direction = projectile.direction
 	_advance_arrow_until_resolved(arena)
 	_expect(is_equal_approx(target.health, health_before) and String(arena.last_attack_outcome.get("outcome", "")) == "miss", "frozen impact: target moved beyond frozen range was damaged", failures)
-	_expect((arena.last_attack_outcome.get("contact_point", Vector2.ZERO) as Vector2).is_equal_approx(frozen_origin + frozen_direction * arena.locked_targeting_distance), "frozen impact: range miss did not resolve at frozen range", failures)
+	_expect((arena.last_attack_outcome.get("contact_point", Vector2.ZERO) as Vector2).is_equal_approx(frozen_origin + frozen_direction * arena.session.locked_targeting_distance), "frozen impact: range miss did not resolve at frozen range", failures)
 
 
 func _test_projectile_entity_bound(arena: Node, failures: Array[String]) -> void:
 	# A slow frozen projectile build keeps real arrows in flight across casts.
 	_configure_enemies(arena, {"v": 1.0})
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(80.0, 0.0))
 	target.health = 1.0e30
 	target.maximum_health = target.health
-	for _index in range(arena.combat_system.MAX_ACTIVE_PIERCING_PROJECTILES + 1):
+	for _index in range(arena.session.combat_system.MAX_ACTIVE_PIERCING_PROJECTILES + 1):
 		fixture.wait_ready(arena)
 		var receipt := fixture.cast(arena, "piercing_arrow", target.entity_id, Vector2.RIGHT)
 		_expect(bool(receipt.get("accepted", false)), "projectile bound: real cast setup failed", failures)
-		fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
-	_expect(arena.projectiles.size() == arena.combat_system.MAX_ACTIVE_PIERCING_PROJECTILES, "projectile bound: active arrow entities exceeded their fixed cap", failures)
+		fixture.advance_to(arena, arena.session.sim_tick + Timeline.WINDUP_TICKS)
+	_expect(arena.projectiles.size() == arena.session.combat_system.MAX_ACTIVE_PIERCING_PROJECTILES, "projectile bound: active arrow entities exceeded their fixed cap", failures)
 	_expect(String(arena.last_attack_outcome.get("reason", "")) == "projectile_limit", "projectile bound: overflow did not resolve deterministically", failures)
 
 
 func _test_kill_cancels_only_matching_buffered_arrow(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena, {"v": 50.0})
-	var first = arena.enemies[0]
-	var second = arena.enemies[1]
-	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(60.0, 0.0))
-	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	var first = arena.session.encounter_director.enemies[0]
+	var second = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % first.entity_id, arena.session.player_position() + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.session.player_position() + Vector2(90.0, 0.0))
 	first.health = 1.0
 	first.maximum_health = 1.0
 	second.health = 1.0e12
 	second.maximum_health = second.health
 	var initial := fixture.cast(arena, "piercing_arrow", first.entity_id)
-	var start_tick: int = arena.sim_tick
+	var start_tick: int = arena.session.sim_tick
 	fixture.advance_to(arena, start_tick + Timeline.WINDUP_TICKS)
-	_expect(arena.projectiles.size() == 1 and first in arena.enemies, "kill buffer: release damaged before projectile contact", failures)
+	_expect(arena.projectiles.size() == 1 and first in arena.session.encounter_director.enemies, "kill buffer: release damaged before projectile contact", failures)
 	fixture.advance_to(arena, start_tick + Skill.PIERCING_ARROW_COOLDOWN_TICKS - Timeline.INPUT_BUFFER_TICKS)
 	var buffered: Dictionary = arena.request_player_cast("piercing_arrow", first.entity_id)
 	_expect(String(buffered.get("status", "")) == "buffered" and int(buffered.get("start_tick", -1)) == start_tick + Skill.PIERCING_ARROW_COOLDOWN_TICKS, "kill buffer: same-target request was not queued inside its window", failures)
 	var buffered_request_id := int(buffered.get("request_id", 0))
 	_advance_arrow_until_resolved(arena)
-	_expect(bool(initial.get("accepted", false)) and first not in arena.enemies, "kill buffer: first arrow did not kill the first target", failures)
+	_expect(bool(initial.get("accepted", false)) and first not in arena.session.encounter_director.enemies, "kill buffer: first arrow did not kill the first target", failures)
 	_expect(not arena.presentation.feedback.attack_request_sources.has(buffered_request_id), "kill buffer: canceled request retained its input source", failures)
 	fixture.advance_to(arena, 20)
 	var accepted_count := 0
 	var miss_count := 0
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "action_accepted" and String(event.get("actor_id", "")) == "ranger":
 			accepted_count += 1
 		if String(event.get("type", "")) == "attack_resolved" and String(event.get("outcome", "")) == "miss":
 			miss_count += 1
-	_expect(second in arena.enemies and not arena.battle_over, "kill buffer: surviving second enemy incorrectly ended the battle", failures)
+	_expect(second in arena.session.encounter_director.enemies and not arena.session.is_battle_over(), "kill buffer: surviving second enemy incorrectly ended the battle", failures)
 	_expect(arena.shots == 1 and accepted_count == 1 and miss_count == 0, "kill buffer: canceled request started or resolved after the kill", failures)
 
 	# Killing one target preserves a follow-up queued for a different living entity.
 	_configure_enemies(arena, {"v": 50.0})
-	first = arena.enemies[0]
-	second = arena.enemies[1]
-	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(60.0, 0.0))
-	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(90.0, 0.0))
+	first = arena.session.encounter_director.enemies[0]
+	second = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % first.entity_id, arena.session.player_position() + Vector2(60.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.session.player_position() + Vector2(90.0, 0.0))
 	first.health = 1.0
 	second.health = 1.0e12
 	fixture.cast(arena, "piercing_arrow", first.entity_id)
-	start_tick = arena.sim_tick
+	start_tick = arena.session.sim_tick
 	fixture.advance_to(arena, start_tick + Skill.PIERCING_ARROW_COOLDOWN_TICKS - Timeline.INPUT_BUFFER_TICKS)
 	buffered = arena.request_player_cast("piercing_arrow", second.entity_id)
 	_expect(String(buffered.get("status", "")) == "buffered", "kill buffer: different-target follow-up was not queued", failures)
 	_advance_arrow_until_resolved(arena)
-	_expect(first not in arena.enemies and int(_player(arena).timeline.buffered.get("target_entity_id", 0)) == second.entity_id,
+	_expect(first not in arena.session.encounter_director.enemies and int(_player(arena).timeline.buffered.get("target_entity_id", 0)) == second.entity_id,
 		"kill buffer: first target death canceled a different living target's buffer", failures)
-	fixture.advance_to(arena, int(buffered.get("start_tick", arena.sim_tick)) + Timeline.WINDUP_TICKS)
+	fixture.advance_to(arena, int(buffered.get("start_tick", arena.session.sim_tick)) + Timeline.WINDUP_TICKS)
 	_advance_arrow_until_resolved(arena)
-	_expect(second in arena.enemies and arena.shots == 2 and arena.arrow_hits == 2,
+	_expect(second in arena.session.encounter_director.enemies and arena.shots == 2 and arena.arrow_hits == 2,
 		"kill buffer: preserved follow-up did not produce its second real contact", failures)
 
 
 func _test_same_tick_runtime_arbitration(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
 	fixture.drive(arena, {"input": true})
-	arena.in_arena = true
-	arena.command_source.dodge_requested = true
-	arena.command_source.dash_requested = true
+	arena.session.in_arena = true
+	arena.session.command_source.dodge_requested = true
+	arena.session.command_source.dash_requested = true
 	arena.step_tick()
 	_expect(_player(arena).dodge_remaining_ticks > 0 and _player(arena).dash_remaining_ticks == 0, "arbitration: same-tick dodge and dash both changed mobility authority", failures)
 	var dash_rejected := false
-	for receipt: Dictionary in arena.last_command_receipts:
+	for receipt: Dictionary in arena.session.last_command_receipts:
 		var command: Dictionary = receipt.get("command", {})
 		if String(command.get("kind", "")) == Protocol.KIND_CAST and String(command.get("ability_id", "")) == Protocol.ABILITY_DASH:
 			dash_rejected = String(receipt.get("reason", "")) == "action_conflict"
@@ -334,15 +334,15 @@ func _test_same_tick_runtime_arbitration(arena: Node, failures: Array[String]) -
 
 	_configure_enemies(arena)
 	fixture.drive(arena, {"input": true})
-	arena.in_arena = true
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
-	var base_damage: float = float(arena.locked_payload) * float(arena.current_model().total_events_float)
+	arena.session.in_arena = true
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(60.0, 0.0))
+	var base_damage: float = float(arena.session.locked_payload) * float(arena.current_model().total_events_float)
 	target.health = base_damage * 10.0
 	target.maximum_health = target.health
 	var before: float = target.health
-	arena.command_source.hunter_mark_requested = true
-	arena.command_source.attack_requested = true
+	arena.session.command_source.hunter_mark_requested = true
+	arena.session.command_source.attack_requested = true
 	arena.step_tick()
 	var active: Dictionary = _player(arena).timeline.active
 	_expect(_player(arena).marked_entity_id == target.entity_id and int(active.get("target_entity_id", 0)) == target.entity_id, "arbitration: mark was not committed before the compatible arrow", failures)
@@ -359,19 +359,19 @@ func _test_same_tick_runtime_arbitration(arena: Node, failures: Array[String]) -
 
 func _test_proxy_decision_state_runtime(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	arena.selected_mode = "Auto"
+	arena.session.selected_mode = "Auto"
 	_start_proxy(arena, _white_proxy_build())
-	var first = arena.enemies[0]
-	var second = arena.enemies[1]
-	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(50.0, 0.0))
-	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	var first = arena.session.encounter_director.enemies[0]
+	var second = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % first.entity_id, arena.session.player_position() + Vector2(50.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.session.player_position() + Vector2(80.0, 0.0))
 	var first_commands: Array[Dictionary] = arena.player_commands._auto_commands()
 	_expect(_cast_target(first_commands) == first.entity_id and _cast_has_aim(first_commands), "proxy: first perception did not emit an explicit target and aim", failures)
-	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(90.0, 0.0))
-	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % first.entity_id, arena.session.player_position() + Vector2(90.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.session.player_position() + Vector2(20.0, 0.0))
 	fixture.advance_to(arena, 29)
 	arena.player_commands._auto_commands()
-	var retained_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
+	var retained_state: Dictionary = arena.session.proxy_intent_system.decision_state_snapshot()
 	_expect(int(retained_state.get("target_entity_id", 0)) == first.entity_id
 			and int(retained_state.get("next_perception_tick", 0)) == 30
 			and arena.player_commands._proxy_trace_snapshot().has("perception:retain_target"),
@@ -379,14 +379,14 @@ func _test_proxy_decision_state_runtime(arena: Node, failures: Array[String]) ->
 	fixture.advance_to(arena, 30)
 	var refreshed_commands: Array[Dictionary] = arena.player_commands._auto_commands()
 	_expect(_cast_target(refreshed_commands) == second.entity_id, "proxy: target did not refresh on the public perception tick", failures)
-	arena.selected_mode = "Manual"
+	arena.session.selected_mode = "Manual"
 
 
 func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) -> void:
 	arena.test_session = true
-	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
-	arena.framework_resolved_proxy_build = _white_proxy_build()
-	arena.framework_room = {
+	arena.session.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
+	arena.session.framework_resolved_proxy_build = _white_proxy_build()
+	arena.session.framework_room = {
 		"room_id": "test.ranger.proxy_barrier",
 		"layout_id": "rectangle_arena",
 		"objective_id": "hunt_elite",
@@ -396,22 +396,22 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 		"boss_id": "",
 		"drop_tags": [],
 	}
-	fixture.reset(arena, arena.framework_room, fixture.build({"d": 100.0, "max_health": 1.0e9}))
+	fixture.reset(arena, arena.session.framework_room, fixture.build({"d": 100.0, "max_health": 1.0e9}))
 	fixture.drive(arena)
 	_place(arena, "ranger", SKILL_ORIGIN)
-	var elite = arena.enemies[0]
-	var secondary = arena.enemies[1]
-	_place(arena, "enemy/%d" % elite.entity_id, arena.player_position + Vector2(20.0, 0.0))
-	_place(arena, "enemy/%d" % secondary.entity_id, arena.player_position + Vector2(60.0, 0.0))
-	arena.selected_mode = "Auto"
-	_start_proxy(arena, arena.framework_resolved_proxy_build)
+	var elite = arena.session.encounter_director.enemies[0]
+	var secondary = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % elite.entity_id, arena.session.player_position() + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % secondary.entity_id, arena.session.player_position() + Vector2(60.0, 0.0))
+	arena.session.selected_mode = "Auto"
+	_start_proxy(arena, arena.session.framework_resolved_proxy_build)
 	arena.update_room_rules_tick()
 	var public_snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
 	var elite_is_publicly_blocked := false
 	for visible_enemy: Dictionary in public_snapshot.visible_enemies:
 		if int(visible_enemy.get("entity_id", 0)) == elite.entity_id:
 			elite_is_publicly_blocked = not bool(visible_enemy.get("targetable", true))
-	_expect(arena.elite_barrier_active and elite_is_publicly_blocked, "proxy legality: active elite barrier was not projected as current non-targetable state", failures)
+	_expect(arena.session.encounter_director.elite_barrier_active and elite_is_publicly_blocked, "proxy legality: active elite barrier was not projected as current non-targetable state", failures)
 	_expect(not public_snapshot.has("elite_barrier_active")
 		and "periodic_barrier" not in str(public_snapshot)
 		and "classification_tags" not in str(public_snapshot),
@@ -420,26 +420,26 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 
 	## Opening the barrier does not grant the white core an extra perception sample.
 	## It may reacquire only on the next public 30-tick horizon.
-	arena.enemies.erase(secondary)
-	_start_proxy(arena, arena.framework_resolved_proxy_build)
+	arena.session.encounter_director.enemies.erase(secondary)
+	_start_proxy(arena, arena.session.framework_resolved_proxy_build)
 	arena.update_room_rules_tick()
 	_expect(_cast_target(arena.player_commands._auto_commands()) == 0, "proxy legality: only shielded target still produced an attack", failures)
 	fixture.advance_to(arena, 20)
 	arena.update_room_rules_tick()
-	_expect(not arena.elite_barrier_active and _cast_target(arena.player_commands._auto_commands()) == 0, "proxy legality: barrier opening leaked an out-of-cadence perception refresh", failures)
+	_expect(not arena.session.encounter_director.elite_barrier_active and _cast_target(arena.player_commands._auto_commands()) == 0, "proxy legality: barrier opening leaked an out-of-cadence perception refresh", failures)
 	fixture.advance_to(arena, 30)
 	_expect(_cast_target(arena.player_commands._auto_commands()) == elite.entity_id, "proxy legality: next public horizon did not reacquire the opened elite", failures)
-	arena.selected_mode = "Manual"
+	arena.session.selected_mode = "Manual"
 
 
 func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	arena.selected_mode = "Auto"
-	var ordinary = arena.enemies[0]
-	var elite = arena.enemies[1]
-	_place(arena, "enemy/%d" % ordinary.entity_id, arena.player_position + Vector2(20.0, 0.0))
-	_place(arena, "enemy/%d" % elite.entity_id, arena.player_position + Vector2(60.0, 0.0))
-	arena.elite_entity_id = elite.entity_id
+	arena.session.selected_mode = "Auto"
+	var ordinary = arena.session.encounter_director.enemies[0]
+	var elite = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % ordinary.entity_id, arena.session.player_position() + Vector2(20.0, 0.0))
+	_place(arena, "enemy/%d" % elite.entity_id, arena.session.player_position() + Vector2(60.0, 0.0))
+	arena.session.encounter_director.elite_entity_id = elite.entity_id
 	var marking_build := _proxy_build("marking_prism", "direct_gait")
 	_start_proxy(arena, marking_build)
 	var marking_snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
@@ -450,10 +450,10 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 	_expect("elite" in elite_tags and _cast_target(arena.player_commands._auto_commands()) == elite.entity_id,
 		"resolved proxy: marking prism did not receive public classification and prioritize the elite", failures)
 
-	_place(arena, "enemy/%d" % ordinary.entity_id, arena.player_position + Vector2(55.0, 0.0))
-	arena.enemies.clear()
-	arena.enemies.append(ordinary)
-	arena.elite_entity_id = 0
+	_place(arena, "enemy/%d" % ordinary.entity_id, arena.session.player_position() + Vector2(55.0, 0.0))
+	arena.session.encounter_director.enemies.clear()
+	arena.session.encounter_director.enemies.append(ordinary)
+	arena.session.encounter_director.elite_entity_id = 0
 	var near_build := _proxy_build("near_enemy_horizon", "distance_keeping_gait", "near")
 	var far_build := _proxy_build("near_enemy_horizon", "distance_keeping_gait", "far")
 	_start_proxy(arena, near_build)
@@ -468,30 +468,31 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 		"resolved proxy: far distance band did not retreat at the same relative distance", failures)
 	_expect(not near_hash.is_empty() and near_hash != far_hash,
 		"resolved proxy: effective distance setting did not change Main semantic state", failures)
-	arena.selected_mode = "Manual"
-	arena.framework_resolved_proxy_build = _white_proxy_build()
+	arena.session.selected_mode = "Manual"
+	arena.session.framework_resolved_proxy_build = _white_proxy_build()
 
 
 func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	arena.test_session = true
-	arena.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
-	arena.framework_resolved_proxy_build = _white_proxy_build()
-	fixture.reset(arena, arena.framework_room, fixture.build({"d": 100.0, "max_health": 1.0e9, "damage": 1.0}))
+	arena.session.framework_active_build = {"skills": ["piercing_arrow", "hunter_mark", "dash"]}
+	arena.session.framework_resolved_proxy_build = _white_proxy_build()
+	fixture.reset(arena, arena.session.framework_room, fixture.build({"d": 100.0, "max_health": 1.0e9, "damage": 1.0}))
 	fixture.drive(arena, {"input": true, "enemies": true})
 	_place(arena, "ranger", SKILL_ORIGIN)
-	arena.selected_mode = "Auto"
-	arena.in_arena = true
+	arena.session.selected_mode = "Auto"
+	arena.session.in_arena = true
+	# Left on the MainArena forwarder: its setter is a deliberate no-op pass.
 	arena.battle_over = false
-	_start_proxy(arena, arena.framework_resolved_proxy_build)
-	arena.combat_event_stream.reset()
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	_start_proxy(arena, arena.session.framework_resolved_proxy_build)
+	arena.session.combat_event_stream.reset()
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(20.0, 0.0))
 	target.health = 1.0e30
 	target.maximum_health = target.health
-	var start_player: Vector2 = arena.player_position
+	var start_player: Vector2 = arena.session.player_position()
 	var start_target: Vector2 = target.position
 	var start_distance: float = start_player.distance_to(start_target)
-	var retreat_exit_distance: float = arena.locked_targeting_distance * 0.38
+	var retreat_exit_distance: float = arena.session.locked_targeting_distance * 0.38
 	var public_snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
 	var public_enemy: Dictionary = public_snapshot.visible_enemies[0]
 	_expect(not public_snapshot.has("enemy_tactics") and not public_snapshot.has("room_id") and not public_enemy.has("kind_id") and not public_enemy.has("action_state"), "proxy retreat: runtime exposed hidden enemy or room state", failures)
@@ -506,17 +507,17 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	var accepted_cast := false
 	var observed_bands: Array[String] = []
 	for step in 30:
-		var before_player: Vector2 = arena.player_position
+		var before_player: Vector2 = arena.session.player_position()
 		arena.step_tick()
-		var distance: float = arena.player_position.distance_to(target.position)
+		var distance: float = arena.session.player_position().distance_to(target.position)
 		maximum_distance = maxf(maximum_distance, distance)
-		var proxy_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
+		var proxy_state: Dictionary = arena.session.proxy_intent_system.decision_state_snapshot()
 		var band := String(proxy_state.get("movement_band", ""))
 		observed_bands.append(band)
 		if step == 0:
-			first_displacement = arena.player_position - before_player
-			first_trace = arena.proxy_intent_system.trace_snapshot()
-		for receipt: Dictionary in arena.last_command_receipts:
+			first_displacement = arena.session.player_position() - before_player
+			first_trace = arena.session.proxy_intent_system.trace_snapshot()
+		for receipt: Dictionary in arena.session.last_command_receipts:
 			if String(receipt.get("status", "")) != Protocol.STATUS_ACCEPTED:
 				continue
 			var command: Dictionary = receipt.get("command", {})
@@ -537,7 +538,7 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 
 	var ranger_action_accepted := false
 	var ranger_action_impacted := false
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("actor_id", "")) != "ranger" or String(event.get("action_id", "")) != Protocol.ABILITY_PIERCING_ARROW:
 			continue
 		if String(event.get("type", "")) == "action_accepted":
@@ -550,21 +551,21 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	_expect(accepted_cast and ranger_action_accepted and ranger_action_impacted, "proxy retreat: shared cast timeline did not accept and impact while range control was active", failures)
 	_expect(saw_retreat and saw_hold_after_retreat and maximum_distance >= retreat_exit_distance, "proxy retreat: real distance never crossed the retreat exit band before hold: %s / %.3f" % [str(observed_bands), maximum_distance], failures)
 	_expect(hold_streak >= 4, "proxy retreat: retreat-to-hold transition jittered during the four-tick stability window: %s" % str(observed_bands), failures)
-	arena.selected_mode = "Manual"
+	arena.session.selected_mode = "Manual"
 
 
 func _test_proxy_target_death_reacquire_state_reset(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena, {"damage": 1000000.0})
 	fixture.drive(arena, {"input": true, "enemies": true})
-	arena.framework_resolved_proxy_build = _white_proxy_build()
-	arena.selected_mode = "Auto"
-	_start_proxy(arena, arena.framework_resolved_proxy_build)
-	var first = arena.enemies[0]
-	var second = arena.enemies[1]
-	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	arena.session.framework_resolved_proxy_build = _white_proxy_build()
+	arena.session.selected_mode = "Auto"
+	_start_proxy(arena, arena.session.framework_resolved_proxy_build)
+	var first = arena.session.encounter_director.enemies[0]
+	var second = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % first.entity_id, arena.session.player_position() + Vector2(20.0, 0.0))
 	first.health = 1.0
 	first.maximum_health = first.health
-	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(70.0, 0.0))
+	_place(arena, "enemy/%d" % second.entity_id, arena.session.player_position() + Vector2(70.0, 0.0))
 	second.health = 1.0e30
 	second.maximum_health = second.health
 	for enemy in [first, second]:
@@ -578,10 +579,10 @@ func _test_proxy_target_death_reacquire_state_reset(arena: Node, failures: Array
 	var first_died_through_main := false
 	for _tick in 16:
 		arena.step_tick()
-		var proxy_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
+		var proxy_state: Dictionary = arena.session.proxy_intent_system.decision_state_snapshot()
 		if int(proxy_state.get("target_entity_id", 0)) == first.entity_id and String(proxy_state.get("movement_band", "")) == "retreat":
 			saw_retreat_on_first = true
-		if first not in arena.enemies:
+		if first not in arena.session.encounter_director.enemies:
 			first_died_through_main = true
 			break
 	_expect(saw_retreat_on_first, "proxy reacquire: first target never committed retreat movement state", failures)
@@ -589,17 +590,17 @@ func _test_proxy_target_death_reacquire_state_reset(arena: Node, failures: Array
 	if first_died_through_main:
 		## A distance between retreat enter and exit distinguishes a reset hold band
 		## from an inherited retreat band on the target-missing reacquire tick.
-		_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(30.0, 0.0))
+		_place(arena, "enemy/%d" % second.entity_id, arena.session.player_position() + Vector2(30.0, 0.0))
 		arena.step_tick()
-		var proxy_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
+		var proxy_state: Dictionary = arena.session.proxy_intent_system.decision_state_snapshot()
 		_expect(int(proxy_state.get("target_entity_id", 0)) == second.entity_id, "proxy reacquire: target death did not reacquire the remaining enemy through real Main", failures)
 		_expect(String(proxy_state.get("movement_band", "")) == "hold", "proxy reacquire: new target inherited the dead target's retreat movement band", failures)
-	arena.selected_mode = "Manual"
+	arena.session.selected_mode = "Manual"
 
 
 func _test_dodge_facing_integration(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var start: Vector2 = arena.player_position
+	var start: Vector2 = arena.session.player_position()
 	_expect(_dodge(arena, Vector2.UP), "dodge facing: upward dodge was rejected", failures)
 	_expect(_player(arena).dodge_direction == Vector2.UP and _player(arena).player_facing == Vector2.UP, "dodge facing: authority and facing did not commit the upward direction together", failures)
 	_expect(_player(arena).dodge_remaining_ticks == 5 and _player(arena).dodge_cooldown_ticks == 35, "dodge facing: fixed five-tick duration or 35-tick cooldown changed", failures)
@@ -609,41 +610,41 @@ func _test_dodge_facing_integration(arena: Node, failures: Array[String]) -> voi
 			fixture.step(arena)
 		var frame: Dictionary = arena.presentation.animations.ranger_animation.resolve(arena.presentation.animations.ranger_state(arena.gameplay_snapshot()))
 		_expect(String(frame.get("action", "")) == "dodge" and String(frame.get("facing", "")) == "north" and String(frame.get("clip", "")) == "ranger.north.dodge", "dodge facing: active tick %d did not resolve through Main state as north dodge" % active_tick, failures)
-		var tick_displacement: Vector2 = arena.player_position - previous
+		var tick_displacement: Vector2 = arena.session.player_position() - previous
 		_expect(is_zero_approx(tick_displacement.x) and tick_displacement.y < 0.0, "dodge facing: active tick %d had a non-upward displacement component" % active_tick, failures)
-		previous = arena.player_position
-	var displacement: Vector2 = arena.player_position - start
+		previous = arena.session.player_position()
+	var displacement: Vector2 = arena.session.player_position() - start
 	var expected_distance: float = Skill.DODGE_SPEED * arena.SIM_STEP_SECONDS * float(Skill.DODGE_DURATION_TICKS)
 	_expect(is_zero_approx(displacement.x) and absf(displacement.y + expected_distance) <= 0.01, "dodge facing: five ticks did not move exclusively upward by the fixed distance", failures)
 	fixture.wait_ready(arena, "dodge_cooldown_ticks")
 	fixture.step(arena, [fixture.command(arena, "move", 0, Vector2.LEFT)])
 	_expect(_dodge(arena, Vector2.ZERO), "dodge facing: directionless dodge was rejected", failures)
 	_expect(_player(arena).dodge_direction == Vector2.LEFT and _player(arena).player_facing == Vector2.LEFT, "dodge facing: directionless dodge lost the pre-dodge facing fallback", failures)
-	fixture.advance_to(arena, arena.sim_tick + Skill.DODGE_DURATION_TICKS)
+	fixture.advance_to(arena, arena.session.sim_tick + Skill.DODGE_DURATION_TICKS)
 	var idle_frame: Dictionary = arena.presentation.animations.ranger_animation.resolve(arena.presentation.animations.ranger_state(arena.gameplay_snapshot()))
 	_expect(String(idle_frame.get("action", "")) == "idle" and String(idle_frame.get("facing", "")) == "west", "dodge facing: idle did not retain the last dodge direction", failures)
 	fixture.wait_ready(arena, "dodge_cooldown_ticks")
-	var damage: Dictionary = arena.player_combat_rules.apply_damage(arena.sim_tick, arena.player_health - 50.0, "fixture/setup", arena.player_position)
+	var damage: Dictionary = arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, arena.player_health - 50.0, "fixture/setup", arena.session.player_position())
 	_expect(bool(damage.get("accepted", false)), "dodge facing: health setup damage was rejected", failures)
 	_expect(_dodge(arena, Vector2.ZERO) and _player(arena).dodge_direction == Vector2.LEFT and _player(arena).player_facing == Vector2.LEFT, "dodge facing: the next directionless action did not inherit the last dodge direction", failures)
-	arena.player_combat_rules.apply_damage(arena.sim_tick, 7.0, "fixture/damage", arena.player_position)
+	arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 7.0, "fixture/damage", arena.session.player_position())
 	_expect(is_equal_approx(arena.player_health, 50.0), "dodge facing: active dodge lost its invulnerability", failures)
 
 
 func _test_dodge_interrupts_arrow(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(60.0, 0.0))
 	target.health = 1.0e12
 	target.maximum_health = target.health
 	var health_before: float = target.health
 	_expect(_cast_skill_one(arena), "dodge interrupt: arrow windup setup was rejected", failures)
 	var active_before: Dictionary = _player(arena).timeline.active
-	var impact_tick: int = int(active_before.get("start_tick", arena.sim_tick)) + Timeline.WINDUP_TICKS
+	var impact_tick: int = int(active_before.get("start_tick", arena.session.sim_tick)) + Timeline.WINDUP_TICKS
 	_expect(String(_player(arena).action_phase) == Timeline.PHASE_WINDUP, "dodge interrupt: arrow was not in windup before the dodge", failures)
 	_expect(_dodge(arena, Vector2.LEFT), "dodge interrupt: lateral dodge during windup was rejected", failures)
 	var interrupt_count := 0
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "action_interrupted" and String(event.get("action_id", "")) == "piercing_arrow":
 			interrupt_count += 1
 	_expect(interrupt_count == 1 and _player(arena).timeline.active.is_empty(), "dodge interrupt: timeline did not project exactly one interruption and clear the active arrow", failures)
@@ -651,7 +652,7 @@ func _test_dodge_interrupts_arrow(arena: Node, failures: Array[String]) -> void:
 	_expect(_player(arena).player_facing == Vector2.LEFT and String(dodge_frame.get("action", "")) == "dodge" and String(dodge_frame.get("facing", "")) == "west" and String(dodge_frame.get("clip", "")) == "ranger.west.dodge", "dodge interrupt: facing and dodge animation did not switch sideways immediately", failures)
 	fixture.advance_to(arena, impact_tick + 1)
 	var impact_count := 0
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "action_impact" and String(event.get("action_id", "")) == "piercing_arrow":
 			impact_count += 1
 	_expect(impact_count == 0 and is_equal_approx(target.health, health_before), "dodge interrupt: interrupted arrow still impacted after its original impact tick", failures)
@@ -659,15 +660,15 @@ func _test_dodge_interrupts_arrow(arena: Node, failures: Array[String]) -> void:
 
 func _test_mobility_boundary_buffer(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(60.0, 0.0))
 	_expect(_cast_skill_one(arena), "mobility buffer: recovery setup arrow was rejected", failures)
-	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS + 1)
+	fixture.advance_to(arena, arena.session.sim_tick + Timeline.WINDUP_TICKS + 1)
 	_expect(_player(arena).action_phase == Timeline.PHASE_RECOVERY, "mobility buffer: arrow did not enter recovery", failures)
 	_expect(_dodge(arena, Vector2.LEFT), "mobility buffer: dodge during arrow recovery was lost instead of interrupting immediately", failures)
 	_configure_enemies(arena)
 	_expect(_dash(arena, Vector2.RIGHT), "mobility buffer: real dash setup failed", failures)
-	fixture.advance_to(arena, arena.sim_tick + Skill.DASH_DURATION_TICKS - 2)
+	fixture.advance_to(arena, arena.session.sim_tick + Skill.DASH_DURATION_TICKS - 2)
 	var buffered := fixture.cast(arena, "dodge")
 	_expect(_player(arena).dodge_remaining_ticks == 0 and String(buffered.get("reason", "")) == "mobility_buffered", "mobility buffer: dodge bypassed the active dash exclusion", failures)
 	fixture.step(arena)
@@ -677,23 +678,23 @@ func _test_mobility_boundary_buffer(arena: Node, failures: Array[String]) -> voi
 
 func _test_dash(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var start: Vector2 = arena.player_position
+	var start: Vector2 = arena.session.player_position()
 	_expect(_dash(arena, Vector2.UP) and _player(arena).dash_direction == Vector2.UP, "dash did not use current movement input", failures)
 	_expect(not bool(arena.request_player_cast("dash", 0, Vector2.RIGHT).get("accepted", false)), "dash repeated while already active", failures)
-	fixture.advance_to(arena, arena.sim_tick + Skill.DASH_DURATION_TICKS - 1)
-	_expect(is_equal_approx(arena.player_position.distance_to(start), Skill.DASH_TOTAL_DISTANCE), "dash total fixed-tick displacement is wrong", failures)
+	fixture.advance_to(arena, arena.session.sim_tick + Skill.DASH_DURATION_TICKS - 1)
+	_expect(is_equal_approx(arena.session.player_position().distance_to(start), Skill.DASH_TOTAL_DISTANCE), "dash total fixed-tick displacement is wrong", failures)
 	fixture.step(arena)
 	_expect(not bool(arena.request_player_cast("dash", 0, Vector2.LEFT).get("accepted", false)), "dash ignored independent cooldown", failures)
 	fixture.wait_ready(arena, "dash_cooldown_ticks")
 	fixture.step(arena, [fixture.command(arena, "move", 0, Vector2.LEFT)])
-	arena.player_combat_rules.apply_damage(arena.sim_tick, arena.player_health - 50.0, "fixture/setup", arena.player_position)
+	arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, arena.player_health - 50.0, "fixture/setup", arena.session.player_position())
 	_expect(_dash(arena, Vector2.ZERO) and _player(arena).dash_direction == Vector2.LEFT, "dash did not fall back to player facing", failures)
-	arena.player_combat_rules.apply_damage(arena.sim_tick, 7.0, "fixture/damage", arena.player_position)
+	arena.session.player_combat_rules.apply_damage(arena.session.sim_tick, 7.0, "fixture/damage", arena.session.player_position())
 	_expect(is_equal_approx(arena.player_health, 43.0), "dash incorrectly granted dodge immunity", failures)
 
 
 func _test_input_map_movement(arena: Node, failures: Array[String]) -> void:
-	arena.selected_mode = "Manual"
+	arena.session.selected_mode = "Manual"
 	Input.action_press("move_right")
 	var commands: Array[Dictionary] = arena.input_adapter.collect_commands(arena.gameplay_snapshot())
 	Input.action_release("move_right")
@@ -706,10 +707,10 @@ func _test_input_map_movement(arena: Node, failures: Array[String]) -> void:
 
 func _test_manual_pointer_exact_selection(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var left = arena.enemies[0]
-	var right = arena.enemies[1]
-	_place(arena, "enemy/%d" % left.entity_id, arena.player_position + Vector2(-80.0, 0.0))
-	_place(arena, "enemy/%d" % right.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	var left = arena.session.encounter_director.enemies[0]
+	var right = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % left.entity_id, arena.session.player_position() + Vector2(-80.0, 0.0))
+	_place(arena, "enemy/%d" % right.entity_id, arena.session.player_position() + Vector2(80.0, 0.0))
 	for target in [left, right]:
 		var anchor: Vector2 = target.position + Vector2(0.0, -22.0)
 		arena.input_adapter.capture_attack_event(_mouse_attack_event(_gameplay_to_screen(arena, anchor), true), false, arena.gameplay_snapshot())
@@ -724,7 +725,7 @@ func _test_manual_pointer_exact_selection(arena: Node, failures: Array[String]) 
 
 func _test_manual_pointer_blank_and_quick_edge(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var blank: Vector2 = arena.player_position + Vector2(0.0, 90.0)
+	var blank: Vector2 = arena.session.player_position() + Vector2(0.0, 90.0)
 	var blank_screen: Vector2 = _gameplay_to_screen(arena, blank)
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(blank_screen, true), false, arena.gameplay_snapshot())
 	_expect(_piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot())).is_empty(), "pointer blank: empty space fell back to another enemy", failures)
@@ -732,22 +733,22 @@ func _test_manual_pointer_blank_and_quick_edge(arena: Node, failures: Array[Stri
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(blank_screen, false), false, arena.gameplay_snapshot())
 
 	_configure_enemies(arena)
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(70.0, 0.0))
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(70.0, 0.0))
 	var target_screen := _gameplay_to_screen(arena, target.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(target_screen, true), false, arena.gameplay_snapshot())
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(target_screen, false), false, arena.gameplay_snapshot())
-	_expect(arena.input_adapter.manual_pointer_target_entity_id == 0 and arena.command_source.attack_requested_source == arena.ATTACK_SOURCE_POINTER, "pointer quick edge: release cleared the queued press edge", failures)
+	_expect(arena.input_adapter.manual_pointer_target_entity_id == 0 and arena.session.command_source.attack_requested_source == arena.ATTACK_SOURCE_POINTER, "pointer quick edge: release cleared the queued press edge", failures)
 	var quick_command: Dictionary = _piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot()))
 	_expect(int(quick_command.get("target_entity_id", 0)) == target.entity_id, "pointer quick edge: press/release before fixed tick lost its cast", failures)
 
 
 func _test_manual_pointer_lock_lifecycle(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var locked = arena.enemies[0]
-	var other = arena.enemies[1]
-	_place(arena, "enemy/%d" % locked.entity_id, arena.player_position + Vector2(160.0, 0.0))
-	_place(arena, "enemy/%d" % other.entity_id, arena.player_position + Vector2(30.0, -70.0))
+	var locked = arena.session.encounter_director.enemies[0]
+	var other = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % locked.entity_id, arena.session.player_position() + Vector2(160.0, 0.0))
+	_place(arena, "enemy/%d" % other.entity_id, arena.session.player_position() + Vector2(30.0, -70.0))
 	var locked_screen := _gameplay_to_screen(arena, locked.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(locked_screen, true), false, arena.gameplay_snapshot())
 	_expect(arena.input_adapter.manual_pointer_target_entity_id == locked.entity_id and arena.input_adapter.manual_pointer_status == arena.input_adapter.POINTER_STATUS_OUT_OF_RANGE, "pointer range: out-of-range click did not retain the entity lock", failures)
@@ -759,10 +760,10 @@ func _test_manual_pointer_lock_lifecycle(arena: Node, failures: Array[String]) -
 	_expect(arena.input_adapter.manual_pointer_target_entity_id == 0 and arena.input_adapter.manual_pointer_status == arena.input_adapter.POINTER_STATUS_NONE, "pointer release: lock state was not cleared", failures)
 
 	_configure_enemies(arena)
-	locked = arena.enemies[0]
-	other = arena.enemies[1]
-	_place(arena, "enemy/%d" % locked.entity_id, arena.player_position + Vector2(80.0, 0.0))
-	_place(arena, "enemy/%d" % other.entity_id, arena.player_position + Vector2(20.0, 0.0))
+	locked = arena.session.encounter_director.enemies[0]
+	other = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % locked.entity_id, arena.session.player_position() + Vector2(80.0, 0.0))
+	_place(arena, "enemy/%d" % other.entity_id, arena.session.player_position() + Vector2(20.0, 0.0))
 	locked_screen = _gameplay_to_screen(arena, locked.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(locked_screen, true), false, arena.gameplay_snapshot())
 	locked.health = 0.0
@@ -774,10 +775,10 @@ func _test_manual_pointer_lock_lifecycle(arena: Node, failures: Array[String]) -
 
 func _test_assisted_and_pointer_arbitration(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var nearest = arena.enemies[0]
-	var marked = arena.enemies[1]
-	_place(arena, "enemy/%d" % nearest.entity_id, arena.player_position + Vector2(25.0, 0.0))
-	_place(arena, "enemy/%d" % marked.entity_id, arena.player_position + Vector2(80.0, 0.0))
+	var nearest = arena.session.encounter_director.enemies[0]
+	var marked = arena.session.encounter_director.enemies[1]
+	_place(arena, "enemy/%d" % nearest.entity_id, arena.session.player_position() + Vector2(25.0, 0.0))
+	_place(arena, "enemy/%d" % marked.entity_id, arena.session.player_position() + Vector2(80.0, 0.0))
 	_expect(_cast(arena, "hunter_mark", marked.entity_id), "assisted Space: real mark setup failed", failures)
 	arena.input_adapter.capture_attack_event(_attack_key_event(true), true, arena.gameplay_snapshot())
 	_expect(_cast_target(arena.input_adapter.collect_commands(arena.gameplay_snapshot())) == marked.entity_id, "assisted Space: HUD hover or nearest target overrode the live mark", failures)
@@ -807,7 +808,7 @@ func _test_assisted_and_pointer_arbitration(arena: Node, failures: Array[String]
 
 func _test_auto_ignores_manual_device_state(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	arena.selected_mode = "Auto"
+	arena.session.selected_mode = "Auto"
 	var input_before: Dictionary = arena.input_adapter.manual_combat_input.snapshot()
 	var hash_before: String = arena.state_hash("auto_pointer_ignored")
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(Vector2(320.0, 240.0), true), false, arena.gameplay_snapshot())
@@ -816,7 +817,7 @@ func _test_auto_ignores_manual_device_state(arena: Node, failures: Array[String]
 	_expect(input_after == input_before, "auto input boundary: pointer device state entered ManualCombatInput", failures)
 	_expect(hash_after == hash_before, "auto input boundary: ignored pointer activity changed the deterministic hash", failures)
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(Vector2(320.0, 240.0), false), false, arena.gameplay_snapshot())
-	arena.selected_mode = "Manual"
+	arena.session.selected_mode = "Manual"
 
 
 func _test_pointer_camera_round_trip(arena: Node, failures: Array[String]) -> void:
@@ -829,9 +830,9 @@ func _test_pointer_camera_round_trip(arena: Node, failures: Array[String]) -> vo
 	for camera_case: Dictionary in cases:
 		_configure_enemies(arena)
 		_place(arena, "ranger", camera_case.player)
-		var target = arena.enemies[0]
-		_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(camera_case.offset))
-		arena.enemies[1].health = 0.0
+		var target = arena.session.encounter_director.enemies[0]
+		_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(camera_case.offset))
+		arena.session.encounter_director.enemies[1].health = 0.0
 		var anchor: Vector2 = target.position + Vector2(0.0, -22.0)
 		var screen: Vector2 = _gameplay_to_screen(arena, anchor)
 		var view = arena.presentation.world_view
@@ -850,12 +851,12 @@ func _test_pointer_camera_round_trip(arena: Node, failures: Array[String]) -> vo
 
 func _test_pointer_command_protocol_boundary(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var target = arena.enemies[0]
-	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, -45.0))
+	var target = arena.session.encounter_director.enemies[0]
+	_place(arena, "enemy/%d" % target.entity_id, arena.session.player_position() + Vector2(60.0, -45.0))
 	var screen := _gameplay_to_screen(arena, target.position + Vector2(0.0, -22.0))
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(screen, true), false, arena.gameplay_snapshot())
 	var command: Dictionary = _piercing_cast(arena.input_adapter.collect_commands(arena.gameplay_snapshot()))
-	var receipt: Dictionary = Protocol.validate(command, arena.sim_tick, [Protocol.ABILITY_PIERCING_ARROW])
+	var receipt: Dictionary = Protocol.validate(command, arena.session.sim_tick, [Protocol.ABILITY_PIERCING_ARROW])
 	_expect(String(command.get("kind", "")) == Protocol.KIND_CAST and String(command.get("ability_id", "")) == Protocol.ABILITY_PIERCING_ARROW, "pointer protocol: final command was not a normal piercing_arrow cast", failures)
 	_expect(int(command.get("target_entity_id", 0)) == target.entity_id and command.has("direction_x_milli") and command.has("direction_y_milli"), "pointer protocol: target or quantized direction was missing", failures)
 	_expect(String(receipt.get("status", "")) == Protocol.STATUS_ACCEPTED, "pointer protocol: generated cast failed CombatCommandProtocol validation", failures)
@@ -867,23 +868,23 @@ func _test_pointer_command_protocol_boundary(arena: Node, failures: Array[String
 func _test_held_attack_repeats_without_buffer_churn(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
 	fixture.drive(arena, {"input": true})
-	arena.in_arena = true
-	arena.combat_event_stream.reset()
+	arena.session.in_arena = true
+	arena.session.combat_event_stream.reset()
 	arena.input_adapter.manual_combat_input.reset()
-	arena.command_source.attack_requested = false
-	for enemy in arena.enemies:
-		_place(arena, "enemy/%d" % enemy.entity_id, arena.player_position + Vector2(60.0 + float(enemy.entity_id), 0.0))
+	arena.session.command_source.attack_requested = false
+	for enemy in arena.session.encounter_director.enemies:
+		_place(arena, "enemy/%d" % enemy.entity_id, arena.session.player_position() + Vector2(60.0 + float(enemy.entity_id), 0.0))
 		enemy.health = 1.0e30
 		enemy.maximum_health = enemy.health
 
 	## Cursor hover must not affect Space. One physical press should start now, then
 	## occupy exactly one future buffer slot at each 13-tick cooldown boundary.
 	arena.input_adapter.capture_attack_event(_attack_key_event(true), true, arena.gameplay_snapshot())
-	_expect(arena.command_source.attack_requested, "held attack: Space over the HUD did not queue the initial edge", failures)
+	_expect(arena.session.command_source.attack_requested, "held attack: Space over the HUD did not queue the initial edge", failures)
 	for _tick in 30:
 		arena.step_tick()
 	var starts: Array[int] = []
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "action_accepted" and String(event.get("actor_id", "")) == "ranger":
 			starts.append(int(event.get("tick", -1)))
 	_expect(starts == [1, 14, 27], "held attack: one hold produced the wrong fixed-tick starts %s" % str(starts), failures)
@@ -893,7 +894,7 @@ func _test_held_attack_repeats_without_buffer_churn(arena: Node, failures: Array
 	for _tick in 20:
 		arena.step_tick()
 	var starts_after_release := 0
-	for event: Dictionary in arena.combat_event_stream.snapshot().events:
+	for event: Dictionary in arena.session.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "action_accepted" and String(event.get("actor_id", "")) == "ranger":
 			starts_after_release += 1
 	_expect(starts_after_release == 3, "held attack: release allowed another automatic cast", failures)
@@ -903,25 +904,25 @@ func _test_hash_sensitivity(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
 	var baseline: String = arena.state_hash("skills")
 	arena.input_adapter.manual_pointer_gameplay = Vector2(11.0, 22.0)
-	arena.command_source.attack_requested_pointer_gameplay = Vector2(33.0, 44.0)
+	arena.session.command_source.attack_requested_pointer_gameplay = Vector2(33.0, 44.0)
 	arena.input_adapter.manual_pointer_target_anchor = Vector2(55.0, 66.0)
 	arena.input_adapter.manual_pointer_target_radius = 77.0
 	var geometry_only: String = arena.state_hash("skills")
 	_expect(geometry_only == baseline, "semantic hash includes pointer presentation geometry that cannot change a command", failures)
-	arena.enemies.reverse()
+	arena.session.encounter_director.enemies.reverse()
 	var reordered: String = arena.state_hash("skills")
-	arena.enemies.reverse()
+	arena.session.encounter_director.enemies.reverse()
 	_expect(reordered == baseline, "semantic hash depends on incidental enemy array order", failures)
 	_expect(_cast(arena, "hunter_mark"), "semantic hash: real mark setup failed", failures)
 	var mark_hash: String = arena.state_hash("skills")
 	_expect(_dash(arena, Vector2.UP), "semantic hash: real dash setup failed", failures)
 	var dash_hash: String = arena.state_hash("skills")
-	fixture.advance_to(arena, arena.sim_tick + Skill.DASH_DURATION_TICKS - 2)
+	fixture.advance_to(arena, arena.session.sim_tick + Skill.DASH_DURATION_TICKS - 2)
 	fixture.cast(arena, "dodge", 0, Vector2.RIGHT)
 	var mobility_buffer_hash: String = arena.state_hash("skills")
 	# Same tick/position/timers before and after public input release isolates
 	# the buffer's own contribution to the hash.
-	var released: Dictionary = arena.player_combat_rules.release_input(arena.sim_tick)
+	var released: Dictionary = arena.session.player_combat_rules.release_input(arena.session.sim_tick)
 	var released_hash: String = arena.state_hash("skills")
 	_expect(not baseline.is_empty() and baseline != mark_hash and mark_hash != dash_hash and dash_hash != mobility_buffer_hash and released.get("cleared", false) and mobility_buffer_hash != released_hash, "semantic hash is not sensitive to mark/dash/buffer authority state", failures)
 
@@ -929,13 +930,13 @@ func _test_hash_sensitivity(arena: Node, failures: Array[String]) -> void:
 func _test_arena_reset(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
 	_expect(_cast(arena, "hunter_mark") and _dash(arena, Vector2.UP), "enter arena: live mark/dash setup failed", failures)
-	fixture.advance_to(arena, arena.sim_tick + Skill.DASH_DURATION_TICKS - 2)
+	fixture.advance_to(arena, arena.session.sim_tick + Skill.DASH_DURATION_TICKS - 2)
 	fixture.cast(arena, "dodge")
 	var before := _player(arena)
 	_expect(before.marked_entity_id > 0 and before.hunter_mark_cooldown_ticks > 0 and before.dash_remaining_ticks > 0 and before.dash_cooldown_ticks > 0 and not before.mobility_input_buffer.is_empty(), "enter arena: reset fixture did not contain real skill state", failures)
 	arena.start_room()
 	var after := _player(arena)
-	_expect(arena.in_arena and after.marked_entity_id == 0 and after.hunter_mark_expires_tick == 0 and after.hunter_mark_cooldown_ticks == 0 and after.dash_remaining_ticks == 0 and after.dash_cooldown_ticks == 0 and after.mobility_input_buffer.is_empty(), "enter arena did not reset skill authority state", failures)
+	_expect(arena.session.in_arena and after.marked_entity_id == 0 and after.hunter_mark_expires_tick == 0 and after.hunter_mark_cooldown_ticks == 0 and after.dash_remaining_ticks == 0 and after.dash_cooldown_ticks == 0 and after.mobility_input_buffer.is_empty(), "enter arena did not reset skill authority state", failures)
 
 
 ## Keep rejected setup poses in the test result instead of silently testing a
@@ -954,15 +955,15 @@ func _configure_enemies(arena: Node, overrides: Dictionary = {}, skills: Array =
 	fixture.reset(arena, _skill_room(), fixture.build(parameters), skills)
 	_place(arena, "ranger", SKILL_ORIGIN)
 	fixture.drive(arena)
-	for index in arena.enemies.size():
-		_place(arena, "enemy/%d" % arena.enemies[index].entity_id, arena.player_position + Vector2(60.0 + index * 30.0, 0.0))
+	for index in arena.session.encounter_director.enemies.size():
+		_place(arena, "enemy/%d" % arena.session.encounter_director.enemies[index].entity_id, arena.session.player_position() + Vector2(60.0 + index * 30.0, 0.0))
 
 
 func _cast_and_resolve_arrow(arena: Node) -> bool:
 	fixture.wait_ready(arena)
 	if not _cast_skill_one(arena):
 		return false
-	fixture.advance_to(arena, arena.sim_tick + Timeline.WINDUP_TICKS)
+	fixture.advance_to(arena, arena.session.sim_tick + Timeline.WINDUP_TICKS)
 	_advance_arrow_until_resolved(arena)
 	return true
 
@@ -997,7 +998,7 @@ func _piercing_cast(commands: Array[Dictionary]) -> Dictionary:
 
 
 func _gameplay_to_screen(arena: Node, gameplay_point: Vector2) -> Vector2:
-	arena.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, arena.get_viewport_rect().size), arena.player_position, arena.arena_rect())
+	arena.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, arena.get_viewport_rect().size), arena.session.player_position(), arena.arena_rect())
 	return arena.presentation.world_view.gameplay_to_screen(gameplay_point)
 
 
@@ -1027,11 +1028,11 @@ func _white_proxy_build() -> Dictionary:
 
 
 func _start_proxy(arena: Node, build: Dictionary) -> void:
-	arena.framework_resolved_proxy_build = build
-	var started: Dictionary = arena.proxy_intent_system.begin_contract(build)
+	arena.session.framework_resolved_proxy_build = build
+	var started: Dictionary = arena.session.proxy_intent_system.begin_contract(build)
 	if not bool(started.get("ok", false)):
 		push_error("proxy test setup failed: %s" % String(started.get("error", "unknown")))
-	arena.command_sequence = 0
+	arena.session.command_sequence = 0
 
 
 func _proxy_build(perception_id: String, movement_id: String, distance_band: String = "") -> Dictionary:

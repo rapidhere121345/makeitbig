@@ -357,7 +357,7 @@ func _test_authored_campaign_rooms(resolved_build: Dictionary, failures: Array[S
 				loaded_layouts[room["layout_id"]] = true
 				for _tick in 30:
 					arena.call("_process", 1.0 / 30.0)
-				_expect(int(arena.get("sim_tick")) == 30 and runtime.scene_runtime.simulation.tick == 30, "native campaign: room and shared simulation ticks diverged", failures)
+				_expect(int(arena.session.sim_tick) == 30 and runtime.scene_runtime.simulation.tick == 30, "native campaign: room and shared simulation ticks diverged", failures)
 				var registry = runtime.scene_runtime.actor_registry
 				for actor_id: String in registry.actor_ids():
 					var actor = registry.actor(actor_id)
@@ -379,7 +379,7 @@ func _test_ranger_action_wiring(arena: Node, failures: Array[String]) -> void:
 	## The arena draws the shared action frame from authoritative tick fields, and
 	## the defeat clip ages on a float presentation clock: 144 tiny steps have to
 	## add up to the same ticks as one big step instead of rounding away to zero.
-	_expect(bool(arena.get("in_arena")), "ranger wiring: the arena never entered the arena", failures)
+	_expect(bool(arena.session.in_arena), "ranger wiring: the arena never entered the arena", failures)
 	_expect(String(arena.get("presentation").get("animations").get("ranger_action_pending_reason")) == "", "ranger wiring: the published action atlas reads as pending: %s" % String(arena.get("presentation").get("animations").get("ranger_action_pending_reason")), failures)
 	var report: Dictionary = arena.call("ranger_animation_report")
 
@@ -409,9 +409,9 @@ func _test_ranger_action_wiring(arena: Node, failures: Array[String]) -> void:
 
 
 func _lethal_damage(arena: Node, failures: Array[String]) -> void:
-	var tick := int(arena.get("sim_tick"))
-	var player: Dictionary = arena.get("player_combat_state").snapshot(tick)
-	var applied: Dictionary = arena.get("player_combat_rules").apply_damage(tick, float(player.player_health) + 1.0, "fixture/defeat", player.player_position)
+	var tick := int(arena.session.sim_tick)
+	var player: Dictionary = arena.session.player_combat_state.snapshot(tick)
+	var applied: Dictionary = arena.session.player_combat_rules.apply_damage(tick, float(player.player_health) + 1.0, "fixture/defeat", player.player_position)
 	_expect(bool(applied.get("accepted", false)), "ranger wiring: real lethal damage was rejected", failures)
 
 
@@ -420,7 +420,7 @@ func _settle_first_encounter_member(arena: Node) -> Dictionary:
 	# notification.  The old test cleared Main.enemies directly, which bypassed
 	# the encounter member state and could no longer prove terminal semantics.
 	arena.step_tick()
-	var port: Variant = arena.get("room_encounter_port")
+	var port: Variant = arena.session.room_encounter_port
 	if port == null:
 		return {"ok": false, "error": "encounter_port_unavailable"}
 	var snapshot: Dictionary = port.snapshot()
@@ -429,8 +429,8 @@ func _settle_first_encounter_member(arena: Node) -> Dictionary:
 		return {"ok": false, "error": "encounter_member_not_spawned"}
 	var notification: Dictionary = notifications[0]
 	var context := SimTickContextScript.new()
-	context.tick = int(arena.get("sim_tick"))
-	var scene_runtime: Variant = arena.get("scene_runtime")
+	context.tick = int(arena.session.sim_tick)
+	var scene_runtime: Variant = arena.session.scene_runtime
 	context.room_instance_id = String(scene_runtime.get("room_instance_id"))
 	context.world_revision = int(scene_runtime.get("world_revision"))
 	var typed_death := DeathSettlementNotificationScript.new()
@@ -452,9 +452,9 @@ func _expect(condition: bool, message: String, failures: Array[String]) -> void:
 
 
 func _semantic_snapshot(arena: Node) -> Dictionary:
-	var player: Dictionary = arena.get("player_combat_state").snapshot(int(arena.get("sim_tick")))
+	var player: Dictionary = arena.session.player_combat_state.snapshot(int(arena.session.sim_tick))
 	var enemies_state: Array[Dictionary] = []
-	for enemy in (arena.get("enemies") as Array):
+	for enemy in (arena.session.encounter_director.enemies as Array):
 		enemies_state.append({
 			"entity_id": int(enemy.entity_id),
 			"kind_id": String(enemy.kind_id),
@@ -470,25 +470,25 @@ func _semantic_snapshot(arena: Node) -> Dictionary:
 	for state in (arena.get("hazard_states") as Array):
 		hazards_state.append((state as Dictionary).duplicate(true))
 	return {
-		"sim_tick": int(arena.get("sim_tick")),
-		"elapsed": float(arena.get("elapsed")),
+		"sim_tick": int(arena.session.sim_tick),
+		"elapsed": float(arena.session.elapsed),
 		"shots": int(arena.get("shots")),
 		"defeated": int(arena.get("defeated")),
-		"battle_over": bool(arena.get("battle_over")),
-		"battle_victory": bool(arena.get("battle_victory")),
+		"battle_over": bool(arena.session.is_battle_over()),
+		"battle_victory": bool(arena.session.is_battle_victory()),
 		"player_health": float(arena.get("player_health")),
-		"player_x": float((arena.get("player_position") as Vector2).x),
-		"player_y": float((arena.get("player_position") as Vector2).y),
-		"command_sequence": int(arena.get("command_sequence")),
-		"next_entity_id": int(arena.get("next_entity_id")),
+		"player_x": float((arena.session.player_position() as Vector2).x),
+		"player_y": float((arena.session.player_position() as Vector2).y),
+		"command_sequence": int(arena.session.command_sequence),
+		"next_entity_id": int(arena.session.encounter_director.next_entity_id),
 		"marked_entity_id": int(player["marked_entity_id"]),
 		"attack_cooldown_ticks": int(player["attack_cooldown_ticks"]),
 		"boss_damage": String((arena.get("boss_damage") as Object).call("to_short_string", 6)),
 		"enemies": enemies_state,
 		"hazards": hazards_state,
 		"room_reward_snapshot": (arena.get("room_reward_snapshot") as Dictionary).duplicate(true),
-		"elite_barrier_active": bool(arena.get("elite_barrier_active")),
-		"timed_bonus_available": bool(arena.get("timed_bonus_available")),
+		"elite_barrier_active": bool(arena.session.encounter_director.elite_barrier_active),
+		"timed_bonus_available": bool(arena.session.encounter_director.timed_bonus_available),
 	}
 
 

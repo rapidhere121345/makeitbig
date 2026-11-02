@@ -112,19 +112,19 @@ func free_session(session: Dictionary) -> void:
 
 
 func player(arena) -> Dictionary:
-	return arena.player_combat_state.snapshot(arena.sim_tick)
+	return arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 
 
 func configure_target(arena, offset: Vector2 = Vector2(120.0, 0.0)):
 	# Only the actors are positioned by this fixture. The room already reset
 	# State/Rules; no player counters, timeline ids or world ticks are rewritten.
 	assert(bool(arena.teleport_actor("ranger", arena.arena_rect().get_center() + Vector2(0, -36)).get("ok", false)))
-	var target = arena.enemies[0]
-	assert(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena.player_position + offset).get("ok", false)))
+	var target = arena.session.encounter_director.enemies[0]
+	assert(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena.session.player_position() + offset).get("ok", false)))
 	target.health = 1000000000.0
 	target.maximum_health = target.health
-	for other in arena.enemies.slice(1):
-		assert(bool(arena.teleport_actor("enemy/%d" % other.entity_id, arena.player_position + Vector2(-180.0, -120.0)).get("ok", false)))
+	for other in arena.session.encounter_director.enemies.slice(1):
+		assert(bool(arena.teleport_actor("enemy/%d" % other.entity_id, arena.session.player_position() + Vector2(-180.0, -120.0)).get("ok", false)))
 	var arena_id: int = arena.get_instance_id()
 	_command_batches[arena_id] = []
 	var callbacks := {
@@ -146,7 +146,7 @@ func configure_target(arena, offset: Vector2 = Vector2(120.0, 0.0)):
 	var phase_port = PhasePort.new()
 	var port_result: Dictionary = phase_port.bind(callbacks)
 	assert(bool(port_result.get("ok", false)), "talent phase port bind failed: %s" % str(port_result))
-	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, phase_port)
+	var configured: Dictionary = arena.session.combat_simulation.configure(arena.session.simulation_world, arena.session.player_combat_rules, phase_port)
 	assert(bool(configured.get("ok", false)), "talent tick driver failed: %s" % str(configured))
 	return target
 
@@ -160,21 +160,21 @@ func _collect(arena_id: int) -> Array[Dictionary]:
 
 func step(arena, commands: Array[Dictionary] = []) -> Dictionary:
 	_command_batches[arena.get_instance_id()] = commands.duplicate(true)
-	var result: Dictionary = arena.combat_simulation.step()
+	var result: Dictionary = arena.session.combat_simulation.step()
 	assert(bool(result.get("ok", false)), "talent simulation failed: %s" % str(result))
 	return result
 
 
 func advance_to(arena, tick: int) -> void:
-	assert(tick >= int(arena.sim_tick), "talent fixture cannot rewind the world")
-	while int(arena.sim_tick) < tick:
+	assert(tick >= int(arena.session.sim_tick), "talent fixture cannot rewind the world")
+	while int(arena.session.sim_tick) < tick:
 		step(arena)
 
 
 func cast(arena, ability: String, target_id: int = 0, aim: Vector2 = Vector2.RIGHT) -> Dictionary:
-	var tick := int(arena.sim_tick) + 1
-	var sequence := int(arena.command_sequence)
-	arena.command_sequence += 1
+	var tick := int(arena.session.sim_tick) + 1
+	var sequence := int(arena.session.command_sequence)
+	arena.session.command_sequence += 1
 	var direction := aim.normalized()
 	var command: Dictionary
 	if ability == "dodge":
@@ -201,7 +201,7 @@ func wait_for_cast_ready(arena) -> void:
 
 func release_arrow(arena, target, aim: Vector2 = Vector2.ZERO) -> bool:
 	wait_for_cast_ready(arena)
-	var direction: Vector2 = aim if aim != Vector2.ZERO else arena.player_position.direction_to(target.position)
+	var direction: Vector2 = aim if aim != Vector2.ZERO else arena.session.player_position().direction_to(target.position)
 	var receipt := cast(arena, "piercing_arrow", target.entity_id, direction)
 	if not bool(receipt.get("accepted", false)):
 		return false

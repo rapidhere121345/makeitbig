@@ -79,12 +79,12 @@ func _run() -> void:
 		arena.set_process(false)
 		arena.set_physics_process(false)
 		var rect: Rect2 = arena.arena_rect()
-		var foot: Vector2 = arena.player_position
+		var foot: Vector2 = arena.session.player_position()
 		for size: Vector2i in [Vector2i(1280,720),Vector2i(1920,1080),Vector2i(1024,576)]:
 			first.get_pixel_stage().apply_window_size(size)
 			await process_frame
 			_expect(arena.arena_rect() == rect,"raster resize keeps arena geometry " + str(size))
-			_expect(arena.player_position == foot,"raster resize cannot move player " + str(size))
+			_expect(arena.session.player_position() == foot,"raster resize cannot move player " + str(size))
 			_expect(arena.get_viewport() == first.get_presentation_viewport(),"actual arena shares presentation viewport")
 	first.free()
 	await process_frame

@@ -46,13 +46,13 @@ func free_session(session: Dictionary) -> void:
 
 
 func player(arena) -> Dictionary:
-	return arena.player_combat_state.snapshot(arena.sim_tick)
+	return arena.session.player_combat_state.snapshot(arena.session.sim_tick)
 
 
 func reset(arena, room: Dictionary = {}, resolved: Dictionary = {}, skills: Array = ["piercing_arrow", "hunter_mark", "dash"]) -> void:
 	arena.release_manual_controls()
 	if not room.is_empty():
-		arena.framework_room = room.duplicate(true)
+		arena.session.framework_room = room.duplicate(true)
 		var encounter = RoomEncounterScript.new()
 		var spawns: Array = []
 		var roster: Array = (room.get("enemy_ids", []) as Array).duplicate()
@@ -73,14 +73,14 @@ func reset(arena, room: Dictionary = {}, resolved: Dictionary = {}, skills: Arra
 			"spawns": spawns,
 		}])
 		assert(bool(configured.get("ok", false)), "behavior fixture encounter rebind failed: %s" % str(configured))
-		var bound: Dictionary = arena.scene_runtime.bind_encounter(encounter, arena.encounter_spawn_port)
+		var bound: Dictionary = arena.session.scene_runtime.bind_encounter(encounter, arena.session.encounter_spawn_port)
 		assert(bool(bound.get("ok", false)), "behavior fixture encounter port rebind failed: %s" % str(bound))
 	if not resolved.is_empty():
-		arena.framework_resolved_build = resolved.duplicate(true)
-	arena.framework_active_build = {"skills": skills.duplicate()}
-	arena.selected_mode = "Manual"
+		arena.session.framework_resolved_build = resolved.duplicate(true)
+	arena.session.framework_active_build = {"skills": skills.duplicate()}
+	arena.session.selected_mode = "Manual"
 	arena.start_room()
-	assert(arena.in_arena and arena.sim_tick == 0, "behavior fixture reset failed: %s" % arena.last_save_message)
+	assert(arena.session.in_arena and arena.session.sim_tick == 0, "behavior fixture reset failed: %s" % arena.last_save_message)
 	_release_frames[arena.get_instance_id()] = {}
 
 
@@ -108,7 +108,7 @@ func drive(arena, options: Dictionary = {}) -> void:
 	var phase_port = PhasePort.new()
 	var port_result: Dictionary = phase_port.bind(callbacks)
 	assert(bool(port_result.get("ok", false)), "behavior phase port bind failed: %s" % str(port_result))
-	var configured: Dictionary = arena.combat_simulation.configure(arena.simulation_world, arena.player_combat_rules, phase_port)
+	var configured: Dictionary = arena.session.combat_simulation.configure(arena.session.simulation_world, arena.session.player_combat_rules, phase_port)
 	assert(bool(configured.get("ok", false)), "behavior tick driver failed: %s" % str(configured))
 
 
@@ -122,7 +122,7 @@ func _collect(arena_id: int) -> Array[Dictionary]:
 func _observe_release_and_advance(arena) -> void:
 	var frames: Dictionary = _release_frames.get(arena.get_instance_id(), {})
 	for projectile in arena.projectiles:
-		if projectile.spawned_tick != arena.sim_tick or frames.has(projectile.action_instance_id):
+		if projectile.spawned_tick != arena.session.sim_tick or frames.has(projectile.action_instance_id):
 			continue
 		frames[projectile.action_instance_id] = {
 			"origin": projectile.origin, "position": projectile.position, "previous_position": projectile.previous_position,
@@ -138,7 +138,7 @@ func release_frame(arena, action_id: int) -> Dictionary:
 
 func step(arena, commands: Array[Dictionary] = []) -> Dictionary:
 	_batches[arena.get_instance_id()] = commands.duplicate(true)
-	var result: Dictionary = arena.combat_simulation.step()
+	var result: Dictionary = arena.session.combat_simulation.step()
 	assert(bool(result.get("ok", false)), "behavior simulation failed: %s" % str(result))
 	# The view applies the tick's presentation events right after each step.
 	arena.apply_presentation_events()
@@ -146,15 +146,15 @@ func step(arena, commands: Array[Dictionary] = []) -> Dictionary:
 
 
 func advance_to(arena, tick: int) -> void:
-	assert(tick >= int(arena.sim_tick), "behavior fixture cannot rewind the world")
-	while int(arena.sim_tick) < tick:
+	assert(tick >= int(arena.session.sim_tick), "behavior fixture cannot rewind the world")
+	while int(arena.session.sim_tick) < tick:
 		step(arena)
 
 
 func command(arena, ability: String, target_id: int = 0, direction: Vector2 = Vector2.ZERO) -> Dictionary:
-	var tick: int = arena.sim_tick + 1
-	var sequence: int = arena.command_sequence
-	arena.command_sequence += 1
+	var tick: int = arena.session.sim_tick + 1
+	var sequence: int = arena.session.command_sequence
+	arena.session.command_sequence += 1
 	var aim := direction.normalized()
 	if ability == "piercing_arrow" and aim == Vector2.ZERO:
 		for target: Dictionary in arena.read_only_targets():
