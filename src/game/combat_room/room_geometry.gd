@@ -4,18 +4,16 @@ extends RefCounted
 ## Arena geometry queries extracted from MainArena: arena rect, walkable and
 ## collision geometry, sockets, clamping and spawn projection. MainArena keeps
 ## thin forwarders for the queries that tests and Callable bindings address
-## by name; room state stays owned by MainArena.
+## by name; room state is read from the RoomSession.
 
 const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 
-var _main: MainArena
 ## The room authority; read at use time, never cache its replaced members.
 var _session: RoomSession
 
 
-func _init(main: MainArena) -> void:
-	_main = main
-	_session = main.session
+func _init(session: RoomSession) -> void:
+	_session = session
 
 
 func arena_rect() -> Rect2:
@@ -24,8 +22,8 @@ func arena_rect() -> Rect2:
 
 func walkable_geometry(padding: float) -> Dictionary:
 	var geometry: Dictionary = {}
-	if _main.scene_runtime != null:
-		var native_boundary: Variant = _main.scene_runtime.get("movement_boundary")
+	if _session.scene_runtime != null:
+		var native_boundary: Variant = _session.scene_runtime.get("movement_boundary")
 		if native_boundary is Dictionary:
 			geometry = ArenaGeometryScript.from_native_boundary(native_boundary, arena_rect(), padding)
 	else:
@@ -36,8 +34,8 @@ func walkable_geometry(padding: float) -> Dictionary:
 
 func _presentation_geometry() -> Dictionary:
 	var boundary: Dictionary = {}
-	if _main.scene_runtime != null:
-		var native_boundary: Variant = _main.scene_runtime.get("movement_boundary")
+	if _session.scene_runtime != null:
+		var native_boundary: Variant = _session.scene_runtime.get("movement_boundary")
 		if native_boundary is Dictionary:
 			boundary = (native_boundary as Dictionary).duplicate(true)
 	else:
@@ -53,8 +51,8 @@ func collision_geometry(radius: float) -> Dictionary:
 	if not is_finite(radius) or radius < 0.0:
 		return {}
 	var boundary: Dictionary = {}
-	if _main.scene_runtime != null:
-		var native_boundary: Variant = _main.scene_runtime.get("movement_boundary")
+	if _session.scene_runtime != null:
+		var native_boundary: Variant = _session.scene_runtime.get("movement_boundary")
 		if native_boundary is Dictionary:
 			boundary = (native_boundary as Dictionary).duplicate(true)
 	else:
@@ -72,9 +70,9 @@ func static_blocker_bounds() -> Array[Dictionary]:
 
 
 func room_socket(binding: String) -> Variant:
-	if _main.scene_runtime == null:
+	if _session.scene_runtime == null:
 		return null
-	var sockets: Variant = _main.scene_runtime.get("spawn_socket_bindings")
+	var sockets: Variant = _session.scene_runtime.get("spawn_socket_bindings")
 	if not sockets is Array:
 		return null
 	for socket: Dictionary in sockets:
@@ -136,7 +134,7 @@ func quantize_position(value: Vector2) -> Vector2:
 
 
 func layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
-	_main.ensure_room_catalog()
+	_session.ensure_room_catalog()
 	var spawn_room_id := String(_session.encounter_director.room_id) if _session.encounter_director != null else _session.room_id
 	if _session.room_catalog == null:
 		return []

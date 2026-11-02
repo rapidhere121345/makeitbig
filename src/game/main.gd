@@ -518,7 +518,7 @@ var enemy_ai := EnemyAiTicksScript.new(self)
 var actor_setup := RoomActorSetupScript.new(self)
 var _player_commands := RoomPlayerCommandsScript.new(self)
 var _terminal := RoomTerminalScript.new(self)
-var room_geometry := RoomGeometryScript.new(self)
+var room_geometry := RoomGeometryScript.new(session)
 
 
 func _init() -> void:
