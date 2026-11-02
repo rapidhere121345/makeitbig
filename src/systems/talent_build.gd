@@ -4,10 +4,12 @@ extends RefCounted
 const TalentRegistryScript = preload("res://src/content/talent_registry.gd")
 
 var registry: TalentRegistry
+var progression: ClassProgression
 
 
-func _init(talent_registry: TalentRegistry = null) -> void:
+func _init(talent_registry: TalentRegistry = null, class_progression: ClassProgression = null) -> void:
 	registry = talent_registry if talent_registry != null else TalentRegistryScript.new()
+	progression = class_progression if class_progression != null else RangerProgression.new()
 
 
 func validate(build: Dictionary, available_points: int, unlocked_classes: Array) -> Dictionary:
@@ -82,7 +84,7 @@ func compile(build: Dictionary, available_points: int, unlocked_classes: Array) 
 		var effect: Dictionary = node.effect
 		if String(effect.type) == "capability":
 			var id := String(effect.id)
-			if id == "hunter_mark_duration_multiplier" or id == "dash_duration_multiplier" or id == "dodge_cooldown_reduction" or id == "p_overflow_damage_efficiency_bonus":
+			if id in progression.stacking_capability_ids():
 				capabilities[id] = float(capabilities.get(id, 0.0)) + float(effect.value)
 			else:
 				capabilities[id] = effect.value
