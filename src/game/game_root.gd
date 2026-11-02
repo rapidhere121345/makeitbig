@@ -106,6 +106,8 @@ var status_message: String = ""
 ## transition payload; this value only preserves truthful navigation copy.
 var _facility_return_route: String = SceneRouterScript.ROUTE_BASE
 var _test_session: bool = false
+## Set from the launch arguments by DiagnosticsPolicy (always on in debug builds).
+var _test_console_enabled: bool = true
 var _initialized: bool = false
 var _presentation_enabled := true
 ## Playtest telemetry and the timers it keeps (src/game/root/).
@@ -140,7 +142,8 @@ func _ready() -> void:
 	Locale.acquire()
 	_ensure_pixel_stage()
 	initialize()
-	test_console_host.ensure_test_console()
+	if _test_console_enabled:
+		test_console_host.ensure_test_console()
 	test_console_host.ensure_session_menu()
 	# Some tests prepare the route before entering the SceneTree. Keep that
 	# supported, but once mounted use the same logical viewport as normal play.
@@ -230,6 +233,7 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 	if scene_router == null:
 		scene_router = SceneRouterScript.new()
 	_presentation_enabled = not arguments.has("--presentation-off")
+	_test_console_enabled = DiagnosticsPolicy.test_console_enabled(arguments)
 	prototype_debug.consider(arguments)
 	if save_store == null:
 		save_store = SaveStoreScript.new(save_directory_path)
@@ -246,7 +250,7 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 	capture_path = String(request.get("capture_path", ""))
 	auto_smoke.session = arguments.has("--auto-smoke")
 	_test_session = auto_smoke.session or arguments.has("--smoke") or arguments.has("--game-flow-smoke") or not capture_path.is_empty()
-	if playtest_logging_enabled and not _test_session and not arguments.has("--no-playtest-log") and not prototype_debug.no_persist:
+	if playtest_logging_enabled and DiagnosticsPolicy.playtest_logging_enabled(arguments, _test_session) and not prototype_debug.no_persist:
 		playtest_recorder.start_session()
 	if auto_smoke.session:
 		auto_smoke.accelerate()

@@ -71,6 +71,12 @@ with uniform integer enlargement. **Native Resolution** keeps the finest game te
 resolution, and paused game surfaces are cached while settings are open. Menu scale
 increases reading size where the window has enough space for the two-column pages.
 
+Playtest diagnostics: development builds show the F10 test console and write a
+playtest log to `user://playtest`. Release downloads keep both off unless the game
+is started with `--test-console` and/or `--playtest-log` (after `--` on the command
+line, for example `./make-it-big.x86_64 -- --playtest-log`); `--no-playtest-log`
+always disables logging.
+
 ## Test and Export
 
 The project builds on Linux only. `./scripts/build.sh` is the delivery gate: it
