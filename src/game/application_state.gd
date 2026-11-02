@@ -187,7 +187,8 @@ func growth_snapshot() -> Dictionary:
 			nodes.append({"id":id,"name":String(node.name),"tier":int(node.layer),"keystone":bool(node.is_key),"description":String(node.get("description",node.get("pending_reason","Description pending"))),"allocated":selected,"can_allocate":not selected and reason.is_empty(),"lock_reason":reason})
 		trees.append({"id":String(tree.class_id),"name":String(tree.name),"available":bool(tree.implemented) and String(tree.class_id) in context.unlocked_classes,"nodes":nodes})
 	reading["trees"] = trees
-	reading["stance_available"] = "ranger_near_far_hunting" in raw.allocated_ids
+	var class_progression := ClassProgressionCatalog.for_class(String(_profile.initial_class))
+	reading["stance_available"] = class_progression != null and class_progression.stance_available(raw.allocated_ids)
 	return reading
 
 
