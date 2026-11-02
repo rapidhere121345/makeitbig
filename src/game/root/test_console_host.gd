@@ -127,7 +127,7 @@ func _test_console_snapshot() -> Dictionary:
 			"test_session": _root.is_test_session(),
 			"auto_smoke": _root._auto_smoke_session,
 			"capture": not _root._capture_request.is_empty(),
-			"prototype_debug": not _root._prototype_debug_dto.is_empty(),
+			"prototype_debug": not _root.prototype_debug.dto.is_empty(),
 			"presentation_enabled": _root.presentation_enabled,
 		},
 		"log_path": _root.playtest_log.call("log_path") if _root.playtest_log != null and _root.playtest_log.has_method("log_path") else "",

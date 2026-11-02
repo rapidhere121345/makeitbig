@@ -106,8 +106,8 @@ func _campaign_contract_snapshot() -> Dictionary:
 			node_snapshot["completion_count"] = completion_count
 			node_snapshot["next_attempt_number"] = completion_count + 1
 			node_snapshot["suggested_seed"] = suggested_seed
-		if _root._prototype_debug_has_seed:
-			node_snapshot["suggested_seed"] = _root._prototype_debug_seed_override
+		if _root.prototype_debug.has_seed:
+			node_snapshot["suggested_seed"] = _root.prototype_debug.seed_override
 		nodes.append(node_snapshot)
 	var result := progress.duplicate(true)
 	result["nodes"] = nodes

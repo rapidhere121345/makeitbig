@@ -49,7 +49,6 @@ const CAPTURE_STAGE_ROUTE: String = "result"
 const DEFEAT_ROUTE_FALLBACK_SECONDS: float = 1.0
 
 const DEFAULT_SAVE_DIRECTORY: String = "user://framework-saves"
-const PROTOTYPE_DEBUG_FORCED_DROP_TAG: String = "equipment_general"
 const DEFAULT_CONTRACT: Dictionary = {
 	"contract_id": "first_contract",
 	"mode": "Manual",
@@ -136,14 +135,8 @@ var _playtest_session_started_msec := 0
 var _playtest_profile_started_msec := 0
 var _playtest_route_entered_msec := 0
 var _presentation_enabled := true
-var _prototype_debug_dto: Dictionary = {}
-var _prototype_debug_rejected := false
-var _prototype_debug_reject_reason := ""
-var _prototype_debug_no_persist := false
-var _prototype_debug_has_seed := false
-var _prototype_debug_seed_override := 0
-var _prototype_debug_force_family := ""
-var prototype_debug_summary: Dictionary = {}
+## The --mib-* prototype debug tooling and the state it owns (src/game/root/).
+var prototype_debug: PrototypeDebug = PrototypeDebug.new(self)
 
 
 func _enter_tree() -> void:
@@ -324,10 +317,10 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 	if scene_router == null:
 		scene_router = SceneRouterScript.new()
 	_parse_presentation_flag(arguments)
-	_consider_prototype_debug(arguments)
+	prototype_debug.consider(arguments)
 	if save_store == null:
 		save_store = SaveStoreScript.new(save_directory_path)
-	_apply_prototype_debug_wipe()
+	prototype_debug.apply_wipe()
 	if not scene_router.route_changed.is_connected(_on_route_changed):
 		scene_router.route_changed.connect(_on_route_changed)
 	var capture_path := ""
@@ -342,13 +335,13 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 	capture_path = String(request.get("capture_path", ""))
 	_auto_smoke_session = arguments.has("--auto-smoke")
 	_test_session = _auto_smoke_session or arguments.has("--smoke") or arguments.has("--game-flow-smoke") or not capture_path.is_empty()
-	if playtest_logging_enabled and not _test_session and not arguments.has("--no-playtest-log") and not _prototype_debug_no_persist:
+	if playtest_logging_enabled and not _test_session and not arguments.has("--no-playtest-log") and not prototype_debug.no_persist:
 		_start_playtest_logging()
 	if _auto_smoke_session:
 		_auto_smoke_previous_time_scale = Engine.time_scale
 		Engine.time_scale = AUTO_SMOKE_TIME_SCALE
 	_bootstrap(arguments)
-	_apply_prototype_debug_runtime()
+	prototype_debug.apply_runtime()
 	if not String(request.get("capture_route", "")).is_empty():
 		if not _apply_capture_request(request):
 			return
@@ -557,7 +550,7 @@ func _bootstrap(arguments: PackedStringArray) -> void:
 	if arguments.has("--auto-smoke"):
 		_start_auto_smoke()
 		return
-	if _prototype_debug_rejected:
+	if prototype_debug.rejected:
 		transition(SceneRouterScript.ROUTE_TITLE)
 		return
 
@@ -577,28 +570,6 @@ func _bootstrap(arguments: PackedStringArray) -> void:
 
 func _parse_presentation_flag(arguments: PackedStringArray) -> void:
 	_presentation_enabled = not arguments.has("--presentation-off")
-
-
-## The --mib-* prototype debug tooling lives in
-## src/game/root/prototype_debug.gd; these thin forwarders keep the owner's
-## method names for the remaining call sites.
-var _prototype_debug_impl  # untyped to avoid a preload cycle
-func _prototype_debug() -> PrototypeDebug:
-	if _prototype_debug_impl == null:
-		_prototype_debug_impl = PrototypeDebug.new(self)
-	return _prototype_debug_impl
-
-
-func _consider_prototype_debug(arguments: PackedStringArray) -> void:
-	_prototype_debug()._consider_prototype_debug(arguments)
-
-
-func _apply_prototype_debug_wipe() -> void:
-	_prototype_debug()._apply_prototype_debug_wipe()
-
-
-func _apply_prototype_debug_runtime() -> void:
-	_prototype_debug()._apply_prototype_debug_runtime()
 
 
 ## The --auto-smoke replay driver lives in src/game/root/auto_smoke_harness.gd;
@@ -917,7 +888,7 @@ func _retire_current_screen() -> void:
 ## Saves the profile unless this is a test session or prototype debug no-persist
 ## run. Returns reason on success, or a player-facing save failure message.
 func persist(reason: String, safe_route: String) -> String:
-	if _test_session or _prototype_debug_no_persist:
+	if _test_session or prototype_debug.no_persist:
 		return reason
 	var saved: Dictionary = save_store.save(application_state.persistent_payload(safe_route))
 	if bool(saved.get("ok", false)):

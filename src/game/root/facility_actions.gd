@@ -161,7 +161,7 @@ func request_facility_action(facility_id: String, action_id: String, payload: Di
 	if not bool(prepared.get("ok", false)):
 		return _finish_forge_action(normalized_facility, prepared, "")
 	var commit_token := String(prepared.commit_token)
-	if not _root.is_test_session() and not _root._prototype_debug_no_persist:
+	if not _root.is_test_session() and not _root.prototype_debug.no_persist:
 		var saved: Dictionary = _root.save_store.save((prepared.next_payload as Dictionary).duplicate(true))
 		if not bool(saved.get("ok", false)):
 			_root.application_state.forge_abort_commit(commit_token)

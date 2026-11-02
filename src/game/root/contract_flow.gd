@@ -71,8 +71,8 @@ func launch_contract(config: Dictionary) -> Dictionary:
 		_root.present_contract(String(plan_result.get("error", "contract_plan_failed")))
 		return plan_result
 	var room_plan: Dictionary = (plan_result.get("plan", {}) as Dictionary).duplicate(true)
-	if not _root._prototype_debug_force_family.is_empty():
-		_apply_forced_drop_family(room_plan, _root._prototype_debug_force_family)
+	if not _root.prototype_debug.force_family.is_empty():
+		_apply_forced_drop_family(room_plan, _root.prototype_debug.force_family)
 	planned_config["room_plan"] = room_plan
 	planned_config["room_count"] = int(room_plan.get("room_count", planned_config.get("room_count", 0)))
 	var profile: Dictionary = _root.application_state.profile
@@ -92,8 +92,8 @@ func launch_contract(config: Dictionary) -> Dictionary:
 	if not bool(begun.get("ok", false)):
 		_root.present_contract(String(begun.get("error", "session_start_failed")))
 		return begun
-	if not _root._prototype_debug_force_family.is_empty():
-		_root._prototype_debug_force_family = ""
+	if not _root.prototype_debug.force_family.is_empty():
+		_root.prototype_debug.force_family = ""
 	_root._last_contract = (begun.get("session", {}) as Dictionary).duplicate(true)
 	_root.record_playtest("contract_started", {
 		"contract_id": String(_root._last_contract.get("contract_id", "")),
@@ -362,7 +362,7 @@ func _apply_forced_drop_family(room_plan: Dictionary, family: String) -> void:
 		var room: Dictionary = room_value
 		var tags_value: Variant = room.get("drop_tags", [])
 		var tags: Array = (tags_value as Array).duplicate() if tags_value is Array else []
-		if not tags.has(_root.PROTOTYPE_DEBUG_FORCED_DROP_TAG):
-			tags.append(_root.PROTOTYPE_DEBUG_FORCED_DROP_TAG)
+		if not tags.has(PrototypeDebug.FORCED_DROP_TAG):
+			tags.append(PrototypeDebug.FORCED_DROP_TAG)
 		room["drop_tags"] = tags
 		room["guarantee_family"] = family

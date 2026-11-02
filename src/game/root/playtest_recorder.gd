@@ -36,7 +36,7 @@ func _start_playtest_logging() -> void:
 
 
 func _record_playtest(event_id: String, payload: Dictionary = {}) -> void:
-	if _root._prototype_debug_no_persist:
+	if _root.prototype_debug.no_persist:
 		return
 	if _root.playtest_log == null or not _root.playtest_log.has_method("record"):
 		return

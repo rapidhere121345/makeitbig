@@ -141,7 +141,7 @@ func _test_stage_ladder(failures: Array[String]) -> void:
 				_expect(bool(grad_progression.get("ending_unlocked", false)) and bool(grad_progression.get("early_game_complete", false)), "prototype debug graduated: ending/early-game flags missing", failures)
 				_expect(int(grad_progression.get("auto_contract_wins", 0)) >= 1, "prototype debug graduated: auto_contract_wins missing", failures)
 				_expect(game.current_route == "base", "prototype debug graduated: did not route base", failures)
-		_expect(String(game.prototype_debug_summary.get("stage", "")) == stage, "prototype debug %s: summary stage mismatch" % stage, failures)
+		_expect(String(game.prototype_debug.summary.get("stage", "")) == stage, "prototype debug %s: summary stage mismatch" % stage, failures)
 		_destroy_game(game)
 
 
@@ -154,7 +154,7 @@ func _test_no_stage_preserves_existing_debug_profile(failures: Array[String]) ->
 	var completed: Array = (second.application_state.profile.get("progression", {}) as Dictionary).get("completed_node_ids", [])
 	for node_id in MAINLINE_NODE_IDS:
 		_expect(node_id in completed, "prototype debug preserve: profile was rebuilt (missing %s)" % node_id, failures)
-	_expect(String(second.prototype_debug_summary.get("stage", "")) == "keep", "prototype debug preserve: has_stage=false rebuilt the profile", failures)
+	_expect(String(second.prototype_debug.summary.get("stage", "")) == "keep", "prototype debug preserve: has_stage=false rebuilt the profile", failures)
 	_destroy_game(second)
 
 
@@ -214,7 +214,7 @@ func _make_rejecting_game(directory: String, extra: Array[String], failures: Arr
 	var flow_errors: Array[Dictionary] = []
 	game.flow_error.connect(func(code: String, detail: String): flow_errors.append({"code": code, "detail": detail}))
 	game.initialize(_pack(_debug_args(directory, extra)))
-	_expect(bool(game.get("_prototype_debug_rejected")), "prototype debug rejection: %s was not rejected" % [extra], failures)
+	_expect(bool(game.prototype_debug.rejected), "prototype debug rejection: %s was not rejected" % [extra], failures)
 	_expect(game.current_route == "title" and not game.application_state.has_profile(), "prototype debug rejection: did not stay on empty title", failures)
 	_expect(String(game.save_directory_path) == REJECTED_SAVE_DIRECTORY, "prototype debug rejection: did not isolate to the rejected directory", failures)
 	var codes: Array[String] = []
@@ -227,7 +227,7 @@ func _make_rejecting_game(directory: String, extra: Array[String], failures: Arr
 func _test_force_family_one_shot_drop_hit(failures: Array[String]) -> void:
 	var directory := _case_dir("force_family_hit")
 	var game = _make_debug_game(directory, ["--mib-stage=pre_boss", "--mib-force-family=carrier_power"])
-	_expect(String(game.get("_prototype_debug_force_family")) == "carrier_power", "prototype debug force-family: pending override missing", failures)
+	_expect(String(game.prototype_debug.force_family) == "carrier_power", "prototype debug force-family: pending override missing", failures)
 	_expect(bool(game.open_contract().get("ok", false)), "prototype debug force-family: contract board did not open", failures)
 	var launched: Dictionary = game.launch_contract({"contract_id": "side_targeted_equipment", "mode": "Manual", "preset_id": "exponential", "seed": 7, "room_count": 3})
 	_expect(bool(launched.get("ok", false)) and game.current_route == "arena", "prototype debug force-family: contract did not launch", failures)
@@ -238,7 +238,7 @@ func _test_force_family_one_shot_drop_hit(failures: Array[String]) -> void:
 			var first_room: Dictionary = rooms[0]
 			_expect(String(first_room.get("guarantee_family", "")) == "carrier_power", "prototype debug force-family: room lost guarantee_family", failures)
 			_expect("equipment_general" in (first_room.get("drop_tags", []) as Array), "prototype debug force-family: room lost equipment_general tag", failures)
-	_expect(String(game.get("_prototype_debug_force_family")).is_empty(), "prototype debug force-family: override was not cleared after begin_session", failures)
+	_expect(String(game.prototype_debug.force_family).is_empty(), "prototype debug force-family: override was not cleared after begin_session", failures)
 	if arena != null:
 		arena.resolve({"outcome": "victory", "rooms_completed": 3, "ticks": 30, "elapsed_seconds": 1.0, "casts": 3, "defeated": 3, "rewards": {"contract_wins_delta": 1}})
 	_expect(game.current_route == "result", "prototype debug force-family: contract did not settle", failures)
@@ -276,7 +276,7 @@ func _test_force_family_drop_gate(failures: Array[String]) -> void:
 func _test_negative_seed_suggested_and_manual_override(failures: Array[String]) -> void:
 	var directory := _case_dir("negative_seed")
 	var game = _make_debug_game(directory, ["--mib-stage=base", "--mib-seed=-42"])
-	_expect(bool(game.get("_prototype_debug_has_seed")), "prototype debug seed: has_seed not recorded", failures)
+	_expect(bool(game.prototype_debug.has_seed), "prototype debug seed: has_seed not recorded", failures)
 	_expect(bool(game.open_contract().get("ok", false)), "prototype debug seed: contract board did not open", failures)
 	var screen = game.current_screen
 	screen.call("_build_ui")
@@ -317,7 +317,7 @@ func _test_no_persist_writes_nothing(failures: Array[String]) -> void:
 	game.playtest_log = logger
 	game.playtest_logging_enabled = true
 	game.initialize(_pack(_debug_args(directory, ["--mib-stage=base", "--mib-no-persist"])))
-	_expect(bool(game.get("_prototype_debug_no_persist")), "prototype debug no-persist: flag not recorded", failures)
+	_expect(bool(game.prototype_debug.no_persist), "prototype debug no-persist: flag not recorded", failures)
 	_expect(game.application_state.has_profile() and game.current_route == "base", "prototype debug no-persist: stage was not applied in memory", failures)
 	_expect(not _has_save_files(directory), "prototype debug no-persist: save file was written", failures)
 	_expect(logger.events.is_empty(), "prototype debug no-persist: playtest events were written", failures)
