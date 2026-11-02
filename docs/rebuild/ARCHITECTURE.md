@@ -29,6 +29,30 @@ ports and owners' public APIs should replace. Existing debt is listed in `script
 may only shrink: a new violation fails, an exception that is no longer needed
 fails, and `--update-baseline` records reductions but never growth.
 
+## App shell
+
+`GameRoot` (`src/game/game_root.gd`) is the composition root: it owns the
+services (`application_state`, `scene_router`, `save_store`, `playtest_log`), the
+current route and screen, and the pixel stage. Its helper modules in
+`src/game/root/` own their own state and use only GameRoot's public shell API
+(`transition()`, `status_message`, `persist()`, `present_*()`,
+`record_playtest()`, `request_exit()`, `is_test_session()`, ...):
+
+| Module | Owns |
+| --- | --- |
+| `contract_flow` | contract launch/finish, the deferred defeat route, `last_contract` |
+| `facility_actions` | facility action dispatch |
+| `route_snapshots` | route snapshot builders |
+| `display_settings` | language, menu scale, render quality, audio, window and stage lease |
+| `test_console_host` | the F10 console and the session menu |
+| `playtest_recorder` | playtest log session and timers |
+| `auto_smoke_harness`, `capture_harness`, `prototype_debug` | test, evidence and `--mib-*` tooling |
+
+`DiagnosticsPolicy` decides from the launch arguments whether the F10 console
+and playtest logging start: always in debug builds, only with `--test-console`
+/ `--playtest-log` in release exports. The planned room-level split is in
+[ROOM_SESSION_DESIGN.md](ROOM_SESSION_DESIGN.md).
+
 ## Runtime graph
 
 ```text
