@@ -478,7 +478,7 @@ func _test_unchanged_outcomes(failures: Array[String]) -> void:
 		return
 	## The smoke driver owns its own route expectations outright.
 	game.auto_smoke.session = true
-	_expect(not bool(game.call("_defeat_window_holds_screen", {"outcome": "defeat"})),
+	_expect(not bool(game.contract_flow.defeat_window_holds_screen({"outcome": "defeat"})),
 		"game root: a smoke session would have held a defeat screen", failures)
 	game.auto_smoke.session = false
 	## A victory on a screen that never reports readiness still routes at once.

@@ -74,7 +74,7 @@ var current_screen: Node:
 
 var last_contract: Dictionary:
 	get:
-		return _last_contract.duplicate(true)
+		return contract_flow.last_contract.duplicate(true)
 
 ## False when the command line passed --presentation-off. Read-only.
 var presentation_enabled: bool:
@@ -85,11 +85,6 @@ var _current_screen: Node
 ## Town browsing is transient presentation state, separate from the save schema.
 var _town_travel: Dictionary = {}
 var _pixel_stage: Control
-var _last_contract: Dictionary = {}
-## The result screen waiting for a defeat clip that is still playing on the arena
-## screen, plus how it was released. The settlement is never part of this state.
-var _pending_visual_route: Dictionary = {}
-var _pending_route_release_reason: String = ""
 ## Player-facing message the next presented screen shows. Modules write it before
 ## re-presenting or transitioning.
 var status_message: String = ""
@@ -111,6 +106,9 @@ var capture: CaptureHarness = CaptureHarness.new(self)
 var auto_smoke: AutoSmokeHarness = AutoSmokeHarness.new(self)
 ## The F10 test console and the in-game session menu (src/game/root/).
 var test_console_host: TestConsoleHost = TestConsoleHost.new(self)
+## The contract lifecycle, the last contract and the deferred result route
+## (src/game/root/).
+var contract_flow: ContractFlow = ContractFlow.new(self)
 ## The facility action dispatcher and loadout telemetry (src/game/root/).
 var facility_actions: FacilityActions = FacilityActions.new(self)
 ## Display, audio and player settings, and the shared stage window lease
@@ -207,14 +205,7 @@ func _notification(what: int) -> void:
 func _process(delta: float) -> void:
 	if test_console_host.is_session_menu_open():
 		return
-	if _pending_visual_route.is_empty():
-		return
-	var elapsed: float = float(_pending_visual_route.get("seconds", 0.0)) + maxf(0.0, delta)
-	_pending_visual_route["seconds"] = elapsed
-	var ready := not _defeat_window_holds_screen(_pending_visual_route.get("payload", {}))
-	if not ready and elapsed < DEFEAT_ROUTE_FALLBACK_SECONDS:
-		return
-	_release_pending_visual_route("ready" if ready else "fallback")
+	contract_flow.advance_pending_route(delta)
 
 
 func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> void:
@@ -264,7 +255,7 @@ func start_new_game(initial_class: String = "ranger") -> Dictionary:
 	if not bool(created.get("ok", false)):
 		present_title(String(created.get("error", "profile_creation_failed")))
 		return created
-	_last_contract.clear()
+	contract_flow.clear_last_contract()
 	playtest_recorder.mark_profile_started()
 	record_playtest("profile_started", {"initial_class": String(application_state.profile.get("initial_class", initial_class))})
 	status_message = persist("New profile saved", SceneRouterScript.ROUTE_TUTORIAL)
@@ -379,65 +370,44 @@ func return_to_title() -> Dictionary:
 	return transition(SceneRouterScript.ROUTE_TITLE)
 
 
-## The contract lifecycle lives in src/game/root/contract_flow.gd;
-## these thin forwarders keep the owner's method names for the remaining call sites.
-var _contract_flow_impl  # untyped to avoid a preload cycle
-func _contract_flow() -> ContractFlow:
-	if _contract_flow_impl == null:
-		_contract_flow_impl = ContractFlow.new(self)
-	return _contract_flow_impl
-
-
 func cancel_contract() -> Dictionary:
-	return _contract_flow().cancel_contract()
+	return contract_flow.cancel_contract()
 
 
 func launch_contract(config: Dictionary) -> Dictionary:
-	return _contract_flow().launch_contract(config)
+	return contract_flow.launch_contract(config)
 
 
 func finish_contract(result: Dictionary) -> Dictionary:
-	return _contract_flow().finish_contract(result)
-
-
-func _defeat_window_holds_screen(completed_result: Dictionary) -> bool:
-	return _contract_flow()._defeat_window_holds_screen(completed_result)
-
-
-func _release_pending_visual_route(reason: String) -> Dictionary:
-	return _contract_flow()._release_pending_visual_route(reason)
+	return contract_flow.finish_contract(result)
 
 
 func skip_defeat_presentation() -> Dictionary:
-	return _contract_flow().skip_defeat_presentation()
+	return contract_flow.skip_defeat_presentation()
 
 
 func defeat_route_report() -> Dictionary:
-	return _contract_flow().defeat_route_report()
+	return contract_flow.defeat_route_report()
 
 
 func leave_result() -> Dictionary:
-	return _contract_flow().leave_result()
-
-
-func _open_next_contract_from_result() -> void:
-	_contract_flow()._open_next_contract_from_result()
+	return contract_flow.leave_result()
 
 
 func review_result_drop(instance_id: String, slot: String) -> Dictionary:
-	return _contract_flow().review_result_drop(instance_id, slot)
+	return contract_flow.review_result_drop(instance_id, slot)
 
 
 func open_ending() -> Dictionary:
-	return _contract_flow().open_ending()
+	return contract_flow.open_ending()
 
 
 func leave_ending_to_base() -> Dictionary:
-	return _contract_flow().leave_ending_to_base()
+	return contract_flow.leave_ending_to_base()
 
 
 func leave_ending_to_title() -> Dictionary:
-	return _contract_flow().leave_ending_to_title()
+	return contract_flow.leave_ending_to_title()
 
 
 func _bootstrap(arguments: PackedStringArray) -> void:
@@ -490,9 +460,7 @@ func transition(route: String, payload: Dictionary = {}) -> Dictionary:
 
 func _on_route_changed(previous_route: String, route: String, payload: Dictionary) -> void:
 	_render_route(route, payload)
-	## A committed route supersedes a deferred result screen. The settlement stays
-	## exactly as it is and is never replayed from here.
-	_pending_visual_route = {}
+	contract_flow.supersede_pending_route()
 	playtest_recorder.record_route_change(previous_route, route)
 	flow_route_changed.emit(previous_route, route)
 	test_console_host.refresh_test_console()
@@ -585,10 +553,10 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			screen.base_requested.connect(leave_result)
 			screen.loadout_review_requested.connect(review_result_drop)
 			screen.ending_requested.connect(open_ending)
-			screen.contract_requested.connect(_open_next_contract_from_result)
+			screen.contract_requested.connect(contract_flow.open_next_contract_from_result)
 			_current_screen = screen
 			_mount_screen(screen)
-			screen.present(application_state.last_result, _last_contract, application_state.profile)
+			screen.present(application_state.last_result, contract_flow.last_contract, application_state.profile)
 			screen.focus_equipment(String(payload.get("review_instance_id", "")))
 		SceneRouterScript.ROUTE_ENDING:
 			var screen = EndingScreenScript.new()
@@ -685,7 +653,7 @@ func present_contract(message: String) -> void:
 			build_snapshot["resolved_build"] = application_state.resolved_build_snapshot().duplicate(true)
 		build_snapshot["auto_mode_unlocked"] = application_state.is_auto_mode_unlocked()
 		build_snapshot["campaign"] = route_snapshots.campaign_contract_snapshot()
-		_current_screen.call("present", application_state.profile, _last_contract, message, build_snapshot)
+		_current_screen.call("present", application_state.profile, contract_flow.last_contract, message, build_snapshot)
 
 
 ## Presents a facility screen; context carries one-shot loadout focus hints.

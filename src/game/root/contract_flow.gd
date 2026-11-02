@@ -3,18 +3,51 @@ extends RefCounted
 
 ## Contract lifecycle extracted from GameRoot. This collaborator owns the
 ## contract launch and settlement path, the deferred defeat-result route
-## window, and the result and ending exits, reaching owner state and
-## presentation through the untyped owner reference.
+## window, and the result and ending exits. It owns the last contract and the
+## deferred result route, and reaches the shell through GameRoot's public API.
 const SceneRouterScript = preload("res://src/game/scene_router.gd")
 const ContractPlanScript = preload("res://src/game/contract_plan.gd")
 const EarlyItemRegistryScript = preload("res://src/content/early_item_registry.gd")
 const CoreResult := preload("res://src/core/result.gd")
 
-var _root
+## The session record of the contract most recently launched; empty before the
+## first launch and after a new profile starts.
+var last_contract: Dictionary = {}
+
+var _root: GameRoot
+## The result screen waiting for a defeat clip that is still playing on the arena
+## screen, plus how it was released. The settlement is never part of this state.
+var _pending_visual_route: Dictionary = {}
+var _pending_route_release_reason: String = ""
 
 
-func _init(root) -> void:
+func _init(root: GameRoot) -> void:
 	_root = root
+
+
+## Forgets the last contract, e.g. when a new profile starts.
+func clear_last_contract() -> void:
+	last_contract.clear()
+
+
+## A committed route supersedes a deferred result screen. The settlement stays
+## exactly as it is and is never replayed from here.
+func supersede_pending_route() -> void:
+	_pending_visual_route = {}
+
+
+## Drives the deferred result screen. Nothing authoritative happens here: the
+## only work is asking the mounted screen whether its defeat clip is done and
+## enforcing the route layer's own fallback bound.
+func advance_pending_route(delta: float) -> void:
+	if _pending_visual_route.is_empty():
+		return
+	var elapsed: float = float(_pending_visual_route.get("seconds", 0.0)) + maxf(0.0, delta)
+	_pending_visual_route["seconds"] = elapsed
+	var ready := not defeat_window_holds_screen(_pending_visual_route.get("payload", {}))
+	if not ready and elapsed < GameRoot.DEFEAT_ROUTE_FALLBACK_SECONDS:
+		return
+	_release_pending_visual_route("ready" if ready else "fallback")
 
 
 func cancel_contract() -> Dictionary:
@@ -94,23 +127,23 @@ func launch_contract(config: Dictionary) -> Dictionary:
 		return begun
 	if not _root.prototype_debug.force_family.is_empty():
 		_root.prototype_debug.force_family = ""
-	_root._last_contract = (begun.get("session", {}) as Dictionary).duplicate(true)
+	last_contract = (begun.get("session", {}) as Dictionary).duplicate(true)
 	_root.record_playtest("contract_started", {
-		"contract_id": String(_root._last_contract.get("contract_id", "")),
-		"mode": String(_root._last_contract.get("mode", "")),
-		"seed": int(_root._last_contract.get("seed", 0)),
-		"room_count": int(_root._last_contract.get("room_count", 0)),
+		"contract_id": String(last_contract.get("contract_id", "")),
+		"mode": String(last_contract.get("mode", "")),
+		"seed": int(last_contract.get("seed", 0)),
+		"room_count": int(last_contract.get("room_count", 0)),
 		"build_fingerprint": String(resolved_build.get("build_fingerprint", "")),
 		"proxy_build_fingerprint": String(resolved_proxy_build.get("semantic_fingerprint", "")),
 	})
 	_root.status_message = ""
-	return _root.transition(SceneRouterScript.ROUTE_ARENA, _root._last_contract)
+	return _root.transition(SceneRouterScript.ROUTE_ARENA, last_contract)
 
 
 func finish_contract(result: Dictionary) -> Dictionary:
 	if _root.current_route != SceneRouterScript.ROUTE_ARENA:
 		return CoreResult.failure("wrong_route")
-	if not _root._pending_visual_route.is_empty():
+	if not _pending_visual_route.is_empty():
 		## This defeat already settled and its result screen is still waiting for the
 		## clip: a duplicate signal must not settle again or rewrite last_result.
 		return CoreResult.failure("result_pending")
@@ -123,9 +156,9 @@ func finish_contract(result: Dictionary) -> Dictionary:
 		return completed
 	var completed_result: Dictionary = completed.get("result", normalized) if completed.get("result", normalized) is Dictionary else normalized
 	var log_payload := {
-		"contract_id": String(completed_result.get("contract_id", _root._last_contract.get("contract_id", ""))),
-		"mode": String(completed_result.get("mode", _root._last_contract.get("mode", ""))),
-		"seed": int(completed_result.get("seed", _root._last_contract.get("seed", 0))),
+		"contract_id": String(completed_result.get("contract_id", last_contract.get("contract_id", ""))),
+		"mode": String(completed_result.get("mode", last_contract.get("mode", ""))),
+		"seed": int(completed_result.get("seed", last_contract.get("seed", 0))),
 		"outcome": String(completed_result.get("outcome", "")),
 		"ticks": int(completed_result.get("ticks", 0)),
 		"elapsed_seconds": float(completed_result.get("elapsed_seconds", 0.0)),
@@ -206,9 +239,9 @@ func finish_contract(result: Dictionary) -> Dictionary:
 ## replace the arena screen now, or has to wait for the defeat clip that is still
 ## playing on it.
 func _route_to_result(completed_result: Dictionary) -> Dictionary:
-	if not _defeat_window_holds_screen(completed_result):
+	if not defeat_window_holds_screen(completed_result):
 		return _root.transition(SceneRouterScript.ROUTE_RESULT, completed_result)
-	_root._pending_visual_route = {
+	_pending_visual_route = {
 		"route": SceneRouterScript.ROUTE_RESULT,
 		"payload": completed_result.duplicate(true),
 		"seconds": 0.0,
@@ -225,26 +258,26 @@ func _route_to_result(completed_result: Dictionary) -> Dictionary:
 ## A defeated run whose clip is still on screen holds the route at the screen
 ## layer only. Victories, abandons, the smoke driver's own route expectations and
 ## any screen without the readiness relay are never held.
-func _defeat_window_holds_screen(completed_result: Dictionary) -> bool:
+func defeat_window_holds_screen(completed_result: Dictionary) -> bool:
 	if _root.auto_smoke.session:
 		return false
 	if String(completed_result.get("outcome", "")) != "defeat":
 		return false
-	if _root._current_screen == null or not is_instance_valid(_root._current_screen):
+	if _root.current_screen == null or not is_instance_valid(_root.current_screen):
 		return false
-	if not _root._current_screen.has_method("defeat_presentation_ready"):
+	if not _root.current_screen.has_method("defeat_presentation_ready"):
 		return false
-	return not bool(_root._current_screen.call("defeat_presentation_ready"))
+	return not bool(_root.current_screen.call("defeat_presentation_ready"))
 
 
 ## Releases the deferred result screen and names why. No settlement is repeated
 ## here: a second call after the route moved is refused by the router itself.
 func _release_pending_visual_route(reason: String) -> Dictionary:
-	if _root._pending_visual_route.is_empty():
+	if _pending_visual_route.is_empty():
 		return CoreResult.failure("no_pending_route")
-	_root._pending_route_release_reason = reason
-	var payload: Dictionary = _root._pending_visual_route.get("payload", {})
-	_root._pending_visual_route = {}
+	_pending_route_release_reason = reason
+	var payload: Dictionary = _pending_visual_route.get("payload", {})
+	_pending_visual_route = {}
 	return _root.transition(SceneRouterScript.ROUTE_RESULT, payload)
 
 
@@ -259,10 +292,10 @@ func skip_defeat_presentation() -> Dictionary:
 ## screen is still waiting for the clip, for how long, and what released it.
 func defeat_route_report() -> Dictionary:
 	return {
-		"pending": not _root._pending_visual_route.is_empty(),
-		"held_seconds": float(_root._pending_visual_route.get("seconds", 0.0)),
-		"fallback_seconds": _root.DEFEAT_ROUTE_FALLBACK_SECONDS,
-		"released_by": _root._pending_route_release_reason,
+		"pending": not _pending_visual_route.is_empty(),
+		"held_seconds": float(_pending_visual_route.get("seconds", 0.0)),
+		"fallback_seconds": GameRoot.DEFEAT_ROUTE_FALLBACK_SECONDS,
+		"released_by": _pending_route_release_reason,
 	}
 
 
@@ -272,7 +305,7 @@ func leave_result() -> Dictionary:
 	return _root.transition(SceneRouterScript.ROUTE_BASE)
 
 
-func _open_next_contract_from_result() -> void:
+func open_next_contract_from_result() -> void:
 	if _root.current_route != SceneRouterScript.ROUTE_RESULT:
 		return
 	var result := leave_result()
