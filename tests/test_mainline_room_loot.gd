@@ -87,7 +87,7 @@ func _run() -> void:
 	elite.maximum_health = 1.0
 	var cast: Dictionary = arena.request_player_cast("piercing_arrow", elite.entity_id, elite_position - placement.position)
 	_expect(bool(cast.get("accepted", false)), "mainline loot: real elite arrow was rejected: %s" % str(cast))
-	var elite_dead := _advance_until(arena, func() -> bool: return arena._enemy_by_entity_id(elite.entity_id) == null, 120)
+	var elite_dead := _advance_until(arena, func() -> bool: return arena.enemy_by_entity_id(elite.entity_id) == null, 120)
 	_expect(elite_dead, "mainline loot: elite did not die through the mounted projectile path")
 	var loot: Dictionary = arena.room_loot_snapshot
 	var entities: Array = loot.get("entities", [])
@@ -157,9 +157,9 @@ func _run() -> void:
 		auto_arena.set_process(false)
 		auto_arena.selected_mode = "Auto"
 		var auto_position: Vector2 = auto_arena.player_combat_state.snapshot(auto_arena.sim_tick).player_position
-		var blocked_spawn: Dictionary = auto_arena._spawn_room_loot_for_source("enemy_death", 1000, auto_arena._arena_rect().position)
+		var blocked_spawn: Dictionary = auto_arena.spawn_room_loot_for_source("enemy_death", 1000, auto_arena._arena_rect().position)
 		_expect(not bool(blocked_spawn.get("ok", false)) and String(blocked_spawn.get("error", "")) == "loot_spawn_position_blocked", "mainline loot: production placement port accepted a blocked drop")
-		var spawned: Dictionary = auto_arena._spawn_room_loot_for_source("enemy_death", 1001, auto_position)
+		var spawned: Dictionary = auto_arena.spawn_room_loot_for_source("enemy_death", 1001, auto_position)
 		_expect(bool(spawned.get("ok", false)), "mainline loot: Auto pickup fixture did not spawn its room entity")
 		auto_arena.call("_simulate_tick")
 		_expect(String(auto_arena.last_loot_pickup_command_receipt.get("status", "")) == "accepted" and bool(auto_arena.last_loot_pickup_command_receipt.get("room_receipt", {}).get("accepted", false)), "mainline loot: Auto did not submit the shared pickup protocol")

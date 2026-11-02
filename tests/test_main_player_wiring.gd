@@ -17,11 +17,11 @@ const Assert := preload("res://tests/helpers/assert.gd")
 class DrivenMain:
 	extends Main
 	var supplied_commands: Array[Dictionary] = []
-	func _simulation_collect_commands() -> Array[Dictionary]:
+	func simulation_collect_commands() -> Array[Dictionary]:
 		var commands: Array[Dictionary] = supplied_commands.duplicate(true)
 		supplied_commands.clear()
 		return commands
-	func _update_enemies_tick() -> void:
+	func update_enemies_tick() -> void:
 		# This fixture isolates player phase ordering against a stationary target.
 		pass
 
@@ -95,7 +95,7 @@ func _run() -> void:
 		var arrow = arena.projectiles[0]
 		_expect(arrow.origin.is_equal_approx(release_feet + ArrowOrigin.release_offset(Vector2.RIGHT)), "arrow release used post-motor position")
 		_expect(not arrow.origin.is_equal_approx(arena.player_position + ArrowOrigin.release_offset(Vector2.RIGHT)), "release fixture did not bracket movement")
-		var model: Dictionary = arena._current_model()
+		var model: Dictionary = arena.current_model()
 		var marked_damage := float(model.total_events_float) * arena.locked_payload * Rules.HUNTER_MARK_DAMAGE_MULTIPLIER
 		_expect(is_equal_approx(arrow.ordinary_damage, marked_damage), "mark expiry was applied before the pre-command timeline release")
 	_expect(arena.player_combat_state.snapshot(impact_tick).marked_entity_id == 0, "post-timeline player slice did not expire mark")
@@ -111,7 +111,7 @@ func _run() -> void:
 	var maximum_before: BigValue = arena.boss_maximum
 	maximum_before.magnitude = 7.0
 	_expect(arena.boss_maximum.magnitude == 1.0e12 and arena.encounter_director.boss_maximum.magnitude == 1.0e12, "Main/Encounter exposed mutable outcome ledger values")
-	arena._encounter_context()
+	arena.sync_encounter_context()
 	arena.encounter_director._resolve_hostile_attack(target, 3.0, true)
 	# Hostile contacts are queued during the room phase and committed by the
 	# next fixed tick through RoomCombatPort; direct invocation must not bypass

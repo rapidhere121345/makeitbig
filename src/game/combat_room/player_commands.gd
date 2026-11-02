@@ -26,7 +26,7 @@ func _simulation_collect_commands() -> Array[Dictionary]:
 		_submit_loot_pickup_command(loot_command)
 	if _main.automation_smoke and _main.selected_mode == "Manual":
 		var result: Dictionary = _main.smoke_input_driver.decide({
-			"player": _main.player_combat_state.snapshot(_main.sim_tick), "targets": _main._read_only_targets(),
+			"player": _main.player_combat_state.snapshot(_main.sim_tick), "targets": _main.read_only_targets(),
 			"hazards": _main.hazard_states.duplicate(true), "targeting_distance": _main.locked_targeting_distance,
 			"boss": {"impact_tick": _main.boss.impact_tick, "target_shape": _main.boss.target_shape.duplicate(true)} if _main.boss != null else {},
 		}, _main.command_sequence)
@@ -87,7 +87,7 @@ func _auto_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
 
 func _auto_commands() -> Array[Dictionary]:
 	var observation := _public_proxy_snapshot()
-	var collision_geometry := _main._collision_geometry(14.0)
+	var collision_geometry := _main.room_geometry.collision_geometry(14.0)
 	if not collision_geometry.is_empty():
 		observation["walkable_geometry"] = collision_geometry
 	var result: Dictionary = _main.proxy_intent_system.decide(observation, _main.command_sequence)
@@ -111,7 +111,7 @@ func _proxy_trace_snapshot() -> Array[String]:
 
 func _public_proxy_snapshot() -> Dictionary:
 	var player := _main.player_combat_state.snapshot(_main.sim_tick)
-	var public_geometry := _main._walkable_geometry(14.0).duplicate(true)
+	var public_geometry := _main.room_geometry.walkable_geometry(14.0).duplicate(true)
 	## Public geometry describes only the space the actor may occupy. Route and
 	## room identifiers remain private even if a future helper revision carries
 	## spatial metadata alongside the geometric primitives.
@@ -126,7 +126,7 @@ func _public_proxy_snapshot() -> Dictionary:
 			"health": enemy.health,
 			## Action legality is part of enemy.basic. It reveals no barrier rule,
 			## phase duration, or future opening tick.
-			"targetable": _main.encounter_director.is_targetable(enemy) and _main._is_enemy_actor_active(enemy),
+			"targetable": _main.encounter_director.is_targetable(enemy) and _main.is_enemy_actor_active(enemy),
 		}
 		if include_classification:
 			var classification_tags: Array[String] = []

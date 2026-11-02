@@ -92,13 +92,13 @@ func _configure_actor_registry() -> bool:
 		return false
 	var spawn_position: Vector2
 	if injected_runtime:
-		var authored_spawn: Variant = _main._room_socket("combat/spawn")
+		var authored_spawn: Variant = _main.room_geometry.room_socket("combat/spawn")
 		if not authored_spawn is Vector2 or not _main.actor_registry.is_position_clear(authored_spawn, 14.0):
 			push_error("actor_registry_configuration_failed:invalid_player_spawn:%s" % str(authored_spawn))
 			return false
 		spawn_position = authored_spawn
 	else:
-		var projected: Dictionary = _main.room_geometry.project_actor_spawn_position(_main._arena_rect().get_center() + Vector2(-220.0, 100.0), 14.0)
+		var projected: Dictionary = _main.room_geometry.project_actor_spawn_position(_main.room_geometry.arena_rect().get_center() + Vector2(-220.0, 100.0), 14.0)
 		if not bool(projected.get("ok", false)):
 			return false
 		spawn_position = _main.room_geometry.quantize_position(projected["position"])
@@ -124,7 +124,7 @@ func _configure_actor_registry() -> bool:
 		return false
 	# The mounted SimulationWorld starts at tick zero.  A live room never
 	# rewinds or fabricates its authority tick during actor registration.
-	if not _main._configure_player_domain(preserved_sim_tick):
+	if not _main.configure_player_domain(preserved_sim_tick):
 		push_error("actor_registry_configuration_failed:player_domain:%s" % _main.last_save_message)
 		_main.actor_registry_instance_id = ""
 		return false
@@ -134,7 +134,7 @@ func _configure_actor_registry() -> bool:
 func _configure_standalone_room_access(room_key: String) -> bool:
 	_main.actor_registry_revision += 1
 	_main.actor_registry_instance_id = "combat/%s/%d" % [room_key, _main.actor_registry_revision]
-	var boundary := ArenaGeometryScript.movement_boundary(_main.layout_id, _main._arena_rect())
+	var boundary := ArenaGeometryScript.movement_boundary(_main.layout_id, _main.room_geometry.arena_rect())
 	if boundary.is_empty():
 		return false
 	var static_build: Dictionary = StaticSpatialIndexScript.build({

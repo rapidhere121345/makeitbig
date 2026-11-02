@@ -96,8 +96,8 @@ func _run() -> void:
 		_expect(proxy_runtime_instance is Object and String(((proxy_runtime_instance as Object).get("cores") as Dictionary)[&"perception"].core_id) == "near_enemy_horizon", "runtime: resolved proxy Build was not installed", failures)
 		var typed_clear := _settle_first_encounter_member(room_node)
 		_expect(bool(typed_clear.get("ok", false)), "runtime: typed encounter member settlement was rejected", failures)
-		room_node.call("_check_battle_end")
-		room_node.call("_check_battle_end")
+		room_node.call("check_battle_end")
+		room_node.call("check_battle_end")
 		var snapshot: Dictionary = room_node.get("room_reward_snapshot")
 		snapshot["drop_id"] = "must.not.leak"
 		snapshot["drop_label"] = "Must Not Leak"
@@ -154,7 +154,7 @@ func _run() -> void:
 		var player: Dictionary = state.snapshot(44)
 		var damage: Dictionary = rules.apply_damage(44, float(player.player_health) + 1.0, "enemy/melee_pursuer", (defeat_room.get("enemies") as Array)[0].position)
 		_expect(bool(damage.get("accepted", false)), "runtime defeat: real lethal damage was rejected", failures)
-		defeat_room.call("_check_battle_end")
+		defeat_room.call("check_battle_end")
 		defeat_runtime.call("_process", 0.0)
 		defeat_runtime.call("_process", 0.0)
 		defeat_room.emit_signal("return_requested")
@@ -444,7 +444,7 @@ func _settle_first_encounter_member(arena: Node) -> Dictionary:
 	if records.is_empty() or String((records[0] as Dictionary).get("state", "")) != "dead":
 		return {"ok": false, "error": "encounter_member_not_dead"}
 	return {"ok": true, "error": ""}
-	arena.call("_check_battle_end")
+	arena.call("check_battle_end")
 
 
 

@@ -90,14 +90,14 @@ func _run() -> void:
 	## player would use — not mid-strafe and not the uncommitted spawn idle.
 	## Wait for a real settled tick, then cast.
 	var settled := _advance_until(arena, func() -> bool:
-		var live = arena._enemy_by_entity_id(enemy.entity_id)
+		var live = arena.enemy_by_entity_id(enemy.entity_id)
 		return live != null and String(live.motion_state) == "idle" and String(live.tactic_reason) not in ["", "spawned"]
 	, 120)
 	_expect(settled, "authored room: elite never settled into its launch band")
 	var cast: Dictionary = arena.request_player_cast("piercing_arrow", enemy.entity_id, enemy.position - player_placement.position)
 	_expect(bool(cast.get("accepted", false)), "authored room: real arrow request was rejected")
 	var first_removed := _advance_until(arena, func() -> bool:
-		return arena._enemy_by_entity_id(enemy.entity_id) == null and not arena.enemies.is_empty()
+		return arena.enemy_by_entity_id(enemy.entity_id) == null and not arena.enemies.is_empty()
 	, 120)
 	_expect(first_removed, "authored room: elite did not die and summon a replacement")
 	var loot: Dictionary = arena.room_loot_snapshot

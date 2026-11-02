@@ -23,7 +23,7 @@ func _configure_hazard_domain(hazard_ids: Variant, center: Vector2) -> Dictionar
 	if not hazard_ids is Array:
 		return {"ok": false, "error": "invalid_hazard_ids"}
 	var candidate: RefCounted = CombatHazardDomainScript.new()
-	var configured: Dictionary = candidate.configure_ids(_main.encounter_director.room_port, _main._arena_rect(), hazard_ids, center)
+	var configured: Dictionary = candidate.configure_ids(_main.encounter_director.room_port, _main.room_geometry.arena_rect(), hazard_ids, center)
 	if not bool(configured.get("ok", false)):
 		return configured
 	domain = candidate
@@ -48,7 +48,7 @@ func _refresh_hazard_states_tick() -> void:
 			_main.battle_report = "hazard_refresh_failed:%s" % String(refreshed.get("error", "unknown"))
 		_main.encounter_director.hazard_states = domain.snapshots()
 		return
-	_main._encounter_context()
+	_main.sync_encounter_context()
 	_main.encounter_director.refresh_hazard_states_tick()
 
 
@@ -81,7 +81,7 @@ func _resolve_hazard_hits_tick() -> void:
 					"contact_point": _main.player_position,
 				})
 		return
-	_main._encounter_context()
+	_main.sync_encounter_context()
 	var previous_report := String(_main.encounter_director.battle_report)
 	_main.encounter_director.resolve_hazard_hits_tick()
 	if _main.room_combat_port != null:
@@ -96,7 +96,7 @@ func _resolve_hazard_hits_tick() -> void:
 				"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
 				"contact_point": _main.player_position,
 			})
-	_main._encounter_report(previous_report)
+	_main.adopt_encounter_report(previous_report)
 
 
 func _queue_kernel_hazard_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
@@ -152,10 +152,10 @@ func _hostile_action_instance_id(source_id: String) -> int:
 
 
 func _new_hazard_state(id: String, center: Vector2) -> Dictionary:
-	_main._encounter_context()
+	_main.sync_encounter_context()
 	return _main.encounter_director.new_hazard_state(id, center)
 
 
 func _hazard_contains(state: Dictionary, point: Vector2) -> bool:
-	_main._encounter_context()
+	_main.sync_encounter_context()
 	return _main.encounter_director.hazard_contains(state, point)

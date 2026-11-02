@@ -87,7 +87,7 @@ func _run() -> void:
 	var cast: Dictionary = arena.request_player_cast("piercing_arrow", entity_id)
 	_expect(bool(cast.get("accepted", false)), "death deregistration: real arrow was rejected: %s" % str(cast))
 	var dead := _advance_until(arena, func() -> bool:
-		return arena._enemy_by_entity_id(entity_id) == null
+		return arena.enemy_by_entity_id(entity_id) == null
 	, 120)
 	_expect(dead, "death deregistration: enemy did not die through the mounted projectile path")
 	if not dead:

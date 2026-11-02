@@ -114,7 +114,7 @@ func _run_boss_kill(arena) -> void:
 	if not _failures.is_empty():
 		return
 	_expect(arena.locked_build.get("total_events", {}) == {"layer": 1, "magnitude": 12.0}, "kernel boss: frozen build payload changed: %s" % str(arena.locked_build.get("total_events", {})))
-	var cast_model: Dictionary = arena._current_model()
+	var cast_model: Dictionary = arena.current_model()
 	_expect(cast_model.get("total_events", null) != null and (cast_model["total_events"] as BigValue).compare(BigValue.from_power10(12.0)) == 0, "kernel boss: cast model did not read frozen BigValue events: %s" % str(cast_model.get("total_events", {})))
 	# Drive the real EncounterDirector barrier window onto the mounted Boss so
 	# the production kernel path proves admission at the current fixed tick.

@@ -95,14 +95,14 @@ func boss_domain_room_is_current() -> bool:
 func is_boss_kernel_projectile(projectile) -> bool:
 	if projectile == null:
 		return false
-	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
+	var enemy := _main.enemy_by_entity_id(int(projectile.target_entity_id))
 	return enemy != null and enemy.is_boss and boss_domain_room_is_current()
 
 
 func is_normal_kernel_projectile(projectile) -> bool:
 	if projectile == null or _main.room_spatial_port == null or _main.room_combat_port == null:
 		return false
-	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
+	var enemy := _main.enemy_by_entity_id(int(projectile.target_entity_id))
 	return enemy == null or not enemy.is_boss
 
 
@@ -123,7 +123,7 @@ func is_kernel_projectile(projectile) -> bool:
 ## In production the mirror is written after actor commits, so the pose sync
 ## is a no-op; a failed relocation keeps the authoritative actor pose.
 func sync_kernel_target_record(projectile) -> void:
-	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
+	var enemy := _main.enemy_by_entity_id(int(projectile.target_entity_id))
 	if enemy == null or enemy.is_boss:
 		return
 	var actor_id := "enemy/%d" % enemy.entity_id
@@ -148,7 +148,7 @@ func sync_kernel_target_record(projectile) -> void:
 ## room mirror before a query. Health is deliberately not copied: once the room
 ## starts, BossCombatDomain owns BigValue health and mortality.
 func sync_boss_kernel_target(projectile) -> BossTargetView:
-	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
+	var enemy := _main.enemy_by_entity_id(int(projectile.target_entity_id))
 	if enemy == null or not enemy.is_boss or not boss_domain_room_is_current():
 		return null
 	var target: BossTargetView = _main.kernel_bindings.boss_domain_targets.get(int(enemy.entity_id), null)
@@ -198,7 +198,7 @@ func admit_kernel_hit(hit: Dictionary) -> Dictionary:
 			break
 	if projectile == null:
 		return {"allowed": false, "reason": "arrow_not_in_flight"}
-	var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
+	var enemy := _main.enemy_by_entity_id(int(projectile.target_entity_id))
 	if enemy == null or enemy.is_boss:
 		return {"allowed": false, "reason": "legacy_big_value_target"}
 	var hit_entity_id := int(_main.kernel_bindings.enemy_stable_keys.get(String(hit.get("target_key", "")), 0))
@@ -213,7 +213,7 @@ func _enemy_by_stable_key(target_key: String) -> CombatEnemyState:
 	var entity_id := int(_main.kernel_bindings.enemy_stable_keys.get(target_key, 0))
 	if entity_id <= 0:
 		return null
-	return _main._enemy_by_entity_id(entity_id)
+	return _main.enemy_by_entity_id(entity_id)
 
 
 func _consume_kernel_room_combat() -> void:
@@ -222,7 +222,7 @@ func _consume_kernel_room_combat() -> void:
 	var published_snapshot = _main.simulation_world.latest_snapshot() if _main.simulation_world != null else null
 	if published_snapshot != null:
 		_published_tick = int(published_snapshot.tick)
-	_main._combat_context()
+	_main.sync_combat_context()
 	var previous_report := String(_main.combat_system.battle_report)
 	var previous_event_id: int = _main.combat_event_stream.latest_event_id()
 	var results: Array = _main.room_spatial_port.take_path_results()
@@ -274,7 +274,7 @@ func _consume_kernel_room_combat() -> void:
 	_main.kernel_bindings.arrow_flight.clear_pending()
 	_reconcile_kernel_deaths()
 	_consume_kernel_boss_combat()
-	_main._combat_report(previous_report, previous_event_id)
+	_main.adopt_combat_report(previous_report, previous_event_id)
 
 
 func _retire_kernel_projectile(projectile, attack_key: String) -> void:
@@ -315,7 +315,7 @@ func _consume_kernel_boss_combat() -> void:
 			if suppressed_by_attack.has(attack_key):
 				var suppression: Dictionary = suppressed_by_attack[attack_key]
 				if String(suppression.get("reason", "")) == "periodic_barrier":
-					var blocked_enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
+					var blocked_enemy := _main.enemy_by_entity_id(int(projectile.target_entity_id))
 					var blocked_point_value: Variant = suppression.get("contact_point", projectile.position)
 					var blocked_point: Vector2 = blocked_point_value if blocked_point_value is Vector2 else projectile.position
 					projectile.position = blocked_point
@@ -331,7 +331,7 @@ func _consume_kernel_boss_combat() -> void:
 				_retire_boss_kernel_projectile(projectile, attack_key)
 			continue
 		var outcome: Dictionary = outcome_by_attack[attack_key]
-		var enemy := _main._enemy_by_entity_id(int(projectile.target_entity_id))
+		var enemy := _main.enemy_by_entity_id(int(projectile.target_entity_id))
 		if enemy == null or not enemy.is_boss:
 			push_error("boss_kernel_target_mirror_unresolved:%s" % attack_key)
 			continue
@@ -435,7 +435,7 @@ func _settle_boss_kernel_deaths(settlement_tick: int) -> void:
 				continue
 			var position_value: Variant = (loot_value as Dictionary).get("position", Vector2.ZERO)
 			var position: Vector2 = position_value if position_value is Vector2 else Vector2.ZERO
-			_main._spawn_room_loot_for_source("enemy_death", entity_id, position)
+			_main.spawn_room_loot_for_source("enemy_death", entity_id, position)
 
 
 func _reconcile_kernel_hit(projectile, record: Variant, hit: Dictionary, outcome: Dictionary) -> void:
@@ -463,7 +463,7 @@ func _finalize_kernel_enemy_death(enemy: CombatEnemyState) -> void:
 	var canceled_request_id: int = _main.piercing_arrows.cancel_buffered_target(enemy.entity_id)
 	if canceled_request_id > 0:
 		_main.piercing_arrows.erase_attack_request(canceled_request_id)
-	_main._refresh_player_mark()
+	_main.refresh_player_mark()
 
 
 func _reconcile_kernel_deaths() -> void:
@@ -480,4 +480,4 @@ func _reconcile_kernel_deaths() -> void:
 			continue
 		var position_value: Variant = (loot_value as Dictionary).get("position", Vector2.ZERO)
 		var position: Vector2 = position_value if position_value is Vector2 else Vector2.ZERO
-		_main._spawn_room_loot_for_source("enemy_death", entity_id, position)
+		_main.spawn_room_loot_for_source("enemy_death", entity_id, position)

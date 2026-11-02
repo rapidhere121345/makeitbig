@@ -40,7 +40,7 @@ func register_enemy(enemy: CombatEnemyState) -> Dictionary:
 func collision_geometry(padding: float) -> Dictionary:
 	if not _ready():
 		return {}
-	return _owner._collision_geometry(padding)
+	return _owner.room_geometry.collision_geometry(padding)
 
 
 func static_blocker_bounds() -> Array[Dictionary]:
@@ -58,7 +58,7 @@ func layout_spawn_offsets(layout_id: String, count: int) -> Array[Vector2]:
 func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 	if not _ready():
 		return Vector2(INF, INF)
-	return _owner._clamp_to_arena(value, padding)
+	return _owner.room_geometry.clamp_to_arena(value, padding)
 
 
 func quantize_position(value: Vector2) -> Vector2:

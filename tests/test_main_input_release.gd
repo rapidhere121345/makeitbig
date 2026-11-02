@@ -12,14 +12,14 @@ class DrivenMain:
 	var supplied_mobility := ""
 	var supplied_direction := Vector2.ZERO
 	var last_supplied_command: Dictionary = {}
-	func _simulation_collect_commands() -> Array[Dictionary]:
+	func simulation_collect_commands() -> Array[Dictionary]:
 		if supplied_mobility.is_empty():
 			return []
 		var command: Dictionary = _player_commands._dodge_command(supplied_direction) if supplied_mobility == "dodge" else _player_commands._cast_command("dash", 0, supplied_direction)
 		supplied_mobility = ""
 		last_supplied_command = command.duplicate(true)
 		return [command]
-	func _update_enemies_tick() -> void:
+	func update_enemies_tick() -> void:
 		pass
 
 var failures: Array[String] = []

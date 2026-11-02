@@ -22,15 +22,15 @@ func is_ready() -> bool:
 
 
 func target_by_id(entity_id: int) -> CombatEnemyState:
-	return _owner._enemy_by_entity_id(entity_id)
+	return _owner.enemy_by_entity_id(entity_id)
 
 
 func aim_candidate(target: CombatEnemyState) -> Dictionary:
-	return _owner._manual_aim_candidate(target)
+	return _owner.manual_aim_candidate(target)
 
 
 func current_model() -> Dictionary:
-	return _owner._current_model()
+	return _owner.current_model()
 
 
 func target_blocked(target: CombatEnemyState) -> Dictionary:
@@ -52,7 +52,7 @@ func cancel_buffered_target(entity_id: int) -> int:
 
 
 func update_mark() -> void:
-	_owner._refresh_player_mark()
+	_owner.refresh_player_mark()
 
 
 func advance_sequence(skill_id: String) -> void:

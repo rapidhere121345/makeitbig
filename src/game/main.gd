@@ -328,7 +328,7 @@ func _init() -> void:
 
 	_ensure_simulation_world()
 	_ensure_combat_simulation()
-	_ensure_room_catalog()
+	ensure_room_catalog()
 	_ensure_combat_system()
 	_ensure_encounter_director()
 	_ensure_encounter_spawn_port()
@@ -349,7 +349,7 @@ func _ensure_simulation_world() -> void:
 		push_error("simulation_world_initialization_failed:%s" % String(configured.error))
 
 
-func _ensure_room_catalog() -> void:
+func ensure_room_catalog() -> void:
 	if room_catalog == null:
 		room_catalog = RoomCatalogScript.new()
 
@@ -391,7 +391,7 @@ func _ensure_combat_system() -> void:
 		combat_system = CombatSystemScript.new()
 
 
-func _configure_player_domain(start_tick: int) -> bool:
+func configure_player_domain(start_tick: int) -> bool:
 	var reset: Dictionary = player_combat_state.reset_for_room(locked_build, actor_registry, "ranger", start_tick)
 	if not bool(reset.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(reset.get("error", "player_reset_failed"))
@@ -704,7 +704,7 @@ func _spawn_wave() -> bool:
 	input_adapter.reset_intent()
 	if combat_event_stream != null:
 		combat_event_stream.reset()
-	_encounter_context()
+	sync_encounter_context()
 	var spawn_room: Dictionary = framework_room.duplicate(true)
 	if spawn_room.is_empty() and test_session:
 		spawn_room = _load_test_room_fixture()
@@ -728,7 +728,7 @@ func _spawn_wave() -> bool:
 	layout_id = String(spawned.get("layout_id", ""))
 	objective_id = String(spawned.get("objective_id", "clear"))
 	room_drop_tags = (framework_room.get("drop_tags", []) as Array).duplicate(true)
-	_encounter_context()
+	sync_encounter_context()
 	var configured: Dictionary = room_rules.reset_for_room(
 		{"objective_id": objective_id, "drop_tags": room_drop_tags}, true,
 		selected_mode, FATE_SEED, {}
@@ -757,7 +757,7 @@ func _configure_room_loot(room: Dictionary) -> Dictionary:
 	return _room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry, placement_port)
 
 
-func _spawn_room_loot_for_source(source: String, source_entity_id: int, position: Vector2) -> Dictionary:
+func spawn_room_loot_for_source(source: String, source_entity_id: int, position: Vector2) -> Dictionary:
 	return _room_loot.spawn_for_source(sim_tick, source, source_entity_id, position)
 
 
@@ -765,7 +765,7 @@ func request_loot_pickup(loot_entity_id: String) -> Dictionary:
 	return _room_loot.request_pickup(sim_tick, in_arena, battle_over, battle_victory, loot_entity_id)
 
 
-func _process_room_loot_pickups_tick() -> void:
+func process_room_loot_pickups_tick() -> void:
 	var player := player_combat_state.snapshot(sim_tick)
 	var receipts_before: Array = (_room_loot.snapshot().get("pickup_receipts", []) as Array).duplicate(true)
 	_room_loot.process_pickups(sim_tick, float(player.get("player_health", 0.0)), player.player_position, battle_over, battle_victory)
@@ -776,10 +776,6 @@ func _process_room_loot_pickups_tick() -> void:
 			presentation.feedback.show_input_feedback("Loot picked up · Added to rewards on exit", sim_tick)
 		elif receipt_value is Dictionary:
 			presentation.feedback.show_input_feedback("Loot not picked up · %s" % String({"loot_out_of_range": "Too far away; move closer and press F", "loot_pickup_already_queued": "Pickup requested", "loot_pickup_window_closed": "Pickup window closed"}.get(String((receipt_value as Dictionary).get("error", "")), "Request expired")), sim_tick)
-
-
-func _settle_room_loot(outcome: String) -> void:
-	_room_loot.settle(outcome)
 
 
 func settle_room_loot(outcome: String) -> Dictionary:
@@ -848,7 +844,7 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 	var enemy: CombatEnemyState = null
 	if normalized_id != "ranger":
 		var entity_id := int(normalized_id.trim_prefix("enemy/"))
-		enemy = _enemy_by_entity_id(entity_id)
+		enemy = enemy_by_entity_id(entity_id)
 		if enemy == null:
 			return {"ok": false, "error": "enemy_mirror_not_found"}
 	if not actor_setup._ensure_actor_registry_ready() or not position.is_finite():
@@ -869,58 +865,58 @@ func _simulate_tick() -> void:
 		push_error("combat_simulation_step_failed:%s" % String(result.get("error", "unknown")))
 
 
-func _simulation_set_elapsed(value: float) -> void:
+func simulation_set_elapsed(value: float) -> void:
 	elapsed = value
 
 
 ## Fixed-tick phase hooks. RoomPhaseDomain dispatches to these owner methods so
 ## the phase logic stays overridable by test subclasses; the work lives in the
 ## room collaborators.
-func _simulation_collect_commands() -> Array[Dictionary]:
+func simulation_collect_commands() -> Array[Dictionary]:
 	return _player_commands._simulation_collect_commands()
 
 
-func _update_enemies_tick() -> void:
+func update_enemies_tick() -> void:
 	enemy_ai._update_enemies_tick()
 
 
-func _advance_piercing_projectiles_tick() -> void:
+func advance_piercing_projectiles_tick() -> void:
 	piercing_arrows._advance_piercing_projectiles_tick()
 
 
-func _refresh_hazard_states_tick() -> void:
+func refresh_hazard_states_tick() -> void:
 	room_hazards._refresh_hazard_states_tick()
 
 
-func _resolve_hazard_hits_tick() -> void:
+func resolve_hazard_hits_tick() -> void:
 	room_hazards._resolve_hazard_hits_tick()
 
 
-func _check_battle_end() -> void:
+func check_battle_end() -> void:
 	_terminal._check_battle_end()
 
 
-func _simulation_check_timeout() -> void:
+func simulation_check_timeout() -> void:
 	if automation_smoke and not battle_over and sim_tick >= SIM_TICKS_PER_SECOND * 180:
 		_terminal._fail_automation_smoke("timeout ticks=%d casts=%d" % [sim_tick, shots])
 
 
-func _route_commands(commands: Array[Dictionary]) -> Dictionary:
+func route_commands(commands: Array[Dictionary]) -> Dictionary:
 	return CombatCommandProtocolScript.arbitrate(commands, sim_tick, player_combat_state.equipped_ability_ids(), true)
 
 
-func _read_only_targets() -> Array[Dictionary]:
+func read_only_targets() -> Array[Dictionary]:
 	var targets: Array[Dictionary] = []
 	for enemy: CombatEnemyState in enemies:
-		targets.append(_manual_aim_candidate(enemy))
+		targets.append(manual_aim_candidate(enemy))
 	return targets
 
 
-func _refresh_player_mark() -> void:
-	player_combat_rules.update_mark(sim_tick, _read_only_targets())
+func refresh_player_mark() -> void:
+	player_combat_rules.update_mark(sim_tick, read_only_targets())
 
 
-func _consume_player_events(result: Dictionary) -> void:
+func consume_player_events(result: Dictionary) -> void:
 	# Both the pre-command timeline and post-command timeline have their own
 	# pre-motor context. Never let later mark expiry/movement alter arrow release.
 	var player: Dictionary = result["player"]
@@ -937,9 +933,9 @@ func _consume_player_events(result: Dictionary) -> void:
 			presentation.feedback.discard_command(int(command.get("sequence", -1)))
 	if result.has("protocol_receipts"):
 		last_command_receipts.assign((result["protocol_receipts"] as Array).duplicate(true))
-	_combat_context(action_player)
+	sync_combat_context(action_player)
 	_process_player_action_events(result.get("action_events", []), action_player)
-	_combat_context(player)
+	sync_combat_context(player)
 
 
 func _present_cast_receipt(receipt: Dictionary, source: String) -> void:
@@ -955,7 +951,7 @@ func _present_cast_receipt(receipt: Dictionary, source: String) -> void:
 
 func request_player_cast(ability_id: String, target_entity_id: int = 0, direction: Vector2 = Vector2.ZERO, source: String = ATTACK_SOURCE_ASSISTED) -> Dictionary:
 	# Explicit diagnostic input enters the same domain as device/replay commands.
-	var receipt: Dictionary = player_combat_rules.request_cast(sim_tick, ability_id, target_entity_id, direction, _read_only_targets())
+	var receipt: Dictionary = player_combat_rules.request_cast(sim_tick, ability_id, target_entity_id, direction, read_only_targets())
 	if ability_id == "piercing_arrow":
 		_present_cast_receipt(receipt, source)
 	elif ability_id == "hunter_mark":
@@ -967,7 +963,7 @@ func request_player_cast(ability_id: String, target_entity_id: int = 0, directio
 func _present_mark_receipt(receipt: Dictionary, player: Dictionary) -> void:
 	if not bool(receipt.get("accepted", false)):
 		return
-	var target := _enemy_by_entity_id(int(player["marked_entity_id"]))
+	var target := enemy_by_entity_id(int(player["marked_entity_id"]))
 	if target != null and target.health > 0.0:
 		battle_report = "Hunter's Mark locked: %s." % presentation.frame_builder.enemy_public_label(target)
 
@@ -984,7 +980,7 @@ func _process_player_action_events(events: Array, action_player: Dictionary) -> 
 				presentation.feedback.forget_action(action_id)
 
 
-func _combat_context(player: Dictionary = {}) -> void:
+func sync_combat_context(player: Dictionary = {}) -> void:
 	if player.is_empty():
 		player = player_combat_state.snapshot(sim_tick)
 	_ensure_combat_system()
@@ -1004,7 +1000,7 @@ func _combat_context(player: Dictionary = {}) -> void:
 	combat_system.attack_origins = (player.get("attack_origins", {}) as Dictionary).duplicate(true)
 
 
-func _combat_report(previous_report: String, previous_event_id: int) -> void:
+func adopt_combat_report(previous_report: String, previous_event_id: int) -> void:
 	var report := String(combat_system.battle_report)
 	if report.is_empty():
 		return
@@ -1016,7 +1012,7 @@ func _combat_report(previous_report: String, previous_event_id: int) -> void:
 		battle_report = report
 
 
-func _encounter_context() -> void:
+func sync_encounter_context() -> void:
 	if encounter_director == null:
 		return
 	_sync_encounter_active_state()
@@ -1043,13 +1039,13 @@ func _sync_encounter_active_state() -> void:
 	encounter_director.set_active_entity_ids(active_ids)
 
 
-func _encounter_report(previous_report: String) -> void:
+func adopt_encounter_report(previous_report: String) -> void:
 	var report := String(encounter_director.battle_report)
 	if not report.is_empty() and report != previous_report:
 		battle_report = report
 
 
-func _update_room_rules_tick() -> void:
+func update_room_rules_tick() -> void:
 	# CombatSimulation submits the kernel tick through SimulationWorld directly,
 	# bypassing SceneRuntime.step_tick(). Drain pending kernel encounter spawn
 	# requests here - after this tick's snapshot was published, before the
@@ -1063,24 +1059,24 @@ func _update_room_rules_tick() -> void:
 	# and deaths commit here, before buffered casts start and before enemies,
 	# hazards or the battle-end check observe the room.
 	kernel_reconciler._consume_kernel_room_combat()
-	_encounter_context()
+	sync_encounter_context()
 	encounter_director.update_room_rules_tick()
 
 
-func _enemy_by_entity_id(id: int) -> CombatEnemyState:
-	_encounter_context()
+func enemy_by_entity_id(id: int) -> CombatEnemyState:
+	sync_encounter_context()
 	return encounter_director._enemy_by_entity_id(id)
 
 
 func _allocate_entity_id() -> int:
-	_encounter_context()
+	sync_encounter_context()
 	return encounter_director._allocate_entity_id()
 
 
 func _framework_room_error() -> String:
 	if framework_room.is_empty():
 		return ""
-	_ensure_room_catalog()
+	ensure_room_catalog()
 	return EncounterDirectorScript.validate_room(framework_room, room_catalog)
 
 
@@ -1088,7 +1084,7 @@ func _semantic_state_hash(result: String) -> String:
 	return CombatStateSnapshotBuilderScript.hash_runtime(self, result)
 
 
-func _current_model() -> Dictionary:
+func current_model() -> Dictionary:
 	var player := player_combat_state.snapshot(sim_tick)
 	if not locked_build.is_empty():
 		var event_value: Dictionary = locked_build.get("total_events", {})
@@ -1120,7 +1116,7 @@ func _current_model() -> Dictionary:
 	)
 
 
-func _manual_aim_candidate(enemy: CombatEnemyState) -> Dictionary:
+func manual_aim_candidate(enemy: CombatEnemyState) -> Dictionary:
 	return {
 		"entity_id": enemy.entity_id,
 		"kind_id": enemy.kind_id,
@@ -1132,12 +1128,12 @@ func _manual_aim_candidate(enemy: CombatEnemyState) -> Dictionary:
 
 func _preferred_skill_one_target() -> CombatEnemyState:
 	var player := player_combat_state.snapshot(sim_tick)
-	var marked := _enemy_by_entity_id(player["marked_entity_id"])
-	if marked != null and _is_enemy_actor_active(marked) and marked.health > 0.0 and sim_tick < player["hunter_mark_expires_tick"] and player_position.distance_to(marked.position) <= locked_targeting_distance:
+	var marked := enemy_by_entity_id(player["marked_entity_id"])
+	if marked != null and is_enemy_actor_active(marked) and marked.health > 0.0 and sim_tick < player["hunter_mark_expires_tick"] and player_position.distance_to(marked.position) <= locked_targeting_distance:
 		return marked
 	if player["hunter_mark_candidate_entity_id"] > 0 and sim_tick <= player["hunter_mark_candidate_expires_tick"]:
-		var candidate := _enemy_by_entity_id(player["hunter_mark_candidate_entity_id"])
-		if candidate != null and _is_enemy_actor_active(candidate) and candidate.health > 0.0 and player_position.distance_to(candidate.position) <= locked_targeting_distance:
+		var candidate := enemy_by_entity_id(player["hunter_mark_candidate_entity_id"])
+		if candidate != null and is_enemy_actor_active(candidate) and candidate.health > 0.0 and player_position.distance_to(candidate.position) <= locked_targeting_distance:
 			return candidate
 	return _nearest_enemy()
 
@@ -1146,7 +1142,7 @@ func _nearest_enemy(maximum_distance: float = INF) -> CombatEnemyState:
 	var nearest: CombatEnemyState
 	var best_distance: float = maximum_distance * maximum_distance
 	for enemy: CombatEnemyState in enemies:
-		if enemy.health <= 0.0 or not _is_enemy_actor_active(enemy):
+		if enemy.health <= 0.0 or not is_enemy_actor_active(enemy):
 			continue
 		var distance: float = player_position.distance_squared_to(enemy.position)
 		if distance < best_distance or (is_equal_approx(distance, best_distance) and (nearest == null or enemy.entity_id < nearest.entity_id)):
@@ -1155,7 +1151,7 @@ func _nearest_enemy(maximum_distance: float = INF) -> CombatEnemyState:
 	return nearest
 
 
-func _is_enemy_actor_active(enemy: CombatEnemyState) -> bool:
+func is_enemy_actor_active(enemy: CombatEnemyState) -> bool:
 	if enemy == null:
 		return false
 	if actor_registry != null and actor_registry.has_method("is_actor_active"):
@@ -1169,23 +1165,23 @@ func _is_skill_equipped(slot_index: int, expected_id: String) -> bool:
 
 
 func _arena_rect() -> Rect2:
-	return room_geometry._arena_rect()
+	return room_geometry.arena_rect()
 
 
 func _walkable_geometry(padding: float) -> Dictionary:
-	return room_geometry._walkable_geometry(padding)
+	return room_geometry.walkable_geometry(padding)
 
 
 func _collision_geometry(radius: float) -> Dictionary:
-	return room_geometry._collision_geometry(radius)
+	return room_geometry.collision_geometry(radius)
 
 
 func _room_socket(binding: String) -> Variant:
-	return room_geometry._room_socket(binding)
+	return room_geometry.room_socket(binding)
 
 
 func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
-	return room_geometry._clamp_to_arena(value, padding)
+	return room_geometry.clamp_to_arena(value, padding)
 
 
 func _ensure_command_source() -> void:
@@ -1249,7 +1245,7 @@ func gameplay_snapshot() -> Dictionary:
 		"presentation_geometry": room_geometry._presentation_geometry(),
 		"projectiles": projectiles,
 		"equipped_parameters": content_registry.preset_equipped_parameters if content_registry != null else {},
-		"model": _current_model() if content_registry != null else {},
+		"model": current_model() if content_registry != null else {},
 		"proxy_failure": _player_commands._proxy_failure_snapshot(),
 		"events": combat_event_stream.events_after(presentation.feedback.presentation_event_cursor) if combat_event_stream != null else [],
 	}, true)

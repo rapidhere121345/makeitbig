@@ -82,7 +82,7 @@ func _run() -> void:
 	var first_cast: Dictionary = arena.request_player_cast("piercing_arrow", first.entity_id)
 	_expect(bool(first_cast.get("accepted", false)), "real room: first real arrow was rejected: %s" % str(first_cast))
 	var first_dead := _advance_until(arena, func() -> bool:
-		return arena._enemy_by_entity_id(first.entity_id) == null
+		return arena.enemy_by_entity_id(first.entity_id) == null
 	, 120)
 	_expect(first_dead, "real room: first enemy did not die through the mounted projectile path")
 	_expect(not bool(arena.battle_over), "real room: one enemy death ended a two-enemy room")

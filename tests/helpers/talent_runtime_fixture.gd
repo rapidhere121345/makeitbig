@@ -128,20 +128,20 @@ func configure_target(arena, offset: Vector2 = Vector2(120.0, 0.0)):
 	var arena_id: int = arena.get_instance_id()
 	_command_batches[arena_id] = []
 	var callbacks := {
-		"read_only_targets": Callable(arena, "_read_only_targets"),
-		"set_elapsed": Callable(arena, "_simulation_set_elapsed"),
-		"consume_player_events": Callable(arena, "_consume_player_events"),
-		"update_room_rules": Callable(arena, "_update_room_rules_tick"),
-		"refresh_hazard_states": Callable(arena, "_refresh_hazard_states_tick"),
+		"read_only_targets": Callable(arena, "read_only_targets"),
+		"set_elapsed": Callable(arena, "simulation_set_elapsed"),
+		"consume_player_events": Callable(arena, "consume_player_events"),
+		"update_room_rules": Callable(arena, "update_room_rules_tick"),
+		"refresh_hazard_states": Callable(arena, "refresh_hazard_states_tick"),
 		"collect_commands": func() -> Array[Dictionary]: return _collect(arena_id),
-		"route_commands": Callable(arena, "_route_commands"),
+		"route_commands": Callable(arena, "route_commands"),
 		# Talent payload assertions use stationary targets, as the original
 		# fixture did. Player rules, motor, projectiles and contacts all run.
 		"update_enemies": func() -> void: pass,
-		"advance_projectiles": Callable(arena, "_advance_piercing_projectiles_tick"),
-		"resolve_hazard_hits": Callable(arena, "_resolve_hazard_hits_tick"),
-		"check_battle_end": Callable(arena, "_check_battle_end"),
-		"check_timeout": Callable(arena, "_simulation_check_timeout"),
+		"advance_projectiles": Callable(arena, "advance_piercing_projectiles_tick"),
+		"resolve_hazard_hits": Callable(arena, "resolve_hazard_hits_tick"),
+		"check_battle_end": Callable(arena, "check_battle_end"),
+		"check_timeout": Callable(arena, "simulation_check_timeout"),
 	}
 	var phase_port = PhasePort.new()
 	var port_result: Dictionary = phase_port.bind(callbacks)

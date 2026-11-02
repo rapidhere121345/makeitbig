@@ -24,47 +24,47 @@ func is_ready() -> bool:
 
 
 func read_only_targets() -> Array[Dictionary]:
-	return _owner._read_only_targets()
+	return _owner.read_only_targets()
 
 
 func set_elapsed(value: float) -> void:
-	_owner._simulation_set_elapsed(value)
+	_owner.simulation_set_elapsed(value)
 
 
 func consume_player_events(result: Dictionary) -> void:
-	_owner._consume_player_events(result)
+	_owner.consume_player_events(result)
 
 
 func update_room_rules() -> void:
-	_owner._update_room_rules_tick()
+	_owner.update_room_rules_tick()
 
 
 func refresh_hazard_states() -> void:
-	_owner._refresh_hazard_states_tick()
+	_owner.refresh_hazard_states_tick()
 
 
 func collect_commands() -> Array[Dictionary]:
-	return _owner._simulation_collect_commands()
+	return _owner.simulation_collect_commands()
 
 
 func route_commands(commands: Array[Dictionary]) -> Dictionary:
-	return _owner._route_commands(commands)
+	return _owner.route_commands(commands)
 
 
 func update_enemies() -> void:
-	_owner._update_enemies_tick()
+	_owner.update_enemies_tick()
 
 
 func advance_projectiles() -> void:
-	_owner._advance_piercing_projectiles_tick()
+	_owner.advance_piercing_projectiles_tick()
 
 
 func resolve_hazard_hits() -> void:
-	_owner._resolve_hazard_hits_tick()
+	_owner.resolve_hazard_hits_tick()
 
 
 func check_battle_end() -> void:
-	_owner._check_battle_end()
+	_owner.check_battle_end()
 
 
 func room_terminal_locked() -> bool:
@@ -72,4 +72,4 @@ func room_terminal_locked() -> bool:
 
 
 func check_timeout() -> void:
-	_owner._simulation_check_timeout()
+	_owner.simulation_check_timeout()

@@ -126,7 +126,7 @@ func _test_mark_priority_and_damage(arena: Node, failures: Array[String]) -> voi
 	_place(arena, "enemy/%d" % marked.entity_id, arena.player_position + Vector2(80.0, 0.0))
 	_expect(_cast(arena, "hunter_mark") and _player(arena).marked_entity_id == marked.entity_id, "priority setup failed to mark requested target", failures)
 	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(20.0, 0.0))
-	var base_damage: float = float(arena.locked_payload) * float(arena._current_model().total_events_float)
+	var base_damage: float = float(arena.locked_payload) * float(arena.current_model().total_events_float)
 	first.health = base_damage * 4.0
 	marked.health = base_damage * 4.0
 	var first_before: float = first.health
@@ -337,7 +337,7 @@ func _test_same_tick_runtime_arbitration(arena: Node, failures: Array[String]) -
 	arena.in_arena = true
 	var target = arena.enemies[0]
 	_place(arena, "enemy/%d" % target.entity_id, arena.player_position + Vector2(60.0, 0.0))
-	var base_damage: float = float(arena.locked_payload) * float(arena._current_model().total_events_float)
+	var base_damage: float = float(arena.locked_payload) * float(arena.current_model().total_events_float)
 	target.health = base_damage * 10.0
 	target.maximum_health = target.health
 	var before: float = target.health
@@ -405,7 +405,7 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 	_place(arena, "enemy/%d" % secondary.entity_id, arena.player_position + Vector2(60.0, 0.0))
 	arena.selected_mode = "Auto"
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
-	arena._update_room_rules_tick()
+	arena.update_room_rules_tick()
 	var public_snapshot: Dictionary = arena._player_commands._public_proxy_snapshot()
 	var elite_is_publicly_blocked := false
 	for visible_enemy: Dictionary in public_snapshot.visible_enemies:
@@ -422,10 +422,10 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 	## It may reacquire only on the next public 30-tick horizon.
 	arena.enemies.erase(secondary)
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
-	arena._update_room_rules_tick()
+	arena.update_room_rules_tick()
 	_expect(_cast_target(arena._player_commands._auto_commands()) == 0, "proxy legality: only shielded target still produced an attack", failures)
 	fixture.advance_to(arena, 20)
-	arena._update_room_rules_tick()
+	arena.update_room_rules_tick()
 	_expect(not arena.elite_barrier_active and _cast_target(arena._player_commands._auto_commands()) == 0, "proxy legality: barrier opening leaked an out-of-cadence perception refresh", failures)
 	fixture.advance_to(arena, 30)
 	_expect(_cast_target(arena._player_commands._auto_commands()) == elite.entity_id, "proxy legality: next public horizon did not reacquire the opened elite", failures)

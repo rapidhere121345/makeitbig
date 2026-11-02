@@ -43,12 +43,12 @@ func _test_critical_hunter_once_after_pure_reads(fixture, failures: Array[String
 	var session: Dictionary = fixture.start_session(["ranger_critical_hunter"])
 	var arena = session.arena
 	var target = fixture.configure_target(arena)
-	var base_events: float = float(arena._current_model().total_events_float)
+	var base_events: float = float(arena.current_model().total_events_float)
 	for _index in 8:
-		arena._current_model()
+		arena.current_model()
 		arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 		arena.refresh_presentation()
-	_expect(is_equal_approx(float(arena._current_model().total_events_float), base_events), "model/HUD reads consumed the once-per-battle critical bonus", failures)
+	_expect(is_equal_approx(float(arena.current_model().total_events_float), base_events), "model/HUD reads consumed the once-per-battle critical bonus", failures)
 	_expect(fixture.release_arrow(arena, target), "critical hunter: first arrow did not release", failures)
 	var first = arena.projectiles[0]
 	var expected_first: float = (base_events + 2.0) * arena.locked_payload
@@ -222,7 +222,7 @@ func _test_render_rates_and_presentation_switch(fixture, failures: Array[String]
 		var arena = session.arena
 		for _index in int(setting.frames):
 			arena._process(float(setting.delta))
-			arena._current_model()
+			arena.current_model()
 			arena.presentation.frame_builder.attack_state(arena.gameplay_snapshot(), arena.input_adapter.view_state(arena.gameplay_snapshot()))
 		var guard := 0
 		while int(arena.sim_tick) < 270 and guard < 64:

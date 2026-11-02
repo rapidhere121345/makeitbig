@@ -14,11 +14,11 @@ func _init(main: MainArena) -> void:
 
 
 func _resolve_piercing_arrow(action_event: Dictionary, action_player: Dictionary) -> void:
-	_main._combat_context(action_player)
+	_main.sync_combat_context(action_player)
 	var previous_report := String(_main.combat_system.battle_report)
 	var previous_event_id: int = _main.combat_event_stream.latest_event_id()
 	_main.combat_system.resolve_piercing_arrow(action_event)
-	_main._combat_report(previous_report, previous_event_id)
+	_main.adopt_combat_report(previous_report, previous_event_id)
 
 
 func _current_projectile_speed() -> float:
@@ -33,7 +33,7 @@ func _current_projectile_speed() -> float:
 
 
 func _advance_piercing_projectiles_tick() -> void:
-	_main._combat_context()
+	_main.sync_combat_context()
 	var previous_report := String(_main.combat_system.battle_report)
 	var previous_event_id: int = _main.combat_event_stream.latest_event_id()
 	# Every production ranger arrow flies through the mounted kernel. Normal
@@ -56,27 +56,27 @@ func _advance_piercing_projectiles_tick() -> void:
 			_main.sim_tick,
 			_main.combat_system.room_port
 		)
-	_main._combat_report(previous_report, previous_event_id)
+	_main.adopt_combat_report(previous_report, previous_event_id)
 
 
 func _resolve_piercing_arrow_contact(projectile: CombatArrowProjectile, target: CombatEnemyState, contact_point: Vector2) -> void:
-	_main._combat_context()
+	_main.sync_combat_context()
 	var previous_report := String(_main.combat_system.battle_report)
 	var previous_event_id: int = _main.combat_event_stream.latest_event_id()
 	_main.combat_system.resolve_projectile_contact(projectile, target, contact_point)
-	_main._combat_report(previous_report, previous_event_id)
+	_main.adopt_combat_report(previous_report, previous_event_id)
 
 
 func _resolve_piercing_arrow_miss(projectile: CombatArrowProjectile) -> void:
-	_main._combat_context()
+	_main.sync_combat_context()
 	var previous_report := String(_main.combat_system.battle_report)
 	var previous_event_id: int = _main.combat_event_stream.latest_event_id()
 	_main.combat_system.resolve_projectile_miss(projectile)
-	_main._combat_report(previous_report, previous_event_id)
+	_main.adopt_combat_report(previous_report, previous_event_id)
 
 
 func _piercing_arrow_swept_contact(start: Vector2, finish: Vector2, target: CombatEnemyState) -> Variant:
-	_main._combat_context()
+	_main.sync_combat_context()
 	return _main.combat_system.swept_contact(start, finish, target)
 
 
@@ -89,7 +89,7 @@ func remove_combat_target(target: CombatEnemyState) -> void:
 		var unregistered: Dictionary = _main.actor_registry.unregister_actor(actor_id)
 		if not bool(unregistered.get("ok", false)):
 			push_error("enemy_actor_unregister_failed:%d:%s" % [target.entity_id, String(unregistered.get("error", "unknown"))])
-	_main._spawn_room_loot_for_source("enemy_death", target.entity_id, target.position)
+	_main.spawn_room_loot_for_source("enemy_death", target.entity_id, target.position)
 
 
 func cancel_buffered_target(entity_id: int) -> int:

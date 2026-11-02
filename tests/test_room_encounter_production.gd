@@ -313,7 +313,7 @@ func _test_production_authored_multi_wave_session() -> void:
 	var cast_accepted := _cast_real_arrow(arena, charger)
 	_expect(cast_accepted, "production: real arrow against the wave.01 charger was rejected")
 	var charger_dead := _advance_until(arena, func() -> bool:
-		return arena._enemy_by_entity_id(charger.entity_id) == null
+		return arena.enemy_by_entity_id(charger.entity_id) == null
 	, 120)
 	_expect(charger_dead, "production: wave.01 charger did not die through the production projectile path")
 	_expect(port.spawned_notifications.size() == 1, "production: wave.02 spawned before wave.01 cleared")

@@ -90,20 +90,20 @@ func drive(arena, options: Dictionary = {}) -> void:
 	var arena_id: int = arena.get_instance_id()
 	_batches[arena_id] = []
 	_release_frames[arena_id] = {}
-	var enemy_step: Callable = options.get("enemy_step", Callable(arena, "_update_enemies_tick") if bool(options.get("enemies", false)) else func() -> void: pass)
-	var collect: Callable = Callable(arena, "_simulation_collect_commands") if bool(options.get("input", false)) else func() -> Array[Dictionary]: return _collect(arena_id)
+	var enemy_step: Callable = options.get("enemy_step", Callable(arena, "update_enemies_tick") if bool(options.get("enemies", false)) else func() -> void: pass)
+	var collect: Callable = Callable(arena, "simulation_collect_commands") if bool(options.get("input", false)) else func() -> Array[Dictionary]: return _collect(arena_id)
 	var callbacks := {
-		"read_only_targets": Callable(arena, "_read_only_targets"),
-		"set_elapsed": Callable(arena, "_simulation_set_elapsed"),
-		"consume_player_events": Callable(arena, "_consume_player_events"),
-		"update_room_rules": Callable(arena, "_update_room_rules_tick"),
-		"refresh_hazard_states": Callable(arena, "_refresh_hazard_states_tick"),
-		"collect_commands": collect, "route_commands": Callable(arena, "_route_commands"),
+		"read_only_targets": Callable(arena, "read_only_targets"),
+		"set_elapsed": Callable(arena, "simulation_set_elapsed"),
+		"consume_player_events": Callable(arena, "consume_player_events"),
+		"update_room_rules": Callable(arena, "update_room_rules_tick"),
+		"refresh_hazard_states": Callable(arena, "refresh_hazard_states_tick"),
+		"collect_commands": collect, "route_commands": Callable(arena, "route_commands"),
 		"update_enemies": enemy_step,
 		"advance_projectiles": func() -> void: _observe_release_and_advance(arena),
-		"resolve_hazard_hits": Callable(arena, "_resolve_hazard_hits_tick"),
-		"check_battle_end": Callable(arena, "_check_battle_end"),
-		"check_timeout": Callable(arena, "_simulation_check_timeout"),
+		"resolve_hazard_hits": Callable(arena, "resolve_hazard_hits_tick"),
+		"check_battle_end": Callable(arena, "check_battle_end"),
+		"check_timeout": Callable(arena, "simulation_check_timeout"),
 	}
 	var phase_port = PhasePort.new()
 	var port_result: Dictionary = phase_port.bind(callbacks)
@@ -129,7 +129,7 @@ func _observe_release_and_advance(arena) -> void:
 			"player_position": player(arena).player_position, "player_facing": player(arena).player_facing,
 		}
 	_release_frames[arena.get_instance_id()] = frames
-	arena._advance_piercing_projectiles_tick()
+	arena.advance_piercing_projectiles_tick()
 
 
 func release_frame(arena, action_id: int) -> Dictionary:
@@ -155,7 +155,7 @@ func command(arena, ability: String, target_id: int = 0, direction: Vector2 = Ve
 	arena.command_sequence += 1
 	var aim := direction.normalized()
 	if ability == "piercing_arrow" and aim == Vector2.ZERO:
-		for target: Dictionary in arena._read_only_targets():
+		for target: Dictionary in arena.read_only_targets():
 			if int(target.entity_id) == target_id:
 				aim = (player(arena).player_position as Vector2).direction_to(target.position)
 				break

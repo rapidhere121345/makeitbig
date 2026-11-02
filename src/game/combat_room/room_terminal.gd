@@ -21,7 +21,7 @@ func _init(main: MainArena) -> void:
 func _check_battle_end() -> void:
 	# Pickup is a committed post-movement phase. Requests are queued by the
 	# public input boundary and can only mutate the room ledger here.
-	_main._process_room_loot_pickups_tick()
+	_main.process_room_loot_pickups_tick()
 	if _mounted_encounter_terminal_active():
 		var terminal_result := _observe_mounted_encounter_terminal()
 		if not bool(terminal_result.get("ok", false)):
@@ -38,15 +38,15 @@ func _check_battle_end() -> void:
 			push_error("room_terminal_reward_projection_failed:%s" % String(projected.get("error", "unknown")))
 			return
 		if victory:
-			_main._spawn_room_loot_for_source("wave_clear", 0, _main.player_position)
+			_main.spawn_room_loot_for_source("wave_clear", 0, _main.player_position)
 		else:
-			_main._settle_room_loot("defeat")
+			_main.settle_room_loot("defeat")
 		_handle_terminal_automation(victory)
 		return
 	var observed: Dictionary = _main.room_rules.observe(_main.player_combat_state.snapshot(_main.sim_tick), {
 		"has_boss": _main.boss != null, "boss_health": _main.boss.health if _main.boss != null else 0.0,
 		"enemy_count": _main.enemies.size(), "elite_entity_id": _main.elite_entity_id,
-		"elite_alive": _main._enemy_by_entity_id(_main.elite_entity_id) != null,
+		"elite_alive": _main.enemy_by_entity_id(_main.elite_entity_id) != null,
 		"elite_rule_ids": _main.elite_rule_ids, "timed_bonus_available": _main.timed_bonus_available,
 		"elapsed": _main.elapsed, "shots": _main.shots, "defeated": _main.defeated,
 	})
@@ -54,9 +54,9 @@ func _check_battle_end() -> void:
 		return
 	_main.battle_report = String(observed.state.report)
 	if _main.battle_victory:
-		_main._spawn_room_loot_for_source("wave_clear", 0, _main.player_position)
+		_main.spawn_room_loot_for_source("wave_clear", 0, _main.player_position)
 	if not _main.battle_victory:
-		_main._settle_room_loot("defeat")
+		_main.settle_room_loot("defeat")
 	if _main.battle_victory:
 		if _main.automation_smoke and not _automation_smoke_state_valid():
 			_fail_automation_smoke("integrated room/proxy/reward state is invalid")
@@ -92,7 +92,7 @@ func _observe_mounted_encounter_terminal() -> Dictionary:
 			observation.unresolved_member_count += 1
 	var objective := String(_main.framework_room.get("objective_id", _main.objective_id))
 	if objective == "hunt_elite" and _main.elite_entity_id > 0:
-		var elite_alive := _main._enemy_by_entity_id(_main.elite_entity_id) != null
+		var elite_alive := _main.enemy_by_entity_id(_main.elite_entity_id) != null
 		var requires_full_clear := "summon_reinforcements" in _main.elite_rule_ids
 		observation.objective_satisfied = not elite_alive and (not requires_full_clear or _main.enemies.is_empty())
 	var result: RoomTerminalResult = _main.room_encounter_port.observe_terminal(observation)
