@@ -5,6 +5,7 @@ const GridIcon = preload("res://src/presentation/pixel_grid_icon.gd")
 const Progression = preload("res://src/presentation/progression_icons.gd")
 const Skills = preload("res://src/presentation/combat_skill_icons.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
+const ICON_SHEET_DIRECTORY := "res://art/production/p1/ui_style_r13"
 var errors: Array[String] = []
 var preserved := 0
 var contrasts: Dictionary = {}
@@ -94,7 +95,7 @@ func _preserve(old_path: String, name: String) -> void:
 	var before := Image.new()
 	var after := Image.new()
 	_expect(before.load_png_from_buffer(FileAccess.get_file_as_bytes(old_path)) == OK, "original " + name)
-	_expect(after.load_png_from_buffer(FileAccess.get_file_as_bytes(Shell.MATERIAL_DIRECTORY.path_join(name))) == OK, "framed " + name)
+	_expect(after.load_png_from_buffer(FileAccess.get_file_as_bytes(ICON_SHEET_DIRECTORY.path_join(name))) == OK, "framed " + name)
 	_expect(before.get_size() == after.get_size(), name + " atlas dimensions")
 	var backing_pixels := 0
 	for y in before.get_height():

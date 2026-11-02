@@ -2,6 +2,10 @@
 
 Run from project root: python tools/art_pipeline/p1_ui_style_r13/build.py
 No generation/noise/gradient synthesis happens in this packing step.
+
+The nine `*_v01.png` panel materials it writes were retired from runtime on
+2026-11-01 (the crafted UI replaced them); only the icon sheets are live.
+Delete regenerated material PNGs rather than committing them.
 """
 from pathlib import Path
 import json

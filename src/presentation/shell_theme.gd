@@ -6,7 +6,6 @@ extends RefCounted
 
 const SharedPalette := preload("res://src/presentation/palette.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
-const MATERIAL_DIRECTORY := "res://art/production/p1/ui_style_r13"
 const EXPLORATION_ART := "res://art/production/p1/ui_exploration_v01"
 const CRAFTED_ART := "res://art/production/p1/ui_crafted_v01"
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
@@ -246,24 +245,6 @@ static func panel_style(kind: String = "panel") -> StyleBoxFlat:
 		"well":
 			pass
 	return box
-
-
-## One upload per authored material. Fresh styleboxes let callers adjust their
-## margins without changing another screen; textures are shared across routes.
-static func material_texture(kind: String) -> Texture2D:
-	if not _materials.has(kind):
-		var path := MATERIAL_DIRECTORY.path_join(kind + "_v01.png")
-		var texture: Texture2D = null
-		if ResourceLoader.exists(path):
-			texture = load(path) as Texture2D
-		elif FileAccess.file_exists(path):
-			var image := Image.new()
-			if image.load_png_from_buffer(FileAccess.get_file_as_bytes(path)) == OK:
-				texture = ImageTexture.create_from_image(image)
-		if texture == null:
-			push_error("R13 UI material missing: " + path)
-		_materials[kind] = texture
-	return _materials[kind] as Texture2D
 
 
 static func add_backdrop(host: Control, motif: String = "forge") -> Control:

@@ -12,7 +12,7 @@ The authoritative production resources are those read by runtime code in `art/pr
 | Retained battlefield actors and historical scene compatibility assets | `p1-combat-style-r13/`; `p1-scene-rework-v01/`, `p1-calibration-v01/` |
 | Ranger and enemy action atlases (frame contracts and base atlases under the actors_v02 styled art) | `p1-ranger-actions-v01/recipe.final.json`, [p1-enemy-actions-v01](p1-enemy-actions-v01/README.md), and corresponding sources |
 | Equipment, skills, navigation, talents, Law Tokens | `p1-early-loop-v01/`, `p1-equipment-readability-v02/`, `p1-hub-navigation-v01/`, `p1-icon-expansion-v01/` |
-| UI materials | Original images, prompts, and packing maps in `p1-ui-style-r13/` |
+| Skill, talent and Law Token icon sheets in `ui_style_r13/` | Original images, prompts, and packing maps in `p1-ui-style-r13/` (its nine `*_v01.png` panel materials were retired on 2026-11-01; the crafted UI in `ui-crafted-20261101/` replaced them) |
 | Title, loop, and return | [Current title](title-world-20261101/PROMPT.md), shared `p1-title-life-v01/` frames, and [current-world return composition](hearth-return-20261101/README.md). Superseded title/return source recipes remain for provenance. |
 | Five dialogue portraits | `p1-story-portraits-r14/`: v03 original, prompts, current crop recipe, and FROZEN import manifest only |
 | Ground and visual references | `p1-ground-refine-v01/`; production reference originals and prompts retained in `concepts/` |

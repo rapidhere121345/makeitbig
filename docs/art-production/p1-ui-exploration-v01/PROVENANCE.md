@@ -6,9 +6,9 @@
 | --- | --- |
 | `contract_road.png` | Contract background/right-side snow-road illustration, conveying cold and danger before departure. |
 | `settlement_table.png` | Results background/title banner, a fireside table for inspecting returned loot. |
-| `copper_frame.png` | Nine-slice borders for main Contract/results panels, town heading, and signposts. |
+| `copper_frame.png` | Retired 2026-11-01: formerly nine-slice borders for main panels; no runtime code read it after the crafted UI pass, so the runtime copy was removed. Its prompt is kept below. |
 
-All three are opaque PNGs. Originals retain generated resolution; Godot import `process/size_limit=256` reduces the frame into runtime material with 20px nine-slice edges. Body text used separate 22px/18px Chinese controls at production time; images embed no gameplay text. Runtime darkens backgrounds; illustration occupies a separate region. Frames serve major panels only; secondary controls retain thin borders. `ShellTheme` caches resources; window resizing changes neither world field of view nor gameplay data.
+All three were opaque PNGs; the two backgrounds remain at generated resolution. Body text used separate 22px/18px Chinese controls at production time; images embed no gameplay text. Runtime darkens backgrounds; illustration occupies a separate region. Frames serve major panels only; secondary controls retain thin borders. `ShellTheme` caches resources; window resizing changes neither world field of view nor gameplay data.
 
 Raw outputs reside in imagegen's default generation directory; project files are copies without repainting. Complete final prompts follow unchanged. No CLI/API fallback, external references, secondary image editing, or cropped export was used.
 
