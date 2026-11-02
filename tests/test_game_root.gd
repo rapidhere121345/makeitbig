@@ -560,7 +560,7 @@ func _test_result_drop_review_route(failures: Array[String]) -> void:
 			"game root review: loadout did not carry the exact settled candidate context=%s focus=%s" % [str(review_context), focused_slot], failures)
 	_expect((game.application_state.active_build_snapshot().active_build.equipped_item_ids as Dictionary) == equipped_before,
 		"game root review: opening comparison equipped or unequipped an item", failures)
-	game._on_facility_back_requested("result")
+	game.request_facility_back("result")
 	_expect(game.current_route == "result", "game root review: comparison could not return to the settlement decision", failures)
 	game.review_result_drop("review:drop/1", "gloves")
 	_expect(game.current_route == "loadout" and String(game.current_screen.get("_focus_slot")) == "gloves",

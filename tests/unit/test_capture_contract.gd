@@ -49,12 +49,12 @@ func _run() -> void:
 	var probe := Game.new()
 	probe.save_directory_path = TEST_DIRECTORY
 	probe.playtest_logging_enabled = false
-	probe.set("_capture_request", {
+	probe.capture.request = {
 		"ok": true, "error": "", "detail": "",
 		"capture_path": png_path, "capture_route": "", "capture_stage": "boss",
 		"auto_smoke": true, "presentation_off": false,
-	})
-	var untimed: Dictionary = await probe._capture_settlement_stage("boss")
+	}
+	var untimed: Dictionary = await probe.capture.settlement_stage("boss")
 	_expect(not bool(untimed.get("ok", true)), "empty framework state was reported as a settled capture")
 	_expect(String(untimed.get("error", "")) in ["headless_display", "route_mismatch"], "unsettled capture refused for the wrong reason: " + String(untimed.get("error", "")))
 	_expect(not FileAccess.file_exists(png_path), "a refused capture still wrote a png")

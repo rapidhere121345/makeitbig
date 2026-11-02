@@ -167,7 +167,7 @@ func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, set
 			_auto_smoke_fail("boss", "Boss settlement completed the early game before Auto")
 			return
 		_root._auto_smoke_boss_result = _root.application_state.last_result.duplicate(true)
-		if _root._capture_stage() == "boss":
+		if _root.capture.requested_stage() == "boss":
 			# Settled already: photograph Result before leaving it.
 			_auto_smoke_capture_stage.call_deferred("boss")
 			return
@@ -194,7 +194,7 @@ func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, set
 	if String(final_result.get("outcome", "")) != "final_victory":
 		_auto_smoke_fail("auto", "real Auto graduation did not produce final_victory")
 		return
-	if _root._capture_stage() == "auto":
+	if _root.capture.requested_stage() == "auto":
 		# Settle first, photograph Result, and only then open the Ending.
 		_auto_smoke_capture_stage.call_deferred("auto")
 		return
@@ -223,15 +223,15 @@ func _auto_smoke_advance_after_boss_result() -> void:
 ## Photographs one settled stage and resumes the replay. A failed capture fails the
 ## smoke too: a replay that cannot produce its own evidence must not pass.
 func _auto_smoke_capture_stage(stage: String) -> void:
-	var captured: Dictionary = await _root._capture_settlement_stage(stage)
+	var captured: Dictionary = await _root.capture.settlement_stage(stage)
 	if not bool(captured.get("ok", false)):
-		_root._capture_fail_line(
+		_root.capture.fail_line(
 			String(captured.get("error", "unknown_error")),
 			String(captured.get("detail", "")),
 			_root.CAPTURE_STAGE_ROUTE,
 			_root.current_route,
 			stage,
-			String(_root._capture_request.get("capture_path", ""))
+			String(_root.capture.request.get("capture_path", ""))
 		)
 		_auto_smoke_fail(stage, "settlement capture failed: %s: %s" % [String(captured.get("error", "unknown_error")), String(captured.get("detail", ""))])
 		return

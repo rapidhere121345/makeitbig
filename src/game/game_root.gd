@@ -129,13 +129,15 @@ var _auto_smoke_boss_result: Dictionary = {}
 var _auto_smoke_settlement_count := 0
 var _auto_smoke_previous_time_scale := 1.0
 var _auto_smoke_finished := false
-var _capture_request: Dictionary = {}
 var _initialized: bool = false
 var _presentation_enabled := true
 ## Playtest telemetry and the timers it keeps (src/game/root/).
 var playtest_recorder: PlaytestRecorder = PlaytestRecorder.new(self)
 ## Route snapshot builders for the loadout facility and the contract board.
 var route_snapshots: RouteSnapshots = RouteSnapshots.new(self)
+## The capture and evidence harness: request validation, route preparation and
+## settlement evidence (src/game/root/).
+var capture: CaptureHarness = CaptureHarness.new(self)
 ## The --mib-* prototype debug tooling and the state it owns (src/game/root/).
 var prototype_debug: PrototypeDebug = PrototypeDebug.new(self)
 
@@ -330,9 +332,9 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 			_auto_smoke_state_hash_output_path = argument.trim_prefix("--state-hash-out=")
 	var request: Dictionary = capture_request_report(arguments)
 	if not bool(request.get("ok", false)):
-		_capture_contract_fail(request)
+		capture.contract_fail(request)
 		return
-	_capture_request = request
+	capture.request = request
 	capture_path = String(request.get("capture_path", ""))
 	_auto_smoke_session = arguments.has("--auto-smoke")
 	_test_session = _auto_smoke_session or arguments.has("--smoke") or arguments.has("--game-flow-smoke") or not capture_path.is_empty()
@@ -344,10 +346,10 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 	_bootstrap(arguments)
 	prototype_debug.apply_runtime()
 	if not String(request.get("capture_route", "")).is_empty():
-		if not _apply_capture_request(request):
+		if not capture.apply_request(request):
 			return
-	if not capture_path.is_empty() and _capture_stage().is_empty():
-		_capture_frame.call_deferred(capture_path, String(request.get("capture_route", "")))
+	if not capture_path.is_empty() and capture.requested_stage().is_empty():
+		capture.capture_frame.call_deferred(capture_path, String(request.get("capture_route", "")))
 	elif arguments.has("--smoke"):
 		_run_scene_smoke.call_deferred()
 
@@ -685,8 +687,8 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			var screen = FacilityScreenScript.new()
 			var back_destination := String(payload.get("return_route", SceneRouterScript.ROUTE_BASE))
 			_facility_return_route = back_destination
-			screen.base_requested.connect(_on_facility_back_requested.bind(back_destination, String(payload.get("review_instance_id", ""))))
-			screen.destination_requested.connect(_on_facility_destination_requested)
+			screen.base_requested.connect(request_facility_back.bind(back_destination, String(payload.get("review_instance_id", ""))))
+			screen.destination_requested.connect(request_facility_destination)
 			screen.action_requested.connect(_on_facility_action_requested)
 			_current_screen = screen
 			_mount_screen(screen)
@@ -778,7 +780,8 @@ func _on_feature_requested(feature_id: String) -> void:
 	open_facility(feature_id)
 
 
-func _on_facility_destination_requested(route: String) -> void:
+## Facility screen navigation to another facility; refused unless the router allows it.
+func request_facility_destination(route: String) -> void:
 	if route not in FACILITY_ROUTES or not scene_router.can_transition(route):
 		flow_error.emit("facility_destination_blocked", "%s -> %s" % [current_route, route])
 		return
@@ -786,7 +789,8 @@ func _on_facility_destination_requested(route: String) -> void:
 	transition(route)
 
 
-func _on_facility_back_requested(destination: String, reviewed_item_id: String = "") -> void:
+## Facility screen back button: returns to the result review or leaves to the base.
+func request_facility_back(destination: String, reviewed_item_id: String = "") -> void:
 	if destination == SceneRouterScript.ROUTE_RESULT \
 			and current_route == SceneRouterScript.ROUTE_LOADOUT \
 			and not application_state.last_result.is_empty() \
@@ -870,53 +874,20 @@ func persist(reason: String, safe_route: String) -> String:
 	return PlayerFacingStatusScript.error_message("save_failed")
 
 
-## The capture and evidence harness lives in src/game/root/capture_harness.gd;
-## these thin forwarders keep the owner's method names for the remaining call sites.
-var _capture_harness  # untyped to avoid a preload cycle
-func _capture() -> CaptureHarness:
-	if _capture_harness == null:
-		_capture_harness = CaptureHarness.new(self)
-	return _capture_harness
-
-
 func capture_request_report(arguments: PackedStringArray) -> Dictionary:
-	return _capture().capture_request_report(arguments)
+	return capture.capture_request_report(arguments)
 
 
 func capture_environment_report() -> Dictionary:
-	return _capture().capture_environment_report()
+	return capture.capture_environment_report()
 
 
 func capture_evidence_target_available(path: String) -> Dictionary:
-	return _capture().capture_evidence_target_available(path)
+	return capture.capture_evidence_target_available(path)
 
 
 func prepare_capture_route(route: String) -> Dictionary:
-	return _capture().prepare_capture_route(route)
-
-
-func _apply_capture_request(request: Dictionary) -> bool:
-	return _capture()._apply_capture_request(request)
-
-
-func _capture_stage() -> String:
-	return _capture()._capture_stage()
-
-
-func _capture_frame(path: String, requested_route: String = "") -> void:
-	await _capture().capture_frame(path, requested_route)
-
-
-func _capture_settlement_stage(stage: String) -> Dictionary:
-	return await _capture().settlement_stage(stage)
-
-
-func _capture_fail_line(error_code: String, detail: String, requested_route: String, actual_route: String, requested_stage: String, capture_path: String) -> void:
-	_capture()._capture_fail_line(error_code, detail, requested_route, actual_route, requested_stage, capture_path)
-
-
-func _capture_contract_fail(report: Dictionary) -> void:
-	_capture()._capture_contract_fail(report)
+	return capture.prepare_capture_route(route)
 
 
 ## Reports the final exit code to exit_code_hook instead of ending the process.

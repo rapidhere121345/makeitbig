@@ -2,8 +2,8 @@ class_name CaptureHarness
 extends RefCounted
 
 ## Capture and evidence harness extracted from GameRoot. It validates capture
-## requests, prepares routes, and writes settlement evidence, reaching the
-## presentation and replay state through the untyped owner reference.
+## requests, prepares routes, and writes settlement evidence. It owns the
+## validated capture request and reaches the shell through GameRoot's public API.
 const SceneRouterScript = preload("res://src/game/scene_router.gd")
 const SaveStoreScript = preload("res://src/persistence/save_store.gd")
 
@@ -20,10 +20,13 @@ const CAPTURE_STAGES: Array[String] = ["boss", "auto"]
 const CAPTURE_EVIDENCE_PROTOCOL: String = "mib-settlement-capture-v1"
 const CAPTURE_EVIDENCE_SUFFIX: String = ".json"
 
-var _root
+## The validated command-line capture request; empty when no capture was asked for.
+var request: Dictionary = {}
+
+var _root: GameRoot
 
 
-func _init(root) -> void:
+func _init(root: GameRoot) -> void:
 	_root = root
 
 
@@ -152,7 +155,7 @@ func prepare_capture_route(route: String) -> Dictionary:
 		return _capture_route_report(route)
 	if route == SceneRouterScript.ROUTE_RESEARCH and _root.current_route == SceneRouterScript.ROUTE_BASE:
 		_root.open_facility(SceneRouterScript.ROUTE_TRAINING)
-		_root._on_facility_destination_requested(SceneRouterScript.ROUTE_RESEARCH)
+		_root.request_facility_destination(SceneRouterScript.ROUTE_RESEARCH)
 		return _capture_route_report(route)
 	if route in _root.FACILITY_ROUTES and _root.current_route == SceneRouterScript.ROUTE_BASE:
 		_root.open_facility(route)
@@ -182,8 +185,8 @@ func _capture_route_report(requested_route: String) -> Dictionary:
 
 ## Applies a validated request. Anything but the requested screen fails loudly
 ## instead of saving a frame for a screen nobody reached.
-func _apply_capture_request(request: Dictionary) -> bool:
-	var requested_route := String(request.get("capture_route", ""))
+func apply_request(capture_request: Dictionary) -> bool:
+	var requested_route := String(capture_request.get("capture_route", ""))
 	var report: Dictionary = prepare_capture_route(requested_route)
 	if bool(report.get("ok", false)):
 		return true
@@ -192,14 +195,15 @@ func _apply_capture_request(request: Dictionary) -> bool:
 		String(report.get("detail", "")),
 		requested_route,
 		String(report.get("actual_route", _root.current_route)),
-		String(request.get("capture_stage", "")),
-		String(request.get("capture_path", ""))
+		String(capture_request.get("capture_stage", "")),
+		String(capture_request.get("capture_path", ""))
 	)
 	return false
 
 
-func _capture_stage() -> String:
-	return String(_root._capture_request.get("capture_stage", ""))
+## The settlement stage (boss or auto) the command line asked to photograph, or empty.
+func requested_stage() -> String:
+	return String(request.get("capture_stage", ""))
 
 
 ## Route capture: --capture=<path> [--capture-route=<route>], written only when the
@@ -239,7 +243,7 @@ func settlement_stage(stage: String) -> Dictionary:
 		return _capture_refusal("route_mismatch", "settlement evidence requires the committed %s route; actual=%s" % [_root.CAPTURE_STAGE_ROUTE, _root.current_route])
 	if _root._auto_smoke_stage != stage:
 		return _capture_refusal("stage_mismatch", "requested stage=%s is not the settled stage=%s" % [stage, _root._auto_smoke_stage])
-	var path := String(_root._capture_request.get("capture_path", ""))
+	var path := String(request.get("capture_path", ""))
 	var target: Dictionary = capture_evidence_target_available(path)
 	if not bool(target.get("ok", false)):
 		return _capture_refusal(String(target.get("error", "capture_target_unavailable")), String(target.get("detail", "")))
@@ -295,8 +299,8 @@ func _capture_settlement_evidence(stage: String, absolute_path: String, evidence
 	var proxy_value: Variant = profile.get("proxy_build", {})
 	var proxy_build: Dictionary = proxy_value if proxy_value is Dictionary else {}
 	var screen_name := ""
-	if _root._current_screen != null and is_instance_valid(_root._current_screen) and _root._current_screen.get_script() != null:
-		screen_name = String((_root._current_screen.get_script() as Script).resource_path.get_file())
+	if _root.current_screen != null and is_instance_valid(_root.current_screen) and _root.current_screen.get_script() != null:
+		screen_name = String((_root.current_screen.get_script() as Script).resource_path.get_file())
 	return {
 		"protocol": CAPTURE_EVIDENCE_PROTOCOL,
 		"capture_kind": "real_arena_simulation_settlement",
@@ -362,11 +366,11 @@ func _globalize_capture_path(path: String) -> String:
 
 ## One loud line per refused capture, naming the requested and actual route/stage.
 func _capture_fail(error_code: String, detail: String, requested_route: String, actual_route: String, requested_stage: String, capture_path: String) -> void:
-	_capture_fail_line(error_code, detail, requested_route, actual_route, requested_stage, capture_path)
+	fail_line(error_code, detail, requested_route, actual_route, requested_stage, capture_path)
 	_root.request_exit(1, "capture_fail:%s" % error_code)
 
 
-func _capture_fail_line(error_code: String, detail: String, requested_route: String, actual_route: String, requested_stage: String, capture_path: String) -> void:
+func fail_line(error_code: String, detail: String, requested_route: String, actual_route: String, requested_stage: String, capture_path: String) -> void:
 	printerr("CAPTURE_FAIL reason=%s requested_route=%s actual_route=%s requested_stage=%s capture=%s detail=%s" % [
 		error_code,
 		requested_route if not requested_route.is_empty() else "none",
@@ -377,7 +381,7 @@ func _capture_fail_line(error_code: String, detail: String, requested_route: Str
 	])
 
 
-func _capture_contract_fail(report: Dictionary) -> void:
+func contract_fail(report: Dictionary) -> void:
 	_capture_fail(
 		String(report.get("error", "capture_request_invalid")),
 		String(report.get("detail", "")),
