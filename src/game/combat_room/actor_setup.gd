@@ -46,30 +46,30 @@ func _configure_actor_registry() -> bool:
 	if room_key.is_empty():
 		push_error("actor_registry_configuration_failed:missing_room_id")
 		return false
-	if _main.session.scene_runtime != null and not _main.session.scene_runtime.is_ready():
+	if _session.scene_runtime != null and not _session.scene_runtime.is_ready():
 		push_error("actor_registry_configuration_failed:scene_runtime_not_ready")
 		return false
-	var injected_runtime: bool = _main.session.scene_runtime != null
+	var injected_runtime: bool = _session.scene_runtime != null
 	if injected_runtime:
 		# SceneRuntime is the only authority for a mounted room: its actor
 		# access, SimulationWorld, and the world's bound ports are adopted
 		# as-is. Main must never rebuild or replace them here, including when
 		# presentation is disabled.
-		_session.actor_registry = _main.session.scene_runtime.get("actor_registry")
-		_session.simulation_world = _main.session.scene_runtime.get("simulation")
-		_session.actor_registry_instance_id = String(_main.session.scene_runtime.get("room_instance_id"))
-		_session.actor_registry_revision = int(_main.session.scene_runtime.get("world_revision"))
+		_session.actor_registry = _session.scene_runtime.get("actor_registry")
+		_session.simulation_world = _session.scene_runtime.get("simulation")
+		_session.actor_registry_instance_id = String(_session.scene_runtime.get("room_instance_id"))
+		_session.actor_registry_revision = int(_session.scene_runtime.get("world_revision"))
 		if _session.actor_registry == null or _session.simulation_world == null or _session.actor_registry_instance_id.is_empty():
 			push_error("actor_registry_configuration_failed:injected_access_missing")
 			return false
-		_session.room_spatial_port = _main.session.scene_runtime.get("spatial_port")
-		_session.room_combat_port = _main.session.scene_runtime.get("combat_port")
-		_session.room_encounter_port = _main.session.scene_runtime.get("encounter_port")
+		_session.room_spatial_port = _session.scene_runtime.get("spatial_port")
+		_session.room_combat_port = _session.scene_runtime.get("combat_port")
+		_session.room_encounter_port = _session.scene_runtime.get("encounter_port")
 		if _main.presentation_enabled:
 			# Art boxes are read once here, never while a tick spawns an enemy.
 			_session.actor_art_boxes = _main.actor_art_boxes(ACTOR_VISUAL_IDS)
-			_main.session.scene_runtime.clear_actor_presentation_bindings()
-			var presentation_ready: Dictionary = _main.session.scene_runtime.prepare_presentation()
+			_session.scene_runtime.clear_actor_presentation_bindings()
+			var presentation_ready: Dictionary = _session.scene_runtime.prepare_presentation()
 			if not bool(presentation_ready.get("ok", false)):
 				push_error("presentation_projector_configuration_failed:%s" % String(presentation_ready.get("error", "unknown")))
 				return false
@@ -118,7 +118,7 @@ func _configure_actor_registry() -> bool:
 		return false
 	if injected_runtime and _main.presentation_enabled and not _bind_runtime_actor_presentation(_session.kit.actor_id(), "ranger.south.idle", 2):
 		return false
-	for enemy: CombatEnemyState in _main.session.encounter_director.enemies:
+	for enemy: CombatEnemyState in _session.encounter_director.enemies:
 		if not register_enemy_actor(enemy):
 			push_error("actor_registry_configuration_failed:enemy_registration:%d" % enemy.entity_id)
 			_session.actor_registry_instance_id = ""
@@ -128,7 +128,7 @@ func _configure_actor_registry() -> bool:
 	# encounter authority. Keep the standalone authority self-contained so
 	# geometry and combat tests can exercise a Boss without inventing a second
 	# encounter runtime.
-	if _main.session.scene_runtime != null and not _bind_boss_production_encounter():
+	if _session.scene_runtime != null and not _bind_boss_production_encounter():
 		_session.actor_registry_instance_id = ""
 		return false
 	# The mounted SimulationWorld starts at tick zero.  A live room never
@@ -202,9 +202,9 @@ func _boundary_for_static_index(boundary: Dictionary) -> Dictionary:
 
 
 func _start_mounted_encounter() -> bool:
-	if _main.session.scene_runtime == null or not _main.session.scene_runtime.is_ready():
+	if _session.scene_runtime == null or not _session.scene_runtime.is_ready():
 		return true
-	var encounter_domain: Variant = _main.session.scene_runtime.get("encounter_domain")
+	var encounter_domain: Variant = _session.scene_runtime.get("encounter_domain")
 	if encounter_domain == null:
 		return true
 	var phase := String(encounter_domain.snapshot().get("phase", "")) if encounter_domain.has_method("snapshot") else ""
@@ -215,14 +215,14 @@ func _start_mounted_encounter() -> bool:
 			return false
 		phase = "idle"
 	if phase == "idle":
-		var started: Dictionary = _main.session.scene_runtime.start_encounter(_session.sim_tick)
+		var started: Dictionary = _session.scene_runtime.start_encounter(_session.sim_tick)
 		if not bool(started.get("ok", false)):
 			_main.last_save_message = "Deployment blocked: %s" % String(started.get("error", "encounter_start_failed"))
 			return false
-	var encounter_port = _main.session.scene_runtime.get("encounter_port")
+	var encounter_port = _session.scene_runtime.get("encounter_port")
 	if encounter_port != null and encounter_port.has_method("prime_spawn_requests"):
 		encounter_port.prime_spawn_requests(_session.sim_tick)
-	var materialized: Array[Dictionary] = _main.session.scene_runtime.materialize_encounter_spawns()
+	var materialized: Array[Dictionary] = _session.scene_runtime.materialize_encounter_spawns()
 	for result: Dictionary in materialized:
 		if String(result.get("kind", "")) == "failed":
 			_main.last_save_message = "Deployment blocked: encounter_spawn_failed:%s" % String(result.get("error", "unknown"))
@@ -255,9 +255,9 @@ func register_enemy_actor(enemy: CombatEnemyState) -> bool:
 	if bool(registered.get("ok", false)):
 		enemy.position = position
 		_session.kernel_bindings.enemy_stable_keys["actor/%d" % int(registered.stable_key)] = enemy.entity_id
-		if enemy.is_boss and not _register_boss_kernel_target(enemy, int(registered.stable_key), _main.session.encounter_director.enemies.find(enemy)):
+		if enemy.is_boss and not _register_boss_kernel_target(enemy, int(registered.stable_key), _session.encounter_director.enemies.find(enemy)):
 			return false
-		if _main.session.scene_runtime != null and _main.presentation_enabled:
+		if _session.scene_runtime != null and _main.presentation_enabled:
 			var role := "melee"
 			match enemy.kind_id:
 				"charging_raider": role = "charger"
@@ -317,9 +317,9 @@ func _production_boss_spawn_key(enemy: CombatEnemyState, ordinal: int) -> String
 
 
 func _bind_boss_production_encounter() -> bool:
-	if _main.session.encounter_director.boss == null:
+	if _session.encounter_director.boss == null:
 		return true
-	if _main.session.scene_runtime == null or not _main.session.scene_runtime.is_ready():
+	if _session.scene_runtime == null or not _session.scene_runtime.is_ready():
 		push_error("boss_encounter_runtime_unavailable")
 		return false
 	# CombatRoomRuntime owns the single mixed-room encounter composition.  Its
@@ -331,8 +331,8 @@ func _bind_boss_production_encounter() -> bool:
 	if mounted_room_roster is Array and not (mounted_room_roster as Array).is_empty():
 		return true
 	var spawns: Array = []
-	for index: int in _main.session.encounter_director.enemies.size():
-		var enemy: CombatEnemyState = _main.session.encounter_director.enemies[index]
+	for index: int in _session.encounter_director.enemies.size():
+		var enemy: CombatEnemyState = _session.encounter_director.enemies[index]
 		spawns.append({
 			"spawn_id": "%s.%d" % [enemy.kind_id, index],
 			"archetype_id": enemy.kind_id,
@@ -348,20 +348,20 @@ func _bind_boss_production_encounter() -> bool:
 	if not bool(configured.get("ok", false)):
 		push_error("boss_encounter_configure_failed:%s" % String(configured.get("error", "unknown")))
 		return false
-	var bound: Dictionary = _main.session.scene_runtime.bind_encounter(encounter, _session.encounter_spawn_port)
+	var bound: Dictionary = _session.scene_runtime.bind_encounter(encounter, _session.encounter_spawn_port)
 	if not bool(bound.get("ok", false)):
 		push_error("boss_encounter_bind_failed:%s" % String(bound.get("error", "unknown")))
 		return false
-	var started: Dictionary = _main.session.scene_runtime.start_encounter(_session.sim_tick)
+	var started: Dictionary = _session.scene_runtime.start_encounter(_session.sim_tick)
 	if not bool(started.get("ok", false)):
 		push_error("boss_encounter_start_failed:%s" % String(started.get("error", "unknown")))
 		return false
-	_session.room_encounter_port = _main.session.scene_runtime.get("encounter_port")
+	_session.room_encounter_port = _session.scene_runtime.get("encounter_port")
 	return true
 
 
 func _bind_runtime_actor_presentation(actor_id: String, visual_id: String, rank: int) -> bool:
-	if _main.session.scene_runtime == null or not _main.presentation_enabled:
+	if _session.scene_runtime == null or not _main.presentation_enabled:
 		return true
 	if not _session.actor_art_boxes.has(visual_id):
 		push_error("presentation_art_box_unavailable:%s" % visual_id)
@@ -375,7 +375,7 @@ func _bind_runtime_actor_presentation(actor_id: String, visual_id: String, rank:
 	# detached gameplay coordinate domain; never substitute the hurtbox radius.
 	var scale := ArenaWorldViewScript.GAMEPLAY_TO_WORLD
 	var gameplay_box := Rect2(world_box.position / scale, world_box.size / scale)
-	var bound: Dictionary = _main.session.scene_runtime.bind_actor_presentation(actor_id, visual_id, rank, gameplay_box)
+	var bound: Dictionary = _session.scene_runtime.bind_actor_presentation(actor_id, visual_id, rank, gameplay_box)
 	if not bool(bound.get("ok", false)):
 		push_error("presentation_binding_failed:%s:%s" % [actor_id, String(bound.get("error", "unknown"))])
 		return false
@@ -445,7 +445,7 @@ func _mobility_policy_value() -> Variant:
 
 
 func _has_active_charge() -> bool:
-	for enemy: CombatEnemyState in _main.session.encounter_director.enemies:
+	for enemy: CombatEnemyState in _session.encounter_director.enemies:
 		if enemy != null and enemy.action_state == "active" and enemy.action_id == "charge":
 			return true
 	return false

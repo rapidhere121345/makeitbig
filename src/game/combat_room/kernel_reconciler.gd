@@ -461,7 +461,7 @@ func _reconcile_kernel_hit(projectile, record: Variant, hit: Dictionary, outcome
 
 
 func _finalize_kernel_enemy_death(enemy: CombatEnemyState) -> void:
-	_main.session.encounter_director.enemies.erase(enemy)
+	_session.encounter_director.enemies.erase(enemy)
 	_session.combat_system.note_kernel_death(enemy)
 	var canceled_request_id: int = _main.piercing_arrows.cancel_buffered_target(enemy.entity_id)
 	if canceled_request_id > 0:

@@ -57,7 +57,7 @@ func _refresh_hazard_states_tick() -> void:
 
 func _resolve_hazard_hits_tick() -> void:
 	if domain != null and domain.is_configured():
-		var resolved: Dictionary = domain.resolve(_session.sim_tick, _main.session.player_position())
+		var resolved: Dictionary = domain.resolve(_session.sim_tick, _session.player_position())
 		if not bool(resolved.get("ok", false)):
 			_session.battle_report = "hazard_resolve_failed:%s" % String(resolved.get("error", "unknown"))
 		else:
@@ -67,7 +67,7 @@ func _resolve_hazard_hits_tick() -> void:
 					"source_id": String(contact.get("source_id", "")),
 					"target_id": _session.kit.actor_id(),
 					"outcome": "queued",
-					"contact_point": contact.get("contact_point", _main.session.player_position()),
+					"contact_point": contact.get("contact_point", _session.player_position()),
 				})
 		# Player contacts are consumed after staging and after the kernel has
 		# published this tick, preserving the existing fixed-tick boundary.
@@ -81,7 +81,7 @@ func _resolve_hazard_hits_tick() -> void:
 					"source_id": String(receipt.get("source_id", "")),
 					"target_id": _session.kit.actor_id(),
 					"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
-					"contact_point": _main.session.player_position(),
+					"contact_point": _session.player_position(),
 				})
 		return
 	_main.sync_encounter_context()
@@ -97,7 +97,7 @@ func _resolve_hazard_hits_tick() -> void:
 				"source_id": String(receipt.get("source_id", "")),
 				"target_id": _session.kit.actor_id(),
 				"outcome": "damage" if bool(receipt.get("accepted", false)) else "avoided",
-				"contact_point": _main.session.player_position(),
+				"contact_point": _session.player_position(),
 			})
 	_main.adopt_encounter_report(previous_report)
 
