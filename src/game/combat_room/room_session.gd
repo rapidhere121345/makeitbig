@@ -6,7 +6,8 @@ extends RefCounted
 ## the state hash builder, the room helpers, the ports and the tests keep
 ## reading `arena.<name>`. The session is never a Node and imports no
 ## presentation code; it holds no MainArena reference. Fixed-tick behavior still
-## lives in MainArena and its collaborators (see
+## lives in MainArena's phase hooks and the combat_room collaborators; the
+## session owns the simulation lifecycle (see
 ## docs/rebuild/ROOM_SESSION_DESIGN.md, migration items 3 and 4).
 
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
@@ -16,6 +17,7 @@ const PlayerCombatStateScript := preload("res://src/runtime/world/player_combat_
 const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.gd")
 const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
 const CombatSystemScript := preload("res://src/systems/combat_system.gd")
+const CombatSimulationScript := preload("res://src/systems/combat_simulation.gd")
 
 ## Build lock: the rule inputs frozen when a contract starts.
 var selected_preset: String = "convergent"
@@ -42,6 +44,10 @@ var encounter_director
 var room_catalog
 var combat_system
 var combat_simulation
+## Production fixed-tick phase owner. CombatSimulation never receives MainArena
+## as a callback bag; it receives a typed CombatPhasePort (today the
+## RoomPhaseDomain MainArena binds to itself).
+var room_phase_owner: CombatPhasePort = null
 var player_combat_state := PlayerCombatStateScript.new()
 var player_combat_rules := PlayerCombatRulesScript.new()
 var smoke_input_driver := SmokeInputDriverScript.new()
@@ -79,3 +85,23 @@ var objective_id: String = "clear"
 var room_entry_start_tick: int = 0
 var room_drop_tags: Array = []
 var framework_seed: int = MainArena.FATE_SEED
+
+
+## Creates the fixed-tick simulation on first use.
+func ensure_combat_simulation() -> void:
+	if combat_simulation == null:
+		combat_simulation = CombatSimulationScript.new()
+
+
+## Binds the fixed tick to the room's simulation world, player rules and the
+## given phase port, and records the port as the session's phase owner.
+func configure_simulation(phase_port: CombatPhasePort) -> Dictionary:
+	ensure_combat_simulation()
+	room_phase_owner = phase_port
+	return combat_simulation.configure(simulation_world, player_combat_rules, phase_port)
+
+
+## Runs exactly one fixed tick through CombatSimulation.
+func step() -> Dictionary:
+	ensure_combat_simulation()
+	return combat_simulation.step()

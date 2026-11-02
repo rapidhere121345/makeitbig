@@ -35,7 +35,6 @@ const PlayerCombatStateScript := preload("res://src/runtime/world/player_combat_
 const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.gd")
 const CombatCommandSourceScript = preload("res://src/systems/combat_command_source.gd")
 const MainCombatCommandSourcePortScript: Script = preload("res://src/game/main_combat_command_source_port.gd")
-const CombatSimulationScript = preload("res://src/systems/combat_simulation.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
 const CombatStatsSnapshotScript := preload("res://src/systems/combat_stats_snapshot.gd")
@@ -493,10 +492,14 @@ var automation_smoke_failure: String:
 		session.automation_smoke_failure = value
 var presentation
 var input_adapter
-## Production fixed-tick phase owner. CombatSimulation never receives Main as a
-## callback bag; it receives the typed RoomPhaseDomain from
+## Production fixed-tick phase owner, held by the session. CombatSimulation never
+## receives Main as a callback bag; it receives the typed RoomPhaseDomain from
 ## src/game/ports/room_phase_domain.gd. Phase dispatch is typed virtual calls only.
-var room_phase_owner: CombatPhasePort = null
+var room_phase_owner: CombatPhasePort:
+	get:
+		return session.room_phase_owner
+	set(value):
+		session.room_phase_owner = value
 
 ## These read-only input relays are used by CombatStateSnapshotBuilder; the
 ## device adapter is their sole state owner. No physical source ids are replay ids.
@@ -526,7 +529,7 @@ func _init() -> void:
 	input_adapter = InputAdapter.new()
 
 	_ensure_simulation_world()
-	_ensure_combat_simulation()
+	session.ensure_combat_simulation()
 	ensure_room_catalog()
 	_ensure_combat_system()
 	_ensure_encounter_director()
@@ -551,11 +554,6 @@ func _ensure_simulation_world() -> void:
 func ensure_room_catalog() -> void:
 	if room_catalog == null:
 		room_catalog = RoomCatalogScript.new()
-
-
-func _ensure_combat_simulation() -> void:
-	if combat_simulation == null:
-		combat_simulation = CombatSimulationScript.new()
 
 
 func _ensure_encounter_director() -> void:
@@ -601,14 +599,12 @@ func configure_player_domain(start_tick: int) -> bool:
 		return false
 	if not _configure_combat_ports():
 		return false
-	_ensure_combat_simulation()
 	var phase_domain := RoomPhaseDomainScript.new()
 	var phase_bound: Dictionary = phase_domain.bind(self)
 	if not bool(phase_bound.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(phase_bound.get("error", "combat_phase_port_unavailable"))
 		return false
-	room_phase_owner = phase_domain
-	var configured: Dictionary = combat_simulation.configure(simulation_world, player_combat_rules, phase_domain)
+	var configured: Dictionary = session.configure_simulation(phase_domain)
 	if not bool(configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "combat_simulation_unavailable"))
 		return false
@@ -1058,8 +1054,7 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 
 
 func _simulate_tick() -> void:
-	_ensure_combat_simulation()
-	var result: Dictionary = combat_simulation.step()
+	var result: Dictionary = session.step()
 	if not bool(result.get("ok", false)):
 		push_error("combat_simulation_step_failed:%s" % String(result.get("error", "unknown")))
 
