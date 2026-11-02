@@ -653,11 +653,6 @@ func update_room_rules_tick() -> void:
 		timed_bonus_available = false
 
 
-func update_hazards_tick() -> void:
-	refresh_hazard_states_tick()
-	resolve_hazard_hits_tick()
-
-
 func refresh_hazard_states_tick() -> void:
 	for state in hazard_states:
 		var cycle := tick / HAZARD_CYCLE_TICKS
