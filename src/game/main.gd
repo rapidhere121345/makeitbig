@@ -586,8 +586,7 @@ func _ensure_encounter_spawn_port() -> void:
 
 
 func _ensure_combat_system() -> void:
-	if combat_system == null:
-		combat_system = CombatSystemScript.new()
+	session.ensure_combat_system()
 
 
 func configure_player_domain(start_tick: int) -> bool:
@@ -1022,7 +1021,7 @@ func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 	if entity_key.is_empty() or stable_key < 1:
 		encounter_director.discard_encounter_enemy(enemy)
 		return EncounterSpawnResultScript.failed(request, "encounter_actor_identity_unavailable")
-	_sync_encounter_active_state()
+	session.sync_encounter_active_state()
 	return EncounterSpawnResultScript.spawned(
 		request,
 		handle,
@@ -1188,68 +1187,19 @@ func _process_player_action_events(events: Array, action_player: Dictionary) -> 
 
 
 func sync_combat_context(player: Dictionary = {}) -> void:
-	if player.is_empty():
-		player = session.player_combat_state.snapshot(session.sim_tick)
-	_ensure_combat_system()
-	session.combat_system.set_context(
-		session.sim_tick,
-		player["player_position"],
-		player["player_facing"],
-		session.locked_payload,
-		session.locked_targeting_distance,
-		piercing_arrows._current_projectile_speed(),
-		player["marked_entity_id"],
-		player["talent_capabilities"],
-		session.combat_event_stream,
-		session.manual_aim_resolver,
-		enemies
-	)
-	session.combat_system.attack_origins = (player.get("attack_origins", {}) as Dictionary).duplicate(true)
+	session.sync_combat_context(player)
 
 
 func adopt_combat_report(previous_report: String, previous_event_id: int) -> void:
-	var report := String(session.combat_system.battle_report)
-	if report.is_empty():
-		return
-	var fresh := report != previous_report
-	for event: Dictionary in session.combat_event_stream.events_after(previous_event_id):
-		if String(event.get("type", "")) == "projectile_spawned" or (String(event.get("type", "")) == "attack_resolved" and String(event.get("source_id", "")) == "ranger/piercing_arrow"):
-			fresh = true
-	if fresh:
-		session.battle_report = report
+	session.adopt_combat_report(previous_report, previous_event_id)
 
 
 func sync_encounter_context() -> void:
-	if session.encounter_director == null:
-		return
-	_sync_encounter_active_state()
-	session.encounter_director.set_context(
-		session.sim_tick,
-		player_position,
-		_arena_rect(),
-		session.combat_event_stream,
-		session.layout_id,
-		session.objective_id
-	)
-
-
-func _sync_encounter_active_state() -> void:
-	if session.encounter_director == null or session.room_encounter_port == null or session.room_encounter_port.encounter == null:
-		return
-	if session.actor_registry == null or not session.actor_registry.has_method("is_actor_active"):
-		return
-	var active_ids: Array[int] = []
-	for enemy: CombatEnemyState in session.encounter_director.enemies:
-		var actor_id := "enemy/%d" % enemy.entity_id
-		if session.actor_registry.has_actor(actor_id) and session.actor_registry.is_actor_active(actor_id):
-			active_ids.append(enemy.entity_id)
-	session.encounter_director.set_active_entity_ids(active_ids)
+	session.sync_encounter_context()
 
 
 func adopt_encounter_report(previous_report: String) -> void:
-	var report := String(session.encounter_director.battle_report)
-	if not report.is_empty() and report != previous_report:
-		session.battle_report = report
+	session.adopt_encounter_report(previous_report)
 
 
 func update_room_rules_tick() -> void:
@@ -1258,16 +1208,14 @@ func update_room_rules_tick() -> void:
 	# requests here - after this tick's snapshot was published, before the
 	# reconciliation binding adopts legacy actors - so structural spawn acks
 	# land in the between-tick window exactly once.
-	if scene_runtime != null and scene_runtime.is_ready():
-		scene_runtime.materialize_encounter_spawns()
+	session.materialize_encounter_spawns()
 	# Consume the kernel's typed combat output for the queries submitted last
 	# tick: PathQuery results, the HitBuffer-derived batch RoomCombatPort
 	# resolved through DamageResolution, and DeathSettlement receipts. Damage
 	# and deaths commit here, before buffered casts start and before enemies,
 	# hazards or the battle-end check observe the room.
 	kernel_reconciler._consume_kernel_room_combat()
-	sync_encounter_context()
-	session.encounter_director.update_room_rules_tick()
+	session.update_encounter_rules()
 
 
 func enemy_by_entity_id(id: int) -> CombatEnemyState:

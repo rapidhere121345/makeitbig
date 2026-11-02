@@ -147,6 +147,109 @@ func is_battle_victory() -> bool:
 	return bool(room_rules.snapshot().battle_victory)
 
 
+## Creates the combat system on first use.
+func ensure_combat_system() -> void:
+	if combat_system == null:
+		combat_system = CombatSystemScript.new()
+
+
+## Projectile speed the Ranger's arrows fly at: the frozen build's, else the
+## calibrated preset's. Never zero or non-finite.
+func current_projectile_speed() -> float:
+	var speed := 0.0
+	if not locked_build.is_empty():
+		speed = float((locked_build.get("final_parameters", {}) as Dictionary).get("v", 0.0))
+	elif content_registry != null:
+		speed = float(content_registry.preset_equipped_parameters.get("speed", 0.0))
+	if not is_finite(speed) or speed <= 0.0:
+		return 1.0
+	return speed
+
+
+## Pushes the player's pre-motor context into the combat system. The order of
+## these pushes relative to the tick phases is part of the replay contract.
+func sync_combat_context(player: Dictionary = {}) -> void:
+	if player.is_empty():
+		player = player_combat_state.snapshot(sim_tick)
+	ensure_combat_system()
+	combat_system.set_context(
+		sim_tick,
+		player["player_position"],
+		player["player_facing"],
+		locked_payload,
+		locked_targeting_distance,
+		current_projectile_speed(),
+		player["marked_entity_id"],
+		player["talent_capabilities"],
+		combat_event_stream,
+		manual_aim_resolver,
+		encounter_director.enemies
+	)
+	combat_system.attack_origins = (player.get("attack_origins", {}) as Dictionary).duplicate(true)
+
+
+## Adopts the combat system's report when this resolution produced a new one.
+func adopt_combat_report(previous_report: String, previous_event_id: int) -> void:
+	var report := String(combat_system.battle_report)
+	if report.is_empty():
+		return
+	var fresh := report != previous_report
+	for event: Dictionary in combat_event_stream.events_after(previous_event_id):
+		if String(event.get("type", "")) == "projectile_spawned" or (String(event.get("type", "")) == "attack_resolved" and String(event.get("source_id", "")) == "ranger/piercing_arrow"):
+			fresh = true
+	if fresh:
+		battle_report = report
+
+
+## Pushes the room context (tick, player position, arena, layout, objective)
+## into the encounter director.
+func sync_encounter_context() -> void:
+	if encounter_director == null:
+		return
+	sync_encounter_active_state()
+	encounter_director.set_context(
+		sim_tick,
+		player_combat_state.snapshot(sim_tick)["player_position"],
+		arena_rect(),
+		combat_event_stream,
+		layout_id,
+		objective_id
+	)
+
+
+## Tells the director which of its enemies are active actors in the registry.
+func sync_encounter_active_state() -> void:
+	if encounter_director == null or room_encounter_port == null or room_encounter_port.encounter == null:
+		return
+	if not actor_registry is RoomActorAccess:
+		return
+	var active_ids: Array[int] = []
+	for enemy: CombatEnemyState in encounter_director.enemies:
+		var actor_id := "enemy/%d" % enemy.entity_id
+		if actor_registry.has_actor(actor_id) and actor_registry.is_actor_active(actor_id):
+			active_ids.append(enemy.entity_id)
+	encounter_director.set_active_entity_ids(active_ids)
+
+
+## Drains the kernel's pending encounter spawn requests into the mounted
+## room (a no-op for a standalone room).
+func materialize_encounter_spawns() -> void:
+	if scene_runtime != null and scene_runtime.is_ready():
+		scene_runtime.materialize_encounter_spawns()
+
+
+## Runs the encounter director's rule tick after refreshing its context.
+func update_encounter_rules() -> void:
+	sync_encounter_context()
+	encounter_director.update_room_rules_tick()
+
+
+func adopt_encounter_report(previous_report: String) -> void:
+	var report := String(encounter_director.battle_report)
+	if not report.is_empty() and report != previous_report:
+		battle_report = report
+
+
 ## Replaces the battle report text. The view calls this for status lines the
 ## player's input produces outside the fixed tick (pointer lock messages).
 func set_status_report(text: String) -> void:

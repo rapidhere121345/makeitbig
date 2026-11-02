@@ -24,17 +24,6 @@ func _resolve_piercing_arrow(action_event: Dictionary, action_player: Dictionary
 	_main.adopt_combat_report(previous_report, previous_event_id)
 
 
-func _current_projectile_speed() -> float:
-	var speed := 0.0
-	if not _session.locked_build.is_empty():
-		speed = float((_session.locked_build.get("final_parameters", {}) as Dictionary).get("v", 0.0))
-	elif _main.content_registry != null:
-		speed = float(_main.content_registry.preset_equipped_parameters.get("speed", 0.0))
-	if not is_finite(speed) or speed <= 0.0:
-		return 1.0
-	return speed
-
-
 func _advance_piercing_projectiles_tick() -> void:
 	_main.sync_combat_context()
 	var previous_report := String(_session.combat_system.battle_report)
