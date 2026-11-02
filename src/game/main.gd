@@ -722,11 +722,6 @@ func _initialize_runtime() -> void:
 	proxy_prediction = "unknown"
 
 
-## Digest of the authored combat content (Callable-bound by the snapshot builder).
-func _content_hash() -> String:
-	return session.content_hash()
-
-
 ## Puts a freshly constructed room into its idle state: no contract running,
 ## room rules and loot cleared, and no held manual input.
 func _reset_idle_state() -> void:
@@ -1065,8 +1060,7 @@ func _is_skill_equipped(slot_index: int, expected_id: String) -> bool:
 	return session.is_skill_equipped(slot_index, expected_id)
 
 
-## Room geometry accessors. The private names stay as compatibility aliases:
-## the snapshot builder binds `_walkable_geometry` by name.
+## Room geometry accessors.
 func arena_rect() -> Rect2:
 	return room_geometry.arena_rect()
 
@@ -1085,12 +1079,6 @@ func room_socket(binding: String) -> Variant:
 
 func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 	return room_geometry.clamp_to_arena(value, padding)
-
-
-## The snapshot builder binds `_walkable_geometry` by name, so this alias stays
-## until that binding moves to the public name.
-func _walkable_geometry(padding: float) -> Dictionary:
-	return walkable_geometry(padding)
 
 
 func _ensure_command_source() -> void:

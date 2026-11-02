@@ -28,8 +28,8 @@ class RoomSnapshotSource:
 		get:
 			position_reads += 1
 			return Vector2(-9999, -9999)
-	func _walkable_geometry(_radius: float) -> Dictionary: return {}
-	func _content_hash() -> String: return "fixture"
+	func walkable_geometry(_radius: float) -> Dictionary: return {}
+	func content_hash() -> String: return "fixture"
 
 
 func _initialize() -> void:

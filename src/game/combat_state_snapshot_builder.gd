@@ -20,20 +20,27 @@ static func hash_runtime(runtime: Object, result: String) -> String:
 
 
 static func build_runtime_state(runtime: Object, result: String, player_slice: Dictionary = {}) -> Dictionary:
+	# Authority state lives on the room's RoomSession and the encounter fields on
+	# its EncounterDirector; the view (MainArena) still owns the hazard domain,
+	# the manual input adapter, the attack-intent edge and the walkable
+	# geometry. A runtime without a session (test doubles) is its own source.
+	var session := _authority(runtime)
+	var director_value: Variant = _runtime_value(session, "encounter_director")
+	var director: Object = director_value if director_value is Object else runtime
 	var player := player_slice.duplicate(true)
 	if player.is_empty():
-		var domain: Variant = _runtime_value(runtime, "player_combat_state")
+		var domain: Variant = _runtime_value(session, "player_combat_state")
 		assert(domain != null and domain.has_method("snapshot"), "player_combat_state is required for an authoritative snapshot")
 		if domain == null:
 			return {}
-		player = domain.snapshot(int(_runtime_value(runtime, "sim_tick", 0)))
-	var combat: Variant = _runtime_value(runtime, "combat_system")
+		player = domain.snapshot(int(_runtime_value(session, "sim_tick", 0)))
+	var combat: Variant = _runtime_value(session, "combat_system")
 	assert(combat is Object and combat.has_method("outcome_snapshot"), "combat_system outcome authority is required for an authoritative snapshot")
 	if not combat is Object or not combat.has_method("outcome_snapshot"):
 		return {}
 	var outcome: Dictionary = combat.outcome_snapshot()
 	var enemy_state: Array[Dictionary] = []
-	var enemy_value: Variant = _runtime_value(runtime, "enemies")
+	var enemy_value: Variant = _runtime_value(director, "enemies")
 	var ordered_enemies: Array = (enemy_value as Array).duplicate() if enemy_value is Array else []
 	ordered_enemies.sort_custom(func(left, right) -> bool: return int(left.entity_id) < int(right.entity_id))
 	for enemy in ordered_enemies:
@@ -76,7 +83,7 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"y_millipixels": roundi(enemy.position.y * 1000.0),
 		}
 		if enemy.has_method("status_effects_snapshot"):
-			var effects: Variant = enemy.status_effects_snapshot(int(_runtime_value(runtime, "sim_tick", 0)))
+			var effects: Variant = enemy.status_effects_snapshot(int(_runtime_value(session, "sim_tick", 0)))
 			if effects is Dictionary and bool((effects as Dictionary).get("ok", false)) and not ((effects as Dictionary).get("effects", []) as Array).is_empty():
 				enemy_entry["status_effects"] = CombatStateCodecScript.hash_safe(effects)
 		enemy_state.append(enemy_entry)
@@ -104,7 +111,7 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 
 	var manual_input_state: Dictionary = {}
 	var manual_input_value: Variant = _runtime_value(runtime, "manual_combat_input")
-	if String(_runtime_value(runtime, "selected_mode", "")) == "Manual" and bool(_runtime_value(runtime, "in_arena", false)) and not bool(_runtime_value(runtime, "battle_over", false)) and manual_input_value is Object:
+	if String(_runtime_value(session, "selected_mode", "")) == "Manual" and bool(_runtime_value(session, "in_arena", false)) and not _battle_flag(session, "is_battle_over", "battle_over") and manual_input_value is Object:
 		var input_snapshot_value: Variant = (manual_input_value as Object).call("snapshot")
 		if input_snapshot_value is Dictionary:
 			var input_state: Dictionary = input_snapshot_value as Dictionary
@@ -150,38 +157,36 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"payload_milli": roundi(projectile.payload * 1000.0),
 		})
 
-	var boss: Variant = _runtime_value(runtime, "boss")
+	var boss: Variant = _runtime_value(director, "boss")
 	var boss_damage: Variant = outcome.boss_damage
 	var destiny_forge: Variant = _runtime_value(runtime, "destiny_forge")
-	var proxy_runtime: Variant = _runtime_value(runtime, "proxy_runtime")
-	var proxy_intent_system: Variant = _runtime_value(runtime, "proxy_intent_system")
+	var proxy_runtime: Variant = _runtime_value(session, "proxy_runtime")
+	var proxy_intent_system: Variant = _runtime_value(session, "proxy_intent_system")
 	var proxy_intent_diagnostic := _object_snapshot(proxy_intent_system, "diagnostic_snapshot")
-	var combat_event_stream: Variant = _runtime_value(runtime, "combat_event_stream")
-	var locked_build: Variant = _runtime_value(runtime, "locked_build")
-	var framework_proxy_build: Variant = _runtime_value(runtime, "framework_resolved_proxy_build")
-	var geometry_callback := Callable(runtime, "_walkable_geometry")
-	var content_callback := Callable(runtime, "_content_hash")
+	var combat_event_stream: Variant = _runtime_value(session, "combat_event_stream")
+	var locked_build: Variant = _runtime_value(session, "locked_build")
+	var framework_proxy_build: Variant = _runtime_value(session, "framework_resolved_proxy_build")
 	var state := {
 		"arena_geometry": CombatStateCodecScript.hash_safe({
-			"player": geometry_callback.call(14.0),
-			"enemy": geometry_callback.call(16.0),
+			"player": _walkable_geometry(runtime, 14.0),
+			"enemy": _walkable_geometry(runtime, 16.0),
 		}),
 		"boss_damage": CombatStateCodecScript.big_value_state(boss_damage),
 		"boss_health_milli": roundi(boss.health * 1000.0) if boss != null else -1,
 		"boss_x_millipixels": roundi(boss.position.x * 1000.0) if boss != null else 0,
 		"boss_y_millipixels": roundi(boss.position.y * 1000.0) if boss != null else 0,
-		"battle_victory": bool(_runtime_value(runtime, "battle_victory", false)),
+		"battle_victory": _battle_flag(session, "is_battle_victory", "battle_victory"),
 		"action_timeline": CombatStateCodecScript.hash_safe(player.get("timeline", {})),
-		"command_sequence": int(_runtime_value(runtime, "command_sequence", 0)),
-		"command_receipts": CombatStateCodecScript.hash_safe(_runtime_value(runtime, "last_command_receipts", [])),
+		"command_sequence": int(_runtime_value(session, "command_sequence", 0)),
+		"command_receipts": CombatStateCodecScript.hash_safe(_runtime_value(session, "last_command_receipts", [])),
 		"combat_events": CombatStateCodecScript.hash_safe(_object_snapshot(combat_event_stream, "snapshot")),
-		"content_hash": String(content_callback.call()),
+		"content_hash": _content_hash(session),
 		"contract_wins": int(_runtime_value(runtime, "contract_wins", 0)),
 		"defeated": int(outcome.defeated),
 		"enemies": enemy_state,
-		"elite_barrier_active": bool(_runtime_value(runtime, "elite_barrier_active", false)),
-		"elite_entity_id": int(_runtime_value(runtime, "elite_entity_id", 0)),
-		"elite_rule_ids": _runtime_value(runtime, "elite_rule_ids", []),
+		"elite_barrier_active": bool(_runtime_value(director, "elite_barrier_active", false)),
+		"elite_entity_id": int(_runtime_value(director, "elite_entity_id", 0)),
+		"elite_rule_ids": _runtime_value(director, "elite_rule_ids", []),
 		"forge": _object_snapshot(destiny_forge, "state"),
 		"last_drop": String(_runtime_value(runtime, "last_drop", "")),
 		"last_drop_id": String(_runtime_value(runtime, "last_drop_id", "")),
@@ -189,15 +194,15 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 		"last_attack_outcome": CombatStateCodecScript.hash_safe(_runtime_value(runtime, "last_attack_outcome", {})),
 		"last_proxy_failure": proxy_intent_diagnostic.get("last_failure", {}),
 		"hazards": hazard_state,
-		"layout_id": String(_runtime_value(runtime, "layout_id", "")),
-		"objective_id": String(_runtime_value(runtime, "objective_id", "")),
-		"reinforcements_summoned": bool(_runtime_value(runtime, "reinforcements_summoned", false)),
-		"room_drop_tags": _runtime_value(runtime, "room_drop_tags", []),
+		"layout_id": String(_runtime_value(session, "layout_id", "")),
+		"objective_id": String(_runtime_value(session, "objective_id", "")),
+		"reinforcements_summoned": bool(_runtime_value(director, "reinforcements_summoned", false)),
+		"room_drop_tags": _runtime_value(session, "room_drop_tags", []),
 		"room_reward_snapshot": _runtime_value(runtime, "room_reward_snapshot", {}),
-		"room_id": String(_runtime_value(runtime, "room_id", "")),
-		"timed_bonus_available": bool(_runtime_value(runtime, "timed_bonus_available", false)),
+		"room_id": String(_runtime_value(session, "room_id", "")),
+		"timed_bonus_available": bool(_runtime_value(director, "timed_bonus_available", false)),
 		"build_fingerprint": String((locked_build as Dictionary).get("build_fingerprint", "diagnostic")) if locked_build is Dictionary else "diagnostic",
-		"mode": String(_runtime_value(runtime, "selected_mode", "")).to_lower(),
+		"mode": String(_runtime_value(session, "selected_mode", "")).to_lower(),
 		"manual_input": manual_input_state,
 		"manual_attack_intent": {
 			"edge_requested": bool(_runtime_value(runtime, "attack_requested", false)),
@@ -205,10 +210,10 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"edge_target_entity_id": int(_runtime_value(runtime, "attack_requested_target_entity_id", 0)),
 			"pointer_target_entity_id": int(_runtime_value(runtime, "manual_pointer_target_entity_id", 0)),
 		},
-		"next_entity_id": int(_runtime_value(runtime, "next_entity_id", 0)),
-		"next_enemy_action_instance_id": int(_runtime_value(runtime, "next_enemy_action_instance_id", 0)),
-		"payload_milli": roundi(float(_runtime_value(runtime, "locked_payload", 0.0)) * 1000.0),
-		"p_basis_points": roundi(float(_runtime_value(runtime, "locked_p", 0.0)) * 100.0),
+		"next_entity_id": int(_runtime_value(director, "next_entity_id", 0)),
+		"next_enemy_action_instance_id": int(_runtime_value(director, "next_enemy_action_instance_id", 0)),
+		"payload_milli": roundi(float(_runtime_value(session, "locked_payload", 0.0)) * 1000.0),
+		"p_basis_points": roundi(float(_runtime_value(session, "locked_p", 0.0)) * 100.0),
 		"player_health_milli": roundi(float(player.get("player_health", 0.0)) * 1000.0),
 		"player_maximum_health_milli": roundi(float(player.get("player_maximum_health", 0.0)) * 1000.0),
 		"player_facing_x_milli": roundi((player.get("player_facing", Vector2.RIGHT) as Vector2).x * 1000.0),
@@ -221,12 +226,12 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 		"proxy_mode_locked": proxy_runtime.get("mode_locked") if proxy_runtime is Object else false,
 		"proxy_build_fingerprint": String((framework_proxy_build as Dictionary).get("semantic_fingerprint", "")) if framework_proxy_build is Dictionary else "",
 		"proxy_decision_state": CombatStateCodecScript.hash_safe(proxy_intent_diagnostic.get("decision_state", {})),
-		"proxy_prediction": String(_runtime_value(runtime, "proxy_prediction", "unknown")),
+		"proxy_prediction": String(_runtime_value(session, "proxy_prediction", "unknown")),
 		"projectiles": projectile_state,
 		"result": result,
 		"sim_protocol_version": 1,
-		"targeting_distance_milli": roundi(float(_runtime_value(runtime, "locked_targeting_distance", 0.0)) * 1000.0),
-		"tick": int(_runtime_value(runtime, "sim_tick", 0)),
+		"targeting_distance_milli": roundi(float(_runtime_value(session, "locked_targeting_distance", 0.0)) * 1000.0),
+		"tick": int(_runtime_value(session, "sim_tick", 0)),
 	}
 	if player.has("combat_stats"):
 		state["combat_stats"] = CombatStateCodecScript.hash_safe(player.get("combat_stats", {}))
@@ -235,10 +240,10 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			var velocity: Vector2 = player.get("player_velocity", Vector2.ZERO)
 			state["player_velocity_x_milli"] = roundi(velocity.x * 1000.0)
 			state["player_velocity_y_milli"] = roundi(velocity.y * 1000.0)
-	var room_loot_value: Variant = _runtime_value(runtime, "room_loot_snapshot", {})
+	var room_loot_value: Variant = _room_loot_snapshot(session)
 	if room_loot_value is Dictionary and bool((room_loot_value as Dictionary).get("enabled", false)):
 		state["room_loot"] = CombatStateCodecScript.hash_safe(room_loot_value)
-	var kit := _state_kit(runtime)
+	var kit := _state_kit(session)
 	var kit_slice: Dictionary = kit.hash_slice(player, outcome)
 	for key: String in kit_slice:
 		if state.has(key):
@@ -282,6 +287,33 @@ static func _runtime_value(runtime: Object, property: String, default_value: Var
 	return default_value if value == null else value
 
 
+static func _authority(runtime: Object) -> Object:
+	var session: Variant = _runtime_value(runtime, "session")
+	return session if session is Object else runtime
+
+
+## The view's walkable geometry (MainArena or a test double).
+static func _walkable_geometry(view: Variant, padding: float) -> Dictionary:
+	return view.walkable_geometry(padding)
+
+
+static func _content_hash(session: Variant) -> String:
+	return String(session.content_hash())
+
+
+static func _battle_flag(session: Object, method: String, property: String) -> bool:
+	if session.has_method(method):
+		return bool(session.call(method))
+	return bool(_runtime_value(session, property, false))
+
+
+static func _room_loot_snapshot(session: Object) -> Variant:
+	var room_loot: Variant = _runtime_value(session, "room_loot")
+	if room_loot is CombatRoomLoot:
+		return (room_loot as CombatRoomLoot).snapshot()
+	return _runtime_value(session, "room_loot_snapshot", {})
+
+
 static func _object_snapshot(value: Variant, method: String) -> Dictionary:
 	if not value is Object or not (value as Object).has_method(method):
 		return {}
@@ -289,14 +321,10 @@ static func _object_snapshot(value: Variant, method: String) -> Dictionary:
 	return snapshot.duplicate(true) if snapshot is Dictionary else {}
 
 
-## The runtime's class kit owns the class slice of the hash. A mounted room
-## forwards `session`, so the slice comes from the session's kit; a bare
-## runtime (test doubles) falls back to the Ranger kit so the hash is
-## unchanged.
-static func _state_kit(runtime: Object) -> ClassKit:
-	var session: Variant = _runtime_value(runtime, "session")
-	if session is Object:
-		var kit: Variant = session.get("kit")
-		if kit is ClassKit:
-			return kit
+## The session's class kit owns the class slice of the hash; a source without a
+## kit (test doubles) falls back to the Ranger kit so the hash is unchanged.
+static func _state_kit(session: Object) -> ClassKit:
+	var kit: Variant = _runtime_value(session, "kit")
+	if kit is ClassKit:
+		return kit
 	return RangerKitScript.new()
