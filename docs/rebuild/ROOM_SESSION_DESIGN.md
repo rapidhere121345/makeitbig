@@ -1,6 +1,6 @@
 # Room Session Design (redesign Step 2-4)
 
-Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 6 are implemented.
+Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 7 are implemented.
 
 ## Problem
 
@@ -79,7 +79,7 @@ A kit is the only place a player class lives. Interface (RefCounted):
 | `flight_submitters()` | RangerArrowFlight | none | maybe summon projectiles |
 | `summon_effects()` | none | none | light summons (see below) |
 | `movement_policy(actor_id)` | ranger dash/dodge policies | own | own + summon AI |
-| `hash_slice()` | `locked_p`, `payload_milli`, ... (identical keys) | own | own |
+| `hash_slice()` | cooldowns, mobility, hunter's mark, casts, talent_runtime | own | own |
 | view side: `animation_set()`, `hud_spec()`, input bindings | RangerAnimation, skill cells | own | own |
 
 Summons are light effects, not kernel entities: a summon is a kit-owned,
@@ -190,6 +190,14 @@ becomes `kit.actor_spec().id`.
    idle reset clear the log. Dropping affects presentation only, never
    authority or the state hash.
 7. Introduce `ClassKit` with `RangerKit` as a wrapper; keep identical hash keys.
+   Done: `RangerKit` (`src/game/classes/ranger/ranger_kit.gd`) is the room half
+   behind `RoomSession.kit`; the progression half is `ClassProgression` /
+   `RangerProgression` in `src/systems`. The kit owns its part of the
+   authoritative hash (`RangerKit.hash_slice`), which the snapshot builder
+   merges at the top level after a collision check; the replay hash is
+   unchanged. `CombatSystem`'s arrow lifecycle stays Ranger-owned until the
+   second class is built, and per-class save sections need a schema change
+   decided then.
 8. Move tests from `MainArena` privates (`_simulate_tick`, `_semantic_state_hash`,
    `_arena_rect`, `_enemy_by_entity_id`, ...) to the session, then delete the
    compatibility getters.
