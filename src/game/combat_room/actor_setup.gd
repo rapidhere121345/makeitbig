@@ -26,16 +26,19 @@ const RoomEncounterScript := preload("res://src/runtime/encounter/room_encounter
 const MainMovementPolicyPortScript := preload("res://src/game/ports/main_movement_policy_port.gd")
 
 var _main: MainArena
+## The room authority; read at use time, never cache its replaced members.
+var _session: RoomSession
 var _charge_movement_policy = null
 var _mobility_movement_policy = null
 
 
 func _init(main: MainArena) -> void:
 	_main = main
+	_session = main.session
 
 
 func _configure_actor_registry() -> bool:
-	var room_key := _main.room_id.strip_edges()
+	var room_key := _session.room_id.strip_edges()
 	if room_key.is_empty():
 		push_error("actor_registry_configuration_failed:missing_room_id")
 		return false
@@ -48,16 +51,16 @@ func _configure_actor_registry() -> bool:
 		# access, SimulationWorld, and the world's bound ports are adopted
 		# as-is. Main must never rebuild or replace them here, including when
 		# presentation is disabled.
-		_main.actor_registry = _main.scene_runtime.get("actor_registry")
-		_main.simulation_world = _main.scene_runtime.get("simulation")
-		_main.actor_registry_instance_id = String(_main.scene_runtime.get("room_instance_id"))
-		_main.actor_registry_revision = int(_main.scene_runtime.get("world_revision"))
-		if _main.actor_registry == null or _main.simulation_world == null or _main.actor_registry_instance_id.is_empty():
+		_session.actor_registry = _main.scene_runtime.get("actor_registry")
+		_session.simulation_world = _main.scene_runtime.get("simulation")
+		_session.actor_registry_instance_id = String(_main.scene_runtime.get("room_instance_id"))
+		_session.actor_registry_revision = int(_main.scene_runtime.get("world_revision"))
+		if _session.actor_registry == null or _session.simulation_world == null or _session.actor_registry_instance_id.is_empty():
 			push_error("actor_registry_configuration_failed:injected_access_missing")
 			return false
-		_main.room_spatial_port = _main.scene_runtime.get("spatial_port")
-		_main.room_combat_port = _main.scene_runtime.get("combat_port")
-		_main.room_encounter_port = _main.scene_runtime.get("encounter_port")
+		_session.room_spatial_port = _main.scene_runtime.get("spatial_port")
+		_session.room_combat_port = _main.scene_runtime.get("combat_port")
+		_session.room_encounter_port = _main.scene_runtime.get("encounter_port")
 		if _main.presentation_enabled:
 			_main.scene_runtime.clear_actor_presentation_bindings()
 			var presentation_ready: Dictionary = _main.scene_runtime.prepare_presentation()
@@ -69,31 +72,31 @@ func _configure_actor_registry() -> bool:
 			push_error("actor_registry_configuration_failed:standalone_access_failed")
 			return false
 	if not _main.kernel_reconciler.bind_kernel_room_ports():
-		_main.actor_registry_instance_id = ""
+		_session.actor_registry_instance_id = ""
 		return false
 	var movement_policy_port := MainMovementPolicyPortScript.new()
 	var movement_policy_bound: Dictionary = movement_policy_port.bind(_main)
 	if not bool(movement_policy_bound.get("ok", false)):
 		push_error("actor_registry_configuration_failed:movement_policy_port:%s" % String(movement_policy_bound.get("error", "unknown")))
-		_main.actor_registry_instance_id = ""
+		_session.actor_registry_instance_id = ""
 		return false
-	_main.actor_registry.set_movement_policy_port(movement_policy_port)
+	_session.actor_registry.set_movement_policy_port(movement_policy_port)
 	var preserved_sim_tick := _main.sim_tick
-	if _main.actor_registry.has_method("reset_actors"):
-		var reset_result: Dictionary = _main.actor_registry.reset_actors()
+	if _session.actor_registry.has_method("reset_actors"):
+		var reset_result: Dictionary = _session.actor_registry.reset_actors()
 		if not bool(reset_result.get("ok", false)):
 			push_error("actor_registry_configuration_failed:actor_reset:%s" % str(reset_result))
-			_main.actor_registry_instance_id = ""
+			_session.actor_registry_instance_id = ""
 			return false
-	if not _main.actor_registry.has_method("has_movement_boundary") or not bool(_main.actor_registry.has_movement_boundary()):
-		push_error("manifest_movement_boundary_missing:%s" % _main.layout_id)
+	if not _session.actor_registry.has_method("has_movement_boundary") or not bool(_session.actor_registry.has_movement_boundary()):
+		push_error("manifest_movement_boundary_missing:%s" % _session.layout_id)
 		push_error("actor_registry_configuration_failed:movement_boundary_missing")
-		_main.actor_registry_instance_id = ""
+		_session.actor_registry_instance_id = ""
 		return false
 	var spawn_position: Vector2
 	if injected_runtime:
 		var authored_spawn: Variant = _main.room_geometry.room_socket("combat/spawn")
-		if not authored_spawn is Vector2 or not _main.actor_registry.is_position_clear(authored_spawn, 14.0):
+		if not authored_spawn is Vector2 or not _session.actor_registry.is_position_clear(authored_spawn, 14.0):
 			push_error("actor_registry_configuration_failed:invalid_player_spawn:%s" % str(authored_spawn))
 			return false
 		spawn_position = authored_spawn
@@ -102,17 +105,17 @@ func _configure_actor_registry() -> bool:
 		if not bool(projected.get("ok", false)):
 			return false
 		spawn_position = _main.room_geometry.quantize_position(projected["position"])
-	var player_result: Dictionary = _main.actor_registry.register_actor("ranger", spawn_position, 14.0, 1, &"soft", [&"movement", &"hurtbox"])
+	var player_result: Dictionary = _session.actor_registry.register_actor("ranger", spawn_position, 14.0, 1, &"soft", [&"movement", &"hurtbox"])
 	if not bool(player_result.get("ok", false)):
 		push_error("actor_registry_configuration_failed:player_registration:%s" % str(player_result))
-		_main.actor_registry_instance_id = ""
+		_session.actor_registry_instance_id = ""
 		return false
 	if injected_runtime and _main.presentation_enabled and not _bind_runtime_actor_presentation("ranger", "ranger.south.idle", 2):
 		return false
 	for enemy: CombatEnemyState in _main.enemies:
 		if not register_enemy_actor(enemy):
 			push_error("actor_registry_configuration_failed:enemy_registration:%d" % enemy.entity_id)
-			_main.actor_registry_instance_id = ""
+			_session.actor_registry_instance_id = ""
 			return false
 	# Standalone Main fixtures do not own a SceneRuntime/RoomEncounter port.
 	# Mounted production rooms do, and must bind the Boss domain to that typed
@@ -120,26 +123,26 @@ func _configure_actor_registry() -> bool:
 	# geometry and combat tests can exercise a Boss without inventing a second
 	# encounter runtime.
 	if _main.scene_runtime != null and not _bind_boss_production_encounter():
-		_main.actor_registry_instance_id = ""
+		_session.actor_registry_instance_id = ""
 		return false
 	# The mounted SimulationWorld starts at tick zero.  A live room never
 	# rewinds or fabricates its authority tick during actor registration.
 	if not _main.configure_player_domain(preserved_sim_tick):
 		push_error("actor_registry_configuration_failed:player_domain:%s" % _main.last_save_message)
-		_main.actor_registry_instance_id = ""
+		_session.actor_registry_instance_id = ""
 		return false
 	return true
 
 
 func _configure_standalone_room_access(room_key: String) -> bool:
-	_main.actor_registry_revision += 1
-	_main.actor_registry_instance_id = "combat/%s/%d" % [room_key, _main.actor_registry_revision]
-	var boundary := ArenaGeometryScript.movement_boundary(_main.layout_id, _main.room_geometry.arena_rect())
+	_session.actor_registry_revision += 1
+	_session.actor_registry_instance_id = "combat/%s/%d" % [room_key, _session.actor_registry_revision]
+	var boundary := ArenaGeometryScript.movement_boundary(_session.layout_id, _main.room_geometry.arena_rect())
 	if boundary.is_empty():
 		return false
 	var static_build: Dictionary = StaticSpatialIndexScript.build({
 		"schema_version": StaticSpatialIndexScript.SCHEMA_VERSION,
-		"asset_id": "runtime/%s" % _main.layout_id,
+		"asset_id": "runtime/%s" % _session.layout_id,
 		"surfaces": [],
 		"movement_boundary": _boundary_for_static_index(boundary),
 	})
@@ -156,20 +159,20 @@ func _configure_standalone_room_access(room_key: String) -> bool:
 	var encounter_port = RoomEncounterPortScript.new()
 	var presentation_port = RoomPresentationPortScript.new()
 	var raw_registry = ActorRegistryScript.new()
-	_main.simulation_world = SimulationWorldScript.new(spatial_port, combat_port, encounter_port, presentation_port, raw_registry)
-	var configured = _main.simulation_world.configure(_main.actor_registry_instance_id, _main.actor_registry_revision, MainArena.SIM_TICKS_PER_SECOND)
+	_session.simulation_world = SimulationWorldScript.new(spatial_port, combat_port, encounter_port, presentation_port, raw_registry)
+	var configured = _session.simulation_world.configure(_session.actor_registry_instance_id, _session.actor_registry_revision, MainArena.SIM_TICKS_PER_SECOND)
 	if not configured.ok:
 		return false
 	var access = RoomActorAccessScript.new()
-	var access_result: Dictionary = access.configure(_main.simulation_world, raw_registry, static_index, dynamic_index, movement_build.get("value"), overlay)
+	var access_result: Dictionary = access.configure(_session.simulation_world, raw_registry, static_index, dynamic_index, movement_build.get("value"), overlay)
 	if not bool(access_result.get("ok", false)):
 		return false
-	_main.actor_registry = access
+	_session.actor_registry = access
 	spatial_port.bind(access)
 	combat_port.bind(access)
-	_main.room_spatial_port = spatial_port
-	_main.room_combat_port = combat_port
-	_main.room_encounter_port = encounter_port
+	_session.room_spatial_port = spatial_port
+	_session.room_combat_port = combat_port
+	_session.room_encounter_port = encounter_port
 	return true
 
 
@@ -222,7 +225,7 @@ func _start_mounted_encounter() -> bool:
 
 
 func register_enemy_actor(enemy: CombatEnemyState) -> bool:
-	if _main.actor_registry == null or enemy == null:
+	if _session.actor_registry == null or enemy == null:
 		push_error("enemy_actor_registration_failed:missing_dependency")
 		return false
 	var projected: Dictionary = _main.room_geometry.project_actor_spawn_position(enemy.position, 16.0)
@@ -230,13 +233,13 @@ func register_enemy_actor(enemy: CombatEnemyState) -> bool:
 		push_error("enemy_actor_registration_failed:projection:%d:%s" % [enemy.entity_id, str(projected)])
 		return false
 	var position: Vector2 = projected["position"]
-	if not _main.actor_registry.is_position_clear(position, 16.0):
+	if not _session.actor_registry.is_position_clear(position, 16.0):
 		push_error("enemy_actor_registration_failed:blocked:%d:%s" % [enemy.entity_id, str(position)])
 		return false
 	var drop_tags: Array[String] = []
-	for tag: Variant in _main.room_drop_tags:
+	for tag: Variant in _session.room_drop_tags:
 		drop_tags.append(String(tag))
-	var registered: Dictionary = _main.actor_registry.register_actor(
+	var registered: Dictionary = _session.actor_registry.register_actor(
 		"enemy/%d" % enemy.entity_id, position, 16.0, maxi(1, roundi(enemy.health)), &"soft",
 		[&"movement", &"hurtbox"], PackedStringArray(), maxf(1.0, enemy.maximum_health), {},
 		enemy.kind_id, "enemy/%d" % enemy.entity_id, drop_tags
@@ -245,7 +248,7 @@ func register_enemy_actor(enemy: CombatEnemyState) -> bool:
 		push_error("enemy_actor_registration_failed:register:%d:%s" % [enemy.entity_id, str(registered)])
 	if bool(registered.get("ok", false)):
 		enemy.position = position
-		_main.kernel_bindings.enemy_stable_keys["actor/%d" % int(registered.stable_key)] = enemy.entity_id
+		_session.kernel_bindings.enemy_stable_keys["actor/%d" % int(registered.stable_key)] = enemy.entity_id
 		if enemy.is_boss and not _register_boss_kernel_target(enemy, int(registered.stable_key), _main.enemies.find(enemy)):
 			return false
 		if _main.scene_runtime != null and _main.presentation_enabled:
@@ -265,13 +268,13 @@ func _register_boss_kernel_target(enemy: CombatEnemyState, stable_key: int, ordi
 	if stable_key < 1 or ordinal < 0:
 		push_error("boss_domain_registration_identity_invalid:%d:%d" % [enemy.entity_id, stable_key])
 		return false
-	var maximum: BigValue = _main.combat_system.outcome_snapshot().boss_maximum
+	var maximum: BigValue = _session.combat_system.outcome_snapshot().boss_maximum
 	if maximum == null or maximum.is_zero():
 		push_error("boss_domain_maximum_unavailable:%d" % enemy.entity_id)
 		return false
 	var target_key := "actor/%d" % stable_key
 	var drop_tags: Array[String] = []
-	for tag: Variant in _main.room_drop_tags:
+	for tag: Variant in _session.room_drop_tags:
 		drop_tags.append(String(tag))
 	var target := BossTargetViewScript.make(
 		target_key,
@@ -295,11 +298,11 @@ func _register_boss_kernel_target(enemy: CombatEnemyState, stable_key: int, ordi
 		if not bool(added.get("ok", false)):
 			push_error("boss_domain_part_registration_failed:%s" % String(added.get("error", "unknown")))
 			return false
-	var registered: Dictionary = _main.kernel_bindings.boss_domain.register_target(target)
+	var registered: Dictionary = _session.kernel_bindings.boss_domain.register_target(target)
 	if not bool(registered.get("ok", false)):
 		push_error("boss_domain_target_registration_failed:%s" % String(registered.get("error", "unknown")))
 		return false
-	_main.kernel_bindings.boss_domain_targets[int(enemy.entity_id)] = target
+	_session.kernel_bindings.boss_domain_targets[int(enemy.entity_id)] = target
 	return true
 
 
@@ -318,7 +321,7 @@ func _bind_boss_production_encounter() -> bool:
 	# second Boss-only bind here would replace the shared domain and split
 	# terminal/death authority.  Boss-only Main construction still uses this
 	# fallback binding.
-	var mounted_room_roster: Variant = _main.framework_room.get("enemy_ids", [])
+	var mounted_room_roster: Variant = _session.framework_room.get("enemy_ids", [])
 	if mounted_room_roster is Array and not (mounted_room_roster as Array).is_empty():
 		return true
 	var spawns: Array = []
@@ -331,7 +334,7 @@ func _bind_boss_production_encounter() -> bool:
 			"count": 1,
 		})
 	var encounter := RoomEncounterScript.new()
-	var configured: Dictionary = encounter.configure(_main.room_id, [{
+	var configured: Dictionary = encounter.configure(_session.room_id, [{
 		"wave_id": "wave.production",
 		"clear_policy": "all_dead",
 		"spawns": spawns,
@@ -339,7 +342,7 @@ func _bind_boss_production_encounter() -> bool:
 	if not bool(configured.get("ok", false)):
 		push_error("boss_encounter_configure_failed:%s" % String(configured.get("error", "unknown")))
 		return false
-	var bound: Dictionary = _main.scene_runtime.bind_encounter(encounter, _main.encounter_spawn_port)
+	var bound: Dictionary = _main.scene_runtime.bind_encounter(encounter, _session.encounter_spawn_port)
 	if not bool(bound.get("ok", false)):
 		push_error("boss_encounter_bind_failed:%s" % String(bound.get("error", "unknown")))
 		return false
@@ -347,7 +350,7 @@ func _bind_boss_production_encounter() -> bool:
 	if not bool(started.get("ok", false)):
 		push_error("boss_encounter_start_failed:%s" % String(started.get("error", "unknown")))
 		return false
-	_main.room_encounter_port = _main.scene_runtime.get("encounter_port")
+	_session.room_encounter_port = _main.scene_runtime.get("encounter_port")
 	return true
 
 
@@ -375,21 +378,21 @@ func _bind_runtime_actor_presentation(actor_id: String, visual_id: String, rank:
 
 
 func _ensure_actor_registry_ready() -> bool:
-	if _main.actor_registry_instance_id.is_empty():
+	if _session.actor_registry_instance_id.is_empty():
 		if not _configure_actor_registry():
 			return false
-	return _main.actor_registry != null and _main.actor_registry.has_actor("ranger")
+	return _session.actor_registry != null and _session.actor_registry.has_actor("ranger")
 
 
 func _commit_actor_move(actor_id: String, displacement: Vector2, movement_policy: Variant = null) -> Dictionary:
 	if not _ensure_actor_registry_ready():
 		return {"ok": false, "error": "actor_registry_not_ready", "position": Vector2.ZERO, "displacement": Vector2.ZERO}
-	var state = _main.actor_registry.actor(actor_id)
+	var state = _session.actor_registry.actor(actor_id)
 	if state == null:
 		return {"ok": false, "error": "actor_not_registered", "position": Vector2.ZERO, "displacement": Vector2.ZERO}
 	if movement_policy == null and actor_id == "ranger" and _has_active_charge():
 		movement_policy = _charge_movement_policy_value()
-	var result: Dictionary = _main.actor_registry.move_actor(actor_id, displacement, _main.sim_tick, movement_policy)
+	var result: Dictionary = _session.actor_registry.move_actor(actor_id, displacement, _main.sim_tick, movement_policy)
 	if not bool(result.get("ok", false)):
 		if String(result.get("error", "")) in ["non_monotonic_motor_tick", "non_monotonic_movement_tick"]:
 			return result
@@ -415,9 +418,9 @@ func _charge_movement_policy_value() -> Variant:
 ## bodies instead of being separated away, while contacts stay recorded for
 ## presentation. Normal movement keeps the default soft separation policy.
 func resolve_ranger_movement_policy(actor_id: String) -> Variant:
-	if actor_id != "ranger" or _main.player_combat_state == null:
+	if actor_id != "ranger" or _session.player_combat_state == null:
 		return null
-	var player: Dictionary = _main.player_combat_state.snapshot(_main.sim_tick)
+	var player: Dictionary = _session.player_combat_state.snapshot(_main.sim_tick)
 	if int(player.get("dash_remaining_ticks", 0)) <= 0 and int(player.get("dodge_remaining_ticks", 0)) <= 0:
 		return null
 	return _mobility_policy_value()
@@ -456,9 +459,9 @@ func move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Diction
 
 
 func set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
-	if enemy == null or _main.actor_registry == null or not _main.actor_registry.has_method("set_collision_class"):
+	if enemy == null or _session.actor_registry == null or not _session.actor_registry.has_method("set_collision_class"):
 		return false
-	var result: Dictionary = _main.actor_registry.set_collision_class("enemy/%d" % enemy.entity_id, collision_class)
+	var result: Dictionary = _session.actor_registry.set_collision_class("enemy/%d" % enemy.entity_id, collision_class)
 	if not bool(result.get("ok", false)):
 		push_error("enemy_collision_class_update_failed:%d:%s" % [enemy.entity_id, String(result.get("error", "unknown"))])
 		return false

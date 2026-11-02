@@ -34,9 +34,9 @@ func current_model() -> Dictionary:
 
 
 func target_blocked(target: CombatEnemyState) -> Dictionary:
-	if target == null or _owner.encounter_director == null:
+	if target == null or _owner.session.encounter_director == null:
 		return {"ok": false, "error": "target_blocked_port_unavailable"}
-	return {"ok": true, "error": "", "blocked": _owner.encounter_director.is_target_blocked(target)}
+	return {"ok": true, "error": "", "blocked": _owner.session.encounter_director.is_target_blocked(target)}
 
 
 func maybe_summon(target: CombatEnemyState) -> void:
@@ -56,11 +56,11 @@ func update_mark() -> void:
 
 
 func advance_sequence(skill_id: String) -> void:
-	_owner.player_combat_rules.advance_three_skill_sequence(skill_id)
+	_owner.session.player_combat_rules.advance_three_skill_sequence(skill_id)
 
 
 func reset_sequence() -> void:
-	_owner.player_combat_rules.reset_three_skill_sequence()
+	_owner.session.player_combat_rules.reset_three_skill_sequence()
 
 
 func erase_attack_request(request_id: int) -> void:
@@ -68,16 +68,16 @@ func erase_attack_request(request_id: int) -> void:
 
 
 func consume_first_critical_bonus() -> int:
-	return _owner.player_combat_rules.consume_first_critical_bonus()
+	return _owner.session.player_combat_rules.consume_first_critical_bonus()
 
 
 func retain_missed_arrow(aggregate: BigValue, ordinary: float) -> bool:
-	_owner.player_combat_rules.retain_missed_arrow(aggregate, ordinary)
+	_owner.session.player_combat_rules.retain_missed_arrow(aggregate, ordinary)
 	return true
 
 
 func take_retained_arrow() -> Dictionary:
-	return _owner.player_combat_rules.take_retained_arrow()
+	return _owner.session.player_combat_rules.take_retained_arrow()
 
 
 func is_normal_kernel_projectile(projectile) -> bool:

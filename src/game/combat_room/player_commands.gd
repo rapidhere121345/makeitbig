@@ -11,28 +11,31 @@ const CombatCommandProtocolScript = preload("res://src/systems/combat_command_pr
 const CombatLootPickupProtocolScript := preload("res://src/systems/combat_loot_pickup_protocol.gd")
 
 var _main: MainArena
+## The room authority; read at use time, never cache its replaced members.
+var _session: RoomSession
 
 
 func _init(main: MainArena) -> void:
 	_main = main
+	_session = main.session
 
 
 func _simulation_collect_commands() -> Array[Dictionary]:
 	var snapshot := _main.gameplay_snapshot()
 	var loot_command: Dictionary = _main.input_adapter.collect_loot_pickup_command(snapshot)
-	if loot_command.is_empty() and _main.selected_mode == "Auto":
+	if loot_command.is_empty() and _session.selected_mode == "Auto":
 		loot_command = _auto_loot_pickup_command(snapshot)
 	if not loot_command.is_empty():
 		_submit_loot_pickup_command(loot_command)
-	if _main.automation_smoke and _main.selected_mode == "Manual":
-		var result: Dictionary = _main.smoke_input_driver.decide({
-			"player": _main.player_combat_state.snapshot(_main.sim_tick), "targets": _main.read_only_targets(),
-			"hazards": _main.hazard_states.duplicate(true), "targeting_distance": _main.locked_targeting_distance,
+	if _session.automation_smoke and _session.selected_mode == "Manual":
+		var result: Dictionary = _session.smoke_input_driver.decide({
+			"player": _session.player_combat_state.snapshot(_main.sim_tick), "targets": _main.read_only_targets(),
+			"hazards": _main.hazard_states.duplicate(true), "targeting_distance": _session.locked_targeting_distance,
 			"boss": {"impact_tick": _main.boss.impact_tick, "target_shape": _main.boss.target_shape.duplicate(true)} if _main.boss != null else {},
-		}, _main.command_sequence)
-		_main.command_sequence = int(result.next_sequence)
+		}, _session.command_sequence)
+		_session.command_sequence = int(result.next_sequence)
 		return result.commands
-	return _auto_commands() if _main.selected_mode == "Auto" else _main.input_adapter.collect_commands(_main.gameplay_snapshot())
+	return _auto_commands() if _session.selected_mode == "Auto" else _main.input_adapter.collect_commands(_main.gameplay_snapshot())
 
 
 func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
@@ -43,10 +46,10 @@ func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
 		var normalized: Dictionary = receipt.get("command", {})
 		var room_receipt := _main.request_loot_pickup(String(normalized.get("loot_entity_id", "")))
 		receipt["room_receipt"] = room_receipt.duplicate(true)
-		if not bool(room_receipt.get("accepted", false)) and _main.selected_mode == "Manual" and _main.presentation != null and _main.presentation.feedback != null:
+		if not bool(room_receipt.get("accepted", false)) and _session.selected_mode == "Manual" and _main.presentation != null and _main.presentation.feedback != null:
 			_main.presentation.feedback.show_input_feedback("Loot out of reach · Move closer, then press F", _main.sim_tick)
-	_main.last_loot_pickup_command_receipt = receipt.duplicate(true)
-	return _main.last_loot_pickup_command_receipt.duplicate(true)
+	_session.last_loot_pickup_command_receipt = receipt.duplicate(true)
+	return _session.last_loot_pickup_command_receipt.duplicate(true)
 
 
 func _auto_loot_pickup_command(snapshot: Dictionary) -> Dictionary:
@@ -90,33 +93,33 @@ func _auto_commands() -> Array[Dictionary]:
 	var collision_geometry := _main.room_geometry.collision_geometry(14.0)
 	if not collision_geometry.is_empty():
 		observation["walkable_geometry"] = collision_geometry
-	var result: Dictionary = _main.proxy_intent_system.decide(observation, _main.command_sequence)
+	var result: Dictionary = _session.proxy_intent_system.decide(observation, _session.command_sequence)
 	if not bool(result.get("ok", false)):
 		return []
-	_main.command_sequence = int(result.get("next_sequence", _main.command_sequence))
+	_session.command_sequence = int(result.get("next_sequence", _session.command_sequence))
 	return (result.get("commands", []) as Array).duplicate(true)
 
 
 func _proxy_failure_snapshot() -> Dictionary:
-	if _main.proxy_intent_system == null:
+	if _session.proxy_intent_system == null:
 		return {}
-	return _main.proxy_intent_system.failure_snapshot()
+	return _session.proxy_intent_system.failure_snapshot()
 
 
 func _proxy_trace_snapshot() -> Array[String]:
-	if _main.proxy_intent_system == null:
+	if _session.proxy_intent_system == null:
 		return []
-	return _main.proxy_intent_system.trace_snapshot()
+	return _session.proxy_intent_system.trace_snapshot()
 
 
 func _public_proxy_snapshot() -> Dictionary:
-	var player := _main.player_combat_state.snapshot(_main.sim_tick)
+	var player := _session.player_combat_state.snapshot(_main.sim_tick)
 	var public_geometry := _main.room_geometry.walkable_geometry(14.0).duplicate(true)
 	## Public geometry describes only the space the actor may occupy. Route and
 	## room identifiers remain private even if a future helper revision carries
 	## spatial metadata alongside the geometric primitives.
 	public_geometry.erase("layout_id")
-	var observations: Array = _main.framework_resolved_proxy_build.get("observation_contract", [])
+	var observations: Array = _session.framework_resolved_proxy_build.get("observation_contract", [])
 	var include_classification := "enemy.public_classification_tags" in observations
 	var visible: Array[Dictionary] = []
 	for enemy: CombatEnemyState in _main.enemies:
@@ -126,7 +129,7 @@ func _public_proxy_snapshot() -> Dictionary:
 			"health": enemy.health,
 			## Action legality is part of enemy.basic. It reveals no barrier rule,
 			## phase duration, or future opening tick.
-			"targetable": _main.encounter_director.is_targetable(enemy) and _main.is_enemy_actor_active(enemy),
+			"targetable": _session.encounter_director.is_targetable(enemy) and _main.is_enemy_actor_active(enemy),
 		}
 		if include_classification:
 			var classification_tags: Array[String] = []
@@ -146,7 +149,7 @@ func _public_proxy_snapshot() -> Dictionary:
 		"facing": player["player_facing"],
 		"action_state": _player_authority_action_state(),
 		"attack_ready_tick": _main.sim_tick + player["attack_cooldown_ticks"],
-		"targeting_distance": _main.locked_targeting_distance,
+		"targeting_distance": _session.locked_targeting_distance,
 		"visible_enemies": visible,
 		"walkable_geometry": public_geometry,
 		"static_blockers": _public_static_blockers(),
@@ -166,7 +169,7 @@ func _public_static_blockers() -> Array[Dictionary]:
 
 
 func _player_authority_action_state() -> String:
-	var player := _main.player_combat_state.snapshot(_main.sim_tick)
+	var player := _session.player_combat_state.snapshot(_main.sim_tick)
 	if player["dodge_remaining_ticks"] > 0:
 		return "dodge"
 	if player["dash_remaining_ticks"] > 0:
@@ -176,15 +179,15 @@ func _player_authority_action_state() -> String:
 
 func _move_command(direction: Vector2, speed_scale: float) -> Dictionary:
 	var milli := _direction_to_milli(direction)
-	var result := CombatCommandProtocolScript.move(_main.sim_tick, "ranger", _main.command_sequence, milli.x, milli.y, clampi(roundi(speed_scale * 1000.0), 1, 1000))
-	_main.command_sequence += 1
+	var result := CombatCommandProtocolScript.move(_main.sim_tick, "ranger", _session.command_sequence, milli.x, milli.y, clampi(roundi(speed_scale * 1000.0), 1, 1000))
+	_session.command_sequence += 1
 	return result
 
 
 func _dodge_command(direction: Vector2) -> Dictionary:
 	var milli := _direction_to_milli(direction)
-	var result := CombatCommandProtocolScript.dodge(_main.sim_tick, "ranger", _main.command_sequence, milli.x, milli.y)
-	_main.command_sequence += 1
+	var result := CombatCommandProtocolScript.dodge(_main.sim_tick, "ranger", _session.command_sequence, milli.x, milli.y)
+	_session.command_sequence += 1
 	return result
 
 
@@ -192,21 +195,21 @@ func _cast_command(ability_id: String, target_entity_id: int, direction: Vector2
 	var result: Dictionary
 	if ability_id in ["dash", "piercing_arrow"]:
 		var direction_milli := _direction_to_milli(direction)
-		result = CombatCommandProtocolScript.cast(_main.sim_tick, "ranger", _main.command_sequence, ability_id, target_entity_id, direction_milli.x, direction_milli.y)
+		result = CombatCommandProtocolScript.cast(_main.sim_tick, "ranger", _session.command_sequence, ability_id, target_entity_id, direction_milli.x, direction_milli.y)
 	else:
-		result = CombatCommandProtocolScript.cast(_main.sim_tick, "ranger", _main.command_sequence, ability_id, target_entity_id)
-	_main.command_sequence += 1
+		result = CombatCommandProtocolScript.cast(_main.sim_tick, "ranger", _session.command_sequence, ability_id, target_entity_id)
+	_session.command_sequence += 1
 	return result
 
 
 func _loot_pickup_command(loot_entity_id: String) -> Dictionary:
-	var result := CombatLootPickupProtocolScript.make_request(_main.sim_tick, "ranger", _main.command_sequence, loot_entity_id)
-	_main.command_sequence += 1
+	var result := CombatLootPickupProtocolScript.make_request(_main.sim_tick, "ranger", _session.command_sequence, loot_entity_id)
+	_session.command_sequence += 1
 	return result
 
 
 func _direction_to_milli(direction: Vector2) -> Vector2i:
-	var player := _main.player_combat_state.snapshot(_main.sim_tick)
+	var player := _session.player_combat_state.snapshot(_main.sim_tick)
 	var normalized: Vector2 = direction.normalized() if direction != Vector2.ZERO else (player["player_facing"] as Vector2).normalized()
 	if normalized == Vector2.ZERO:
 		normalized = Vector2.RIGHT

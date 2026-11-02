@@ -9,10 +9,13 @@ extends RefCounted
 const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 
 var _main: MainArena
+## The room authority; read at use time, never cache its replaced members.
+var _session: RoomSession
 
 
 func _init(main: MainArena) -> void:
 	_main = main
+	_session = main.session
 
 
 func arena_rect() -> Rect2:
@@ -31,7 +34,7 @@ func walkable_geometry(padding: float) -> Dictionary:
 		if native_boundary is Dictionary:
 			geometry = ArenaGeometryScript.from_native_boundary(native_boundary, arena_rect(), padding)
 	else:
-		geometry = ArenaGeometryScript.from_layout(_main.layout_id, arena_rect(), padding)
+		geometry = ArenaGeometryScript.from_layout(_session.layout_id, arena_rect(), padding)
 	var normalized: Dictionary = ArenaGeometryScript.normalize(geometry)
 	return (normalized.get("value", {}) as Dictionary).duplicate(true) if bool(normalized.get("ok", false)) else {}
 
@@ -43,12 +46,12 @@ func _presentation_geometry() -> Dictionary:
 		if native_boundary is Dictionary:
 			boundary = (native_boundary as Dictionary).duplicate(true)
 	else:
-		boundary = ArenaGeometryScript.movement_boundary(_main.layout_id, arena_rect())
+		boundary = ArenaGeometryScript.movement_boundary(_session.layout_id, arena_rect())
 	if not boundary.is_empty():
 		var native_geometry := ArenaGeometryScript.from_native_boundary(boundary, arena_rect(), 0.0)
 		if not native_geometry.is_empty():
 			return native_geometry
-	return ArenaGeometryScript.from_layout(_main.layout_id, arena_rect(), 0.0)
+	return ArenaGeometryScript.from_layout(_session.layout_id, arena_rect(), 0.0)
 
 
 func collision_geometry(radius: float) -> Dictionary:
@@ -60,7 +63,7 @@ func collision_geometry(radius: float) -> Dictionary:
 		if native_boundary is Dictionary:
 			boundary = (native_boundary as Dictionary).duplicate(true)
 	else:
-		boundary = ArenaGeometryScript.movement_boundary(_main.layout_id, arena_rect())
+		boundary = ArenaGeometryScript.movement_boundary(_session.layout_id, arena_rect())
 	return ArenaGeometryScript.from_native_boundary_for_footprint(boundary, arena_rect(), radius)
 
 
@@ -68,9 +71,9 @@ func collision_geometry(radius: float) -> Dictionary:
 ## movement channel. Standalone fixtures without a mounted registry have no
 ## authored blockers and steer on the boundary geometry alone.
 func static_blocker_bounds() -> Array[Dictionary]:
-	if _main.actor_registry == null:
+	if _session.actor_registry == null:
 		return []
-	return _main.actor_registry.static_blocker_bounds()
+	return _session.actor_registry.static_blocker_bounds()
 
 
 func room_socket(binding: String) -> Variant:
@@ -107,7 +110,7 @@ func project_actor_spawn_position(value: Vector2, radius: float) -> Dictionary:
 	if not bool(projected.get("ok", false)):
 		return {"ok": false, "error": "spawn_projection_failed:%s" % String(projected.get("error", "invalid_geometry"))}
 	var position := Vector2(projected["position"])
-	if _main.actor_registry != null:
+	if _session.actor_registry != null:
 		var static_clear: Variant = _project_static_clear(position, radius)
 		if static_clear == null:
 			return {"ok": false, "error": "spawn_static_projection_failed"}
@@ -121,12 +124,12 @@ func project_actor_spawn_position(value: Vector2, radius: float) -> Dictionary:
 ## stay byte-stable. Returns null when no candidate inside the arena clears
 ## every static surface and live body, keeping the fail-closed contract.
 func _project_static_clear(position: Vector2, radius: float) -> Variant:
-	if _main.actor_registry.is_spawn_position_clear(position, radius):
+	if _session.actor_registry.is_spawn_position_clear(position, radius):
 		return position
 	for ring: float in [16.0, 32.0, 48.0, 64.0, 96.0, 128.0, 160.0, 192.0, 224.0, 256.0]:
 		for step: int in 16:
 			var candidate := position + Vector2(ring, 0.0).rotated(TAU * float(step) / 16.0)
-			if candidate.is_finite() and _main.actor_registry.is_spawn_position_clear(candidate, radius):
+			if candidate.is_finite() and _session.actor_registry.is_spawn_position_clear(candidate, radius):
 				return candidate
 	return null
 
@@ -139,7 +142,7 @@ func quantize_position(value: Vector2) -> Vector2:
 
 func layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
 	_main.ensure_room_catalog()
-	var spawn_room_id := String(_main.encounter_director.room_id) if _main.encounter_director != null else _main.room_id
-	if _main.room_catalog == null:
+	var spawn_room_id := String(_session.encounter_director.room_id) if _session.encounter_director != null else _session.room_id
+	if _session.room_catalog == null:
 		return []
-	return _main.room_catalog.spawn_offsets({"layout_id": id, "room_id": spawn_room_id}, count)
+	return _session.room_catalog.spawn_offsets({"layout_id": id, "room_id": spawn_room_id}, count)
