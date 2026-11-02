@@ -59,9 +59,9 @@ const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
 const SIM_TICKS_PER_SECOND: int = RangerSkillRulesScript.TICKS_PER_SECOND
 const SIM_STEP_SECONDS: float = 1.0 / float(SIM_TICKS_PER_SECOND)
-const AUTO_RANGE: float = 225.0
-const BASE_PAYLOAD: float = 160.0
-const FATE_SEED: int = 52969
+const AUTO_RANGE: float = RoomSessionScript.AUTO_RANGE
+const BASE_PAYLOAD: float = RoomSessionScript.BASE_PAYLOAD
+const FATE_SEED: int = RoomSessionScript.FATE_SEED
 const ENEMY_HIT_FLASH_TICKS: int = 3
 const MAX_ACTIVE_PIERCING_PROJECTILES: int = 16
 # Early campaign durability only; movement, action timing and Boss authority stay separate.

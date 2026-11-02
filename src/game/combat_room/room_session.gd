@@ -19,12 +19,18 @@ const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_
 const CombatSystemScript := preload("res://src/systems/combat_system.gd")
 const CombatSimulationScript := preload("res://src/systems/combat_simulation.gd")
 
+## Frozen gameplay constants of the Ranger's first chapter. MainArena re-exports
+## them under the same names.
+const AUTO_RANGE: float = 225.0
+const BASE_PAYLOAD: float = 160.0
+const FATE_SEED: int = 52969
+
 ## Build lock: the rule inputs frozen when a contract starts.
 var selected_preset: String = "convergent"
 var selected_mode: String = "Manual"
 var locked_p: float = PiercingArrowModel.BASE_P
-var locked_payload: float = MainArena.BASE_PAYLOAD
-var locked_targeting_distance: float = MainArena.AUTO_RANGE
+var locked_payload: float = BASE_PAYLOAD
+var locked_targeting_distance: float = AUTO_RANGE
 var locked_build: Dictionary = {}
 
 ## Contract run state: whether a contract is live, the elapsed clock, the
@@ -89,7 +95,7 @@ var layout_id: String = "rectangle_arena"
 var objective_id: String = "clear"
 var room_entry_start_tick: int = 0
 var room_drop_tags: Array = []
-var framework_seed: int = MainArena.FATE_SEED
+var framework_seed: int = FATE_SEED
 
 
 ## Creates the fixed-tick simulation on first use.
