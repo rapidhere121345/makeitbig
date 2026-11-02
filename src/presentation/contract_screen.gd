@@ -10,6 +10,7 @@ const FacilityArtScript = preload("res://src/presentation/facility_art.gd")
 const SkillIconsScript = preload("res://src/presentation/combat_skill_icons.gd")
 const EarlySkillRegistryScript = preload("res://src/content/early_skill_registry.gd")
 const PlayerReadableBuildScript = preload("res://src/presentation/player_readable_build.gd")
+const ContractBuildTextScript = preload("res://src/presentation/contract_build_text.gd")
 const PlayerFacingStatusScript = preload("res://src/presentation/player_facing_status.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
 const MODES := ["Manual", "Auto"]
@@ -420,7 +421,7 @@ func _present_departure_build(build: Dictionary) -> void:
 		_skill_row.remove_child(child)
 		child.queue_free()
 	var resolved := _resolved_build()
-	var skills := _component_values(build, resolved, "skills", "skill_id")
+	var skills := ContractBuildTextScript.component_values(build, resolved, "skills", "skill_id")
 	if not "basic_dodge" in skills: skills.append("basic_dodge")
 	for skill_id: String in skills:
 		var skill := _skill_registry.get_skill(skill_id)
@@ -1038,7 +1039,7 @@ func _open_build_details() -> void:
 		scroll.add_child(_details_label)
 	var resolved := _resolved_build()
 	var build := _active_build()
-	_details_label.text = "%s\n\n%s\n\nGrowth Conclusion: %s\n\n%s" % [_components_summary(build, resolved), _parameter_line(resolved), _growth_conclusion(resolved), _core_skill_summary(build, resolved)]
+	_details_label.text = "%s\n\n%s\n\nGrowth Conclusion: %s\n\n%s" % [_components_summary(build, resolved), ContractBuildTextScript.parameter_line(resolved, _player_readable), _growth_conclusion(resolved), ContractBuildTextScript.core_skill_summary(build, resolved, _skill_registry, _player_readable)]
 	var available := get_viewport_rect().size
 	_details_dialog.popup_centered(Vector2i(minf(900, available.x - 80), minf(580, available.y - 80)))
 	_details_dialog.get_ok_button().grab_focus()
@@ -1058,83 +1059,11 @@ func _resolved_build() -> Dictionary:
 	return resolved
 
 
-func _parameter_line(resolved: Dictionary) -> String:
-	var parameters_value: Variant = resolved.get("final_parameters", {})
-	var parameters: Dictionary = parameters_value if parameters_value is Dictionary else {}
-	return _player_readable.format_parameters(parameters)
-
-
 func _growth_conclusion(resolved: Dictionary) -> String:
 	var training_value: Variant = _build_snapshot.get("training", {})
 	var training: Dictionary = training_value if training_value is Dictionary else {}
-	var fingerprint := str(resolved.get("build_fingerprint", "")).strip_edges()
-	var report := _matched_training_report(training, fingerprint)
-	if report.is_empty():
-		return "Unverified"
-	var state := str(report.get("state", "")).strip_edges()
-	return String({"convergent": "Convergent", "critical": "Critical", "exponential": "Exponential"}.get(state.to_lower(), "Unverified"))
-
-
-func _core_skill_summary(build: Dictionary, resolved: Dictionary) -> String:
-	var skill_ids := _component_values(build, resolved, "skills", "skill_id")
-	if not "basic_dodge" in skill_ids:
-		skill_ids.append("basic_dodge")
-	var details: Array[String] = []
-	for raw_id in skill_ids:
-		var skill := _skill_registry.get_skill(String(raw_id))
-		if not skill.is_empty():
-			details.append(_player_readable.format_skill(skill))
-	return "Core skill details:\n%s" % "\n\n".join(details) if not details.is_empty() else "Core skill details unavailable"
-
-
-func _matched_training_report(training: Dictionary, fingerprint: String) -> Dictionary:
-	if fingerprint.is_empty():
-		return {}
-	var reports_by_fingerprint_value: Variant = training.get("reports_by_fingerprint", {})
-	if not reports_by_fingerprint_value is Dictionary:
-		return {}
-	var report_value: Variant = (reports_by_fingerprint_value as Dictionary).get(fingerprint, {})
-	if not report_value is Dictionary:
-		return {}
-	var report: Dictionary = report_value
-	if String(report.get("build_fingerprint", "")).strip_edges() != fingerprint:
-		return {}
-	return report.duplicate(true)
+	return ContractBuildTextScript.growth_conclusion(resolved, training)
 
 
 func _components_summary(build: Dictionary, resolved: Dictionary) -> String:
-	var skills := _component_values(build, resolved, "skills", "skill_id")
-	var runes := _component_values(build, resolved, "runes", "rune_ids")
-	var laws := _component_values(build, resolved, "laws", "law_ids")
-	if laws.is_empty():
-		laws = _component_values(build, resolved, "rules", "law_ids")
-	if laws.is_empty():
-		laws = _component_values(build, resolved, "law", "law_ids")
-	var skill_names: Array[String] = []
-	for raw_skill in skills:
-		var skill := _skill_registry.get_skill(String(raw_skill))
-		if not skill.is_empty():
-			skill_names.append(String(skill.get("name", "Skill")))
-	var rune_lines: Array[String] = []
-	for raw_rune in runes:
-		rune_lines.append(_player_readable.format_rune(String(raw_rune)).trim_prefix("Rune: "))
-	var law_lines: Array[String] = []
-	for raw_law in laws:
-		law_lines.append(_player_readable.format_law(String(raw_law)).trim_prefix("Law: "))
-	return "Skill: %s\nRune: %s\nLaw: %s" % [
-		", ".join(skill_names) if not skill_names.is_empty() else "None",
-		"; ".join(rune_lines) if not rune_lines.is_empty() else "None",
-		"; ".join(law_lines) if not law_lines.is_empty() else "None",
-	]
-
-
-func _component_values(build: Dictionary, resolved: Dictionary, list_key: String, singular_key: String) -> Array:
-	var list_value: Variant = build.get(list_key, null)
-	if list_value is Array and not (list_value as Array).is_empty():
-		return (list_value as Array).duplicate()
-	var resolved_value: Variant = resolved.get(singular_key, null)
-	if resolved_value is Array and not (resolved_value as Array).is_empty():
-		return (resolved_value as Array).duplicate()
-	if resolved_value is String and not (resolved_value as String).strip_edges().is_empty():
-		return [resolved_value]
-	return []
+	return ContractBuildTextScript.components_summary(build, resolved, _skill_registry, _player_readable)
