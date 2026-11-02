@@ -18,6 +18,7 @@ const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.
 const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
 const CombatSystemScript := preload("res://src/systems/combat_system.gd")
 const CombatSimulationScript := preload("res://src/systems/combat_simulation.gd")
+const CombatCommandProtocolScript := preload("res://src/systems/combat_command_protocol.gd")
 const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
 
 ## Frozen gameplay constants of the Ranger's first chapter. MainArena re-exports
@@ -145,6 +146,138 @@ func is_battle_victory() -> bool:
 		if String(terminal.get("phase", "")) in ["victory", "defeat"]:
 			return bool(terminal.get("victory", false))
 	return bool(room_rules.snapshot().battle_victory)
+
+
+## Player position at the current authority tick.
+func player_position() -> Vector2:
+	return player_combat_state.snapshot(sim_tick)["player_position"]
+
+
+## Arbitrates the collected commands for this tick against the equipped skills.
+func route_commands(commands: Array[Dictionary]) -> Dictionary:
+	return CombatCommandProtocolScript.arbitrate(commands, sim_tick, player_combat_state.equipped_ability_ids(), true)
+
+
+## Read-only copies of the live enemies the player rules aim and mark against.
+func read_only_targets() -> Array[Dictionary]:
+	var targets: Array[Dictionary] = []
+	for enemy: CombatEnemyState in encounter_director.enemies:
+		targets.append(manual_aim_candidate(enemy))
+	return targets
+
+
+func manual_aim_candidate(enemy: CombatEnemyState) -> Dictionary:
+	return {
+		"entity_id": enemy.entity_id,
+		"kind_id": enemy.kind_id,
+		"position": enemy.position,
+		"health": enemy.health,
+		"is_boss": enemy.is_boss,
+	}
+
+
+func refresh_player_mark() -> void:
+	player_combat_rules.update_mark(sim_tick, read_only_targets())
+
+
+func enemy_by_entity_id(id: int) -> CombatEnemyState:
+	sync_encounter_context()
+	return encounter_director._enemy_by_entity_id(id)
+
+
+func allocate_entity_id() -> int:
+	sync_encounter_context()
+	return encounter_director._allocate_entity_id()
+
+
+## False for an enemy whose registry actor is inactive; true when the registry
+## cannot say (standalone room).
+func is_enemy_actor_active(enemy: CombatEnemyState) -> bool:
+	if enemy == null:
+		return false
+	if actor_registry is RoomActorAccess:
+		return bool(actor_registry.is_actor_active("enemy/%d" % enemy.entity_id))
+	return true
+
+
+## The hunter-marked target, else the pending mark candidate, else the nearest
+## active enemy.
+func preferred_skill_one_target() -> CombatEnemyState:
+	var player := player_combat_state.snapshot(sim_tick)
+	var marked := enemy_by_entity_id(player["marked_entity_id"])
+	if marked != null and is_enemy_actor_active(marked) and marked.health > 0.0 and sim_tick < player["hunter_mark_expires_tick"] and player_position().distance_to(marked.position) <= locked_targeting_distance:
+		return marked
+	if player["hunter_mark_candidate_entity_id"] > 0 and sim_tick <= player["hunter_mark_candidate_expires_tick"]:
+		var candidate := enemy_by_entity_id(player["hunter_mark_candidate_entity_id"])
+		if candidate != null and is_enemy_actor_active(candidate) and candidate.health > 0.0 and player_position().distance_to(candidate.position) <= locked_targeting_distance:
+			return candidate
+	return nearest_enemy()
+
+
+func nearest_enemy(maximum_distance: float = INF) -> CombatEnemyState:
+	var nearest: CombatEnemyState
+	var best_distance: float = maximum_distance * maximum_distance
+	for enemy: CombatEnemyState in encounter_director.enemies:
+		if enemy.health <= 0.0 or not is_enemy_actor_active(enemy):
+			continue
+		var distance: float = player_position().distance_squared_to(enemy.position)
+		if distance < best_distance or (is_equal_approx(distance, best_distance) and (nearest == null or enemy.entity_id < nearest.entity_id)):
+			best_distance = distance
+			nearest = enemy
+	return nearest
+
+
+func is_skill_equipped(slot_index: int, expected_id: String) -> bool:
+	var skills: Array = player_combat_state.snapshot(sim_tick).get("equipped_skills", [])
+	return slot_index >= 0 and slot_index < skills.size() and String(skills[slot_index]) == expected_id
+
+
+## Growth model of the frozen build (or the calibrated preset when no build is
+## locked), as the combat system consumes it.
+func current_model() -> Dictionary:
+	var player := player_combat_state.snapshot(sim_tick)
+	if not locked_build.is_empty():
+		var event_value: Dictionary = locked_build.get("total_events", {})
+		var total_events := BigValue.from_components(
+			int(event_value.get("layer", 0)),
+			float(event_value.get("magnitude", 0.0))
+		)
+		if total_events != null:
+			var generations := int(locked_build.generation_count)
+			return {
+				"p": float(locked_build.final_parameters.p),
+				"R": float(locked_build.R),
+				"g": generations,
+				"generation_time": float(locked_build.generation_time),
+				"state": String(locked_build.growth_classification),
+				"total_events": total_events,
+				"total_events_float": float(locked_build.total_events_float),
+				"growth_snapshot_details": bool((player.get("talent_capabilities", {}) as Dictionary).get("growth_snapshot_details", false)),
+			}
+	var equipped: Dictionary = content_registry.preset_equipped_parameters
+	return PiercingArrowModel.evaluate(
+		locked_p,
+		float(equipped.shared_lifetime),
+		float(equipped.distance),
+		float(equipped.speed),
+		float(equipped.minimum_turn_time),
+		true,
+		true
+	)
+
+
+## Fails an automation-smoke run that outlives three simulated minutes.
+func check_timeout() -> void:
+	if automation_smoke and not is_battle_over() and sim_tick >= SIM_TICKS_PER_SECOND * 180:
+		fail_automation_smoke("timeout ticks=%d casts=%d" % [sim_tick, int(combat_system.outcome_snapshot().shots)])
+
+
+## Records an automation-smoke failure on the room rules and the report. The
+## host decides whether the process exits.
+func fail_automation_smoke(reason: String) -> void:
+	automation_smoke_failure = reason
+	room_rules.fail(reason)
+	battle_report = String(room_rules.snapshot().report)
 
 
 ## Creates the combat system on first use.

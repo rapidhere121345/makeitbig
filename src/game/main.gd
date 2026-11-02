@@ -187,7 +187,7 @@ var player_combat_rules: PlayerCombatRules:
 ## Narrow, read-only observations used by room diagnostics and play_session.
 var player_position: Vector2:
 	get:
-		return player_combat_state.snapshot(sim_tick)["player_position"]
+		return session.player_position()
 var player_health: float:
 	get:
 		return float(player_combat_state.snapshot(sim_tick).get("player_health", 0.0))
@@ -1099,23 +1099,19 @@ func check_battle_end() -> void:
 
 
 func simulation_check_timeout() -> void:
-	if automation_smoke and not battle_over and session.sim_tick >= SIM_TICKS_PER_SECOND * 180:
-		_terminal._fail_automation_smoke("timeout ticks=%d casts=%d" % [session.sim_tick, shots])
+	session.check_timeout()
 
 
 func route_commands(commands: Array[Dictionary]) -> Dictionary:
-	return CombatCommandProtocolScript.arbitrate(commands, session.sim_tick, session.player_combat_state.equipped_ability_ids(), true)
+	return session.route_commands(commands)
 
 
 func read_only_targets() -> Array[Dictionary]:
-	var targets: Array[Dictionary] = []
-	for enemy: CombatEnemyState in enemies:
-		targets.append(manual_aim_candidate(enemy))
-	return targets
+	return session.read_only_targets()
 
 
 func refresh_player_mark() -> void:
-	session.player_combat_rules.update_mark(session.sim_tick, read_only_targets())
+	session.refresh_player_mark()
 
 
 func consume_player_events(result: Dictionary) -> void:
@@ -1219,13 +1215,11 @@ func update_room_rules_tick() -> void:
 
 
 func enemy_by_entity_id(id: int) -> CombatEnemyState:
-	sync_encounter_context()
-	return session.encounter_director._enemy_by_entity_id(id)
+	return session.enemy_by_entity_id(id)
 
 
 func _allocate_entity_id() -> int:
-	sync_encounter_context()
-	return session.encounter_director._allocate_entity_id()
+	return session.allocate_entity_id()
 
 
 func _framework_room_error() -> String:
@@ -1240,83 +1234,27 @@ func _semantic_state_hash(result: String) -> String:
 
 
 func current_model() -> Dictionary:
-	var player := player_combat_state.snapshot(sim_tick)
-	if not locked_build.is_empty():
-		var event_value: Dictionary = locked_build.get("total_events", {})
-		var total_events := BigValue.from_components(
-			int(event_value.get("layer", 0)),
-			float(event_value.get("magnitude", 0.0))
-		)
-		if total_events != null:
-			var generations := int(locked_build.generation_count)
-			return {
-				"p": float(locked_build.final_parameters.p),
-				"R": float(locked_build.R),
-				"g": generations,
-				"generation_time": float(locked_build.generation_time),
-				"state": String(locked_build.growth_classification),
-				"total_events": total_events,
-				"total_events_float": float(locked_build.total_events_float),
-				"growth_snapshot_details": bool((player.get("talent_capabilities", {}) as Dictionary).get("growth_snapshot_details", false)),
-			}
-	var equipped: Dictionary = content_registry.preset_equipped_parameters
-	return PiercingArrowModel.evaluate(
-		locked_p,
-		float(equipped.shared_lifetime),
-		float(equipped.distance),
-		float(equipped.speed),
-		float(equipped.minimum_turn_time),
-		true,
-		true
-	)
+	return session.current_model()
 
 
 func manual_aim_candidate(enemy: CombatEnemyState) -> Dictionary:
-	return {
-		"entity_id": enemy.entity_id,
-		"kind_id": enemy.kind_id,
-		"position": enemy.position,
-		"health": enemy.health,
-		"is_boss": enemy.is_boss,
-	}
+	return session.manual_aim_candidate(enemy)
 
 
 func _preferred_skill_one_target() -> CombatEnemyState:
-	var player := player_combat_state.snapshot(sim_tick)
-	var marked := enemy_by_entity_id(player["marked_entity_id"])
-	if marked != null and is_enemy_actor_active(marked) and marked.health > 0.0 and sim_tick < player["hunter_mark_expires_tick"] and player_position.distance_to(marked.position) <= locked_targeting_distance:
-		return marked
-	if player["hunter_mark_candidate_entity_id"] > 0 and sim_tick <= player["hunter_mark_candidate_expires_tick"]:
-		var candidate := enemy_by_entity_id(player["hunter_mark_candidate_entity_id"])
-		if candidate != null and is_enemy_actor_active(candidate) and candidate.health > 0.0 and player_position.distance_to(candidate.position) <= locked_targeting_distance:
-			return candidate
-	return _nearest_enemy()
+	return session.preferred_skill_one_target()
 
 
 func _nearest_enemy(maximum_distance: float = INF) -> CombatEnemyState:
-	var nearest: CombatEnemyState
-	var best_distance: float = maximum_distance * maximum_distance
-	for enemy: CombatEnemyState in enemies:
-		if enemy.health <= 0.0 or not is_enemy_actor_active(enemy):
-			continue
-		var distance: float = player_position.distance_squared_to(enemy.position)
-		if distance < best_distance or (is_equal_approx(distance, best_distance) and (nearest == null or enemy.entity_id < nearest.entity_id)):
-			best_distance = distance
-			nearest = enemy
-	return nearest
+	return session.nearest_enemy(maximum_distance)
 
 
 func is_enemy_actor_active(enemy: CombatEnemyState) -> bool:
-	if enemy == null:
-		return false
-	if session.actor_registry != null and session.actor_registry.has_method("is_actor_active"):
-		return bool(session.actor_registry.is_actor_active("enemy/%d" % enemy.entity_id))
-	return true
+	return session.is_enemy_actor_active(enemy)
 
 
 func _is_skill_equipped(slot_index: int, expected_id: String) -> bool:
-	var skills: Array = player_combat_state.snapshot(sim_tick).get("equipped_skills", [])
-	return slot_index >= 0 and slot_index < skills.size() and String(skills[slot_index]) == expected_id
+	return session.is_skill_equipped(slot_index, expected_id)
 
 
 func _arena_rect() -> Rect2:

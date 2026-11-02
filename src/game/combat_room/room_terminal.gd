@@ -119,6 +119,4 @@ func _automation_smoke_state_valid() -> bool:
 ## The room reports a smoke failure to its host through automation_smoke_failure;
 ## the host decides whether the process exits.
 func _fail_automation_smoke(reason: String) -> void:
-	_session.automation_smoke_failure = reason
-	_session.room_rules.fail(reason)
-	_session.battle_report = String(_session.room_rules.snapshot().report)
+	_session.fail_automation_smoke(reason)
