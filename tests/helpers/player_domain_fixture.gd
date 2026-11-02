@@ -140,6 +140,8 @@ func step(arena, commands: Array[Dictionary] = []) -> Dictionary:
 	_batches[arena.get_instance_id()] = commands.duplicate(true)
 	var result: Dictionary = arena.combat_simulation.step()
 	assert(bool(result.get("ok", false)), "behavior simulation failed: %s" % str(result))
+	# The view applies the tick's presentation events right after each step.
+	arena.apply_presentation_events()
 	return result
 
 

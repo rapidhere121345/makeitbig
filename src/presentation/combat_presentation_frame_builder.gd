@@ -275,15 +275,7 @@ func loot_prompt(snapshot: Dictionary) -> Dictionary:
 
 
 func enemy_public_label(enemy: CombatEnemyState) -> String:
-	if enemy == null:
-		return ""
-	if enemy.is_boss:
-		return "Threshold Colossus"
-	match enemy.kind_id:
-		"melee_pursuer": return "Melee Pursuer"
-		"charging_raider": return "Charging Raider"
-		"fan_ranged": return "Fan-Shot Hunter"
-	return "Enemy"
+	return enemy.public_label() if enemy != null else ""
 
 
 func hud_feedback(snapshot: Dictionary, input_view: Dictionary) -> String:

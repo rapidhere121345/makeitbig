@@ -48,8 +48,8 @@ func _submit_loot_pickup_command(command: Dictionary) -> Dictionary:
 		var normalized: Dictionary = receipt.get("command", {})
 		var room_receipt := _main.request_loot_pickup(String(normalized.get("loot_entity_id", "")))
 		receipt["room_receipt"] = room_receipt.duplicate(true)
-		if not bool(room_receipt.get("accepted", false)) and _session.selected_mode == "Manual" and _main.presentation != null and _main.presentation.feedback != null:
-			_main.presentation.feedback.show_input_feedback("Loot out of reach · Move closer, then press F", _session.sim_tick)
+		if not bool(room_receipt.get("accepted", false)) and _session.selected_mode == "Manual":
+			_session.record_event(RoomPresentationEvent.input_feedback("Loot out of reach · Move closer, then press F", _session.sim_tick))
 	_session.last_loot_pickup_command_receipt = receipt.duplicate(true)
 	return _session.last_loot_pickup_command_receipt.duplicate(true)
 

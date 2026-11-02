@@ -100,6 +100,23 @@ var room_drop_tags: Array = []
 var framework_seed: int = FATE_SEED
 
 
+## Presentation events produced by the ticks since the last drain, in emission
+## order. The authority only appends; the view drains after each step().
+var _presentation_events: Array[RoomPresentationEvent] = []
+
+
+## Appends one presentation effect to the event log.
+func record_event(event: RoomPresentationEvent) -> void:
+	_presentation_events.append(event)
+
+
+## Returns the pending presentation events in emission order and clears the log.
+func drain_events() -> Array[RoomPresentationEvent]:
+	var drained := _presentation_events
+	_presentation_events = []
+	return drained
+
+
 ## Creates the fixed-tick simulation on first use.
 func ensure_combat_simulation() -> void:
 	if combat_simulation == null:

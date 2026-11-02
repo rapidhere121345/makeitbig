@@ -84,6 +84,17 @@ func _init(
 		]
 
 
+## Player-facing name used in reports and labels.
+func public_label() -> String:
+	if is_boss:
+		return "Threshold Colossus"
+	match kind_id:
+		"melee_pursuer": return "Melee Pursuer"
+		"charging_raider": return "Charging Raider"
+		"fan_ranged": return "Fan-Shot Hunter"
+	return "Enemy"
+
+
 func apply_status_effect(
 	tick: int,
 	effect_id: String,

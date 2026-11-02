@@ -101,4 +101,4 @@ func cancel_buffered_target(entity_id: int) -> int:
 
 func erase_attack_request(request_id: int) -> void:
 	if request_id > 0:
-		_main.presentation.feedback.forget_request(request_id)
+		_session.record_event(RoomPresentationEvent.request_forgotten(request_id))

@@ -492,6 +492,8 @@ var automation_smoke_failure: String:
 		session.automation_smoke_failure = value
 var presentation
 var input_adapter
+## Replays the session's event log into the presentation after each tick.
+var presentation_events: MainPresentationEvents
 ## Production fixed-tick phase owner, held by the session. CombatSimulation never
 ## receives Main as a callback bag; it receives the typed RoomPhaseDomain from
 ## src/game/ports/room_phase_domain.gd. Phase dispatch is typed virtual calls only.
@@ -528,6 +530,7 @@ func _init() -> void:
 	add_child(presentation)
 	input_adapter = InputAdapter.new()
 	session.command_intake = MainCommandIntake.new(self)
+	presentation_events = MainPresentationEvents.new(self)
 
 	_ensure_simulation_world()
 	session.ensure_combat_simulation()
@@ -966,12 +969,12 @@ func process_room_loot_pickups_tick() -> void:
 	var receipts_before: Array = (session.room_loot.snapshot().get("pickup_receipts", []) as Array).duplicate(true)
 	session.room_loot.process_pickups(sim_tick, float(player.get("player_health", 0.0)), player.player_position, battle_over, battle_victory)
 	var receipts_after: Array = session.room_loot.snapshot().get("pickup_receipts", [])
-	if receipts_after.size() > receipts_before.size() and presentation != null and presentation.feedback != null:
+	if receipts_after.size() > receipts_before.size():
 		var receipt_value: Variant = receipts_after[receipts_after.size() - 1]
 		if receipt_value is Dictionary and bool((receipt_value as Dictionary).get("ok", false)):
-			presentation.feedback.show_input_feedback("Loot picked up · Added to rewards on exit", sim_tick)
+			session.record_event(RoomPresentationEvent.input_feedback("Loot picked up · Added to rewards on exit", sim_tick))
 		elif receipt_value is Dictionary:
-			presentation.feedback.show_input_feedback("Loot not picked up · %s" % String({"loot_out_of_range": "Too far away; move closer and press F", "loot_pickup_already_queued": "Pickup requested", "loot_pickup_window_closed": "Pickup window closed"}.get(String((receipt_value as Dictionary).get("error", "")), "Request expired")), sim_tick)
+			session.record_event(RoomPresentationEvent.input_feedback("Loot not picked up · %s" % String({"loot_out_of_range": "Too far away; move closer and press F", "loot_pickup_already_queued": "Pickup requested", "loot_pickup_window_closed": "Pickup window closed"}.get(String((receipt_value as Dictionary).get("error", "")), "Request expired")), sim_tick))
 
 
 func settle_room_loot(outcome: String) -> Dictionary:
@@ -1058,6 +1061,13 @@ func _simulate_tick() -> void:
 	var result: Dictionary = session.step()
 	if not bool(result.get("ok", false)):
 		push_error("combat_simulation_step_failed:%s" % String(result.get("error", "unknown")))
+	apply_presentation_events()
+
+
+## Applies the presentation effects the authority logged since the last call.
+## The view calls this right after each fixed tick and before it refreshes.
+func apply_presentation_events() -> void:
+	presentation_events.apply(session.drain_events())
 
 
 func simulation_set_elapsed(value: float) -> void:
@@ -1120,12 +1130,11 @@ func consume_player_events(result: Dictionary) -> void:
 		var command: Dictionary = receipt.get("command", {})
 		if String(command.get("ability_id", "")) == "piercing_arrow":
 			var default_source := ATTACK_SOURCE_PROXY if session.selected_mode == "Auto" else ATTACK_SOURCE_ASSISTED
-			var source: String = presentation.feedback.take_command_source(int(command.get("sequence", -1)), default_source)
-			_present_cast_receipt(receipt, source)
+			_present_cast_receipt(receipt, default_source, int(command.get("sequence", -1)), true)
 		else:
 			if String(command.get("ability_id", "")) == "hunter_mark":
 				_present_mark_receipt(receipt, player)
-			presentation.feedback.discard_command(int(command.get("sequence", -1)))
+			session.record_event(RoomPresentationEvent.command_discarded(int(command.get("sequence", -1))))
 	if result.has("protocol_receipts"):
 		session.last_command_receipts.assign((result["protocol_receipts"] as Array).duplicate(true))
 	sync_combat_context(action_player)
@@ -1133,15 +1142,19 @@ func consume_player_events(result: Dictionary) -> void:
 	sync_combat_context(player)
 
 
-func _present_cast_receipt(receipt: Dictionary, source: String) -> void:
-	if bool(receipt.get("accepted", false)):
-		var request_id := int(receipt.get("request_id", 0))
-		presentation.feedback.remember_request_source(request_id, source, int(receipt.get("replaced_request_id", 0)))
-		if String(receipt.get("status", "")) == "started":
-			presentation.feedback.bind_action_request(int(receipt.get("action_instance_id", 0)), request_id)
-		battle_report = "Piercing Arrow buffered; waiting for an action window." if String(receipt.get("status", "")) in ["buffered", "replaced"] else "Drawing Piercing Arrow."
-	elif String(receipt.get("reason", "")) == "target_out_of_range" and selected_mode == "Manual" and source != ATTACK_SOURCE_PROXY:
-		presentation.feedback.show_input_feedback("Target out of range · Move closer to shoot", sim_tick)
+## Records the Piercing Arrow receipt: the report text is authority, the input
+## feedback and request-source bookkeeping travel as a presentation event. When
+## `resolve_source` is set the view swaps `source` (the fallback) for the source
+## its input adapter registered for `sequence`.
+func _present_cast_receipt(receipt: Dictionary, source: String, sequence: int = -1, resolve_source: bool = false) -> void:
+	var accepted := bool(receipt.get("accepted", false))
+	var status := String(receipt.get("status", ""))
+	if accepted:
+		battle_report = "Piercing Arrow buffered; waiting for an action window." if status in ["buffered", "replaced"] else "Drawing Piercing Arrow."
+	session.record_event(RoomPresentationEvent.cast_receipt(
+		sim_tick, sequence, source, resolve_source, accepted, status == "started",
+		not accepted and String(receipt.get("reason", "")) == "target_out_of_range" and selected_mode == "Manual",
+		int(receipt.get("request_id", 0)), int(receipt.get("replaced_request_id", 0)), int(receipt.get("action_instance_id", 0))))
 
 
 func request_player_cast(ability_id: String, target_entity_id: int = 0, direction: Vector2 = Vector2.ZERO, source: String = ATTACK_SOURCE_ASSISTED) -> Dictionary:
@@ -1152,6 +1165,7 @@ func request_player_cast(ability_id: String, target_entity_id: int = 0, directio
 	elif ability_id == "hunter_mark":
 		_present_mark_receipt(receipt, player_combat_state.snapshot(sim_tick))
 	_process_player_action_events(receipt.get("action_events", []), player_combat_state.snapshot(sim_tick))
+	apply_presentation_events()
 	return receipt
 
 
@@ -1160,7 +1174,7 @@ func _present_mark_receipt(receipt: Dictionary, player: Dictionary) -> void:
 		return
 	var target := enemy_by_entity_id(int(player["marked_entity_id"]))
 	if target != null and target.health > 0.0:
-		battle_report = "Hunter's Mark locked: %s." % presentation.frame_builder.enemy_public_label(target)
+		battle_report = "Hunter's Mark locked: %s." % target.public_label()
 
 
 func _process_player_action_events(events: Array, action_player: Dictionary) -> void:
@@ -1168,11 +1182,11 @@ func _process_player_action_events(events: Array, action_player: Dictionary) -> 
 		var action_id := int(event.get("action_instance_id", 0))
 		match String(event.get("type", "")):
 			"buffered_started", "action_started":
-				presentation.feedback.bind_action_request(action_id, int(event.get("request_id", 0)))
+				session.record_event(RoomPresentationEvent.action_request_bound(action_id, int(event.get("request_id", 0))))
 			"action_impact":
 				piercing_arrows._resolve_piercing_arrow(event, action_player)
 			"action_ended", "action_interrupted":
-				presentation.feedback.forget_action(action_id)
+				session.record_event(RoomPresentationEvent.action_forgotten(action_id))
 
 
 func sync_combat_context(player: Dictionary = {}) -> void:
@@ -1448,6 +1462,8 @@ func gameplay_snapshot() -> Dictionary:
 
 
 func refresh_presentation(delta: float = 0.0) -> void:
+	# Ticks stepped without _simulate_tick (tests, tools) leave events pending.
+	apply_presentation_events()
 	var snapshot := gameplay_snapshot()
 	if delta > 0.0:
 		presentation.advance_time(snapshot, delta)
