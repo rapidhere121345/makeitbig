@@ -7,6 +7,7 @@ extends RefCounted
 
 const PaletteScript = preload("res://src/presentation/combat_palette.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
+const SharedPalette := preload("res://src/presentation/palette.gd")
 
 const COLOR_INK: Color = PaletteScript.INK
 const COLOR_DEEP_BLUE: Color = PaletteScript.SLATE_0
@@ -32,8 +33,8 @@ func _init(host: Control) -> void:
 
 static func panel_style(vertical_margin: float = 9.0, opacity: float = 0.92) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(Color("100f0d"), opacity)
-	style.border_color = Color("8e714a")
+	style.bg_color = Color(SharedPalette.PANEL_INK, opacity)
+	style.border_color = SharedPalette.BRONZE_EDGE
 	style.set_border_width_all(0)
 	style.set_corner_radius_all(0)
 	style.shadow_color = Color(0.01,0.02,0.025,0.5)
@@ -53,19 +54,19 @@ static func transparent_panel_style() -> StyleBoxFlat:
 
 
 static func style_progress(bar: ProgressBar, fill_color: Color) -> void:
-	bar.add_theme_stylebox_override("background", UiKit.flat_style(Color("100f0d"), COLOR_NEUTRAL, 1))
+	bar.add_theme_stylebox_override("background", UiKit.flat_style(SharedPalette.PANEL_INK, COLOR_NEUTRAL, 1))
 	bar.add_theme_stylebox_override("fill", UiKit.flat_style(fill_color, COLOR_BONE, 1))
 
 
 static func style_action_button(button: Button, disabled: bool, tone: String) -> void:
-	var accent := COLOR_WARNING if tone == "active" else (COLOR_AMBER if tone == "ready" else (COLOR_PROXY if tone == "locked" else (COLOR_BLOOD if tone == "cooldown" else Color("8e714a"))))
+	var accent := COLOR_WARNING if tone == "active" else (COLOR_AMBER if tone == "ready" else (COLOR_PROXY if tone == "locked" else (COLOR_BLOOD if tone == "cooldown" else SharedPalette.BRONZE_EDGE)))
 	for state_name in ["normal", "hover", "pressed", "focus", "disabled"]:
 		var style := StyleBoxFlat.new()
-		style.bg_color = Color("100f0dcc") if state_name == "normal" else (Color("221c14e6") if state_name == "hover" else Color("100f0df5"))
+		style.bg_color = SharedPalette.BUTTON_NORMAL if state_name == "normal" else (SharedPalette.BUTTON_HOVER if state_name == "hover" else Color("100f0df5"))
 		if state_name == "pressed":
-			style.bg_color = Color(accent, 0.32) if tone in ["active", "ready", "locked", "cooldown"] else Color("2b2115e6")
+			style.bg_color = Color(accent, 0.32) if tone in ["active", "ready", "locked", "cooldown"] else SharedPalette.BUTTON_PRESSED
 		if state_name == "disabled":
-			style.bg_color = Color("08080799")
+			style.bg_color = SharedPalette.BUTTON_DISABLED
 		style.border_color = accent
 		style.set_border_width_all(2 if state_name == "focus" else 0)
 		style.border_width_bottom = 2 if tone in ["active", "ready", "locked", "cooldown"] or state_name == "focus" else 1

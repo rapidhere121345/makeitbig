@@ -229,19 +229,19 @@ static func panel_style(kind: String = "panel") -> StyleBoxFlat:
 			box.bg_color = Color("171511")
 			box.set_corner_radius_all(4)
 		"button":
-			box.bg_color = Color("100f0dcc")
+			box.bg_color = SharedPalette.BUTTON_NORMAL
 			box.border_color = Color("66523b99")
 			box.border_width_bottom = 1
 		"hover":
-			box.bg_color = Color("221c14e6")
+			box.bg_color = SharedPalette.BUTTON_HOVER
 			box.border_color = COPPER_DULL
 			box.border_width_bottom = 1
 		"selected":
-			box.bg_color = Color("2b2115e6")
+			box.bg_color = SharedPalette.BUTTON_PRESSED
 			box.border_color = AMBER
 			box.border_width_bottom = 2
 		"disabled":
-			box.bg_color = Color("08080799")
+			box.bg_color = SharedPalette.BUTTON_DISABLED
 		"well":
 			pass
 	return box

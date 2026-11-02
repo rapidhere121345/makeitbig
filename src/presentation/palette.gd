@@ -23,3 +23,13 @@ const COMBAT_INK := Color("090c10")
 const COMBAT_SLATE_1 := Color("1d2730")
 const COMBAT_COPPER_DULL := Color("896043")
 const SHELL_DEEP_BLUE := Color("1d2731")
+
+## Panel ink and bronze edge, plus the four button state fills, shared verbatim
+## by the shell theme, the combat interface theme and the combat HUD style so
+## all three render byte-identical panel and button chrome.
+const PANEL_INK := Color("100f0d")
+const BRONZE_EDGE := Color("8e714a")
+const BUTTON_NORMAL := Color("100f0dcc")
+const BUTTON_HOVER := Color("221c14e6")
+const BUTTON_PRESSED := Color("2b2115e6")
+const BUTTON_DISABLED := Color("08080799")

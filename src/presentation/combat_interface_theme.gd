@@ -6,12 +6,7 @@ extends RefCounted
 const PaletteScript := preload("res://src/presentation/combat_palette.gd")
 const ShellThemeScript := preload("res://src/presentation/shell_theme.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
-const COLOR_INK: Color = PaletteScript.INK
-const COLOR_DEEP_BLUE: Color = PaletteScript.SLATE_0
-const COLOR_GROUND: Color = PaletteScript.SLATE_1
-const COLOR_NEUTRAL: Color = PaletteScript.SLATE_3
-const COLOR_BONE: Color = PaletteScript.BONE
-const COLOR_AMBER: Color = PaletteScript.COPPER
+const SharedPalette := preload("res://src/presentation/palette.gd")
 
 
 static func create() -> Theme:
@@ -19,20 +14,20 @@ static func create() -> Theme:
 	var ui_font: FontFile = ShellThemeScript.ui_font()
 	if ui_font != null:
 		theme.default_font = ui_font
-	theme.set_color("font_color", "Label", COLOR_BONE)
-	theme.set_color("font_shadow_color", "Label", COLOR_INK)
+	theme.set_color("font_color", "Label", PaletteScript.BONE)
+	theme.set_color("font_shadow_color", "Label", PaletteScript.INK)
 	theme.set_constant("shadow_offset_x", "Label", 1)
 	theme.set_constant("shadow_offset_y", "Label", 1)
-	theme.set_color("font_color", "Button", COLOR_BONE)
-	theme.set_color("font_hover_color", "Button", COLOR_BONE)
-	theme.set_color("font_pressed_color", "Button", COLOR_BONE)
-	theme.set_color("font_disabled_color", "Button", COLOR_NEUTRAL)
-	theme.set_color("font_focus_color", "Button", COLOR_BONE)
-	theme.set_stylebox("normal", "Button", _button_style(Color("100f0dcc"), Color("8e714a"), 0))
-	theme.set_stylebox("hover", "Button", _button_style(Color("221c14e6"), COLOR_AMBER, 0))
-	theme.set_stylebox("pressed", "Button", _button_style(Color("2b2115e6"), COLOR_AMBER, 0))
-	theme.set_stylebox("disabled", "Button", _button_style(Color("08080799"), Color("8e714a"), 0))
-	theme.set_stylebox("focus", "Button", _button_style(Color.TRANSPARENT, COLOR_AMBER, 2))
+	theme.set_color("font_color", "Button", PaletteScript.BONE)
+	theme.set_color("font_hover_color", "Button", PaletteScript.BONE)
+	theme.set_color("font_pressed_color", "Button", PaletteScript.BONE)
+	theme.set_color("font_disabled_color", "Button", PaletteScript.SLATE_3)
+	theme.set_color("font_focus_color", "Button", PaletteScript.BONE)
+	theme.set_stylebox("normal", "Button", _button_style(SharedPalette.BUTTON_NORMAL, SharedPalette.BRONZE_EDGE, 0))
+	theme.set_stylebox("hover", "Button", _button_style(SharedPalette.BUTTON_HOVER, PaletteScript.COPPER, 0))
+	theme.set_stylebox("pressed", "Button", _button_style(SharedPalette.BUTTON_PRESSED, PaletteScript.COPPER, 0))
+	theme.set_stylebox("disabled", "Button", _button_style(SharedPalette.BUTTON_DISABLED, SharedPalette.BRONZE_EDGE, 0))
+	theme.set_stylebox("focus", "Button", _button_style(Color.TRANSPARENT, PaletteScript.COPPER, 2))
 	return theme
 
 
