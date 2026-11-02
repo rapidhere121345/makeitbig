@@ -1,6 +1,6 @@
 # Room Session Design (redesign Step 2-4)
 
-Status: reviewed by the owner on 2026-11-02 (decisions below). Not implemented yet.
+Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 3 are implemented.
 
 ## Problem
 
@@ -118,7 +118,17 @@ becomes `kit.actor_spec().id`.
    dedicated `LootPort`/`RoomClock` is still open.
 3. Introduce `RoomSession` as a pure move of the authority fields and helpers;
    `MainArena` keeps the same property names as getters so the hash builder and
-   tests are untouched.
+   tests are untouched. Done for the fields (`src/game/combat_room/room_session.gd`,
+   `MainArena.session`): the build lock, contract run counters and command
+   receipts, battle report and automation verdict, the domain objects (encounter
+   director, catalog, combat system and simulation, player state and rules, room
+   rules, proxy/aim/tactics objects, command source, event stream, kernel
+   bindings, room loot), the mounted-room authorities and ports, and the room
+   definition and identity. Each moved field is a forwarding property on
+   `MainArena` with a setter. The helpers still take `MainArena`, `scene_runtime`,
+   `content_registry`, `startup_errors`, `last_save_message`, `proxy_prediction`,
+   `room_phase_owner`, the phase hooks and all presentation members stay on
+   `MainArena` until items 4 to 6.
 4. Move `CombatSimulation` and the phase domain into the session.
 5. Cut presentation out of the tick: commands come from a source the view hands
    in; feedback/impact/corpse calls become session events drained by the view;
