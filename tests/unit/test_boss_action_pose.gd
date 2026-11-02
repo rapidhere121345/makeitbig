@@ -422,7 +422,7 @@ func _open_bridge_harness() -> bool:
 func _bridge_case(action: String, phase: int, facing: Vector2) -> bool:
 	var label := "%s p%d %s" % [action, phase, facing]
 	var enemy = bridge_harness.boss
-	_expect(bool(bridge_harness.teleport_actor("enemy/%d" % enemy.entity_id, bridge_harness._arena_rect().get_center()).get("ok", false)), "bridge boss deployment failed")
+	_expect(bool(bridge_harness.teleport_actor("enemy/%d" % enemy.entity_id, bridge_harness.arena_rect().get_center()).get("ok", false)), "bridge boss deployment failed")
 	var awakened := phase >= 2
 	## Each fist has its own base, exactly the pair main.enemy_ai._update_boss_hands() and
 	## the world view use: measuring one against the other reads a 68px phantom.
@@ -445,11 +445,11 @@ func _bridge_case(action: String, phase: int, facing: Vector2) -> bool:
 	var strike: Array[Vector2] = [Vector2.ZERO, Vector2.ZERO]
 	for tick in range(impact, recovery_end):
 		bridge_fixture.advance_to(bridge_harness, tick)
-		var hash_before: String = bridge_harness._semantic_state_hash("recovery_bridge")
+		var hash_before: String = bridge_harness.state_hash("recovery_bridge")
 		var draw_enemy = PresentationSnapshot.enemy_record(enemy)
 		var frame: Dictionary = actor_presenter.boss_visual_pose(draw_enemy, tick)
 		_expect(hash_before.length() == 64, "%s: the state hash guard could not run" % label)
-		_expect(bridge_harness._semantic_state_hash("recovery_bridge") == hash_before, "%s: drawing tick %d moved the replay hash" % [label, tick])
+		_expect(bridge_harness.state_hash("recovery_bridge") == hash_before, "%s: drawing tick %d moved the replay hash" % [label, tick])
 		drawn[tick] = _drawn_hands(draw_enemy, frame)
 		published[tick] = _published_fields(draw_enemy, tick)
 		if tick == impact:

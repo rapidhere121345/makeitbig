@@ -103,7 +103,7 @@ func _test_actual_projectile_evidence(outcome: String) -> void:
 		## Park the target far south through the registry: the melee AI chases
 		## the player (the arrow origin), so the body must be moved off any
 		## approach line the released arrow could still cross.
-		_expect(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena._arena_rect().get_center() + Vector2(120.0, 200.0)).get("ok", false)), "miss fixture could not park the target clear of the line")
+		_expect(bool(arena.teleport_actor("enemy/%d" % target.entity_id, arena.arena_rect().get_center() + Vector2(120.0, 200.0)).get("ok", false)), "miss fixture could not park the target clear of the line")
 	if outcome == "blocked":
 		_expect(arena.sim_tick == Encounter.ELITE_BARRIER_PERIOD_TICKS - 1 and not arena.encounter_director.is_target_blocked(target), "blocked fixture did not release before the barrier transition")
 	fixture.advance_projectiles(arena)

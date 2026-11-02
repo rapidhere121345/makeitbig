@@ -161,7 +161,7 @@ func _test_fan_sequence(arena: Node, failures: Array[String]) -> void:
 func _test_fan_attack_radius_runtime(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["fan_ranged"])
 	var fan = arena.enemies[0]
-	arena.teleport_actor("ranger", arena._arena_rect().get_center())
+	arena.teleport_actor("ranger", arena.arena_rect().get_center())
 	arena.teleport_actor("enemy/%d" % fan.entity_id, arena.player_position - Vector2.RIGHT * 200.0)
 	var outside_before: Vector2 = fan.position
 	fixture.drive(arena, {"enemies": true})
@@ -222,7 +222,7 @@ func _test_same_role_action_lane_runtime(arena: Node, failures: Array[String]) -
 
 func _test_recovery_end_has_same_tick_intent(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
-	arena.teleport_actor("ranger", arena._arena_rect().get_center())
+	arena.teleport_actor("ranger", arena.arena_rect().get_center())
 	var enemy = arena.enemies[0]
 	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(100.0, 0.0))
 	enemy.action_state = "recovery"
@@ -283,9 +283,9 @@ func _test_boss_runtime(arena: Node, failures: Array[String]) -> void:
 func _test_hash_role_sensitivity(arena: Node, failures: Array[String]) -> void:
 	var charger = _enemy_of_kind(arena, "charging_raider")
 	var original_kind: String = charger.kind_id
-	var first_hash: String = arena._semantic_state_hash("test")
+	var first_hash: String = arena.state_hash("test")
 	charger.kind_id = "fan_ranged"
-	var second_hash: String = arena._semantic_state_hash("test")
+	var second_hash: String = arena.state_hash("test")
 	charger.kind_id = original_kind
 	_expect(not first_hash.is_empty() and first_hash != second_hash, "hash: enemy role difference is not semantic", failures)
 
@@ -303,9 +303,9 @@ func _test_room_rosters_and_layouts(arena: Node, failures: Array[String]) -> voi
 		_expect(arena.boss == null, "normal room unexpectedly spawned a Boss", failures)
 		positions[layout] = arena.enemies[0].position
 	_expect(positions.rectangle_arena != positions.corridor and positions.corridor != positions.ring and positions.rectangle_arena != positions.ring, "layouts do not produce distinct deterministic spawn geometry", failures)
-	var center: Vector2 = arena._arena_rect().get_center()
-	var ring_clamp: Vector2 = arena._clamp_to_arena(center, 14.0)
-	var ring_geometry: Dictionary = arena._walkable_geometry(14.0)
+	var center: Vector2 = arena.arena_rect().get_center()
+	var ring_clamp: Vector2 = arena.clamp_to_arena(center, 14.0)
+	var ring_geometry: Dictionary = arena.walkable_geometry(14.0)
 	_expect(not Vector2(ring_clamp).is_equal_approx(center)
 		and is_equal_approx(ring_clamp.distance_to(center), float(ring_geometry.get("inner_radius", 0.0))),
 		"ring layout did not project its center onto the authored inner boundary", failures)
@@ -313,7 +313,7 @@ func _test_room_rosters_and_layouts(arena: Node, failures: Array[String]) -> voi
 
 func _test_public_proxy_geometry_snapshot(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "ring", "clear", ["melee_pursuer", "charging_raider", "fan_ranged"])
-	var snapshot: Dictionary = arena._player_commands._public_proxy_snapshot()
+	var snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
 	var geometry: Dictionary = snapshot.get("walkable_geometry", {})
 	_expect(int(snapshot.get("snapshot_version", -1)) == arena.ProxyDecisionScript.SNAPSHOT_VERSION, "public proxy snapshot did not use ProxyDecision's version constant", failures)
 	_expect(not geometry.is_empty() and String(geometry.get("kind", "")) == "ring"
@@ -337,7 +337,7 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 	# pier. The pair remains exactly antipodal and starts 200 units from the
 	# west-side player, outside both attack bands, with a walkable approach.
 	arena = _configure_room(arena, "ring", "clear", ["charging_raider", "melee_pursuer", "melee_pursuer", "fan_ranged", "fan_ranged", "melee_pursuer"])
-	var center: Vector2 = arena._arena_rect().get_center()
+	var center: Vector2 = arena.arena_rect().get_center()
 	if not _place_fixture_actor(arena, "ranger", center + Vector2.LEFT * 160.0, failures):
 		return
 	var charger = arena.enemies[0]
@@ -400,8 +400,8 @@ func _test_authored_ring_runtime(arena: Node, failures: Array[String]) -> void:
 
 func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "ring", "clear", ["charging_raider"])
-	var player_geometry: Dictionary = arena._walkable_geometry(14.0)
-	var enemy_geometry: Dictionary = arena._walkable_geometry(16.0)
+	var player_geometry: Dictionary = arena.walkable_geometry(14.0)
+	var enemy_geometry: Dictionary = arena.walkable_geometry(16.0)
 	_expect(String(player_geometry.get("kind", "")) == "ring" and String(enemy_geometry.get("kind", "")) == "ring",
 		"ring runtime: ring rooms did not expose the authored annulus", failures)
 	_expect(float(player_geometry.get("inner_radius", 0.0)) > 0.0 and float(enemy_geometry.get("outer_radius", 0.0)) > float(enemy_geometry.get("inner_radius", 0.0)),
@@ -515,8 +515,8 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 
 func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["charging_raider"])
-	var player_geometry: Dictionary = arena._walkable_geometry(14.0)
-	var enemy_geometry: Dictionary = arena._walkable_geometry(16.0)
+	var player_geometry: Dictionary = arena.walkable_geometry(14.0)
+	var enemy_geometry: Dictionary = arena.walkable_geometry(16.0)
 	## The authored tower blocker sits near the vertical centre of the west
 	## edge; slide the edge fixture south so the projected charge lane stays
 	## clear of it.
@@ -572,7 +572,7 @@ func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) ->
 	## the frozen lane. Drift beyond that clip stays a failure.
 	var charger_state = arena.actor_registry.actor("enemy/%d" % charger.entity_id)
 	var charger_footprint: float = float(charger_state.footprint_radius) if charger_state != null else 18.0
-	var motor_reach: float = (player_start.x + 100.0) - float(arena._walkable_geometry(charger_footprint).bounds.position.x)
+	var motor_reach: float = (player_start.x + 100.0) - float(arena.walkable_geometry(charger_footprint).bounds.position.x)
 	_expect(absf(active_displacement - minf(frozen_charge_length, motor_reach)) <= 0.02, "padding runtime: body displacement did not equal the reachable frozen charge_length", failures)
 	_expect(charger.impact_resolved and authoritative_resolution, "padding runtime: charge produced no authoritative hit/miss resolution", failures)
 	_expect(is_equal_approx(arena.player_health, 89.0), "padding runtime: projected contact charge did not hit the static edge player", failures)
@@ -643,10 +643,10 @@ func _test_room_completion_and_validation(arena: Node, failures: Array[String]) 
 	arena = _configure_room(arena, "rectangle_arena", "hunt_elite", [], "threshold_colossus")
 	_expect(arena.boss != null and arena.enemies.size() == 1 and arena.boss.entity_id == 1, "Boss room did not spawn authoritative threshold colossus", failures)
 	arena.framework_room.enemy_ids = ["unknown_enemy"]
-	_expect(arena._framework_room_error() == "unknown_enemy_id", "unknown enemy did not fail closed", failures)
+	_expect(arena.session.framework_room_error() == "unknown_enemy_id", "unknown enemy did not fail closed", failures)
 	arena.framework_room.enemy_ids = []
 	arena.framework_room.boss_id = "unknown_boss"
-	_expect(arena._framework_room_error() == "unknown_boss_id", "unknown Boss did not fail closed", failures)
+	_expect(arena.session.framework_room_error() == "unknown_boss_id", "unknown Boss did not fail closed", failures)
 
 
 func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
@@ -679,7 +679,7 @@ func _test_embedded_room_rewards(arena: Node, failures: Array[String]) -> void:
 func _test_hazards(arena: Node, failures: Array[String]) -> void:
 	for hazard_id in ["exposed_ground_zone", "moving_fireline"]:
 		arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [hazard_id])
-		var center: Vector2 = arena._arena_rect().get_center()
+		var center: Vector2 = arena.arena_rect().get_center()
 		# Both the waiting position and the hit position are legal registry feet.
 		arena.teleport_actor("ranger", center + Vector2(350.0, 170.0))
 		fixture.advance_to(arena, 30)
@@ -749,7 +749,7 @@ func _test_elite_rules(arena: Node, failures: Array[String]) -> void:
 	## firing lane south-west of the elite instead: that quadrant hosts no
 	## authored blocker, so the dropped 22px query line reaches the elite's
 	## feet without grazing any padded projectile surface.
-	arena.teleport_actor("ranger", arena._arena_rect().get_center() + Vector2.from_angle(-PI * 0.75) * 175.0)
+	arena.teleport_actor("ranger", arena.arena_rect().get_center() + Vector2.from_angle(-PI * 0.75) * 175.0)
 	elite.health = 1.0
 	_cast_and_resolve_arrow(arena)
 	arena.check_battle_end()
@@ -762,26 +762,26 @@ func _test_elite_rules(arena: Node, failures: Array[String]) -> void:
 
 func _test_room_hash_sensitivity(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "corridor", "timed_break", ["melee_pursuer"], "", ["moving_fireline"], ["periodic_barrier"])
-	var first: String = arena._semantic_state_hash("test")
+	var first: String = arena.state_hash("test")
 	arena.layout_id = "ring"
-	var layout_hash: String = arena._semantic_state_hash("test")
+	var layout_hash: String = arena.state_hash("test")
 	arena.layout_id = "corridor"
 	arena.hazard_states[0].origin += Vector2(1.0, 0.0)
-	var hazard_hash: String = arena._semantic_state_hash("test")
+	var hazard_hash: String = arena.state_hash("test")
 	arena.hazard_states[0].origin -= Vector2(1.0, 0.0)
 	arena.room_id = "hash.changed"
-	var room_hash: String = arena._semantic_state_hash("test")
+	var room_hash: String = arena.state_hash("test")
 	arena.room_id = "test.corridor.timed_break"
 	arena.room_drop_tags.append("damage")
-	var drop_hash: String = arena._semantic_state_hash("test")
+	var drop_hash: String = arena.state_hash("test")
 	arena.room_drop_tags.pop_back()
 	arena.elite_barrier_active = not arena.elite_barrier_active
-	var elite_hash: String = arena._semantic_state_hash("test")
+	var elite_hash: String = arena.state_hash("test")
 	arena.elite_barrier_active = not arena.elite_barrier_active
 	arena.timed_bonus_available = false
-	var objective_hash: String = arena._semantic_state_hash("test")
+	var objective_hash: String = arena.state_hash("test")
 	_defeat_target(arena, arena.enemies[0], failures)
-	var reward_hash: String = arena._semantic_state_hash("test")
+	var reward_hash: String = arena.state_hash("test")
 	_expect(arena.room_reward_snapshot.bonus_lost, "room hash: real timed victory did not commit its lost bonus", failures)
 	var settled: Dictionary = SnapshotBuilder.build_runtime_state(arena, "test")
 	var without_bonus_loss: Dictionary = settled.duplicate(true)
@@ -876,7 +876,7 @@ func _first_hunt_input_run(arena: Node, rooms: Array, react: bool, failures: Arr
 			elif fixture.player(arena).dodge_remaining_ticks == 0:
 				_early_key_input(KEY_A, false)
 			var position_before: Vector2 = arena.player_position
-			arena._simulate_tick()
+			arena.step_tick()
 			if arena.player_position != position_before:
 				move_ticks += 1
 			for event: Dictionary in arena.combat_event_stream.events_after(last_event_id):
@@ -941,7 +941,7 @@ func _test_melee_stuck_escape_intent(arena: Node, failures: Array[String]) -> vo
 	## nearest its own bearing instead of grinding the fixed far slot forever.
 	arena = _configure_room(arena, "ring", "clear", ["melee_pursuer"])
 	var enemy = arena.enemies[0]
-	arena.teleport_actor("ranger", arena._arena_rect().get_center() + Vector2(-180.0, 80.0))
+	arena.teleport_actor("ranger", arena.arena_rect().get_center() + Vector2(-180.0, 80.0))
 	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(280.0, -20.0))
 	enemy.stuck_ticks = 40
 	enemy.stuck_anchor = enemy.position
@@ -954,7 +954,7 @@ func _test_melee_stuck_escape_intent(arena: Node, failures: Array[String]) -> vo
 	_expect(String(free_intent.get("reason", "")) == "melee_ring_slot", "escape: an unstuck melee lost its authored ring slot reason", failures)
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"])
 	enemy = arena.enemies[0]
-	arena.teleport_actor("ranger", arena._arena_rect().get_center())
+	arena.teleport_actor("ranger", arena.arena_rect().get_center())
 	arena.teleport_actor("enemy/%d" % enemy.entity_id, arena.player_position + Vector2(280.0, -20.0))
 	enemy.stuck_ticks = 40
 	enemy.stuck_anchor = enemy.position
@@ -973,7 +973,7 @@ func _enemy_of_kind(arena: Node, kind_id: String) -> Variant:
 
 func _cast_and_resolve_arrow(arena: Node) -> bool:
 	fixture.wait_ready(arena)
-	var target = arena._preferred_skill_one_target()
+	var target = arena.session.preferred_skill_one_target()
 	if target == null:
 		return false
 	var receipt := fixture.cast(arena, "piercing_arrow", target.entity_id)
@@ -1014,9 +1014,9 @@ func _defeat_target(arena: Node, target, failures: Array[String]) -> void:
 	var target_state = arena.actor_registry.actor("enemy/%d" % target.entity_id)
 	if target_state != null:
 		footprint = float(target_state.footprint_radius)
-	var position: Vector2 = arena._clamp_to_arena(start + Vector2(60.0, 0.0), 16.0)
+	var position: Vector2 = arena.clamp_to_arena(start + Vector2(60.0, 0.0), 16.0)
 	for offset: Vector2 in [Vector2(60.0, 0.0), Vector2(-60.0, 0.0), Vector2(0.0, 60.0), Vector2(0.0, -60.0)]:
-		var candidate: Vector2 = arena._clamp_to_arena(start + offset, 16.0)
+		var candidate: Vector2 = arena.clamp_to_arena(start + offset, 16.0)
 		if arena.actor_registry.is_position_clear(candidate, footprint):
 			position = candidate
 			break

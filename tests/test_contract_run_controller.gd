@@ -318,7 +318,7 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 			var target: CombatEnemyState = first.enemies[0]
 			var placed: Dictionary = first.teleport_actor("enemy/%d" % target.entity_id, first.player_position + Vector2(120.0, 0.0))
 			_expect(bool(placed.get("ok", false)), "continuous input: pointer target placement failed", failures)
-			first._simulate_tick()
+			first.step_tick()
 			first.refresh_presentation()
 			var point: Vector2 = first.presentation.world_view.gameplay_to_screen(target.position + Vector2(0.0, -22.0))
 			_expect(Rect2(Vector2.ZERO, Vector2(1280, 720)).has_point(point) and not first.presentation.is_pointer_over_interface(point), "continuous input: pointer target is not visible outside the HUD", failures)
@@ -329,7 +329,7 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 		for tick in 1800:
 			if first.battle_over:
 				break
-			first._simulate_tick()
+			first.step_tick()
 		_expect(first.battle_victory and first.shots > 0, "continuous input: first real room did not clear", failures)
 		if not first.battle_victory:
 			_attack_key(false)
@@ -355,7 +355,7 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 			for tick in 1800:
 				if second.battle_over:
 					break
-				second._simulate_tick()
+				second.step_tick()
 			(controller.get("_current_runtime") as Node)._process(0.0)
 			_expect(second.battle_victory and second.shots > 0 and results.size() == 1
 				and int(results[0].rooms_completed) == 2,
@@ -364,7 +364,7 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 			for tick in 60:
 				if second.battle_over:
 					break
-				second._simulate_tick()
+				second.step_tick()
 			_expect(second.shots == 0 and not second.input_adapter.manual_combat_input.snapshot().assisted_held,
 				"continuous input: %s left automatic fire in the next room" % scenario, failures)
 		print("CONTINUOUS_ROOM_INPUT scenario=%s room1_casts=%d room2_casts=%d" % [scenario, first_casts, second.shots])
@@ -378,7 +378,7 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 				var fresh_main: Node = (fresh.get("_current_runtime") as Node).get("room_instance")
 				fresh_main.set_process(false)
 				for tick in 60:
-					fresh_main._simulate_tick()
+					fresh_main.step_tick()
 				_expect(fresh_main.shots == 0 and not fresh_main.input_adapter.manual_combat_input.snapshot().assisted_held,
 					"continuous input: exit/new deployment restored still-held menu input", failures)
 			fresh.free()

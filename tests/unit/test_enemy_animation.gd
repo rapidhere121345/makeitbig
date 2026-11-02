@@ -840,7 +840,7 @@ func _cast_and_resolve_arrow(arena: Node, target_id: int) -> bool:
 ## authoritative action state.
 func _authoritative_fingerprint(arena: Node) -> String:
 	var parts: Array[String] = [
-		"state=%s" % arena._semantic_state_hash("enemy-animation"),
+		"state=%s" % arena.state_hash("enemy-animation"),
 		"tick=%d" % arena.sim_tick,
 		"hp=%.3f" % arena.player_health,
 		"pos=%s" % str(arena.player_position),

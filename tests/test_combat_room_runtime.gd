@@ -148,7 +148,7 @@ func _run() -> void:
 	if defeat_room_value is Node:
 		var defeat_room := defeat_room_value as Node
 		while int(defeat_room.get("sim_tick")) < 44:
-			defeat_room.call("_simulate_tick")
+			defeat_room.step_tick()
 		var state = defeat_room.get("player_combat_state")
 		var rules = defeat_room.get("player_combat_rules")
 		var player: Dictionary = state.snapshot(44)
@@ -419,7 +419,7 @@ func _settle_first_encounter_member(arena: Node) -> Dictionary:
 	# Exercise the mounted RoomEncounter authority through its typed death
 	# notification.  The old test cleared Main.enemies directly, which bypassed
 	# the encounter member state and could no longer prove terminal semantics.
-	arena.call("_simulate_tick")
+	arena.step_tick()
 	var port: Variant = arena.get("room_encounter_port")
 	if port == null:
 		return {"ok": false, "error": "encounter_port_unavailable"}

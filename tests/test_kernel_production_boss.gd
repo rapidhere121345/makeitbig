@@ -133,8 +133,9 @@ func _run_boss_kill(arena) -> void:
 	var blocked_seen := false
 	var blocked_steps := 0
 	while blocked_steps < 12:
-		var blocked_tick: Dictionary = arena.combat_simulation.step()
-		_expect(bool(blocked_tick.get("ok", false)), "kernel boss: production barrier tick failed: %s" % str(blocked_tick))
+		var blocked_tick_before := int(arena.sim_tick)
+		arena.step_tick()
+		_expect(int(arena.sim_tick) == blocked_tick_before + 1, "kernel boss: production barrier tick failed")
 		var blocked_batch: Dictionary = arena.room_combat_port.last_boss_batch
 		for suppression: Variant in blocked_batch.get("suppressed", []):
 			if suppression is Dictionary and String((suppression as Dictionary).get("reason", "")) == "periodic_barrier":
@@ -147,8 +148,9 @@ func _run_boss_kill(arena) -> void:
 	_expect(arena.room_combat_port.last_boss_settlements.size() == settlements_before_barrier, "kernel boss: blocked production hit changed settlements")
 	_expect((arena.room_loot_snapshot.get("entities", []) as Array).size() == loot_before_barrier, "kernel boss: blocked production hit changed loot")
 	while arena.sim_tick < arena.encounter_director.ELITE_BARRIER_ACTIVE_TICKS:
-		var cooldown_tick: Dictionary = arena.combat_simulation.step()
-		_expect(bool(cooldown_tick.get("ok", false)), "kernel boss: production barrier cooldown tick failed: %s" % str(cooldown_tick))
+		var cooldown_tick_before := int(arena.sim_tick)
+		arena.step_tick()
+		_expect(int(arena.sim_tick) == cooldown_tick_before + 1, "kernel boss: production barrier cooldown tick failed")
 	_expect(not arena.encounter_director.elite_barrier_active, "kernel boss: production fixed tick did not leave the barrier window")
 	# The exponential calibration fixture is the real production-scale BigValue
 	# payload source; the room/player rules freeze it before this cast.
@@ -167,9 +169,10 @@ func _run_boss_kill(arena) -> void:
 	var encounter_death_seen := false
 	var ticks := 0
 	while ticks < 150 and not bool(arena.battle_over):
-		var stepped: Dictionary = arena.combat_simulation.step()
-		_expect(bool(stepped.get("ok", false)), "kernel boss: production tick failed: %s" % str(stepped))
-		if not bool(stepped.get("ok", false)):
+		var stepped_tick_before := int(arena.sim_tick)
+		arena.step_tick()
+		_expect(int(arena.sim_tick) == stepped_tick_before + 1, "kernel boss: production tick failed")
+		if int(arena.sim_tick) != stepped_tick_before + 1:
 			break
 		ticks = int(arena.sim_tick)
 		if cast_aggregate == "none" and not arena.projectiles.is_empty():
@@ -223,8 +226,9 @@ func _run_boss_kill(arena) -> void:
 	# RoomEncounter evaluates wave clear on the step after the death receipt. The
 	# legacy terminal projection may stop Main's loop first, so advance once more.
 	if String(encounter_snapshot.get("phase", "")) != "victory":
-		var terminal_tick: Dictionary = arena.combat_simulation.step()
-		_expect(bool(terminal_tick.get("ok", false)), "kernel boss: post-terminal encounter tick failed: %s" % str(terminal_tick))
+		var terminal_tick_before := int(arena.sim_tick)
+		arena.step_tick()
+		_expect(int(arena.sim_tick) == terminal_tick_before + 1, "kernel boss: post-terminal encounter tick failed")
 		encounter_snapshot = arena.scene_runtime.encounter_domain.snapshot()
 	_expect(String(encounter_snapshot.get("phase", "")) == "victory", "kernel boss: real RoomEncounter did not reach terminal victory")
 	_expect(arena.room_combat_port.last_boss_settlements.size() == 1, "kernel boss: Boss settlement receipt duplicated")

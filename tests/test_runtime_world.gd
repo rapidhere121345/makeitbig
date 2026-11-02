@@ -374,9 +374,9 @@ func _test_ring_real_combat_ticks() -> void:
 			var action := "move_left" if tick <= 20 or (tick >= 41 and tick <= 50) else "move_right"
 			var previous: Vector2 = registry.actor("ranger").feet_position
 			Input.action_press(action)
-			var stepped: Dictionary = arena.combat_simulation.step()
+			arena.step_tick()
 			Input.action_release(action)
-			_expect(bool(stepped.get("ok", false)) and int(world.tick) == tick, "ring real ticks: real step failed or fabricated tick %d" % tick)
+			_expect(int(world.tick) == tick, "ring real ticks: real step failed or fabricated tick %d" % tick)
 			var frame := {"tick": tick, "actors": []}
 			for id: String in registry.actor_ids():
 				var actor = registry.actor(id)

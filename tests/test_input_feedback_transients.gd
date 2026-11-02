@@ -204,9 +204,9 @@ func _test_assisted_indicator_snapshot_target(arena: Node) -> void:
 
 func _test_feedback_never_reaches_semantic_hash(arena: Node) -> void:
 	_configure_enemies(arena)
-	var baseline: String = arena._semantic_state_hash("skills")
+	var baseline: String = arena.state_hash("skills")
 	arena.presentation.feedback.show_input_feedback("Click an enemy to shoot · Or hold Space for aim assist", arena.sim_tick)
-	_expect(arena._semantic_state_hash("skills") == baseline,
+	_expect(arena.state_hash("skills") == baseline,
 		"semantic hash consumed transient input feedback")
 	arena.release_manual_controls()
 	_expect(arena.presentation.feedback.active_input_feedback(arena.sim_tick).is_empty(),
@@ -243,7 +243,7 @@ func _room() -> Dictionary:
 
 
 func _gameplay_to_screen(arena: Node, gameplay_point: Vector2) -> Vector2:
-	arena.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, arena.get_viewport_rect().size), arena.player_position, arena._arena_rect())
+	arena.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, arena.get_viewport_rect().size), arena.player_position, arena.arena_rect())
 	return arena.presentation.world_view.gameplay_to_screen(gameplay_point)
 
 

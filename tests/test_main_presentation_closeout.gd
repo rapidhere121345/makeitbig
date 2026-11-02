@@ -232,7 +232,7 @@ func _test_mounted_boss_sort_and_cleanup() -> void:
 	marker.name = "NativeInterleaveMarker"
 	marker.position = Vector2(640, 412)
 	domain.sort_root.add_child(marker)
-	var before: String = arena._semantic_state_hash("mounted-sort")
+	var before: String = arena.state_hash("mounted-sort")
 	arena.refresh_presentation()
 	var report := controller.sort_report()
 	_expect(report.ok and report.render_active, "production commit did not submit mounted sort views")
@@ -264,7 +264,7 @@ func _test_mounted_boss_sort_and_cleanup() -> void:
 	_expect(_mounted_actor_order(domain) == ids, "mounted commit preserved reversed insertion order for equal-depth parts")
 	await process_frame
 	await process_frame
-	_expect(arena._semantic_state_hash("mounted-sort") == before, "mounted draw/commit changed authoritative semantic hash")
+	_expect(arena.state_hash("mounted-sort") == before, "mounted draw/commit changed authoritative semantic hash")
 	_expect(controller.sort_report().actor_ids.size() == ids.size(), "draw callback duplicated the mounted actor views")
 	var published: Dictionary = arena.gameplay_snapshot()
 	var input_view: Dictionary = arena.input_adapter.view_state(published)

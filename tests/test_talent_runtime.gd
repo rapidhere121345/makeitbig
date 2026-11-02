@@ -157,7 +157,7 @@ func _test_defocused_tracking_candidate(fixture, failures: Array[String]) -> voi
 		"defocused tracking: lost target did not retain the exact 15-tick candidate window", failures)
 
 	arena.teleport_actor("enemy/%d" % marked_target.entity_id, arena.player_position + Vector2(180.0, 0.0))
-	var preferred = arena._preferred_skill_one_target()
+	var preferred = arena.session.preferred_skill_one_target()
 	_expect(preferred != null and preferred.entity_id == marked_target.entity_id,
 		"defocused tracking: candidate did not outrank the nearer unmarked target", failures)
 	_expect(fixture.release_arrow(arena, marked_target), "defocused tracking: candidate arrow did not release", failures)

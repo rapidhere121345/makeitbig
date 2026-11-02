@@ -110,7 +110,7 @@ func _run_kernel_kill_scenario(arena) -> void:
 	_expect(not stable_key.is_empty(), "kernel combat: enemy stable key mapping missing at registration")
 
 	# Preserve the attack distance on the clear lane above the whole wall.
-	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
+	var center: Vector2 = arena.arena_rect().get_center() + Vector2(0, -36)
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "kernel combat: ranger placement failed")
 	_expect(bool(arena.teleport_actor(actor_id, center + Vector2.RIGHT * 110.0).get("ok", false)), "kernel combat: enemy placement failed")
 	enemy.health = 1.0
@@ -127,9 +127,10 @@ func _run_kernel_kill_scenario(arena) -> void:
 	var encounter_notification_seen := false
 	var ticks := 0
 	while ticks < 120 and not bool(arena.battle_over):
-		var stepped: Dictionary = arena.combat_simulation.step()
-		_expect(bool(stepped.get("ok", false)), "kernel combat: production tick failed: %s" % str(stepped))
-		if not bool(stepped.get("ok", false)):
+		var stepped_tick_before := int(arena.sim_tick)
+		arena.step_tick()
+		_expect(int(arena.sim_tick) == stepped_tick_before + 1, "kernel combat: production tick failed")
+		if int(arena.sim_tick) != stepped_tick_before + 1:
 			break
 		ticks = int(arena.sim_tick)
 		max_submitted = maxi(max_submitted, int(arena.kernel_bindings.arrow_flight.submitted_queries))

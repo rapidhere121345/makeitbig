@@ -82,7 +82,7 @@ func _check_room(room: Dictionary, build: Dictionary, proxy: Dictionary, mode: S
 	var chain := Builder.hash_runtime(arena, "probe")
 	var ticks := 0
 	while ticks < MAX_TICKS and not bool(arena.battle_over):
-		arena.call("_simulate_tick")
+		arena.step_tick()
 		ticks += 1
 		chain = (chain + Builder.hash_runtime(arena, "probe")).sha256_text()
 	var actual := [ticks, bool(arena.battle_over), bool(arena.battle_victory), chain]

@@ -37,12 +37,12 @@ func _run() -> void:
 
 
 func _test_damage_text_formatting(arena: Node, failures: Array[String]) -> void:
-	var before: String = arena._semantic_state_hash("float-text")
+	var before: String = arena.state_hash("float-text")
 	var presenter := ArenaCombatPresenterScript.new()
 	for pair in [["253.968254", "254"], ["−253.968254", "−254"], ["-253.968254", "-254"],
 		["+253.968254", "+254"], ["Dodge", "Dodge"], ["1.25e6", "1.25e6"], ["1.2K", "1.2K"], ["−1.25e6", "−1.25e6"]]:
 		_expect(String(presenter.call("_compact_feedback_number", pair[0])) == pair[1], "damage text: wrong draw-only format for %s" % pair[0], failures)
-	_expect(arena._semantic_state_hash("float-text") == before, "damage text formatting changed combat authority", failures)
+	_expect(arena.state_hash("float-text") == before, "damage text formatting changed combat authority", failures)
 
 
 func _test_event_projection(arena: Node, failures: Array[String]) -> void:
@@ -56,9 +56,9 @@ func _test_event_projection(arena: Node, failures: Array[String]) -> void:
 		"amount": "1.25e6",
 		"contact_point": first.position,
 	})
-	var hash_before_projection: String = arena._semantic_state_hash("presentation")
+	var hash_before_projection: String = arena.state_hash("presentation")
 	arena.refresh_presentation()
-	var hash_after_projection: String = arena._semantic_state_hash("presentation")
+	var hash_after_projection: String = arena.state_hash("presentation")
 	_expect(hash_before_projection == hash_after_projection, "event projection changed authoritative semantic state", failures)
 	_expect(arena.presentation.feedback.presentation_event_cursor == int(damage_event.event_id), "presentation cursor did not advance to the consumed event", failures)
 	_expect(arena.presentation.animations.enemy_animation.latched_event_id("enemy/%d/hit" % first.entity_id) == "combat:%d" % int(damage_event.event_id), "enemy hit animation did not use the authority event id", failures)

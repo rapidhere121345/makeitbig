@@ -87,7 +87,7 @@ func _test_loadout_gate(arena: Node, failures: Array[String]) -> void:
 	arena.selected_mode = "Auto"
 	_start_proxy(arena, _white_proxy_build())
 	var auto_abilities: Array[String] = []
-	for command in arena._player_commands._auto_commands():
+	for command in arena.player_commands._auto_commands():
 		if String(command.get("kind", "")) == "cast":
 			auto_abilities.append(String(command.get("ability_id", "")))
 	_expect("hunter_mark" not in auto_abilities and "dash" not in auto_abilities, "Auto issued a hidden skill 2/3 command", failures)
@@ -323,7 +323,7 @@ func _test_same_tick_runtime_arbitration(arena: Node, failures: Array[String]) -
 	arena.in_arena = true
 	arena.command_source.dodge_requested = true
 	arena.command_source.dash_requested = true
-	arena._simulate_tick()
+	arena.step_tick()
 	_expect(_player(arena).dodge_remaining_ticks > 0 and _player(arena).dash_remaining_ticks == 0, "arbitration: same-tick dodge and dash both changed mobility authority", failures)
 	var dash_rejected := false
 	for receipt: Dictionary in arena.last_command_receipts:
@@ -343,16 +343,16 @@ func _test_same_tick_runtime_arbitration(arena: Node, failures: Array[String]) -
 	var before: float = target.health
 	arena.command_source.hunter_mark_requested = true
 	arena.command_source.attack_requested = true
-	arena._simulate_tick()
+	arena.step_tick()
 	var active: Dictionary = _player(arena).timeline.active
 	_expect(_player(arena).marked_entity_id == target.entity_id and int(active.get("target_entity_id", 0)) == target.entity_id, "arbitration: mark was not committed before the compatible arrow", failures)
 	for _step in Timeline.WINDUP_TICKS:
-		arena._simulate_tick()
+		arena.step_tick()
 	_expect(is_equal_approx(target.health, before) and arena.projectiles.size() == 1,
 		"arbitration: release bypassed the real projectile travel window", failures)
 	var projectile_guard := 0
 	while not arena.projectiles.is_empty() and projectile_guard < 120:
-		arena._simulate_tick()
+		arena.step_tick()
 		projectile_guard += 1
 	_expect(is_equal_approx(before - target.health, base_damage * Skill.HUNTER_MARK_DAMAGE_MULTIPLIER), "arbitration: same-tick mark did not affect the locked arrow impact", failures)
 
@@ -365,19 +365,19 @@ func _test_proxy_decision_state_runtime(arena: Node, failures: Array[String]) ->
 	var second = arena.enemies[1]
 	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(50.0, 0.0))
 	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(80.0, 0.0))
-	var first_commands: Array[Dictionary] = arena._player_commands._auto_commands()
+	var first_commands: Array[Dictionary] = arena.player_commands._auto_commands()
 	_expect(_cast_target(first_commands) == first.entity_id and _cast_has_aim(first_commands), "proxy: first perception did not emit an explicit target and aim", failures)
 	_place(arena, "enemy/%d" % first.entity_id, arena.player_position + Vector2(90.0, 0.0))
 	_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(20.0, 0.0))
 	fixture.advance_to(arena, 29)
-	arena._player_commands._auto_commands()
+	arena.player_commands._auto_commands()
 	var retained_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
 	_expect(int(retained_state.get("target_entity_id", 0)) == first.entity_id
 			and int(retained_state.get("next_perception_tick", 0)) == 30
-			and arena._player_commands._proxy_trace_snapshot().has("perception:retain_target"),
+			and arena.player_commands._proxy_trace_snapshot().has("perception:retain_target"),
 		"proxy: target changed before the 30-tick perception refresh", failures)
 	fixture.advance_to(arena, 30)
-	var refreshed_commands: Array[Dictionary] = arena._player_commands._auto_commands()
+	var refreshed_commands: Array[Dictionary] = arena.player_commands._auto_commands()
 	_expect(_cast_target(refreshed_commands) == second.entity_id, "proxy: target did not refresh on the public perception tick", failures)
 	arena.selected_mode = "Manual"
 
@@ -406,7 +406,7 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 	arena.selected_mode = "Auto"
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
 	arena.update_room_rules_tick()
-	var public_snapshot: Dictionary = arena._player_commands._public_proxy_snapshot()
+	var public_snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
 	var elite_is_publicly_blocked := false
 	for visible_enemy: Dictionary in public_snapshot.visible_enemies:
 		if int(visible_enemy.get("entity_id", 0)) == elite.entity_id:
@@ -416,19 +416,19 @@ func _test_proxy_current_legality_runtime(arena: Node, failures: Array[String]) 
 		and "periodic_barrier" not in str(public_snapshot)
 		and "classification_tags" not in str(public_snapshot),
 		"proxy legality: hidden barrier identity, classification, or phase leaked into the white snapshot", failures)
-	_expect(_cast_target(arena._player_commands._auto_commands()) == secondary.entity_id, "proxy legality: agent attacked the nearer shielded elite instead of the farther legal target", failures)
+	_expect(_cast_target(arena.player_commands._auto_commands()) == secondary.entity_id, "proxy legality: agent attacked the nearer shielded elite instead of the farther legal target", failures)
 
 	## Opening the barrier does not grant the white core an extra perception sample.
 	## It may reacquire only on the next public 30-tick horizon.
 	arena.enemies.erase(secondary)
 	_start_proxy(arena, arena.framework_resolved_proxy_build)
 	arena.update_room_rules_tick()
-	_expect(_cast_target(arena._player_commands._auto_commands()) == 0, "proxy legality: only shielded target still produced an attack", failures)
+	_expect(_cast_target(arena.player_commands._auto_commands()) == 0, "proxy legality: only shielded target still produced an attack", failures)
 	fixture.advance_to(arena, 20)
 	arena.update_room_rules_tick()
-	_expect(not arena.elite_barrier_active and _cast_target(arena._player_commands._auto_commands()) == 0, "proxy legality: barrier opening leaked an out-of-cadence perception refresh", failures)
+	_expect(not arena.elite_barrier_active and _cast_target(arena.player_commands._auto_commands()) == 0, "proxy legality: barrier opening leaked an out-of-cadence perception refresh", failures)
 	fixture.advance_to(arena, 30)
-	_expect(_cast_target(arena._player_commands._auto_commands()) == elite.entity_id, "proxy legality: next public horizon did not reacquire the opened elite", failures)
+	_expect(_cast_target(arena.player_commands._auto_commands()) == elite.entity_id, "proxy legality: next public horizon did not reacquire the opened elite", failures)
 	arena.selected_mode = "Manual"
 
 
@@ -442,12 +442,12 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 	arena.elite_entity_id = elite.entity_id
 	var marking_build := _proxy_build("marking_prism", "direct_gait")
 	_start_proxy(arena, marking_build)
-	var marking_snapshot: Dictionary = arena._player_commands._public_proxy_snapshot()
+	var marking_snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
 	var elite_tags: Array = []
 	for enemy_view: Dictionary in marking_snapshot.visible_enemies:
 		if int(enemy_view.entity_id) == elite.entity_id:
 			elite_tags = (enemy_view.get("classification_tags", []) as Array).duplicate()
-	_expect("elite" in elite_tags and _cast_target(arena._player_commands._auto_commands()) == elite.entity_id,
+	_expect("elite" in elite_tags and _cast_target(arena.player_commands._auto_commands()) == elite.entity_id,
 		"resolved proxy: marking prism did not receive public classification and prioritize the elite", failures)
 
 	_place(arena, "enemy/%d" % ordinary.entity_id, arena.player_position + Vector2(55.0, 0.0))
@@ -457,11 +457,11 @@ func _test_proxy_resolved_variants_runtime(arena: Node, failures: Array[String])
 	var near_build := _proxy_build("near_enemy_horizon", "distance_keeping_gait", "near")
 	var far_build := _proxy_build("near_enemy_horizon", "distance_keeping_gait", "far")
 	_start_proxy(arena, near_build)
-	var near_commands: Array[Dictionary] = arena._player_commands._auto_commands()
-	var near_hash: String = arena._semantic_state_hash("proxy_variant")
+	var near_commands: Array[Dictionary] = arena.player_commands._auto_commands()
+	var near_hash: String = arena.state_hash("proxy_variant")
 	_start_proxy(arena, far_build)
-	var far_commands: Array[Dictionary] = arena._player_commands._auto_commands()
-	var far_hash: String = arena._semantic_state_hash("proxy_variant")
+	var far_commands: Array[Dictionary] = arena.player_commands._auto_commands()
+	var far_hash: String = arena.state_hash("proxy_variant")
 	_expect(not near_commands.is_empty() and String(near_commands[0].kind) == Protocol.KIND_STOP_MOVE,
 		"resolved proxy: near distance band did not hold at 55% targeting distance", failures)
 	_expect(not far_commands.is_empty() and String(far_commands[0].kind) == Protocol.KIND_MOVE and int(far_commands[0].direction_x_milli) == -1000,
@@ -492,7 +492,7 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	var start_target: Vector2 = target.position
 	var start_distance: float = start_player.distance_to(start_target)
 	var retreat_exit_distance: float = arena.locked_targeting_distance * 0.38
-	var public_snapshot: Dictionary = arena._player_commands._public_proxy_snapshot()
+	var public_snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
 	var public_enemy: Dictionary = public_snapshot.visible_enemies[0]
 	_expect(not public_snapshot.has("enemy_tactics") and not public_snapshot.has("room_id") and not public_enemy.has("kind_id") and not public_enemy.has("action_state"), "proxy retreat: runtime exposed hidden enemy or room state", failures)
 
@@ -507,7 +507,7 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	var observed_bands: Array[String] = []
 	for step in 30:
 		var before_player: Vector2 = arena.player_position
-		arena._simulate_tick()
+		arena.step_tick()
 		var distance: float = arena.player_position.distance_to(target.position)
 		maximum_distance = maxf(maximum_distance, distance)
 		var proxy_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
@@ -577,7 +577,7 @@ func _test_proxy_target_death_reacquire_state_reset(arena: Node, failures: Array
 	var saw_retreat_on_first := false
 	var first_died_through_main := false
 	for _tick in 16:
-		arena._simulate_tick()
+		arena.step_tick()
 		var proxy_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
 		if int(proxy_state.get("target_entity_id", 0)) == first.entity_id and String(proxy_state.get("movement_band", "")) == "retreat":
 			saw_retreat_on_first = true
@@ -590,7 +590,7 @@ func _test_proxy_target_death_reacquire_state_reset(arena: Node, failures: Array
 		## A distance between retreat enter and exit distinguishes a reset hold band
 		## from an inherited retreat band on the target-missing reacquire tick.
 		_place(arena, "enemy/%d" % second.entity_id, arena.player_position + Vector2(30.0, 0.0))
-		arena._simulate_tick()
+		arena.step_tick()
 		var proxy_state: Dictionary = arena.proxy_intent_system.decision_state_snapshot()
 		_expect(int(proxy_state.get("target_entity_id", 0)) == second.entity_id, "proxy reacquire: target death did not reacquire the remaining enemy through real Main", failures)
 		_expect(String(proxy_state.get("movement_band", "")) == "hold", "proxy reacquire: new target inherited the dead target's retreat movement band", failures)
@@ -809,10 +809,10 @@ func _test_auto_ignores_manual_device_state(arena: Node, failures: Array[String]
 	_configure_enemies(arena)
 	arena.selected_mode = "Auto"
 	var input_before: Dictionary = arena.input_adapter.manual_combat_input.snapshot()
-	var hash_before: String = arena._semantic_state_hash("auto_pointer_ignored")
+	var hash_before: String = arena.state_hash("auto_pointer_ignored")
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(Vector2(320.0, 240.0), true), false, arena.gameplay_snapshot())
 	var input_after: Dictionary = arena.input_adapter.manual_combat_input.snapshot()
-	var hash_after: String = arena._semantic_state_hash("auto_pointer_ignored")
+	var hash_after: String = arena.state_hash("auto_pointer_ignored")
 	_expect(input_after == input_before, "auto input boundary: pointer device state entered ManualCombatInput", failures)
 	_expect(hash_after == hash_before, "auto input boundary: ignored pointer activity changed the deterministic hash", failures)
 	arena.input_adapter.capture_attack_event(_mouse_attack_event(Vector2(320.0, 240.0), false), false, arena.gameplay_snapshot())
@@ -820,7 +820,7 @@ func _test_auto_ignores_manual_device_state(arena: Node, failures: Array[String]
 
 
 func _test_pointer_camera_round_trip(arena: Node, failures: Array[String]) -> void:
-	var arena_rect: Rect2 = arena._walkable_geometry(14.0).bounds
+	var arena_rect: Rect2 = arena.walkable_geometry(14.0).bounds
 	var cases := [
 		{"player": arena_rect.get_center(), "offset": Vector2(-70.0, 0.0), "label": "center"},
 		{"player": arena_rect.position + Vector2(8.0, 8.0), "offset": Vector2(0.0, Vector2(60.0, 40.0).length()), "label": "top_left_clamp"},
@@ -881,7 +881,7 @@ func _test_held_attack_repeats_without_buffer_churn(arena: Node, failures: Array
 	arena.input_adapter.capture_attack_event(_attack_key_event(true), true, arena.gameplay_snapshot())
 	_expect(arena.command_source.attack_requested, "held attack: Space over the HUD did not queue the initial edge", failures)
 	for _tick in 30:
-		arena._simulate_tick()
+		arena.step_tick()
 	var starts: Array[int] = []
 	for event: Dictionary in arena.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "action_accepted" and String(event.get("actor_id", "")) == "ranger":
@@ -891,7 +891,7 @@ func _test_held_attack_repeats_without_buffer_churn(arena: Node, failures: Array
 
 	arena.input_adapter.capture_attack_event(_attack_key_event(false), true, arena.gameplay_snapshot())
 	for _tick in 20:
-		arena._simulate_tick()
+		arena.step_tick()
 	var starts_after_release := 0
 	for event: Dictionary in arena.combat_event_stream.snapshot().events:
 		if String(event.get("type", "")) == "action_accepted" and String(event.get("actor_id", "")) == "ranger":
@@ -901,28 +901,28 @@ func _test_held_attack_repeats_without_buffer_churn(arena: Node, failures: Array
 
 func _test_hash_sensitivity(arena: Node, failures: Array[String]) -> void:
 	_configure_enemies(arena)
-	var baseline: String = arena._semantic_state_hash("skills")
+	var baseline: String = arena.state_hash("skills")
 	arena.input_adapter.manual_pointer_gameplay = Vector2(11.0, 22.0)
 	arena.command_source.attack_requested_pointer_gameplay = Vector2(33.0, 44.0)
 	arena.input_adapter.manual_pointer_target_anchor = Vector2(55.0, 66.0)
 	arena.input_adapter.manual_pointer_target_radius = 77.0
-	var geometry_only: String = arena._semantic_state_hash("skills")
+	var geometry_only: String = arena.state_hash("skills")
 	_expect(geometry_only == baseline, "semantic hash includes pointer presentation geometry that cannot change a command", failures)
 	arena.enemies.reverse()
-	var reordered: String = arena._semantic_state_hash("skills")
+	var reordered: String = arena.state_hash("skills")
 	arena.enemies.reverse()
 	_expect(reordered == baseline, "semantic hash depends on incidental enemy array order", failures)
 	_expect(_cast(arena, "hunter_mark"), "semantic hash: real mark setup failed", failures)
-	var mark_hash: String = arena._semantic_state_hash("skills")
+	var mark_hash: String = arena.state_hash("skills")
 	_expect(_dash(arena, Vector2.UP), "semantic hash: real dash setup failed", failures)
-	var dash_hash: String = arena._semantic_state_hash("skills")
+	var dash_hash: String = arena.state_hash("skills")
 	fixture.advance_to(arena, arena.sim_tick + Skill.DASH_DURATION_TICKS - 2)
 	fixture.cast(arena, "dodge", 0, Vector2.RIGHT)
-	var mobility_buffer_hash: String = arena._semantic_state_hash("skills")
+	var mobility_buffer_hash: String = arena.state_hash("skills")
 	# Same tick/position/timers before and after public input release isolates
 	# the buffer's own contribution to the hash.
 	var released: Dictionary = arena.player_combat_rules.release_input(arena.sim_tick)
-	var released_hash: String = arena._semantic_state_hash("skills")
+	var released_hash: String = arena.state_hash("skills")
 	_expect(not baseline.is_empty() and baseline != mark_hash and mark_hash != dash_hash and dash_hash != mobility_buffer_hash and released.get("cleared", false) and mobility_buffer_hash != released_hash, "semantic hash is not sensitive to mark/dash/buffer authority state", failures)
 
 
@@ -997,7 +997,7 @@ func _piercing_cast(commands: Array[Dictionary]) -> Dictionary:
 
 
 func _gameplay_to_screen(arena: Node, gameplay_point: Vector2) -> Vector2:
-	arena.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, arena.get_viewport_rect().size), arena.player_position, arena._arena_rect())
+	arena.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, arena.get_viewport_rect().size), arena.player_position, arena.arena_rect())
 	return arena.presentation.world_view.gameplay_to_screen(gameplay_point)
 
 
@@ -1063,7 +1063,7 @@ func _cast(arena: Node, ability: String, target_id: int = 0) -> bool:
 
 
 func _cast_skill_one(arena: Node) -> bool:
-	var target = arena._preferred_skill_one_target()
+	var target = arena.session.preferred_skill_one_target()
 	return target != null and bool(fixture.cast(arena, "piercing_arrow", target.entity_id).get("accepted", false))
 
 

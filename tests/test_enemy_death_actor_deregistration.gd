@@ -77,7 +77,7 @@ func _run() -> void:
 	var entity_handle = registry.actor_handle(actor_id) if registry != null else null
 
 	# Keep the 120-pixel projectile lane north of the whole scenery blockers.
-	var center: Vector2 = arena._arena_rect().get_center() + Vector2(0, -36)
+	var center: Vector2 = arena.arena_rect().get_center() + Vector2(0, -36)
 	_expect(bool(arena.teleport_actor("ranger", center).get("ok", false)), "death deregistration: ranger fixture placement failed")
 	_expect(bool(arena.teleport_actor(actor_id, center + Vector2.RIGHT * 120.0).get("ok", false)), "death deregistration: target placement failed")
 	enemy.health = 1.0
@@ -121,7 +121,7 @@ func _run() -> void:
 
 
 func _arena_step(arena: Node) -> void:
-	arena.call("_simulate_tick")
+	arena.step_tick()
 
 
 ## Explicit teardown: sever the kernel -> port -> access -> registry borrow

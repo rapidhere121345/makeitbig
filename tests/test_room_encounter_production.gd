@@ -365,7 +365,7 @@ func _test_production_authored_multi_wave_session() -> void:
 	, 120)
 	_expect(finished and bool(arena.battle_victory), "production: authored multi-wave did not finish in victory")
 	for _post_terminal in 3:
-		arena.call("_simulate_tick")
+		arena.step_tick()
 	_expect(String(encounter.snapshot().get("phase", "")) == "victory", "production: encounter domain did not reach authored victory")
 	_expect(bool(port.snapshot().get("terminal", {}).get("victory", false)), "production: port terminal projection missed authored victory")
 	_expect(port.pending_spawn_requests.is_empty(), "production: terminal victory emitted a later spawn request")
@@ -470,7 +470,7 @@ func _test_mixed_boss_encounter_authority() -> void:
 			boss_death_seen = true
 	_expect(boss_death_seen, "mixed boss: Boss settlement did not reach the shared RoomEncounter")
 	for _post_terminal in 2:
-		arena.call("_simulate_tick")
+		arena.step_tick()
 	var final_snapshot: Dictionary = encounter.snapshot()
 	_expect(String(final_snapshot.get("phase", "")) == EncounterScript.PHASE_VICTORY, "mixed boss: shared RoomEncounter terminal phase diverged from Main")
 	_expect((final_snapshot.get("spawn_records", []) as Array).size() == 2, "mixed boss: shared encounter lost a member record")
@@ -586,7 +586,7 @@ func _find_valid_attack_position(arena: Node, target_position: Vector2) -> Dicti
 			continue
 		for angle_index in 32:
 			var candidate := target_position + Vector2.RIGHT.rotated(TAU * float(angle_index) / 32.0) * distance
-			if arena.actor_registry.is_position_clear(candidate, arena._arena_rect(), 14.0):
+			if arena.actor_registry.is_position_clear(candidate, arena.arena_rect(), 14.0):
 				return {"ok": true, "position": candidate}
 	return {"ok": false, "position": Vector2.ZERO}
 
@@ -595,7 +595,7 @@ func _advance_until(arena: Node, predicate: Callable, limit: int) -> bool:
 	for _index in limit:
 		if bool(predicate.call()):
 			return true
-		arena.call("_simulate_tick")
+		arena.step_tick()
 	return bool(predicate.call())
 
 

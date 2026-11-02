@@ -37,9 +37,9 @@ func _run() -> void:
 		_expect(is_equal_approx(arena.presentation.feedback.combat_feedback_audio.get_volume(),0.23),"volume reaches current arena")
 	_expect(not bool(arena.input_adapter.manual_combat_input.snapshot().get("assisted_held",true)), "opening menu clears held attack source")
 	var tick: int = arena.sim_tick
-	var state: String = arena._semantic_state_hash("pause-test")
+	var state: String = arena.state_hash("pause-test")
 	for i in range(10): await process_frame
-	_expect(arena.sim_tick == tick and arena._semantic_state_hash("pause-test") == state, "pause must freeze ticks and authority")
+	_expect(arena.sim_tick == tick and arena.state_hash("pause-test") == state, "pause must freeze ticks and authority")
 	_expect(not paused and Engine.time_scale == 1.0, "pause must not change global tree/time scale")
 	_check_display_application(game, menu)
 	menu.close_menu()
