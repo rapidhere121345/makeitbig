@@ -76,19 +76,19 @@ func _apply_prototype_debug_runtime() -> void:
 	var summary: Dictionary = runtime_script.apply(_root, _root._prototype_debug_dto)
 	if not bool(summary.get("ok", false)):
 		_reject_prototype_debug("apply_failed", str(summary.get("error", "prototype_debug_apply_failed")))
-		_root._transition(SceneRouterScript.ROUTE_TITLE)
+		_root.transition(SceneRouterScript.ROUTE_TITLE)
 		return
 	_root.prototype_debug_summary = summary.duplicate(true)
 	var forced_family := String(summary.get("force_family", "")).strip_edges()
 	_root._prototype_debug_force_family = forced_family if not forced_family.is_empty() else ""
 	print("PROTOTYPE_DEBUG_APPLIED %s" % JSON.stringify(_root.prototype_debug_summary))
-	_root._record_playtest("prototype_debug_applied", _root.prototype_debug_summary)
+	_root.record_playtest("prototype_debug_applied", _root.prototype_debug_summary)
 	if not bool(summary.get("changed", false)):
 		return
 	var safe_route := SceneRouterScript.ROUTE_TITLE
 	if _root.current_route == SceneRouterScript.ROUTE_BASE or _root.current_route == SceneRouterScript.ROUTE_TUTORIAL:
 		safe_route = _root.current_route
-	_root._persist("Prototype debug applied", safe_route)
+	_root.persist("Prototype debug applied", safe_route)
 
 
 ## Rejects a debug request with a stable log line and flow_error, then isolates

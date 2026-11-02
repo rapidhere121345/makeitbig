@@ -51,7 +51,7 @@ func _ensure_session_menu() -> void:
 	_root._session_menu.opened.connect(_pause_current_route)
 	_root._session_menu.resumed.connect(_resume_current_route)
 	_root._session_menu.abandon_requested.connect(_abandon_from_menu)
-	_root._session_menu.quit_requested.connect(_root._quit_from_menu)
+	_root._session_menu.quit_requested.connect(func() -> void: _root.request_exit(0, "quit_to_desktop"))
 	_root._session_menu.display_requested.connect(_root._apply_display_settings)
 	_root._session_menu.effects_volume_changed.connect(_root._set_effects_volume)
 	_root._session_menu.language_requested.connect(_root._set_language)
@@ -124,11 +124,11 @@ func _test_console_snapshot() -> Dictionary:
 			String(Engine.get_version_info().get("string", "unknown")),
 		],
 		"test_flags": {
-			"test_session": _root._test_session,
+			"test_session": _root.is_test_session(),
 			"auto_smoke": _root._auto_smoke_session,
 			"capture": not _root._capture_request.is_empty(),
 			"prototype_debug": not _root._prototype_debug_dto.is_empty(),
-			"presentation_enabled": _root._presentation_enabled,
+			"presentation_enabled": _root.presentation_enabled,
 		},
 		"log_path": _root.playtest_log.call("log_path") if _root.playtest_log != null and _root.playtest_log.has_method("log_path") else "",
 		"sections": [

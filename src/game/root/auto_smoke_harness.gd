@@ -26,7 +26,7 @@ func _init(root) -> void:
 
 func _start_auto_smoke() -> void:
 	_root._auto_smoke_stage = "setup"
-	if not _auto_smoke_require_ok("route_title", _root._transition(SceneRouterScript.ROUTE_TITLE)):
+	if not _auto_smoke_require_ok("route_title", _root.transition(SceneRouterScript.ROUTE_TITLE)):
 		return
 	if not _auto_smoke_require_ok("new_profile", _root.start_new_game("ranger")):
 		return
@@ -356,4 +356,4 @@ func _auto_smoke_fail(stage: String, reason: String) -> void:
 	_root._auto_smoke_finished = true
 	printerr("AUTO_SMOKE_FAIL stage=%s reason=%s route=%s framework_settlements=%d" % [stage, reason, _root.current_route, _root._auto_smoke_settlement_count])
 	Engine.time_scale = _root._auto_smoke_previous_time_scale
-	_root._request_exit(1, "auto_smoke_fail:%s:%s" % [stage, reason])
+	_root.request_exit(1, "auto_smoke_fail:%s:%s" % [stage, reason])

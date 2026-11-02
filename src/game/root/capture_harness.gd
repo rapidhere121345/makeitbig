@@ -101,13 +101,13 @@ func _capture_request_error(report: Dictionary, error_code: String, detail: Stri
 ## run cannot draw a frame that proves anything, so both refuse instead of passing.
 func capture_environment_report() -> Dictionary:
 	var display := DisplayServer.get_name()
-	var base := {"display": display, "presentation_enabled": _root._presentation_enabled}
+	var base := {"display": display, "presentation_enabled": _root.presentation_enabled}
 	if display.to_lower().contains("headless"):
 		base["ok"] = false
 		base["error"] = "headless_display"
 		base["detail"] = "the headless display server cannot draw a frame that proves GPU output"
 		return base
-	if not _root._presentation_enabled:
+	if not _root.presentation_enabled:
 		base["ok"] = false
 		base["error"] = "presentation_disabled"
 		base["detail"] = "--presentation-off runs cannot produce visible evidence"
@@ -140,7 +140,7 @@ func prepare_capture_route(route: String) -> Dictionary:
 		if _root.current_route == SceneRouterScript.ROUTE_BASE:
 			_root.return_to_title()
 		elif _root.current_route == SceneRouterScript.ROUTE_TUTORIAL:
-			_root._transition(SceneRouterScript.ROUTE_TITLE)
+			_root.transition(SceneRouterScript.ROUTE_TITLE)
 		return _capture_route_report(route)
 	if _root.current_route == SceneRouterScript.ROUTE_TITLE:
 		_root.start_new_game("ranger")
@@ -310,7 +310,7 @@ func _capture_settlement_evidence(stage: String, absolute_path: String, evidence
 		"captured_at_utc": Time.get_datetime_string_from_system(true, true),
 		"engine_version": String(Engine.get_version_info().get("string", "unknown")),
 		"display": DisplayServer.get_name(),
-		"presentation_enabled": _root._presentation_enabled,
+		"presentation_enabled": _root.presentation_enabled,
 		"injected_result_or_state": false,
 		"setup_synthetic_wins": _root.AUTO_SMOKE_SETUP_NODE_IDS.size(),
 		"framework_settlements": _root._auto_smoke_settlement_count,
@@ -363,7 +363,7 @@ func _globalize_capture_path(path: String) -> String:
 ## One loud line per refused capture, naming the requested and actual route/stage.
 func _capture_fail(error_code: String, detail: String, requested_route: String, actual_route: String, requested_stage: String, capture_path: String) -> void:
 	_capture_fail_line(error_code, detail, requested_route, actual_route, requested_stage, capture_path)
-	_root._request_exit(1, "capture_fail:%s" % error_code)
+	_root.request_exit(1, "capture_fail:%s" % error_code)
 
 
 func _capture_fail_line(error_code: String, detail: String, requested_route: String, actual_route: String, requested_stage: String, capture_path: String) -> void:

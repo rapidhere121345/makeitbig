@@ -85,6 +85,11 @@ var last_contract: Dictionary:
 	get:
 		return _last_contract.duplicate(true)
 
+## False when the command line passed --presentation-off. Read-only.
+var presentation_enabled: bool:
+	get:
+		return _presentation_enabled
+
 var _current_screen: Node
 ## Town browsing is transient presentation state, separate from the save schema.
 var _town_travel: Dictionary = {}
@@ -110,7 +115,9 @@ var _last_contract: Dictionary = {}
 ## screen, plus how it was released. The settlement is never part of this state.
 var _pending_visual_route: Dictionary = {}
 var _pending_route_release_reason: String = ""
-var _status_message: String = ""
+## Player-facing message the next presented screen shows. Modules write it before
+## re-presenting or transitioning.
+var status_message: String = ""
 ## A facility reached from settlement keeps its return destination while domain
 ## actions re-present that same screen. The one-shot drop focus remains in the
 ## transition payload; this value only preserves truthful navigation copy.
@@ -356,23 +363,23 @@ func start_new_game(initial_class: String = "ranger") -> Dictionary:
 		return CoreResult.failure("wrong_route")
 	var created: Dictionary = application_state.start_new_profile(initial_class)
 	if not bool(created.get("ok", false)):
-		_present_title(String(created.get("error", "profile_creation_failed")))
+		present_title(String(created.get("error", "profile_creation_failed")))
 		return created
 	_last_contract.clear()
 	_playtest_profile_started_msec = Time.get_ticks_msec()
-	_record_playtest("profile_started", {"initial_class": String(application_state.profile.get("initial_class", initial_class))})
-	_status_message = _persist("New profile saved", SceneRouterScript.ROUTE_TUTORIAL)
-	return _transition(SceneRouterScript.ROUTE_TUTORIAL)
+	record_playtest("profile_started", {"initial_class": String(application_state.profile.get("initial_class", initial_class))})
+	status_message = persist("New profile saved", SceneRouterScript.ROUTE_TUTORIAL)
+	return transition(SceneRouterScript.ROUTE_TUTORIAL)
 
 
 func continue_game() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_TITLE:
 		return CoreResult.failure("wrong_route")
 	if not application_state.has_profile():
-		_present_title("No valid profile is available.")
+		present_title("No valid profile is available.")
 		return CoreResult.failure("profile_required")
 	var profile: Dictionary = application_state.profile
-	return _transition(SceneRouterScript.ROUTE_BASE if bool(profile.get("tutorial_complete", false)) else SceneRouterScript.ROUTE_TUTORIAL)
+	return transition(SceneRouterScript.ROUTE_BASE if bool(profile.get("tutorial_complete", false)) else SceneRouterScript.ROUTE_TUTORIAL)
 
 
 func complete_tutorial() -> Dictionary:
@@ -381,27 +388,27 @@ func complete_tutorial() -> Dictionary:
 	var completed: Dictionary = application_state.complete_tutorial()
 	if not bool(completed.get("ok", false)):
 		return completed
-	_record_playtest("tutorial_completed", {"initial_class": String(application_state.profile.get("initial_class", ""))})
-	_status_message = _persist("Ranger basics tutorial complete", SceneRouterScript.ROUTE_BASE)
-	return _transition(SceneRouterScript.ROUTE_BASE)
+	record_playtest("tutorial_completed", {"initial_class": String(application_state.profile.get("initial_class", ""))})
+	status_message = persist("Ranger basics tutorial complete", SceneRouterScript.ROUTE_BASE)
+	return transition(SceneRouterScript.ROUTE_BASE)
 
 
 func open_contract() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_BASE:
 		return CoreResult.failure("wrong_route")
-	_status_message = ""
-	return _transition(SceneRouterScript.ROUTE_CONTRACT)
+	status_message = ""
+	return transition(SceneRouterScript.ROUTE_CONTRACT)
 
 
 func open_story() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_BASE: return CoreResult.failure("wrong_route")
-	return _transition(SceneRouterScript.ROUTE_STORY)
+	return transition(SceneRouterScript.ROUTE_STORY)
 
 
 func read_story_entry(entry_id: String) -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_STORY: return CoreResult.failure("wrong_route")
 	var result: Dictionary = application_state.mark_story_read(entry_id)
-	if bool(result.get("ok",false)): _persist("Observation recorded.", SceneRouterScript.ROUTE_BASE)
+	if bool(result.get("ok",false)): persist("Observation recorded.", SceneRouterScript.ROUTE_BASE)
 	return result
 
 
@@ -413,7 +420,7 @@ func read_town_conversation(entry_id: String) -> Dictionary:
 	if not available: return CoreResult.failure("story_entry_unavailable")
 	var result: Dictionary = application_state.mark_story_read(entry_id)
 	if bool(result.get("ok", false)):
-		_persist("", SceneRouterScript.ROUTE_BASE)
+		persist("", SceneRouterScript.ROUTE_BASE)
 		_current_screen.present_adventure(application_state.character_snapshot(), application_state.story_snapshot())
 	return result
 
@@ -421,12 +428,12 @@ func read_town_conversation(entry_id: String) -> Dictionary:
 
 func open_character() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_BASE: return CoreResult.failure("wrong_route")
-	return _transition(SceneRouterScript.ROUTE_CHARACTER)
+	return transition(SceneRouterScript.ROUTE_CHARACTER)
 
 
 func close_adventure_page() -> Dictionary:
 	if current_route not in [SceneRouterScript.ROUTE_CHARACTER, SceneRouterScript.ROUTE_STORY]: return CoreResult.failure("wrong_route")
-	return _transition(SceneRouterScript.ROUTE_BASE)
+	return transition(SceneRouterScript.ROUTE_BASE)
 
 
 func change_character_talent(action: String, value: String = "") -> Dictionary:
@@ -436,7 +443,7 @@ func change_character_talent(action: String, value: String = "") -> Dictionary:
 	if not bool(result.get("ok",false)):
 		message = "Invalid allocation: check available points, tier investment, and keystone count."
 	else:
-		message = _persist("", SceneRouterScript.ROUTE_BASE)
+		message = persist("", SceneRouterScript.ROUTE_BASE)
 	_current_screen.present(application_state.growth_snapshot(), message)
 	return result
 
@@ -451,14 +458,14 @@ func open_facility(route: String) -> Dictionary:
 		var forge_context: Dictionary = application_state.forge_ensure_context()
 		if not bool(forge_context.get("ok", false)):
 			return forge_context
-	_status_message = ""
-	return _transition(route)
+	status_message = ""
+	return transition(route)
 
 
 func leave_facility() -> Dictionary:
 	if current_route not in FACILITY_ROUTES:
 		return CoreResult.failure("wrong_route")
-	return _transition(SceneRouterScript.ROUTE_BASE)
+	return transition(SceneRouterScript.ROUTE_BASE)
 
 
 ## The facility action dispatcher lives in src/game/root/facility_actions.gd;
@@ -481,8 +488,8 @@ func _owned_equipment_for_telemetry(instance_id: String) -> Dictionary:
 func return_to_title() -> Dictionary:
 	if current_route != SceneRouterScript.ROUTE_BASE:
 		return CoreResult.failure("wrong_route")
-	_status_message = _persist("Profile saved", SceneRouterScript.ROUTE_TITLE)
-	return _transition(SceneRouterScript.ROUTE_TITLE)
+	status_message = persist("Profile saved", SceneRouterScript.ROUTE_TITLE)
+	return transition(SceneRouterScript.ROUTE_TITLE)
 
 
 ## The contract lifecycle lives in src/game/root/contract_flow.gd;
@@ -551,7 +558,7 @@ func _bootstrap(arguments: PackedStringArray) -> void:
 		_start_auto_smoke()
 		return
 	if _prototype_debug_rejected:
-		_transition(SceneRouterScript.ROUTE_TITLE)
+		transition(SceneRouterScript.ROUTE_TITLE)
 		return
 
 	var initial_route: String = SceneRouterScript.ROUTE_TITLE
@@ -560,12 +567,12 @@ func _bootstrap(arguments: PackedStringArray) -> void:
 		var restored: Dictionary = application_state.restore_persistent_payload(loaded.get("payload", {}))
 		if bool(restored.get("ok", false)):
 			initial_route = String(restored.get("route", SceneRouterScript.ROUTE_TITLE))
-			_status_message = "Restored save generation %d." % int(loaded.get("generation", 0))
+			status_message = "Restored save generation %d." % int(loaded.get("generation", 0))
 		else:
-			_status_message = PlayerFacingStatusScript.failure("Load profile", String(restored.get("error", "invalid_payload")))
+			status_message = PlayerFacingStatusScript.failure("Load profile", String(restored.get("error", "invalid_payload")))
 	elif String(loaded.get("error", "")) != "no valid save slot":
-		_status_message = PlayerFacingStatusScript.failure("Load profile", String(loaded.get("error", "unknown_error")))
-	_transition(initial_route)
+		status_message = PlayerFacingStatusScript.failure("Load profile", String(loaded.get("error", "unknown_error")))
+	transition(initial_route)
 
 
 func _parse_presentation_flag(arguments: PackedStringArray) -> void:
@@ -619,7 +626,15 @@ func _proxy_inventory_ids(profile: Dictionary) -> Array[String]:
 	return _auto_smoke()._proxy_inventory_ids(profile)
 
 
-func _transition(route: String, payload: Dictionary = {}) -> Dictionary:
+## True for --smoke, --game-flow-smoke, --auto-smoke and capture runs, which never
+## write saves or settings.
+func is_test_session() -> bool:
+	return _test_session
+
+
+## Requests a route change through the scene router and renders it. Returns the
+## router's result; emits flow_error when the request is refused.
+func transition(route: String, payload: Dictionary = {}) -> Dictionary:
 	var requested: Dictionary = scene_router.request(route, payload)
 	if not bool(requested.get("ok", false)):
 		flow_error.emit(String(requested.get("error", "route_request_failed")), "%s -> %s" % [current_route, route])
@@ -639,7 +654,7 @@ func _on_route_changed(previous_route: String, route: String, payload: Dictionar
 	## exactly as it is and is never replayed from here.
 	_pending_visual_route = {}
 	var now_msec := Time.get_ticks_msec()
-	_record_playtest("route_changed", {
+	record_playtest("route_changed", {
 		"from": previous_route,
 		"to": route,
 		"previous_dwell_msec": maxi(0, now_msec - _playtest_route_entered_msec) if _playtest_route_entered_msec > 0 else 0,
@@ -666,7 +681,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			screen.continue_requested.connect(continue_game)
 			_current_screen = screen
 			_mount_screen(screen)
-			_present_title(_status_message)
+			present_title(status_message)
 		SceneRouterScript.ROUTE_TUTORIAL:
 			var screen = TutorialScreenScript.new()
 			screen.completed.connect(complete_tutorial)
@@ -683,7 +698,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			screen.conversation_read.connect(read_town_conversation)
 			_current_screen = screen
 			_mount_screen(screen)
-			_present_base(_status_message)
+			present_base(status_message)
 			if not _town_travel.is_empty(): screen.restore_travel(_town_travel)
 		SceneRouterScript.ROUTE_STORY:
 			var screen = StoryScreenScript.new()
@@ -711,14 +726,14 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			screen.action_requested.connect(_on_facility_action_requested)
 			_current_screen = screen
 			_mount_screen(screen)
-			_present_facility(route, _status_message, payload)
+			present_facility(route, status_message, payload)
 		SceneRouterScript.ROUTE_CONTRACT:
 			var screen = ContractScreenScript.new()
 			screen.start_requested.connect(launch_contract)
 			screen.cancel_requested.connect(cancel_contract)
 			_current_screen = screen
 			_mount_screen(screen)
-			_present_contract(_status_message)
+			present_contract(status_message)
 		SceneRouterScript.ROUTE_ARENA:
 			var screen: Node = _make_arena_screen()
 			if screen == null:
@@ -803,8 +818,8 @@ func _on_facility_destination_requested(route: String) -> void:
 	if route not in FACILITY_ROUTES or not scene_router.can_transition(route):
 		flow_error.emit("facility_destination_blocked", "%s -> %s" % [current_route, route])
 		return
-	_status_message = ""
-	_transition(route)
+	status_message = ""
+	transition(route)
 
 
 func _on_facility_back_requested(destination: String, reviewed_item_id: String = "") -> void:
@@ -812,7 +827,7 @@ func _on_facility_back_requested(destination: String, reviewed_item_id: String =
 			and current_route == SceneRouterScript.ROUTE_LOADOUT \
 			and not application_state.last_result.is_empty() \
 			and scene_router.can_transition(SceneRouterScript.ROUTE_RESULT):
-		_transition(SceneRouterScript.ROUTE_RESULT, {"review_instance_id": reviewed_item_id})
+		transition(SceneRouterScript.ROUTE_RESULT, {"review_instance_id": reviewed_item_id})
 		return
 	leave_facility()
 
@@ -821,18 +836,21 @@ func _on_facility_action_requested(facility_id: String, action_id: String, paylo
 	request_facility_action(facility_id, action_id, payload)
 
 
-func _present_title(message: String) -> void:
+## Presents the title screen with the given message when it is the current screen.
+func present_title(message: String) -> void:
 	if _current_screen != null and _current_screen.has_method("present"):
 		_current_screen.call("present", application_state.has_profile(), message)
 
 
-func _present_base(message: String) -> void:
+## Presents the base hub with the given message when it is the current screen.
+func present_base(message: String) -> void:
 	if _current_screen != null and _current_screen.has_method("present"):
 		_current_screen.call("present", application_state.profile, application_state.last_result, message, _campaign_contract_snapshot())
 
 		_current_screen.present_adventure(application_state.character_snapshot(), application_state.story_snapshot())
 
-func _present_contract(message: String) -> void:
+## Presents the contract board with the given message when it is the current screen.
+func present_contract(message: String) -> void:
 	if _current_screen != null and _current_screen.has_method("present"):
 		var build_snapshot: Dictionary = application_state.early_game_snapshot().duplicate(true)
 		if bool(build_snapshot.get("ok", false)):
@@ -842,7 +860,8 @@ func _present_contract(message: String) -> void:
 		_current_screen.call("present", application_state.profile, _last_contract, message, build_snapshot)
 
 
-func _present_facility(facility_id: String, message: String, presentation_context: Dictionary = {}) -> void:
+## Presents a facility screen; context carries one-shot loadout focus hints.
+func present_facility(facility_id: String, message: String, presentation_context: Dictionary = {}) -> void:
 	if _current_screen != null and _current_screen.has_method("present"):
 		var facility_data: Dictionary = {}
 		if facility_id == SceneRouterScript.ROUTE_FORGE:
@@ -895,7 +914,9 @@ func _retire_current_screen() -> void:
 	_current_screen = null
 
 
-func _persist(reason: String, safe_route: String) -> String:
+## Saves the profile unless this is a test session or prototype debug no-persist
+## run. Returns reason on success, or a player-facing save failure message.
+func persist(reason: String, safe_route: String) -> String:
 	if _test_session or _prototype_debug_no_persist:
 		return reason
 	var saved: Dictionary = save_store.save(application_state.persistent_payload(safe_route))
@@ -955,12 +976,8 @@ func _capture_contract_fail(report: Dictionary) -> void:
 	_capture()._capture_contract_fail(report)
 
 
-func _quit_from_menu() -> void:
-	_request_exit(0, "quit_to_desktop")
-
-
 ## Reports the final exit code to exit_code_hook instead of ending the process.
-func _request_exit(code: int, reason: String) -> void:
+func request_exit(code: int, reason: String) -> void:
 	if exit_code_hook.is_valid():
 		exit_code_hook.call(code, reason)
 		return
@@ -1003,7 +1020,8 @@ func _start_playtest_logging() -> void:
 	_playtest_recorder()._start_playtest_logging()
 
 
-func _record_playtest(event_id: String, payload: Dictionary = {}) -> void:
+## Appends one event to the playtest log when logging is active.
+func record_playtest(event_id: String, payload: Dictionary = {}) -> void:
 	_playtest_recorder()._record_playtest(event_id, payload)
 
 

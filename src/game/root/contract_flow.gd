@@ -21,8 +21,8 @@ func cancel_contract() -> Dictionary:
 	if _root.current_route != SceneRouterScript.ROUTE_CONTRACT:
 		return CoreResult.failure("wrong_route")
 	_root.application_state.abandon_session()
-	_root._status_message = "Contract preparation cancelled."
-	return _root._transition(SceneRouterScript.ROUTE_BASE)
+	_root.status_message = "Contract preparation cancelled."
+	return _root.transition(SceneRouterScript.ROUTE_BASE)
 
 
 func launch_contract(config: Dictionary) -> Dictionary:
@@ -32,7 +32,7 @@ func launch_contract(config: Dictionary) -> Dictionary:
 	var active_build: Dictionary = _root._active_build_from_snapshot(active_snapshot)
 	var resolved_build: Dictionary = _root.application_state.resolved_build_snapshot()
 	if not bool(resolved_build.get("ok", false)) or String(resolved_build.get("build_fingerprint", "")).length() != 64:
-		_root._present_contract("active_build_invalid")
+		_root.present_contract("active_build_invalid")
 		return CoreResult.failure("active_build_invalid")
 	# preset_id is a live session field: the active session record, the combat
 	# growth-discovery telemetry and the room/run reports all carry it. The
@@ -45,30 +45,30 @@ func launch_contract(config: Dictionary) -> Dictionary:
 	planned_config["resolved_build"] = resolved_build.duplicate(true)
 	# Callers cannot bypass the CLI-presentation contract: the planned session
 	# always carries the flag parsed from --presentation-off (default true).
-	planned_config["presentation_enabled"] = _root._presentation_enabled
+	planned_config["presentation_enabled"] = _root.presentation_enabled
 	var campaign_progress: Dictionary = _root.application_state.campaign_progress_snapshot()
 	if not bool(campaign_progress.get("ok", false)):
-		_root._present_contract(String(campaign_progress.get("error", "campaign_progress_invalid")))
+		_root.present_contract(String(campaign_progress.get("error", "campaign_progress_invalid")))
 		return campaign_progress
 	planned_config["completed_node_ids"] = (campaign_progress.get("completed_node_ids", []) as Array).duplicate()
 	if String(planned_config.get("mode", "")).strip_edges().to_lower() == "auto" and not _root.application_state.is_auto_mode_unlocked():
-		_root._record_playtest("auto_rejected", {
+		_root.record_playtest("auto_rejected", {
 			"contract_id": String(planned_config.get("contract_id", "")),
 			"reason": "proxy_locked",
 		})
-		_root._present_contract("proxy_locked")
+		_root.present_contract("proxy_locked")
 		return CoreResult.failure("proxy_locked")
 	var resolved_proxy_build: Dictionary = {}
 	if String(planned_config.get("mode", "")).strip_edges().to_lower() == "auto":
 		var proxy_resolution: Dictionary = _root.application_state.resolved_proxy_build_snapshot()
 		if not bool(proxy_resolution.get("ok", false)):
 			var proxy_error := String(proxy_resolution.get("error", "invalid_proxy_build"))
-			_root._present_contract(proxy_error)
+			_root.present_contract(proxy_error)
 			return proxy_resolution
 		resolved_proxy_build = (proxy_resolution.resolved_proxy_build as Dictionary).duplicate(true)
 	var plan_result: Dictionary = ContractPlanScript.build(planned_config)
 	if not bool(plan_result.get("ok", false)):
-		_root._present_contract(String(plan_result.get("error", "contract_plan_failed")))
+		_root.present_contract(String(plan_result.get("error", "contract_plan_failed")))
 		return plan_result
 	var room_plan: Dictionary = (plan_result.get("plan", {}) as Dictionary).duplicate(true)
 	if not _root._prototype_debug_force_family.is_empty():
@@ -86,16 +86,16 @@ func launch_contract(config: Dictionary) -> Dictionary:
 	}
 	var prepared: Dictionary = _root.application_state.prepare_contract(planned_config)
 	if not bool(prepared.get("ok", false)):
-		_root._present_contract(String(prepared.get("error", "contract_prepare_failed")))
+		_root.present_contract(String(prepared.get("error", "contract_prepare_failed")))
 		return prepared
 	var begun: Dictionary = _root.application_state.begin_session()
 	if not bool(begun.get("ok", false)):
-		_root._present_contract(String(begun.get("error", "session_start_failed")))
+		_root.present_contract(String(begun.get("error", "session_start_failed")))
 		return begun
 	if not _root._prototype_debug_force_family.is_empty():
 		_root._prototype_debug_force_family = ""
 	_root._last_contract = (begun.get("session", {}) as Dictionary).duplicate(true)
-	_root._record_playtest("contract_started", {
+	_root.record_playtest("contract_started", {
 		"contract_id": String(_root._last_contract.get("contract_id", "")),
 		"mode": String(_root._last_contract.get("mode", "")),
 		"seed": int(_root._last_contract.get("seed", 0)),
@@ -103,8 +103,8 @@ func launch_contract(config: Dictionary) -> Dictionary:
 		"build_fingerprint": String(resolved_build.get("build_fingerprint", "")),
 		"proxy_build_fingerprint": String(resolved_proxy_build.get("semantic_fingerprint", "")),
 	})
-	_root._status_message = ""
-	return _root._transition(SceneRouterScript.ROUTE_ARENA, _root._last_contract)
+	_root.status_message = ""
+	return _root.transition(SceneRouterScript.ROUTE_ARENA, _root._last_contract)
 
 
 func finish_contract(result: Dictionary) -> Dictionary:
@@ -177,10 +177,10 @@ func finish_contract(result: Dictionary) -> Dictionary:
 	var bottleneck_value: Variant = completed_result.get("primary_bottleneck", null)
 	if bottleneck_value is Dictionary:
 		log_payload["primary_bottleneck"] = String((bottleneck_value as Dictionary).get("id", ""))
-	_root._record_playtest("contract_finished", log_payload)
+	_root.record_playtest("contract_finished", log_payload)
 	var unlock_value: Variant = completed_result.get("unlock", {})
 	if unlock_value is Dictionary and bool((unlock_value as Dictionary).get("proxy_unlocked", false)):
-		_root._record_playtest("auto_unlocked", {
+		_root.record_playtest("auto_unlocked", {
 			"contract_id": String(completed_result.get("contract_id", "")),
 			"components": ((unlock_value as Dictionary).get("components", []) as Array).duplicate(true) if (unlock_value as Dictionary).get("components", []) is Array else [],
 			"profile_elapsed_msec": _root._profile_elapsed_msec(),
@@ -192,11 +192,11 @@ func finish_contract(result: Dictionary) -> Dictionary:
 		and String(completed_result.get("contract_id", "")) == "auto_certification"
 		and String(completed_result.get("outcome", "")) == "final_victory"
 	):
-		_root._record_playtest("early_game_completed", {
+		_root.record_playtest("early_game_completed", {
 			"contract_id": "auto_certification",
 			"profile_elapsed_msec": _root._profile_elapsed_msec(),
 		})
-	_root._status_message = _root._persist("Contract result saved", SceneRouterScript.ROUTE_BASE)
+	_root.status_message = _root.persist("Contract result saved", SceneRouterScript.ROUTE_BASE)
 	return _route_to_result(completed_result)
 
 
@@ -207,7 +207,7 @@ func finish_contract(result: Dictionary) -> Dictionary:
 ## playing on it.
 func _route_to_result(completed_result: Dictionary) -> Dictionary:
 	if not _defeat_window_holds_screen(completed_result):
-		return _root._transition(SceneRouterScript.ROUTE_RESULT, completed_result)
+		return _root.transition(SceneRouterScript.ROUTE_RESULT, completed_result)
 	_root._pending_visual_route = {
 		"route": SceneRouterScript.ROUTE_RESULT,
 		"payload": completed_result.duplicate(true),
@@ -245,7 +245,7 @@ func _release_pending_visual_route(reason: String) -> Dictionary:
 	_root._pending_route_release_reason = reason
 	var payload: Dictionary = _root._pending_visual_route.get("payload", {})
 	_root._pending_visual_route = {}
-	return _root._transition(SceneRouterScript.ROUTE_RESULT, payload)
+	return _root.transition(SceneRouterScript.ROUTE_RESULT, payload)
 
 
 ## Public skip entry for the defeat window: the fall has been seen (or the caller
@@ -269,7 +269,7 @@ func defeat_route_report() -> Dictionary:
 func leave_result() -> Dictionary:
 	if _root.current_route != SceneRouterScript.ROUTE_RESULT:
 		return CoreResult.failure("wrong_route")
-	return _root._transition(SceneRouterScript.ROUTE_BASE)
+	return _root.transition(SceneRouterScript.ROUTE_BASE)
 
 
 func _open_next_contract_from_result() -> void:
@@ -300,13 +300,13 @@ func review_result_drop(instance_id: String, slot: String) -> Dictionary:
 		return CoreResult.failure("slot_locked")
 	var active := _root.application_state.active_build_snapshot().get("active_build", {}) as Dictionary
 	var equipped := active.get("equipped_item_ids", {}) as Dictionary
-	_root._status_message = "Drop located; it is equipped. Inspect or unequip it." if String(equipped.get(normalized_slot, "")) == normalized_id else "Drop located; compare it and decide whether to equip it."
-	_root._record_playtest("drop_review_started", {
+	_root.status_message = "Drop located; it is equipped. Inspect or unequip it." if String(equipped.get(normalized_slot, "")) == normalized_id else "Drop located; compare it and decide whether to equip it."
+	_root.record_playtest("drop_review_started", {
 		"instance_id": normalized_id,
 		"slot": normalized_slot,
 		"base_item_id": String(item.get("base_item_id", "")),
 	})
-	return _root._transition(SceneRouterScript.ROUTE_LOADOUT, {
+	return _root.transition(SceneRouterScript.ROUTE_LOADOUT, {
 		"review_instance_id": normalized_id,
 		"focus_slot": normalized_slot,
 		"return_route": SceneRouterScript.ROUTE_RESULT,
@@ -332,20 +332,20 @@ func open_ending() -> Dictionary:
 		return CoreResult.failure("wrong_route")
 	if String(_root.application_state.last_result.get("outcome", "")) != "final_victory":
 		return CoreResult.failure("ending_locked")
-	return _root._transition(SceneRouterScript.ROUTE_ENDING)
+	return _root.transition(SceneRouterScript.ROUTE_ENDING)
 
 
 func leave_ending_to_base() -> Dictionary:
 	if _root.current_route != SceneRouterScript.ROUTE_ENDING:
 		return CoreResult.failure("wrong_route")
-	return _root._transition(SceneRouterScript.ROUTE_BASE)
+	return _root.transition(SceneRouterScript.ROUTE_BASE)
 
 
 func leave_ending_to_title() -> Dictionary:
 	if _root.current_route != SceneRouterScript.ROUTE_ENDING:
 		return CoreResult.failure("wrong_route")
-	_root._status_message = _root._persist("Epilogue checkpoint saved", SceneRouterScript.ROUTE_TITLE)
-	return _root._transition(SceneRouterScript.ROUTE_TITLE)
+	_root.status_message = _root.persist("Epilogue checkpoint saved", SceneRouterScript.ROUTE_TITLE)
+	return _root.transition(SceneRouterScript.ROUTE_TITLE)
 
 
 ## One-shot debug drop override: after ContractPlan.build, every room of the

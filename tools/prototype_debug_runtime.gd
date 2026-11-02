@@ -298,7 +298,7 @@ static func _validate_force_family(family_id: String) -> Dictionary:
 static func _route_to(game, route: String) -> Dictionary:
 	if String(game.current_route) == route:
 		return {"ok": true}
-	var result: Variant = game.call("_transition", route)
+	var result: Variant = game.transition(route)
 	if not (result is Dictionary) or not bool((result as Dictionary).get("ok", false)):
 		var error_code := "route_transition_failed"
 		if result is Dictionary:

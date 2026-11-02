@@ -84,7 +84,7 @@ func _apply_display_settings(resolution: Vector2i, fullscreen: bool) -> void:
 
 
 func _load_player_settings() -> void:
-	if _root._settings_loaded or _root._test_session:
+	if _root._settings_loaded or _root.is_test_session():
 		return
 	_root._settings_loaded = true
 	var config := ConfigFile.new()
@@ -109,7 +109,7 @@ func _load_player_settings() -> void:
 
 
 func _save_player_settings(fullscreen: Variant = null) -> void:
-	if _root._test_session or not _root.is_inside_tree():
+	if _root.is_test_session() or not _root.is_inside_tree():
 		return
 	var config := ConfigFile.new()
 	config.set_value("interface", "language", _root._language_code)
