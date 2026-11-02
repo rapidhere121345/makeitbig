@@ -22,6 +22,8 @@ extends RefCounted
 ## layer alone instead of faking a character out of polygons.
 
 const RangerAnimationScript = preload("res://src/presentation/ranger_animation.gd")
+## Shared raw-file and integer-list helpers of the actor atlas readers.
+const ClipReader := preload("res://src/presentation/actor_clip_reader.gd")
 
 const NATIVE_VIEW := Vector2i(640, 360)
 ## Art pixels are shown at integer 2x throughout this slice.
@@ -222,7 +224,7 @@ func _take_sprite(
 	var entry := raw as Dictionary
 	var rect_values := entry.get("rect", []) as Array
 	var anchor_values := entry.get("anchor", []) as Array
-	if not _integer_list(rect_values, 4) or not _integer_list(anchor_values, 2):
+	if not ClipReader.integer_list(rect_values, 4) or not ClipReader.integer_list(anchor_values, 2):
 		pending_reasons.append("sprite %s requires integer rect[4] / anchor[2]" % sprite_id)
 		return
 	var cell_rect := Rect2i(
@@ -299,7 +301,7 @@ func _load_images() -> void:
 			if imported != null and Vector2i(imported.get_size()) == expected:
 				_images[texture_key] = imported
 				continue
-		var file := _open_resource(path)
+		var file := ClipReader.open_resource(path)
 		var image := Image.new()
 		if file == null or file.get_length() == 0 or image.load_png_from_buffer(file.get_buffer(file.get_length())) != OK:
 			pending_reasons.append("ASSETS PENDING: cannot load %s" % path)
@@ -309,23 +311,3 @@ func _load_images() -> void:
 			continue
 		_images[texture_key] = ImageTexture.create_from_image(image)
 	valid = pending_reasons.is_empty() and _images.size() == _texture_meta.size() and _texture_meta.size() == 3
-
-
-## Raw-file fallback for an unimported development tree. Imported PNG resources
-## are handled above; globalizing a missing raw PNG cannot recreate it in a PCK.
-func _open_resource(path: String) -> FileAccess:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file != null:
-		return file
-	return FileAccess.open(ProjectSettings.globalize_path(path), FileAccess.READ)
-
-
-func _integer_list(value: Variant, count: int) -> bool:
-	if not value is Array or (value as Array).size() != count:
-		return false
-	for number in value as Array:
-		if typeof(number) not in [TYPE_INT, TYPE_FLOAT]:
-			return false
-		if not is_finite(float(number)) or float(number) != floor(float(number)):
-			return false
-	return true
