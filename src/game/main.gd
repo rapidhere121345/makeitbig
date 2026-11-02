@@ -140,8 +140,16 @@ var in_arena: bool:
 		return session.in_arena
 	set(value):
 		session.in_arena = value
-var encounter_director
-var room_catalog
+var encounter_director:
+	get:
+		return session.encounter_director
+	set(value):
+		session.encounter_director = value
+var room_catalog:
+	get:
+		return session.room_catalog
+	set(value):
+		session.room_catalog = value
 var enemies: Array[CombatEnemyState]:
 	get:
 		return encounter_director.enemies
@@ -158,10 +166,26 @@ var boss_maximum: BigValue:
 var boss_damage: BigValue:
 	get:
 		return combat_system.outcome_snapshot().boss_damage
-var combat_system
-var combat_simulation
-var player_combat_state := PlayerCombatStateScript.new()
-var player_combat_rules := PlayerCombatRulesScript.new()
+var combat_system:
+	get:
+		return session.combat_system
+	set(value):
+		session.combat_system = value
+var combat_simulation:
+	get:
+		return session.combat_simulation
+	set(value):
+		session.combat_simulation = value
+var player_combat_state: PlayerCombatState:
+	get:
+		return session.player_combat_state
+	set(value):
+		session.player_combat_state = value
+var player_combat_rules: PlayerCombatRules:
+	get:
+		return session.player_combat_rules
+	set(value):
+		session.player_combat_rules = value
 ## Narrow, read-only observations used by room diagnostics and play_session.
 var player_position: Vector2:
 	get:
@@ -194,8 +218,16 @@ var arrow_hits: int:
 var defeated: int:
 	get:
 		return int(combat_system.outcome_snapshot().defeated)
-var smoke_input_driver := SmokeInputDriverScript.new()
-var room_rules := CombatRoomRulesScript.new()
+var smoke_input_driver: SmokeInputDriver:
+	get:
+		return session.smoke_input_driver
+	set(value):
+		session.smoke_input_driver = value
+var room_rules: CombatRoomRules:
+	get:
+		return session.room_rules
+	set(value):
+		session.room_rules = value
 var battle_over: bool:
 	get:
 		if room_encounter_port != null and room_encounter_port.encounter != null and room_encounter_port.encounter.has_method("snapshot"):
@@ -246,12 +278,36 @@ var last_attack_outcome: Dictionary:
 	get:
 		return combat_system.last_attack_outcome
 var content_registry
-var proxy_runtime
-var proxy_intent_system
-var manual_aim_resolver
-var enemy_tactics
-var command_source
-var command_source_port: RefCounted = null
+var proxy_runtime:
+	get:
+		return session.proxy_runtime
+	set(value):
+		session.proxy_runtime = value
+var proxy_intent_system:
+	get:
+		return session.proxy_intent_system
+	set(value):
+		session.proxy_intent_system = value
+var manual_aim_resolver:
+	get:
+		return session.manual_aim_resolver
+	set(value):
+		session.manual_aim_resolver = value
+var enemy_tactics:
+	get:
+		return session.enemy_tactics
+	set(value):
+		session.enemy_tactics = value
+var command_source:
+	get:
+		return session.command_source
+	set(value):
+		session.command_source = value
+var command_source_port: RefCounted:
+	get:
+		return session.command_source_port
+	set(value):
+		session.command_source_port = value
 var actor_registry
 var scene_runtime
 var simulation_world
@@ -263,8 +319,16 @@ var room_spatial_port = null
 var room_combat_port = null
 var room_encounter_port = null
 var encounter_spawn_port: RefCounted = null
-var kernel_bindings := KernelBindingsScript.new()
-var combat_event_stream
+var kernel_bindings: KernelBindings:
+	get:
+		return session.kernel_bindings
+	set(value):
+		session.kernel_bindings = value
+var combat_event_stream:
+	get:
+		return session.combat_event_stream
+	set(value):
+		session.combat_event_stream = value
 var startup_errors: Array[String] = []
 var proxy_prediction: String = "unknown"
 var last_save_message: String = ""
@@ -281,19 +345,18 @@ var objective_id: String = "clear"
 var room_entry_start_tick: int = 0
 var room_drop_tags: Array = []
 var framework_seed: int = FATE_SEED
-var _room_loot = CombatRoomLootScript.new()
 var room_loot_enabled: bool:
 	get:
-		return _room_loot != null and _room_loot.enabled()
+		return session.room_loot.enabled()
 var room_loot_snapshot: Dictionary:
 	get:
-		return _room_loot.snapshot() if _room_loot != null else {"enabled": false, "entities": [], "events": [], "settlement": {}}
+		return session.room_loot.snapshot()
 var room_loot_settlement: Dictionary:
 	get:
-		return _room_loot.settlement_snapshot() if _room_loot != null else {}
+		return session.room_loot.settlement_snapshot()
 var room_loot_window_open: bool:
 	get:
-		return battle_victory and _room_loot != null and _room_loot.has_unsettled_entities()
+		return battle_victory and session.room_loot.has_unsettled_entities()
 var hazard_states: Array[Dictionary]:
 	get:
 		if room_hazards.domain != null and room_hazards.domain.is_configured():
@@ -801,35 +864,35 @@ func _spawn_wave() -> bool:
 
 
 func _reset_room_loot() -> void:
-	_room_loot.reset()
+	session.room_loot.reset()
 
 
 func _configure_room_loot(room: Dictionary) -> Dictionary:
 	if content_registry == null or content_registry.early_item_registry == null:
-		_room_loot.reset()
+		session.room_loot.reset()
 		return {"ok": false, "error": "loot_item_registry_unavailable"} if room.has("loot_slots") else {"ok": true, "error": "", "enabled": false}
 	var placement_room: Variant = scene_runtime if scene_runtime != null and scene_runtime.is_ready() else actor_registry
 	var placement_port := MainLootPlacementPortScript.new()
 	var placement_bound: Dictionary = placement_port.configure(placement_room)
 	if not bool(placement_bound.get("ok", false)):
-		_room_loot.reset()
+		session.room_loot.reset()
 		return placement_bound
-	return _room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry, placement_port)
+	return session.room_loot.configure(room, room_id, framework_seed, content_registry.early_item_registry, placement_port)
 
 
 func spawn_room_loot_for_source(source: String, source_entity_id: int, position: Vector2) -> Dictionary:
-	return _room_loot.spawn_for_source(sim_tick, source, source_entity_id, position)
+	return session.room_loot.spawn_for_source(sim_tick, source, source_entity_id, position)
 
 
 func request_loot_pickup(loot_entity_id: String) -> Dictionary:
-	return _room_loot.request_pickup(sim_tick, in_arena, battle_over, battle_victory, loot_entity_id)
+	return session.room_loot.request_pickup(sim_tick, in_arena, battle_over, battle_victory, loot_entity_id)
 
 
 func process_room_loot_pickups_tick() -> void:
 	var player := player_combat_state.snapshot(sim_tick)
-	var receipts_before: Array = (_room_loot.snapshot().get("pickup_receipts", []) as Array).duplicate(true)
-	_room_loot.process_pickups(sim_tick, float(player.get("player_health", 0.0)), player.player_position, battle_over, battle_victory)
-	var receipts_after: Array = _room_loot.snapshot().get("pickup_receipts", [])
+	var receipts_before: Array = (session.room_loot.snapshot().get("pickup_receipts", []) as Array).duplicate(true)
+	session.room_loot.process_pickups(sim_tick, float(player.get("player_health", 0.0)), player.player_position, battle_over, battle_victory)
+	var receipts_after: Array = session.room_loot.snapshot().get("pickup_receipts", [])
 	if receipts_after.size() > receipts_before.size() and presentation != null and presentation.feedback != null:
 		var receipt_value: Variant = receipts_after[receipts_after.size() - 1]
 		if receipt_value is Dictionary and bool((receipt_value as Dictionary).get("ok", false)):
@@ -841,7 +904,7 @@ func process_room_loot_pickups_tick() -> void:
 func settle_room_loot(outcome: String) -> Dictionary:
 	if outcome not in ["victory", "defeat", "abandoned"]:
 		return {"ok": false, "error": "invalid_loot_outcome"}
-	return _room_loot.settle(outcome)
+	return session.room_loot.settle(outcome)
 
 
 func _load_test_room_fixture() -> Dictionary:

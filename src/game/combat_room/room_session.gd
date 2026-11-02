@@ -9,6 +9,13 @@ extends RefCounted
 ## lives in MainArena and its collaborators (see
 ## docs/rebuild/ROOM_SESSION_DESIGN.md, migration items 3 and 4).
 
+const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
+const CombatRoomRulesScript := preload("res://src/game/combat_room_rules.gd")
+const KernelBindingsScript := preload("res://src/game/combat_room/kernel_bindings.gd")
+const PlayerCombatStateScript := preload("res://src/runtime/world/player_combat_state.gd")
+const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.gd")
+const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
+
 ## Build lock: the rule inputs frozen when a contract starts.
 var selected_preset: String = "convergent"
 var selected_mode: String = "Manual"
@@ -27,3 +34,23 @@ var last_command_receipts: Array[Dictionary] = []
 var last_loot_pickup_command_receipt: Dictionary = {}
 var automation_smoke: bool = false
 var automation_smoke_failure: String = ""
+
+## Domain objects. The untyped ones are created by MainArena's ensure_* methods
+## because their construction binds typed ports to the MainArena instance.
+var encounter_director
+var room_catalog
+var combat_system
+var combat_simulation
+var player_combat_state := PlayerCombatStateScript.new()
+var player_combat_rules := PlayerCombatRulesScript.new()
+var smoke_input_driver := SmokeInputDriverScript.new()
+var room_rules := CombatRoomRulesScript.new()
+var proxy_runtime
+var proxy_intent_system
+var manual_aim_resolver
+var enemy_tactics
+var command_source
+var command_source_port: RefCounted = null
+var combat_event_stream
+var kernel_bindings := KernelBindingsScript.new()
+var room_loot := CombatRoomLootScript.new()
