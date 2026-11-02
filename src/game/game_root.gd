@@ -86,21 +86,9 @@ var _current_screen: Node
 var _town_travel: Dictionary = {}
 var _pixel_stage: Control
 var _test_console: CanvasLayer
-var _language_code := "en"
-var _menu_scale := 1.0
-var _render_quality := "balanced"
 var _session_menu: CanvasLayer
 var _menu_paused_screen: Node
 var _menu_previous_process_mode: int = Node.PROCESS_MODE_INHERIT
-var _effects_volume := 0.45
-var _windowed_resolution := Vector2i(1600, 900)
-## Test hook: pretends the screen has this usable size. ZERO means ask the OS.
-var usable_display_override := Vector2i.ZERO
-var _settings_loaded := false
-var _stage_window: Window
-## Multiple mounted roots occur in tests and tooling. Share the window lease so
-## one exiting root cannot restore stretch underneath another live pixel stage.
-static var _stage_window_leases: Dictionary = {}
 var _last_contract: Dictionary = {}
 ## The result screen waiting for a defeat clip that is still playing on the arena
 ## screen, plus how it was released. The settlement is never part of this state.
@@ -125,13 +113,16 @@ var route_snapshots: RouteSnapshots = RouteSnapshots.new(self)
 var capture: CaptureHarness = CaptureHarness.new(self)
 ## The deterministic --auto-smoke replay driver and its state (src/game/root/).
 var auto_smoke: AutoSmokeHarness = AutoSmokeHarness.new(self)
+## Display, audio and player settings, and the shared stage window lease
+## (src/game/root/).
+var display_settings: DisplaySettings = DisplaySettings.new(self)
 ## The --mib-* prototype debug tooling and the state it owns (src/game/root/).
 var prototype_debug: PrototypeDebug = PrototypeDebug.new(self)
 
 
 func _enter_tree() -> void:
 	if _pixel_stage != null:
-		_acquire_stage_window()
+		display_settings.acquire_stage_window()
 
 
 func _ready() -> void:
@@ -153,10 +144,10 @@ func _ensure_pixel_stage() -> void:
 	# Only the graphical GameRoot owns the outer window's stretch policy. Keep
 	# standalone screen fixtures and headless simulation on their existing 1280
 	# project canvas (the headless OS window itself defaults to a tiny 64x64).
-	_acquire_stage_window()
+	display_settings.acquire_stage_window()
 	_pixel_stage = PixelStageScript.new()
 	_pixel_stage.name = "PixelStage"
-	_pixel_stage.set_render_quality(_render_quality)
+	_pixel_stage.set_render_quality(display_settings.render_quality)
 	add_child(_pixel_stage)
 	_pixel_stage.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -195,52 +186,6 @@ func _refresh_test_console() -> void:
 	_test_console_host()._refresh_test_console()
 
 
-## The display, audio and player-settings service lives in
-## src/game/root/display_settings.gd; these thin forwarders keep the owner's
-## method names for the remaining call sites.
-var _display_settings_impl  # untyped to avoid a preload cycle
-func _display_settings() -> DisplaySettings:
-	if _display_settings_impl == null:
-		_display_settings_impl = DisplaySettings.new(self)
-	return _display_settings_impl
-
-
-func _set_language(code: String) -> void:
-	_display_settings()._set_language(code)
-
-
-func _set_render_quality(value: String) -> void:
-	_display_settings()._set_render_quality(value)
-
-
-func _set_menu_scale(value: float) -> void:
-	_display_settings()._set_menu_scale(value)
-
-
-func _set_effects_volume(value: float) -> void:
-	_display_settings()._set_effects_volume(value)
-
-
-func _apply_route_preferences() -> void:
-	_display_settings()._apply_route_preferences()
-
-
-func _usable_display_size() -> Vector2i:
-	return _display_settings()._usable_display_size()
-
-
-func _apply_display_settings(resolution: Vector2i, fullscreen: bool) -> void:
-	_display_settings()._apply_display_settings(resolution, fullscreen)
-
-
-func _acquire_stage_window() -> void:
-	_display_settings()._acquire_stage_window()
-
-
-func _release_stage_window() -> void:
-	_display_settings()._release_stage_window()
-
-
 ## Pixel-authored routes use a fixed 1280x720 canvas. Information-heavy shell
 ## routes may use a larger logical viewport; the arena's authoritative rectangle
 ## remains fixed regardless of either presentation policy.
@@ -271,7 +216,7 @@ func _exit_tree() -> void:
 	Locale.release()
 	_resume_current_route()
 	playtest_recorder.finish("tree_exit")
-	_release_stage_window()
+	display_settings.release_stage_window()
 
 
 func _notification(what: int) -> void:
@@ -669,7 +614,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			_current_screen = screen
 			_mount_screen(screen)
 			var launch_result: Variant = screen.call("start_session", payload.duplicate(true))
-			_apply_route_preferences()
+			display_settings.apply_route_preferences()
 			if not (launch_result is Dictionary) or not bool((launch_result as Dictionary).get("ok", false)):
 				var error_code := "room_runtime_start_failed"
 				if launch_result is Dictionary:

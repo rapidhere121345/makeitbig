@@ -117,7 +117,7 @@ func _check_live_switch(catalog: Resource) -> void:
 	_expect(game.application_state.profile == before, "language selection does not change profile authority")
 	var resume: Button = menu.find_child("ResumeButton", true, false)
 	_expect(resume.tr(resume.text) == catalog.source_messages["Resume"], "open menu translates without rebuilding")
-	game._set_language("en")
+	game.display_settings.set_language("en")
 	_expect(resume.tr(resume.text) == "Resume", "same button restores English")
 	menu.close_menu()
 	_expect(game.get_presentation_viewport().render_target_update_mode == SubViewport.UPDATE_WHEN_VISIBLE, "resume restores live game rendering")
@@ -131,10 +131,10 @@ func _check_persistence() -> void:
 	game.playtest_logging_enabled = false
 	root.add_child(game)
 	await process_frame
-	game._set_language("zh_CN")
-	game._set_menu_scale(1.25)
-	game._set_render_quality("fast")
-	game._set_effects_volume(0.23)
+	game.display_settings.set_language("zh_CN")
+	game.display_settings.set_menu_scale(1.25)
+	game.display_settings.set_render_quality("fast")
+	game.display_settings.set_effects_volume(0.23)
 	game.free()
 	Locale.select("en")
 	var restored := Game.new()
@@ -142,9 +142,9 @@ func _check_persistence() -> void:
 	restored.playtest_logging_enabled = false
 	root.add_child(restored)
 	await process_frame
-	_expect(restored._language_code == "zh_CN" and Locale.current() == "zh_CN", "language survives restart")
-	_expect(restored._menu_scale == 1.25 and restored._render_quality == "fast", "display preferences survive restart")
-	_expect(is_equal_approx(restored._effects_volume, 0.23), "changing language/scale retains volume")
+	_expect(restored.display_settings.language_code == "zh_CN" and Locale.current() == "zh_CN", "language survives restart")
+	_expect(restored.display_settings.menu_scale == 1.25 and restored.display_settings.render_quality == "fast", "display preferences survive restart")
+	_expect(is_equal_approx(restored.display_settings.effects_volume, 0.23), "changing language/scale retains volume")
 	restored.free()
 	# Only this test's unique temporary configuration is removed.
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(directory.path_join("display.cfg")))
