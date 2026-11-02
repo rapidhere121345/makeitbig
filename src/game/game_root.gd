@@ -131,10 +131,9 @@ var _auto_smoke_previous_time_scale := 1.0
 var _auto_smoke_finished := false
 var _capture_request: Dictionary = {}
 var _initialized: bool = false
-var _playtest_session_started_msec := 0
-var _playtest_profile_started_msec := 0
-var _playtest_route_entered_msec := 0
 var _presentation_enabled := true
+## Playtest telemetry and the timers it keeps (src/game/root/).
+var playtest_recorder: PlaytestRecorder = PlaytestRecorder.new(self)
 ## The --mib-* prototype debug tooling and the state it owns (src/game/root/).
 var prototype_debug: PrototypeDebug = PrototypeDebug.new(self)
 
@@ -280,13 +279,13 @@ func _apply_presentation_policy(route: String) -> void:
 func _exit_tree() -> void:
 	Locale.release()
 	_resume_current_route()
-	_finish_playtest_logging("tree_exit")
+	playtest_recorder.finish("tree_exit")
 	_release_stage_window()
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
-		_finish_playtest_logging("object_freed")
+		playtest_recorder.finish("object_freed")
 	elif what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and not _test_session \
 			and current_route == SceneRouterScript.ROUTE_ARENA and _session_menu != null:
 		_session_menu.open_menu()
@@ -336,7 +335,7 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 	_auto_smoke_session = arguments.has("--auto-smoke")
 	_test_session = _auto_smoke_session or arguments.has("--smoke") or arguments.has("--game-flow-smoke") or not capture_path.is_empty()
 	if playtest_logging_enabled and not _test_session and not arguments.has("--no-playtest-log") and not prototype_debug.no_persist:
-		_start_playtest_logging()
+		playtest_recorder.start_session()
 	if _auto_smoke_session:
 		_auto_smoke_previous_time_scale = Engine.time_scale
 		Engine.time_scale = AUTO_SMOKE_TIME_SCALE
@@ -359,7 +358,7 @@ func start_new_game(initial_class: String = "ranger") -> Dictionary:
 		present_title(String(created.get("error", "profile_creation_failed")))
 		return created
 	_last_contract.clear()
-	_playtest_profile_started_msec = Time.get_ticks_msec()
+	playtest_recorder.mark_profile_started()
 	record_playtest("profile_started", {"initial_class": String(application_state.profile.get("initial_class", initial_class))})
 	status_message = persist("New profile saved", SceneRouterScript.ROUTE_TUTORIAL)
 	return transition(SceneRouterScript.ROUTE_TUTORIAL)
@@ -624,15 +623,7 @@ func _on_route_changed(previous_route: String, route: String, payload: Dictionar
 	## A committed route supersedes a deferred result screen. The settlement stays
 	## exactly as it is and is never replayed from here.
 	_pending_visual_route = {}
-	var now_msec := Time.get_ticks_msec()
-	record_playtest("route_changed", {
-		"from": previous_route,
-		"to": route,
-		"previous_dwell_msec": maxi(0, now_msec - _playtest_route_entered_msec) if _playtest_route_entered_msec > 0 else 0,
-		"session_elapsed_msec": maxi(0, now_msec - _playtest_session_started_msec) if _playtest_session_started_msec > 0 else 0,
-		"profile_elapsed_msec": _profile_elapsed_msec(),
-	})
-	_playtest_route_entered_msec = now_msec
+	playtest_recorder.record_route_change(previous_route, route)
 	flow_route_changed.emit(previous_route, route)
 	_refresh_test_console()
 
@@ -978,30 +969,9 @@ func _run_scene_smoke() -> void:
 	get_tree().quit(0)
 
 
-## The playtest telemetry lives in src/game/root/playtest_recorder.gd; these
-## thin forwarders keep the owner's method names for the remaining call sites.
-var _playtest_recorder_impl  # untyped to avoid a preload cycle
-func _playtest_recorder() -> PlaytestRecorder:
-	if _playtest_recorder_impl == null:
-		_playtest_recorder_impl = PlaytestRecorder.new(self)
-	return _playtest_recorder_impl
-
-
-func _start_playtest_logging() -> void:
-	_playtest_recorder()._start_playtest_logging()
-
-
 ## Appends one event to the playtest log when logging is active.
 func record_playtest(event_id: String, payload: Dictionary = {}) -> void:
-	_playtest_recorder()._record_playtest(event_id, payload)
-
-
-func _finish_playtest_logging(reason: String) -> void:
-	_playtest_recorder()._finish_playtest_logging(reason)
-
-
-func _profile_elapsed_msec() -> int:
-	return _playtest_recorder()._profile_elapsed_msec()
+	playtest_recorder.record(event_id, payload)
 
 
 ## Typed bridge from the route composition root to ApplicationState. The

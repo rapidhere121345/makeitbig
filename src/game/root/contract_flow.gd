@@ -183,7 +183,7 @@ func finish_contract(result: Dictionary) -> Dictionary:
 		_root.record_playtest("auto_unlocked", {
 			"contract_id": String(completed_result.get("contract_id", "")),
 			"components": ((unlock_value as Dictionary).get("components", []) as Array).duplicate(true) if (unlock_value as Dictionary).get("components", []) is Array else [],
-			"profile_elapsed_msec": _root._profile_elapsed_msec(),
+			"profile_elapsed_msec": _root.playtest_recorder.profile_elapsed_msec(),
 		})
 	var progression_value: Variant = _root.application_state.profile.get("progression", {})
 	var progression: Dictionary = progression_value if progression_value is Dictionary else {}
@@ -194,7 +194,7 @@ func finish_contract(result: Dictionary) -> Dictionary:
 	):
 		_root.record_playtest("early_game_completed", {
 			"contract_id": "auto_certification",
-			"profile_elapsed_msec": _root._profile_elapsed_msec(),
+			"profile_elapsed_msec": _root.playtest_recorder.profile_elapsed_msec(),
 		})
 	_root.status_message = _root.persist("Contract result saved", SceneRouterScript.ROUTE_BASE)
 	return _route_to_result(completed_result)
