@@ -46,7 +46,7 @@ func _check_battle_end() -> void:
 			_main.settle_room_loot("defeat")
 		_handle_terminal_automation(victory)
 		return
-	var observed: Dictionary = _session.room_rules.observe(_session.player_combat_state.snapshot(_main.sim_tick), {
+	var observed: Dictionary = _session.room_rules.observe(_session.player_combat_state.snapshot(_session.sim_tick), {
 		"has_boss": _main.boss != null, "boss_health": _main.boss.health if _main.boss != null else 0.0,
 		"enemy_count": _main.enemies.size(), "elite_entity_id": _main.elite_entity_id,
 		"elite_alive": _main.enemy_by_entity_id(_main.elite_entity_id) != null,
@@ -73,10 +73,10 @@ func _mounted_encounter_terminal_active() -> bool:
 
 func _observe_mounted_encounter_terminal() -> Dictionary:
 	var observation := RoomTerminalObservationScript.new()
-	observation.tick = _main.sim_tick
+	observation.tick = _session.sim_tick
 	observation.room_instance_id = String(_session.simulation_world.room_instance_id)
 	observation.world_revision = int(_session.simulation_world.world_revision)
-	var player := _session.player_combat_state.snapshot(_main.sim_tick)
+	var player := _session.player_combat_state.snapshot(_session.sim_tick)
 	observation.player_alive = float(player.get("player_health", 0.0)) > 0.0
 	var encounter_state: Dictionary = _session.room_encounter_port.encounter.snapshot()
 	observation.current_wave_index = int(encounter_state.get("current_wave_index", -1))

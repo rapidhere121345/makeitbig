@@ -354,7 +354,7 @@ func _consume_kernel_boss_combat() -> void:
 		var contact := _boss_contact_for_outcome(result, outcome)
 		var contact_point: Vector2 = contact.get("contact_point", projectile.position) if contact.get("contact_point", null) is Vector2 else projectile.position
 		projectile.position = contact_point
-		enemy.hit_flash_until_tick = _main.sim_tick + MainArena.ENEMY_HIT_FLASH_TICKS
+		enemy.hit_flash_until_tick = _session.sim_tick + MainArena.ENEMY_HIT_FLASH_TICKS
 		_session.combat_system.apply_boss_kernel_contact(
 			projectile,
 			enemy,
@@ -452,7 +452,7 @@ func _reconcile_kernel_hit(projectile, record: Variant, hit: Dictionary, outcome
 	var toi := clampf(float(hit.get("toi", 0.0)), 0.0, 1.0)
 	var contact: Vector2 = record.query_start + record.query_displacement * toi
 	enemy.health = snappedf(remaining, 0.001)
-	enemy.hit_flash_until_tick = _main.sim_tick + MainArena.ENEMY_HIT_FLASH_TICKS
+	enemy.hit_flash_until_tick = _session.sim_tick + MainArena.ENEMY_HIT_FLASH_TICKS
 	projectile.position = contact
 	_session.combat_system.apply_kernel_contact(projectile, enemy, contact, hit, health_before, enemy.health, record.aggregate)
 	_main.enemy_ai.maybe_summon_reinforcements(enemy)

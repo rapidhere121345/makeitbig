@@ -202,7 +202,7 @@ var elapsed: float:
 		session.elapsed = value
 var sim_tick: int:
 	get:
-		return int(simulation_world.tick) if simulation_world != null else 0
+		return session.sim_tick
 	set(value):
 		# Authority ticks are committed only by SimulationWorld.step_tick().
 		# Retain the setter surface for scene/test construction, but never let a

@@ -48,7 +48,7 @@ func _advance_piercing_projectiles_tick() -> void:
 		_session.kernel_bindings.arrow_flight.submit_tick(
 			_session.combat_system.projectiles,
 			ranger_handle,
-			_main.sim_tick,
+			_session.sim_tick,
 			_session.combat_system.room_port
 		)
 	if _session.room_spatial_port != null and _session.room_combat_port != null and _session.kernel_bindings.boss_flight.is_configured() and _main.kernel_reconciler.boss_domain_room_is_current():
@@ -56,7 +56,7 @@ func _advance_piercing_projectiles_tick() -> void:
 		_session.kernel_bindings.boss_flight.submit_tick(
 			_session.combat_system.projectiles,
 			ranger_handle,
-			_main.sim_tick,
+			_session.sim_tick,
 			_session.combat_system.room_port
 		)
 	_main.adopt_combat_report(previous_report, previous_event_id)

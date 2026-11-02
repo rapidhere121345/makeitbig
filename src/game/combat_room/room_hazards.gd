@@ -46,7 +46,7 @@ func _update_hazards_tick() -> void:
 
 func _refresh_hazard_states_tick() -> void:
 	if domain != null and domain.is_configured():
-		var refreshed: Dictionary = domain.refresh(_main.sim_tick)
+		var refreshed: Dictionary = domain.refresh(_session.sim_tick)
 		if not bool(refreshed.get("ok", false)):
 			_session.battle_report = "hazard_refresh_failed:%s" % String(refreshed.get("error", "unknown"))
 		_session.encounter_director.hazard_states = domain.snapshots()
@@ -57,12 +57,12 @@ func _refresh_hazard_states_tick() -> void:
 
 func _resolve_hazard_hits_tick() -> void:
 	if domain != null and domain.is_configured():
-		var resolved: Dictionary = domain.resolve(_main.sim_tick, _main.player_position)
+		var resolved: Dictionary = domain.resolve(_session.sim_tick, _main.player_position)
 		if not bool(resolved.get("ok", false)):
 			_session.battle_report = "hazard_resolve_failed:%s" % String(resolved.get("error", "unknown"))
 		else:
 			for contact: Dictionary in resolved.get("contacts", []):
-				_session.combat_event_stream.emit(_main.sim_tick, "attack_resolved", {
+				_session.combat_event_stream.emit(_session.sim_tick, "attack_resolved", {
 					"action_instance_id": 0,
 					"source_id": String(contact.get("source_id", "")),
 					"target_id": "ranger",
@@ -72,11 +72,11 @@ func _resolve_hazard_hits_tick() -> void:
 		# Player contacts are consumed after staging and after the kernel has
 		# published this tick, preserving the existing fixed-tick boundary.
 		if _session.room_combat_port != null:
-			var receipts: Array[Dictionary] = _session.room_combat_port.commit_player_contacts(_main.sim_tick)
+			var receipts: Array[Dictionary] = _session.room_combat_port.commit_player_contacts(_session.sim_tick)
 			for receipt: Dictionary in receipts:
 				if String(receipt.get("contact_kind", "")) != "hostile_attack":
 					continue
-				_session.combat_event_stream.emit(_main.sim_tick, "attack_resolved", {
+				_session.combat_event_stream.emit(_session.sim_tick, "attack_resolved", {
 					"action_instance_id": int(String(receipt.get("attack_instance_id", "0"))),
 					"source_id": String(receipt.get("source_id", "")),
 					"target_id": "ranger",
@@ -88,11 +88,11 @@ func _resolve_hazard_hits_tick() -> void:
 	var previous_report := String(_session.encounter_director.battle_report)
 	_session.encounter_director.resolve_hazard_hits_tick()
 	if _session.room_combat_port != null:
-		var receipts: Array[Dictionary] = _session.room_combat_port.commit_player_contacts(_main.sim_tick)
+		var receipts: Array[Dictionary] = _session.room_combat_port.commit_player_contacts(_session.sim_tick)
 		for receipt: Dictionary in receipts:
 			if String(receipt.get("contact_kind", "")) != "hostile_attack":
 				continue
-			_session.combat_event_stream.emit(_main.sim_tick, "attack_resolved", {
+			_session.combat_event_stream.emit(_session.sim_tick, "attack_resolved", {
 				"action_instance_id": int(String(receipt.get("attack_instance_id", "0"))),
 				"source_id": String(receipt.get("source_id", "")),
 				"target_id": "ranger",
@@ -112,7 +112,7 @@ func _queue_kernel_hazard_hit(tick: int, amount: float, source_id: String, sourc
 func queue_kernel_player_hit(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
 	if _session.room_spatial_port == null or _session.actor_registry == null:
 		return {"ok": false, "error": "kernel_player_contact_port_unavailable"}
-	if tick != _main.sim_tick or not is_finite(amount) or amount <= 0.0 or not source_position.is_finite():
+	if tick != _session.sim_tick or not is_finite(amount) or amount <= 0.0 or not source_position.is_finite():
 		return {"ok": false, "error": "invalid_kernel_player_contact_context"}
 	var contact_kind: StringName
 	var encoded_amount: int

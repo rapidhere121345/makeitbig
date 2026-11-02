@@ -66,6 +66,11 @@ var room_loot := CombatRoomLootScript.new()
 ## assembly) and the typed ports built over them.
 var actor_registry
 var simulation_world
+## Authority tick committed by the simulation world (0 before one exists).
+## Ticks are only ever committed by SimulationWorld.step_tick().
+var sim_tick: int:
+	get:
+		return int(simulation_world.tick) if simulation_world != null else 0
 var actor_registry_instance_id := ""
 var actor_registry_revision := 0
 var room_spatial_port = null

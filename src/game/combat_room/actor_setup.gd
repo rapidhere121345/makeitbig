@@ -81,7 +81,7 @@ func _configure_actor_registry() -> bool:
 		_session.actor_registry_instance_id = ""
 		return false
 	_session.actor_registry.set_movement_policy_port(movement_policy_port)
-	var preserved_sim_tick := _main.sim_tick
+	var preserved_sim_tick := _session.sim_tick
 	if _session.actor_registry.has_method("reset_actors"):
 		var reset_result: Dictionary = _session.actor_registry.reset_actors()
 		if not bool(reset_result.get("ok", false)):
@@ -202,20 +202,20 @@ func _start_mounted_encounter() -> bool:
 	if encounter_domain == null:
 		return true
 	var phase := String(encounter_domain.snapshot().get("phase", "")) if encounter_domain.has_method("snapshot") else ""
-	if phase != "idle" and _main.sim_tick == 0 and encounter_domain.has_method("restart"):
-		var restarted: Dictionary = encounter_domain.restart(_main.sim_tick)
+	if phase != "idle" and _session.sim_tick == 0 and encounter_domain.has_method("restart"):
+		var restarted: Dictionary = encounter_domain.restart(_session.sim_tick)
 		if not bool(restarted.get("ok", false)):
 			_main.last_save_message = "Deployment blocked: %s" % String(restarted.get("error", "encounter_restart_failed"))
 			return false
 		phase = "idle"
 	if phase == "idle":
-		var started: Dictionary = _main.scene_runtime.start_encounter(_main.sim_tick)
+		var started: Dictionary = _main.scene_runtime.start_encounter(_session.sim_tick)
 		if not bool(started.get("ok", false)):
 			_main.last_save_message = "Deployment blocked: %s" % String(started.get("error", "encounter_start_failed"))
 			return false
 	var encounter_port = _main.scene_runtime.get("encounter_port")
 	if encounter_port != null and encounter_port.has_method("prime_spawn_requests"):
-		encounter_port.prime_spawn_requests(_main.sim_tick)
+		encounter_port.prime_spawn_requests(_session.sim_tick)
 	var materialized: Array[Dictionary] = _main.scene_runtime.materialize_encounter_spawns()
 	for result: Dictionary in materialized:
 		if String(result.get("kind", "")) == "failed":
@@ -346,7 +346,7 @@ func _bind_boss_production_encounter() -> bool:
 	if not bool(bound.get("ok", false)):
 		push_error("boss_encounter_bind_failed:%s" % String(bound.get("error", "unknown")))
 		return false
-	var started: Dictionary = _main.scene_runtime.start_encounter(_main.sim_tick)
+	var started: Dictionary = _main.scene_runtime.start_encounter(_session.sim_tick)
 	if not bool(started.get("ok", false)):
 		push_error("boss_encounter_start_failed:%s" % String(started.get("error", "unknown")))
 		return false
@@ -392,7 +392,7 @@ func _commit_actor_move(actor_id: String, displacement: Vector2, movement_policy
 		return {"ok": false, "error": "actor_not_registered", "position": Vector2.ZERO, "displacement": Vector2.ZERO}
 	if movement_policy == null and actor_id == "ranger" and _has_active_charge():
 		movement_policy = _charge_movement_policy_value()
-	var result: Dictionary = _session.actor_registry.move_actor(actor_id, displacement, _main.sim_tick, movement_policy)
+	var result: Dictionary = _session.actor_registry.move_actor(actor_id, displacement, _session.sim_tick, movement_policy)
 	if not bool(result.get("ok", false)):
 		if String(result.get("error", "")) in ["non_monotonic_motor_tick", "non_monotonic_movement_tick"]:
 			return result
@@ -420,7 +420,7 @@ func _charge_movement_policy_value() -> Variant:
 func resolve_ranger_movement_policy(actor_id: String) -> Variant:
 	if actor_id != "ranger" or _session.player_combat_state == null:
 		return null
-	var player: Dictionary = _session.player_combat_state.snapshot(_main.sim_tick)
+	var player: Dictionary = _session.player_combat_state.snapshot(_session.sim_tick)
 	if int(player.get("dash_remaining_ticks", 0)) <= 0 and int(player.get("dodge_remaining_ticks", 0)) <= 0:
 		return null
 	return _mobility_policy_value()
