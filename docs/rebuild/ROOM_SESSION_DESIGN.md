@@ -106,9 +106,16 @@ becomes `kit.actor_spec().id`.
 
 1. Delete evidence-only fields (`kernel_snapshot_publications`,
    `kernel_reconcile_events`, the Main-side `last_kernel_snapshot`): no readers.
+   Done.
 2. Replace the private reach-ins from `combat_room/` and `ports/` with typed
    owner APIs per helper (`LootPort`, `GeometryPort`, `KernelBindings`,
-   `RoomClock`); the ratchet drops toward zero.
+   `RoomClock`); the ratchet drops toward zero. Done for `combat_room/` and
+   `ports/` (zero reach-ins): `KernelBindings` owns the kernel state, the
+   hazard domain, movement policies and terminal flag moved into their helpers,
+   and `MainArena` publishes the helpers (`kernel_reconciler`, `room_hazards`,
+   `piercing_arrows`, `enemy_ai`, `actor_setup`, `room_geometry`) plus the
+   phase hooks and context/report sync calls as plain public methods. A
+   dedicated `LootPort`/`RoomClock` is still open.
 3. Introduce `RoomSession` as a pure move of the authority fields and helpers;
    `MainArena` keeps the same property names as getters so the hash builder and
    tests are untouched.
