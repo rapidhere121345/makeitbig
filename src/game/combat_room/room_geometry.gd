@@ -19,12 +19,7 @@ func _init(main: MainArena) -> void:
 
 
 func arena_rect() -> Rect2:
-	if _main.scene_runtime != null:
-		var authored: Variant = _main.scene_runtime.get("authored_arena_rect")
-		return authored as Rect2 if authored is Rect2 else Rect2()
-	return Rect2(Vector2(MainArena.ARENA_MARGIN, 190.0), Vector2(
-		MainArena.AUTHORITY_VIEWPORT_SIZE.x - MainArena.ARENA_MARGIN * 2.0,
-		MainArena.AUTHORITY_VIEWPORT_SIZE.y - 190.0 - MainArena.ARENA_MARGIN))
+	return _session.arena_rect()
 
 
 func walkable_geometry(padding: float) -> Dictionary:

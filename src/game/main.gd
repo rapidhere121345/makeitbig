@@ -17,7 +17,6 @@ const ManualAimResolverScript = preload("res://src/systems/manual_aim_resolver.g
 const EnemyTacticsScript = preload("res://src/systems/enemy_tactics.gd")
 const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 const CombatEventStreamScript = preload("res://src/systems/combat_event_stream.gd")
-const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
 const PiercingArrowModelScript = preload("res://src/systems/piercing_arrow_model.gd")
 const ActorRegistryScript = preload("res://src/runtime/world/actor_registry.gd")
 const SimulationWorldScript = preload("res://src/runtime/world/simulation_world.gd")
@@ -55,9 +54,9 @@ const RoomTerminalScript := preload("res://src/game/combat_room/room_terminal.gd
 const RoomGeometryScript := preload("res://src/game/combat_room/room_geometry.gd")
 const RoomSessionScript := preload("res://src/game/combat_room/room_session.gd")
 
-const ARENA_MARGIN: float = 42.0
-const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
-const SIM_TICKS_PER_SECOND: int = RangerSkillRulesScript.TICKS_PER_SECOND
+const ARENA_MARGIN: float = RoomSessionScript.ARENA_MARGIN
+const AUTHORITY_VIEWPORT_SIZE: Vector2 = RoomSessionScript.AUTHORITY_VIEWPORT_SIZE
+const SIM_TICKS_PER_SECOND: int = RoomSessionScript.SIM_TICKS_PER_SECOND
 const SIM_STEP_SECONDS: float = 1.0 / float(SIM_TICKS_PER_SECOND)
 const AUTO_RANGE: float = RoomSessionScript.AUTO_RANGE
 const BASE_PAYLOAD: float = RoomSessionScript.BASE_PAYLOAD
@@ -97,9 +96,9 @@ const HAZARD_CYCLE_TICKS: int = 90
 const ELITE_BARRIER_PERIOD_TICKS: int = 60
 const ELITE_BARRIER_ACTIVE_TICKS: int = 20
 const TIMED_BREAK_BONUS_TICKS: int = 900
-const ATTACK_SOURCE_ASSISTED: String = "assisted"
-const ATTACK_SOURCE_POINTER: String = "pointer"
-const ATTACK_SOURCE_PROXY: String = "proxy"
+const ATTACK_SOURCE_ASSISTED: String = RoomSessionScript.ATTACK_SOURCE_ASSISTED
+const ATTACK_SOURCE_POINTER: String = RoomSessionScript.ATTACK_SOURCE_POINTER
+const ATTACK_SOURCE_PROXY: String = RoomSessionScript.ATTACK_SOURCE_PROXY
 
 ## Room authority (see src/game/combat_room/room_session.gd). The properties below
 ## forward to it under their historical names.
@@ -229,18 +228,10 @@ var room_rules: CombatRoomRules:
 		session.room_rules = value
 var battle_over: bool:
 	get:
-		if room_encounter_port != null and room_encounter_port.encounter != null and room_encounter_port.encounter.has_method("snapshot"):
-			var terminal: Dictionary = room_encounter_port.snapshot().get("terminal", {})
-			if String(terminal.get("phase", "")) in ["victory", "defeat"]:
-				return true
-		return bool(room_rules.snapshot().battle_over)
+		return session.is_battle_over()
 var battle_victory: bool:
 	get:
-		if room_encounter_port != null and room_encounter_port.encounter != null and room_encounter_port.encounter.has_method("snapshot"):
-			var terminal: Dictionary = room_encounter_port.snapshot().get("terminal", {})
-			if String(terminal.get("phase", "")) in ["victory", "defeat"]:
-				return bool(terminal.get("victory", false))
-		return bool(room_rules.snapshot().battle_victory)
+		return session.is_battle_victory()
 var battle_report: String:
 	get:
 		return session.battle_report
@@ -276,7 +267,11 @@ var last_loot_pickup_command_receipt: Dictionary:
 var last_attack_outcome: Dictionary:
 	get:
 		return combat_system.last_attack_outcome
-var content_registry
+var content_registry:
+	get:
+		return session.content_registry
+	set(value):
+		session.content_registry = value
 var proxy_runtime:
 	get:
 		return session.proxy_runtime
@@ -312,7 +307,11 @@ var actor_registry:
 		return session.actor_registry
 	set(value):
 		session.actor_registry = value
-var scene_runtime
+var scene_runtime:
+	get:
+		return session.scene_runtime
+	set(value):
+		session.scene_runtime = value
 var simulation_world:
 	get:
 		return session.simulation_world

@@ -18,12 +18,22 @@ const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.
 const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
 const CombatSystemScript := preload("res://src/systems/combat_system.gd")
 const CombatSimulationScript := preload("res://src/systems/combat_simulation.gd")
+const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
 
 ## Frozen gameplay constants of the Ranger's first chapter. MainArena re-exports
 ## them under the same names.
 const AUTO_RANGE: float = 225.0
 const BASE_PAYLOAD: float = 160.0
 const FATE_SEED: int = 52969
+## Authority viewport and arena margin used when no mounted room supplies the
+## authored arena rectangle.
+const ARENA_MARGIN: float = 42.0
+const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
+const SIM_TICKS_PER_SECOND: int = RangerSkillRulesScript.TICKS_PER_SECOND
+## Attack sources a cast request can carry (feedback bookkeeping only).
+const ATTACK_SOURCE_ASSISTED: String = "assisted"
+const ATTACK_SOURCE_POINTER: String = "pointer"
+const ATTACK_SOURCE_PROXY: String = "proxy"
 
 ## Build lock: the rule inputs frozen when a contract starts.
 var selected_preset: String = "convergent"
@@ -74,6 +84,11 @@ var room_loot := CombatRoomLootScript.new()
 ## assembly) and the typed ports built over them.
 var actor_registry
 var simulation_world
+## SceneRuntime the room is mounted in (null for a standalone room).
+var scene_runtime
+## Authored content the room validates against (loaded by the view's runtime
+## initialization).
+var content_registry
 ## Authority tick committed by the simulation world (0 before one exists).
 ## Ticks are only ever committed by SimulationWorld.step_tick().
 var sim_tick: int:
@@ -102,6 +117,34 @@ var room_drop_tags: Array = []
 ## spawning during a tick never queries the presentation. Keyed by visual id.
 var actor_art_boxes: Dictionary = {}
 var framework_seed: int = FATE_SEED
+
+
+## Authored arena rectangle: the mounted room's, or the fixed authority
+## viewport rectangle for a standalone room.
+func arena_rect() -> Rect2:
+	if scene_runtime != null:
+		var authored: Variant = scene_runtime.get("authored_arena_rect")
+		return authored as Rect2 if authored is Rect2 else Rect2()
+	return Rect2(Vector2(ARENA_MARGIN, 190.0), Vector2(
+		AUTHORITY_VIEWPORT_SIZE.x - ARENA_MARGIN * 2.0,
+		AUTHORITY_VIEWPORT_SIZE.y - 190.0 - ARENA_MARGIN))
+
+
+## True once the mounted encounter or the room rules report victory or defeat.
+func is_battle_over() -> bool:
+	if room_encounter_port != null and room_encounter_port.encounter is RoomEncounter:
+		var terminal: Dictionary = room_encounter_port.snapshot().get("terminal", {})
+		if String(terminal.get("phase", "")) in ["victory", "defeat"]:
+			return true
+	return bool(room_rules.snapshot().battle_over)
+
+
+func is_battle_victory() -> bool:
+	if room_encounter_port != null and room_encounter_port.encounter is RoomEncounter:
+		var terminal: Dictionary = room_encounter_port.snapshot().get("terminal", {})
+		if String(terminal.get("phase", "")) in ["victory", "defeat"]:
+			return bool(terminal.get("victory", false))
+	return bool(room_rules.snapshot().battle_victory)
 
 
 ## Replaces the battle report text. The view calls this for status lines the
