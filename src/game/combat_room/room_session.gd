@@ -1,14 +1,17 @@
 class_name RoomSession
 extends RefCounted
 
-## Authoritative state of one combat room. MainArena creates and owns the
-## session and keeps every historical property name as a forwarding property, so
-## the state hash builder, the room helpers, the ports and the tests keep
-## reading `arena.<name>`. The session is never a Node and imports no
-## presentation code; it holds no MainArena reference. Fixed-tick behavior still
-## lives in MainArena's phase hooks and the combat_room collaborators; the
-## session owns the simulation lifecycle (see
-## docs/rebuild/ROOM_SESSION_DESIGN.md, migration items 3 and 4).
+## Authoritative state and logic of one combat room. MainArena (the room view)
+## creates and holds the session and keeps every historical property name as a
+## forwarding property, so the state hash builder, the room helpers, the ports
+## and the tests keep reading `arena.<name>`. The session is never a Node, imports
+## no presentation code and holds no MainArena reference. It owns the simulation
+## lifecycle, the combat and encounter context syncs, the player-event
+## consumption, target and enemy queries, the contract start/idle resets, the
+## build freeze, room loot and the presentation event log. The fixed-tick phase
+## hooks stay on MainArena (RoomPhaseDomain dispatches to them) and delegate here
+## or to the combat_room collaborators that still take MainArena (see
+## docs/rebuild/ROOM_SESSION_DESIGN.md, migration items 3 to 6).
 
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const CombatRoomRulesScript := preload("res://src/game/combat_room_rules.gd")

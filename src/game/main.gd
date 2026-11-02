@@ -1,6 +1,13 @@
 class_name MainArena
 extends Node2D
 
+## The combat room view: the script on every combat room scene. Room authority
+## lives in RoomSession (`session`); this node owns the presentation controller,
+## the input adapter and the frame loop, applies the session's presentation event
+## log after each fixed tick, and keeps compatibility forwarders and the thin
+## fixed-tick phase hooks that RoomPhaseDomain dispatches to (test subclasses
+## override those hooks). See docs/rebuild/ROOM_SESSION_DESIGN.md.
+
 signal return_requested
 
 const PresentationController := preload("res://src/presentation/combat_presentation_controller.gd")

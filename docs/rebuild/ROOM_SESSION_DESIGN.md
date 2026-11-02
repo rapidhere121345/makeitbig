@@ -1,6 +1,6 @@
 # Room Session Design (redesign Step 2-4)
 
-Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 5 are implemented.
+Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 6 are implemented.
 
 ## Problem
 
@@ -158,7 +158,37 @@ becomes `kit.actor_spec().id`.
    for reinforcement spawns still run in the tick through the runtime's
    presentation port; they are not `src/presentation` reads.
 6. Extract `RoomView`; `MainArena` becomes the view script plus compatibility
-   getters. `CombatRoomRuntime` talks to `session` with typed calls.
+   getters. `CombatRoomRuntime` talks to `session` with typed calls. Done:
+   `MainArena` (`src/game/main.gd`) is the RoomView (no second Node, no rename).
+   `CombatRoomRuntime` casts the mounted scene to `MainArena` once (a failed cast
+   still reports `room_api_unavailable`) and configures authority through
+   `room.session`, with no string `get`/`set`/`call`/signal lookups. The session
+   now owns: `scene_runtime`, `content_registry`, `proxy_prediction`, the arena
+   rect, `battle_over`/`battle_victory`, the combat and encounter context syncs
+   and report adoption, command routing, target and enemy queries, entity id
+   allocation, the player-event consumption (receipts, action events, arrow
+   release) and the diagnostic cast, the build freeze and room combat stats, the
+   proxy contract start, the contract-start and idle resets, room loot, the
+   content hash and the automation timeout. `MainArena` keeps same-named
+   forwarders, the phase hooks RoomPhaseDomain dispatches to, `start_room` and
+   `_spawn_wave` as orchestrators (they interleave presentation resets and
+   helpers that still take `MainArena`: `actor_setup`, `room_hazards`,
+   `kernel_reconciler`), `_initialize_runtime`, the port wiring and the
+   presentation members. `RoomGeometry` now takes only the session; the other
+   helpers still need `MainArena` for `actor_setup`, `kernel_reconciler`,
+   `enemies` and presentation flags, so they keep taking it.
+
+   Event log drain contract: the session never drains itself; whoever calls
+   `step()` owns the log and drains after every step. `MainArena` drains after
+   each fixed tick, before each presentation refresh and after a diagnostic cast,
+   whether or not presentation is enabled (the applier hands events to a disabled
+   feedback controller, or drops them when it is missing), so the log is empty
+   between ticks in presentation-off replays. A headless host that steps a
+   session without a view must call `drain_events()` or `clear_events()`. As a
+   safety net the log keeps at most `MAX_PENDING_EVENTS` (4096) events; the
+   oldest half is dropped and counted in `dropped_events`. Contract start and
+   idle reset clear the log. Dropping affects presentation only, never
+   authority or the state hash.
 7. Introduce `ClassKit` with `RangerKit` as a wrapper; keep identical hash keys.
 8. Move tests from `MainArena` privates (`_simulate_tick`, `_semantic_state_hash`,
    `_arena_rect`, `_enemy_by_entity_id`, ...) to the session, then delete the
