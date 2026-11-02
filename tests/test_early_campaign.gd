@@ -30,8 +30,8 @@ func _test_shipped_contract(failures: Array[String]) -> void:
 	if not errors.is_empty():
 		return
 	var data := _read_shipped_data()
-	_expect(data.layouts.size() == 3 and data.objectives.size() == 3 and data.hazards.size() == 2,
-		"catalog: expected exactly 3 layouts, 3 objectives, and 2 hazards", failures)
+	_expect(data.layouts.size() == 8 and data.objectives.size() == 3 and data.hazards.size() == 2,
+		"catalog: expected exactly 8 layouts, 3 objectives, and 2 hazards", failures)
 	for layout_value in data.layouts:
 		var layout: Dictionary = layout_value
 		for field in ["display_name", "concept", "landmark", "entry_hint", "exit_hint"]:
@@ -69,7 +69,7 @@ func _test_first_hunt_roster_plan(failures: Array[String]) -> void:
 	if not bool(built.get("ok", false)):
 		return
 	_expect(int(built.plan.room_count) == 2, "first hunt: expected two short rooms", failures)
-	_expect(built.plan.rooms[0].layout_id == "rectangle_arena" and built.plan.rooms[1].layout_id == "corridor",
+	_expect(built.plan.rooms[0].layout_id == "snowbound_road" and built.plan.rooms[1].layout_id == "ruined_village",
 		"first hunt: the two authored rooms must demonstrate different spaces", failures)
 	var ids := {}
 	for room: Dictionary in built.plan.rooms:
@@ -143,7 +143,7 @@ func _test_invalid_reference_cycle_and_counts(failures: Array[String]) -> void:
 
 	var wrong_count := _read_shipped_data()
 	wrong_count.layouts.pop_back()
-	_expect(_has(registry.validate_campaign(wrong_count), "layouts has 2 entries, expected 3"), "validator: wrong exact catalog count was accepted", failures)
+	_expect(_has(registry.validate_campaign(wrong_count), "layouts has 7 entries, expected 8"), "validator: wrong exact catalog count was accepted", failures)
 
 	var duplicate := _read_shipped_data()
 	duplicate.hazards[1].id = duplicate.hazards[0].id

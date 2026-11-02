@@ -6,6 +6,7 @@ extends CanvasLayer
 signal opened
 signal resumed
 signal abandon_requested
+signal quit_requested
 signal display_requested(resolution: Vector2i, fullscreen: bool)
 signal effects_volume_changed(value: float)
 signal language_requested(locale_code: String)
@@ -34,6 +35,10 @@ var _heading: Label
 var _note: Label
 var _resume: Button
 var _abandon: Button
+var _quit: Button
+var _cancel_quit: Button
+var _quit_warning: Label
+var _confirm_quit := false
 var _resolution: OptionButton
 var _fullscreen: CheckButton
 var _display_hint: Label
@@ -96,6 +101,19 @@ func _ready() -> void:
 	_resume = _button("Resume", "ResumeButton", outer)
 	outer.move_child(_resume, 2)
 	_resume.pressed.connect(close_menu)
+	_quit_warning = _label("Quitting will lose the active contract. Saved progress remains.", 18)
+	# This short pinned warning must not calculate a wrapped minimum height at
+	# zero width when it first becomes visible.
+	_quit_warning.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_quit_warning.name = "QuitWarning"
+	_quit_warning.visible = false
+	outer.add_child(_quit_warning)
+	_quit = _button("Quit to Desktop", "QuitButton", outer)
+	_quit.pressed.connect(_request_quit)
+	_cancel_quit = _button("Cancel Quit", "CancelQuitButton", outer)
+	_cancel_quit.visible = false
+	_cancel_quit.pressed.connect(_cancel_quit_request)
+
 	var language_row := HBoxContainer.new()
 	column.add_child(language_row)
 	var language_label := _label("Language", 20)
@@ -174,7 +192,7 @@ func _ready() -> void:
 		effects_volume_changed.emit(value / 100.0))
 	volume_row.add_child(_volume)
 	column.add_child(_label("Controls", 22))
-	column.add_child(_label("WASD Move   Left-click Target and shoot\nSpace Aim assist   Q Mark   E Assault\nShift / Right-click Dodge   Tab Battle report\nEsc Pause / Resume   F1 Settings   F11 Fullscreen", 18))
+	column.add_child(_label("WASD Move   Left-click Target and shoot\nSpace Aim assist   Q Mark   E Dash\nShift / Right-click Dodge   Tab Battle report\nEsc Pause / Resume   F1 Settings   F11 Fullscreen", 18))
 	_abandon = _button("Abandon Contract", "AbandonButton", column)
 	_abandon.pressed.connect(_request_abandon)
 	get_viewport().size_changed.connect(_fit)
@@ -263,6 +281,7 @@ func open_menu() -> void:
 	_return_focus = weakref(focus) if focus != null else null
 	_open = true
 	_confirm_abandon = false
+	_cancel_quit_request()
 	_abandon.text = "Abandon Contract"
 	_shade.show()
 	_panel.show()
@@ -287,6 +306,28 @@ func close_menu() -> void:
 
 func is_open() -> bool:
 	return _open
+
+
+func _request_quit() -> void:
+	if _arena and not _confirm_quit:
+		_confirm_quit = true
+		_quit_warning.show()
+		_cancel_quit.show()
+		_quit.text = "Confirm Quit to Desktop"
+		_fit.call_deferred()
+		_cancel_quit.grab_focus()
+		return
+	quit_requested.emit()
+
+
+func _cancel_quit_request() -> void:
+	_confirm_quit = false
+	_quit_warning.hide()
+	_cancel_quit.hide()
+	_quit.text = "Quit to Desktop"
+	if _open:
+		_quit.grab_focus()
+	_fit()
 
 
 func _request_abandon() -> void:

@@ -433,6 +433,11 @@ func _run() -> void:
 	action_snapshot["attack_phase_label"] = ""
 	hud.present(action_snapshot)
 	_expect(_state(hud, "Skill1Button") == "Buffered", "phase-free buffered attack did not keep the continuous-fire buffer copy", failures)
+	action_snapshot["attack_buffered"] = false
+	action_snapshot["attack_request_open"] = false
+	hud.present(action_snapshot)
+	_expect(_state(hud, "Skill1Button") == "Repeating", "phase-free held attack must fit the compact state label", failures)
+	_expect("Current State: Hold to Repeat" in skill_one.tooltip_text, "phase-free held attack tooltip lost its full state", failures)
 	_expect_skill_state_fits(hud, "Skill1Button", failures)
 
 	# Old snapshots remain byte-for-byte compatible, while assisted targeting keeps the
@@ -1020,9 +1025,9 @@ func _test_room_progress(hud: Control, failures: Array[String]) -> void:
 	hud.present(snapshot)
 	var heading := hud.find_child("EncounterHeading", true, false) as Label
 	var cue := hud.find_child("RoomStartLabel", true, false) as Label
-	_expect(heading.visible and heading.text == "Room 1 / 2 · Clear All Targets",
+	_expect(heading.visible and heading.text == "Stage 1 / 2 · Clear All Targets",
 		"room HUD: first-room progress and objective were not continuously visible", failures)
-	_expect(cue.visible and cue.text.contains("Entering Room 1"), "room HUD: first-room entry cue missing", failures)
+	_expect(cue.visible and cue.text.contains("Entering Stage 1"), "room HUD: first-room entry cue missing", failures)
 	_expect(heading.get_minimum_size().x <= heading.size.x and cue.get_minimum_size().x <= cue.size.x
 		and not heading.get_global_rect().intersects(cue.get_global_rect())
 		and not (hud.find_child("BossStateLabel", true, false) as Control).visible,
@@ -1041,20 +1046,31 @@ func _test_room_progress(hud: Control, failures: Array[String]) -> void:
 				_expect(layout["entry_hint"] == hint, "room HUD: campaign and catalog entry guidance differ", failures)
 	snapshot["room_elapsed_seconds"] = 2.0
 	hud.present(snapshot)
-	_expect(not cue.visible and heading.text.contains("Room 1 / 2"),
+	_expect(not cue.visible and heading.text.contains("Stage 1 / 2"),
 		"room HUD: expiring the entry cue removed persistent room progress", failures)
 	# A same-layout room transition gets a distinct number immediately, without a click.
 	snapshot["room_id"] = "first_hunt_followup"
 	snapshot["room_index"] = 1
 	snapshot["room_elapsed_seconds"] = 0.0
 	hud.present(snapshot)
-	_expect(heading.text == "Room 2 / 2 · Clear All Targets" and cue.visible and cue.text.contains("Entering Room 2"),
+	_expect(heading.text == "Stage 2 / 2 · Clear All Targets" and cue.visible and cue.text.contains("Entering Stage 2"),
 		"room HUD: second-room transition reused the first-room copy", failures)
 	hud.present(snapshot)
-	_expect(cue.visible and heading.text.contains("Room 2 / 2"), "room HUD: repeated snapshot disturbed the entry cue", failures)
+	_expect(cue.visible and heading.text.contains("Stage 2 / 2"), "room HUD: repeated snapshot disturbed the entry cue", failures)
+	var return_button := hud.find_child("ReturnButton", true, false) as Button
+	_expect(return_button.text == "Leave", "room HUD: active stage must offer Leave", failures)
 	snapshot["battle_over"] = true
+	snapshot["battle_victory"] = true
+	snapshot["room_index"] = 0
 	hud.present(snapshot)
-	_expect(not cue.visible and heading.text.contains("Room 2 / 2"),
+	_expect(return_button.text == "Next Stage", "room HUD: nonfinal victory must offer Next Stage", failures)
+	snapshot["room_index"] = 1
+	hud.present(snapshot)
+	_expect(return_button.text == "Finish Task", "room HUD: final victory must offer Finish Task", failures)
+	snapshot["battle_victory"] = false
+	hud.present(snapshot)
+	_expect(return_button.text == "Leave", "room HUD: defeat must offer Leave", failures)
+	_expect(not cue.visible and heading.text.contains("Stage 2 / 2"),
 		"room HUD: settled room still shows entry cue or loses its progress", failures)
 	hud.present(_snapshot())
 	_expect(not cue.visible, "room HUD: legacy snapshot invented a room entry", failures)
@@ -1089,7 +1105,7 @@ func _test_elite_feedback(hud: Control, failures: Array[String]) -> void:
 			var expected := "Barrier Active · Circle Around and Wait for an Opening" if phase_sample.elite_barrier_active else "Barrier Down · Focus Your Attacks"
 			_expect(panel.is_visible_in_tree() and expected in label.text and "Reinforcements Pending · Elite Calls at Half Health" in label.text,
 				"elite HUD: authority phase or summon readiness missing at %s tick %d" % [viewport_size, tick], failures)
-			_expect(_label_text(hud, "EncounterHeading") == "Room 2 / 2 · Hunt Elites"
+			_expect(_label_text(hud, "EncounterHeading") == "Stage 2 / 2 · Hunt Elites"
 				and (hud.find_child("RoomStartLabel", true, false) as Control).visible,
 				"elite HUD: mechanic cue replaced room progress or entry cue", failures)
 			_expect(hud.size == Vector2(viewport_size) and Rect2(Vector2.ZERO, hud.size).encloses(panel.get_global_rect())

@@ -15,13 +15,13 @@ const UiKit := preload("res://src/presentation/ui_kit.gd")
 const DESIGN_SIZE := Vector2(1280.0, 720.0)
 ## The produced plate keeps its left 40% (native 256px, 512px at 2x) as quiet dark
 ## ground for exactly this column, so the veil stops on that boundary and ends
-## before the shared-hearth canopy starts at native x=270.
+## before the road and forge composition on the right.
 const VEIL_WIDTH := 512.0
 const RAIL_WIDTH := 4.0
 ## One flat scrim, no gradient and no glow. The plate's left is already dark, so
 ## this only buys contrast for the copy; the right 768px - the half that carries
-## the ruined tower and its hearth canopy - is never dimmed at all.
-const VEIL_ALPHA := 0.45
+## the road, forge and distant watchtower - is never dimmed at all.
+const VEIL_ALPHA := 0.72
 const COLUMN_POSITION := Vector2(56.0, 74.0)
 const COLUMN_WIDTH := 416.0
 const CLASS_ID := "ranger"
@@ -126,6 +126,7 @@ func _add_menu_column() -> void:
 	column.add_child(UiKit.colored_label(KICKER_TEXT, KICKER_FONT_SIZE, COOL_GREY))
 	var wordmark := UiKit.colored_label(TITLE_TEXT, TITLE_FONT_SIZE, ShellThemeScript.BONE)
 	wordmark.name = "Wordmark"
+	wordmark.add_theme_font_override("font", ShellThemeScript.ui_font())
 	column.add_child(wordmark)
 	column.add_child(_copper_rule())
 	var premise := UiKit.colored_label(PREMISE_TEXT, BODY_FONT_SIZE, COOL_GREY)
@@ -143,9 +144,8 @@ func _add_menu_column() -> void:
 	_new_game_button.text = NEW_GAME_TEXT
 	_new_game_button.custom_minimum_size = Vector2(COLUMN_WIDTH, 52.0)
 	_new_game_button.add_theme_font_size_override("font_size", ACTION_FONT_SIZE)
-	## Only the primary action is emphasised; hover, pressed, focus and disabled all
-	## stay the shared theme's own states.
-	_new_game_button.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
+	## Engraved primary action retains distinct hover, pressed and focus states.
+	ShellThemeScript.apply_primary_button(_new_game_button)
 	_new_game_button.pressed.connect(_on_new_game_pressed)
 	column.add_child(_new_game_button)
 

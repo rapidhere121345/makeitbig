@@ -1,6 +1,6 @@
 class_name ShellTheme
 extends RefCounted
-## R13: generated hearthside copper/wood fittings and cold woven materials.
+## Modern Hearthside shell: open sections, quiet surfaces and restrained accents.
 ## Presentation only; content margins stay stable so this skin does not trade
 ## away the established readable text and compact-window layout contracts.
 
@@ -8,31 +8,35 @@ const SharedPalette := preload("res://src/presentation/palette.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
 const MATERIAL_DIRECTORY := "res://art/production/p1/ui_style_r13"
 const EXPLORATION_ART := "res://art/production/p1/ui_exploration_v01"
+const CRAFTED_ART := "res://art/production/p1/ui_crafted_v01"
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 static var _materials: Dictionary = {}
 
 
 class MaterialBackdrop extends Control:
-	var cloth: Texture2D
 	var scenery: Texture2D
+	var workshop := false
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		cloth = ShellTheme.material_texture("backdrop_cloth")
 		var motif := String(get_meta("motif", ""))
 		if motif in ["contract_screen", "result_screen"]:
 			scenery = ShellTheme.illustration_texture("contract_road" if motif == "contract_screen" else "settlement_table")
+		elif motif == "facility_screen":
+			workshop = true
+			scenery = ShellTheme.crafted_texture("workshop")
 		resized.connect(queue_redraw)
 		queue_redraw()
 
 	func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), ShellTheme.INK)
-		if cloth != null:
-			draw_texture_rect(cloth, Rect2(Vector2.ZERO, size), true, Color(0.46, 0.50, 0.54, 1.0))
 		if scenery != null:
 			var extent := scenery.get_size() * maxf(size.x / scenery.get_width(), size.y / scenery.get_height())
-			draw_texture_rect(scenery, Rect2((size - extent) * 0.5, extent), false, Color(0.30, 0.34, 0.40, 1))
+			var intensity := float(get_meta("material_intensity", 0.52))
+			var tint := Color(intensity, intensity, intensity, 1) if workshop else Color(0.22, 0.25, 0.29, 1)
+			draw_texture_rect(scenery, Rect2((size - extent) * 0.5, extent), false, tint)
 
 ## Full Simplified-Chinese faces, bundled with their upstream OFL licences.
 ## Serif carries the town's book/inscription character; medium sans keeps
@@ -98,13 +102,13 @@ static func data_font() -> FontFile:
 
 static func create() -> Theme:
 	var theme := Theme.new()
-	theme.default_font = ui_font()
+	theme.default_font = data_font()
 	theme.default_font_size = BODY_FONT_SIZE
 
 	theme.set_color("font_color", "Label", BONE)
 	theme.set_color("font_shadow_color", "Label", INK)
 	theme.set_constant("shadow_offset_x", "Label", 0)
-	theme.set_constant("shadow_offset_y", "Label", 1)
+	theme.set_constant("shadow_offset_y", "Label", 0)
 	theme.set_constant("line_spacing", "Label", 4)
 	theme.set_font_size("font_size", "Label", BODY_FONT_SIZE)
 	theme.set_type_variation("DataLabel", "Label")
@@ -123,21 +127,21 @@ static func create() -> Theme:
 	theme.set_stylebox("focus", "Button", _box(Color(0, 0, 0, 0), BONE, 2, 0))
 	theme.set_stylebox("disabled", "Button", panel_style("disabled"))
 
-	# Text entry reads as a recessed well: cool edge at rest, copper when active.
+	# Smoked charcoal reading wells and bronze focus match the workshop materials.
 	for control_type: String in ["LineEdit", "OptionButton"]:
 		theme.set_color("font_color", control_type, BONE)
 		theme.set_color("font_placeholder_color", control_type, NEUTRAL)
 		theme.set_font_size("font_size", control_type, 20)
 		theme.set_stylebox("normal", control_type, panel_style("disabled"))
-		theme.set_stylebox("focus", control_type, _box(DEEP_BLUE, AMBER, 1, 0))
+		theme.set_stylebox("focus", control_type, _box(Color("17130f"), AMBER, 1, 0))
 	theme.set_color("font_hover_color", "OptionButton", BONE)
 	theme.set_color("font_pressed_color", "OptionButton", BONE)
 	theme.set_stylebox("hover", "OptionButton", panel_style("hover"))
 	theme.set_stylebox("pressed", "OptionButton", panel_style("selected"))
 
 	theme.set_stylebox("panel", "PanelContainer", panel_style())
-	theme.set_stylebox("panel", "PopupPanel", panel_style())
-	theme.set_stylebox("panel", "AcceptDialog", panel_style())
+	theme.set_stylebox("panel", "PopupPanel", panel_style("paper"))
+	theme.set_stylebox("panel", "AcceptDialog", panel_style("paper"))
 	theme.set_color("font_color", "RichTextLabel", BONE)
 	theme.set_color("default_color", "RichTextLabel", BONE)
 	theme.set_constant("line_separation", "RichTextLabel", 4)
@@ -159,11 +163,9 @@ static func _box(fill: Color, border: Color, width: int, radius: int) -> StyleBo
 	return UiKit.flat_style(fill, border, width, radius, Vector4(16.0, 12.0, 16.0, 12.0))
 
 
-## Flat slate surface with a single thin copper edge: the calm default for
-## repeated panels and strips, so the ornate copper frame keeps meaning "major
-## framed surface" instead of appearing everywhere at once.
+## Quiet borderless slate surface for overlays that need a reading ground.
 static func slate_panel(edge: Color = COPPER_DULL, fill: Color = DEEP_BLUE) -> StyleBoxFlat:
-	var box := _box(fill, edge, 1, 0)
+	var box := _box(fill, edge, 0, 0)
 	return box
 
 
@@ -178,29 +180,71 @@ static func slate_header() -> StyleBoxFlat:
 	return box
 
 
-static func panel_style(kind: String = "panel") -> StyleBoxTexture:
-	if kind not in ["panel", "button", "hover", "selected", "disabled", "well", "paper"]:
-		kind = "panel"
+## Section containers keep layout margins without painting another card.
+static func section_style() -> StyleBoxFlat:
+	return _box(Color.TRANSPARENT, Color.TRANSPARENT, 0, 0)
+
+
+static func primary_button_style(tint: Color = Color.WHITE) -> StyleBoxTexture:
 	var box := StyleBoxTexture.new()
-	box.texture = material_texture(kind)
-	# Keep the authored material; recess reading surfaces and ordinary borders
-	# so text, selected controls and active copper remain the visual priorities.
-	if kind in ["paper", "well"]:
-		box.modulate_color = Color(0.52, 0.57, 0.61, 1.0)
-	elif kind == "panel":
-		box.modulate_color = Color(0.64, 0.66, 0.69, 1.0)
-	elif kind == "button":
-		box.modulate_color = Color(0.78, 0.79, 0.80, 1.0)
-	elif kind == "disabled":
-		box.modulate_color = Color(0.58, 0.61, 0.65, 1.0)
-	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
-		box.set_texture_margin(side, 12)
-	box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
-	box.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
+	box.texture = crafted_texture("action")
+	box.modulate_color = tint
+	# Only the narrow engraved caps and metal rims retain their native size.
+	# Layout margins deliberately match the open UI's existing button contract.
+	box.texture_margin_left = 24
+	box.texture_margin_right = 24
+	box.texture_margin_top = 6
+	box.texture_margin_bottom = 6
 	box.content_margin_left = 16
 	box.content_margin_right = 16
 	box.content_margin_top = 12
 	box.content_margin_bottom = 12
+	return box
+
+
+static func apply_primary_button(button: Button) -> void:
+	button.add_theme_stylebox_override("normal", primary_button_style())
+	button.add_theme_stylebox_override("hover", primary_button_style(Color(1.3, 1.2, 1.05)))
+	button.add_theme_stylebox_override("pressed", primary_button_style(Color(0.75, 0.75, 0.75)))
+	button.add_theme_stylebox_override("disabled", primary_button_style(Color(0.42, 0.42, 0.42)))
+	# Focus stays the shared high-contrast outline, independent of hover or art.
+
+
+static func crafted_texture(name: String) -> Texture2D:
+	var key := "crafted/" + name
+	if not _materials.has(key):
+		var path := CRAFTED_ART.path_join(name + ".png")
+		var loaded := TextureLoader.load_imported_first(path)
+		if loaded.texture == null:
+			push_error("Crafted UI material missing: " + path)
+		_materials[key] = loaded.texture
+	return _materials[key] as Texture2D
+
+
+static func panel_style(kind: String = "panel") -> StyleBoxFlat:
+	var box := section_style()
+	match kind:
+		"panel":
+			box.bg_color = Color("171511f2")
+		"paper":
+			box.bg_color = Color("171511")
+			box.set_corner_radius_all(4)
+		"button":
+			box.bg_color = Color("100f0dcc")
+			box.border_color = Color("66523b99")
+			box.border_width_bottom = 1
+		"hover":
+			box.bg_color = Color("221c14e6")
+			box.border_color = COPPER_DULL
+			box.border_width_bottom = 1
+		"selected":
+			box.bg_color = Color("2b2115e6")
+			box.border_color = AMBER
+			box.border_width_bottom = 2
+		"disabled":
+			box.bg_color = Color("08080799")
+		"well":
+			pass
 	return box
 
 
@@ -239,21 +283,9 @@ static func illustration_texture(name: String) -> Texture2D:
 	return _materials[key] as Texture2D
 
 
-## Hand-painted copper fittings frame the major surfaces. Small controls retain
-## their thinner edges so ornament does not compete with their labels.
-static func crafted_panel() -> StyleBoxTexture:
-	var box := StyleBoxTexture.new()
-	box.texture = illustration_texture("copper_frame")
-	box.modulate_color = Color(0.76, 0.78, 0.82, 1)
-	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
-		box.set_texture_margin(side, 20)
-	box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
-	box.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
-	box.content_margin_left = 16
-	box.content_margin_right = 16
-	box.content_margin_top = 12
-	box.content_margin_bottom = 12
-	return box
+## Kept as the shared major-section entry point; sections no longer draw frames.
+static func crafted_panel() -> StyleBoxFlat:
+	return section_style()
 
 
 static func illustration_panel(name: String, minimum_height: float) -> PanelContainer:

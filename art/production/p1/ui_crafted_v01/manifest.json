@@ -1,0 +1,118 @@
+{
+  "assets": {
+    "action": {
+      "alpha_bounds_xyxy": [
+        0,
+        0,
+        512,
+        56
+      ],
+      "output_mode": "RGBA",
+      "path": "res://art/production/p1/ui_crafted_v01/action.png",
+      "sha256": "c2075a2a50f0b295addaf2f18d2c0874f19fcc1faaee4c1105f19882914bcd3c",
+      "source": "docs/art-production/ui-crafted-20261101/sources/action_original.png",
+      "source_mode": "RGBA",
+      "source_sha256": "c34455c0eec435b6c74c2fff6edf944798bb8f78fd1fafe109c997ad99134dcd",
+      "source_size": [
+        2172,
+        724
+      ],
+      "transform": {
+        "canvas": [
+          512,
+          56
+        ],
+        "crop_alpha_greater_than": 1,
+        "crop_xyxy": [
+          0,
+          238,
+          2171,
+          477
+        ],
+        "offset": [
+          0,
+          0
+        ],
+        "scaled_size": [
+          512,
+          56
+        ]
+      }
+    },
+    "crest": {
+      "alpha_bounds_xyxy": [
+        17,
+        8,
+        148,
+        150
+      ],
+      "output_mode": "RGBA",
+      "path": "res://art/production/p1/ui_crafted_v01/crest.png",
+      "sha256": "8db62c1cd5a9bb536d89fbe1faa08167c4c58845233ac63679dd4cbe21891288",
+      "source": "docs/art-production/ui-crafted-20261101/sources/crest_original.png",
+      "source_mode": "RGBA",
+      "source_sha256": "bd7a1048920046a58785cb3e3a324ab8de57bdd2d21949093664b0085786e39c",
+      "source_size": [
+        1254,
+        1254
+      ],
+      "transform": {
+        "canvas": [
+          160,
+          160
+        ],
+        "crop_xyxy": [
+          0,
+          16,
+          1230,
+          1254
+        ],
+        "offset": [
+          8,
+          8
+        ],
+        "scaled_size": [
+          143,
+          144
+        ]
+      }
+    },
+    "workshop": {
+      "alpha_bounds_xyxy": null,
+      "output_mode": "RGB",
+      "path": "res://art/production/p1/ui_crafted_v01/workshop.png",
+      "sha256": "1acba5ff1baebf1d7399a4e78ad6886f784c536e2bf57d70437357fbf5cbffec",
+      "source": "docs/art-production/ui-crafted-20261101/sources/workshop_original.png",
+      "source_mode": "RGB",
+      "source_sha256": "af6c8180c968f7710db377d67456ce18d8410ad0b848fbbe36ed0b45c8409a04",
+      "source_size": [
+        1672,
+        941
+      ],
+      "transform": {
+        "canvas": [
+          1280,
+          720
+        ],
+        "crop_xyxy": [
+          4,
+          2,
+          1668,
+          938
+        ],
+        "offset": [
+          0,
+          0
+        ],
+        "scaled_size": [
+          1280,
+          720
+        ]
+      }
+    }
+  },
+  "recipe": "docs/art-production/ui-crafted-20261101/recipe.json",
+  "recipe_sha256": "a0213a5366aa7969c7ae46dc54b8068a977972f5eb251906f764995c5ad94c73",
+  "sampling": "nearest-neighbor",
+  "schema_version": 1
+}

@@ -313,8 +313,15 @@ func _test_real_held_attack_between_rooms(failures: Array[String]) -> void:
 		var first: Node = runtime.get("room_instance")
 		first.set_process(false)
 		if scenario == "pointer":
-			first.presentation.world_view.begin_frame(Rect2(Vector2.ZERO, Vector2(1280, 720)), first.player_position, first._arena_rect())
-			var point: Vector2 = first.presentation.world_view.gameplay_to_screen(first.enemies[0].position + Vector2(0.0, -22.0))
+			# The river's encounter spawn can be outside the camera. Place the
+			# real enemy on the spawn bank and publish its pose before clicking.
+			var target: CombatEnemyState = first.enemies[0]
+			var placed: Dictionary = first.teleport_actor("enemy/%d" % target.entity_id, first.player_position + Vector2(120.0, 0.0))
+			_expect(bool(placed.get("ok", false)), "continuous input: pointer target placement failed", failures)
+			first._simulate_tick()
+			first.refresh_presentation()
+			var point: Vector2 = first.presentation.world_view.gameplay_to_screen(target.position + Vector2(0.0, -22.0))
+			_expect(Rect2(Vector2.ZERO, Vector2(1280, 720)).has_point(point) and not first.presentation.is_pointer_over_interface(point), "continuous input: pointer target is not visible outside the HUD", failures)
 			_attack_pointer(point, true)
 			_expect(first.input_adapter.manual_pointer_target_entity_id == 1, "continuous input: real pointer fixture did not lock enemy 1", failures)
 		else:

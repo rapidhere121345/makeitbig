@@ -149,7 +149,20 @@ func _public_proxy_snapshot() -> Dictionary:
 		"targeting_distance": _main.locked_targeting_distance,
 		"visible_enemies": visible,
 		"walkable_geometry": public_geometry,
+		"static_blockers": _public_static_blockers(),
 	}
+
+
+## Static movement surfaces are observable as geometry only. Binding names,
+## channel metadata and room identities remain private.
+func _public_static_blockers() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for blocker: Dictionary in _main._geometry._static_blocker_bounds():
+		if blocker.has("points"):
+			result.append({"points": blocker.points})
+		else:
+			result.append({"center": blocker.center, "radius": blocker.radius})
+	return result
 
 
 func _player_authority_action_state() -> String:

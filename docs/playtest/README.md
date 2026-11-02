@@ -3,6 +3,12 @@
 The retained records describe historical runs, not the current checkout's test
 status. Consult logs and run fresh checks before making a new acceptance claim.
 
+- [Modern UI refinement](MODERN_UI_20261101.md): open workspaces, fewer frames, shared sans-serif reading text and clear primary/focus states; rendered and localized layout evidence.
+
+- [Art consistency refresh](ART_REFRESH_20261101.md): new title plate, current-world facility marks and epilogue, scoped retirement of superseded runtime art with source provenance retained.
+
+- [Battlefield completion and refinement](REFINEMENT_20261101.md): terrain-aware Auto retreat, safe presentation reloads, pure terrain authoring, source-hash reconciliation with unchanged runtime PNGs; 221/0 gate, 600/600 encounters, unchanged replay hash, all three desktop exports and Linux smoke passed. Closes the earlier macOS-template blocker.
+- [Terrain battlegrounds and task stages](BATTLEFIELDS_20261028.md): five generated environments and painted camera extensions, native terrain contacts, two/three-stage tasks, bridge routing and pointer fixes; 29 rendered fixtures, 220/0 tests, 600/600 encounters, matching replays, Linux/Windows exports and Linux smoke passed. Local macOS export is blocked by the missing matching template.
 - [GitHub Release migration](GITHUB_RELEASE_MIGRATION_20261028.md): HTTP page/serving helpers retired, 29 legacy files archived intact, full gate and native platform checks passed, and v0.1.0 published with all six assets.
 - [macOS Universal support](MACOS_SUPPORT_20261028.md): Apple Silicon/Intel export, package integrity checks, download-page support, and native ARM64/Intel signature, startup, and full replay checks passed; local frozen gate passed 216/0.
 - [Release candidate play-test](RELEASE_PLAYTEST_E712CCF_20261026.md): real-input windowed play of the frozen `e712ccf` Linux export on Xvfb/llvmpipe (title to town, two Manual contracts, Training, zh_CN round trip) plus a fixture-driven Auto room, Ending and Proxy Bay install; no blocker, six cosmetic notes, no menu Quit entry and the Colossus fight not reached.
@@ -81,3 +87,5 @@ Historical raw-evidence roots include `build/current/gpu-ux-review-20261018-*`,
 `gpu-visual-r3-glm/`, `town-cutout-r4d/`, and `english-visual-20261024/` beneath
 `build/current/`. Names are evidence identifiers; the last tag is not the actual
 run date. Availability of these old local directories is not assumed after migration.
+
+- [Linux playtest and three optimization rounds, 2026-11-01](PLAYTEST_OPTIMIZATION_20261101.md).

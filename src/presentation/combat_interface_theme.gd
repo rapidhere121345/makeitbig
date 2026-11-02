@@ -25,16 +25,19 @@ static func create() -> Theme:
 	theme.set_constant("shadow_offset_y", "Label", 1)
 	theme.set_color("font_color", "Button", COLOR_BONE)
 	theme.set_color("font_hover_color", "Button", COLOR_BONE)
-	theme.set_color("font_pressed_color", "Button", COLOR_INK)
+	theme.set_color("font_pressed_color", "Button", COLOR_BONE)
 	theme.set_color("font_disabled_color", "Button", COLOR_NEUTRAL)
 	theme.set_color("font_focus_color", "Button", COLOR_BONE)
-	theme.set_stylebox("normal", "Button", _button_style(COLOR_DEEP_BLUE, COLOR_NEUTRAL, 1))
-	theme.set_stylebox("hover", "Button", _button_style(COLOR_GROUND, COLOR_BONE, 2))
-	theme.set_stylebox("pressed", "Button", _button_style(COLOR_AMBER, COLOR_BONE, 2))
-	theme.set_stylebox("disabled", "Button", _button_style(COLOR_GROUND, COLOR_NEUTRAL, 2))
+	theme.set_stylebox("normal", "Button", _button_style(Color("100f0dcc"), Color("8e714a"), 0))
+	theme.set_stylebox("hover", "Button", _button_style(Color("221c14e6"), COLOR_AMBER, 0))
+	theme.set_stylebox("pressed", "Button", _button_style(Color("2b2115e6"), COLOR_AMBER, 0))
+	theme.set_stylebox("disabled", "Button", _button_style(Color("08080799"), Color("8e714a"), 0))
 	theme.set_stylebox("focus", "Button", _button_style(Color.TRANSPARENT, COLOR_AMBER, 2))
 	return theme
 
 
 static func _button_style(background: Color, border: Color, border_width: int) -> StyleBoxFlat:
-	return UiKit.flat_style(background, border, border_width, 0, Vector4(10.0, 7.0, 10.0, 7.0))
+	var style := UiKit.flat_style(background, border, border_width, 0, Vector4(10.0, 7.0, 10.0, 7.0))
+	if border_width == 0:
+		style.border_width_bottom = 1
+	return style

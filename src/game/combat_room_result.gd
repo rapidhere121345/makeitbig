@@ -53,7 +53,7 @@ static func build(current_config: Dictionary, room_snapshot: Dictionary, outcome
 	}
 	var room_loot_value: Variant = room_snapshot.get("room_loot_settlement", {})
 	if room_loot_value is Dictionary and not (room_loot_value as Dictionary).is_empty():
-		result["room_loot_settlement"] = (room_loot_value as Dictionary).duplicate(true)
+		result["room_loot_settlement"] = _project_loot_settlement(room_loot_value)
 	if outcome == "defeat":
 		result["failure_reason"] = room_snapshot.last_damage_source_id
 		result["death_tick"] = room_snapshot.last_damage_tick
@@ -70,3 +70,15 @@ static func _copy_room_value(room: Dictionary, key: String, fallback_key: String
 
 static func _copy_value(value: Variant) -> Variant:
 	return {"value": value}.duplicate(true)["value"]
+
+
+## Runtime loot positions are Vector2; result receipts cross the JSON save boundary.
+static func _project_loot_settlement(settlement: Dictionary) -> Dictionary:
+	var projected := settlement.duplicate(true)
+	var entities: Variant = projected.get("entities", [])
+	if entities is Array:
+		for entity: Variant in entities:
+			if entity is Dictionary and (entity as Dictionary).get("position") is Vector2:
+				var position: Vector2 = entity.position
+				entity["position"] = {"x": position.x, "y": position.y}
+	return projected

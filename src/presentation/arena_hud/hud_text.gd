@@ -48,6 +48,7 @@ static func short_cell_phrase(value: String) -> String:
 		"Locked Target Out of Range": "Too Far",
 		"Target Lock Expired": "Lost Lock",
 		"Pointer Lock": "Locked",
+		"Hold to Repeat": "Repeating",
 		"Next Shot Buffered": "Buffered",
 		"Target Lock Buffered": "Buffered",
 	}.get(value, value))

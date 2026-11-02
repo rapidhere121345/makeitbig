@@ -955,6 +955,10 @@ func _capture_contract_fail(report: Dictionary) -> void:
 	_capture()._capture_contract_fail(report)
 
 
+func _quit_from_menu() -> void:
+	_request_exit(0, "quit_to_desktop")
+
+
 ## Reports the final exit code to exit_code_hook instead of ending the process.
 func _request_exit(code: int, reason: String) -> void:
 	if exit_code_hook.is_valid():

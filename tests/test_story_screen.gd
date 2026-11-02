@@ -28,7 +28,7 @@ func _run() -> void:
 	screen.present(_snapshot(["tutorial_ranger_basics"], false, false), {})
 	await _settle()
 	_expect(pre_ready_presented, "present before _ready did not preserve public state")
-	_expect(screen.theme != null and screen.theme.default_font == ShellTheme.ui_font()
+	_expect(screen.theme != null and screen.theme.default_font == ShellTheme.data_font()
 		and screen.theme.default_font_size == ShellTheme.BODY_FONT_SIZE,
 		"story screen did not use ShellTheme font and body-size contract")
 	_check_layout(screen)

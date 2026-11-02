@@ -46,10 +46,12 @@ devbox's network and visibility restrictions.
 
 Choose Manual or Auto when departing; the mode stays fixed for that contract. Loot enters the backpack before you compare and equip it. Forge previews are free; only confirming the forge spends Law Tokens.
 
+After the tutorial, combat tasks span two or three stages across five terrain battlefields: Snowbound Road, River Crossing, Ruined Village, Slate Quarry, and Colossus Approach. Riverbanks, quarry ledges, and ruined structures define movement and cover; campaign battles have no circular arena boundary. Repeatable tasks visit three different battlefields. After clearing a stage and collecting loot, choose **Next Stage** to advance or **Finish Task** after the final battle.
+
 Hearthside's river is crossed at its two bridges; water, mountain edges and
 scenery bases block movement. The Expedition Gate opens Contracts. In combat,
-cleared wards are visual feedback: room settlement and the Leave action control
-departure.
+high ruins stop arrows while low stones and water block movement only. The task
+action advances after stage clearance; leaving during combat abandons the task.
 
 Hearthside’s Forge and Loadout face their roads, bridge landings are kept clear,
 and the eastern wall replaces the crowded pine boundary. See the

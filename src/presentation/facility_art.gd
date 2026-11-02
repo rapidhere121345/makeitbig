@@ -1,14 +1,11 @@
 extends RefCounted
-## Read-only reader for the three production art packages the facility pages
-## draw: the approved 24-icon base batch (early_loop_v01), the six-cell
-## readability overlay (equipment_readability_v02) and the hamlet facility marks
-## (hamlet_concept_v02). Nothing is generated here: every texture is one integer
-## rect of a published sheet, addressed by the canonical id that the package
-## catalog names, never by position or by resemblance.
+## Reads the production icon batches and creates facility marks from the same
+## textures used by the current town. Marks are fitted into their existing
+## display canvases with nearest-neighbor sampling and transparent padding.
 ##
 ## Contract:
 ##   icon(canonical_id) -> AtlasTexture over the 32x32 cell, or null.
-##   mark(facility_id)  -> AtlasTexture over the published facility cell, or null.
+##   mark(facility_id)  -> AtlasTexture over the fitted town texture, or null.
 ## A null never has a substitute drawn in its place; the caller keeps its own
 ## text and reports the missing id, so a wrong mapping can never masquerade as
 ## another object. Quality, lock state and equipped state are never baked into
@@ -24,7 +21,13 @@ extends RefCounted
 const ICON_ATLAS_PATH: String = "res://art/production/p1/early_loop_v01/atlas.json"
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const ICON_ATLAS_DIRECTORY: String = "res://art/production/p1/early_loop_v01"
-const MARK_ATLAS_PATH: String = "res://art/production/p1/hamlet_style_r13/atlas.json"
+const MARK_SOURCES := {
+	"contract": {"path": "res://art/production/p1/generated_world_v02/board_opaque.png", "size": Vector2i(112, 112)},
+	"loadout": {"path": "res://art/production/p1/town_order_v01/loadout_east_opaque.png", "size": Vector2i(112, 112)},
+	"forge": {"path": "res://art/production/p1/town_order_v01/forge_west_opaque.png", "size": Vector2i(160, 144)},
+	"training": {"path": "res://art/production/p1/generated_world_v02/training_dummy_opaque.png", "size": Vector2i(112, 112)},
+	"proxy": {"path": "res://art/production/p1/generated_world_v02/proxy_opaque.png", "size": Vector2i(112, 112)},
+}
 
 ## Native cell contract of the icon batch, and the one display scale this module
 ## permits. 2x is an integer step, so a 32px cell reaches 64 display pixels with
@@ -136,7 +139,7 @@ func icon(canonical: String) -> Texture2D:
 	return _region(_entries[normalized])
 
 
-## The published facility cell for a page id (`contract`, `forge`, or a screen
+## The fitted current-town mark for a page id (`contract`, `forge`, or a screen
 ## title such as "forge / destiny forge"). Unknown pages return null.
 func mark(facility_id: String) -> Texture2D:
 	var key := facility_key(facility_id)
@@ -176,7 +179,7 @@ func load_art() -> bool:
 	# One layered read: base batch, then the bounded overlay, then the marks. A
 	# failure anywhere serves nothing at all - no partial set, no superseded cell
 	# - so a broken package can never masquerade as published art.
-	if not (_load_icon_atlas() and _load_override_atlas() and _load_mark_atlas() and _verify_required_ids()):
+	if not (_load_icon_atlas() and _load_override_atlas() and _load_marks() and _verify_required_ids()):
 		_reset()
 		return false
 	_ready = true
@@ -385,38 +388,35 @@ func _override_package() -> String:
 	return OVERRIDE_DIRECTORY if directory.is_empty() else directory
 
 
-func _load_mark_atlas() -> bool:
-	var atlas := _parse_atlas(MARK_ATLAS_PATH)
-	if atlas.is_empty():
-		return false
-	var textures := _atlas_texture_paths(atlas, "", false)
-	var sprites: Variant = atlas.get("sprites", {})
-	if not sprites is Dictionary:
-		pending_reason = "ASSETS PENDING: %s facility sprites must be an object" % MARK_ATLAS_PATH
-		return false
-	var listed: Dictionary = sprites
-	for key in listed:
-		var atlas_id := String(key)
-		if not atlas_id.begins_with("facility."):
-			continue
-		var facility_key_name := atlas_id.trim_prefix("facility.")
-		if not FACILITY_KEYS.has(facility_key_name):
-			continue
-		var entry_value: Variant = listed[key]
-		if not entry_value is Dictionary:
-			pending_reason = "ASSETS PENDING: %s %s must be an object" % [MARK_ATLAS_PATH, atlas_id]
+func _load_marks() -> bool:
+	for facility_key_name in FACILITY_KEYS:
+		var spec: Dictionary = MARK_SOURCES[facility_key_name]
+		var path := String(spec["path"])
+		var source := _load_texture(path)
+		if source == null:
 			return false
-		var entry: Dictionary = entry_value
-		var texture_key := str(entry.get("texture", ""))
-		var texture_path := str(textures.get(texture_key, ""))
-		if texture_path.is_empty():
-			pending_reason = "ASSETS PENDING: %s names an undeclared texture '%s'" % [atlas_id, texture_key]
+		var image := source.get_image()
+		if image == null or image.is_empty():
+			pending_reason = "ASSETS PENDING: cannot read mark pixels from %s" % path
 			return false
-		var record := _accept_entry(facility_key_name, entry, texture_path)
-		if record.is_empty():
+		if image.is_compressed() and image.decompress() != OK:
+			pending_reason = "ASSETS PENDING: cannot decompress %s" % path
 			return false
-		_entries[facility_key_name] = record
-		_marks[facility_key_name] = record
+		var bounds := image.get_used_rect()
+		if not bounds.has_area():
+			pending_reason = "ASSETS PENDING: empty facility texture %s" % path
+			return false
+		var canvas_size: Vector2i = spec["size"]
+		var available := canvas_size - Vector2i(8, 8)
+		var scale_factor := minf(float(available.x) / bounds.size.x, float(available.y) / bounds.size.y)
+		var fitted_size := Vector2i(maxi(1, roundi(bounds.size.x * scale_factor)), maxi(1, roundi(bounds.size.y * scale_factor)))
+		var fitted := image.get_region(bounds)
+		fitted.resize(fitted_size.x, fitted_size.y, Image.INTERPOLATE_NEAREST)
+		var canvas := Image.create_empty(canvas_size.x, canvas_size.y, false, Image.FORMAT_RGBA8)
+		canvas.blit_rect(fitted, Rect2i(Vector2i.ZERO, fitted_size), (canvas_size - fitted_size) / 2)
+		var texture := ImageTexture.create_from_image(canvas)
+		_textures[path] = texture
+		_marks[facility_key_name] = {"texture_path": path, "rect": [0, 0, canvas_size.x, canvas_size.y]}
 	return true
 
 
@@ -522,7 +522,7 @@ func _verify_required_ids() -> bool:
 				return false
 	for facility_key_name in FACILITY_KEYS:
 		if not _marks.has(facility_key_name):
-			pending_reason = "ASSETS PENDING: hamlet_concept_v02 lacks facility.%s" % facility_key_name
+			pending_reason = "ASSETS PENDING: current town texture lacks facility.%s" % facility_key_name
 			return false
 	# The overlay is bounded and it must have landed: each pinned id has to
 	# resolve to its pinned cell on the overrides sheet, so a layer that silently
@@ -553,8 +553,8 @@ func _region(entry: Dictionary) -> Texture2D:
 	var atlas := AtlasTexture.new()
 	atlas.atlas = texture
 	atlas.region = Rect2(float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3]))
-	# Provenance for independent verification: which published sheet this cell is
-	# cut from. It is metadata only and changes nothing about the drawn pixels.
+	# Provenance for independent verification: the icon sheet or town source.
+	# This metadata does not change the drawn pixels.
 	atlas.set_meta("sheet_path", str(entry.get("texture_path", "")))
 	return atlas
 

@@ -235,7 +235,7 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	var boss_config := {"contract_id": "threshold_colossus", "mode": "Manual", "preset_id": "convergent", "seed": 311, "room_count": 1}
 	_expect(bool(game.launch_contract(boss_config).get("ok", false)), "game root: threshold colossus contract did not launch", failures)
 	var boss_arena := game.current_screen as FakeArena
-	_expect(boss_arena != null and String((((boss_arena.config.room_plan as Dictionary).rooms as Array)[0] as Dictionary).boss_id) == "threshold_colossus", "game root: threshold colossus RoomPlan lost the Boss id", failures)
+	_expect(boss_arena != null and String((((boss_arena.config.room_plan as Dictionary).rooms as Array)[-1] as Dictionary).boss_id) == "threshold_colossus", "game root: threshold colossus RoomPlan lost the Boss id", failures)
 	if boss_arena != null:
 		boss_arena.resolve({"outcome": "victory", "rewards": {"contract_wins_delta": 1}})
 	_expect(game.current_route == "result" and game.application_state.is_auto_mode_unlocked(), "game root: threshold colossus first victory did not unlock Auto", failures)

@@ -1,0 +1,153 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource path="res://src/game/main.gd" type="Script" id="1_main"]
+[ext_resource path="res://src/runtime/world/room_asset_root.gd" type="Script" id="2_room_asset"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="RoomAsset" type="Node2D" parent="."]
+script = ExtResource("2_room_asset")
+scene_id = "combat.colossus_approach"
+layout_id = "colossus_approach"
+gameplay_source = "colossus_approach.spatial.json"
+presentation_source = "battlefield_scene"
+arena_rect = Rect2(-71.125, 25.5625, 1422.25, 888.875)
+traversal_radius = 14.0
+
+[node name="Ground" type="Node2D" parent="RoomAsset"]
+[node name="Surface" type="Node2D" parent="RoomAsset/Ground"]
+metadata/binding_id = "ground.surface"
+[node name="GroundEffects" type="Node2D" parent="RoomAsset"]
+[node name="SortRoot" type="Node2D" parent="RoomAsset"]
+y_sort_enabled = true
+[node name="Foreground" type="Node2D" parent="RoomAsset"]
+[node name="GeometrySources" type="Node2D" parent="RoomAsset"]
+[node name="MovementBoundary" type="Node2D" parent="RoomAsset/GeometrySources"]
+metadata/binding_id = "combat/movement-boundary"
+metadata/source = "arena.geometry.v1"
+metadata/channels = {"movement": true, "navigation": true, "vision": true, "projectile": true, "occlusion": false}
+metadata/geometry = {"type": "rect", "rect": [-71.125, 25.5625, 1422.25, 888.875]}
+[node name="Static" type="Node2D" parent="RoomAsset/GeometrySources"]
+
+[node name="Terrain0" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-71.125, 25.5625, 137.25, 25.5625, 84.4375, 247.75, -71.125, 247.75)
+metadata/binding_id = "combat/terrain/water/west_0"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Terrain1" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-71.125, 247.75, 84.4375, 247.75, 92.75, 470, -71.125, 470)
+metadata/binding_id = "combat/terrain/water/west_1"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Terrain2" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-71.125, 470, 92.75, 470, 60.8125, 692.25, -71.125, 692.25)
+metadata/binding_id = "combat/terrain/water/west_2"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Terrain3" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(0, 0)
+polygon = PackedVector2Array(-71.125, 692.25, 60.8125, 692.25, 92.75, 914.4375, -71.125, 914.4375)
+metadata/binding_id = "combat/terrain/water/west_3"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Terrain4" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(0, 0)
+polygon = PackedVector2Array(1234.4375, 25.5625, 1351.125, 25.5625, 1351.125, 247.75, 1269.1875, 247.75)
+metadata/binding_id = "combat/terrain/water/east_0"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Terrain5" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(0, 0)
+polygon = PackedVector2Array(1269.1875, 247.75, 1351.125, 247.75, 1351.125, 470, 1278.875, 470)
+metadata/binding_id = "combat/terrain/water/east_1"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Terrain6" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(0, 0)
+polygon = PackedVector2Array(1278.875, 470, 1351.125, 470, 1351.125, 692.25, 1255.25, 692.25)
+metadata/binding_id = "combat/terrain/water/east_2"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Terrain7" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(0, 0)
+polygon = PackedVector2Array(1255.25, 692.25, 1351.125, 692.25, 1351.125, 914.4375, 1220.5625, 914.4375)
+metadata/binding_id = "combat/terrain/water/east_3"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Structure0" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(330, 335.5625)
+polygon = PackedVector2Array(-84.75, -54.1875, 84.75, -54.1875, 84.75, 6.9375, -84.75, 6.9375)
+metadata/binding_id = "combat/structure/ruin.wall_corner#0"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
+
+[node name="Structure1" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(1010, 335.5625)
+polygon = PackedVector2Array(-84.75, -54.1875, 84.75, -54.1875, 84.75, 6.9375, -84.75, 6.9375)
+metadata/binding_id = "combat/structure/ruin.wall_corner#1"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
+
+[node name="Structure2" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(280, 645.5625)
+polygon = PackedVector2Array(-84.75, -43.0625, 84.75, -43.0625, 84.75, 6.9375, -84.75, 6.9375)
+metadata/binding_id = "combat/structure/ruin.low_pier#0"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Structure3" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(1030, 695.5625)
+polygon = PackedVector2Array(-84.75, -43.0625, 84.75, -43.0625, 84.75, 6.9375, -84.75, 6.9375)
+metadata/binding_id = "combat/structure/ruin.low_pier#1"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": false, "occlusion": false}
+
+[node name="Structure4" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(930, 245.5625)
+polygon = PackedVector2Array(-81.9375, -44.4375, 81.9375, -44.4375, 81.9375, 6.9375, -81.9375, 6.9375)
+metadata/binding_id = "combat/structure/ruin.gate#0"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
+
+[node name="Structure5" type="Polygon2D" parent="RoomAsset/GeometrySources/Static"]
+visible = false
+position = Vector2(175, 445.5625)
+polygon = PackedVector2Array(-79.1875, -48.625, 79.1875, -48.625, 79.1875, 6.9375, -79.1875, 6.9375)
+metadata/binding_id = "combat/structure/tower"
+metadata/source = "arena.static.convex.v1"
+metadata/channels = {"movement": true, "navigation": false, "vision": false, "projectile": true, "occlusion": false}
+
+[node name="Sockets" type="Node2D" parent="RoomAsset"]
+[node name="CombatSpawn" type="Marker2D" parent="RoomAsset/Sockets"]
+position = Vector2(330, 715.5625)
+metadata/binding_id = "combat/spawn"
+metadata/kind = "spawn"
+[node name="EncounterOrigin" type="Marker2D" parent="RoomAsset/Sockets"]
+position = Vector2(640, 525.5625)
+metadata/binding_id = "combat/encounter-origin"
+metadata/kind = "spawn"

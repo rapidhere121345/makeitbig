@@ -1,7 +1,7 @@
 extends SceneTree
 ## Contract test for the facility art integration: every glyph on the equipment,
-## rune, forge, training and proxy pages must be one real cell of a published
-## production sheet, addressed by canonical id and drawn at an integer scale.
+## rune, forge, training and proxy pages use canonical icon cells, and facility
+## marks match the current town assets within the established page dimensions.
 ##
 ## It reads the published PNGs and the atlas tables only; it writes nothing, and
 ## it fails loudly when a glyph is missing instead of accepting a stand-in.
@@ -15,6 +15,7 @@ extends SceneTree
 
 const FacilityScreenScript = preload("res://src/presentation/facility_screen.gd")
 const FacilityArtScript = preload("res://src/presentation/facility_art.gd")
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 const ICON_NATIVE_SIZE := Vector2i(32, 32)
@@ -45,13 +46,21 @@ const CORE_IDS := {
 	"single_key_execution": "core.single_key_execution",
 	"short_trace_memory": "core.short_trace_memory",
 }
-## Published cell size per facility page, straight from the hamlet atlas table.
+## Existing page dimensions and the corresponding current town textures.
 const FACILITY_MARKS := {
 	"contract": Vector2i(112, 112),
 	"loadout": Vector2i(112, 112),
 	"training": Vector2i(112, 112),
 	"proxy": Vector2i(112, 112),
 	"forge": Vector2i(160, 144),
+}
+
+const FACILITY_SOURCES := {
+	"contract": "res://art/production/p1/generated_world_v02/board_opaque.png",
+	"loadout": "res://art/production/p1/town_order_v01/loadout_east_opaque.png",
+	"forge": "res://art/production/p1/town_order_v01/forge_west_opaque.png",
+	"training": "res://art/production/p1/generated_world_v02/training_dummy_opaque.png",
+	"proxy": "res://art/production/p1/generated_world_v02/proxy_opaque.png",
 }
 
 ## The published overlay package and the one order it may repaint, restated from
@@ -142,6 +151,20 @@ func _test_mark_lookup(failures: Array[String]) -> void:
 			var atlas := texture as AtlasTexture
 			_expect(atlas.region.size == Vector2(expected_size),
 				"facility art: %s mark is not its published native cell" % String(facility_id), failures)
+			var source_path: String = FACILITY_SOURCES[facility_id]
+			_expect(String(atlas.get_meta("sheet_path", "")) == source_path,
+				"facility art: %s does not identify the town source" % facility_id, failures)
+			var source := TextureLoader.decode_png_path(source_path)
+			var bounds := source.get_used_rect()
+			var fit_scale := minf(float(expected_size.x - 8) / bounds.size.x, float(expected_size.y - 8) / bounds.size.y)
+			var fitted_size := Vector2i(maxi(1, roundi(bounds.size.x * fit_scale)), maxi(1, roundi(bounds.size.y * fit_scale)))
+			var expected := source.get_region(bounds)
+			expected.resize(fitted_size.x, fitted_size.y, Image.INTERPOLATE_NEAREST)
+			var actual := atlas.atlas.get_image()
+			var offset := (expected_size - fitted_size) / 2
+			_expect(actual.get_region(Rect2i(offset, fitted_size)).get_data() == expected.get_data()
+				and Rect2i(Vector2i(4, 4), expected_size - Vector2i(8, 8)).encloses(actual.get_used_rect()),
+				"facility art: %s pixels or padding do not match its town source" % facility_id, failures)
 		_expect(art.mark_size(String(facility_id)) == expected_size,
 			"facility art: %s mark size does not match the published cell" % String(facility_id), failures)
 	_expect(art.mark("research") == null and art.mark("immortality") == null,

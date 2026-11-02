@@ -32,13 +32,12 @@ func _init(host: Control) -> void:
 
 static func panel_style(vertical_margin: float = 9.0, opacity: float = 0.92) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(COLOR_DEEP_BLUE, opacity)
+	style.bg_color = Color(Color("100f0d"), opacity)
 	style.border_color = Color("8e714a")
-	style.set_border_width_all(1)
-	style.border_width_top = 2
+	style.set_border_width_all(0)
 	style.set_corner_radius_all(0)
 	style.shadow_color = Color(0.01,0.02,0.025,0.5)
-	style.shadow_size = 3
+	style.shadow_size = 0
 	style.shadow_offset = Vector2(0,2)
 	style.content_margin_left = 12.0
 	style.content_margin_right = 12.0
@@ -54,21 +53,22 @@ static func transparent_panel_style() -> StyleBoxFlat:
 
 
 static func style_progress(bar: ProgressBar, fill_color: Color) -> void:
-	bar.add_theme_stylebox_override("background", UiKit.flat_style(COLOR_INK, COLOR_NEUTRAL, 1))
+	bar.add_theme_stylebox_override("background", UiKit.flat_style(Color("100f0d"), COLOR_NEUTRAL, 1))
 	bar.add_theme_stylebox_override("fill", UiKit.flat_style(fill_color, COLOR_BONE, 1))
 
 
 static func style_action_button(button: Button, disabled: bool, tone: String) -> void:
-	var accent := COLOR_WARNING if tone == "active" else (COLOR_AMBER if tone == "ready" else (COLOR_PROXY if tone == "locked" else (COLOR_BLOOD if tone == "cooldown" else PaletteScript.SLATE_2)))
+	var accent := COLOR_WARNING if tone == "active" else (COLOR_AMBER if tone == "ready" else (COLOR_PROXY if tone == "locked" else (COLOR_BLOOD if tone == "cooldown" else Color("8e714a"))))
 	for state_name in ["normal", "hover", "pressed", "focus", "disabled"]:
 		var style := StyleBoxFlat.new()
-		style.bg_color = Color(COLOR_GROUND, 0.94) if state_name == "normal" else (Color(PaletteScript.SLATE_2, 0.94) if state_name == "hover" else Color(COLOR_DEEP_BLUE, 0.96))
+		style.bg_color = Color("100f0dcc") if state_name == "normal" else (Color("221c14e6") if state_name == "hover" else Color("100f0df5"))
 		if state_name == "pressed":
-			style.bg_color = Color(accent, 0.32)
+			style.bg_color = Color(accent, 0.32) if tone in ["active", "ready", "locked", "cooldown"] else Color("2b2115e6")
 		if state_name == "disabled":
-			style.bg_color = Color(PaletteScript.SLATE_0, 0.86)
+			style.bg_color = Color("08080799")
 		style.border_color = accent
-		style.set_border_width_all(2 if tone in ["active", "ready", "locked", "cooldown"] else 1)
+		style.set_border_width_all(2 if state_name == "focus" else 0)
+		style.border_width_bottom = 2 if tone in ["active", "ready", "locked", "cooldown"] or state_name == "focus" else 1
 		style.set_corner_radius_all(3)
 		button.add_theme_stylebox_override(state_name, style)
 

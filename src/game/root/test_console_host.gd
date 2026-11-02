@@ -51,6 +51,7 @@ func _ensure_session_menu() -> void:
 	_root._session_menu.opened.connect(_pause_current_route)
 	_root._session_menu.resumed.connect(_resume_current_route)
 	_root._session_menu.abandon_requested.connect(_abandon_from_menu)
+	_root._session_menu.quit_requested.connect(_root._quit_from_menu)
 	_root._session_menu.display_requested.connect(_root._apply_display_settings)
 	_root._session_menu.effects_volume_changed.connect(_root._set_effects_volume)
 	_root._session_menu.language_requested.connect(_root._set_language)

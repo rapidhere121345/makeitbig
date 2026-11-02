@@ -4,10 +4,10 @@ extends RefCounted
 ## published JSON atlases (2026-09-14 tutorial landing pass).
 ##
 ## Roles and their approved sources:
-## - hero: scene_rework_v01 `ranger.<facing>.idle`, 32x48 cells anchored at
+## - hero: actors_v02/scene_atlas.json `ranger.<facing>.idle`, 32x48 cells anchored at
 ##   (16,44). Drawn at the slice's native 2x presentation scale (64x96) and
 ##   placed by its foot point, never by its centre.
-## - the single melee target: calibration_v01 `enemy.melee.idle`, 48x48 cell
+## - the single melee target: actors_v02/legacy_atlas.json `enemy.melee.idle`, 48x48 cell
 ##   anchored at (24,44), drawn at 2x. The tutorial target keeps the melee
 ##   enemy's identity; a training-dummy stand-in would change what the
 ##   checklist asks the player to hit, so it is not allowed here.

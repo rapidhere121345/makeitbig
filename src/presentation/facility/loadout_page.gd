@@ -120,7 +120,7 @@ func _build_real_loadout() -> void:
 	slot_column.add_child(character_note)
 	_build_loadout_skill_strip(left)
 	var locked: VBoxContainer = _screen._section_in(left, "Backpack and Progression", "ClosedEquipmentSlots")
-	var locked_style: StyleBoxTexture = _screen._recessed_panel_style("well")
+	var locked_style: StyleBoxFlat = _screen._recessed_panel_style("well")
 	locked_style.content_margin_top = 4
 	locked_style.content_margin_bottom = 4
 	_screen._section_panel(locked).add_theme_stylebox_override("panel", locked_style)

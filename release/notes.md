@@ -1,3 +1,16 @@
+Local crafted-UI candidate: v0.1.1-ui.2 (2026-11-01).
+
+Adds a newly generated Ranger workshop backdrop, engraved steel-and-bronze primary
+buttons, and a Ranger crest behind the equipment preview. Default buttons and
+item slots use translucent warm charcoal and bronze accents instead of opaque
+blue-gray fills; neutral combat surfaces follow the same treatment. Open reading
+sections, localized layouts and visible keyboard focus remain intact.
+
+Includes the preceding modern layout, art-refresh and playtest fixes. Original
+art sources, exact prompts and reproducible packing records are retained.
+This is an uncommitted working-tree build, not a published tagged release.
+Validation evidence and limits: docs/playtest/CRAFTED_UI_20261101.md.
+
 Ranger Chapter One: tutorial, Hearthside exploration, contracts, equipment and
 talents, Training, Law Token forging, Manual/Auto combat, and the Threshold Colossus.
 

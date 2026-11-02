@@ -38,6 +38,7 @@ func _initialize() -> void:
 	if _has_arg("--gpu"):
 		call_deferred("_run_gpu")
 		return
+	_test_reveal_material_detachment()
 	_test_presets()
 	_test_layer()
 	_test_hamlet()
@@ -468,7 +469,11 @@ func _silhouette_stage(view, stage: String, piece: Sprite2D, slot_actors: Array,
 	piece.visible = false
 	var nopiece: Image = await _silhouette_capture(view, stage + "_nopiece.png")
 	piece.visible = true
+	var original_material := piece.material
 	var detached := _silhouette_detach_materials(view)
+	_expect(original_material is ShaderMaterial and piece.material == null
+		and detached.any(func(pair: Array) -> bool: return pair[0] == piece and pair[1] == original_material),
+		stage + ": tested piece reveal material was not detached for the opaque reference")
 	var off: Image = await _silhouette_capture(view, stage + "_off.png")
 	var lift := piece.z_index + 1
 	var lifted_pair := [hero, mira]
@@ -481,6 +486,7 @@ func _silhouette_stage(view, stage: String, piece: Sprite2D, slot_actors: Array,
 		(lifted_pair[index] as Sprite2D).z_index = original_z[index]
 	_silhouette_diag_front_layers(view, piece, stage)
 	_silhouette_restore_materials(detached)
+	_expect(piece.material == original_material, stage + ": tested piece material was not restored")
 	piece.visible = false
 	hero.visible = false
 	mira.visible = false
@@ -884,19 +890,47 @@ func _silhouette_merge_all(cells: Array) -> Rect2:
 	return merged
 
 
-## Detaches every silhouette reveal material; returns the pairs for restore.
+## Detaches both production reveal materials; returns the pairs for restore.
 func _silhouette_detach_materials(view) -> Array:
 	var detached: Array = []
 	var walk: Array[Node] = [view.world_presenter]
 	while not walk.is_empty():
 		var node: Node = walk.pop_back()
 		if node is Sprite2D and (node as Sprite2D).material is ShaderMaterial \
-				and ((node as Sprite2D).material as ShaderMaterial).shader == SilhouetteRevealScript.RevealShader:
+				and ((node as Sprite2D).material as ShaderMaterial).shader in [SilhouetteRevealScript.RevealShader, AuthoredReveal.RevealShader]:
 			detached.append([node, (node as Sprite2D).material])
 			(node as Sprite2D).material = null
 		for child: Node in node.get_children():
 			walk.push_back(child)
 	return detached
+
+
+## Exercise nested traversal and exact restoration without a rendering display.
+func _test_reveal_material_detachment() -> void:
+	var world := Node2D.new()
+	var nested := Node2D.new()
+	world.add_child(nested)
+	var sprites: Array[Sprite2D] = []
+	var materials: Array[ShaderMaterial] = []
+	for shader in [SilhouetteRevealScript.RevealShader, AuthoredReveal.RevealShader]:
+		var sprite := Sprite2D.new()
+		var material := ShaderMaterial.new()
+		material.shader = shader
+		sprite.material = material
+		nested.add_child(sprite)
+		sprites.append(sprite)
+		materials.append(material)
+	var unrelated := Sprite2D.new()
+	var unrelated_material := CanvasItemMaterial.new()
+	unrelated.material = unrelated_material
+	nested.add_child(unrelated)
+	var detached := _silhouette_detach_materials({"world_presenter": world})
+	_expect(detached.size() == 2 and sprites[0].material == null and sprites[1].material == null
+		and unrelated.material == unrelated_material, "reveal reference: both reveal materials must detach without touching unrelated materials")
+	_silhouette_restore_materials(detached)
+	_expect(sprites[0].material == materials[0] and sprites[1].material == materials[1]
+		and unrelated.material == unrelated_material, "reveal reference: original materials must be restored")
+	world.free()
 
 
 func _silhouette_restore_materials(pairs: Array) -> void:

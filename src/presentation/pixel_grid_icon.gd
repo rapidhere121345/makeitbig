@@ -7,22 +7,9 @@ var _snap_pending := false
 var _local_correction := Vector2.ZERO
 var _last_snapped_position := Vector2.ZERO
 var _has_snapped := false
-const Shell = preload("res://src/presentation/shell_theme.gd")
 
 func _ready() -> void:
-	# A physical cloth/copper well behind the unchanged equipment silhouette.
-	# This child draws behind TextureRect and cannot consume input or affect a
-	# Container minimum. Framed skill/law atlases simply cover the same backing.
-	var backing := TextureRect.new()
-	backing.name = "HearthsideIconWell"
-	backing.texture = Shell.material_texture("icon_well")
-	backing.show_behind_parent = true
-	backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	backing.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	backing.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	backing.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	add_child(backing)
-	backing.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# The icon silhouette stands on the containing surface without a second frame.
 	set_notify_transform(true)
 	item_rect_changed.connect(_queue_snap)
 	_queue_snap()

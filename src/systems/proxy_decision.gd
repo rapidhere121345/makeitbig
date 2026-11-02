@@ -6,6 +6,8 @@ extends RefCounted
 const ProxyBuild := preload("res://src/systems/proxy_build.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Navigation := preload("res://src/systems/proxy_navigation.gd")
+const SpatialShape := preload("res://src/runtime/geometry/spatial_shape.gd")
 
 const SNAPSHOT_VERSION := 3
 const STATE_VERSION := 1
@@ -102,12 +104,18 @@ static func decide(public_snapshot: Variant, resolved_build: Variant, prior_stat
 		next_band = "approach"
 
 	if next_band == "retreat":
-		var retreat_result := _feasible_move_direction(snapshot.player_position, -target_direction, snapshot.walkable_geometry, target_id)
+		var retreat_direction := -target_direction
+		if not snapshot.static_blockers.is_empty():
+			retreat_direction = Navigation.retreat_direction(snapshot.player_position, retreat_direction, snapshot.walkable_geometry, snapshot.static_blockers, -1 if target_id % 2 == 0 else 1)
+		var retreat_result := _feasible_move_direction(snapshot.player_position, retreat_direction, snapshot.walkable_geometry, target_id)
 		if not retreat_result.ok:
 			return _failure(String(retreat_result.error), sequence)
 		sequence = _append_movement(commands, state, trace, snapshot, sequence, "retreat", retreat_result)
 	elif next_band == "approach":
-		var approach_result := _feasible_move_direction(snapshot.player_position, target_direction, snapshot.walkable_geometry, target_id)
+		var approach_direction := target_direction
+		if not snapshot.static_blockers.is_empty():
+			approach_direction = Navigation.direction(snapshot.player_position, target.position, snapshot.walkable_geometry, snapshot.static_blockers)
+		var approach_result := _feasible_move_direction(snapshot.player_position, approach_direction, snapshot.walkable_geometry, target_id)
 		if not approach_result.ok:
 			return _failure(String(approach_result.error), sequence)
 		sequence = _append_movement(commands, state, trace, snapshot, sequence, "approach", approach_result)
@@ -247,7 +255,10 @@ static func _normalize_snapshot(value: Variant, observation_contract: Array) -> 
 	if not value is Dictionary:
 		return {"ok": false, "error": "invalid_snapshot"}
 	var snapshot: Dictionary = value
-	if not _has_exact_fields(snapshot, SNAPSHOT_FIELDS):
+	var expected_fields := SNAPSHOT_FIELDS.duplicate()
+	if snapshot.has("static_blockers"):
+		expected_fields.append("static_blockers")
+	if not _has_exact_fields(snapshot, expected_fields):
 		return {"ok": false, "error": "invalid_snapshot"}
 	if not snapshot.snapshot_version is int or int(snapshot.snapshot_version) != SNAPSHOT_VERSION:
 		return {"ok": false, "error": "wrong_snapshot_version"}
@@ -265,6 +276,9 @@ static func _normalize_snapshot(value: Variant, observation_contract: Array) -> 
 	var geometry_result: Dictionary = ArenaGeometry.normalize(snapshot.walkable_geometry)
 	if not bool(geometry_result.get("ok", false)):
 		return {"ok": false, "error": "invalid_walkable_geometry:%s" % String(geometry_result.get("error", "invalid_geometry"))}
+	var blockers_result := _normalize_blockers(snapshot.get("static_blockers", []))
+	if not blockers_result.ok:
+		return {"ok": false, "error": "invalid_static_blockers"}
 	var allow_classification := CLASSIFICATION_CHANNEL in observation_contract
 	var enemies: Array[Dictionary] = []
 	var ids := {}
@@ -277,7 +291,31 @@ static func _normalize_snapshot(value: Variant, observation_contract: Array) -> 
 		if float(enemy.health) > 0.0 and bool(enemy.targetable):
 			enemies.append(enemy)
 	enemies.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.entity_id) < int(b.entity_id))
-	return {"ok": true, "value": {"snapshot_version": SNAPSHOT_VERSION, "tick": int(snapshot.tick), "actor_id": String(snapshot.actor_id), "player_position": position_result.value, "facing": facing_result.value, "action_state": String(snapshot.action_state), "attack_ready_tick": int(snapshot.attack_ready_tick), "targeting_distance": targeting_distance, "visible_enemies": enemies, "walkable_geometry": Dictionary(geometry_result.value).duplicate(true)}}
+	return {"ok": true, "value": {"snapshot_version": SNAPSHOT_VERSION, "tick": int(snapshot.tick), "actor_id": String(snapshot.actor_id), "player_position": position_result.value, "facing": facing_result.value, "action_state": String(snapshot.action_state), "attack_ready_tick": int(snapshot.attack_ready_tick), "targeting_distance": targeting_distance, "visible_enemies": enemies, "walkable_geometry": Dictionary(geometry_result.value).duplicate(true), "static_blockers": blockers_result.value}}
+
+
+## Version 3 snapshots may omit static_blockers for older producers; supplied
+## geometry is restricted to convex movement polygons or circles, with no IDs.
+static func _normalize_blockers(value: Variant) -> Dictionary:
+	if not value is Array:
+		return {"ok": false}
+	var result: Array[Dictionary] = []
+	for item: Variant in value:
+		if not item is Dictionary:
+			return {"ok": false}
+		var shape: Dictionary
+		if _has_exact_fields(item, ["points"]) and item.points is PackedVector2Array:
+			shape = SpatialShape.normalize({"kind": "polygon", "points": item.points})
+		elif _has_exact_fields(item, ["center", "radius"]):
+			shape = SpatialShape.normalize({"kind": "circle", "center": item.center, "radius": item.radius})
+		else:
+			return {"ok": false}
+		if not shape.ok:
+			return {"ok": false}
+		var normalized: Dictionary = shape.value
+		normalized.erase("kind")
+		result.append(normalized)
+	return {"ok": true, "value": result}
 
 
 static func _normalize_enemy(value: Variant, allow_classification: bool) -> Dictionary:

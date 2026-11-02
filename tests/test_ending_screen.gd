@@ -5,7 +5,7 @@ const Assert := preload("res://tests/helpers/assert.gd")
 
 ## The dedicated early-return illustration, and the floor
 ## no English copy may fall under (approved baseline: Text 18-22 display pixels).
-const ILLUSTRATION_PATH := "res://art/production/p1/hearth_return_v01/background.png"
+const ILLUSTRATION_PATH := "res://art/production/p1/world_expansion_v01/town_ground.png"
 const ILLUSTRATION_SIZE := Vector2(640.0, 360.0)
 const FONT_FLOOR := 18
 const EDGE_EPSILON := 0.5
@@ -90,27 +90,50 @@ func _run() -> void:
 			"ending: dedicated return layers did not load: %s" % str(scene), failures)
 		_expect(scene.get("story_state", "") == "early_return_unrepaired" and not bool(scene.get("final_e03_repair", true)),
 			"ending: Auto graduation falsely implied the final repair", failures)
-		_expect(scene.get("layers", []).size() == 2 and scene.get("effects", []).size() == 4,
-			"ending: expected bench + ranger layers and Mira/Leia work loops plus two effects", failures)
+		_expect(scene.get("layers", []).size() == 3 and scene.get("effects", []).size() == 2,
+			"ending: expected current forge + brazier + ranger and only Mira/Leia work loops", failures)
+		var ground := illustration.texture as AtlasTexture
+		_expect(ground != null and ground.atlas.resource_path == ILLUSTRATION_PATH
+			and ground.region == Rect2(448, 144, 640, 360),
+			"ending: current town ground must be a native 640x360 crop", failures)
+		var expected_props := {
+			"return.forge": "res://art/production/p1/town_order_v01/forge_west_opaque.png",
+			"return.hearth": "res://art/production/p1/generated_world_v02/hearth_opaque.png",
+		}
+		for layer: Dictionary in scene.get("layers", []):
+			if expected_props.has(layer.id):
+				var prop := illustration.find_child(String(layer.id).replace(".", "_"), true, false) as Sprite2D
+				_expect(prop != null and prop.texture.resource_path == expected_props[layer.id]
+					and layer.get("path", "") == expected_props[layer.id],
+					"ending: prop pixels differ from the current town identity: " + String(layer.id), failures)
+		for effect: Dictionary in scene.get("effects", []):
+			_expect(String(effect.get("clip", "")) in ["mira.south.work", "leia.south.work"],
+				"ending: obsolete flame/pipe-steam overlay survived", failures)
+		for node: Node in illustration._art_root.get_children():
+			if node is Sprite2D:
+				var sprite := node as Sprite2D
+				_expect(Rect2(Vector2.ZERO, ILLUSTRATION_SIZE).encloses(Rect2(sprite.position, sprite.region_rect.size)),
+					"ending: scene sprite leaves the native illustration: " + String(sprite.name), failures)
 		var feet := {}
 		for layer: Dictionary in scene.get("layers", []):
 			feet[layer.id] = layer.feet
 		for effect: Dictionary in scene.get("effects", []):
 			feet[String(effect.get("id", ""))] = effect.feet
-		_expect(feet.get("return.mira") == Vector2i(296, 189)
-			and feet.get("return.bench") == Vector2i(235, 225)
-			and feet.get("return.leia") == Vector2i(237, 254)
-			and feet.get("ranger.east.idle") == Vector2i(124, 293),
-			"ending: the concept-derived staging or foot anchors drifted", failures)
+		_expect(feet.get("return.mira") == Vector2i(400, 280)
+			and feet.get("return.forge") == Vector2i(448, 272)
+			and feet.get("return.hearth") == Vector2i(160, 240)
+			and feet.get("return.leia") == Vector2i(240, 294)
+			and feet.get("ranger.east.idle") == Vector2i(176, 280),
+			"ending: the current town staging or foot anchors drifted", failures)
 		illustration.set_review_time(0.0)
 		var first_effects: Array = illustration.scene_report().get("effects", [])
 		illustration.set_review_time(0.5)
 		_expect(first_effects != illustration.scene_report().get("effects", []),
-			"ending: fire/steam did not advance", failures)
+			"ending: resident work clips did not advance", failures)
 		illustration.set_review_time(2.0)
 		_expect(first_effects == illustration.scene_report().get("effects", []),
 			"ending: the shared two-second loop did not close", failures)
-		_expect(illustration.load_scene() and illustration.scene_report().get("layers", []).size() == 2,
+		_expect(illustration.load_scene() and illustration.scene_report().get("layers", []).size() == 3,
 			"ending: repeated loading duplicated static layers", failures)
 	var boundary: Label = screen.find_child("ReturnStoryBoundary", true, false)
 	_expect(boundary != null and boundary.text.contains("wind is still cold") and boundary.text.contains("connections need tending"),

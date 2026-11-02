@@ -124,6 +124,7 @@ func build_detail_overlay() -> void:
 func build(parent: Control) -> void:
 	var panel := PanelContainer.new()
 	panel.name = "DropPanel"
+	panel.add_theme_stylebox_override("panel", ShellThemeScript.section_style())
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(panel)
@@ -313,7 +314,7 @@ func _render_core_rewards(rewards: Dictionary) -> void:
 		var reward := PanelContainer.new()
 		reward.name = "CoreReward_" + core_id
 		reward.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		reward.add_theme_stylebox_override("panel", ShellThemeScript.panel_style("well") if featured else StyleBoxEmpty.new())
+		reward.add_theme_stylebox_override("panel", ShellThemeScript.section_style() if featured else StyleBoxEmpty.new())
 		_core_rewards.add_child(reward)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 12 if featured else 6)

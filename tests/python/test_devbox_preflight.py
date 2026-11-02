@@ -5,6 +5,7 @@ import importlib.util
 import os
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -35,6 +36,7 @@ class PreflightTests(unittest.TestCase):
             patch.object(preflight.os, "geteuid", return_value=1000, create=True),
             patch.object(preflight.platform, "system", return_value="Linux"),
             patch.object(preflight.platform, "machine", return_value="x86_64"),
+            patch.object(preflight.shutil, "disk_usage", return_value=SimpleNamespace(free=8 * 1024**3)),
             patch.object(preflight.shutil, "which", side_effect=lambda name:
                          str(name) if os.path.isabs(name) else "/usr/bin/" + name),
             patch.object(preflight, "run", return_value=(0, "4.7.2.stable.official.ed1daf0bf")),
@@ -63,6 +65,10 @@ class PreflightTests(unittest.TestCase):
     def test_missing_windows_template_blocks_release(self):
         (self.templates / "windows_release_x86_64.exe").unlink()
         self.assertIn("template_windows_release_x86_64.exe", self.failures(self.audit()))
+
+    def test_low_disk_space_blocks_release(self):
+        with patch.object(preflight.shutil, "disk_usage", return_value=SimpleNamespace(free=2 * 1024**3)):
+            self.assertIn("disk_space", self.failures(self.audit()))
 
     def test_missing_macos_template_blocks_release(self):
         (self.templates / "macos.zip").unlink()

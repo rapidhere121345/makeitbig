@@ -192,7 +192,6 @@ var _skill_detail_dialog: AcceptDialog
 var _skill_detail_reading_surface: Panel
 var _skill_detail_scroll: ScrollContainer
 var _skill_detail_text: Label
-var _recessed_panel_textures: Dictionary = {}
 var _item_detail_dialog: AcceptDialog
 var _item_detail_scroll: ScrollContainer
 var _item_detail_dialog_text: Label
@@ -564,6 +563,11 @@ func _sync_back_button() -> void:
 
 
 func _apply_presentation() -> void:
+	var backdrop := get_node_or_null("SanctumBackdrop") as Control
+	if backdrop != null:
+		# Equipment comparisons can extend over the right-hand workshop detail.
+		backdrop.set_meta("material_intensity", 0.38 if _facility_id == "loadout" else 0.52)
+		backdrop.queue_redraw()
 	# The rebuild below frees the focused control and resets every scroll region, so
 	# the player's place is read while the old body is still alive. A switch that
 	# rebuilds because the compared slot changed has no list to return to: its saved
@@ -920,14 +924,14 @@ func _page_lead_row() -> HBoxContainer:
 	return _lead_row
 
 
-## A hard-edged workspace panel with a 22px heading. `parent` receives the panel
+## An open workspace section with a 22px heading. `parent` receives the panel
 ## and the returned VBox is its content, so a page lays out its own rows inside
 ## instead of feeding a generic card framework.
 func _section_in(parent: Container, heading_text: String, node_name: String = "") -> VBoxContainer:
 	var panel := PanelContainer.new()
 	if not node_name.is_empty():
 		panel.name = node_name
-	panel.add_theme_stylebox_override("panel", _recessed_panel_style("well" if node_name.begins_with("CandidateListPanel_") else "panel"))
+	panel.add_theme_stylebox_override("panel", ShellThemeScript.section_style())
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(panel)
 	var content := VBoxContainer.new()
@@ -1000,6 +1004,8 @@ func _action_button(parent: Container, label_text: String, action_id: String, pa
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.pressed.connect(_on_payload_action_pressed.bind(action_id, payload.duplicate(true)))
+	if action_id == "equip_item":
+		ShellThemeScript.apply_primary_button(button)
 	parent.add_child(button)
 	return button
 
@@ -1008,7 +1014,7 @@ func _action_button(parent: Container, label_text: String, action_id: String, pa
 ## dim edge, a filled one the idle copper. The state word in the cell is what
 ## actually says which case this is; the edge only reinforces it.
 func _slot_cell_box(focused: bool, empty: bool) -> StyleBox:
-	var box := ShellThemeScript.panel_style("selected") if focused else _recessed_panel_style("disabled" if empty else "well")
+	var box := ShellThemeScript.panel_style("selected") if focused else ShellThemeScript.panel_style("disabled" if empty else "button")
 	box.content_margin_left = 0
 	box.content_margin_right = 0
 	box.content_margin_top = 0
@@ -1016,26 +1022,19 @@ func _slot_cell_box(focused: bool, empty: bool) -> StyleBox:
 	return box
 
 
-## Only the authored nine-slice edge is recessed. Its cloth/wood center pixels,
-## layout margins and all text/icon colours stay unchanged. Selected and focus
-## skins never enter this local cache; no global theme or PNG is edited.
-func _recessed_panel_style(kind: String = "well") -> StyleBoxTexture:
-	var box := ShellThemeScript.panel_style(kind)
-	if not _recessed_panel_textures.has(kind):
-		var image := box.texture.get_image().duplicate() as Image
-		if image.is_compressed():
-			image.decompress()
-		for y in image.get_height():
-			for x in image.get_width():
-				var edge_distance := mini(mini(x, image.get_width() - 1 - x), mini(y, image.get_height() - 1 - y))
-				if edge_distance >= 12:
-					continue
-				var colour := image.get_pixel(x, y)
-				var edge_gain := lerpf(0.72, 1.0, smoothstep(8.0, 12.0, float(edge_distance)))
-				image.set_pixel(x, y, Color(colour.r * edge_gain, colour.g * edge_gain, colour.b * edge_gain, colour.a))
-		_recessed_panel_textures[kind] = ImageTexture.create_from_image(image)
-	box.texture = _recessed_panel_textures[kind]
+## Informational rows keep compact spacing without looking like selected slots.
+func _plain_cell_box() -> StyleBoxFlat:
+	var box := _recessed_panel_style("well")
+	box.content_margin_left = 0
+	box.content_margin_right = 0
+	box.content_margin_top = 0
+	box.content_margin_bottom = 0
 	return box
+
+
+## Shared flat surfaces replace the old pixel-processed nine-slice borders.
+func _recessed_panel_style(kind: String = "well") -> StyleBoxFlat:
+	return ShellThemeScript.panel_style(kind)
 
 
 ## Builds one real TextureRect over a published atlas region. `scaled` is the
@@ -1246,6 +1245,8 @@ func _add_payload_action(label_text: String, action_id: String, payload: Diction
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.pressed.connect(_on_payload_action_pressed.bind(action_id, payload.duplicate(true)))
+	if action_id == "run_training_trial":
+		ShellThemeScript.apply_primary_button(button)
 	_actions.add_child(button)
 
 

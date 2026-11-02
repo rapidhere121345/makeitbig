@@ -4,6 +4,9 @@ const ContractPlan := preload("res://src/game/contract_plan.gd")
 const Items := preload("res://src/content/early_item_registry.gd")
 const Resolver := preload("res://src/systems/build_resolver.gd")
 const RoomRuntime := preload("res://src/game/combat_room_runtime.gd")
+const ApplicationState := preload("res://src/game/application_state.gd")
+const Controller := preload("res://src/game/contract_run_controller.gd")
+const SaveStore := preload("res://src/persistence/save_store.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 var _failures: Array[String] = []
@@ -24,8 +27,8 @@ func _run() -> void:
 		_finish()
 		return
 	var rooms: Array = (planned.plan.get("rooms", []) as Array)
-	_expect(rooms.size() == 1, "mainline loot: elite contract changed room count")
-	var room: Dictionary = rooms[0] if not rooms.is_empty() else {}
+	_expect(rooms.size() == 2, "mainline loot: elite contract changed room count")
+	var room: Dictionary = rooms[-1] if not rooms.is_empty() else {}
 	var slots: Array = room.get("loot_slots", [])
 	_expect(slots.size() == 1 and String((slots[0] as Dictionary).get("source", "")) == "enemy_death", "mainline loot: authored enemy-death slot was not carried into RoomPlan")
 	if _failures.size() > 0:
@@ -132,6 +135,7 @@ func _run() -> void:
 		var result: Dictionary = _completed[0]
 		var result_settlement: Dictionary = result.get("room_loot_settlement", {})
 		_expect((result_settlement.get("items", []) as Array).size() == 1, "mainline loot: result lost picked ItemInstance")
+		_check_persisted_elite_result(result, settlement, item)
 	runtime.free()
 
 	# Auto uses the same typed pickup protocol and room authority when a drop is
@@ -165,6 +169,51 @@ func _run() -> void:
 	auto_runtime.request_abandon()
 	auto_runtime.free()
 	_finish()
+
+
+func _check_persisted_elite_result(room_result: Dictionary, runtime_settlement: Dictionary, item: Dictionary) -> void:
+	var state := ApplicationState.new()
+	state.start_new_profile("ranger")
+	var config := {"contract_id": "mainline_03_first_elite", "mode": "Manual", "seed": 303, "room_count": 1}
+	_expect(bool(state.prepare_contract(config).get("ok", false)) and bool(state.begin_session().get("ok", false)), "mainline loot: persistence session setup failed")
+	var controller := Controller.new()
+	controller._current_config = config
+	controller._rooms = [{}]
+	controller._rooms_completed = 1
+	controller._room_results = [room_result]
+	var summary: Dictionary = controller._build_summary("victory")
+	controller.free()
+	var probe_registry := Items.new()
+	probe_registry.load_all()
+	_expect(probe_registry.validate_item_instance(item).is_empty(), "item validity: %s" % str(probe_registry.validate_item_instance(item)))
+	var completed: Dictionary = state.complete_session(summary)
+	_expect(bool(completed.get("ok", false)), "mainline loot: application settlement failed")
+	var wins: int = int(state.profile.progression.contract_wins)
+	var path := "user://elite-loot-persistence-%d" % Time.get_ticks_usec()
+	var store := SaveStore.new(path)
+	var saved: Dictionary = store.save(state.persistent_payload("base"))
+	_expect(bool(saved.get("ok", false)), "mainline loot: production victory save failed: %s" % str(saved))
+	var loaded: Dictionary = store.load_latest()
+	_expect(bool(loaded.get("ok", false)), "mainline loot: victory save could not load")
+	if bool(loaded.get("ok", false)):
+		var restored := ApplicationState.new()
+		var restore: Dictionary = restored.restore_persistent_payload(loaded.payload)
+		_expect(bool(restore.get("ok", false)) and int(restored.profile.progression.contract_wins) == wins and wins > 0,
+			"mainline loot: restored profile lost the victory")
+		var saved_settlement: Dictionary = restored.last_result.room_results[0].room_loot_settlement
+		var saved_entity: Dictionary = saved_settlement.entities[0]
+		var position: Vector2 = runtime_settlement.entities[0].position
+		_expect(is_equal_approx(float(saved_entity.position.x), position.x) and is_equal_approx(float(saved_entity.position.y), position.y)
+			and saved_entity.state == "picked" and saved_entity.item.instance_id == item.instance_id,
+			"mainline loot: restored entity lost its coordinates, state or item: %s expected %s / %s" % [str(saved_entity), str(position), str(item.get("instance_id"))])
+		var found_item := false
+		for owned: Dictionary in restored.profile.inventory.equipment:
+			found_item = found_item or String(owned.get("instance_id", "")) == String(item.get("instance_id", ""))
+		_expect(found_item, "mainline loot: restored inventory lost the elite item")
+		_expect(restored.last_result.room_loot_settlements[0] == saved_settlement,
+			"mainline loot: summary and per-room receipts diverged")
+	_expect(runtime_settlement.entities[0].position is Vector2, "mainline loot: runtime settlement lost Vector2 position")
+	store.delete_all()
 
 
 func _find_valid_attack_position(arena: Node, target_position: Vector2) -> Dictionary:

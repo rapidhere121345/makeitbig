@@ -165,27 +165,14 @@ func _check_skill_and_edges(state: RefCounted) -> void:
 		await _settle()
 		_expect(not dialog.visible, "close action dismisses skill " + id)
 	_expect(state.profile == before_profile, "detail inspection preserves production profile")
-	# Pixel checks here prove that ONLY nine-slice edges change. They do not
-	# approve GPU hierarchy, which remains the subsequent after run's job.
-	var original := ShellSkin.panel_style("well")
-	var recessed: StyleBoxTexture = screen.call("_recessed_panel_style", "well")
-	var a := original.texture.get_image()
-	var b := recessed.texture.get_image()
-	if a.is_compressed(): a.decompress()
-	if b.is_compressed(): b.decompress()
-	_expect(a.get_size() == b.get_size(), "authored panel dimensions retained")
-	var centers_equal := true
-	var edge_darker := false
-	for y in a.get_height():
-		for x in a.get_width():
-			if x >= 12 and y >= 12 and x < a.get_width() - 12 and y < a.get_height() - 12:
-				centers_equal = centers_equal and a.get_pixel(x, y) == b.get_pixel(x, y)
-			else:
-				edge_darker = edge_darker or b.get_pixel(x, y).get_luminance() < a.get_pixel(x, y).get_luminance()
-	print("MATERIAL_CHECK: centers_equal=%s edge_darker=%s image_formats=%s/%s" % [centers_equal, edge_darker, a.get_format(), b.get_format()])
-	_expect(centers_equal and edge_darker, "only ordinary border pixels recessed, center material unchanged")
-	var selected: StyleBoxTexture = screen.call("_slot_cell_box", true, false)
-	_expect(selected.texture == ShellSkin.panel_style("selected").texture, "selected bright copper skin preserved")
+	# Open reading surfaces replace per-section nine-slice frames; selected
+	# equipment retains an accent rule and a readable state word.
+	var recessed: StyleBoxFlat = screen.call("_recessed_panel_style", "well")
+	_expect(recessed.bg_color.a == 0.0 and recessed.border_width_left == 0
+		and recessed.border_width_right == 0, "reading sections are unframed")
+	var selected: StyleBoxFlat = screen.call("_slot_cell_box", true, false)
+	_expect(selected.border_width_bottom >= 2 and selected.border_color == ShellSkin.AMBER,
+		"selected slot retains a clear accent rule")
 	var reason := screen.find_child("ClosedSlotReason", true, false) as Label
 	_expect(reason != null and reason.get_theme_font_size("font_size") >= 18, "locked reason retains 18px minimum")
 	_expect(screen.find_child("SlotFocus_head", true, false) == null, "locked slot remains an inspection-only slot")

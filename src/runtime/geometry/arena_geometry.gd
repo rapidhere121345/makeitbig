@@ -16,6 +16,11 @@ const _FIELDS: Array[String] = [
 	"inner_radius", "outer_radius",
 ]
 const _KINDS: Array[String] = ["rectangle", "corridor", "ring"]
+## These layouts use their whole map extent. Individual rivers, cliffs and
+## structures are scene-authored static surfaces, never an annular arena.
+const BATTLEFIELDS: Array[String] = [
+	"snowbound_road", "river_crossing", "ruined_village", "quarry_pass", "colossus_approach",
+]
 const _SWALLOWED_DISPLACEMENT: float = 0.01
 const _MIN_PROGRESS_FRACTION: float = 0.05
 const _RING_DIRECTION_EPSILON: float = 0.001
@@ -40,7 +45,7 @@ static func from_layout(layout_id: String, arena_rect: Rect2, padding: float) ->
 	var bounds := arena_rect.grow(-padding)
 	if not _valid_rect(bounds):
 		return {}
-	var kind := "rectangle" if layout_id in ["rectangle", "rectangle_arena"] else layout_id
+	var kind := "rectangle" if layout_id in ["rectangle", "rectangle_arena"] or layout_id in BATTLEFIELDS else layout_id
 	if kind not in _KINDS:
 		return {}
 	var corridor_half_height := 0.0
@@ -302,6 +307,8 @@ static func movement_blockers(layout_id: String, arena_rect: Rect2) -> Array[Dic
 static func movement_boundary(layout_id: String, arena_rect: Rect2) -> Dictionary:
 	if not _valid_rect(arena_rect):
 		return {}
+	if layout_id in BATTLEFIELDS:
+		return {"type": "rect", "rect": arena_rect}
 	match layout_id:
 		"rectangle", "rectangle_arena":
 			return {"type": "rect", "rect": arena_rect}
@@ -404,6 +411,8 @@ static func normalize_native_static_geometry(value: Variant) -> Dictionary:
 
 
 static func expected_kind_for_layout(layout_id: String) -> String:
+	if layout_id in BATTLEFIELDS:
+		return "rectangle"
 	match layout_id.strip_edges():
 		"rectangle", "rectangle_arena": return "rectangle"
 		"corridor": return "corridor"
@@ -415,6 +424,8 @@ static func expected_kind_for_layout(layout_id: String) -> String:
 ## ActorMotor. Planner and presenter snapshots use the canonical "rectangle"
 ## spelling above, so the two representations cannot be confused silently.
 static func expected_native_kind_for_layout(layout_id: String) -> String:
+	if layout_id in BATTLEFIELDS:
+		return "rect"
 	match layout_id.strip_edges():
 		"rectangle", "rectangle_arena": return "rect"
 		"corridor": return "corridor"

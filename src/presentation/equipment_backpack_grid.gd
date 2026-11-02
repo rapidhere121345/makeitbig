@@ -252,7 +252,7 @@ func _add_entry(grid: GridContainer, entry: Dictionary, node_prefix: String) -> 
 		badge.offset_top = -28
 		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var background := StyleBoxFlat.new()
-		background.bg_color = Color(0.035, 0.055, 0.075, 0.95)
+		background.bg_color = Color("100f0df2")
 		badge.add_theme_stylebox_override("panel", background)
 		overlay.add_child(badge)
 		var label := Label.new()

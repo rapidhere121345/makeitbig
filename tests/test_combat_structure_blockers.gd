@@ -178,14 +178,18 @@ func _test_manifest_and_catalog_digests() -> void:
 		for binding: Variant in (committed as Dictionary).get("stable_bindings", []):
 			if String((binding as Dictionary).get("kind", "")) == "static_blocker":
 				blockers.append(binding)
-		_expect(blockers.size() == 13, "%s: expected 13 static blockers in manifest, found %d" % [room, blockers.size()])
+		# The retained legacy layouts share one 13-piece ruin set. Terrain
+		# battlefields have independent authored blocker sets, verified by
+		# test_battlefields.gd against their native sources.
+		if room in ROOMS:
+			_expect(blockers.size() == 13, "%s: expected 13 static blockers in manifest, found %d" % [room, blockers.size()])
 		for binding: Variant in blockers:
 			var entry_channels: Dictionary = (binding as Dictionary).get("channels", {})
 			var binding_id := String((binding as Dictionary)["binding_id"])
 			_expect(bool(entry_channels.get("movement", false)), "%s: blocker %s lost its movement channel" % [room, binding_id])
 			var blocks_projectile := bool(entry_channels.get("projectile", false))
-			if binding_id.begins_with("combat/structure/ruin.low_pier#"):
-				_expect(not blocks_projectile, "%s: low pier %s must stay passable for projectiles" % [room, binding_id])
+			if binding_id.begins_with("combat/structure/ruin.low_pier#") or binding_id.begins_with("combat/terrain/water/"):
+				_expect(not blocks_projectile, "%s: low obstacle %s must stay passable for projectiles" % [room, binding_id])
 			else:
 				_expect(blocks_projectile, "%s: wall blocker %s must stop projectiles" % [room, binding_id])
 			_expect(not bool(entry_channels.get("occlusion", false)), "%s: blocker %s must not claim the presentation occlusion channel" % [room, binding_id])

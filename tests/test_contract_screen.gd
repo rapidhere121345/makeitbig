@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ContractScreenScript = preload("res://src/presentation/contract_screen.gd")
+const Locale := preload("res://src/localization/game_locale.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 
@@ -282,6 +283,8 @@ func _run() -> void:
 		_expect((screen.get("_build_scroll") as Control).get_global_rect().encloses(details_button.get_global_rect()),
 			"contract screen: build details action is partially cropped at " + str(viewport_size), failures)
 
+	await _check_localized_layout(app.profile, real_snapshot, failures)
+
 	# A visible transition locks every commitment control and emits the exact
 	# validated config once completion is forced through the public test hook.
 	var transition_screen = ContractScreenScript.new()
@@ -488,6 +491,7 @@ func _is_disabled(picker: OptionButton, node_id: String) -> bool:
 
 
 func _finish(failures: Array[String]) -> void:
+	Locale.shutdown()
 	if failures.is_empty():
 		print("PASS  test_contract_screen.gd")
 		quit(0)
@@ -503,3 +507,37 @@ func _expect(condition: bool, message: String, failures: Array[String]) -> void:
 func _parameter_text(screen: Control, key: String) -> String:
 	var label := screen.find_child("Departure_" + key, true, false) as Label
 	return label.text if label != null else ""
+
+
+func _check_localized_layout(profile: Dictionary, snapshot: Dictionary, failures: Array[String]) -> void:
+	var previous_locale := Locale.current()
+	for language in ["en", "zh_CN"]:
+		Locale.select(language)
+		for logical_size in [Vector2i(1280, 720), Vector2i(1600, 900)]:
+			var host := SubViewport.new()
+			host.size = logical_size
+			root.add_child(host)
+			var screen = ContractScreenScript.new()
+			screen.set_presentation_enabled(false)
+			host.add_child(screen)
+			screen.present(profile, {}, "", snapshot)
+			await _wait_frames(4)
+			var area := Rect2(Vector2.ZERO, Vector2(logical_size))
+			var contract_scroll := screen.find_child("ContractScroll", true, false) as ScrollContainer
+			var build_scroll := screen.find_child("ContractBuildScroll", true, false) as ScrollContainer
+			for selector in ["ContractPicker", "CombatObjective", "ContractRewardLabel", "ContractFirstRewardLabel", "ContractDetailsButton"]:
+				var control := screen.find_child(selector, true, false) as Control
+				_expect(control.is_visible_in_tree() and contract_scroll.get_global_rect().encloses(control.get_global_rect()),
+					"contract: %s requires scrolling at %s in %s" % [selector, logical_size, language], failures)
+			for selector in ["Departure_damage", "Departure_max_health", "Departure_d", "Departure_p", "Departure_T", "Departure_training", "BuildDetailsButton"]:
+				var control := screen.find_child(selector, true, false) as Control
+				_expect(control.is_visible_in_tree() and build_scroll.get_global_rect().encloses(control.get_global_rect()),
+					"contract: %s clipped at %s in %s" % [selector, logical_size, language], failures)
+			for selector in ["StartButton", "CancelContractButton", "ModePicker"]:
+				var control := screen.find_child(selector, true, false) as Control
+				_expect(area.encloses(control.get_global_rect()), "contract: action %s escaped %s in %s" % [selector, logical_size, language], failures)
+			var picker := screen.find_child("ContractPicker", true, false) as OptionButton
+			_expect(host.gui_get_focus_owner() == picker, "contract: localized layout lost initial destination focus", failures)
+			root.remove_child(host)
+			host.free()
+	Locale.select(previous_locale)

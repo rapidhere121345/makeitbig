@@ -1,0 +1,874 @@
+{
+	"coordinate_convention": {
+		"scale": 1.0,
+		"units": "design_pixel",
+		"up": "negative_y"
+	},
+	"gameplay_spatial_metadata": {
+		"authored_arena_rect": [
+			-71.125,
+			25.5625,
+			1422.25,
+			888.875
+		],
+		"geometry_source": "arena.geometry.v1",
+		"layout_id": "river_crossing",
+		"room_kind": "combat"
+	},
+	"regions_and_portals": [
+		{
+			"portals": [],
+			"region_id": "combat"
+		}
+	],
+	"spawn_interaction_exit_sockets": [
+		{
+			"kind": "spawn",
+			"position": [
+				640.0,
+				475.5625
+			],
+			"socket_id": "combat/encounter-origin"
+		},
+		{
+			"kind": "spawn",
+			"position": [
+				300.0,
+				665.5625
+			],
+			"socket_id": "combat/spawn"
+		}
+	],
+	"stable_bindings": [
+		{
+			"binding_id": "combat/movement-boundary",
+			"channels": {
+				"movement": true,
+				"navigation": true,
+				"occlusion": false,
+				"projectile": true,
+				"vision": true
+			},
+			"geometry": {
+				"rect": [
+					-71.125,
+					25.5625,
+					1422.25,
+					888.875
+				],
+				"type": "rect"
+			},
+			"source": "arena.geometry.v1"
+		},
+		{
+			"binding_id": "combat/structure/ruin.gate#0",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": true,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						968.0625,
+						201.125
+					],
+					[
+						1131.9375,
+						201.125
+					],
+					[
+						1131.9375,
+						252.5
+					],
+					[
+						968.0625,
+						252.5
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/structure/ruin.low_pier#0",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						350.25,
+						352.5
+					],
+					[
+						519.75,
+						352.5
+					],
+					[
+						519.75,
+						402.5
+					],
+					[
+						350.25,
+						402.5
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/structure/ruin.low_pier#1",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						720.25,
+						607.5
+					],
+					[
+						889.75,
+						607.5
+					],
+					[
+						889.75,
+						657.5
+					],
+					[
+						720.25,
+						657.5
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/structure/ruin.wall_corner#0",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": true,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						985.25,
+						281.375
+					],
+					[
+						1154.75,
+						281.375
+					],
+					[
+						1154.75,
+						342.5
+					],
+					[
+						985.25,
+						342.5
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/structure/tower",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": true,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						80.8125,
+						276.9375
+					],
+					[
+						239.1875,
+						276.9375
+					],
+					[
+						239.1875,
+						332.5
+					],
+					[
+						80.8125,
+						332.5
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/cliff/east",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": true,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						1303.875,
+						25.5625
+					],
+					[
+						1351.125,
+						25.5625
+					],
+					[
+						1351.125,
+						914.4375
+					],
+					[
+						1310.8125,
+						914.4375
+					],
+					[
+						1290.0,
+						470.0
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/cliff/west",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": true,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						-71.125,
+						25.5625
+					],
+					[
+						-8.625,
+						25.5625
+					],
+					[
+						12.25,
+						275.5625
+					],
+					[
+						-1.6875,
+						636.6875
+					],
+					[
+						-29.4375,
+						914.4375
+					],
+					[
+						-71.125,
+						914.4375
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/north_0",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						553.875,
+						25.5625
+					],
+					[
+						776.125,
+						25.5625
+					],
+					[
+						792.75,
+						156.125
+					],
+					[
+						577.5,
+						156.125
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/north_1",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						577.5,
+						156.125
+					],
+					[
+						792.75,
+						156.125
+					],
+					[
+						776.125,
+						192.25
+					],
+					[
+						553.875,
+						192.25
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/north_2",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						553.875,
+						192.25
+					],
+					[
+						776.125,
+						192.25
+					],
+					[
+						723.3125,
+						233.875
+					],
+					[
+						560.8125,
+						233.875
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/north_3",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						560.8125,
+						233.875
+					],
+					[
+						723.3125,
+						233.875
+					],
+					[
+						734.4375,
+						275.5625
+					],
+					[
+						566.375,
+						275.5625
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/north_4",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						566.375,
+						275.5625
+					],
+					[
+						734.4375,
+						275.5625
+					],
+					[
+						745.5625,
+						317.25
+					],
+					[
+						571.9375,
+						317.25
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/north_5",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						571.9375,
+						317.25
+					],
+					[
+						745.5625,
+						317.25
+					],
+					[
+						759.4375,
+						358.875
+					],
+					[
+						576.125,
+						358.875
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/north_6",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						576.125,
+						358.875
+					],
+					[
+						759.4375,
+						358.875
+					],
+					[
+						762.25,
+						395.0
+					],
+					[
+						567.75,
+						395.0
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_0",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						540.0,
+						531.125
+					],
+					[
+						748.3125,
+						531.125
+					],
+					[
+						776.125,
+						553.3125
+					],
+					[
+						534.4375,
+						553.3125
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_1",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						534.4375,
+						553.3125
+					],
+					[
+						776.125,
+						553.3125
+					],
+					[
+						796.9375,
+						595.0
+					],
+					[
+						551.125,
+						595.0
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_2",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						551.125,
+						595.0
+					],
+					[
+						796.9375,
+						595.0
+					],
+					[
+						745.5625,
+						636.6875
+					],
+					[
+						566.375,
+						636.6875
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_3",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						566.375,
+						636.6875
+					],
+					[
+						745.5625,
+						636.6875
+					],
+					[
+						777.5,
+						678.3125
+					],
+					[
+						544.1875,
+						678.3125
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_4",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						544.1875,
+						678.3125
+					],
+					[
+						777.5,
+						678.3125
+					],
+					[
+						742.75,
+						720.0
+					],
+					[
+						541.375,
+						720.0
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_5",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						541.375,
+						720.0
+					],
+					[
+						742.75,
+						720.0
+					],
+					[
+						727.5,
+						761.6875
+					],
+					[
+						537.25,
+						761.6875
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_6",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						537.25,
+						761.6875
+					],
+					[
+						727.5,
+						761.6875
+					],
+					[
+						748.3125,
+						803.3125
+					],
+					[
+						553.875,
+						803.3125
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_7",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						553.875,
+						803.3125
+					],
+					[
+						748.3125,
+						803.3125
+					],
+					[
+						794.1875,
+						845.0
+					],
+					[
+						580.25,
+						845.0
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_8",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						580.25,
+						845.0
+					],
+					[
+						794.1875,
+						845.0
+					],
+					[
+						817.75,
+						895.5625
+					],
+					[
+						581.6875,
+						895.5625
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		},
+		{
+			"binding_id": "combat/terrain/water/south_9",
+			"channels": {
+				"movement": true,
+				"navigation": false,
+				"occlusion": false,
+				"projectile": false,
+				"vision": false
+			},
+			"geometry": {
+				"points": [
+					[
+						581.6875,
+						895.5625
+					],
+					[
+						817.75,
+						895.5625
+					],
+					[
+						817.75,
+						914.4375
+					],
+					[
+						581.6875,
+						914.4375
+					]
+				],
+				"type": "polygon"
+			},
+			"kind": "static_blocker",
+			"source": "arena.static.convex.v1"
+		}
+	],
+	"traversal_profiles": [
+		{
+			"profile_id": "standard",
+			"radius": 14.0
+		}
+	]
+}

@@ -23,7 +23,7 @@ func _test_catalog_validates() -> void:
 	var catalog = RoomCatalogScript.new()
 	_expect(catalog.load_errors.is_empty(), "catalog: shipped room catalog did not validate: %s" % str(catalog.load_errors))
 	var data: Dictionary = catalog.catalog()
-	_expect(bool(data.get("ok", false)) and (data.get("rooms", []) as Array).size() == 3, "catalog: shipped catalog did not expose exactly three rooms")
+	_expect(bool(data.get("ok", false)) and (data.get("rooms", []) as Array).size() == 8, "catalog: shipped catalog did not expose all eight rooms")
 	var invalid_path: Dictionary = data.duplicate(true)
 	(invalid_path.rooms[0] as Dictionary)["world_scene_path"] = "res://content/rooms/combat/missing.tscn"
 	var errors: Array[String] = catalog.validate_catalog(invalid_path)

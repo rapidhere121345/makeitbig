@@ -149,7 +149,7 @@ func _build_body(root: Control) -> void:
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_content.clip_contents = true
-	_content.add_theme_stylebox_override("panel", ShellThemeScript.crafted_panel())
+	_content.add_theme_stylebox_override("panel", ShellThemeScript.section_style())
 	root.add_child(_content)
 
 	var columns := HBoxContainer.new()

@@ -66,11 +66,11 @@ func _build_training() -> void:
 	_screen._add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
 
 
-func _training_card(parent: Container, title_text: String, value_text: String, focused: bool, node_name: String) -> PanelContainer:
+func _training_card(parent: Container, title_text: String, value_text: String, _focused: bool, node_name: String) -> PanelContainer:
 	var card := PanelContainer.new()
 	card.name = node_name
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_theme_stylebox_override("panel", _screen._slot_cell_box(focused, not focused))
+	card.add_theme_stylebox_override("panel", _screen._plain_cell_box())
 	parent.add_child(card)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 4)

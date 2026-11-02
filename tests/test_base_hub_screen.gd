@@ -642,10 +642,12 @@ func _test_compact_ui_sizes(failures: Array[String]) -> void:
 				_expect(control.get_global_rect().position.x >= previous.end.x,
 					"base hub: top actions overlap at " + str(dimensions), failures)
 			previous = control.get_global_rect()
-		_expect(hub._objective_label.get_visible_line_count() == hub._objective_label.get_line_count()
-			and hub._objective_label.get_line_count() <= 2
+		# Force shaping before asking for visible lines in this synchronous layout probe.
+		var objective_lines: int = hub._objective_label.get_line_count()
+		_expect(hub._objective_label.get_visible_line_count() == objective_lines
+			and objective_lines <= 2
 			and hub._objective_label.get_minimum_size().y <= hub._objective_label.size.y,
-			"base hub: actual current objective is cropped at " + str(dimensions), failures)
+			"base hub: actual current objective is cropped at %s text=%s lines=%d visible=%d size=%s minimum=%s" % [str(dimensions), hub._objective_label.text, hub._objective_label.get_line_count(), hub._objective_label.get_visible_line_count(), str(hub._objective_label.size), str(hub._objective_label.get_minimum_size())], failures)
 		_test_nav_long_status_and_bounds(hub, failures)
 		hub.present(hub._profile, {}, "One update.".repeat(50), hub._campaign_snapshot)
 		hub.set_information_details_expanded(true)

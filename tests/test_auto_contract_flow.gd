@@ -34,7 +34,7 @@ func _run() -> void:
 	_expect(bool(plan_result.get("ok", false)), "auto flow: unlocked certification plan did not compile", failures)
 	var plan: Dictionary = plan_result.get("plan", {}) if plan_result.get("plan", {}) is Dictionary else {}
 	var rooms: Array = plan.get("rooms", []) if plan.get("rooms", []) is Array else []
-	_expect(rooms.size() == 1 and String((rooms[0] as Dictionary).get("room_id", "")) == "auto_certification_clear",
+	_expect(rooms.size() == 2 and String((rooms[0] as Dictionary).get("room_id", "")) == "auto_certification_clear",
 		"auto flow: certification plan lost its authored room", failures)
 	if rooms.is_empty():
 		_finish(failures)
@@ -156,11 +156,17 @@ func _test_game_root_auto_contract(failures: Array[String]) -> void:
 				controller.set_process(false)
 				runtime.set_process(false)
 				arena.set_process(false)
-				for _tick in MAX_TICKS:
-					arena.call("_process", TICK_DELTA)
-					runtime.call("_process", 0.0)
+				for _tick in MAX_TICKS * 2:
 					if game.current_route == "result":
 						break
+					runtime = controller.get("_current_runtime") as Node
+					arena = runtime.get("room_instance") as Node if runtime != null else null
+					if arena == null:
+						break
+					runtime.set_process(false)
+					arena.set_process(false)
+					arena.call("_process", TICK_DELTA)
+					runtime.call("_process", 0.0)
 				_expect(game.current_route == "result", "auto flow: real Auto contract did not reach the result route", failures)
 				var result: Dictionary = game.application_state.last_result
 				_expect(String(result.get("outcome", "")) == "final_victory"

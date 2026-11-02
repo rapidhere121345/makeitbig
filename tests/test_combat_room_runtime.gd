@@ -75,8 +75,8 @@ func _run() -> void:
 			"runtime: existing zero-based room index and total were not passed to the arena", failures)
 		room_node.call("refresh_presentation")
 		var heading := (room_node.get("presentation").get("hud") as Node).find_child("EncounterHeading", true, false) as Label
-		_expect(heading != null and heading.text.contains("Room 2/2") and heading.text.contains("Clear foes")
-			and heading.tooltip_text.contains("Room 2 / 2") and heading.tooltip_text.contains("Clear"),
+		_expect(heading != null and heading.text.contains("Stage 2/2") and heading.text.contains("Clear foes")
+			and heading.tooltip_text.contains("Stage 2 / 2") and heading.tooltip_text.contains("Clear"),
 			"runtime: second-room metadata did not reach the persistent HUD objective", failures)
 		source_room.enemy_ids[0] = "fan_ranged"
 		source_room.drop_tags.append("damage")
@@ -372,7 +372,7 @@ func _test_authored_campaign_rooms(resolved_build: Dictionary, failures: Array[S
 				_expect(abandons.size() == 1 and abandons[0].get("outcome", "") == "abandoned" and not arena.is_processing(), "native campaign: return did not finalize/stop the room once", failures)
 			root.remove_child(runtime)
 			runtime.free()
-	_expect(loaded_layouts.size() == 3, "native campaign: the real contracts did not exercise all three authored scenes", failures)
+	_expect(loaded_layouts.size() == 4, "native campaign: the first two contracts did not exercise four authored scenes", failures)
 
 
 func _test_ranger_action_wiring(arena: Node, failures: Array[String]) -> void:

@@ -25,6 +25,46 @@
       "landmark": "Ring Beacon",
       "entry_hint": "West stones; circle the well.",
       "exit_hint": "The north-east gate stays sealed; once the ring is clear its wards fall, then choose Leave to take the route onward."
+    },
+    {
+      "id": "snowbound_road",
+      "display_name": "Snowbound Road",
+      "concept": "A broken trade road with broad snowfields, roadside ruins and room to flank.",
+      "landmark": "Roadside Watchtower",
+      "entry_hint": "Use roadside ruins as cover.",
+      "exit_hint": "Clear this stage, then continue the task or return to Hearthside."
+    },
+    {
+      "id": "river_crossing",
+      "display_name": "River Crossing",
+      "concept": "A river divides two banks; the broad stone crossing connects both approaches.",
+      "landmark": "Broken River Piers",
+      "entry_hint": "Cross between the riverbanks.",
+      "exit_hint": "Clear this stage, then continue the task or return to Hearthside."
+    },
+    {
+      "id": "ruined_village",
+      "display_name": "Ruined Village",
+      "concept": "Broken buildings divide a village into lanes, courtyards and flanking routes.",
+      "landmark": "Abandoned Village Gate",
+      "entry_hint": "Flank through the ruins.",
+      "exit_hint": "Clear this stage, then continue the task or return to Hearthside."
+    },
+    {
+      "id": "quarry_pass",
+      "display_name": "Slate Quarry",
+      "concept": "Offset quarry ledges form a winding battlefield with open pockets for fighting.",
+      "landmark": "Slate Escarpment",
+      "entry_hint": "Dodge on the wider ledges.",
+      "exit_hint": "Clear this stage, then continue the task or return to Hearthside."
+    },
+    {
+      "id": "colossus_approach",
+      "display_name": "Colossus Approach",
+      "concept": "An open ancient causeway between rivers leads to the Colossus foothold.",
+      "landmark": "Threshold Gate",
+      "entry_hint": "Evade across the open ground.",
+      "exit_hint": "Defeat the Colossus, then choose Finish Task to return to Hearthside."
     }
   ],
   "objectives": [
@@ -97,8 +137,8 @@
       "kind": "mainline",
       "unlock_prerequisites": ["tutorial_ranger_basics"],
       "room_sequence": [
-        {"id": "first_hunt_clear", "layout_id": "rectangle_arena", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "piercing_arrow_basics"},
-        {"id": "first_hunt_followup", "layout_id": "corridor", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""}
+        {"id": "first_hunt_clear", "layout_id": "snowbound_road", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "piercing_arrow_basics"},
+        {"id": "first_hunt_followup", "layout_id": "ruined_village", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "melee_pursuer", "melee_pursuer"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""}
       ],
       "first_reward_tags": ["hunter_mark_skill", "equipment_compare_unlock"],
       "drop_tags": ["equipment_general"],
@@ -110,8 +150,8 @@
       "kind": "mainline",
       "unlock_prerequisites": ["mainline_01_first_hunt"],
       "room_sequence": [
-        {"id": "priority_charge", "layout_id": "corridor", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "telegraphed_charge"},
-        {"id": "priority_ranged", "layout_id": "ring", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "fan_ranged_pressure"}
+        {"id": "priority_charge", "layout_id": "river_crossing", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "telegraphed_charge"},
+        {"id": "priority_ranged", "layout_id": "quarry_pass", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": "fan_ranged_pressure"}
       ],
       "first_reward_tags": ["dash_skill"],
       "drop_tags": ["equipment_general"],
@@ -123,7 +163,28 @@
       "kind": "mainline",
       "unlock_prerequisites": ["mainline_02_priority_under_pressure"],
       "room_sequence": [
-        {"id": "first_elite_barrier", "layout_id": "rectangle_arena", "objective_id": "hunt_elite", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": ["periodic_barrier"], "boss_id": "", "drop_tags": ["equipment_general", "main_hand", "gloves"], "loot_slots": [{"slot_id": "elite_equipment_drop", "source": "enemy_death", "tags": ["equipment_general", "main_hand", "gloves"], "pickup_radius": 24.0, "guaranteed": true, "guarantee_family": "carrier_power"}], "new_problem_id": "periodic_barrier_window"}
+        {"id": "elite_road_approach", "layout_id": "snowbound_road", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""},
+        {
+          "id": "first_elite_barrier",
+          "layout_id": "ruined_village",
+          "objective_id": "hunt_elite",
+          "hazard_ids": [],
+          "enemy_ids": ["melee_pursuer", "fan_ranged"],
+          "elite_rule_ids": ["periodic_barrier"],
+          "boss_id": "",
+          "drop_tags": ["equipment_general", "main_hand", "gloves"],
+          "loot_slots": [
+            {
+              "slot_id": "elite_equipment_drop",
+              "source": "enemy_death",
+              "tags": ["equipment_general", "main_hand", "gloves"],
+              "pickup_radius": 24.0,
+              "guaranteed": true,
+              "guarantee_family": "carrier_power"
+            }
+          ],
+          "new_problem_id": "periodic_barrier_window"
+        }
       ],
       "first_reward_tags": ["breeding_split_item"],
       "drop_tags": ["equipment_general", "main_hand", "gloves"],
@@ -135,8 +196,8 @@
       "kind": "mainline",
       "unlock_prerequisites": ["mainline_03_first_elite"],
       "room_sequence": [
-        {"id": "ground_zone_break", "layout_id": "ring", "objective_id": "timed_break", "hazard_ids": ["exposed_ground_zone"], "enemy_ids": ["charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["inscribe_tally", "rewrite_tally"], "new_problem_id": "visible_ground_denial"},
-        {"id": "moving_fireline_clear", "layout_id": "corridor", "objective_id": "clear", "hazard_ids": ["moving_fireline"], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["refine_tally"], "new_problem_id": "moving_fireline_timing"}
+        {"id": "ground_zone_break", "layout_id": "quarry_pass", "objective_id": "timed_break", "hazard_ids": ["exposed_ground_zone"], "enemy_ids": ["charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["inscribe_tally", "rewrite_tally"], "new_problem_id": "visible_ground_denial"},
+        {"id": "moving_fireline_clear", "layout_id": "river_crossing", "objective_id": "clear", "hazard_ids": ["moving_fireline"], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["refine_tally"], "new_problem_id": "moving_fireline_timing"}
       ],
       "first_reward_tags": ["law_forge_unlock"],
       "drop_tags": ["inscribe_tally", "rewrite_tally", "refine_tally"],
@@ -148,8 +209,8 @@
       "kind": "mainline",
       "unlock_prerequisites": ["mainline_04_hazard_and_forge"],
       "room_sequence": [
-        {"id": "reinforcement_elite", "layout_id": "ring", "objective_id": "hunt_elite", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider", "fan_ranged"], "elite_rule_ids": ["summon_reinforcements"], "boss_id": "", "drop_tags": ["piercing_probability", "shared_lifetime"], "new_problem_id": "reinforcement_target_priority"},
-        {"id": "growth_check", "layout_id": "rectangle_arena", "objective_id": "timed_break", "hazard_ids": ["exposed_ground_zone"], "enemy_ids": ["charging_raider", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["projectile_speed", "targeting_distance", "turn_time"], "new_problem_id": "growth_bottleneck_validation"}
+        {"id": "reinforcement_elite", "layout_id": "ruined_village", "objective_id": "hunt_elite", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider", "fan_ranged"], "elite_rule_ids": ["summon_reinforcements"], "boss_id": "", "drop_tags": ["piercing_probability", "shared_lifetime"], "new_problem_id": "reinforcement_target_priority"},
+        {"id": "growth_check", "layout_id": "quarry_pass", "objective_id": "timed_break", "hazard_ids": ["exposed_ground_zone"], "enemy_ids": ["charging_raider", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["projectile_speed", "targeting_distance", "turn_time"], "new_problem_id": "growth_bottleneck_validation"}
       ],
       "first_reward_tags": ["pack_hunt_mark_item"],
       "drop_tags": ["piercing_probability", "shared_lifetime", "projectile_speed", "targeting_distance", "turn_time"],
@@ -161,7 +222,9 @@
       "kind": "boss",
       "unlock_prerequisites": ["mainline_05_growth_gate"],
       "room_sequence": [
-        {"id": "threshold_colossus_battle", "layout_id": "rectangle_arena", "objective_id": "hunt_elite", "hazard_ids": ["moving_fireline"], "enemy_ids": [], "elite_rule_ids": [], "boss_id": "threshold_colossus", "drop_tags": ["proxy_core_fixed"], "new_problem_id": "two_phase_threshold_boss"}
+        {"id": "threshold_road_approach", "layout_id": "snowbound_road", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""},
+        {"id": "threshold_village_approach", "layout_id": "ruined_village", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""},
+        {"id": "threshold_colossus_battle", "layout_id": "colossus_approach", "objective_id": "hunt_elite", "hazard_ids": ["moving_fireline"], "enemy_ids": [], "elite_rule_ids": [], "boss_id": "threshold_colossus", "drop_tags": ["proxy_core_fixed"], "new_problem_id": "two_phase_threshold_boss"}
       ],
       "first_reward_tags": ["fixed_four_white_proxy_cores"],
       "drop_tags": ["proxy_core_fixed"],
@@ -173,7 +236,8 @@
       "kind": "auto_certification",
       "unlock_prerequisites": ["threshold_colossus"],
       "room_sequence": [
-        {"id": "auto_certification_clear", "layout_id": "corridor", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""}
+        {"id": "auto_certification_clear", "layout_id": "river_crossing", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "fan_ranged"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""},
+        {"id": "auto_certification_followup", "layout_id": "ruined_village", "objective_id": "clear", "hazard_ids": [], "enemy_ids": ["melee_pursuer", "charging_raider"], "elite_rule_ids": [], "boss_id": "", "drop_tags": ["equipment_general"], "new_problem_id": ""}
       ],
       "first_reward_tags": ["early_campaign_complete"],
       "drop_tags": ["equipment_general"],
@@ -188,33 +252,39 @@
       "unlock_prerequisites": ["mainline_03_first_elite"],
       "room_template": {
         "room_count": 3,
-        "layout_ids": ["rectangle_arena", "corridor", "ring"],
+        "layout_ids": ["snowbound_road", "river_crossing", "ruined_village", "quarry_pass", "colossus_approach"],
         "objective_ids": ["clear", "hunt_elite", "timed_break"],
         "hazard_ids": ["exposed_ground_zone", "moving_fireline"],
         "enemy_ids": ["melee_pursuer", "charging_raider", "fan_ranged"],
         "elite_rule_ids": ["periodic_barrier", "summon_reinforcements"],
         "drop_tags": ["main_hand", "off_hand", "gloves", "ring", "equipment_general"],
-        "room_overrides": [{
-          "index": 0,
-          "loot_slots": [{
-            "slot_id": "targeted_equipment_drop",
-            "source": "enemy_death",
-            "tags": ["equipment_general"],
-            "pickup_radius": 24.0,
-            "guaranteed": true,
-            "guarantee_family": "maximum_health"
-          }],
-          "combat_stats": {
-            "move_speed": 220.0,
-            "acceleration": 360.0,
-            "dodge_distance": 96.0,
-            "attack_cooldown_ticks": 11,
-            "dodge_duration_ticks": 5,
-            "dodge_cooldown_ticks": 30,
-            "resistances": {"physical": 0.10},
-            "movement_model": "accelerated"
+        "room_overrides": [
+          {
+            "index": 0,
+            "loot_slots": [
+              {
+                "slot_id": "targeted_equipment_drop",
+                "source": "enemy_death",
+                "tags": ["equipment_general"],
+                "pickup_radius": 24.0,
+                "guaranteed": true,
+                "guarantee_family": "maximum_health"
+              }
+            ],
+            "combat_stats": {
+              "move_speed": 220.0,
+              "acceleration": 360.0,
+              "dodge_distance": 96.0,
+              "attack_cooldown_ticks": 11,
+              "dodge_duration_ticks": 5,
+              "dodge_cooldown_ticks": 30,
+              "resistances": {
+                "physical": 0.1
+              },
+              "movement_model": "accelerated"
+            }
           }
-        }]
+        ]
       },
       "first_reward_tags": ["equipment_compare_unlock"],
       "drop_tags": ["main_hand", "off_hand", "gloves", "ring", "equipment_general"],
@@ -227,7 +297,7 @@
       "unlock_prerequisites": ["mainline_04_hazard_and_forge"],
       "room_template": {
         "room_count": 3,
-        "layout_ids": ["rectangle_arena", "corridor", "ring"],
+        "layout_ids": ["snowbound_road", "river_crossing", "ruined_village", "quarry_pass", "colossus_approach"],
         "objective_ids": ["clear", "hunt_elite", "timed_break"],
         "hazard_ids": ["exposed_ground_zone", "moving_fireline"],
         "enemy_ids": ["melee_pursuer", "charging_raider", "fan_ranged"],

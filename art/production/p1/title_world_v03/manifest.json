@@ -1,0 +1,48 @@
+{
+  "artifacts": [
+    {
+      "atlas": "background",
+      "bytes": 135592,
+      "kind": "texture",
+      "path": "/data/claude/workspace/makeitbig/art/production/p1/title_world_v03/background.png",
+      "sha256": "f6dcde96c3b38375e55cc21216e0935d718c8f9848a0398e73aa4542ef4872e7"
+    },
+    {
+      "bytes": 452,
+      "kind": "atlas_contract",
+      "path": "/data/claude/workspace/makeitbig/art/production/p1/title_world_v03/atlas.json",
+      "sha256": "60894d363c6e527cfa102d36be268d8ee54dbc174a367b4280f2fa001971db3d"
+    },
+    {
+      "bytes": 287967,
+      "kind": "contact_sheet",
+      "path": "/data/claude/workspace/makeitbig/art/production/p1/title_world_v03/contact_sheet.png",
+      "sha256": "2dd91fb56e209e2e6feadf1b1f09ca9a04739e9a31c77fec1f5e54fc9e69d34a"
+    }
+  ],
+  "config_path": "/data/claude/workspace/makeitbig/docs/art-production/title-world-20261101/recipe.json",
+  "config_sha256": "f333d7bc248535c22964a19e1dda518e1ab363f3a43474728996e225539c2408",
+  "resource_prefix": "res://art/production/p1/title_world_v03",
+  "schema_version": 1,
+  "sources": {
+    "title": {
+      "background": {
+        "colors": [],
+        "mode": "opaque",
+        "tolerance": 0.0
+      },
+      "grid": [
+        1,
+        1
+      ],
+      "height": 941,
+      "path": "/data/claude/workspace/makeitbig/docs/art-production/title-world-20261101/sources/title_original.png",
+      "sha256": "38c230063798d50eaf5ca108d89719a990532e8ab2bd87b8df16b3b482cd090f",
+      "width": 1672
+    }
+  },
+  "technical_verification": {
+    "scope": "mechanical output properties only; not visual approval",
+    "status": "pending_external_verify"
+  }
+}

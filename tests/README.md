@@ -73,7 +73,7 @@ MIB_TEST_TIMEOUT_SEC=2400 ./scripts/with_env.sh ./scripts/test.sh
 
 The gate runs the deterministic `--auto-smoke` replay at 30, 60, and 144 Hz and
 with presentation off, and every run must produce the golden hash
-`EXPECTED_HASH` in `scripts/test.sh` (currently `b98adead...`). Test-only
+`EXPECTED_HASH` in `scripts/test.sh` (currently `c7353c04...`). Test-only
 changes must never change it. Update it only in a commit that intentionally
 changes simulation behavior, and say so in the message; never to make a failing
 gate pass.

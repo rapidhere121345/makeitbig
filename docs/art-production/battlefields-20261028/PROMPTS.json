@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "generation_date": "2026-10-28",
+  "mode": "built-in",
+  "assets": [
+    {
+      "id": "snowbound_road",
+      "prompt": "Use case: stylized-concept. Asset type: production ground plate for a top-down angled 2.5D pixel-art dark fantasy action RPG, landscape image 1536x960. Create a polished richly textured abandoned trade road across a frozen wasteland. Only walkable ground plane: wind-packed snow in irregular drifts, dark gravel and muddy exposed earth, broken individual old cobbles naturally disappearing under snow, sparse dead grass, chips of slate. Worn road bends gently from lower left through center toward upper right, with broad open flanking ground both sides. True game texture, crisp intentional pixel clusters at 2x pixel scale, dense carefully shaded material detail, restrained steel-blue snow shadows, warm muted earth, dark low-contrast background so small heroes read clearly. Fill every pixel edge-to-edge with ground; same uniform overhead oblique projection throughout, no horizon, no perspective vanishing point, no tilt-shift. Light from upper left. NO buildings, walls, tall rocks, trees, people, weapons, water, UI, text, grids, circles, rings, arena outlines, bright borders, labels. Do not illustrate an arena or bounded room. No shadows of objects absent from the image. Material quality like a lovingly painted premium pixel-art CRPG, not flat vector geometry.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/snowbound_road_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-86475dc9-218a-4a9c-8b2c-9e4c90b973ce.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "river_water",
+      "prompt": "Use case: stylized-concept. Asset type: seamless tileable production water surface texture for a 2.5D pixel-art dark fantasy game. Square 1024x1024 image completely filled with deep cold river water. Elaborate natural flowing water with very fine small irregular horizontal ripples and scattered restrained teal-blue reflected light over dark blue-green depths, subtle currents and layered translucent depths, a few submerged dark pebbles barely visible. Intentional crisp pixel clusters of 2-4px, detailed premium painted pixel-art environmental material, subdued values so sprites are readable. Near top-down oblique camera, water only, uniform scale, no horizon. All four edges should tile naturally, no vignettes or lighting gradient between edges. Avoid repetitive dashes, stripes, visibly gridded pattern, flat blocks, bright white foam, circular rings, land, shorelines, rocks protruding, objects, structures, text, UI, borders, characters.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/river_water_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-280a26f3-8aa2-4083-a0a2-b1a36d0b598a.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "river_crossing",
+      "prompt": "Use case: stylized-concept. Asset type: production ground plate for a premium top-down angled 2.5D pixel-art dark fantasy action RPG. Landscape image approximately 1536x960. Fully finished richly textured environmental material, deliberate fine crisp 2-4px pixel clusters and coherent upper-left lighting, natural painterly detail without blur, no hard vector geometry. Ground-plane view filling every pixel edge to edge at uniform scale, no horizon, no perspective vanishing point, no tilt shift. Low contrast backdrop with readable open combat space. No characters, monsters, UI, text, labels, grid, circles, rings, arena borders, buildings, tall walls, cliffs, large impassable boulders, trees, standing objects or cast shadows for absent objects. NO BAKED WATER: waterways and physical landmarks are separate game layers. Ground must look traversable across the entire canvas, decorative stones no larger than a boot. Ground subject: an ancient riverside approach with damp fine gray gravel, dark muddy soil, blue-gray rounded shingle and worn sediment. A broad battered patchwork stone ford road travels horizontally across the middle third, weather-softened flat flagstones transition organically into wet earth, uneven edges and scattered chips. Modest dry ochre river grasses sparsely at upper and lower corners. Misty cold atmosphere, muted cool taupe gravel, dark umber wet soil, slate-blue wet cobbles, very restrained desaturated green moss. The empty ground should feel like two old riverbanks and an exposed floodplain, without painting river water or shoreline boundaries.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/river_crossing_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-35a9c54d-4a38-4666-af8c-dce7db19b0be.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "ruined_village",
+      "prompt": "Use case: stylized-concept. Asset type: production ground plate for a premium top-down angled 2.5D pixel-art dark fantasy action RPG. Landscape image approximately 1536x960. Fully finished richly textured environmental material, deliberate fine crisp 2-4px pixel clusters and coherent upper-left lighting, natural painterly detail without blur, no hard vector geometry. Ground-plane view filling every pixel edge to edge at uniform scale, no horizon, no perspective vanishing point, no tilt shift. Low contrast backdrop with readable open combat space. No characters, monsters, UI, text, labels, grid, circles, rings, arena borders, buildings, tall walls, cliffs, large impassable boulders, trees, standing objects or cast shadows for absent objects. NO BAKED WATER: waterways and physical landmarks are separate game layers. Ground must look traversable across the entire canvas, decorative stones no larger than a boot. Ground subject: the open streets and commons of an abandoned medieval hamlet. Broken uneven stone-paved lanes form an asymmetric branching network with two loose junctions, merging into dark packed brown earth and rubble dust. Flat fragments of pale lime mortar, cracked irregular cobbles, fine brick chips, thin creeping moss and tiny tufts of dead ochre grass. No foundations with collision-looking edges; buildings will be placed as separate sprites. Muted earthy warm charcoal browns with pockets of cool gray stone and desaturated olive moss. Distinct natural street character, not a huge pristine paved floor or a repeating tile grid.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/ruined_village_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-bca7b15c-6aee-49a8-871e-315f5a72c4a9.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "quarry_pass",
+      "prompt": "Use case: stylized-concept. Asset type: production ground plate for a premium top-down angled 2.5D pixel-art dark fantasy action RPG. Landscape image approximately 1536x960. Fully finished richly textured environmental material, deliberate fine crisp 2-4px pixel clusters and coherent upper-left lighting, natural painterly detail without blur, no hard vector geometry. Ground-plane view filling every pixel edge to edge at uniform scale, no horizon, no perspective vanishing point, no tilt shift. Low contrast backdrop with readable open combat space. No characters, monsters, UI, text, labels, grid, circles, rings, arena borders, buildings, tall walls, cliffs, large impassable boulders, trees, standing objects or cast shadows for absent objects. NO BAKED WATER: waterways and physical landmarks are separate game layers. Ground must look traversable across the entire canvas, decorative stones no larger than a boot. Ground subject: a deserted slate quarry floor. Fractured dark blue-gray shale, layered flat slate chips, coarse stone dust, old scraped tracks curving gently across the surface, muted chalk mineral veins, a few shallow rain-darkened patches and fine cold gravel. Tiny scattered boot-size debris only, broad navigable open floor throughout, no tall ledges or rocks. Lighting reveals material grain and flaky slate edges. Subdued charcoal slate, restrained steel-blue highlights, dusty pale mineral flecks, tiny rusty ochre deposits. No snow carpet and no medieval paving; this must read as a different rough rock landscape.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/quarry_pass_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-730fadca-abc7-4973-a887-a92d5f155444.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "colossus_approach",
+      "prompt": "Use case: stylized-concept. Asset type: production ground plate for a premium top-down angled 2.5D pixel-art dark fantasy action RPG. Landscape image approximately 1536x960. Fully finished richly textured environmental material, deliberate fine crisp 2-4px pixel clusters and coherent upper-left lighting, natural painterly detail without blur, no hard vector geometry. Ground-plane view filling every pixel edge to edge at uniform scale, no horizon, no perspective vanishing point, no tilt shift. Low contrast backdrop with readable open combat space. No characters, monsters, UI, text, labels, grid, circles, rings, arena borders, buildings, tall walls, cliffs, large impassable boulders, trees, standing objects or cast shadows for absent objects. NO BAKED WATER: waterways and physical landmarks are separate game layers. Ground must look traversable across the entire canvas, decorative stones no larger than a boot. Ground subject: ancient monumental stone causeway at the threshold of a forgotten titan sanctuary. Huge age-worn irregular dark basalt slabs lie flush with ground, their fractured seams merge into weathered dust and fine gravel; broken thin pale inlaid veins form fragmented straight angular ancient motifs, subtle and non-glowing, never circles. Slabs become less complete toward the outside while the center has broad flat open combat space. Moss, gritty stone chippings, sparse cold ash, a few flat shattered tile pieces. Ominous but readable. Palette charcoal basalt, cool muted blue-gray, dusty parchment mineral veins, minute subdued teal mineral traces. No altar, pillars, statues, raised platforms or impassable objects.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/colossus_approach_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-e72a9c89-e5e1-4633-bda6-a98b28b3a778.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "slate_cliff",
+      "prompt": "Use case: stylized-concept. Asset type: seamless tileable production slate escarpment rock texture for a premium angled top-down 2.5D pixel-art dark fantasy game. Square 1024x1024 image filled completely edge to edge with natural rugged dark gray slate bedrock, layered angular weathered rock plates, crumbling stratified stone, irregular diagonal and horizontal fissures, deep occlusion only in tiny crevices, some pale frosty mineral edges and sparse muted lichens. Closely packed rock texture at a constant scale without isolated protruding objects, rendered with crisp fine 2-4px pixel clusters and exquisite premium CRPG material shading. The whole image should work as terrain cut through cliff polygons. Upper-left gentle cold light. Stone only, no sky, ground plane, buildings, characters, water, plants, text, UI, grid or regular repeating blocks. No central focal object, no wide shadows, no vignette, edges should tile naturally.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/slate_cliff_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-4f22f4db-a63e-4049-8ab9-0c8907968185.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "shoreline_stones",
+      "prompt": "Use case: stylized-concept. Asset type: production environment sprite cutout for an angled top-down 2.5D premium pixel-art dark fantasy RPG. A low, loosely connected irregular cluster of seven wet riverbank stones and slate chips seen from the game's upper oblique camera, spread as a short roughly horizontal rubble bank. Long horizontal sprite footprint, approximately 4:1 width to height, with uneven broken silhouette, small gaps between stones. Only low boot-high natural dark gray rocks, wet slate, muted pale frosty edges, tiny brown reed roots, a few moss traces; upper-left lighting, deep small crevices, crisp detailed painted 2-4px pixel clusters. All material closely matches dark basalt ruins and a cold blue-green river. Ground contact along lower edge, no floating pieces. Authentic transparent background, fully transparent outside the object and in gaps, no gray mat, no solid rectangular base, no painted ground patch, no drop shadow outside the low cluster. No water, horizon, people, wall, building, UI, text, grid, circular shape, border, symbol or isolated giant boulder. Object centered with generous empty transparent margin.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/shoreline_stones_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-8c513750-0afb-44ae-9ac1-9e0de0e0ec60.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool",
+      "transparent_background": true
+    },
+    {
+      "id": "river_crossing_v2",
+      "prompt": "Use case: stylized-concept. Asset type: COMPLETE production River Crossing battleground ground plate for a premium top-down angled 2.5D pixel-art dark fantasy action RPG. Landscape 1536x960 (8:5). This is a complete believable real place, not a texture swatch. Fill the whole image edge to edge, no horizon, camera uniformly looks down at oblique top-down RPG ground. A narrow cold dark teal river winds naturally from TOP edge at x46% to BOTTOM edge at x50%; it occupies only about 10% of the image width. The two large banks are damp dark gravel and mud, short dead ochre grasses, scattered tiny flat slate and ancient broken cobbles, with irregular organic eroded shores. CRITICAL COMPOSITION: a broad low ancient stone bridge runs EAST-WEST across the river centered at x48%, y55%. Bridge ends merge naturally into both banks around x37% to x62%, and its broad walkable flat cobbled deck covers about y48% to y64%, no tall rails, no high arched walls, no massive foreground arch. Blue water visibly continues under the bridge, never stops in a flat trapezoid. The two banks remain spacious open combat ground. Very sparse rugged natural slate cliff fringes only along the outer LEFT and RIGHT 5% of the image, and corners; never a boxed arena border. Deliberate fine crisp 2-4px pixel clusters, exquisite premium CRPG material work, coherent upper-left cool light, natural rock shading and water reflections, layered foam subtle at bank stones, no straight clipped water edges or regular repeated pebble rows. Muted wet blue-gray stone, dark taupe earth, deep teal water. NO characters, monsters, buildings, standing walls, UI, text, labels, grid, circles, glowing wards, decorative framing, vignette or perspective vanishing point. All bridge deck and dry banks must read as walkable ground. Do not add extra waterways or ponds.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/river_crossing_v2_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-57129b7a-2246-4c53-9c62-30a2401c55b8.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool",
+      "transparent_background": false
+    },
+    {
+      "id": "snowbound_road_v2",
+      "prompt": "Edit this ground plate into a complete believable production battleground for a premium angled top-down 2.5D pixel-art dark fantasy RPG. Preserve the existing central ground texture, character, road pattern, uniform camera angle and crisp detailed material style. Add the specific natural terrain described below with coherent upper-left lighting and physically believable transitions into the ground. Full landscape canvas, no horizon. Do NOT use straight clipped polygon boundaries, repeated small identical edge props, texture-strip borders, artificial arena outlines, circles, UI or text. No people, monsters or standing buildings; ruin objects are separate sprites. The composition must have ample open traversable combat ground. Keep natural details fine and visually readable, not a photoreal macro photograph. Keep the snowy diagonal trade road and open snowfields. Add broken natural slate escarpments along only the outermost left 8-11% and right 5-7% of the canvas, with a few irregular shoulders near top corners and very thin rubble fringe at bottom corners. The cliff faces are shallow and fractured with snow in crevices, irregular broken silhouettes and organic snow drifts merging into their feet. Leave the central 80% width broadly open, no corridor, no box or straight walls. The roadside feels like a real frozen mountain trade route, with wide snowfield flanking ground, not a texture swatch.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/snowbound_road_v2_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-69877066-016d-4dc8-957f-ea58eaeacd92.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool",
+      "transparent_background": false,
+      "references": [
+        "docs/art-production/battlefields-20261028/sources/snowbound_road_raw.png"
+      ]
+    },
+    {
+      "id": "ruined_village_v2",
+      "prompt": "Edit this ground plate into a complete believable production battleground for a premium angled top-down 2.5D pixel-art dark fantasy RPG. Preserve the existing central ground texture, character, road pattern, uniform camera angle and crisp detailed material style. Add the specific natural terrain described below with coherent upper-left lighting and physically believable transitions into the ground. Full landscape canvas, no horizon. Do NOT use straight clipped polygon boundaries, repeated small identical edge props, texture-strip borders, artificial arena outlines, circles, UI or text. No people, monsters or standing buildings; ruin objects are separate sprites. The composition must have ample open traversable combat ground. Keep natural details fine and visually readable, not a photoreal macro photograph. Keep the warm earthy abandoned village lanes and branching cobbles. Add irregular low rocky escarpments and a little root-bound earth along outermost left 7-9% and right 4-6% of the canvas, and subtle collapsed stone fringe near top corners. No complete enclosing wall and no interior structures. Thin scrub and dead grasses grow where the rocky edges meet the street. Natural detailed eroded sides, no hard cut between cliff and floor. The central commons and street network remain open with several flanking routes. All rock texture must be at the same fine pixel scale as the village floor.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/ruined_village_v2_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-49b9acd0-61a0-43d8-b41a-d888fdd2548e.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool",
+      "transparent_background": false,
+      "references": [
+        "docs/art-production/battlefields-20261028/sources/ruined_village_raw.png"
+      ]
+    },
+    {
+      "id": "quarry_pass_v2",
+      "prompt": "Edit this ground plate into a complete believable production battleground for a premium angled top-down 2.5D pixel-art dark fantasy RPG. Preserve the existing central ground texture, character, road pattern, uniform camera angle and crisp detailed material style. Add the specific natural terrain described below with coherent upper-left lighting and physically believable transitions into the ground. Full landscape canvas, no horizon. Do NOT use straight clipped polygon boundaries, repeated small identical edge props, texture-strip borders, artificial arena outlines, circles, UI or text. No people, monsters or standing buildings; ruin objects are separate sprites. The composition must have ample open traversable combat ground. Keep natural details fine and visually readable, not a photoreal macro photograph. Create an asymmetric slate quarry with two major cliff shelves intruding into opposite corners: upper-left shelf occupies x0-36%, y0-37%, tapering irregularly toward a point around x30%,y41%; lower-right shelf occupies x72-100%, y68-100%, with its irregular top edge starting near x92%,y62%. There is a broad winding open diagonal passage between the shelves from lower-left through center to upper-right, with wide combat pockets rather than a narrow corridor. Tiny old rock cuts and scree merge naturally into the existing shale floor; broken stratified cliff faces are shaded with real depth and fine grain. The central zone x42-67%,y35-70% stays completely open. No linear sticker edges or repetitive cliff bands.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/quarry_pass_v2_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-2f88feee-baf7-401d-8a8d-0765aed6c05c.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool",
+      "transparent_background": false,
+      "references": [
+        "docs/art-production/battlefields-20261028/sources/quarry_pass_raw.png"
+      ]
+    },
+    {
+      "id": "colossus_approach_v2",
+      "prompt": "Edit this ground plate into a complete believable production battleground for a premium angled top-down 2.5D pixel-art dark fantasy RPG. Preserve the existing central ground texture, character, road pattern, uniform camera angle and crisp detailed material style. Add the specific natural terrain described below with coherent upper-left lighting and physically believable transitions into the ground. Full landscape canvas, no horizon. Do NOT use straight clipped polygon boundaries, repeated small identical edge props, texture-strip borders, artificial arena outlines, circles, UI or text. No people, monsters or standing buildings; ruin objects are separate sprites. The composition must have ample open traversable combat ground. Keep natural details fine and visually readable, not a photoreal macro photograph. Keep the monumental basalt slab approach and fragmented angular pale mineral inlays. Add natural flowing dark teal water along the outermost left 12-15% and right 7-10% of the image, continuing off the top and bottom canvas edges. The river edges must be irregular eroded connected rocky banks with tiny foam and scattered embedded bank stones, never a perfectly straight teal strip or evenly spaced pebble rows. Keep the huge central 75% causeway open flat combat ground. Add a shallow weathered rocky rise at the distant top 15% and tiny fractured rubble at bottom corners, with natural material blending. Ominous ancient threshold crossing, no gates, statues, pillars or central altar.",
+      "source_file": "docs/art-production/battlefields-20261028/sources/colossus_approach_v2_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-d0c532c5-0b77-4225-8dd3-bb723b4a675b.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool",
+      "transparent_background": false,
+      "references": [
+        "docs/art-production/battlefields-20261028/sources/colossus_approach_raw.png"
+      ]
+    },
+    {
+      "id": "snowbound_road_extension",
+      "prompt": "Use case: precise-object-edit. Asset type: outpainted top-down pixel-art game environment backing. Expand the supplied 1024x640 battleground on every side. Output a 1536x1024 image: keep the original scene at its original scale centered at x256,y192, and paint 256 new pixels to left and right, 192 new pixels above and below. Preserve the original scene composition and detailed dark-fantasy pixel texture; continue the terrain naturally through every edge. No border, no mirroring, no repeated symmetric landmarks, no blank space, no fog slab, no characters, no text, no UI. The new perimeter must have the same fine pixel density and lighting as the supplied image. Only expand the environment, do not zoom or redesign the center. Environment: snowbound road.",
+      "reference": "art/production/p1/battlefields_v01/snowbound_road.png",
+      "reference_sha256": "c7b757b97049c3c95864f9bff6489ea6c57f8aa1b2435830bb4c5b9ba718daf1",
+      "source_file": "docs/art-production/battlefields-20261028/sources/snowbound_road_extension_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-2946513b-affc-4897-bd2d-4b629939d5d7.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "river_crossing_extension",
+      "prompt": "Use case: precise-object-edit. Asset type: outpainted top-down pixel-art game environment backing. Expand the supplied 1024x640 battleground on every side. Output a 1536x1024 image: keep the original scene at its original scale centered at x256,y192, and paint 256 new pixels to left and right, 192 new pixels above and below. Preserve the original scene composition and detailed dark-fantasy pixel texture; continue the terrain naturally through every edge. No border, no mirroring, no repeated symmetric landmarks, no blank space, no fog slab, no characters, no text, no UI. The new perimeter must have the same fine pixel density and lighting as the supplied image. Only expand the environment, do not zoom or redesign the center. Environment: river crossing.",
+      "reference": "art/production/p1/battlefields_v01/river_crossing.png",
+      "reference_sha256": "9b35ca5328638147195f0fa169f4399ac8487b27e19be91c62f8280cd62c75de",
+      "source_file": "docs/art-production/battlefields-20261028/sources/river_crossing_extension_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-1afc4d1a-a72c-457e-b6c5-b5680747e5e9.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "ruined_village_extension",
+      "prompt": "Use case: precise-object-edit. Asset type: outpainted top-down pixel-art game environment backing. Expand the supplied 1024x640 battleground on every side. Output a 1536x1024 image: keep the original scene at its original scale centered at x256,y192, and paint 256 new pixels to left and right, 192 new pixels above and below. Preserve the original scene composition and detailed dark-fantasy pixel texture; continue the terrain naturally through every edge. No border, no mirroring, no repeated symmetric landmarks, no blank space, no fog slab, no characters, no text, no UI. The new perimeter must have the same fine pixel density and lighting as the supplied image. Only expand the environment, do not zoom or redesign the center. Environment: ruined village.",
+      "reference": "art/production/p1/battlefields_v01/ruined_village.png",
+      "reference_sha256": "1563e35e164692980658d77594abeb30fd32b6752b05056d820710f717520149",
+      "source_file": "docs/art-production/battlefields-20261028/sources/ruined_village_extension_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-e394648c-2c05-42b0-ab26-3e27fec6c1c6.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "quarry_pass_extension",
+      "prompt": "Use case: precise-object-edit. Asset type: outpainted top-down pixel-art game environment backing. Expand the supplied 1024x640 battleground on every side. Output a 1536x1024 image: keep the original scene at its original scale centered at x256,y192, and paint 256 new pixels to left and right, 192 new pixels above and below. Preserve the original scene composition and detailed dark-fantasy pixel texture; continue the terrain naturally through every edge. No border, no mirroring, no repeated symmetric landmarks, no blank space, no fog slab, no characters, no text, no UI. The new perimeter must have the same fine pixel density and lighting as the supplied image. Only expand the environment, do not zoom or redesign the center. Environment: quarry pass.",
+      "reference": "art/production/p1/battlefields_v01/quarry_pass.png",
+      "reference_sha256": "fd9219c0e7e416d4cdcdf566f25519da182de02e343600444ee112ca2fac3617",
+      "source_file": "docs/art-production/battlefields-20261028/sources/quarry_pass_extension_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-d77d5504-65a7-4b3c-bf85-236fc24af6e3.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    },
+    {
+      "id": "colossus_approach_extension",
+      "prompt": "Use case: precise-object-edit. Asset type: outpainted top-down pixel-art game environment backing. Expand the supplied 1024x640 battleground on every side. Output a 1536x1024 image: keep the original scene at its original scale centered at x256,y192, and paint 256 new pixels to left and right, 192 new pixels above and below. Preserve the original scene composition and detailed dark-fantasy pixel texture; continue the terrain naturally through every edge. No border, no mirroring, no repeated symmetric landmarks, no blank space, no fog slab, no characters, no text, no UI. The new perimeter must have the same fine pixel density and lighting as the supplied image. Only expand the environment, do not zoom or redesign the center. Environment: colossus approach.",
+      "reference": "art/production/p1/battlefields_v01/colossus_approach.png",
+      "reference_sha256": "0082da9ff9c93e6068ce0b29b9db1297ba19b530ce8a0fdc2394f2e0a61f7a8a",
+      "source_file": "docs/art-production/battlefields-20261028/sources/colossus_approach_extension_raw.png",
+      "generated_file": "/home/dev/.codex/generated_images/01a183c8-4864-7cb1-ac64-1adea9997d15/exec-db01af25-5656-4a38-8726-7fdfda0d7ad5.png",
+      "generator": "built-in image_gen.imagegen",
+      "model": "not exposed by tool"
+    }
+  ]
+}

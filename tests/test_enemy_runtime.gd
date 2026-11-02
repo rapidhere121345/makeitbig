@@ -815,8 +815,14 @@ func _test_early_durability_and_first_hunt(arena: Node, failures: Array[String])
 	arena.framework_active_build = state.profile.active_build
 	arena.set_process(false)
 	var initial_build: Dictionary = state.resolved_build_snapshot()
-	var stationary := _first_hunt_input_run(arena, built.plan.rooms, false, failures, initial_build)
-	var reactive := _first_hunt_input_run(session.arena, built.plan.rooms, true, failures, initial_build)
+	# Preserve the original input-calibration geometry and authored spawn profiles.
+	var fixture_rooms: Array = built.plan.rooms.duplicate(true)
+	for index in fixture_rooms.size():
+		var layout := "rectangle_arena" if index == 0 else "corridor"
+		fixture_rooms[index]["layout_id"] = layout
+		fixture_rooms[index]["layout"] = layout
+	var stationary := _first_hunt_input_run(arena, fixture_rooms, false, failures, initial_build)
+	var reactive := _first_hunt_input_run(session.arena, fixture_rooms, true, failures, initial_build)
 	for metrics: Dictionary in [stationary, reactive]:
 		_expect(float(metrics.seconds) >= 15.0 and float(metrics.seconds) <= 25.0,
 			"first hunt runtime: real two-room input run escaped 15–25 seconds: %s" % str(metrics), failures)

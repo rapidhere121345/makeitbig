@@ -1,0 +1,598 @@
+{
+  "assets": {
+    "colossus_approach": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1024,
+        640
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/colossus_approach.png",
+      "raw_sha256": "f1f16651d20a5e5b4d2bbb7b324f6257ccb311286efe11d0220efe1aea6d95d5",
+      "raw_size": [
+        1584,
+        993
+      ],
+      "section": "combat",
+      "sha256": "0082da9ff9c93e6068ce0b29b9db1297ba19b530ce8a0fdc2394f2e0a61f7a8a",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          1
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1024,
+          640
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 2,
+        "scale": "64/99",
+        "scaled_size": [
+          1024,
+          642
+        ],
+        "source": "docs/art-production/battlefields-20261028/sources/colossus_approach_v2_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1584,
+          993
+        ],
+        "step": "99/64"
+      }
+    },
+    "colossus_approach_extension": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/colossus_approach_extension.png",
+      "raw_sha256": "57d8eeaa120042aadeec7364fb1f7b5c241a28a1cf97b06a80cdf380d52b1071",
+      "raw_size": [
+        1536,
+        1024
+      ],
+      "section": "combat",
+      "sha256": "107b3c39e61a8343fb2603ead5ece7de64d8e17a818f875e9179f6a1a12d2e93",
+      "status": "packed",
+      "transform": {
+        "dst_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "kind": "ground",
+        "mode": "crop",
+        "scale": "1/1",
+        "source": "docs/art-production/battlefields-20261028/sources/colossus_approach_extension_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "step": "1/1"
+      }
+    },
+    "quarry_pass": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1024,
+        640
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/quarry_pass.png",
+      "raw_sha256": "5dda47d3d188e3d712599abb06886a944e81afd7aa7d0436e1a6b0b1d73e8701",
+      "raw_size": [
+        1586,
+        992
+      ],
+      "section": "combat",
+      "sha256": "fd9219c0e7e416d4cdcdf566f25519da182de02e343600444ee112ca2fac3617",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          0
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1024,
+          640
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 0,
+        "scale": "512/793",
+        "scaled_size": [
+          1024,
+          640
+        ],
+        "source": "docs/art-production/battlefields-20261028/sources/quarry_pass_v2_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1586,
+          992
+        ],
+        "step": "793/512"
+      }
+    },
+    "quarry_pass_extension": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/quarry_pass_extension.png",
+      "raw_sha256": "e5d9daacce582b36f89030a93977c821c27679653e07e6356ae26fca21852981",
+      "raw_size": [
+        1536,
+        1024
+      ],
+      "section": "combat",
+      "sha256": "ec34d45d9db0c70345be2449f5ba14df53cf66101604b6642744ee6142054a36",
+      "status": "packed",
+      "transform": {
+        "dst_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "kind": "ground",
+        "mode": "crop",
+        "scale": "1/1",
+        "source": "docs/art-production/battlefields-20261028/sources/quarry_pass_extension_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "step": "1/1"
+      }
+    },
+    "river_crossing": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1024,
+        640
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/river_crossing.png",
+      "raw_sha256": "4c1a464b19e1be624289980bdb34f30ea7ece70262db28fc24bcdab845cdd637",
+      "raw_size": [
+        1586,
+        992
+      ],
+      "section": "combat",
+      "sha256": "9b35ca5328638147195f0fa169f4399ac8487b27e19be91c62f8280cd62c75de",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          0
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1024,
+          640
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 0,
+        "scale": "512/793",
+        "scaled_size": [
+          1024,
+          640
+        ],
+        "source": "docs/art-production/battlefields-20261028/sources/river_crossing_v2_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1586,
+          992
+        ],
+        "step": "793/512"
+      }
+    },
+    "river_crossing_extension": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/river_crossing_extension.png",
+      "raw_sha256": "9f8e6f915a64dd31f0d80677a9f36513004c0aa907762fd0ae40db011c6a036a",
+      "raw_size": [
+        1536,
+        1024
+      ],
+      "section": "combat",
+      "sha256": "9b4beb1c5ddd5603b2028fe24c0ae5e28d518dc3cda141ee1ca14c5b279307e0",
+      "status": "packed",
+      "transform": {
+        "dst_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "kind": "ground",
+        "mode": "crop",
+        "scale": "1/1",
+        "source": "docs/art-production/battlefields-20261028/sources/river_crossing_extension_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "step": "1/1"
+      }
+    },
+    "river_water": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1024,
+        1024
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/river_water.png",
+      "raw_sha256": "899ff036fd532b02381b6eaa41ba4a4be062a1d3d76d3c6a90060b8916a9d5ee",
+      "raw_size": [
+        1254,
+        1254
+      ],
+      "section": "combat",
+      "sha256": "53569ef92758a55ded9c4ad318df1e39c6aed9d885404660a8a8d5807c5ee52d",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          0
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1024,
+          1024
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 0,
+        "scale": "512/627",
+        "scaled_size": [
+          1024,
+          1024
+        ],
+        "source": "docs/art-production/battlefields-20261028/sources/river_water_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1254,
+          1254
+        ],
+        "step": "627/512"
+      }
+    },
+    "ruined_village": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1024,
+        640
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/ruined_village.png",
+      "raw_sha256": "25883df5c30a277a665e8f87b25e7297837c4e7c7646b47730611b067ca352ad",
+      "raw_size": [
+        1586,
+        992
+      ],
+      "section": "combat",
+      "sha256": "1563e35e164692980658d77594abeb30fd32b6752b05056d820710f717520149",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          0
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1024,
+          640
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 0,
+        "scale": "512/793",
+        "scaled_size": [
+          1024,
+          640
+        ],
+        "source": "docs/art-production/battlefields-20261028/sources/ruined_village_v2_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1586,
+          992
+        ],
+        "step": "793/512"
+      }
+    },
+    "ruined_village_extension": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/ruined_village_extension.png",
+      "raw_sha256": "634f1b5ca53658e20214484431b526f801a2105815e670407c346c61be0a5239",
+      "raw_size": [
+        1536,
+        1024
+      ],
+      "section": "combat",
+      "sha256": "cc8f9cd2564b8ef5ac47fd106377c29610e7bd6e8ffd9f2a712992e7bef788ee",
+      "status": "packed",
+      "transform": {
+        "dst_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "kind": "ground",
+        "mode": "crop",
+        "scale": "1/1",
+        "source": "docs/art-production/battlefields-20261028/sources/ruined_village_extension_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "step": "1/1"
+      }
+    },
+    "shoreline_stones": {
+      "anchor": [
+        80,
+        64
+      ],
+      "canvas": [
+        160,
+        72
+      ],
+      "kind": "object",
+      "occlusion_rect": [
+        0,
+        24,
+        160,
+        48
+      ],
+      "occupied_rect": [
+        8,
+        32,
+        144,
+        32
+      ],
+      "path": "res://art/production/p1/battlefields_v01/shoreline_stones_opaque.png",
+      "raw_sha256": "b0cbad79fc941fe6a47c5ee86a14c3e4bf326589a4f624d2214dd1311e7f509d",
+      "raw_size": [
+        1983,
+        793
+      ],
+      "reveal": false,
+      "section": "combat",
+      "sha256": "2a239965520022a2372468e8ddfb78393a2c4f5b0e4cb0e951606ef2a70ac2f8",
+      "status": "packed",
+      "transform": {
+        "alpha_threshold": 240,
+        "anchor_rule": "window bottom bound (exclusive) == anchor y; window centred on anchor x",
+        "dst_rect": [
+          8,
+          32,
+          144,
+          32
+        ],
+        "kind": "object",
+        "margin": 8,
+        "outside": "fully transparent black; source RGB preserved only on occupied pixels",
+        "scale": "144/1789",
+        "source": "docs/art-production/battlefields-20261028/sources/shoreline_stones_raw.png",
+        "src_rect": [
+          99,
+          220,
+          1789,
+          393
+        ],
+        "step": "1789/144"
+      },
+      "transparent_path": "res://art/production/p1/battlefields_v01/shoreline_stones_transparent.png",
+      "transparent_sha256": "e80a526efd42e84bbf3e734077f677c77e5009a8b0a24e96f9e9ad9e5a2f7b1e"
+    },
+    "slate_cliff": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1024,
+        1024
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/slate_cliff.png",
+      "raw_sha256": "b515e41346ccc518668e3b9b4ea3d76d5527e98d62a4dcf5a055ded86ddfff67",
+      "raw_size": [
+        1254,
+        1254
+      ],
+      "section": "combat",
+      "sha256": "592d673985d547ddd6fff4a63ef580905e9927368fca8b382297a18b9d3db5f1",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          0
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1024,
+          1024
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 0,
+        "scale": "512/627",
+        "scaled_size": [
+          1024,
+          1024
+        ],
+        "source": "docs/art-production/battlefields-20261028/sources/slate_cliff_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1254,
+          1254
+        ],
+        "step": "627/512"
+      }
+    },
+    "snowbound_road": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1024,
+        640
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/snowbound_road.png",
+      "raw_sha256": "4e5f60ac8f14a192513f595d6f2de3c69b356693c25f25ced1d53ed666d15b02",
+      "raw_size": [
+        1585,
+        992
+      ],
+      "section": "combat",
+      "sha256": "c7b757b97049c3c95864f9bff6489ea6c57f8aa1b2435830bb4c5b9ba718daf1",
+      "status": "packed",
+      "transform": {
+        "crop_origin": [
+          0,
+          0
+        ],
+        "dst_rect": [
+          0,
+          0,
+          1024,
+          640
+        ],
+        "kind": "ground",
+        "mode": "fit_width_crop_height",
+        "residue_px": 1,
+        "scale": "1024/1585",
+        "scaled_size": [
+          1024,
+          641
+        ],
+        "source": "docs/art-production/battlefields-20261028/sources/snowbound_road_v2_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1585,
+          992
+        ],
+        "step": "1585/1024"
+      }
+    },
+    "snowbound_road_extension": {
+      "anchor": [
+        0,
+        0
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "kind": "ground",
+      "path": "res://art/production/p1/battlefields_v01/snowbound_road_extension.png",
+      "raw_sha256": "1a7664628490a5621afa9372bdc05101c3cee80d296a15a7b1fd383dff8ce950",
+      "raw_size": [
+        1536,
+        1024
+      ],
+      "section": "combat",
+      "sha256": "c2ede0bfcbbe6039cd2efa276769cb53f2127628002cc065810dee5c6c604f69",
+      "status": "packed",
+      "transform": {
+        "dst_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "kind": "ground",
+        "mode": "crop",
+        "scale": "1/1",
+        "source": "docs/art-production/battlefields-20261028/sources/snowbound_road_extension_raw.png",
+        "src_rect": [
+          0,
+          0,
+          1536,
+          1024
+        ],
+        "step": "1/1"
+      }
+    }
+  },
+  "occlusion_grow": 8,
+  "output_dir": "art/production/p1/battlefields_v01",
+  "package": "battlefields_v01",
+  "pending": [],
+  "schema_version": 1,
+  "transparent_alpha": 128
+}

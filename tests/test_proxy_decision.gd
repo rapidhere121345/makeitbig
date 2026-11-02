@@ -5,6 +5,7 @@ const ProxyBuild := preload("res://src/systems/proxy_build.gd")
 const Decision := preload("res://src/systems/proxy_decision.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Sweep := preload("res://src/runtime/geometry/spatial_sweep.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 const TEST_ARENA := Rect2(-320.0, -320.0, 640.0, 640.0)
 
@@ -28,6 +29,7 @@ func _initialize() -> void:
 		_test_near_retention_and_order(failures)
 		_test_marking_priority_and_two_candidate_fallback(failures)
 		_test_direct_thresholds_and_execution(failures)
+		_test_retreat_terrain(failures)
 		_test_distance_settings(failures)
 		_test_no_progress_and_isolation(failures)
 		_test_deterministic_continuation(failures)
@@ -68,6 +70,13 @@ func _test_snapshot_v3_observation_authority(failures: Array[String]) -> void:
 	var white_state := Decision.initial_state(white)
 	var valid := _snapshot(0, [_enemy(1, Vector2(5, 0))])
 	_expect(Decision.decide(valid, white, white_state, 0).ok, "valid white snapshot v3 was rejected", failures)
+	var terrain := valid.duplicate(true)
+	terrain.static_blockers = [{"points": PackedVector2Array([Vector2(20, 20), Vector2(40, 20), Vector2(40, 40), Vector2(20, 40)])}]
+	_expect(Decision.decide(terrain, white, white_state, 0).ok, "valid public terrain rejected", failures)
+	terrain.static_blockers[0]["id"] = "private/room/binding"
+	_expect(Decision.decide(terrain, white, white_state, 0).error == "invalid_static_blockers", "terrain binding identity accepted", failures)
+	terrain.static_blockers = [{"points": PackedVector2Array([Vector2.ZERO, Vector2.RIGHT, Vector2.RIGHT])}]
+	_expect(Decision.decide(terrain, white, white_state, 0).error == "invalid_static_blockers", "degenerate terrain accepted", failures)
 	var old := valid.duplicate(true)
 	old.snapshot_version = 2
 	_expect(Decision.decide(old, white, white_state, 0).error == "wrong_snapshot_version", "snapshot v2 was accepted", failures)
@@ -151,6 +160,42 @@ func _test_direct_thresholds_and_execution(failures: Array[String]) -> void:
 	_expect(approach_exit.commands[0].kind == "stop_move", "direct approach exit 780 changed", failures)
 	for command in retreat.commands:
 		_expect(Protocol.validate(command, 0, [Protocol.ABILITY_PIERCING_ARROW], false).status == Protocol.STATUS_ACCEPTED, "decision emitted command outside CombatCommandProtocol", failures)
+
+
+func _test_retreat_terrain(failures: Array[String]) -> void:
+	var build: Dictionary = builds.white
+	var target := Vector2(20, 0)
+	for polygon in [false, true]:
+		var blocker := {"points": PackedVector2Array([Vector2(-40, -10), Vector2(-20, -10), Vector2(-20, 10), Vector2(-40, 10)])} if polygon else {"center": Vector2(-30, 0), "radius": 10.0}
+		var state := Decision.initial_state(build)
+		var position := Vector2.ZERO
+		var sequence := 0
+		for tick in 30:
+			var snapshot := _snapshot_at(tick, position, [_enemy(1, target)], 100.0)
+			snapshot.static_blockers = [blocker]
+			var result := Decision.decide(snapshot, build, state, sequence)
+			_expect(result.ok, "terrain retreat decision rejected", failures)
+			_expect(result == Decision.decide(snapshot.duplicate(true), build, state.duplicate(true), sequence), "terrain retreat is not deterministic", failures)
+			if not result.ok:
+				break
+			state = result.next_state
+			sequence = result.next_sequence
+			for command: Dictionary in result.commands:
+				if command.kind != "move":
+					continue
+				var direction := Vector2(command.direction_x_milli, command.direction_y_milli).normalized()
+				var motion := direction * 4.0
+				var blocked := not Sweep.sweep_circle_polygon(position, motion, 14.0, blocker.points).is_empty() if polygon else not Sweep.sweep_circle_circle(position, motion, 14.0, blocker.center, blocker.radius, "circle", false).is_empty()
+				_expect(not blocked, "retreat commands motion into terrain", failures)
+				if not blocked:
+					position += motion
+		_expect(position.distance_to(target) >= 38.0, "terrain retreat failed to reach its safe band", failures)
+	var enclosed := _snapshot_at(0, Vector2.ZERO, [_enemy(1, target)], 100.0)
+	enclosed.static_blockers = []
+	for index in 8:
+		enclosed.static_blockers.append({"center": Vector2.RIGHT.rotated(index * TAU / 8.0) * 30.0, "radius": 10.0})
+	var stopped := Decision.decide(enclosed, build, Decision.initial_state(build), 0)
+	_expect(stopped.ok and stopped.commands[0].kind == "stop_move", "enclosed retreat must stop when no clear step exists", failures)
 
 
 func _test_distance_settings(failures: Array[String]) -> void:

@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "package": "battlefields_v01",
+  "source_dir": "docs/art-production/battlefields-20261028/sources",
+  "output_dir": "art/production/p1/battlefields_v01",
+  "report_dir": "build/current/battlefields-v01/packing",
+  "default_alpha_threshold": 240,
+  "margin": 8,
+  "occlusion_grow": 8,
+  "transparent_alpha": 128,
+  "grounds": {
+    "snowbound_road": {
+      "source": "snowbound_road_v2_raw.png",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "4e5f60ac8f14a192513f595d6f2de3c69b356693c25f25ced1d53ed666d15b02"
+    },
+    "river_crossing": {
+      "source": "river_crossing_v2_raw.png",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "4c1a464b19e1be624289980bdb34f30ea7ece70262db28fc24bcdab845cdd637"
+    },
+    "ruined_village": {
+      "source": "ruined_village_v2_raw.png",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "25883df5c30a277a665e8f87b25e7297837c4e7c7646b47730611b067ca352ad"
+    },
+    "quarry_pass": {
+      "source": "quarry_pass_v2_raw.png",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "5dda47d3d188e3d712599abb06886a944e81afd7aa7d0436e1a6b0b1d73e8701"
+    },
+    "colossus_approach": {
+      "source": "colossus_approach_v2_raw.png",
+      "mode": "fit_width_crop_height",
+      "fit_width": 1024,
+      "canvas": [
+        1024,
+        640
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "f1f16651d20a5e5b4d2bbb7b324f6257ccb311286efe11d0220efe1aea6d95d5"
+    },
+    "river_water": {
+      "source": "river_water_raw.png",
+      "mode": "fit_width_crop_height",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "899ff036fd532b02381b6eaa41ba4a4be062a1d3d76d3c6a90060b8916a9d5ee",
+      "fit_width": 1024
+    },
+    "slate_cliff": {
+      "source": "slate_cliff_raw.png",
+      "mode": "fit_width_crop_height",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "b515e41346ccc518668e3b9b4ea3d76d5527e98d62a4dcf5a055ded86ddfff67",
+      "fit_width": 1024
+    },
+    "snowbound_road_extension": {
+      "source": "snowbound_road_extension_raw.png",
+      "mode": "crop",
+      "src_rect": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "1a7664628490a5621afa9372bdc05101c3cee80d296a15a7b1fd383dff8ce950"
+    },
+    "river_crossing_extension": {
+      "source": "river_crossing_extension_raw.png",
+      "mode": "crop",
+      "src_rect": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "9f8e6f915a64dd31f0d80677a9f36513004c0aa907762fd0ae40db011c6a036a"
+    },
+    "ruined_village_extension": {
+      "source": "ruined_village_extension_raw.png",
+      "mode": "crop",
+      "src_rect": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "634f1b5ca53658e20214484431b526f801a2105815e670407c346c61be0a5239"
+    },
+    "quarry_pass_extension": {
+      "source": "quarry_pass_extension_raw.png",
+      "mode": "crop",
+      "src_rect": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "e5d9daacce582b36f89030a93977c821c27679653e07e6356ae26fca21852981"
+    },
+    "colossus_approach_extension": {
+      "source": "colossus_approach_extension_raw.png",
+      "mode": "crop",
+      "src_rect": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "anchor": [
+        0,
+        0
+      ],
+      "section": "combat",
+      "source_sha256": "57d8eeaa120042aadeec7364fb1f7b5c241a28a1cf97b06a80cdf380d52b1071"
+    }
+  },
+  "assets": {
+    "shoreline_stones": {
+      "canvas": [
+        160,
+        72
+      ],
+      "anchor": [
+        80,
+        64
+      ],
+      "section": "combat",
+      "reveal": false,
+      "source_sha256": "b0cbad79fc941fe6a47c5ee86a14c3e4bf326589a4f624d2214dd1311e7f509d"
+    }
+  }
+}

@@ -12,11 +12,11 @@
 				"landmark": "Ruined Gate"
 			},
 			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
-			"schema_version": 1,
+			"schema_version": 1.0,
 			"spawn_profiles": {
 				"default": {
 					"column_step": 145.0,
-					"columns": 3,
+					"columns": 3.0,
 					"origin": [
 						-145.0,
 						-80.0
@@ -98,10 +98,10 @@
 				"landmark": "Gorge Banner"
 			},
 			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
-			"schema_version": 1,
+			"schema_version": 1.0,
 			"spawn_profiles": {
 				"default": {
-					"columns": 4,
+					"columns": 4.0,
 					"origin": [
 						-180.0,
 						0.0
@@ -141,7 +141,7 @@
 				"landmark": "Ring Beacon"
 			},
 			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
-			"schema_version": 1,
+			"schema_version": 1.0,
 			"spawn_profiles": {
 				"default": {
 					"center": [
@@ -154,7 +154,257 @@
 				}
 			},
 			"world_scene_path": "res://content/rooms/combat/ring.tscn"
+		},
+		{
+			"gameplay_digest": "cd9491c8f9bfb172f90276e44223ce0869ee4e64df37fcb5ca172d83b65f6c61",
+			"layout_id": "snowbound_road",
+			"manifest_path": "res://content/rooms/combat/snowbound_road.spatial.json",
+			"presentation": {
+				"concept": "A broken trade road with broad snowfields, roadside ruins and room to flank.",
+				"display_name": "Snowbound Road",
+				"entry_hint": "Use roadside ruins as cover.",
+				"exit_hint": "Clear this stage, then continue the task or return to Hearthside.",
+				"landmark": "Roadside Watchtower"
+			},
+			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
+			"schema_version": 1,
+			"spawn_profiles": {
+				"default": {
+					"offsets": [
+						[
+							-80.0,
+							-60.0
+						],
+						[
+							60.0,
+							-60.0
+						],
+						[
+							170.0,
+							20.0
+						],
+						[
+							350.0,
+							0.0
+						],
+						[
+							10.0,
+							150.0
+						],
+						[
+							230.0,
+							230.0
+						],
+						[
+							-220.0,
+							50.0
+						]
+					],
+					"pattern": "explicit"
+				}
+			},
+			"world_scene_path": "res://content/rooms/combat/snowbound_road.tscn"
+		},
+		{
+			"gameplay_digest": "70b04f411b910364239785e2ee49acd9986c8f5356c60a171e00f3d83f295508",
+			"layout_id": "river_crossing",
+			"manifest_path": "res://content/rooms/combat/river_crossing.spatial.json",
+			"presentation": {
+				"concept": "A river divides two banks; the broad stone crossing connects both approaches.",
+				"display_name": "River Crossing",
+				"entry_hint": "Cross between the riverbanks.",
+				"exit_hint": "Clear this stage, then continue the task or return to Hearthside.",
+				"landmark": "Broken River Piers"
+			},
+			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
+			"schema_version": 1,
+			"spawn_profiles": {
+				"default": {
+					"offsets": [
+						[
+							160.0,
+							20.0
+						],
+						[
+							300.0,
+							20.0
+						],
+						[
+							380.0,
+							110.0
+						],
+						[
+							230.0,
+							260.0
+						],
+						[
+							-240.0,
+							40.0
+						],
+						[
+							400.0,
+							260.0
+						],
+						[
+							120.0,
+							-120.0
+						]
+					],
+					"pattern": "explicit"
+				}
+			},
+			"world_scene_path": "res://content/rooms/combat/river_crossing.tscn"
+		},
+		{
+			"gameplay_digest": "2fffc2c81f3ea0e2d68d08da7bad97f10e7145022b4aaec52037e86922be7fe4",
+			"layout_id": "ruined_village",
+			"manifest_path": "res://content/rooms/combat/ruined_village.spatial.json",
+			"presentation": {
+				"concept": "Broken buildings divide a village into lanes, courtyards and flanking routes.",
+				"display_name": "Ruined Village",
+				"entry_hint": "Flank through the ruins.",
+				"exit_hint": "Clear this stage, then continue the task or return to Hearthside.",
+				"landmark": "Abandoned Village Gate"
+			},
+			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
+			"schema_version": 1,
+			"spawn_profiles": {
+				"default": {
+					"offsets": [
+						[
+							-70.0,
+							-70.0
+						],
+						[
+							80.0,
+							-40.0
+						],
+						[
+							230.0,
+							-40.0
+						],
+						[
+							410.0,
+							10.0
+						],
+						[
+							-30.0,
+							180.0
+						],
+						[
+							410.0,
+							250.0
+						],
+						[
+							-290.0,
+							40.0
+						]
+					],
+					"pattern": "explicit"
+				}
+			},
+			"world_scene_path": "res://content/rooms/combat/ruined_village.tscn"
+		},
+		{
+			"gameplay_digest": "744ad358d9f169770fac5a2ecdee8f7970f63002cb6ceff728a87cd301f7f0f9",
+			"layout_id": "quarry_pass",
+			"manifest_path": "res://content/rooms/combat/quarry_pass.spatial.json",
+			"presentation": {
+				"concept": "Offset quarry ledges form a winding battlefield with open pockets for fighting.",
+				"display_name": "Slate Quarry",
+				"entry_hint": "Dodge on the wider ledges.",
+				"exit_hint": "Clear this stage, then continue the task or return to Hearthside.",
+				"landmark": "Slate Escarpment"
+			},
+			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
+			"schema_version": 1,
+			"spawn_profiles": {
+				"default": {
+					"offsets": [
+						[
+							-90.0,
+							-20.0
+						],
+						[
+							80.0,
+							-40.0
+						],
+						[
+							260.0,
+							-70.0
+						],
+						[
+							410.0,
+							-20.0
+						],
+						[
+							-70.0,
+							170.0
+						],
+						[
+							140.0,
+							80.0
+						],
+						[
+							-210.0,
+							70.0
+						]
+					],
+					"pattern": "explicit"
+				}
+			},
+			"world_scene_path": "res://content/rooms/combat/quarry_pass.tscn"
+		},
+		{
+			"gameplay_digest": "e648af08800ea817b958281cc23016ae103cbce1fc8fe5518826a40720e3fe65",
+			"layout_id": "colossus_approach",
+			"manifest_path": "res://content/rooms/combat/colossus_approach.spatial.json",
+			"presentation": {
+				"concept": "An open ancient causeway between rivers leads to the Colossus foothold.",
+				"display_name": "Colossus Approach",
+				"entry_hint": "Evade across the open ground.",
+				"exit_hint": "Defeat the Colossus, then choose Finish Task to return to Hearthside.",
+				"landmark": "Threshold Gate"
+			},
+			"presentation_digest": "d33c49fe0b729be72cd24030fcb176200b12a899bd93a03b5142bae44b00c8f7",
+			"schema_version": 1,
+			"spawn_profiles": {
+				"default": {
+					"offsets": [
+						[
+							-70.0,
+							-90.0
+						],
+						[
+							80.0,
+							-50.0
+						],
+						[
+							230.0,
+							-50.0
+						],
+						[
+							350.0,
+							40.0
+						],
+						[
+							-20.0,
+							160.0
+						],
+						[
+							190.0,
+							240.0
+						],
+						[
+							-220.0,
+							40.0
+						]
+					],
+					"pattern": "explicit"
+				}
+			},
+			"world_scene_path": "res://content/rooms/combat/colossus_approach.tscn"
 		}
 	],
-	"schema_version": 1
+	"schema_version": 1.0
 }

@@ -14,7 +14,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var theme := Shell.create()
-	_expect(theme.default_font == Shell.ui_font(), "packaged Chinese face")
+	_expect(theme.default_font == Shell.data_font(), "packaged Chinese face")
 	_expect(theme.get_font("font", "Button") == Shell.data_font()
 		and theme.get_font("font", "DataLabel") == Shell.data_font(), "controls and values use the bundled medium sans face")
 	_check_font_coverage()
@@ -24,23 +24,42 @@ func _run() -> void:
 	for kind in ["panel", "button", "well", "paper", "hover", "selected", "disabled"]:
 		var first := Shell.panel_style(kind)
 		var second := Shell.panel_style(kind)
-		_expect(first != second and first.texture != null and first.texture == second.texture, kind + " cached texture, independent margins")
+		_expect(first != second and first is StyleBoxFlat, kind + " flat styles with independent margins")
 		_expect(first.content_margin_left == 16 and first.content_margin_right == 16
 			and first.content_margin_top == 12 and first.content_margin_bottom == 12, kind + " stable layout margins")
 		first.content_margin_top = 3
 		_expect(second.content_margin_top == 12, "caller override stays local")
-		var image := second.texture.get_image()
-		_expect(image.get_size() == Vector2i(64,64), kind + " generated 64px material")
-		var peak := 0.0
-		for y in range(12,52):
-			for x in range(12,52):
-				var pixel := image.get_pixel(x,y)
-				_expect(pixel.a == 1.0, kind + " writing surface opaque")
-				peak = maxf(peak, _luma(pixel))
-		var body := (_luma(Shell.BONE)+0.05)/(peak+0.05)
-		var auxiliary := (_luma(Shell.NEUTRAL)+0.05)/(peak+0.05)
+		_expect(second.border_width_left == 0 and second.border_width_top == 0
+			and second.border_width_right == 0, kind + " no enclosing decorative frame")
+		if kind in ["button", "hover", "selected", "disabled"]:
+			_expect(second.bg_color.r >= second.bg_color.g and second.bg_color.g >= second.bg_color.b
+				and second.bg_color.a < 1.0, kind + " smoked warm surface instead of opaque blue blocks")
+		var surface: Color = second.bg_color if second.bg_color.a > 0.0 else Shell.INK
+		var body := (_luma(Shell.BONE)+0.05)/(_luma(surface)+0.05)
+		var auxiliary := (_luma(Shell.NEUTRAL)+0.05)/(_luma(surface)+0.05)
 		contrasts[kind] = {"body_min":body,"auxiliary_min":auxiliary}
-		_expect(body >= 7.0 and auxiliary >= 4.5, kind + " worst-pixel writing contrast")
+		_expect(body >= 7.0 and auxiliary >= 4.5, kind + " reading contrast")
+	_expect(Shell.section_style().bg_color.a == 0.0, "layout sections remain transparent")
+	var action := Button.new()
+	action.theme = theme
+	root.add_child(action)
+	Shell.apply_primary_button(action)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var style := action.get_theme_stylebox(state) as StyleBoxTexture
+		_expect(style != null and style.texture != null, state + " engraved action material resolves")
+		if style != null:
+			_expect(style.content_margin_left == 16 and style.content_margin_right == 16
+				and style.content_margin_top == 12 and style.content_margin_bottom == 12,
+				state + " decoration preserves action layout")
+			_expect(style.texture.get_height() <= 64, "button artwork has no excessive transparent padding")
+	_expect(action.get_theme_stylebox("focus") == theme.get_stylebox("focus", "Button"),
+		"material leaves keyboard focus intact")
+	action.free()
+	var focus := theme.get_stylebox("focus", "Button") as StyleBoxFlat
+	_expect(focus != null and focus.border_width_left >= 2 and focus.bg_color.a == 0.0,
+		"keyboard focus remains visible without obscuring the control")
+	_expect(theme.get_stylebox("panel", "PopupPanel").bg_color.a == 1.0,
+		"popup reading surface remains opaque")
 	_preserve("res://art/production/p1/early_loop_v01/skills_actions.png", "skills_actions.png")
 	_preserve("res://art/production/p1/icon_expansion_v01/ranger_talents.png", "ranger_talents.png")
 	_preserve("res://art/production/p1/icon_expansion_v01/law_tokens.png", "law_tokens.png")
@@ -61,10 +80,9 @@ func _run() -> void:
 	icon.size = Vector2(64,64)
 	host.add_child(icon)
 	await process_frame
-	var well := icon.get_node("HearthsideIconWell") as TextureRect
-	_expect(well.mouse_filter == Control.MOUSE_FILTER_IGNORE and well.show_behind_parent, "backing cannot block icon input or cover its foreground")
-	_expect(well.texture == Shell.material_texture("icon_well") and well.size == icon.size
-		and icon.get_combined_minimum_size() == Vector2(64,64), "backing preserves display/layout contract")
+	_expect(icon.get_node_or_null("HearthsideIconWell") == null,
+		"icons do not add a redundant ornamental box")
+	_expect(icon.get_combined_minimum_size() == Vector2(64,64), "unframed icon retains layout size")
 	var backdrop := Shell.add_backdrop(host)
 	await process_frame
 	_expect(backdrop.mouse_filter == Control.MOUSE_FILTER_IGNORE and not backdrop.is_processing(), "backdrop inert")

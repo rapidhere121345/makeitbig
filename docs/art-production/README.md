@@ -13,7 +13,7 @@ The authoritative production resources are those read by runtime code in `art/pr
 | Ranger and enemy action atlases (frame contracts and base atlases under the actors_v02 styled art) | `p1-ranger-actions-v01/recipe.final.json`, [p1-enemy-actions-v01](p1-enemy-actions-v01/README.md), and corresponding sources |
 | Equipment, skills, navigation, talents, Law Tokens | `p1-early-loop-v01/`, `p1-equipment-readability-v02/`, `p1-hub-navigation-v01/`, `p1-icon-expansion-v01/` |
 | UI materials | Original images, prompts, and packing maps in `p1-ui-style-r13/` |
-| Title, loop, and return | `p1-title-concept-v02/`, `p1-title-life-v01/`, `p1-hearth-return-v01/` |
+| Title, loop, and return | [Current title](title-world-20261101/PROMPT.md), shared `p1-title-life-v01/` frames, and [current-world return composition](hearth-return-20261101/README.md). Superseded title/return source recipes remain for provenance. |
 | Five dialogue portraits | `p1-story-portraits-r14/`: v03 original, prompts, current crop recipe, and FROZEN import manifest only |
 | Ground and visual references | `p1-ground-refine-v01/`; production reference originals and prompts retained in `concepts/` |
 

@@ -303,6 +303,7 @@ func commit(snapshot: Dictionary, input_view: Dictionary, display_delta: float =
 	if not bool(binding.ok):
 		_clear_render_state(String(binding.error))
 		return binding
+	_input_projection.set_layout_id(String(snapshot.get("layout_id", "rectangle_arena")))
 	_input_projection.begin_frame(Rect2(Vector2.ZERO, get_viewport_rect().size), snapshot["player_position"], snapshot["arena_rect"])
 	_domain.global_transform = _input_projection.gameplay_transform()
 	_set_native_visible(enabled)
@@ -428,6 +429,7 @@ func world_dependencies() -> Dictionary:
 
 func screen_to_gameplay(screen_point: Vector2, snapshot: Dictionary) -> Vector2:
 	# Coordinate interpretation is available even when all drawing is disabled.
+	_input_projection.set_layout_id(String(snapshot.get("layout_id", "rectangle_arena")))
 	_input_projection.begin_frame(Rect2(Vector2.ZERO, get_viewport_rect().size), snapshot["player_position"], snapshot["arena_rect"])
 	return _input_projection.screen_to_gameplay(screen_point)
 
@@ -478,6 +480,7 @@ func _combat_focus_near_action_edge(snapshot: Dictionary, nearest: CombatEnemySt
 	var frame := Rect2(Vector2.ZERO, get_viewport_rect().size)
 	if frame.size.x <= 0.0 or frame.size.y <= 0.0:
 		return false
+	_input_projection.set_layout_id(String(snapshot.get("layout_id", "rectangle_arena")))
 	_input_projection.begin_frame(frame, snapshot["player_position"], snapshot["arena_rect"])
 	var edge := Rect2(frame.end - Vector2(332.0, 190.0), Vector2(324.0, 182.0)).grow(24.0)
 	if edge.has_point(_input_projection.gameplay_to_screen(snapshot["player_position"])):
@@ -503,7 +506,7 @@ func _draw_room_entry_overlay(viewport_rect: Rect2) -> void:
 	var room_count := maxi(1, int(_snapshot["framework_room"].get("room_count", 1)))
 	var room_number := clampi(int(_snapshot["framework_room"].get("room_index", 0)) + 1, 1, room_count)
 	var panel_width := minf(900.0, maxf(520.0, viewport_rect.size.x - 96.0))
-	var panel := Rect2(Vector2((viewport_rect.size.x - panel_width) * 0.5, viewport_rect.size.y * 0.5 - 124.0), Vector2(panel_width, 248.0))
+	var panel := Rect2(Vector2((viewport_rect.size.x - panel_width) * 0.5, viewport_rect.size.y * 0.5 - 140.0), Vector2(panel_width, 280.0))
 	draw_rect(viewport_rect, Color(COLOR_INK, 0.38 * alpha), true)
 	draw_rect(panel, Color(COLOR_DEEP_BLUE, 0.94 * alpha), true)
 	draw_rect(panel, Color(COLOR_AMBER, 0.86 * alpha), false, 2.0)
@@ -511,32 +514,41 @@ func _draw_room_entry_overlay(viewport_rect: Rect2) -> void:
 	var text_font: Font = font
 	if text_font == null:
 		return
-	var center_x := panel.get_center().x
-	var overline := "Through the Exit · Enter the Next Room" if room_number > 1 else "Chapter One Combat · Enter the First Room"
-	var title := "Room %d / %d  ·  %s" % [room_number, room_count, String(room_info.get("display_name", "Arena"))]
-	var concept := String(room_info.get("concept", ""))
-	var entry_hint := String(room_info.get("entry_hint", ""))
+	var text_left := panel.position.x + 30.0
+	var text_width := panel.size.x - 60.0
+	var overline := "Task Progress · Enter the Next Stage" if room_number > 1 else "Chapter One Combat · Enter the First Stage"
+	var title := "Stage %d / %d  ·  %s" % [room_number, room_count, String(room_info.get("display_name", "Arena"))]
+	var concept := tr(String(room_info.get("concept", "")))
+	var entry_hint := tr(String(room_info.get("entry_hint", "")))
 	var objective := frame_builder.objective_label(_snapshot)
-	var exit_hint := String(room_info.get("exit_hint", ""))
+	var guide := "Finish Task" if room_number == room_count else "Next Stage"
+	var footer := tr("%s  ·  %s  ·  After clearing: %s" % [String(room_info.get("landmark", "Boundary Marker")), objective, guide])
 	overline = tr(overline)
 	title = tr(title)
-	concept = tr(concept)
-	entry_hint = tr(entry_hint)
-	var title_width := text_font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 30).x
-	var overline_width := text_font.get_string_size(overline, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18).x
-	var concept_width := text_font.get_string_size(concept, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 19).x
-	var hint_width := text_font.get_string_size(entry_hint, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18).x
-	draw_string(text_font, Vector2(center_x - overline_width * 0.5, panel.position.y + 42.0), overline, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(COLOR_PROXY, alpha))
-	draw_string(text_font, Vector2(center_x - title_width * 0.5, panel.position.y + 82.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 30, Color(COLOR_BONE, alpha))
-	draw_string(text_font, Vector2(center_x - concept_width * 0.5, panel.position.y + 118.0), concept, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 19, Color(PaletteScript.BONE_DIM, alpha))
-	draw_string(text_font, Vector2(center_x - hint_width * 0.5, panel.position.y + 151.0), entry_hint, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(COLOR_AMBER, alpha))
-	var footer := "%s  ·  %s  ·  %s" % [String(room_info.get("landmark", "Boundary Marker")), objective, exit_hint]
-	footer = tr(footer)
-	var footer_width := text_font.get_string_size(footer, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16).x
-	draw_string(text_font, Vector2(center_x - footer_width * 0.5, panel.position.y + 187.0), footer, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(COLOR_NEUTRAL, alpha))
+	_draw_entry_line(text_font, text_left, panel.position.y + 38.0, text_width, overline, 18, Color(COLOR_PROXY, alpha))
+	_draw_entry_line(text_font, text_left, panel.position.y + 76.0, text_width, title, 30, Color(COLOR_BONE, alpha))
+	_draw_entry_wrapped(text_font, text_left, panel.position.y + 108.0, text_width, concept, 19, Color(PaletteScript.BONE_DIM, alpha))
+	_draw_entry_line(text_font, text_left, panel.position.y + 176.0, text_width, entry_hint, 18, Color(COLOR_AMBER, alpha))
+	_draw_entry_wrapped(text_font, text_left, panel.position.y + 210.0, text_width, footer, 16, Color(COLOR_NEUTRAL, alpha))
 	var bar := Rect2(panel.position + Vector2(30.0, panel.size.y - 24.0), Vector2(panel.size.x - 60.0, 4.0))
 	draw_rect(bar, Color(COLOR_INK, 0.78 * alpha), true)
 	draw_rect(Rect2(bar.position, Vector2(bar.size.x * progress, bar.size.y)), Color(COLOR_AMBER, 0.90 * alpha), true)
+
+
+## Fit compact headings and hints without letting translated text escape the panel.
+func _draw_entry_line(text_font: Font, left: float, baseline: float, width: float, value: String, preferred_size: int, color: Color) -> void:
+	var size := preferred_size
+	while size > 14 and text_font.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x > width:
+		size -= 1
+	draw_string(text_font, Vector2(left, baseline), value, HORIZONTAL_ALIGNMENT_CENTER, width, size, color)
+
+
+## Reserve two rows for descriptive text; shrink to 14 only when wrapping needs it.
+func _draw_entry_wrapped(text_font: Font, left: float, baseline: float, width: float, value: String, preferred_size: int, color: Color) -> void:
+	var size := preferred_size
+	while size > 14 and text_font.get_multiline_string_size(value, HORIZONTAL_ALIGNMENT_CENTER, width, size).y > text_font.get_height(size) * 2.0 + 1.0:
+		size -= 1
+	draw_multiline_string(text_font, Vector2(left, baseline), value, HORIZONTAL_ALIGNMENT_CENTER, width, size, 2, color)
 
 
 func _on_hud_return_requested() -> void:

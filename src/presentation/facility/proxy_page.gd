@@ -78,7 +78,7 @@ func _proxy_core_cell(core_id: String, unlocked: bool) -> PanelContainer:
 	var cell := PanelContainer.new()
 	cell.name = "ProxyCoreCell_%s" % UiKit.stable_node_token(core_id)
 	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cell.add_theme_stylebox_override("panel", _screen._slot_cell_box(unlocked, not unlocked))
+	cell.add_theme_stylebox_override("panel", _screen._plain_cell_box())
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 6)
 	cell.add_child(content)

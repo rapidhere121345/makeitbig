@@ -16,7 +16,7 @@ const BACKDROP_SOURCE_PATH := "res://src/presentation/title_art_helper.gd"
 ## The early placeholder directory the title used to read. It stays on disk for
 ## history; the title must not read from it again.
 const EARLY_PLACEHOLDER_MARKER := "art/early/"
-const EXPECTED_PLATE_SUFFIX := "art/production/p1/title_concept_v02/background.png"
+const EXPECTED_PLATE_SUFFIX := "art/production/p1/title_world_v03/background.png"
 ## The approved English UI band, plus the one approved wordmark exception.
 const CHINESE_BODY_MIN := 18
 const CHINESE_BODY_MAX := 22
@@ -167,7 +167,7 @@ func _test_plate_backdrop(backdrop, failures: Array[String]) -> void:
 	## The produced plate is the whole title: one image, native size, drawn once.
 	_expect(backdrop.plate_status() == TitleArtHelperScript.PLATE_STATUS_READY, "title: the plate is drawn but still reports pending", failures)
 	_expect(String(backdrop.plate_reason()).is_empty(), "title: an accepted plate still carries a rejection reason: %s" % String(backdrop.plate_reason()), failures)
-	_expect(String(TitleArtHelperScript.TITLE_PLATE_ATLAS_PATH).ends_with("title_concept_v02/atlas.json"), "title: the plate atlas moved away from the agreed path", failures)
+	_expect(String(TitleArtHelperScript.TITLE_PLATE_ATLAS_PATH).ends_with("title_world_v03/atlas.json"), "title: the plate atlas moved away from the agreed path", failures)
 	_expect(TitleArtHelperScript.TITLE_PLATE_SPRITE_ID == "title.background", "title: the plate sprite id is no longer title.background", failures)
 	var plate := backdrop.field_layer.get_node_or_null(NodePath("TitlePlate")) as Sprite2D
 	_expect(plate != null, "title: the plate is not drawn into the field layer", failures)
@@ -233,9 +233,9 @@ func _test_life_assets(backdrop, failures: Array[String]) -> void:
 	if fire == null or steam == null:
 		return
 	## The anchors were read off the published plate: the flame sits on the brazier
-	## rim and the steam leaves the pot mouth nine pixels above it.
-	_expect(fire.position == Vector2(338, 237) and fire.offset == Vector2(-4, -9), "title: the flame anchor is not the verified (338, 237) with the published frame anchor", failures)
-	_expect(steam.position == Vector2(338, 228) and steam.offset == Vector2(-6, -17), "title: the steam anchor is not the verified (338, 228) with the published frame anchor", failures)
+	## rim and smoke leaves the forge chimney.
+	_expect(fire.position == Vector2(554, 250) and fire.offset == Vector2(-4, -9), "title: the flame anchor is not the verified (554, 250) with the published frame anchor", failures)
+	_expect(steam.position == Vector2(554, 165) and steam.offset == Vector2(-6, -17), "title: the steam anchor is not the verified (554, 165) with the published frame anchor", failures)
 	_expect(fire.region_rect.size == Vector2(8, 10), "title: the flame cell is not the published 8x10: %s" % str(fire.region_rect.size), failures)
 	_expect(steam.region_rect.size == Vector2(12, 18), "title: the steam cell is not the published 12x18: %s" % str(steam.region_rect.size), failures)
 	## The cuts come from the two published sheets, not from anything drawn here.

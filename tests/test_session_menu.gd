@@ -1,6 +1,7 @@
 extends SceneTree
 const Game = preload("res://src/game/game_root.gd")
 const Menu = preload("res://src/presentation/session_menu.gd")
+const Locale = preload("res://src/localization/game_locale.gd")
 const Stage = preload("res://src/presentation/pixel_stage.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 var errors: Array[String] = []
@@ -10,6 +11,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	await _check_launcher_stage_bounds()
+	await _check_quit_layout()
 	var game := Game.new()
 	game.save_directory_path = "user://session-menu-tests-no-player-save"
 	game.playtest_logging_enabled = false
@@ -45,6 +47,20 @@ func _run() -> void:
 	for i in range(5): await process_frame
 	_expect(controller.process_mode == Node.PROCESS_MODE_INHERIT, "resume restores process mode")
 	menu.open_menu()
+	var exits: Array = []
+	game.exit_code_hook = func(code: int, reason: String): exits.append([code, reason])
+	var active_before: Dictionary = game.application_state.active_session
+	var quit_button: Button = menu.find_child("QuitButton", true, false)
+	var cancel_quit: Button = menu.find_child("CancelQuitButton", true, false)
+	quit_button.pressed.emit()
+	_expect(exits.is_empty() and cancel_quit.visible and menu.is_open(), "active quit asks for confirmation")
+	cancel_quit.pressed.emit()
+	_expect(exits.is_empty() and not cancel_quit.visible and game.current_route == "arena"
+		and game.application_state.active_session == active_before, "cancel quit preserves active contract")
+	quit_button.pressed.emit()
+	quit_button.pressed.emit()
+	_expect(exits == [[0, "quit_to_desktop"]] and game.current_route == "arena", "confirmed quit delegates exit without settling")
+	game.exit_code_hook = Callable()
 	var abandon: Button = menu.find_child("AbandonButton", true, false)
 	abandon.pressed.emit()
 	_expect(game.current_route == "arena" and menu.is_open(), "first abandon press only confirms")
@@ -121,3 +137,58 @@ func _check_launcher_stage_bounds() -> void:
 		_expect(is_equal_approx(button.scale.x, maxf(0.75, minf(window_size.x / 1600.0, window_size.y / 900.0))), "settings launcher follows desktop readability scale")
 		viewport.free()
 		await process_frame
+
+
+func _check_quit_layout() -> void:
+	var previous := Locale.current()
+	for language in ["en", "zh_CN"]:
+		Locale.select(language)
+		for scenario in [["base", 1.0], ["arena", 1.0], ["arena", 1.25]]:
+			var route: String = scenario[0]
+			var viewport := SubViewport.new()
+			viewport.size = Vector2i(1280, 720)
+			root.add_child(viewport)
+			var menu := Menu.new()
+			viewport.add_child(menu)
+			menu.set_route(route)
+			menu.sync_accessibility(language, scenario[1])
+			menu.open_menu()
+			for frame in 4: await process_frame
+			var button := menu.find_child("QuitButton", true, false) as Button
+			var panel := menu.find_child("SessionMenuPanel", true, false) as Control
+			var scroll := menu.find_child("SettingsScroll", true, false) as ScrollContainer
+			_expect(button.is_visible_in_tree() and not scroll.is_ancestor_of(button)
+				and panel.get_global_rect().encloses(button.get_global_rect())
+				and Rect2(Vector2.ZERO, Vector2(viewport.size)).encloses(button.get_global_rect())
+				and button.focus_mode == Control.FOCUS_ALL,
+				"quit button reachable outside scroll at %s in %s" % [route, language])
+			button.grab_focus()
+			_expect(viewport.gui_get_focus_owner() == button, "quit button takes keyboard focus")
+			var quit_events: Array = []
+			menu.quit_requested.connect(func(): quit_events.append(true))
+			if route == "base":
+				button.pressed.emit()
+				_expect(quit_events.size() == 1, "quit outside combat exits immediately")
+			if route == "arena":
+				scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
+				for frame in 3: await process_frame
+				_expect(scroll.scroll_vertical > 0, "settings scroll reaches lower controls")
+				button.pressed.emit()
+				for frame in 3: await process_frame
+				_expect(quit_events.is_empty(), "active quit does not exit before confirmation")
+				var cancel := menu.find_child("CancelQuitButton", true, false) as Button
+				var warning := menu.find_child("QuitWarning", true, false) as Label
+				var panel_rect: Rect2 = panel.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, panel.size)
+				var cancel_rect: Rect2 = cancel.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, cancel.size)
+				var warning_rect: Rect2 = warning.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, warning.size)
+				_expect(Rect2(Vector2.ZERO, Vector2(viewport.size)).encloses(panel_rect),
+					"confirmation panel exceeds viewport in %s: %s" % [language, panel_rect])
+				_expect(panel_rect.encloses(cancel_rect) and panel_rect.encloses(warning_rect)
+					and Rect2(Vector2.ZERO, Vector2(viewport.size)).encloses(cancel_rect)
+					and Rect2(Vector2.ZERO, Vector2(viewport.size)).encloses(warning_rect)
+					and warning.get_visible_line_count() == warning.get_line_count()
+					and viewport.gui_get_focus_owner() == cancel,
+					"quit confirmation fits and focuses cancel in %s" % language)
+			viewport.free()
+			await process_frame
+	Locale.select(previous)

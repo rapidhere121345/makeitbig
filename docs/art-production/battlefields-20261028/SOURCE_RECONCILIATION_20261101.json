@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-01",
+  "reason": "Retained source PNG bytes differ from the original generation hashes. The cause is not established. Recompiling from these retained files reproduces every existing runtime PNG byte for byte. Original generation provenance is preserved separately, unchanged.",
+  "original_provenance": "docs/art-production/battlefields-20261028/provenance.json",
+  "previous_config_sha256": "8832497cf37607b75ecd9c664ec1b6f42e0525e637266f8df930b7c7e7dbf6dd",
+  "previous_manifest_sha256": "ad22a4d9c1c5f5f12c9805f29cc10eb926fe41c9debd0d8f74f769b70aab0552",
+  "sources": [
+    {
+      "asset_id": "snowbound_road",
+      "path": "docs/art-production/battlefields-20261028/sources/snowbound_road_v2_raw.png",
+      "original_sha256": "b60991d0f152f613f80f126eb6f55b96b7dd89c6ca43ac83ec898882241a5447",
+      "retained_sha256": "4e5f60ac8f14a192513f595d6f2de3c69b356693c25f25ced1d53ed666d15b02"
+    },
+    {
+      "asset_id": "river_crossing",
+      "path": "docs/art-production/battlefields-20261028/sources/river_crossing_v2_raw.png",
+      "original_sha256": "bf905cb6d1cf387a133f0d2bc2a6842e825997ee9eb447e793541a20ecdbd711",
+      "retained_sha256": "4c1a464b19e1be624289980bdb34f30ea7ece70262db28fc24bcdab845cdd637"
+    },
+    {
+      "asset_id": "ruined_village",
+      "path": "docs/art-production/battlefields-20261028/sources/ruined_village_v2_raw.png",
+      "original_sha256": "563e10e558d7cbe40131fbda315c07776124ceef9fac521f40fbe3683e5003bb",
+      "retained_sha256": "25883df5c30a277a665e8f87b25e7297837c4e7c7646b47730611b067ca352ad"
+    },
+    {
+      "asset_id": "quarry_pass",
+      "path": "docs/art-production/battlefields-20261028/sources/quarry_pass_v2_raw.png",
+      "original_sha256": "946cc2e41a25006b683164db27a027ddc41ea5266a83350e34c778cab39e6a9a",
+      "retained_sha256": "5dda47d3d188e3d712599abb06886a944e81afd7aa7d0436e1a6b0b1d73e8701"
+    },
+    {
+      "asset_id": "colossus_approach",
+      "path": "docs/art-production/battlefields-20261028/sources/colossus_approach_v2_raw.png",
+      "original_sha256": "38e083ee3516bebc09fd1d08f1a285cc580f335e291c1908bb7f112ff64712d8",
+      "retained_sha256": "f1f16651d20a5e5b4d2bbb7b324f6257ccb311286efe11d0220efe1aea6d95d5"
+    },
+    {
+      "asset_id": "river_water",
+      "path": "docs/art-production/battlefields-20261028/sources/river_water_raw.png",
+      "original_sha256": "a71211054f0657ba1f58839fbf1e0472de556cb81251b18f91070e108c79a2bc",
+      "retained_sha256": "899ff036fd532b02381b6eaa41ba4a4be062a1d3d76d3c6a90060b8916a9d5ee"
+    },
+    {
+      "asset_id": "slate_cliff",
+      "path": "docs/art-production/battlefields-20261028/sources/slate_cliff_raw.png",
+      "original_sha256": "d20b30ba6e3a79293803e8711be10fa5cb41d16fef271549ae2548ed421f5850",
+      "retained_sha256": "b515e41346ccc518668e3b9b4ea3d76d5527e98d62a4dcf5a055ded86ddfff67"
+    },
+    {
+      "asset_id": "snowbound_road_extension",
+      "path": "docs/art-production/battlefields-20261028/sources/snowbound_road_extension_raw.png",
+      "original_sha256": "7f7428d530b94b9957b04793fd9dcded4f13d0218b96cb46f92d5e8bc8e0b9af",
+      "retained_sha256": "1a7664628490a5621afa9372bdc05101c3cee80d296a15a7b1fd383dff8ce950"
+    },
+    {
+      "asset_id": "river_crossing_extension",
+      "path": "docs/art-production/battlefields-20261028/sources/river_crossing_extension_raw.png",
+      "original_sha256": "3243544370602d635888de0cf2f0b2cffd5e3ee0f33a340c881edfd82ebef52b",
+      "retained_sha256": "9f8e6f915a64dd31f0d80677a9f36513004c0aa907762fd0ae40db011c6a036a"
+    },
+    {
+      "asset_id": "ruined_village_extension",
+      "path": "docs/art-production/battlefields-20261028/sources/ruined_village_extension_raw.png",
+      "original_sha256": "1c82dce34c77f8a78e7b9e476c2290ac65aa3845c584fc83fc021fc2f5b1c002",
+      "retained_sha256": "634f1b5ca53658e20214484431b526f801a2105815e670407c346c61be0a5239"
+    },
+    {
+      "asset_id": "quarry_pass_extension",
+      "path": "docs/art-production/battlefields-20261028/sources/quarry_pass_extension_raw.png",
+      "original_sha256": "56d478103a9fa9f3430dcd12ec6fc941a1e4169b48e085c72d9823d10b5b50aa",
+      "retained_sha256": "e5d9daacce582b36f89030a93977c821c27679653e07e6356ae26fca21852981"
+    },
+    {
+      "asset_id": "colossus_approach_extension",
+      "path": "docs/art-production/battlefields-20261028/sources/colossus_approach_extension_raw.png",
+      "original_sha256": "27ccdfe9d2050ed942d85a845ba983288d351471256c4f6a329dcd8f1aaf32b5",
+      "retained_sha256": "57d8eeaa120042aadeec7364fb1f7b5c241a28a1cf97b06a80cdf380d52b1071"
+    },
+    {
+      "asset_id": "shoreline_stones",
+      "path": "docs/art-production/battlefields-20261028/sources/shoreline_stones_raw.png",
+      "original_sha256": "1c2c192e378ab5816c94f49ff42cfdde3f6a2a90438dae22fe603ff9a3cfa898",
+      "retained_sha256": "b0cbad79fc941fe6a47c5ee86a14c3e4bf326589a4f624d2214dd1311e7f509d"
+    }
+  ],
+  "verified_outputs": {
+    "art/production/p1/battlefields_v01/colossus_approach.png": "0082da9ff9c93e6068ce0b29b9db1297ba19b530ce8a0fdc2394f2e0a61f7a8a",
+    "art/production/p1/battlefields_v01/colossus_approach_extension.png": "107b3c39e61a8343fb2603ead5ece7de64d8e17a818f875e9179f6a1a12d2e93",
+    "art/production/p1/battlefields_v01/quarry_pass.png": "fd9219c0e7e416d4cdcdf566f25519da182de02e343600444ee112ca2fac3617",
+    "art/production/p1/battlefields_v01/quarry_pass_extension.png": "ec34d45d9db0c70345be2449f5ba14df53cf66101604b6642744ee6142054a36",
+    "art/production/p1/battlefields_v01/river_crossing.png": "9b35ca5328638147195f0fa169f4399ac8487b27e19be91c62f8280cd62c75de",
+    "art/production/p1/battlefields_v01/river_crossing_extension.png": "9b4beb1c5ddd5603b2028fe24c0ae5e28d518dc3cda141ee1ca14c5b279307e0",
+    "art/production/p1/battlefields_v01/river_water.png": "53569ef92758a55ded9c4ad318df1e39c6aed9d885404660a8a8d5807c5ee52d",
+    "art/production/p1/battlefields_v01/ruined_village.png": "1563e35e164692980658d77594abeb30fd32b6752b05056d820710f717520149",
+    "art/production/p1/battlefields_v01/ruined_village_extension.png": "cc8f9cd2564b8ef5ac47fd106377c29610e7bd6e8ffd9f2a712992e7bef788ee",
+    "art/production/p1/battlefields_v01/slate_cliff.png": "592d673985d547ddd6fff4a63ef580905e9927368fca8b382297a18b9d3db5f1",
+    "art/production/p1/battlefields_v01/snowbound_road.png": "c7b757b97049c3c95864f9bff6489ea6c57f8aa1b2435830bb4c5b9ba718daf1",
+    "art/production/p1/battlefields_v01/snowbound_road_extension.png": "c2ede0bfcbbe6039cd2efa276769cb53f2127628002cc065810dee5c6c604f69",
+    "art/production/p1/battlefields_v01/shoreline_stones_opaque.png": "2a239965520022a2372468e8ddfb78393a2c4f5b0e4cb0e951606ef2a70ac2f8",
+    "art/production/p1/battlefields_v01/shoreline_stones_transparent.png": "e80a526efd42e84bbf3e734077f677c77e5009a8b0a24e96f9e9ad9e5a2f7b1e"
+  }
+}

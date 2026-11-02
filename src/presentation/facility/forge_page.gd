@@ -354,7 +354,7 @@ func _build_forge_dock() -> void:
 	if session.is_empty():
 		var reveal := Button.new()
 		reveal.name = "ForgeReveal"
-		reveal.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
+		ShellThemeScript.apply_primary_button(reveal)
 		reveal.text = "Forecast with %s · No Tokens Spent Yet" % FacilityItemText.law_token_name(_screen._forge_operation)
 		reveal.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		reveal.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -396,7 +396,6 @@ func _build_forge_dock() -> void:
 	if selected_id.is_empty() or browsing_id != selected_id:
 		var select := Button.new()
 		select.name = "ForgeSelectCandidate"
-		select.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
 		select.text = "Select Current Future" if selected_id.is_empty() else "Switch to Current Future"
 		select.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		select.custom_minimum_size.x = 164
@@ -407,7 +406,7 @@ func _build_forge_dock() -> void:
 	else:
 		var confirm := Button.new()
 		confirm.name = "ForgeConfirmSelection"
-		confirm.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
+		ShellThemeScript.apply_primary_button(confirm)
 		var selected := _forge_candidate_by_id(selected_id)
 		confirm.text = "Confirm Commit · Spend %d %s" % [FacilityItemText.forge_candidate_cost(selected), FacilityItemText.law_token_name(_forge_session_operation(), FacilityItemText.forge_candidate_cost(selected))]
 		if not _forge_candidate_affordable(selected):

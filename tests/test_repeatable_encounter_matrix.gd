@@ -424,7 +424,10 @@ func _run() -> void:
 			for pair: Array in [["layout", "layout_ids"], ["objective", "objective_ids"], ["hazard", "hazard_ids"], ["enemy", "enemy_ids"], ["elite", "elite_rule_ids"], ["drop", "drop_tags"]]:
 				for value: Variant in spec[pair[1]]:
 					_expect(coverage[template][pair[0]].has(value), "full fixed-seed matrix missed authored content", {"template": template, "field": pair[0], "value": value})
-			_expect(coverage[template].layout_objective.size() == 9, "full matrix missed layout/objective pair", {"template": template})
+			for layout: String in spec.layout_ids:
+				for objective: String in spec.objective_ids:
+					var pair := layout + "/" + objective
+					_expect(coverage[template].layout_objective.has(pair), "full matrix missed layout/objective pair", {"template": template, "pair": pair})
 	_expect(room_count == TEMPLATES.size() * seed_count * 3, "matrix did not complete requested room count", {"completed": room_count})
 	var changed: Array[String] = []
 	for path: String in evidence_files:

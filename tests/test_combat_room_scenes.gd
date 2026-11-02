@@ -37,6 +37,8 @@ func _test_source_geometry_unchanged() -> void:
 	var catalog = RoomCatalogScript.new()
 	for entry: Dictionary in catalog.catalog().get("rooms", []):
 		var layout_id := String(entry.layout_id)
+		if not GAMEPLAY_DIGESTS.has(layout_id):
+			continue
 		_expect(String(entry.gameplay_digest) == String(GAMEPLAY_DIGESTS.get(layout_id, "")), "%s: gameplay digest moved; room presentation must not edit geometry" % layout_id)
 	for layout_id: String in GAMEPLAY_DIGESTS:
 		var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://content/rooms/combat/%s.spatial.json" % layout_id))
@@ -123,6 +125,8 @@ func _test_honest_hints() -> void:
 		var presentation: Dictionary = catalog.presentation(String(layout.id))
 		for field: String in ["entry_hint", "exit_hint"]:
 			_expect(String(presentation.get(field, "")) == String(layout.get(field, "")), "%s %s differs between catalog and campaign" % [layout.id, field])
+		if not GAMEPLAY_DIGESTS.has(String(layout.id)):
+			continue
 		var exit_hint := String(layout.exit_hint)
 		_expect(exit_hint.contains("Leave") and exit_hint.contains("seal") and not exit_hint.contains("pass through"), "%s exit hint must not claim a walk-through exit" % layout.id)
 

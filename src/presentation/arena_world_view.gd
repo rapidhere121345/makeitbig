@@ -34,6 +34,8 @@ const BossPartsScript := preload("res://src/presentation/arena_world/boss_parts.
 const CutawayScript := preload("res://src/presentation/arena_world/cutaway.gd")
 const GeneratedWorldScript := preload("res://src/presentation/arena_world/generated_world.gd")
 const StructureFadesScript := preload("res://src/presentation/arena_world/structure_fades.gd")
+const BattlefieldSceneScript := preload("res://src/presentation/battlefield_scene.gd")
+const BattlefieldBorder := preload("res://src/presentation/arena_world/battlefield_border.gd")
 ## Constants the owners of these tables publish; re-exported so callers keep
 ## reaching them through the view.
 const GENERATED_WORLD_PATH := GeneratedWorldScript.GENERATED_WORLD_PATH
@@ -88,6 +90,7 @@ var _grounding_counts := {"contact": 0, "base": 0, "base_ids": [], "lit": 0}
 var _grounding_lights_cache: Array = []
 var _room_catalog: RefCounted
 var _layout_id := "rectangle_arena"
+var _battlefields := BattlefieldSceneScript.new()
 var _room_structure_overrides: Dictionary = {}
 ## Fixture seams: production always points at GENERATED_WORLD_PATH; tests may
 ## substitute a synthetic pack to exercise the whole-object branch.
@@ -141,6 +144,8 @@ func hero_world() -> Vector2:
 
 
 func structure_placements() -> Array[Dictionary]:
+	if _battlefields.has_layout(_layout_id):
+		return _battlefields.structures(_layout_id)
 	var result: Array[Dictionary] = _structures.duplicate(true)
 	var occurrences := {}
 	var overrides: Dictionary = _room_structure_overrides.get(_layout_id, {})
@@ -165,6 +170,8 @@ func structure_draw_list() -> Array[Dictionary]:
 
 
 func tower_feet() -> Vector2:
+	if _battlefields.has_layout(_layout_id):
+		return _battlefields.tower_feet(_layout_id)
 	var overrides: Dictionary = _room_structure_overrides.get(_layout_id, {})
 	return _point(overrides.tower) if overrides.has("tower") else _tower_feet
 
@@ -216,6 +223,9 @@ func load_assets() -> bool:
 	if not _dressing.load_assets():
 		pending_reason = _dressing.pending_reason
 		return false
+	if not _battlefields.load_assets(_room_catalog):
+		pending_reason = _battlefields.pending_reason
+		return false
 	_ready = true
 	return true
 
@@ -225,7 +235,8 @@ func begin_frame(clip_rect: Rect2, focus_gameplay: Vector2, arena_rect: Rect2) -
 	_arena = arena_rect
 	_grounding_counts = {"contact": 0, "base": 0, "base_ids": [], "lit": 0}
 	_grounding_lights_cache = []
-	_anchor = WORLD_FOCUS - arena_rect.size * GAMEPLAY_TO_WORLD * 0.5
+	var focus := WORLD_SIZE * 0.5 if _layout_id in BattlefieldSceneScript.IDS else WORLD_FOCUS
+	_anchor = focus - arena_rect.size * GAMEPLAY_TO_WORLD * 0.5
 	_hero_world = gameplay_to_world(focus_gameplay)
 	_hero_occlusion_box = _default_hero_cell(_hero_world)
 	_origin = camera_origin_for(_hero_world)
@@ -233,12 +244,14 @@ func begin_frame(clip_rect: Rect2, focus_gameplay: Vector2, arena_rect: Rect2) -
 	_cutaway.begin_frame()
 
 
-## Clamped follow camera: the hero keeps the 640x360 framing with world headroom
-## above it, and the window never leaves the authored world.
+## Battlefield overscan keeps the hero's silhouette visible at the map edge.
+## Legacy fixtures retain their original camera clamp.
 func camera_origin_for(hero_world_point: Vector2) -> Vector2:
 	var visible := visible_world_size()
 	var wanted := hero_world_point - visible * 0.5 + Vector2(0.0, -CAMERA_UP_OFFSET)
 	var limit := Vector2(maxf(0.0, WORLD_SIZE.x - visible.x), maxf(0.0, WORLD_SIZE.y - visible.y))
+	if _layout_id in BattlefieldSceneScript.IDS:
+		return Vector2(roundf(clampf(wanted.x, -64.0, limit.x + 64.0)), roundf(clampf(wanted.y, -128.0, limit.y + 48.0)))
 	return Vector2(roundf(clampf(wanted.x, 0.0, limit.x)), roundf(clampf(wanted.y, 0.0, limit.y)))
 
 
@@ -358,12 +371,17 @@ func draw_ground(canvas: CanvasItem) -> void:
 	## A loaded room floor pack owns every layout's plate; the generated arena
 	## ground is the fallback when no room grounds are loaded.
 	var texture: Texture2D = _room_scene.ground_texture(_layout_id) if _room_scene.has_grounds() else _textures.get(APPROVED_GROUND_KEY)
+	if _battlefields.has_layout(_layout_id) and _battlefields.floor_texture(_layout_id) != null:
+		texture = _battlefields.floor_texture(_layout_id)
 	if texture == null:
 		return
 	var region := visible_world_region().intersection(Rect2(Vector2.ZERO, WORLD_SIZE))
 	if region.size.x <= 0.0 or region.size.y <= 0.0:
 		return
-	canvas.draw_texture_rect_region(texture, Rect2(region.position.round(), region.size), region)
+	if _battlefields.has_layout(_layout_id):
+		BattlefieldBorder.draw(canvas, texture, _battlefields.extension_texture(_layout_id), WORLD_SIZE)
+	else:
+		canvas.draw_texture_rect_region(texture, Rect2(region.position.round(), region.size), region)
 	AtmosphereScript.draw_ground(
 		canvas,
 		region,
@@ -395,15 +413,22 @@ func room_concept_report(layout_id: String) -> Dictionary:
 func draw_room_concept(canvas: CanvasItem, layout_id: String, phase_ticks: int = 0, _walkable_geometry: Dictionary = {}, room_cleared: bool = false) -> void:
 	if canvas == null:
 		return
+	if _battlefields.has_layout(layout_id):
+		# The complete generated plate already paints its terrain and bridge.
+		return
 	var phase := fmod(float(phase_ticks), 60.0) / 60.0
 	_room_scene.draw_room(canvas, layout_id, Callable(self, "gameplay_to_world"), GAMEPLAY_TO_WORLD, phase, room_cleared)
 
 
 func room_scene_report(layout_id: String, room_cleared: bool = false) -> Dictionary:
+	if _battlefields.has_layout(layout_id):
+		return _battlefields.report(layout_id)
 	return _room_scene.room_report(layout_id, room_cleared)
 
 
 func draw_decals(canvas: CanvasItem) -> void:
+	if _battlefields.has_layout(_layout_id):
+		return
 	if _room_scene.has_room(_layout_id):
 		_room_scene.draw_dressing(canvas, _layout_id, visible_world_region())
 	else:

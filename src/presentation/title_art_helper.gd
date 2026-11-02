@@ -24,9 +24,9 @@ const DISPLAY_SIZE := Vector2i(1280, 720)
 ## The produced, word-free title plate. Contract: native 640x360, drawn 1:1 into
 ## the 640x360 viewport and shown at nearest integer 2x, so the 1280x720 UI layer
 ## never resamples it and the left menu column never covers the tower.
-const TITLE_PLATE_PATH := "res://art/production/p1/title_concept_v02/background.png"
+const TITLE_PLATE_PATH := "res://art/production/p1/title_world_v03/background.png"
 const TITLE_PLATE_SIZE := Vector2i(640, 360)
-const TITLE_PLATE_ATLAS_PATH := "res://art/production/p1/title_concept_v02/atlas.json"
+const TITLE_PLATE_ATLAS_PATH := "res://art/production/p1/title_world_v03/atlas.json"
 const TITLE_PLATE_SPRITE_ID := "title.background"
 const PLATE_STATUS_READY := "ready"
 const PLATE_STATUS_PENDING := "pending"
@@ -44,15 +44,15 @@ const LOOP_STATUS_READY := "ready"
 ## Nothing is drawn when the frames are absent, and no flame is ever faked.
 const TITLE_LIFE_ATLAS_PATH := "res://art/production/p1/title_life_v01/atlas.json"
 ## One overlay per published animation, placed on the plate's own pixel anchors:
-## the flame sits on the brazier rim, the steam leaves the pot mouth 9px above it.
+## the flame sits on the foreground brazier, and smoke leaves the forge chimney.
 ## Both were read off the plate, so a re-cut plate has to move them deliberately.
 const LIFE_OVERLAYS := [
-	{"animation": "life.fire", "node": "LifeFire", "anchor": Vector2i(338, 237)},
-	{"animation": "life.steam", "node": "LifeSteam", "anchor": Vector2i(338, 228)},
+	{"animation": "life.fire", "node": "LifeFire", "anchor": Vector2i(554, 250)},
+	{"animation": "life.steam", "node": "LifeSteam", "anchor": Vector2i(554, 165)},
 ]
 const LIFE_ANCHORS := {
-	"hearth_fire_pit": Vector2i(338, 237),
-	"pot_steam_mouth": Vector2i(338, 228),
+	"hearth_fire_pit": Vector2i(554, 250),
+	"forge_chimney": Vector2i(554, 165),
 }
 ## Published cell sizes, kept as the contract the atlas is checked against.
 const LIFE_EXPECTED_FRAMES := {
@@ -606,7 +606,7 @@ func _log_pending() -> void:
 		return
 	_pending_logged = true
 	for reason: String in pending_reasons():
-		printerr("ASSETS PENDING p1_title_runtime_v02: " + reason)
+		printerr("ASSETS PENDING p1_title_world_v03: " + reason)
 
 
 ## ------------------------------------------------------------- test support

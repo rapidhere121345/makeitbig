@@ -1,0 +1,429 @@
+{
+  "schema_version": 1,
+  "coordinates": "world_pixel",
+  "notes": "Reviewed ground contacts on complete environment plates. The native scenes remain runtime collision authority. Sparse boot-height debris in painted ground is traversable; only cliff faces and water are solid.",
+  "battlefields": {
+    "snowbound_road": {
+      "source_plate": "res://art/production/p1/battlefields_v01/snowbound_road.png",
+      "source_sha256": "c7b757b97049c3c95864f9bff6489ea6c57f8aa1b2435830bb4c5b9ba718daf1",
+      "polygons": [
+        {
+          "binding": "cliff/west_upper",
+          "points": [
+            [
+              0,
+              0
+            ],
+            [
+              50,
+              0
+            ],
+            [
+              72,
+              120
+            ],
+            [
+              60,
+              260
+            ],
+            [
+              30,
+              430
+            ],
+            [
+              0,
+              430
+            ]
+          ]
+        },
+        {
+          "binding": "cliff/east",
+          "points": [
+            [
+              1005,
+              0
+            ],
+            [
+              1024,
+              0
+            ],
+            [
+              1024,
+              640
+            ],
+            [
+              1002,
+              640
+            ],
+            [
+              990,
+              300
+            ],
+            [
+              996,
+              90
+            ]
+          ]
+        }
+      ]
+    },
+    "ruined_village": {
+      "source_plate": "res://art/production/p1/battlefields_v01/ruined_village.png",
+      "source_sha256": "1563e35e164692980658d77594abeb30fd32b6752b05056d820710f717520149",
+      "polygons": [
+        {
+          "binding": "cliff/west",
+          "points": [
+            [
+              0,
+              0
+            ],
+            [
+              60,
+              0
+            ],
+            [
+              80,
+              160
+            ],
+            [
+              88,
+              370
+            ],
+            [
+              60,
+              640
+            ],
+            [
+              0,
+              640
+            ]
+          ]
+        },
+        {
+          "binding": "cliff/east",
+          "points": [
+            [
+              995,
+              0
+            ],
+            [
+              1024,
+              0
+            ],
+            [
+              1024,
+              640
+            ],
+            [
+              940,
+              640
+            ],
+            [
+              965,
+              300
+            ]
+          ]
+        }
+      ]
+    },
+    "quarry_pass": {
+      "source_plate": "res://art/production/p1/battlefields_v01/quarry_pass.png",
+      "source_sha256": "fd9219c0e7e416d4cdcdf566f25519da182de02e343600444ee112ca2fac3617",
+      "polygons": [
+        {
+          "binding": "cliff/northwest",
+          "points": [
+            [
+              0,
+              0
+            ],
+            [
+              420,
+              0
+            ],
+            [
+              410,
+              100
+            ],
+            [
+              335,
+              220
+            ],
+            [
+              260,
+              285
+            ],
+            [
+              0,
+              245
+            ]
+          ]
+        },
+        {
+          "binding": "cliff/southeast",
+          "points": [
+            [
+              1024,
+              370
+            ],
+            [
+              1024,
+              640
+            ],
+            [
+              700,
+              640
+            ],
+            [
+              730,
+              550
+            ],
+            [
+              820,
+              450
+            ],
+            [
+              950,
+              390
+            ]
+          ]
+        }
+      ]
+    },
+    "colossus_approach": {
+      "source_plate": "res://art/production/p1/battlefields_v01/colossus_approach.png",
+      "source_sha256": "0082da9ff9c93e6068ce0b29b9db1297ba19b530ce8a0fdc2394f2e0a61f7a8a",
+      "polygons": [
+        {
+          "binding": "water/west_0",
+          "points": [
+            [
+              0,
+              0
+            ],
+            [
+              150,
+              0
+            ],
+            [
+              112,
+              160
+            ],
+            [
+              0,
+              160
+            ]
+          ]
+        },
+        {
+          "binding": "water/west_1",
+          "points": [
+            [
+              0,
+              160
+            ],
+            [
+              112,
+              160
+            ],
+            [
+              118,
+              320
+            ],
+            [
+              0,
+              320
+            ]
+          ]
+        },
+        {
+          "binding": "water/west_2",
+          "points": [
+            [
+              0,
+              320
+            ],
+            [
+              118,
+              320
+            ],
+            [
+              95,
+              480
+            ],
+            [
+              0,
+              480
+            ]
+          ]
+        },
+        {
+          "binding": "water/west_3",
+          "points": [
+            [
+              0,
+              480
+            ],
+            [
+              95,
+              480
+            ],
+            [
+              118,
+              640
+            ],
+            [
+              0,
+              640
+            ]
+          ]
+        },
+        {
+          "binding": "water/east_0",
+          "points": [
+            [
+              940,
+              0
+            ],
+            [
+              1024,
+              0
+            ],
+            [
+              1024,
+              160
+            ],
+            [
+              965,
+              160
+            ]
+          ]
+        },
+        {
+          "binding": "water/east_1",
+          "points": [
+            [
+              965,
+              160
+            ],
+            [
+              1024,
+              160
+            ],
+            [
+              1024,
+              320
+            ],
+            [
+              972,
+              320
+            ]
+          ]
+        },
+        {
+          "binding": "water/east_2",
+          "points": [
+            [
+              972,
+              320
+            ],
+            [
+              1024,
+              320
+            ],
+            [
+              1024,
+              480
+            ],
+            [
+              955,
+              480
+            ]
+          ]
+        },
+        {
+          "binding": "water/east_3",
+          "points": [
+            [
+              955,
+              480
+            ],
+            [
+              1024,
+              480
+            ],
+            [
+              1024,
+              640
+            ],
+            [
+              930,
+              640
+            ]
+          ]
+        }
+      ]
+    },
+    "river_crossing": {
+      "source_plate": "res://art/production/p1/battlefields_v01/river_crossing.png",
+      "source_sha256": "9b35ca5328638147195f0fa169f4399ac8487b27e19be91c62f8280cd62c75de",
+      "polygons": [
+        {
+          "binding": "cliff/west",
+          "points": [
+            [
+              0,
+              0
+            ],
+            [
+              45,
+              0
+            ],
+            [
+              60,
+              180
+            ],
+            [
+              50,
+              440
+            ],
+            [
+              30,
+              640
+            ],
+            [
+              0,
+              640
+            ]
+          ]
+        },
+        {
+          "binding": "cliff/east",
+          "points": [
+            [
+              990,
+              0
+            ],
+            [
+              1024,
+              0
+            ],
+            [
+              1024,
+              640
+            ],
+            [
+              995,
+              640
+            ],
+            [
+              980,
+              320
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

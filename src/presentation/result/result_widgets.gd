@@ -32,7 +32,7 @@ static func rule() -> ColorRect:
 	var rule_rect := ColorRect.new()
 	rule_rect.name = "HeaderRule"
 	rule_rect.color = ShellThemeScript.COPPER_DULL
-	rule_rect.custom_minimum_size = Vector2(0.0, 2.0)
+	rule_rect.custom_minimum_size = Vector2(0.0, 1.0)
 	rule_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return rule_rect
 
@@ -46,8 +46,12 @@ static func report_note(text: String) -> Label:
 	return label
 
 
-static func frame(_fill: Color, _border: Color, width: int) -> StyleBox:
-	var box := ShellThemeScript.panel_style("selected" if width > 1 else "panel")
+## The modal keeps a surface; reading groups use open space and a single rule.
+static func frame(_fill: Color, _border: Color, width: int) -> StyleBoxFlat:
+	var box := ShellThemeScript.panel_style("panel") if width > 1 else ShellThemeScript.section_style()
+	if width == 1:
+		box.border_width_top = 1
+		box.border_color = Color(ShellThemeScript.COPPER_DULL, 0.35)
 	box.content_margin_left = 14.0
 	box.content_margin_top = 10.0
 	box.content_margin_right = 14.0
@@ -68,7 +72,7 @@ static func place_section(section: Control, top_anchor: float, bottom_anchor: fl
 
 static func set_button_primary(button: Button, primary: bool) -> void:
 	if primary:
-		button.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
+		ShellThemeScript.apply_primary_button(button)
 	else:
 		button.remove_theme_stylebox_override("normal")
 

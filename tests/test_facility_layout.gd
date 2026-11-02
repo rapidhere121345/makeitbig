@@ -1,5 +1,7 @@
 extends "res://tests/test_facility_screen.gd"
 
+const LayoutLocale := preload("res://src/localization/game_locale.gd")
+
 
 func _run() -> void:
 	var failures: Array[String] = []
@@ -584,5 +586,39 @@ func _run_layout_checks(failures: Array[String]) -> void:
 		dialog.canceled.emit()
 	await _settle_frames()
 	_expect(actions.is_empty(), "facility layout: cancelling the salvage confirmation emitted an action", failures)
+	await _check_open_workspace_styles(host, screen, failures)
 	root.remove_child(host)
 	host.free()
+
+
+func _check_open_workspace_styles(host: Control, screen: Control, failures: Array[String]) -> void:
+	var previous := LayoutLocale.current()
+	LayoutLocale.acquire()
+	for language in ["en", "zh_CN"]:
+		LayoutLocale.select(language)
+		for size in [Vector2(1280, 720), Vector2(1600, 900)]:
+			host.size = size
+			for entry in [
+				["loadout", _real_loadout_snapshot(), "CandidateListPanel_main_hand", "SlotFocus_main_hand"],
+				["forge", _forge_snapshot(true), "ForgeTargetPanel", "ForgeReveal"],
+				["training", _training_snapshot(true, _layout_fingerprint(), _training_report(_layout_fingerprint())), "TrainingActiveBuild", "RunTrainingTrial"],
+				["proxy", _proxy_unlocked_snapshot(), "ProxyCoreStrip", ""],
+			]:
+				screen.present(entry[0], {}, {}, "", entry[1])
+				await _settle_frames()
+				var section := screen.find_child(entry[2], true, false) as PanelContainer
+				var style := section.get_theme_stylebox("panel") if section != null else null
+				_expect(style is StyleBoxFlat and (style as StyleBoxFlat).bg_color.a == 0.0
+					and (style as StyleBoxFlat).border_width_left == 0 and (style as StyleBoxFlat).border_width_bottom == 0,
+					"facility %s: workspace section should be unframed at %s in %s" % [entry[0], size, language], failures)
+				_check_logical_layout(screen, size, "%s %s %s" % [entry[0], size, language], failures)
+				if not String(entry[3]).is_empty():
+					var button := screen.find_child(entry[3], true, false) as Button
+					_expect(button != null and button.focus_mode == Control.FOCUS_ALL and _inside_first_screen(button, size),
+						"facility %s: primary control must remain reachable at %s in %s" % [entry[0], size, language], failures)
+					if button != null and not button.disabled:
+						button.grab_focus()
+						_expect(screen.get_viewport().gui_get_focus_owner() == button,
+							"facility %s: keyboard focus failed in %s" % [entry[0], language], failures)
+	LayoutLocale.select(previous)
+	LayoutLocale.release()

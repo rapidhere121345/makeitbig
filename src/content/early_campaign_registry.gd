@@ -6,7 +6,7 @@ const DEFAULT_PATH := "res://content/early_campaign.json"
 const SCHEMA_VERSION := 1
 
 const EXPECTED_COUNTS := {
-	"layouts": 3,
+	"layouts": 8,
 	"objectives": 3,
 	"hazards": 2,
 	"normal_enemies": 3,
@@ -155,13 +155,20 @@ func instantiate_branch(template_id: String, seed: int, mode: String = "Manual")
 	var spec: Dictionary = node.room_template
 	var rng = DeterministicRng.create(seed, "early_campaign/%s" % template_id)
 	var rooms: Array[Dictionary] = []
+	var unused_layouts: Array = (spec.layout_ids as Array).duplicate()
 	for index in range(int(spec.room_count)):
+		# Visit different terrain within a task. Refill only after exhausting
+		# the authored selection, and never repeat the preceding stage.
+		if unused_layouts.is_empty():
+			unused_layouts = (spec.layout_ids as Array).duplicate()
+			if unused_layouts.size() > 1 and not rooms.is_empty():
+				unused_layouts.erase(rooms.back().layout_id)
 		var objective_id := _pick(spec.objective_ids, rng)
 		var hazard_id := _pick(spec.hazard_ids, rng)
 		var elite_rule_id := _pick(spec.elite_rule_ids, rng) if objective_id == "hunt_elite" else ""
 		var room := {
 			"id": "%s/%s/room_%02d" % [template_id, str(seed), index],
-			"layout_id": _pick(spec.layout_ids, rng),
+			"layout_id": _pick(unused_layouts, rng),
 			"objective_id": objective_id,
 			"hazard_ids": [] if hazard_id == "" else [hazard_id],
 			"enemy_ids": [_pick(spec.enemy_ids, rng)],
@@ -170,6 +177,7 @@ func instantiate_branch(template_id: String, seed: int, mode: String = "Manual")
 			"drop_tags": [_pick(spec.drop_tags, rng)],
 			"new_problem_id": "",
 		}
+		unused_layouts.erase(room.layout_id)
 		for override_value: Variant in spec.get("room_overrides", []):
 			if override_value is Dictionary and int((override_value as Dictionary).get("index", -1)) == index:
 				var override: Dictionary = override_value
@@ -238,7 +246,10 @@ func _validate_string_catalog(candidate: Dictionary, field: String, ids_by_catal
 
 
 func _validate_catalog_semantics(candidate: Dictionary, failures: Array[String]) -> void:
-	_validate_exact_catalog_ids(candidate, "layouts", ["rectangle_arena", "corridor", "ring"], failures)
+	_validate_exact_catalog_ids(candidate, "layouts", [
+		"rectangle_arena", "corridor", "ring", "snowbound_road", "river_crossing",
+		"ruined_village", "quarry_pass", "colossus_approach",
+	], failures)
 	for layout_value in candidate.get("layouts", []):
 		if not layout_value is Dictionary:
 			continue

@@ -21,7 +21,7 @@ static func prompt_style() -> StyleBox:
 	return style
 
 
-static func toggle_style(kind: String) -> StyleBoxTexture:
+static func toggle_style(kind: String) -> StyleBoxFlat:
 	var style := ShellThemeScript.panel_style(kind)
 	style.content_margin_left = 8.0
 	style.content_margin_top = 1.0

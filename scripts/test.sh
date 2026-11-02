@@ -128,6 +128,7 @@ verify_art actors_v02/build.py --verify
 verify_art world_polish_v01/build.py --verify
 verify_art world_expansion_v01/pack.py --verify
 verify_art world_expansion_v01/pack.py --config tools/art_pipeline/town_order_v01/packing_config.json --verify
+verify_art world_expansion_v01/pack.py --config tools/art_pipeline/battlefields_v01/packing_config.json --verify
 verify_art p1_calibration_v01/verify.py --output art/production/p1/calibration_v01
 verify_art p1_early_loop_v01/verify.py --output art/production/p1/early_loop_v01
 verify_art p1_hub_navigation_v01/verify.py --output art/production/p1/hub_navigation_v01
@@ -214,7 +215,7 @@ godot_script tests/run_game_flow_smoke.gd
 STATE_DIR="${MIB_TEST_STATE_DIR:-$(pwd -P)/build/test-state}"
 mkdir -p "$STATE_DIR"
 # Versioned historical-geometry replay hash for the current runtime authority.
-EXPECTED_HASH="b98adeadd44d9fb428f1cb762304f8e09c252b2f00ce00583efb40bc8147200b"
+EXPECTED_HASH="c7353c04f81f9c497654a47fd4909fa20a72b49eff53cee3f7bde4d8d4b7df02"
 HISTORICAL_REPLAY_PROFILE="historical_circle_v1"
 
 replay_check() {  # replay_check <name> <hash path> <godot args...>

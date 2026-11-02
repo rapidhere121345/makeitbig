@@ -41,7 +41,7 @@ const TITLE_BUTTON_TEXT := "Return to Title"
 
 ## The approved illustration and the place it shows, named exactly as the base hub
 ## names it. Drawn at native size: any other scale would resample the pixel grid.
-const ILLUSTRATION_PATH := "res://art/production/p1/hearth_return_v01/background.png"
+const ILLUSTRATION_PATH := "res://art/production/p1/world_expansion_v01/town_ground.png"
 const ILLUSTRATION_SIZE := Vector2(640.0, 360.0)
 const ILLUSTRATION_CAPTION := "Hamlet · Hearthside"
 

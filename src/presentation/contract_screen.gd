@@ -160,6 +160,7 @@ func _build_ui() -> void:
 	title.text = "Contract Board · Depart from Hearthside"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 30)
+	title.add_theme_font_override("font", ShellThemeScript.ui_font())
 	title.add_theme_color_override("font_color", ShellThemeScript.BONE)
 	title_header.add_child(title)
 	_profile_label = Label.new()
@@ -172,7 +173,7 @@ func _build_ui() -> void:
 	page.add_child(subtitle)
 	_workspace = HBoxContainer.new()
 	_workspace.name = "ContractWorkspace"
-	_workspace.add_theme_constant_override("separation", 12)
+	_workspace.add_theme_constant_override("separation", 24)
 	_workspace.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(_workspace)
 	_contract_scroll = _workspace_scroll("ContractScroll")
@@ -238,6 +239,10 @@ func _build_ui() -> void:
 	content.add_child(_contract_picker)
 	var brief_panel := PanelContainer.new()
 	brief_panel.name = "ContractBriefPanel"
+	var brief_style := ShellThemeScript.section_style()
+	brief_style.content_margin_left = 0
+	brief_style.content_margin_right = 0
+	brief_panel.add_theme_stylebox_override("panel", brief_style)
 	content.add_child(brief_panel)
 	var brief := VBoxContainer.new()
 	brief.name = "ContractBrief"
@@ -263,6 +268,9 @@ func _build_ui() -> void:
 	_risk_label.add_theme_font_size_override("font_size", 18)
 	_risk_label.add_theme_color_override("font_color", ShellThemeScript.WARNING)
 	brief.add_child(_risk_label)
+	var reward_rule := HSeparator.new()
+	reward_rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(reward_rule)
 	var reward_heading := _field_label("Bring Back to Town")
 	reward_heading.name = "ContractRewardHeading"
 	reward_heading.add_theme_font_size_override("font_size", 22)
@@ -340,7 +348,7 @@ func _build_ui() -> void:
 	_start_button = Button.new()
 	_start_button.name = "StartButton"
 	_start_button.text = "Accept Contract · Depart"
-	_start_button.add_theme_stylebox_override("normal", ShellThemeScript.panel_style("selected"))
+	ShellThemeScript.apply_primary_button(_start_button)
 	_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_start_button.size_flags_stretch_ratio = 1.2
 	_start_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -361,7 +369,7 @@ func _workspace_card(scroll: ScrollContainer, node_name: String) -> VBoxContaine
 	var panel := PanelContainer.new()
 	panel.name = node_name
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", ShellThemeScript.crafted_panel())
+	panel.add_theme_stylebox_override("panel", ShellThemeScript.section_style())
 	scroll.add_child(panel)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 8)
@@ -385,9 +393,9 @@ func _fit_contract_illustration() -> void:
 func _reading_tile(parent: Control, caption: String, value_name: String, value_size: int) -> Label:
 	var tile := PanelContainer.new()
 	tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var material := ShellThemeScript.panel_style("well")
-	material.content_margin_left = 10
-	material.content_margin_right = 10
+	var material := ShellThemeScript.section_style()
+	material.content_margin_left = 0
+	material.content_margin_right = 0
 	material.content_margin_top = 6
 	material.content_margin_bottom = 6
 	tile.add_theme_stylebox_override("panel", material)
@@ -573,7 +581,7 @@ func _apply_selected_contract() -> void:
 	if requested_index >= 0:
 		_mode_picker.select(requested_index)
 	_auto_lock_label.visible = "Auto" in allowed_modes and not auto_unlocked
-	_objective_meta.text = "%d rooms" % maxi(1, int(node.get("room_count", 1)))
+	_objective_meta.text = "%d stages" % maxi(1, int(node.get("room_count", 1)))
 	if node.has("experience_reward"):
 		_objective_meta.text += "  ·  Completion XP %d%s" % [int(node.get("experience_reward", 0)), " (including first clear)" if not bool(node.get("completed", false)) else ""]
 	_objective_label.text = _combat_objective(node).get_slice("\n", 1)
@@ -677,15 +685,15 @@ func _combat_objective(node: Dictionary) -> String:
 		if not value is Dictionary:
 			continue
 		var room: Dictionary = value
-		var task := "Defeat the Threshold Colossus" if String(room.get("boss_id", "")) == "threshold_colossus" else String(names.get(String(room.get("objective_id", "")), "Complete Room Objectives"))
+		var task := "Defeat the Threshold Colossus" if String(room.get("boss_id", "")) == "threshold_colossus" else String(names.get(String(room.get("objective_id", "")), "Complete Stage Objectives"))
 		if not task in objectives:
 			objectives.append(task)
 	if objectives.is_empty():
 		var template: Dictionary = definition.get("room_template", {})
 		for value: Variant in template.get("objective_ids", []):
-			objectives.append(String(names.get(String(value), "Complete Room Objectives")))
+			objectives.append(String(names.get(String(value), "Complete Stage Objectives")))
 	var prefix := "Possible Objectives" if bool(node.get("repeatable", false)) else "Combat Objectives"
-	return "%s · %d rooms\n%s" % [prefix, maxi(1, int(node.get("room_count", 1))), " / ".join(objectives) if not objectives.is_empty() else "Complete the objectives marked in each room"]
+	return "%s · %d stages\n%s" % [prefix, maxi(1, int(node.get("room_count", 1))), " / ".join(objectives) if not objectives.is_empty() else "Complete the objectives marked in each stage"]
 
 
 func _contract_route_summary(node: Dictionary) -> String:

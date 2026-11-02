@@ -82,6 +82,7 @@ func build_header(root: Control) -> void:
 	_title_label.name = "ResultTitle"
 	_title_label.text = TITLE_TEXT
 	_title_label.add_theme_font_size_override("font_size", ResultWidgetsScript.TITLE_FONT_SIZE)
+	_title_label.add_theme_font_override("font", ShellThemeScript.ui_font())
 	_title_label.add_theme_color_override("font_color", ShellThemeScript.BONE)
 	title_row.add_child(_title_label)
 	_growth_label = Label.new()
@@ -128,7 +129,9 @@ func _build_metrics(parent: Control) -> void:
 		var tile := PanelContainer.new()
 		tile.name = "MetricTile_%s" % key
 		tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var metric_style := ResultWidgetsScript.frame(ShellThemeScript.DEEP_BLUE, ShellThemeScript.COPPER_DULL, 1)
+		var metric_style := ShellThemeScript.section_style()
+		metric_style.content_margin_left = 0
+		metric_style.content_margin_right = 0
 		metric_style.content_margin_top = 6
 		metric_style.content_margin_bottom = 6
 		tile.add_theme_stylebox_override("panel", metric_style)
@@ -159,7 +162,7 @@ func sync_metric_columns() -> void:
 		# three columns on narrow logical views without shrinking Chinese text.
 		_metrics_grid.columns = 3
 	if _evidence_grid != null:
-		_evidence_grid.columns = 4 if _screen.size.x >= 1200.0 else 2
+		_evidence_grid.columns = 2
 
 
 func set_report_detail_visible(value: bool) -> void:
@@ -183,6 +186,7 @@ func _on_report_detail_pressed() -> void:
 func build(parent: Control) -> void:
 	var panel := PanelContainer.new()
 	panel.name = "ReportPanel"
+	panel.add_theme_stylebox_override("panel", ShellThemeScript.section_style())
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(panel)
@@ -205,6 +209,7 @@ func build(parent: Control) -> void:
 	_next_step_label.add_theme_font_size_override("font_size", ShellThemeScript.BODY_FONT_SIZE)
 	_next_step_label.add_theme_color_override("font_color", ShellThemeScript.AMBER)
 	column.add_child(_next_step_label)
+	_build_metrics(column)
 	_route_context = ResultWidgetsScript.report_note("")
 	_route_context.name = "RunContext"
 	column.add_child(_route_context)
@@ -235,7 +240,6 @@ func build(parent: Control) -> void:
 	_report_detail_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	_report_detail_button.pressed.connect(_on_report_detail_pressed)
 	progress_row.add_child(_report_detail_button)
-	_build_metrics(column)
 	# Full original copy remains in the disclosure block; stable accessors keep
 	# serving it without making the visible report a wall of raw fields.
 	diagnosis_label = Label.new()
@@ -275,7 +279,7 @@ func build(parent: Control) -> void:
 func _build_evidence_cards(parent: Control) -> void:
 	_evidence_grid = GridContainer.new()
 	_evidence_grid.name = "ReportEvidenceCards"
-	_evidence_grid.columns = 4
+	_evidence_grid.columns = 2
 	_evidence_grid.add_theme_constant_override("h_separation", 12)
 	_evidence_grid.add_theme_constant_override("v_separation", 12)
 	parent.add_child(_evidence_grid)
@@ -299,7 +303,10 @@ func _build_evidence_cards(parent: Control) -> void:
 		mark.kind = row[0]
 		header.add_child(mark)
 		_evidence_marks[row[0]] = mark
-		header.add_child(ResultWidgetsScript.heading(row[1]))
+		var title := ResultWidgetsScript.heading(row[1])
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		header.add_child(title)
 		var body := ResultWidgetsScript.report_note("")
 		body.name = "EvidenceBody_" + row[0]
 		body.visible = false

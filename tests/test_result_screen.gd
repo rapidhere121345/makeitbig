@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ResultScreenScript = preload("res://src/presentation/result_screen.gd")
+const Locale := preload("res://src/localization/game_locale.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 ## The approved English UI floor (approved baseline: Text 18-22 display pixels).
@@ -472,8 +473,13 @@ func _run() -> void:
 		"result: the long-drop payload was a final victory but the ending action stayed hidden", failures)
 
 	await _check_first_victory_layout(drops.slice(0, 2), failures)
+	await _check_localized_metrics(failures)
 	root.remove_child(screen)
 	screen.free()
+	# The test installs a scripted translation directly; remove it while the
+	# script runtime and TranslationServer are still alive.
+	Locale.shutdown()
+	await _frames(2)
 	if failures.is_empty():
 		print("PASS  test_result_screen.gd")
 		quit(0)
@@ -486,7 +492,7 @@ func _run() -> void:
 func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 	var receipt := {
 		"outcome": "victory", "contract_id": "mainline_01_first_hunt", "mode": "Manual",
-		"rooms_completed": 1, "room_count": 1, "ticks": 17, "casts": 1, "defeated": 1,
+		"rooms_completed": 1, "room_count": 1, "ticks": 17, "elapsed_seconds": 0.57, "casts": 1, "defeated": 1,
 		"first_reward_tags": ["hunter_mark_skill", "equipment_compare_unlock", "breeding_split_item"],
 		"rewards": {"equipment_drops": drops, "equipment_drop_count": 2},
 	}
@@ -499,6 +505,13 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 		host.add_child(screen)
 		screen.present(receipt, {}, profile)
 		await _frames(4)
+		var report_scroll := screen.find_child("CurrentRunScroll", true, false) as ScrollContainer
+		for key in ["outcome", "elapsed", "kills", "casts"]:
+			var tile := screen.find_child("MetricTile_" + key, true, false) as Control
+			var value := screen.find_child("MetricValue_" + key, true, false) as Label
+			_expect(tile != null and tile.is_visible_in_tree() and report_scroll.get_global_rect().encloses(tile.get_global_rect())
+				and value.get_visible_line_count() == value.get_line_count(),
+				"result: %s is clipped in the initial report at %s: %s / %s, lines %d / %d" % [key, logical_size, tile.get_global_rect(), report_scroll.get_global_rect(), value.get_visible_line_count(), value.get_line_count()], failures)
 		var loot := screen.find_child("ResultLootScroll", true, false) as ScrollContainer
 		var pager := screen.find_child("EquipmentPagination", true, false) as Control
 		var footer := screen.find_child("ResultFooter", true, false) as Control
@@ -571,6 +584,49 @@ func _check_first_victory_layout(drops: Array, failures: Array[String]) -> void:
 			"result: no-longer-owned reward lost its receipt or exposed an invalid action", failures)
 		root.remove_child(host)
 		host.free()
+
+
+func _check_localized_metrics(failures: Array[String]) -> void:
+	var previous_locale := Locale.current()
+	for language in ["en", "zh_CN"]:
+		Locale.select(language)
+		for logical_size in [Vector2i(1280, 720), Vector2i(1600, 900)]:
+			var host := SubViewport.new()
+			host.size = logical_size
+			root.add_child(host)
+			var screen = ResultScreenScript.new()
+			host.add_child(screen)
+			screen.present({"outcome": "victory", "elapsed_seconds": 12.34, "defeated": 12,
+				"casts": 24, "rooms_completed": 2, "room_count": 2, "rewards": {}})
+			await _frames(4)
+			var scroll := screen.find_child("CurrentRunScroll", true, false) as ScrollContainer
+			for key in ["outcome", "elapsed", "kills", "casts"]:
+				var tile := screen.find_child("MetricTile_" + key, true, false) as Control
+				var value := screen.find_child("MetricValue_" + key, true, false) as Label
+				var caption := tile.get_child(0).get_child(0) as Label
+				_expect(tile.is_visible_in_tree() and scroll.get_global_rect().encloses(tile.get_global_rect())
+					and tile.get_global_rect().encloses(value.get_global_rect())
+					and tile.get_global_rect().encloses(caption.get_global_rect())
+					and caption.get_visible_line_count() == caption.get_line_count()
+					and value.get_visible_line_count() == value.get_line_count(),
+					"result: %s clipped at %s in %s" % [key, logical_size, language], failures)
+			var report_button := screen.find_child("ReportDetailButton", true, false) as Button
+			report_button.grab_focus()
+			report_button.pressed.emit()
+			await _frames(4)
+			var evidence := screen.find_child("ReportEvidenceCards", true, false) as GridContainer
+			_expect(evidence.visible and host.gui_get_focus_owner() == report_button,
+				"result: expanded localized report lost focus", failures)
+			for key in ["observed", "unverified", "bottleneck", "next"]:
+				var card := screen.find_child("EvidenceCard_" + key, true, false) as Control
+				var body := screen.find_child("EvidenceBody_" + key, true, false) as Label
+				_expect(card.is_visible_in_tree() and body.get_global_rect().position.x >= scroll.get_global_rect().position.x
+					and body.get_global_rect().end.x <= scroll.get_global_rect().end.x,
+					"result: %s report text overflows horizontally at %s in %s" % [key, logical_size, language], failures)
+			report_button.pressed.emit()
+			root.remove_child(host)
+			host.free()
+	Locale.select(previous_locale)
 
 
 func _all_equipment_audits(screen: Control) -> Array[String]:

@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "source_plate": "res://art/production/p1/battlefields_v01/river_crossing.png",
+  "source_sha256": "9b35ca5328638147195f0fa169f4399ac8487b27e19be91c62f8280cd62c75de",
+  "coordinates": "world_pixel",
+  "notes": "Reviewed bank cross-sections on the generated plate. Convex bands include wet shoreline contact. The painted bridge between the two water sections stays clear; native scenes are runtime collision authority.",
+  "north": [
+    [
+      0,
+      450,
+      610
+    ],
+    [
+      94,
+      467,
+      622
+    ],
+    [
+      120,
+      450,
+      610
+    ],
+    [
+      150,
+      455,
+      572
+    ],
+    [
+      180,
+      459,
+      580
+    ],
+    [
+      210,
+      463,
+      588
+    ],
+    [
+      240,
+      466,
+      598
+    ],
+    [
+      266,
+      460,
+      600
+    ]
+  ],
+  "south": [
+    [
+      364,
+      440,
+      590
+    ],
+    [
+      380,
+      436,
+      610
+    ],
+    [
+      410,
+      448,
+      625
+    ],
+    [
+      440,
+      459,
+      588
+    ],
+    [
+      470,
+      443,
+      611
+    ],
+    [
+      500,
+      441,
+      586
+    ],
+    [
+      530,
+      438,
+      575
+    ],
+    [
+      560,
+      450,
+      590
+    ],
+    [
+      590,
+      469,
+      623
+    ],
+    [
+      626.4,
+      470,
+      640
+    ],
+    [
+      640,
+      470,
+      640
+    ]
+  ]
+}

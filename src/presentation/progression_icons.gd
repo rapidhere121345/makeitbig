@@ -1,15 +1,15 @@
 class_name ProgressionIcons
 extends RefCounted
-## R13 presentation reader: approved talent/law silhouettes on generated cloth.
+## Reads the original transparent talent/law silhouettes without decorative frames.
 ##
 ## The pack is deliberately bounded: fifteen Ranger talent cells in content order,
 ## and the three law-token cells in the forge operation order. A missing or
 ## malformed package leaves every icon null and reports one explicit reason; this
 ## reader never generates, substitutes, or interprets art.
 
-const ATLAS_DIRECTORY := "res://art/production/p1/ui_style_r13"
+const ATLAS_DIRECTORY := "res://art/production/p1/icon_expansion_v01"
 const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
-const ATLAS_PATH := "res://art/production/p1/ui_style_r13/atlas.json"
+const ATLAS_PATH := "res://art/production/p1/icon_expansion_v01/atlas.json"
 const SCHEMA_VERSION := 1
 const NATIVE_ICON_SIZE := Vector2i(32, 32)
 const ICON_ANCHOR := Vector2i(16, 16)
@@ -72,7 +72,7 @@ func load_icons() -> bool:
 	for entry_id in required_ids:
 		var entry: Dictionary = sprites.get(entry_id, {})
 		if entry.is_empty():
-			pending_reason = "ASSETS PENDING: ui_style_r13 lacks %s" % entry_id
+			pending_reason = "ASSETS PENDING: icon_expansion_v01 lacks %s" % entry_id
 			return false
 		if not _accept_entry(entry_id, entry):
 			return false

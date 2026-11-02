@@ -3,7 +3,7 @@ extends Control
 
 ## Read-only hero preview for the loadout page.
 ##
-## It draws one published frame of res://art/production/p1/ranger_actions_v01 at
+## It draws one published frame of res://art/production/p1/actors_v02/ranger.png at
 ## an integer multiple of the atlas' own 48x48 cell, so every source pixel stays
 ## a whole block of display pixels and the hero keeps the same body he has in the
 ## arena, the hamlet and the tutorial. The frame comes from the same
@@ -41,12 +41,22 @@ var _reader
 var _frame: Dictionary = {}
 var _state := RangerAnimationScript.STATE_PENDING
 var _notes: Array[String] = []
+var _crest := TextureRect.new()
 
 
 func _init() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_reader = RangerAnimationScript.new()
+	_crest.name = "RangerCrest"
+	_crest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_crest.show_behind_parent = true
+	_crest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_crest.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	_crest.self_modulate = Color(1, 1, 1, 0.70)
+	_crest.visible = false
+	add_child(_crest)
+	_crest.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	resized.connect(queue_redraw)
 
 
@@ -56,6 +66,7 @@ func refresh() -> void:
 	_notes.clear()
 	_state = String(_reader.asset_state())
 	_frame = {}
+	_crest.visible = false
 	custom_minimum_size = Vector2(NATIVE_CELL) * float(DISPLAY_SCALE)
 	if not _reader.has_real_art():
 		_notes.append(String(_reader.pending_reason()))
@@ -86,6 +97,8 @@ func refresh() -> void:
 		queue_redraw()
 		return
 	_frame = resolved
+	_crest.texture = ShellThemeScript.crafted_texture("crest")
+	_crest.visible = _crest.texture != null
 	if rect.size != NATIVE_CELL:
 		_notes.append("cell drift: the manifest frame is %sx%s, the published cell is %sx%s" % [
 			rect.size.x, rect.size.y, NATIVE_CELL.x, NATIVE_CELL.y,
@@ -129,6 +142,7 @@ func frame_report() -> Dictionary:
 		"anchor": [anchor.x, anchor.y],
 		"atlas_path": RangerAnimationScript.ATLAS_PATH,
 		"texture_path": _reader.texture_path(),
+		"render_texture_path": _reader.render_texture_path(),
 		"notes": _notes.duplicate(),
 	}
 
@@ -155,13 +169,6 @@ func _draw() -> void:
 	var half := drawn.x * GROUND_SPAN
 	# A quiet etched plinth grounds the real character, without faking equipment
 	# appearance or covering any opaque character pixels.
-	var seal_center := Vector2(foot.x, foot.y - 60)
-	draw_arc(seal_center, 71, -PI*0.90, PI*0.20, 32, Color("465048"), 2, false)
-	draw_arc(seal_center, 64, PI*0.21, PI*1.10, 32, Color("765b3c"), 1, false)
-	for i in range(8):
-		var angle := float(i) * TAU / 8
-		var direction := Vector2.from_angle(angle)
-		draw_line(seal_center + direction*68, seal_center+direction*75, Color("87704c"), 2)
 	var ground := PackedVector2Array([foot+Vector2(-half,0),foot+Vector2(0,-10),foot+Vector2(half,0),foot+Vector2(0,12)])
 	draw_colored_polygon(ground, Color(0.02,0.035,0.045,0.75))
 	draw_polyline(ground, Color("4c524c"), 1, false)

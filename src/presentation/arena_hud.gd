@@ -118,6 +118,10 @@ func present(snapshot: Dictionary) -> void:
 	var is_auto := mode == "AUTO"
 	var battle_over := bool(snapshot.get("battle_over", false))
 	var has_boss := bool(snapshot.get("has_boss", true))
+	var room_count := maxi(1, int(snapshot.get("room_count", 1)))
+	var room_index := clampi(int(snapshot.get("room_index", 0)), 0, room_count - 1)
+	_return_button.text = "Next Stage" if battle_over and bool(snapshot.get("battle_victory", false)) and room_index < room_count - 1 else ("Finish Task" if battle_over and bool(snapshot.get("battle_victory", false)) else "Leave")
+	_return_button.tooltip_text = _return_button.text if _return_button.text != "Leave" else "Leave Contract"
 	var objective_label := String(snapshot.get("objective_label", snapshot.get("objective_id", "clear")))
 	var hero_ratio := _present_hero(snapshot)
 	_present_room_heading(snapshot, has_boss, objective_label, battle_over)
@@ -176,9 +180,9 @@ func _present_room_heading(snapshot: Dictionary, has_boss: bool, objective_label
 		if not has_boss and not has_room_display_name:
 			# Keep diagnostic snapshots and older callers on the compact contract;
 			# live embedded rooms publish the authored scene name explicitly.
-			_encounter_heading.text = "Room %d / %d · %s" % [room_number, room_count, room_objective]
+			_encounter_heading.text = "Stage %d / %d · %s" % [room_number, room_count, room_objective]
 		else:
-			_encounter_heading.text = "Room %d / %d · %s · %s" % [room_number, room_count, room_title, room_objective]
+			_encounter_heading.text = "Stage %d / %d · %s · %s" % [room_number, room_count, room_title, room_objective]
 	_encounter_heading.tooltip_text = _encounter_heading.text
 	## Full boss-layout width for both cases; then measured-fit so the authored
 	## name is never clipped at the render width.
@@ -189,15 +193,15 @@ func _present_room_heading(snapshot: Dictionary, has_boss: bool, objective_label
 			"Clear All Targets": "Clear foes",
 			"Clear Enemies": "Clear foes",
 		}.get(objective_label, objective_label))
-		_encounter_heading.text = "Room %d/%d · %s · %s" % [room_number, room_count, room_display_name, compact_objective]
+		_encounter_heading.text = "Stage %d/%d · %s · %s" % [room_number, room_count, room_display_name, compact_objective]
 		var heading_font := _encounter_heading.get_theme_font("font")
 		if heading_font.get_string_size(_encounter_heading.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
 			_encounter_heading.get_theme_font_size("font_size")).x > _encounter_heading.size.x:
-			_encounter_heading.text = "Room %d/%d · %s" % [room_number, room_count, compact_objective]
+			_encounter_heading.text = "Stage %d/%d · %s" % [room_number, room_count, compact_objective]
 		StyleScript.fit_heading(_encounter_heading)
 	# A read-only entry cue uses the room's existing elapsed time and never delays input.
 	_room_start_label.visible = has_room_progress and not has_boss and not battle_over and float(snapshot.get("room_elapsed_seconds", 99.0)) < 1.8
-	_room_start_label.text = "Entering Room %d · %s" % [room_number, room_entry_hint]
+	_room_start_label.text = "Entering Stage %d · %s" % [room_number, room_entry_hint]
 	_room_start_label.tooltip_text = room_entry_hint
 	_boss_state_label.visible = not _room_start_label.visible
 

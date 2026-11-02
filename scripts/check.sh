@@ -31,6 +31,7 @@ PY
 
 "$MIB_TEST_PYTHON" -B scripts/check_english.py
 "$MIB_TEST_PYTHON" -B tools/world_manifest/author_ground_footprints.py --check
+"$MIB_TEST_PYTHON" -B tools/world_manifest/author_battlegrounds.py --check
 "$MIB_TEST_PYTHON" -B tools/world_manifest/author_town_expansion.py --check
 
 # Godot's project-wide --check-only can wait indefinitely when a project

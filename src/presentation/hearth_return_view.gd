@@ -1,41 +1,39 @@
 class_name HearthReturnView
 extends TextureRect
-## Dedicated early-return scene based on v0.9 story panel 02, not final E03.
-## The bench stays away from the cold door, Mira is still working, Leia records.
+## Early-return vignette composed from the current Hearthside town assets.
+## Mira is still working beside the forge; Leia records beside the brazier.
 ## No repair/shift-handover flag is inferred from Auto graduation.
 const Readability = preload("res://src/presentation/actor_readability.gd")
 const Ranger = preload("res://src/presentation/ranger_animation.gd")
 const Life = preload("res://src/presentation/hamlet_life_animation.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
 const AtmosphereLayerScript = preload("res://src/presentation/scene_atmosphere_layer.gd")
-const ROOT := "res://art/production/p1/hearth_return_v01/"
-const BACKGROUND_PATH := ROOT + "background.png"
+const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const BACKGROUND_PATH := "res://art/production/p1/world_expansion_v01/town_ground.png"
 const NATIVE_SIZE := Vector2i(640, 360)
+## A native-size window onto the dry town roads, without resampling the map.
+const GROUND_REGION := Rect2i(448, 144, 640, 360)
 const PLACEMENTS := [
-	{"id":"return.bench", "feet":Vector2i(235,225)},
+	{"id":"return.forge", "path":"res://art/production/p1/town_order_v01/forge_west_opaque.png",
+		"canvas":Vector2i(320,288), "anchor":Vector2i(160,264), "feet":Vector2i(448,272)},
+	{"id":"return.hearth", "path":"res://art/production/p1/generated_world_v02/hearth_opaque.png",
+		"canvas":Vector2i(160,176), "anchor":Vector2i(80,160), "feet":Vector2i(160,240)},
 ]
-## The two residents are real actors now: they loop their actors_v02 work
-## clips at the same authored feet, like they do in the town. The bench stays
-## published furniture from the scene atlas.
+## Resident work clips are the same published actors used by the town.
 const NPC_PLACEMENTS := [
-	{"id":"return.mira", "clip":"mira.south.work", "feet":Vector2i(296,189)},
-	{"id":"return.leia", "clip":"leia.south.work", "feet":Vector2i(237,254)},
+	{"id":"return.mira", "clip":"mira.south.work", "feet":Vector2i(400,280)},
+	{"id":"return.leia", "clip":"leia.south.work", "feet":Vector2i(240,294)},
 ]
-const RANGER_FEET := Vector2i(124,293)
-const SOCKETS := [
-	{"id":"HearthFire", "clip":"life.fire", "feet":Vector2i(189,191)},
-	{"id":"RepairSteam", "clip":"life.steam", "feet":Vector2i(315,151)},
-]
+const RANGER_FEET := Vector2i(176,280)
 const ATMOSPHERE_PRESET := "hearth"
 const ATMOSPHERE_BOUNDS := Rect2(Vector2.ZERO, Vector2(NATIVE_SIZE))
-const HEARTH_LIGHT_FEET := Vector2(189.0, 187.0)
+const HEARTH_LIGHT_FEET := Vector2(160.0, 150.0)
 const NPC_LIFE_DIR := "res://art/production/p1/actors_v02/residents/"
 var _errors: Array[String] = []
 var _art_root: Node2D
 var _atmosphere_layer: AtmosphereLayerScript
 var _layers: Array[Dictionary] = []
 var _effects: Array[Dictionary] = []
-var _life = Life.new()
 var _npc_life = Life.new()
 var _clock := 0.0
 var _frozen := false
@@ -54,13 +52,14 @@ func load_scene() -> bool:
 	custom_minimum_size = Vector2(NATIVE_SIZE)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	clip_contents = true
-	var atlas := _read_atlas()
-	var backgrounds: Dictionary = atlas.get("sprites", {})
-	var textures: Dictionary = atlas.get("textures", {})
-	var background := _texture(textures.get("background", {}))
-	if background == null or Vector2i(background.get_size()) != NATIVE_SIZE:
-		_errors.append("dedicated background missing or wrong size")
+	var ground := TextureLoader.load_sized(BACKGROUND_PATH, Vector2i(1536,960), false)
+	if ground == null:
+		_errors.append("current town ground missing or wrong size")
 		return false
+	var background := AtlasTexture.new()
+	background.atlas = ground
+	background.region = Rect2(GROUND_REGION)
+	background.filter_clip = true
 	texture = background
 	_art_root = Node2D.new()
 	_art_root.name = "NativeIllustration"
@@ -80,17 +79,14 @@ func load_scene() -> bool:
 	_atmosphere_layer.z_index = 0
 	_art_root.add_child(_atmosphere_layer)
 	for item: Dictionary in PLACEMENTS:
-		var id := String(item.id)
-		var spec: Dictionary = backgrounds.get(id, {})
-		var sheet := _texture(textures.get(String(spec.get("texture", "")), {}))
-		var rect := _rect(spec.get("rect", []))
-		var anchor := _point(spec.get("anchor", []))
-		if sheet == null or rect.size.x <= 0 or not Rect2i(Vector2i.ZERO,Vector2i(sheet.get_size())).encloses(rect):
-			_errors.append("invalid sprite " + id)
+		var sheet := TextureLoader.load_sized(String(item.path), Vector2i(item.canvas), false)
+		if sheet == null:
+			_errors.append("current town prop missing or wrong size: " + String(item.id))
 			continue
-		var node := _sprite(id, sheet, rect, Vector2i(item.feet), anchor)
-		_layers.append({"id":id,"node":node,"rect":rect,"feet":item.feet,"anchor":anchor})
-	## The two residents loop their actors_v02 work clips at the same feet.
+		var rect := Rect2i(Vector2i.ZERO, Vector2i(item.canvas))
+		var node := _sprite(String(item.id), sheet, rect, Vector2i(item.feet), Vector2i(item.anchor))
+		_layers.append({"id":item.id,"path":item.path,"node":node,"rect":rect,"feet":item.feet,"anchor":item.anchor})
+	## The two residents retain their actors_v02 work clips at the new workplaces.
 	if not _npc_life.load_assets_at(NPC_LIFE_DIR):
 		_errors.append_array(_npc_life.pending_reasons())
 	else:
@@ -101,7 +97,7 @@ func load_scene() -> bool:
 				continue
 			var node := _sprite(String(item.id), entry.texture, entry.rect, Vector2i(item.feet), entry.anchor)
 			## The panel owns a shared two-second loop: stretch each work clip so
-			## it still advances and still closes with the fire/steam cycle.
+			## it still advances and closes at the shared review-loop boundary.
 			var frames := maxf(1.0, _npc_life.clip_frame_count(String(item.clip)))
 			var fps := maxf(0.001, _npc_life.clip_fps(String(item.clip)))
 			_effects.append({"id":String(item.id),"node":node,"clip":String(item.clip),"feet":item.feet,"frame":0,"reader":_npc_life,"time_scale":(frames/fps)/2.0})
@@ -112,18 +108,8 @@ func load_scene() -> bool:
 	else:
 		var node := _sprite("ReturnRanger",frame.texture,frame.rect,RANGER_FEET,frame.anchor)
 		_layers.append({"id":"ranger.east.idle","node":node,"rect":frame.rect,"feet":RANGER_FEET,"anchor":frame.anchor})
-	## This retained story panel owns its original fire/steam sockets. The
-	## generated town deliberately has no overlays on its whole-object art.
-	if not _life.load_assets_at("res://art/production/p1/hamlet_life_r13/"):
-		_errors.append_array(_life.pending_reasons())
-	else:
-		for socket: Dictionary in SOCKETS:
-			var entry: Dictionary = _life.frame_at(socket.clip,0.0)
-			if entry.is_empty():
-				_errors.append("published effect unavailable " + String(socket.clip))
-				continue
-			var node := _sprite(socket.id,entry.texture,entry.rect,socket.feet,entry.anchor)
-			_effects.append({"node":node,"clip":socket.clip,"feet":socket.feet,"frame":0})
+	## Fire is already authored into the current forge and brazier. No old pipe
+	## steam or additional flame sprite is layered over these whole-object props.
 	set_process(_errors.is_empty())
 	_update_effects()
 	return _errors.is_empty()
@@ -164,7 +150,7 @@ func set_review_time(seconds: float) -> void:
 
 func _update_effects() -> void:
 	for item: Dictionary in _effects:
-		var reader: Variant = item.get("reader", _life)
+		var reader: Variant = item.reader
 		var frame: Dictionary = reader.frame_at(item.clip,_clock * float(item.get("time_scale", 1.0)))
 		if frame.is_empty():
 			continue
@@ -176,37 +162,11 @@ func _update_effects() -> void:
 func scene_report() -> Dictionary:
 	var layers: Array[Dictionary] = []
 	for item: Dictionary in _layers:
-		layers.append({"id":item.id,"feet":item.feet,"anchor":item.anchor,"rect":item.rect})
+		layers.append({"id":item.id,"feet":item.feet,"anchor":item.anchor,"rect":item.rect,"path":str(item.get("path", ""))})
 	var effects: Array[Dictionary] = []
 	for item: Dictionary in _effects:
 		effects.append({"id":str(item.get("id", item.node.name)),"clip":item.clip,"frame":item.frame,"feet":item.feet})
 	return {"ready":_loaded and _errors.is_empty(),"errors":_errors.duplicate(),"native_size":NATIVE_SIZE,
-		"source_path":BACKGROUND_PATH,"layers":layers,"effects":effects,"time":_clock,
+		"source_path":BACKGROUND_PATH,"ground_region":GROUND_REGION,"layers":layers,"effects":effects,"time":_clock,
 		"atmosphere":_atmosphere_layer.atmosphere_report() if _atmosphere_layer != null else {},
 		"story_state":"early_return_unrepaired","final_e03_repair":false,"loop_seconds":2.0}
-
-func _read_atlas() -> Dictionary:
-	var file := FileAccess.open(ROOT+"atlas.json",FileAccess.READ)
-	if file == null:
-		_errors.append("return atlas missing")
-		return {}
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	if not parsed is Dictionary or parsed.get("schema_version",0) != 1:
-		_errors.append("return atlas invalid")
-		return {}
-	return parsed
-
-func _texture(meta: Dictionary) -> Texture2D:
-	var path := String(meta.get("path",""))
-	if not path.begins_with(ROOT):
-		return null
-	var declared := Vector2i(int(meta.get("width",0)),int(meta.get("height",0)))
-	return _life.load_texture_at(path,declared)
-
-func _rect(value: Array) -> Rect2i:
-	if value.size()!=4:
-		return Rect2i()
-	return Rect2i(int(value[0]),int(value[1]),int(value[2]),int(value[3]))
-
-func _point(value: Array) -> Vector2i:
-	return Vector2i(int(value[0]),int(value[1])) if value.size()==2 else Vector2i.ZERO
