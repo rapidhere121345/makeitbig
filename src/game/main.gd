@@ -54,6 +54,7 @@ const RoomActorSetupScript := preload("res://src/game/combat_room/actor_setup.gd
 const RoomPlayerCommandsScript := preload("res://src/game/combat_room/player_commands.gd")
 const RoomTerminalScript := preload("res://src/game/combat_room/room_terminal.gd")
 const RoomGeometryScript := preload("res://src/game/combat_room/room_geometry.gd")
+const RoomSessionScript := preload("res://src/game/combat_room/room_session.gd")
 
 const ARENA_MARGIN: float = 42.0
 const AUTHORITY_VIEWPORT_SIZE: Vector2 = Vector2(1280.0, 720.0)
@@ -101,6 +102,9 @@ const ATTACK_SOURCE_ASSISTED: String = "assisted"
 const ATTACK_SOURCE_POINTER: String = "pointer"
 const ATTACK_SOURCE_PROXY: String = "proxy"
 
+## Room authority (see src/game/combat_room/room_session.gd). The properties below
+## forward to it under their historical names.
+var session := RoomSessionScript.new()
 var selected_preset: String = "convergent"
 var selected_mode: String = "Manual"
 var locked_p: float = PiercingArrowModel.BASE_P
