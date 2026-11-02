@@ -188,7 +188,7 @@ func _test_game_root_wires_port_to_application_state(failures: Array[String]) ->
 	var bare = ApplicationStateScript.new()
 	bare.start_new_profile("ranger")
 	game_root.set("application_state", bare)
-	var screen: Node = game_root._make_arena_screen()
+	var screen: Node = game_root.make_arena_screen()
 	_expect(screen != null and screen.get_script() == ContractRunControllerScript,
 		"wiring: production arena screen is not the contract controller", failures)
 	if screen != null:

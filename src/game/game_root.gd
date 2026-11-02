@@ -1,6 +1,19 @@
 class_name GameRoot
 extends Node
 
+## The application shell: it owns routing, the mounted screen and the save, and
+## composes the helper modules in src/game/root/, each of which owns the state of
+## one concern (playtest_recorder, route_snapshots, capture, auto_smoke,
+## test_console_host, contract_flow, facility_actions, display_settings,
+## prototype_debug).
+##
+## Modules reach the shell only through its public API: status_message,
+## transition(), persist(), present_title/base/contract/facility(),
+## record_playtest(), request_exit(), is_test_session(), presentation_enabled,
+## application_state, scene_router, save_store, playtest_log, current_route,
+## current_screen, last_contract, get_presentation_viewport(), get_pixel_stage(),
+## the flow_route_changed / flow_error signals and the public flow methods.
+
 signal flow_route_changed(previous_route: String, current_route: String)
 signal flow_error(error_code: String, detail: String)
 
@@ -216,7 +229,7 @@ func initialize(arguments: PackedStringArray = OS.get_cmdline_user_args()) -> vo
 		application_state = ApplicationStateScript.new()
 	if scene_router == null:
 		scene_router = SceneRouterScript.new()
-	_parse_presentation_flag(arguments)
+	_presentation_enabled = not arguments.has("--presentation-off")
 	prototype_debug.consider(arguments)
 	if save_store == null:
 		save_store = SaveStoreScript.new(save_directory_path)
@@ -370,6 +383,8 @@ func return_to_title() -> Dictionary:
 	return transition(SceneRouterScript.ROUTE_TITLE)
 
 
+## Contract lifecycle entry points that screen signals connect to; the service
+## lives in src/game/root/contract_flow.gd.
 func cancel_contract() -> Dictionary:
 	return contract_flow.cancel_contract()
 
@@ -432,10 +447,6 @@ func _bootstrap(arguments: PackedStringArray) -> void:
 	transition(initial_route)
 
 
-func _parse_presentation_flag(arguments: PackedStringArray) -> void:
-	_presentation_enabled = not arguments.has("--presentation-off")
-
-
 ## True for --smoke, --game-flow-smoke, --auto-smoke and capture runs, which never
 ## write saves or settings.
 func is_test_session() -> bool:
@@ -490,7 +501,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			var screen = BaseHubScreenScript.new()
 			screen.contract_requested.connect(open_contract)
 			screen.title_requested.connect(return_to_title)
-			screen.feature_requested.connect(_on_feature_requested)
+			screen.feature_requested.connect(open_facility)
 			screen.character_requested.connect(open_character)
 			screen.story_requested.connect(open_story)
 			screen.conversation_read.connect(read_town_conversation)
@@ -521,7 +532,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			_facility_return_route = back_destination
 			screen.base_requested.connect(request_facility_back.bind(back_destination, String(payload.get("review_instance_id", ""))))
 			screen.destination_requested.connect(request_facility_destination)
-			screen.action_requested.connect(_on_facility_action_requested)
+			screen.action_requested.connect(request_facility_action)
 			_current_screen = screen
 			_mount_screen(screen)
 			present_facility(route, status_message, payload)
@@ -533,12 +544,12 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			_mount_screen(screen)
 			present_contract(status_message)
 		SceneRouterScript.ROUTE_ARENA:
-			var screen: Node = _make_arena_screen()
+			var screen: Node = make_arena_screen()
 			if screen == null:
 				_handle_arena_launch_failure("room_runtime_factory_failed")
 				return
-			screen.connect("completed", _on_arena_completed)
-			screen.connect("abandoned", _on_arena_abandoned)
+			screen.connect("completed", _settle_arena_result)
+			screen.connect("abandoned", _settle_arena_result)
 			_current_screen = screen
 			_mount_screen(screen)
 			var launch_result: Variant = screen.call("start_session", payload.duplicate(true))
@@ -567,7 +578,9 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			screen.present(application_state.profile, application_state.last_result)
 
 
-func _make_arena_screen() -> Node:
+## Builds the arena screen node: the room_runtime_factory result when one is set,
+## otherwise the real contract run controller bound to the application state.
+func make_arena_screen() -> Node:
 	if room_runtime_factory.is_valid():
 		var candidate: Variant = room_runtime_factory.call()
 		return candidate as Node if candidate is Node else null
@@ -590,22 +603,10 @@ func _handle_arena_launch_failure(error_code: String) -> void:
 	})
 
 
-func _on_arena_completed(result: Dictionary) -> void:
-	_settle_arena_result(result)
-
-
-func _on_arena_abandoned(result: Dictionary) -> void:
-	_settle_arena_result(result)
-
-
 func _settle_arena_result(result: Dictionary) -> void:
 	var stage := auto_smoke.stage
 	var settled: Dictionary = finish_contract(result)
 	auto_smoke.on_arena_settled(stage, result, settled)
-
-
-func _on_feature_requested(feature_id: String) -> void:
-	open_facility(feature_id)
 
 
 ## Facility screen navigation to another facility; refused unless the router allows it.
@@ -628,10 +629,6 @@ func request_facility_back(destination: String, reviewed_item_id: String = "") -
 	leave_facility()
 
 
-func _on_facility_action_requested(facility_id: String, action_id: String, payload: Dictionary) -> void:
-	request_facility_action(facility_id, action_id, payload)
-
-
 ## Presents the title screen with the given message when it is the current screen.
 func present_title(message: String) -> void:
 	if _current_screen != null and _current_screen.has_method("present"):
@@ -644,6 +641,7 @@ func present_base(message: String) -> void:
 		_current_screen.call("present", application_state.profile, application_state.last_result, message, route_snapshots.campaign_contract_snapshot())
 
 		_current_screen.present_adventure(application_state.character_snapshot(), application_state.story_snapshot())
+
 
 ## Presents the contract board with the given message when it is the current screen.
 func present_contract(message: String) -> void:
@@ -676,6 +674,7 @@ func present_facility(facility_id: String, message: String, presentation_context
 			facility_data = application_state.early_game_snapshot()
 		_current_screen.call("present", facility_id, application_state.profile, application_state.last_result, message, facility_data)
 
+
 func _retire_current_screen() -> void:
 	if _current_screen == null or not is_instance_valid(_current_screen):
 		_current_screen = null
@@ -702,6 +701,7 @@ func persist(reason: String, safe_route: String) -> String:
 	return PlayerFacingStatusScript.error_message("save_failed")
 
 
+## Capture entry points; the harness lives in src/game/root/capture_harness.gd.
 func capture_request_report(arguments: PackedStringArray) -> Dictionary:
 	return capture.capture_request_report(arguments)
 
