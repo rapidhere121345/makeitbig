@@ -89,9 +89,9 @@ func configure_standalone() -> Dictionary:
 
 func _bind_sort_source() -> void:
 	var host := get_parent()
-	var declared := host != null and host.get_property_list().any(func(item: Dictionary) -> bool: return item.name == "scene_runtime")
-	if declared:
-		var source: Variant = host.get("scene_runtime")
+	var runtime_owner := _scene_runtime_owner(host)
+	if runtime_owner != null:
+		var source: Variant = runtime_owner.get("scene_runtime")
 		if source != null:
 			_binding_mode = "mounted"
 			if not source is SceneRuntimeScript:
@@ -114,6 +114,36 @@ func _bind_sort_source() -> void:
 		_domain_original_transform = _domain.transform
 
 
+## The object that declares the host room's `scene_runtime` injection: the
+## host itself, or the room session it publishes as `session` (MainArena keeps
+## its SceneRuntime on its RoomSession). Null when neither declares one.
+static func _scene_runtime_owner(host: Object) -> Object:
+	if host == null:
+		return null
+	if _declares(host, "scene_runtime"):
+		return host
+	var session: Variant = host.get("session") if _declares(host, "session") else null
+	if session is Object and _declares(session, "scene_runtime"):
+		return session
+	return null
+
+
+## The host's current SceneRuntime injection, without the declaration scan.
+static func _host_scene_runtime(host: Object) -> Variant:
+	if host == null:
+		return null
+	var source: Variant = host.get("scene_runtime")
+	if source == null:
+		var session: Variant = host.get("session")
+		if session is Object:
+			source = (session as Object).get("scene_runtime")
+	return source
+
+
+static func _declares(target: Object, property: String) -> bool:
+	return target.get_property_list().any(func(item: Dictionary) -> bool: return item.name == property)
+
+
 func _resolve_sort_domain() -> Dictionary:
 	if _terminated or not is_inside_tree():
 		return {"ok": false, "error": "presentation_session_closed"}
@@ -122,7 +152,7 @@ func _resolve_sort_domain() -> Dictionary:
 			return {"ok": false, "error": "standalone_sort_domain_unavailable"}
 	elif _binding_mode == "mounted":
 		var source: Variant = _runtime_source.get_ref() if _runtime_source != null else null
-		if source == null or get_parent().get("scene_runtime") != source:
+		if source == null or _host_scene_runtime(get_parent()) != source:
 			return {"ok": false, "error": "mounted_runtime_detached"}
 		if not source.is_ready() or source.mounted_scene != get_parent():
 			return {"ok": false, "error": "native_room_not_mounted"}

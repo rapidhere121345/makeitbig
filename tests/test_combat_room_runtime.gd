@@ -65,12 +65,12 @@ func _run() -> void:
 			_expect(scene_runtime.get("mounted_scene") == room_node, "runtime: SceneRuntime did not own the mounted native room scene", failures)
 			var world_asset: Dictionary = scene_runtime.call("report").get("world_asset", {})
 			_expect(String(world_asset.get("world_scene_path", "")) == "res://content/rooms/combat/corridor.tscn", "runtime: catalog did not select the corridor native room asset", failures)
-			_expect(room_node.get("scene_runtime") == scene_runtime, "runtime: native room did not receive its owning SceneRuntime", failures)
-			_expect(room_node.get("actor_registry") == scene_runtime.get("actor_registry"), "runtime: combat created a second ActorRegistry", failures)
-			_expect(room_node.get("simulation_world") == scene_runtime.get("simulation"), "runtime: combat created a second SimulationWorld", failures)
+			_expect(room_node.session.scene_runtime == scene_runtime, "runtime: native room did not receive its owning SceneRuntime", failures)
+			_expect(room_node.session.actor_registry == scene_runtime.get("actor_registry"), "runtime: combat created a second ActorRegistry", failures)
+			_expect(room_node.session.simulation_world == scene_runtime.get("simulation"), "runtime: combat created a second SimulationWorld", failures)
 			_expect(room_node.get_parent() != null and String(room_node.get_parent().name) == "NativeWorld", "runtime: native room was mounted outside the presenter world layer", failures)
 		_expect(bool(room_node.get("presentation_enabled")), "runtime: normalized presentation flag was not injected before ready", failures)
-		var injected_room: Dictionary = room_node.get("framework_room")
+		var injected_room: Dictionary = room_node.session.framework_room
 		_expect(int(injected_room.get("room_index", -1)) == 1 and int(injected_room.get("room_count", 0)) == 2,
 			"runtime: existing zero-based room index and total were not passed to the arena", failures)
 		room_node.call("refresh_presentation")
@@ -90,9 +90,9 @@ func _run() -> void:
 		config_snapshot["presentation_enabled"] = false
 		_expect(bool(runtime.current_config.get("presentation_enabled", false)), "runtime: current_config presentation copy is not deeply isolated", failures)
 		_expect(bool(room_node.get("test_session")), "runtime: embedded session flag was not enabled", failures)
-		_expect(String((room_node.get("framework_active_build") as Dictionary).get("preset_id", "")) == "convergent", "runtime: active Build was not injected", failures)
-		_expect((room_node.get("framework_resolved_build") as Dictionary) == convergent_build, "runtime: frozen resolved Build was not injected", failures)
-		var proxy_runtime_instance: Variant = room_node.get("proxy_runtime")
+		_expect(String((room_node.session.framework_active_build as Dictionary).get("preset_id", "")) == "convergent", "runtime: active Build was not injected", failures)
+		_expect((room_node.session.framework_resolved_build as Dictionary) == convergent_build, "runtime: frozen resolved Build was not injected", failures)
+		var proxy_runtime_instance: Variant = room_node.session.proxy_runtime
 		_expect(proxy_runtime_instance is Object and String(((proxy_runtime_instance as Object).get("cores") as Dictionary)[&"perception"].core_id) == "near_enemy_horizon", "runtime: resolved proxy Build was not installed", failures)
 		var typed_clear := _settle_first_encounter_member(room_node)
 		_expect(bool(typed_clear.get("ok", false)), "runtime: typed encounter member settlement was rejected", failures)
@@ -147,12 +147,12 @@ func _run() -> void:
 	var defeat_room_value: Variant = defeat_runtime.get("room_instance")
 	if defeat_room_value is Node:
 		var defeat_room := defeat_room_value as Node
-		while int(defeat_room.get("sim_tick")) < 44:
+		while int(defeat_room.session.sim_tick) < 44:
 			defeat_room.step_tick()
-		var state = defeat_room.get("player_combat_state")
-		var rules = defeat_room.get("player_combat_rules")
+		var state = defeat_room.session.player_combat_state
+		var rules = defeat_room.session.player_combat_rules
 		var player: Dictionary = state.snapshot(44)
-		var damage: Dictionary = rules.apply_damage(44, float(player.player_health) + 1.0, "enemy/melee_pursuer", (defeat_room.get("enemies") as Array)[0].position)
+		var damage: Dictionary = rules.apply_damage(44, float(player.player_health) + 1.0, "enemy/melee_pursuer", (defeat_room.session.encounter_director.enemies as Array)[0].position)
 		_expect(bool(damage.get("accepted", false)), "runtime defeat: real lethal damage was rejected", failures)
 		defeat_room.call("check_battle_end")
 		defeat_runtime.call("_process", 0.0)
@@ -216,7 +216,7 @@ func _run() -> void:
 		var headless_node := headless_room_value as Node
 		_expect(bool(presented_node.get("presentation_enabled")), "presentation twins: enabled flag did not reach the arena", failures)
 		_expect(not bool(headless_node.get("presentation_enabled")), "presentation twins: disabled flag did not reach the arena", failures)
-		_expect(bool(headless_node.get("in_arena")), "presentation twins: headless arena did not enter the arena", failures)
+		_expect(bool(headless_node.session.in_arena), "presentation twins: headless arena did not enter the arena", failures)
 		_expect(presented_node.get("presentation").get("world_view") != null, "presentation twins: enabled arena did not load the native world asset", failures)
 		_expect(headless_node.get("presentation").get("world_view") == null, "presentation twins: headless arena still loaded native world assets", failures)
 		_expect(bool((presented_node.get("presentation").get("hud") as Control).visible), "presentation twins: enabled arena HUD was not shown", failures)
@@ -227,7 +227,7 @@ func _run() -> void:
 		for _index in TWIN_TICKS:
 			presented_node.call("_process", 1.0 / 30.0)
 			headless_node.call("_process", 1.0 / 30.0)
-		_expect(int(presented_node.get("sim_tick")) == TWIN_TICKS, "presentation twins: presented arena did not consume %d fixed ticks" % TWIN_TICKS, failures)
+		_expect(int(presented_node.session.sim_tick) == TWIN_TICKS, "presentation twins: presented arena did not consume %d fixed ticks" % TWIN_TICKS, failures)
 		var presented_scene: Variant = presented_runtime.get("scene_runtime")
 		var presented_port: Variant = presented_scene.get("presentation_port") if presented_scene != null else null
 		var projection_errors: Array = presented_port.get("last_projection_errors") if presented_port != null else ["presentation_port_unavailable"]

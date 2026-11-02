@@ -4,9 +4,11 @@ extends Node2D
 ## The combat room view: the script on every combat room scene. Room authority
 ## lives in RoomSession (`session`); this node owns the presentation controller,
 ## the input adapter and the frame loop, applies the session's presentation event
-## log after each fixed tick, and keeps compatibility forwarders and the thin
-## fixed-tick phase hooks that RoomPhaseDomain dispatches to (test subclasses
-## override those hooks). See docs/rebuild/ROOM_SESSION_DESIGN.md.
+## log after each fixed tick, and keeps a few read-only views (combat totals,
+## attack intent, hazards, manual input) and the thin fixed-tick phase hooks
+## that RoomPhaseDomain dispatches to (test subclasses override those hooks).
+## Callers read room state through `session`. See
+## docs/rebuild/ROOM_SESSION_DESIGN.md.
 
 signal return_requested
 
@@ -102,410 +104,69 @@ const ATTACK_SOURCE_POINTER: String = RoomSessionScript.ATTACK_SOURCE_POINTER
 const ATTACK_SOURCE_PROXY: String = RoomSessionScript.ATTACK_SOURCE_PROXY
 
 ## Room authority (see src/game/combat_room/room_session.gd). The properties below
-## forward to it under their historical names.
+## are read-only views the HUD and the snapshot builder consume; everything else
+## is read from the session.
 var session := RoomSessionScript.new()
-var selected_preset: String:
-	get:
-		return session.selected_preset
-	set(value):
-		session.selected_preset = value
-var selected_mode: String:
-	get:
-		return session.selected_mode
-	set(value):
-		session.selected_mode = value
-var locked_p: float:
-	get:
-		return session.locked_p
-	set(value):
-		session.locked_p = value
-var locked_payload: float:
-	get:
-		return session.locked_payload
-	set(value):
-		session.locked_payload = value
-var locked_targeting_distance: float:
-	get:
-		return session.locked_targeting_distance
-	set(value):
-		session.locked_targeting_distance = value
-var locked_build: Dictionary:
-	get:
-		return session.locked_build
-	set(value):
-		session.locked_build = value
-var in_arena: bool:
-	get:
-		return session.in_arena
-	set(value):
-		session.in_arena = value
-var encounter_director:
-	get:
-		return session.encounter_director
-	set(value):
-		session.encounter_director = value
-var room_catalog:
-	get:
-		return session.room_catalog
-	set(value):
-		session.room_catalog = value
-var enemies: Array[CombatEnemyState]:
-	get:
-		return encounter_director.enemies
-	set(value):
-		encounter_director.enemies = value
-var boss: CombatEnemyState:
-	get:
-		return encounter_director.boss
-	set(value):
-		encounter_director.boss = value
 var boss_maximum: BigValue:
 	get:
-		return combat_system.outcome_snapshot().boss_maximum
+		return session.combat_system.outcome_snapshot().boss_maximum
 var boss_damage: BigValue:
 	get:
-		return combat_system.outcome_snapshot().boss_damage
-var combat_system:
-	get:
-		return session.combat_system
-	set(value):
-		session.combat_system = value
-var combat_simulation:
-	get:
-		return session.combat_simulation
-	set(value):
-		session.combat_simulation = value
-var player_combat_state: PlayerCombatState:
-	get:
-		return session.player_combat_state
-	set(value):
-		session.player_combat_state = value
-var player_combat_rules: PlayerCombatRules:
-	get:
-		return session.player_combat_rules
-	set(value):
-		session.player_combat_rules = value
-## Narrow, read-only observations used by room diagnostics and play_session.
-var player_position: Vector2:
-	get:
-		return session.player_position()
+		return session.combat_system.outcome_snapshot().boss_damage
 var player_health: float:
 	get:
-		return float(player_combat_state.snapshot(sim_tick).get("player_health", 0.0))
+		return float(session.player_combat_state.snapshot(session.sim_tick).get("player_health", 0.0))
 var projectiles: Array[CombatArrowProjectile]:
 	get:
-		return combat_system.projectiles
-var elapsed: float:
-	get:
-		return session.elapsed
-	set(value):
-		session.elapsed = value
-var sim_tick: int:
-	get:
-		return session.sim_tick
-	set(value):
-		# Authority ticks are committed only by SimulationWorld.step_tick().
-		# Retain the setter surface for scene/test construction, but never let a
-		# caller fabricate a tick in the live room.
-		pass
+		return session.combat_system.projectiles
 var shots: int:
 	get:
-		return int(combat_system.outcome_snapshot().shots)
+		return int(session.combat_system.outcome_snapshot().shots)
 var arrow_hits: int:
 	get:
-		return int(combat_system.outcome_snapshot().arrow_hits)
+		return int(session.combat_system.outcome_snapshot().arrow_hits)
 var defeated: int:
 	get:
-		return int(combat_system.outcome_snapshot().defeated)
-var smoke_input_driver: SmokeInputDriver:
-	get:
-		return session.smoke_input_driver
-	set(value):
-		session.smoke_input_driver = value
-var room_rules: CombatRoomRules:
-	get:
-		return session.room_rules
-	set(value):
-		session.room_rules = value
-var battle_over: bool:
-	get:
-		return session.is_battle_over()
-var battle_victory: bool:
-	get:
-		return session.is_battle_victory()
-var battle_report: String:
-	get:
-		return session.battle_report
-	set(value):
-		session.battle_report = value
+		return int(session.combat_system.outcome_snapshot().defeated)
 var attack_requested: bool:
 	get:
-		return command_source.attack_requested if command_source != null else false
+		return session.command_source.attack_requested if session.command_source != null else false
 var attack_requested_source: String:
 	get:
-		return command_source.attack_requested_source if command_source != null else ""
+		return session.command_source.attack_requested_source if session.command_source != null else ""
 var attack_requested_target_entity_id: int:
 	get:
-		return command_source.attack_requested_target_entity_id if command_source != null else 0
+		return session.command_source.attack_requested_target_entity_id if session.command_source != null else 0
 var attack_requested_pointer_gameplay: Vector2:
 	get:
-		return command_source.attack_requested_pointer_gameplay if command_source != null else Vector2.ZERO
-var command_sequence: int:
-	get:
-		return session.command_sequence
-	set(value):
-		session.command_sequence = value
-var last_command_receipts: Array[Dictionary]:
-	get:
-		return session.last_command_receipts
-	set(value):
-		session.last_command_receipts = value
-var last_loot_pickup_command_receipt: Dictionary:
-	get:
-		return session.last_loot_pickup_command_receipt
-	set(value):
-		session.last_loot_pickup_command_receipt = value
+		return session.command_source.attack_requested_pointer_gameplay if session.command_source != null else Vector2.ZERO
 var last_attack_outcome: Dictionary:
 	get:
-		return combat_system.last_attack_outcome
-var content_registry:
-	get:
-		return session.content_registry
-	set(value):
-		session.content_registry = value
-var proxy_runtime:
-	get:
-		return session.proxy_runtime
-	set(value):
-		session.proxy_runtime = value
-var proxy_intent_system:
-	get:
-		return session.proxy_intent_system
-	set(value):
-		session.proxy_intent_system = value
-var manual_aim_resolver:
-	get:
-		return session.manual_aim_resolver
-	set(value):
-		session.manual_aim_resolver = value
-var enemy_tactics:
-	get:
-		return session.enemy_tactics
-	set(value):
-		session.enemy_tactics = value
-var command_source:
-	get:
-		return session.command_source
-	set(value):
-		session.command_source = value
-var command_source_port: RefCounted:
-	get:
-		return session.command_source_port
-	set(value):
-		session.command_source_port = value
-var actor_registry:
-	get:
-		return session.actor_registry
-	set(value):
-		session.actor_registry = value
-var scene_runtime:
-	get:
-		return session.scene_runtime
-	set(value):
-		session.scene_runtime = value
-var simulation_world:
-	get:
-		return session.simulation_world
-	set(value):
-		session.simulation_world = value
-var actor_registry_instance_id: String:
-	get:
-		return session.actor_registry_instance_id
-	set(value):
-		session.actor_registry_instance_id = value
-var actor_registry_revision: int:
-	get:
-		return session.actor_registry_revision
-	set(value):
-		session.actor_registry_revision = value
-## Mounted-room typed ports adopted from SceneRuntime (or the standalone room
-## assembly). The fixed-tick kernel owns combat authority through them.
-var room_spatial_port:
-	get:
-		return session.room_spatial_port
-	set(value):
-		session.room_spatial_port = value
-var room_combat_port:
-	get:
-		return session.room_combat_port
-	set(value):
-		session.room_combat_port = value
-var room_encounter_port:
-	get:
-		return session.room_encounter_port
-	set(value):
-		session.room_encounter_port = value
-var encounter_spawn_port: RefCounted:
-	get:
-		return session.encounter_spawn_port
-	set(value):
-		session.encounter_spawn_port = value
-var kernel_bindings: KernelBindings:
-	get:
-		return session.kernel_bindings
-	set(value):
-		session.kernel_bindings = value
-var combat_event_stream:
-	get:
-		return session.combat_event_stream
-	set(value):
-		session.combat_event_stream = value
+		return session.combat_system.last_attack_outcome
 var startup_errors: Array[String] = []
-var proxy_prediction: String:
-	get:
-		return session.proxy_prediction
-	set(value):
-		session.proxy_prediction = value
 var last_save_message: String = ""
 var test_session: bool = false
 var presentation_enabled: bool = true
-var replay_geometry_profile: String:
-	get:
-		return session.replay_geometry_profile
-	set(value):
-		session.replay_geometry_profile = value
-var framework_active_build: Dictionary:
-	get:
-		return session.framework_active_build
-	set(value):
-		session.framework_active_build = value
-var framework_resolved_build: Dictionary:
-	get:
-		return session.framework_resolved_build
-	set(value):
-		session.framework_resolved_build = value
-var framework_resolved_proxy_build: Dictionary:
-	get:
-		return session.framework_resolved_proxy_build
-	set(value):
-		session.framework_resolved_proxy_build = value
-var framework_room: Dictionary:
-	get:
-		return session.framework_room
-	set(value):
-		session.framework_room = value
-var room_id: String:
-	get:
-		return session.room_id
-	set(value):
-		session.room_id = value
-var layout_id: String:
-	get:
-		return session.layout_id
-	set(value):
-		session.layout_id = value
-var objective_id: String:
-	get:
-		return session.objective_id
-	set(value):
-		session.objective_id = value
-var room_entry_start_tick: int:
-	get:
-		return session.room_entry_start_tick
-	set(value):
-		session.room_entry_start_tick = value
-var room_drop_tags: Array:
-	get:
-		return session.room_drop_tags
-	set(value):
-		session.room_drop_tags = value
-var framework_seed: int:
-	get:
-		return session.framework_seed
-	set(value):
-		session.framework_seed = value
-var room_loot_enabled: bool:
-	get:
-		return session.room_loot.enabled()
-var room_loot_snapshot: Dictionary:
-	get:
-		return session.room_loot.snapshot()
-var room_loot_settlement: Dictionary:
-	get:
-		return session.room_loot.settlement_snapshot()
 var room_loot_window_open: bool:
 	get:
-		return battle_victory and session.room_loot.has_unsettled_entities()
+		return session.is_battle_victory() and session.room_loot.has_unsettled_entities()
 var hazard_states: Array[Dictionary]:
 	get:
 		if room_hazards.domain != null and room_hazards.domain.is_configured():
 			return room_hazards.domain.snapshots()
-		return encounter_director.hazard_states
+		return session.encounter_director.hazard_states
 	set(value):
 		if room_hazards.domain == null:
-			encounter_director.hazard_states = value
-var elite_rule_ids: Array[String]:
-	get:
-		return encounter_director.elite_rule_ids
-	set(value):
-		encounter_director.elite_rule_ids = value
-var elite_entity_id: int:
-	get:
-		return encounter_director.elite_entity_id
-	set(value):
-		encounter_director.elite_entity_id = int(value)
-var elite_barrier_active: bool:
-	get:
-		return encounter_director.elite_barrier_active
-	set(value):
-		encounter_director.elite_barrier_active = bool(value)
-var reinforcements_summoned: bool:
-	get:
-		return encounter_director.reinforcements_summoned
-	set(value):
-		encounter_director.reinforcements_summoned = bool(value)
-var timed_bonus_available: bool:
-	get:
-		return encounter_director.timed_bonus_available
-	set(value):
-		encounter_director.timed_bonus_available = bool(value)
-var next_entity_id: int:
-	get:
-		return encounter_director.next_entity_id
-	set(value):
-		encounter_director.next_entity_id = int(value)
-var next_enemy_action_instance_id: int:
-	get:
-		return encounter_director.next_enemy_action_instance_id
-	set(value):
-		encounter_director.next_enemy_action_instance_id = int(value)
+			session.encounter_director.hazard_states = value
 var room_reward_snapshot: Dictionary:
 	get:
-		return room_rules.snapshot().room_reward_snapshot
+		return session.room_rules.snapshot().room_reward_snapshot
 
 
-var automation_smoke: bool:
-	get:
-		return session.automation_smoke
-	set(value):
-		session.automation_smoke = value
-var automation_smoke_failure: String:
-	get:
-		return session.automation_smoke_failure
-	set(value):
-		session.automation_smoke_failure = value
 var presentation
 var input_adapter
 ## Replays the session's event log into the presentation after each tick.
 var presentation_events: MainPresentationEvents
-## Production fixed-tick phase owner, held by the session. CombatSimulation never
-## receives Main as a callback bag; it receives the typed RoomPhaseDomain from
-## src/game/ports/room_phase_domain.gd. Phase dispatch is typed virtual calls only.
-var room_phase_owner: CombatPhasePort:
-	get:
-		return session.room_phase_owner
-	set(value):
-		session.room_phase_owner = value
 
 ## These read-only input relays are used by CombatStateSnapshotBuilder; the
 ## device adapter is their sole state owner. No physical source ids are replay ids.
@@ -558,30 +219,30 @@ func ensure_room_catalog() -> void:
 
 
 func _ensure_encounter_director() -> void:
-	if encounter_director != null:
+	if session.encounter_director != null:
 		return
-	encounter_director = EncounterDirectorScript.new()
+	session.encounter_director = EncounterDirectorScript.new()
 	var room_port := MainEncounterRoomPortScript.new()
-	var room_bound: Dictionary = room_port.bind(self, player_combat_rules, combat_system)
+	var room_bound: Dictionary = room_port.bind(self, session.player_combat_rules, session.combat_system)
 	if not bool(room_bound.get("ok", false)):
 		push_error("encounter_room_port_bind_failed:%s" % String(room_bound.get("error", "unknown")))
 		return
-	var director_bound: Dictionary = encounter_director.bind_room(room_port)
+	var director_bound: Dictionary = session.encounter_director.bind_room(room_port)
 	if not bool(director_bound.get("ok", false)):
 		push_error("encounter_director_bind_failed:%s" % String(director_bound.get("error", "unknown")))
 		return
-	enemy_tactics = encounter_director.enemy_tactics
+	session.enemy_tactics = session.encounter_director.enemy_tactics
 
 
 func _ensure_encounter_spawn_port() -> void:
-	if encounter_spawn_port != null:
+	if session.encounter_spawn_port != null:
 		return
 	var port := MainEncounterSpawnPortScript.new()
 	var bound: Dictionary = port.bind(self)
 	if not bool(bound.get("ok", false)):
 		push_error("encounter_spawn_port_bind_failed:%s" % String(bound.get("error", "unknown")))
 		return
-	encounter_spawn_port = port
+	session.encounter_spawn_port = port
 
 
 func _ensure_combat_system() -> void:
@@ -589,11 +250,11 @@ func _ensure_combat_system() -> void:
 
 
 func configure_player_domain(start_tick: int) -> bool:
-	var reset: Dictionary = player_combat_state.reset_for_room(locked_build, actor_registry, session.kit.actor_id(), start_tick)
+	var reset: Dictionary = session.player_combat_state.reset_for_room(session.locked_build, session.actor_registry, session.kit.actor_id(), start_tick)
 	if not bool(reset.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(reset.get("error", "player_reset_failed"))
 		return false
-	var rules_ready: Dictionary = player_combat_rules.configure(player_combat_state, simulation_world, combat_event_stream)
+	var rules_ready: Dictionary = session.player_combat_rules.configure(session.player_combat_state, session.simulation_world, session.combat_event_stream)
 	if not bool(rules_ready.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(rules_ready.get("error", "player_rules_unavailable"))
 		return false
@@ -612,7 +273,7 @@ func configure_player_domain(start_tick: int) -> bool:
 
 
 func _configure_combat_ports() -> bool:
-	if replay_geometry_profile != CombatSystemScript.QUERY_PROFILE_MULTIPART_V2 and not automation_smoke:
+	if session.replay_geometry_profile != CombatSystemScript.QUERY_PROFILE_MULTIPART_V2 and not session.automation_smoke:
 		last_save_message = "Deployment blocked: historical replay profile requires auto smoke"
 		return false
 	var room_port := MainCombatRoomPortScript.new()
@@ -620,7 +281,7 @@ func _configure_combat_ports() -> bool:
 	if not bool(port_bound.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(port_bound.get("error", "combat_room_port_unavailable"))
 		return false
-	var configured: Dictionary = combat_system.bind_room(room_port, replay_geometry_profile)
+	var configured: Dictionary = session.combat_system.bind_room(room_port, session.replay_geometry_profile)
 
 	if not bool(configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "combat_ports_unavailable"))
@@ -631,7 +292,7 @@ func _configure_combat_ports() -> bool:
 func _ready() -> void:
 	for argument: String in OS.get_cmdline_user_args():
 		if argument.begins_with("--replay-geometry-profile="):
-			replay_geometry_profile = argument.trim_prefix("--replay-geometry-profile=")
+			session.replay_geometry_profile = argument.trim_prefix("--replay-geometry-profile=")
 	_initialize_runtime()
 	startup_errors.append_array(presentation.load_assets(presentation_enabled, CombatInterfaceTheme.create()))
 	_reset_idle_state()
@@ -639,14 +300,14 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not in_arena:
+	if not session.in_arena:
 		return
 	var snapshot := gameplay_snapshot()
 	presentation.advance_time(snapshot, delta)
-	if simulation_world == null or not simulation_world.has_method("ticks_for_frame"):
+	if session.simulation_world == null or not session.simulation_world.has_method("ticks_for_frame"):
 		push_error("simulation_world_unavailable")
 		return
-	var ticks_to_run: int = simulation_world.ticks_for_frame(delta)
+	var ticks_to_run: int = session.simulation_world.ticks_for_frame(delta)
 	for _index in ticks_to_run:
 		if not _can_simulate_tick():
 			break
@@ -658,7 +319,7 @@ func _process(delta: float) -> void:
 
 
 func _can_simulate_tick() -> bool:
-	return in_arena and (not battle_over or room_loot_window_open)
+	return session.in_arena and (not session.is_battle_over() or room_loot_window_open)
 func _unhandled_input(event: InputEvent) -> void:
 	input_adapter.capture_actions(event, gameplay_snapshot())
 
@@ -672,15 +333,15 @@ func release_manual_controls() -> void:
 	# Before a room is started there is no configured player. Once a room owns
 	# the player, Rules clears queued mobility on the current tick without
 	# producing a command.
-	if String(player_combat_state.snapshot(sim_tick)["actor_id"]).is_empty():
+	if String(session.player_combat_state.snapshot(session.sim_tick)["actor_id"]).is_empty():
 		return
-	var released: Dictionary = player_combat_rules.release_input(sim_tick)
+	var released: Dictionary = session.player_combat_rules.release_input(session.sim_tick)
 	if not bool(released.get("ok", false)):
 		push_error("player_input_release_failed:%s" % String(released.get("error", "unknown")))
 
 
 func take_continuous_manual_input() -> RefCounted:
-	return input_adapter.take_continuous_input(selected_mode)
+	return input_adapter.take_continuous_input(session.selected_mode)
 
 
 func resume_continuous_manual_input(continued_input: RefCounted) -> void:
@@ -693,33 +354,33 @@ func set_effects_volume(value: float) -> void:
 
 func _initialize_runtime() -> void:
 	_ensure_encounter_director()
-	if scene_runtime != null and scene_runtime.has_method("is_ready"):
+	if session.scene_runtime != null and session.scene_runtime.has_method("is_ready"):
 		# A mounted Main adopts the SceneRuntime authorities before its first
 		# frame. The scene configures its simulation and actor access before
 		# this node enters the tree, so the LOADING lifecycle is not a fallback
 		# trigger: falling back here would fork the room into two worlds.
-		actor_registry = scene_runtime.get("actor_registry")
-		simulation_world = scene_runtime.get("simulation")
-		if actor_registry == null or simulation_world == null:
+		session.actor_registry = session.scene_runtime.get("actor_registry")
+		session.simulation_world = session.scene_runtime.get("simulation")
+		if session.actor_registry == null or session.simulation_world == null:
 			startup_errors.append("native_room_authorities_unavailable")
 	else:
-		actor_registry = ActorRegistryScript.new()
+		session.actor_registry = ActorRegistryScript.new()
 		_ensure_simulation_world()
-		var configured = simulation_world.configure("combat/unmounted", 0, SIM_TICKS_PER_SECOND)
+		var configured = session.simulation_world.configure("combat/unmounted", 0, SIM_TICKS_PER_SECOND)
 		if not configured.ok:
 			startup_errors.append("simulation_world_initialization_failed:%s" % String(configured.error))
-	content_registry = ContentRegistryScript.new()
-	startup_errors = content_registry.load_all()
-	if content_registry.early_enemy_profile_registry != null and startup_errors.is_empty():
-		var enemy_profiles_ready: Dictionary = encounter_director.set_enemy_profile_registry(content_registry.early_enemy_profile_registry)
+	session.content_registry = ContentRegistryScript.new()
+	startup_errors = session.content_registry.load_all()
+	if session.content_registry.early_enemy_profile_registry != null and startup_errors.is_empty():
+		var enemy_profiles_ready: Dictionary = session.encounter_director.set_enemy_profile_registry(session.content_registry.early_enemy_profile_registry)
 		if not bool(enemy_profiles_ready.get("ok", false)):
 			startup_errors.append("enemy_profiles: %s" % String(enemy_profiles_ready.get("error", "unavailable")))
-	proxy_runtime = ProxyRuntimeScript.new()
-	proxy_intent_system = ProxyIntentSystemScript.new()
+	session.proxy_runtime = ProxyRuntimeScript.new()
+	session.proxy_intent_system = ProxyIntentSystemScript.new()
 	input_adapter.reset_intent()
-	manual_aim_resolver = ManualAimResolverScript.new()
-	combat_event_stream = CombatEventStreamScript.new()
-	proxy_prediction = "unknown"
+	session.manual_aim_resolver = ManualAimResolverScript.new()
+	session.combat_event_stream = CombatEventStreamScript.new()
+	session.proxy_prediction = "unknown"
 
 
 ## Puts a freshly constructed room into its idle state: no contract running,
@@ -733,13 +394,13 @@ func _reset_idle_state() -> void:
 
 
 func start_room() -> void:
-	if scene_runtime != null and (not scene_runtime.is_ready() or arena_rect().size.x <= 0.0 or arena_rect().size.y <= 0.0 or collision_geometry(14.0).is_empty()):
+	if session.scene_runtime != null and (not session.scene_runtime.is_ready() or arena_rect().size.x <= 0.0 or arena_rect().size.y <= 0.0 or collision_geometry(14.0).is_empty()):
 		last_save_message = "Deployment blocked: native_room_geometry_unavailable"
 		return
 	if not startup_errors.is_empty():
 		last_save_message = "Deployment blocked by content validation"
 		return
-	if not BuildResolution.is_valid_resolved_build(framework_resolved_build):
+	if not BuildResolution.is_valid_resolved_build(session.framework_resolved_build):
 		last_save_message = "Deployment blocked: invalid_resolved_build"
 		return
 	var room_error := session.framework_room_error()
@@ -759,39 +420,39 @@ func start_room() -> void:
 	presentation.reset_battle()
 	session.reset_for_contract()
 	_terminal.projection_applied = false
-	if scene_runtime != null and scene_runtime.is_ready() and simulation_world != null and sim_tick > 0:
-		var restarted: Dictionary = scene_runtime.restart_room_instance(SIM_TICKS_PER_SECOND)
+	if session.scene_runtime != null and session.scene_runtime.is_ready() and session.simulation_world != null and session.sim_tick > 0:
+		var restarted: Dictionary = session.scene_runtime.restart_room_instance(SIM_TICKS_PER_SECOND)
 		if not bool(restarted.get("ok", false)):
 			last_save_message = "Deployment blocked: %s" % String(restarted.get("error", "room_restart_failed"))
-			in_arena = false
+			session.in_arena = false
 			return
-		actor_registry = scene_runtime.get("actor_registry")
-		simulation_world = scene_runtime.get("simulation")
-	if simulation_world != null:
-		simulation_world.reset_clock()
-	battle_report = "Deployed: %s / %s. Proxy mode and loadout are locked for this contract." % [session.preset_display_name(selected_preset), selected_mode]
-	var reset: Dictionary = combat_system.reset_room(BigValue.from_power10(12.0))
+		session.actor_registry = session.scene_runtime.get("actor_registry")
+		session.simulation_world = session.scene_runtime.get("simulation")
+	if session.simulation_world != null:
+		session.simulation_world.reset_clock()
+	session.battle_report = "Deployed: %s / %s. Proxy mode and loadout are locked for this contract." % [session.preset_display_name(session.selected_preset), session.selected_mode]
+	var reset: Dictionary = session.combat_system.reset_room(BigValue.from_power10(12.0))
 	if not bool(reset.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(reset.get("error", "combat_room_reset_failed"))
-		in_arena = false
+		session.in_arena = false
 		return
 	if not _spawn_wave():
 		return
 	if not actor_setup._configure_actor_registry():
 		if not last_save_message.begins_with("Deployment blocked:"):
 			last_save_message = "Deployment blocked: actor_registry_configuration_failed"
-		in_arena = false
+		session.in_arena = false
 		return
-	var loot_room: Dictionary = framework_room.duplicate(true)
+	var loot_room: Dictionary = session.framework_room.duplicate(true)
 	if loot_room.is_empty() and test_session:
 		loot_room = session.load_test_room_fixture()
 	var loot_configured: Dictionary = session.configure_room_loot(loot_room)
 	if not bool(loot_configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
-		in_arena = false
+		session.in_arena = false
 		return
 	if not actor_setup._start_mounted_encounter():
-		in_arena = false
+		session.in_arena = false
 		return
 	refresh_presentation()
 
@@ -802,37 +463,37 @@ func _spawn_wave() -> bool:
 	input_adapter.reset_intent()
 	session.begin_wave_reset()
 	sync_encounter_context()
-	var spawn_room: Dictionary = framework_room.duplicate(true)
+	var spawn_room: Dictionary = session.framework_room.duplicate(true)
 	if spawn_room.is_empty() and test_session:
 		spawn_room = session.load_test_room_fixture()
-	var origin: Variant = room_socket("combat/encounter-origin") if scene_runtime != null else arena_rect().get_center()
+	var origin: Variant = room_socket("combat/encounter-origin") if session.scene_runtime != null else arena_rect().get_center()
 	if not origin is Vector2 or not (origin as Vector2).is_finite():
 		last_save_message = "Deployment blocked: missing_combat_encounter_origin"
-		in_arena = false
+		session.in_arena = false
 		return false
-	var mounted_encounter: bool = scene_runtime != null and scene_runtime.is_ready() and scene_runtime.get("encounter_domain") != null
-	var spawned: Dictionary = encounter_director.prepare_room(spawn_room, origin) if mounted_encounter else encounter_director.spawn_wave(spawn_room, origin)
+	var mounted_encounter: bool = session.scene_runtime != null and session.scene_runtime.is_ready() and session.scene_runtime.get("encounter_domain") != null
+	var spawned: Dictionary = session.encounter_director.prepare_room(spawn_room, origin) if mounted_encounter else session.encounter_director.spawn_wave(spawn_room, origin)
 	if not bool(spawned.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(spawned.get("error", "room_spawn_failed"))
-		in_arena = false
+		session.in_arena = false
 		return false
 	var hazard_configured: Dictionary = room_hazards._configure_hazard_domain(spawn_room.get("hazard_ids", []), origin)
 	if not bool(hazard_configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(hazard_configured.get("error", "hazard_domain_failed"))
-		in_arena = false
+		session.in_arena = false
 		return false
-	room_id = String(spawned.get("room_id", ""))
-	layout_id = String(spawned.get("layout_id", ""))
-	objective_id = String(spawned.get("objective_id", "clear"))
-	room_drop_tags = (framework_room.get("drop_tags", []) as Array).duplicate(true)
+	session.room_id = String(spawned.get("room_id", ""))
+	session.layout_id = String(spawned.get("layout_id", ""))
+	session.objective_id = String(spawned.get("objective_id", "clear"))
+	session.room_drop_tags = (session.framework_room.get("drop_tags", []) as Array).duplicate(true)
 	sync_encounter_context()
-	var configured: Dictionary = room_rules.reset_for_room(
-		{"objective_id": objective_id, "drop_tags": room_drop_tags}, true,
-		selected_mode, FATE_SEED, {}
+	var configured: Dictionary = session.room_rules.reset_for_room(
+		{"objective_id": session.objective_id, "drop_tags": session.room_drop_tags}, true,
+		session.selected_mode, FATE_SEED, {}
 	)
 	if not bool(configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(configured.get("error", "room_rules_unavailable"))
-		in_arena = false
+		session.in_arena = false
 		return false
 	return true
 
@@ -863,7 +524,7 @@ func settle_room_loot(outcome: String) -> Dictionary:
 func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 	if request == null or not request is EncounterSpawnRequestScript:
 		return EncounterSpawnResultScript.failed(request, "invalid_encounter_spawn_request")
-	if scene_runtime == null or not scene_runtime.is_ready() or actor_registry == null:
+	if session.scene_runtime == null or not session.scene_runtime.is_ready() or session.actor_registry == null:
 		return EncounterSpawnResultScript.failed(request, "runtime_not_ready")
 	var archetype := String(request.archetype_id).strip_edges()
 	if archetype.is_empty():
@@ -871,23 +532,23 @@ func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 	var position_value: Variant = room_socket(String(request.socket_id))
 	if not position_value is Vector2 or not (position_value as Vector2).is_finite():
 		return EncounterSpawnResultScript.failed(request, "encounter_spawn_socket_unavailable")
-	var spawn_position: Vector2 = encounter_director.encounter_spawn_position(position_value)
-	var created: Dictionary = encounter_director.create_encounter_enemy(archetype, spawn_position)
+	var spawn_position: Vector2 = session.encounter_director.encounter_spawn_position(position_value)
+	var created: Dictionary = session.encounter_director.create_encounter_enemy(archetype, spawn_position)
 	if not bool(created.get("ok", false)):
 		return EncounterSpawnResultScript.failed(request, String(created.get("error", "encounter_enemy_create_failed")))
 	var enemy: CombatEnemyState = created.get("enemy", null)
 	if enemy == null or not actor_setup.register_enemy_actor(enemy):
-		encounter_director.discard_encounter_enemy(enemy)
+		session.encounter_director.discard_encounter_enemy(enemy)
 		return EncounterSpawnResultScript.failed(request, "encounter_actor_registration_failed")
 	var actor_id := "enemy/%d" % enemy.entity_id
-	var handle = actor_registry.actor_handle(actor_id)
+	var handle = session.actor_registry.actor_handle(actor_id)
 	if handle == null or not handle.is_valid():
-		encounter_director.discard_encounter_enemy(enemy)
+		session.encounter_director.discard_encounter_enemy(enemy)
 		return EncounterSpawnResultScript.failed(request, "encounter_actor_handle_unavailable")
-	var entity_key: String = actor_registry.entity_key_for_handle(handle)
-	var stable_key := int(actor_registry.actor_snapshot(actor_id).get("stable_key", 0))
+	var entity_key: String = session.actor_registry.entity_key_for_handle(handle)
+	var stable_key := int(session.actor_registry.actor_snapshot(actor_id).get("stable_key", 0))
 	if entity_key.is_empty() or stable_key < 1:
-		encounter_director.discard_encounter_enemy(enemy)
+		session.encounter_director.discard_encounter_enemy(enemy)
 		return EncounterSpawnResultScript.failed(request, "encounter_actor_identity_unavailable")
 	session.sync_encounter_active_state()
 	return EncounterSpawnResultScript.spawned(
@@ -896,8 +557,8 @@ func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 		entity_key,
 		stable_key,
 		handle.generation,
-		String(scene_runtime.room_instance_id),
-		int(scene_runtime.world_revision)
+		String(session.scene_runtime.room_instance_id),
+		int(session.scene_runtime.world_revision)
 	)
 
 
@@ -914,7 +575,7 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 			return {"ok": false, "error": "enemy_mirror_not_found"}
 	if not actor_setup._ensure_actor_registry_ready() or not position.is_finite():
 		return {"ok": false, "error": "actor_registry_not_ready_or_invalid_position"}
-	var result: Dictionary = actor_registry.teleport_actor(normalized_id, position)
+	var result: Dictionary = session.actor_registry.teleport_actor(normalized_id, position)
 	if not bool(result.get("ok", false)):
 		return result
 	if normalized_id == player_actor_id:
@@ -939,7 +600,7 @@ func apply_presentation_events() -> void:
 
 
 func simulation_set_elapsed(value: float) -> void:
-	elapsed = value
+	session.elapsed = value
 
 
 ## Fixed-tick phase hooks. RoomPhaseDomain dispatches to these owner methods so
@@ -1082,17 +743,17 @@ func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 
 
 func _ensure_command_source() -> void:
-	if command_source != null:
+	if session.command_source != null:
 		return
-	command_source = CombatCommandSourceScript.new()
-	command_source_port = MainCombatCommandSourcePortScript.new()
-	var port_result: Dictionary = command_source_port.bind(self, input_adapter)
+	session.command_source = CombatCommandSourceScript.new()
+	session.command_source_port = MainCombatCommandSourcePortScript.new()
+	var port_result: Dictionary = session.command_source_port.bind(self, input_adapter)
 	if not bool(port_result.get("ok", false)):
 		push_error("command_source_port_bind_failed:%s" % String(port_result.get("error", "unknown")))
-		command_source = null
-		command_source_port = null
+		session.command_source = null
+		session.command_source_port = null
 		return
-	input_adapter.configure(command_source, command_source_port, presentation.feedback, presentation.screen_to_gameplay, presentation.is_pointer_over_interface)
+	input_adapter.configure(session.command_source, session.command_source_port, presentation.feedback, presentation.screen_to_gameplay, presentation.is_pointer_over_interface)
 
 
 func _on_skill_requested(ability: String) -> void:
@@ -1106,45 +767,45 @@ func _on_return_requested() -> void:
 ## This boundary is actually consumed by the controller and input adapter.
 ## Snapshot capture detaches all mutable records before crossing into the view.
 func gameplay_snapshot() -> Dictionary:
-	var values := player_combat_state.snapshot(sim_tick)
+	var values := session.player_combat_state.snapshot(session.sim_tick)
 	values.merge({
-		"sim_tick": sim_tick,
-		"in_arena": in_arena,
-		"battle_over": battle_over,
-		"battle_victory": battle_victory,
-		"battle_report": battle_report,
-		"enemies": enemies,
-		"boss": boss,
+		"sim_tick": session.sim_tick,
+		"in_arena": session.in_arena,
+		"battle_over": session.is_battle_over(),
+		"battle_victory": session.is_battle_victory(),
+		"battle_report": session.battle_report,
+		"enemies": session.encounter_director.enemies,
+		"boss": session.encounter_director.boss,
 		"boss_damage": boss_damage,
 		"boss_maximum": boss_maximum,
 		"shots": shots,
 		"defeated": defeated,
-		"elapsed": elapsed,
-		"room_id": room_id,
-		"layout_id": layout_id,
-		"objective_id": objective_id,
-		"framework_room": framework_room,
-		"room_loot": room_loot_snapshot,
-		"room_entry_start_tick": room_entry_start_tick,
-		"locked_build": locked_build,
-		"locked_targeting_distance": locked_targeting_distance,
+		"elapsed": session.elapsed,
+		"room_id": session.room_id,
+		"layout_id": session.layout_id,
+		"objective_id": session.objective_id,
+		"framework_room": session.framework_room,
+		"room_loot": session.room_loot.snapshot(),
+		"room_entry_start_tick": session.room_entry_start_tick,
+		"locked_build": session.locked_build,
+		"locked_targeting_distance": session.locked_targeting_distance,
 		"hazard_states": hazard_states,
-		"elite_entity_id": elite_entity_id,
-		"elite_rule_ids": elite_rule_ids,
-		"elite_barrier_active": elite_barrier_active,
-		"reinforcements_summoned": reinforcements_summoned,
-		"timed_bonus_available": timed_bonus_available,
+		"elite_entity_id": session.encounter_director.elite_entity_id,
+		"elite_rule_ids": session.encounter_director.elite_rule_ids,
+		"elite_barrier_active": session.encounter_director.elite_barrier_active,
+		"reinforcements_summoned": session.encounter_director.reinforcements_summoned,
+		"timed_bonus_available": session.encounter_director.timed_bonus_available,
 		"last_attack_outcome": last_attack_outcome,
-		"last_loot_pickup_command_receipt": last_loot_pickup_command_receipt.duplicate(true),
-		"proxy_prediction": proxy_prediction,
-		"selected_mode": selected_mode,
+		"last_loot_pickup_command_receipt": session.last_loot_pickup_command_receipt.duplicate(true),
+		"proxy_prediction": session.proxy_prediction,
+		"selected_mode": session.selected_mode,
 		"arena_rect": arena_rect(), "walkable_geometry": walkable_geometry(14.0),
 		"presentation_geometry": room_geometry._presentation_geometry(),
 		"projectiles": projectiles,
-		"equipped_parameters": content_registry.preset_equipped_parameters if content_registry != null else {},
-		"model": current_model() if content_registry != null else {},
+		"equipped_parameters": session.content_registry.preset_equipped_parameters if session.content_registry != null else {},
+		"model": current_model() if session.content_registry != null else {},
 		"proxy_failure": player_commands._proxy_failure_snapshot(),
-		"events": combat_event_stream.events_after(presentation.feedback.presentation_event_cursor) if combat_event_stream != null else [],
+		"events": session.combat_event_stream.events_after(presentation.feedback.presentation_event_cursor) if session.combat_event_stream != null else [],
 	}, true)
 	return PresentationSnapshot.capture(values)
 

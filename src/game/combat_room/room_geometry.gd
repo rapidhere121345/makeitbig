@@ -2,9 +2,9 @@ class_name RoomGeometry
 extends RefCounted
 
 ## Arena geometry queries extracted from MainArena: arena rect, walkable and
-## collision geometry, sockets, clamping and spawn projection. MainArena keeps
-## thin forwarders for the queries that tests and Callable bindings address
-## by name; room state is read from the RoomSession.
+## collision geometry, sockets, clamping and spawn projection. MainArena
+## publishes these queries (arena_rect(), walkable_geometry(), ...); room state
+## is read from the RoomSession.
 
 const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
 

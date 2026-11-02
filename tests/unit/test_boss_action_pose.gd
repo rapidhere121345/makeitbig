@@ -404,8 +404,8 @@ func _open_bridge_harness() -> bool:
 	actor_presenter = ArenaActorPresenterScript.new()
 	bridge_fixture.drive(bridge_harness)
 	bridge_fixture.advance_to(bridge_harness, BRIDGE_TICK)
-	var director = bridge_harness.encounter_director
-	var enemy = bridge_harness.boss
+	var director = bridge_harness.session.encounter_director
+	var enemy = bridge_harness.session.encounter_director.boss
 	# Isolate the recovery bridge's real enemy state machine. Every callback
 	# runs inside Simulation after the world tick and player motor commit.
 	bridge_fixture.drive(bridge_harness, {"enemy_step": func() -> void:
@@ -421,7 +421,7 @@ func _open_bridge_harness() -> bool:
 ## the suite, not leave it looking green.
 func _bridge_case(action: String, phase: int, facing: Vector2) -> bool:
 	var label := "%s p%d %s" % [action, phase, facing]
-	var enemy = bridge_harness.boss
+	var enemy = bridge_harness.session.encounter_director.boss
 	_expect(bool(bridge_harness.teleport_actor("enemy/%d" % enemy.entity_id, bridge_harness.arena_rect().get_center()).get("ok", false)), "bridge boss deployment failed")
 	var awakened := phase >= 2
 	## Each fist has its own base, exactly the pair main.enemy_ai._update_boss_hands() and
@@ -435,7 +435,7 @@ func _bridge_case(action: String, phase: int, facing: Vector2) -> bool:
 	bridge_harness.teleport_actor("ranger", enemy.position + facing * 200.0)
 	# Begin the real Encounter action at the currently committed world tick;
 	# subsequent cases keep advancing the same world instead of rewinding it.
-	bridge_harness.encounter_director.begin_action(enemy, action, Encounter.BOSS_WINDUP_TICKS)
+	bridge_harness.session.encounter_director.begin_action(enemy, action, Encounter.BOSS_WINDUP_TICKS)
 	enemy.facing = facing
 	var impact: int = enemy.impact_tick
 	var recovery_start: int = impact + Encounter.BOSS_ACTIVE_TICKS

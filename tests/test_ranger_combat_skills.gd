@@ -481,8 +481,6 @@ func _test_proxy_retreat_runtime(arena: Node, failures: Array[String]) -> void:
 	_place(arena, "ranger", SKILL_ORIGIN)
 	arena.session.selected_mode = "Auto"
 	arena.session.in_arena = true
-	# Left on the MainArena forwarder: its setter is a deliberate no-op pass.
-	arena.battle_over = false
 	_start_proxy(arena, arena.session.framework_resolved_proxy_build)
 	arena.session.combat_event_stream.reset()
 	var target = arena.session.encounter_director.enemies[0]

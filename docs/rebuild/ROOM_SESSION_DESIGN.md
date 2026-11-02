@@ -1,6 +1,6 @@
 # Room Session Design (redesign Step 2-4)
 
-Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 7 and 9 are implemented; item 8 is in progress (8a done).
+Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 9 are implemented.
 
 ## Problem
 
@@ -170,7 +170,7 @@ becomes `kit.actor_spec().id`.
    release) and the diagnostic cast, the build freeze and room combat stats, the
    proxy contract start, the contract-start and idle resets, room loot, the
    content hash and the automation timeout. `MainArena` keeps same-named
-   forwarders, the phase hooks RoomPhaseDomain dispatches to, `start_room` and
+   forwarders (deleted in item 8), the phase hooks RoomPhaseDomain dispatches to, `start_room` and
    `_spawn_wave` as orchestrators (they interleave presentation resets and
    helpers that still take `MainArena`: `actor_setup`, `room_hazards`,
    `kernel_reconciler`), `_initialize_runtime`, the port wiring and the
@@ -205,8 +205,16 @@ becomes `kit.actor_spec().id`.
    `arena_rect()`, `walkable_geometry()`, `collision_geometry()`,
    `clamp_to_arena()`, `room_socket()`, the `player_commands` helper) and every
    test uses it; the preferred-skill and framework-error checks read the session
-   directly. The migrated privates are deleted; `_walkable_geometry` stays as an
-   alias because the snapshot builder still binds it by name.
+   directly. The migrated privates are deleted.
+   8b and 8c done: tests, tools, the room helpers and the snapshot builder read
+   room state through `session` (`battle_over`, `battle_victory`,
+   `player_position` and the room loot views through its methods, the
+   encounter fields through `session.encounter_director`), and the 69
+   compatibility forwarders are deleted. `MainArena` keeps only read-only views
+   it derives itself (combat totals and `projectiles` from `CombatSystem`, the
+   attack-intent edge, `hazard_states`, `room_loot_window_open`,
+   `room_reward_snapshot`, the manual input adapter). The presentation
+   controller finds the mounted `SceneRuntime` on the host or its session.
 9. Split `EncounterDirector` into per-archetype behaviors (melee, charger,
    ranged, boss) behind one interface (Step 4 of the redesign). Done: the
    stateless behaviors live in `src/game/encounter/` behind `EnemyBehavior`

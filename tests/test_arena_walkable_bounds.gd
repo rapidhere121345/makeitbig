@@ -28,7 +28,7 @@ class DrivenMain:
 		return commands
 	func test_update_enemies_tick() -> void:
 		if drive_enemy_outward:
-			enemy_ai._commit_normal_enemy_intent(enemies[0], {"move_direction": Vector2.RIGHT, "speed_scale": 1.0, "reason": "bounds_test"})
+			enemy_ai._commit_normal_enemy_intent(session.encounter_director.enemies[0], {"move_direction": Vector2.RIGHT, "speed_scale": 1.0, "reason": "bounds_test"})
 
 
 var failures: Array[String] = []
