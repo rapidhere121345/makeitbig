@@ -2,9 +2,7 @@ class_name BuildResolver
 extends RefCounted
 
 const EarlyRegistry = preload("res://src/content/early_item_registry.gd")
-const ArrowModel = preload("res://src/systems/piercing_arrow_model.gd")
 const TalentBuildScript = preload("res://src/systems/talent_build.gd")
-const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
 const CanonicalJsonScript := preload("res://src/core/canonical_json.gd")
 
 const REQUIRED_PARAMETERS: Array[String] = ["p", "T", "v", "d", "turn", "damage"]
@@ -19,14 +17,16 @@ const PARAMETER_ALIASES := {
 var registry
 var registry_load_errors: Array[String] = []
 var talent_build
+var progression: ClassProgression
 
 
-func _init(content_registry = null) -> void:
+func _init(content_registry = null, class_progression: ClassProgression = null) -> void:
 	registry = content_registry
 	if registry == null:
 		registry = EarlyRegistry.new()
 		registry_load_errors = registry.load_all()
 	talent_build = TalentBuildScript.new()
+	progression = class_progression if class_progression != null else RangerProgression.new()
 
 
 func resolve_fixture(fixture_id: String) -> Dictionary:
@@ -58,7 +58,7 @@ func resolve(
 	for registry_error in registry_load_errors:
 		errors.append("build: %s" % registry_error)
 	var skill_id := _feature_id(skill, "skill", errors)
-	if skill_id != "" and skill_id != "piercing_arrow":
+	if skill_id != "" and skill_id not in progression.supported_skill_ids():
 		errors.append("build: unsupported prototype skill '%s'" % skill_id)
 	var parameters := _normalize_base_parameters(base_parameters, errors)
 	if not equipped_items is Dictionary:
@@ -139,27 +139,15 @@ func resolve(
 	if not errors.is_empty():
 		return _error_result(errors)
 	_apply_talent_parameters(parameters, sources, talent_compiled)
-
-	var raw_p := float(parameters.p)
-	var overflow_p := maxf(0.0, raw_p - 1.0)
-	parameters.p = clampf(raw_p, 0.0, 1.0)
-	if raw_p != float(parameters.p):
-		_append_source(sources, "p", "rule", "p_cap", "clamp", 1.0, raw_p, float(parameters.p))
-	if overflow_p > 0.0:
-		var damage_before := float(parameters.damage)
-		var overflow_efficiency := RangerSkillRulesScript.P_OVERFLOW_DAMAGE_BASE_EFFICIENCY + float(talent_compiled.talent_capabilities.get("p_overflow_damage_efficiency_bonus", 0.0))
-		var overflow_bonus := overflow_p * overflow_efficiency
-		parameters.damage = damage_before * (1.0 + overflow_bonus)
-		_append_source(sources, "damage", "rule", "p_overflow_damage", "multiply_bonus", overflow_bonus, damage_before, float(parameters.damage))
+	# Callable.bind() appends bound arguments after the call's own, so the
+	# recorder is a lambda that puts `sources` first.
+	var record_source := func(parameter: String, kind: String, source_id: String, operation: String, value: float, before: float, after: float) -> void:
+		_append_source(sources, parameter, kind, source_id, operation, value, before, after)
+	progression.apply_parameter_rules(parameters, talent_compiled.talent_capabilities, record_source)
 	parameters.critical_chance = clampf(float(parameters.critical_chance), 0.0, 1.0)
 
-	var interfaces := _resolve_interfaces(skill_id, semantic_runes, semantic_laws)
-	var has_split: bool = "breedable_event" in (interfaces.connected as Array)
-	var has_pack_mark: bool = "branch_target_history" in (interfaces.connected as Array)
-	var model: Dictionary = ArrowModel.evaluate(
-		float(parameters.p), float(parameters.T), float(parameters.d),
-		float(parameters.v), float(parameters.turn), has_split, has_pack_mark
-	)
+	var interfaces := progression.resolve_interfaces(skill_id, semantic_runes, semantic_laws, registry.runes, registry.laws)
+	var model: Dictionary = progression.growth_model(parameters, interfaces.connected)
 	var fingerprint_payload := {
 		"base_parameters": normalized_base_parameters,
 		"equipped_instance_ids": equipped_instance_ids,
@@ -373,35 +361,6 @@ func _validate_features(rune_ids: Array[String], law_ids: Array[String], skill_i
 	for law_id in law_ids:
 		if not registry.laws.has(law_id):
 			errors.append("build: unknown law id '%s'" % law_id)
-
-
-func _resolve_interfaces(skill_id: String, rune_ids: Array[String], law_ids: Array[String]) -> Dictionary:
-	var connected: Array[String] = []
-	var missing: Array[String] = []
-	if skill_id == "piercing_arrow":
-		connected.append("piercing_continuation")
-	for rune_id in rune_ids:
-		if registry.runes.has(rune_id):
-			connected.append(String((registry.runes[rune_id] as Dictionary).provides_interface))
-	if "breeding_split" not in rune_ids:
-		missing.append("breedable_event")
-	for law_id in law_ids:
-		if not registry.laws.has(law_id):
-			continue
-		var law: Dictionary = registry.laws[law_id]
-		var requirements_met := true
-		for requirement in (law.requires_interfaces as Array):
-			if String(requirement) not in connected:
-				requirements_met = false
-				if String(requirement) not in missing:
-					missing.append(String(requirement))
-		if requirements_met:
-			connected.append(String(law.provides_interface))
-	if "pack_hunt_mark" not in law_ids or "branch_target_history" not in connected:
-		missing.append("branch_target_history")
-	connected = _sorted_unique(connected)
-	missing = _sorted_unique(missing)
-	return {"connected": connected, "missing": missing}
 
 
 func _sorted_unique(values: Array[String]) -> Array[String]:

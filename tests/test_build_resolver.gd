@@ -126,6 +126,10 @@ func _test_invalid_input_and_p_cap(failures: Array[String]) -> void:
 	var capped: Dictionary = resolver.resolve(_base(0.95), {"gloves": over_item}, "piercing_arrow")
 	_expect(bool(capped.ok) and _near(capped.final_parameters.p, 1.0), "p must cap at 1.0", failures)
 	_expect(capped.final_parameters.damage > 100.0, "p overflow must become ordinary continuation-hit damage", failures)
+	var p_sources: Array = capped.parameter_sources.p
+	var damage_sources: Array = capped.parameter_sources.damage
+	_expect(not p_sources.is_empty() and String(p_sources[-1].source_id) == "p_cap" and String(p_sources[-1].operation) == "clamp", "the p cap must be recorded as the last p source", failures)
+	_expect(not damage_sources.is_empty() and String(damage_sources[-1].source_id) == "p_overflow_damage" and _near(damage_sources[-1].after, capped.final_parameters.damage), "p overflow damage must be recorded as the last damage source", failures)
 	_expect(_near(capped.R, 2.0) and capped.growth_classification == "exponential", "capped p must keep a stable R=2 upper boundary", failures)
 	var malformed: Dictionary = resolver.resolve({"p": "0.25"}, [], "piercing_arrow")
 	_expect(not bool(malformed.ok) and not malformed.errors.is_empty(), "malformed resolver input must fail without crashing", failures)
