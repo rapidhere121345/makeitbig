@@ -22,16 +22,16 @@ func action_ids() -> Array[String]:
 
 func update_tick(director: EncounterDirector, enemy: CombatEnemyState, intent: Dictionary) -> void:
 	var previous_state := enemy.action_state
-	var action := director._action_profile(enemy, "contact")
-	director._advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
+	var action := director.action_profile(enemy, "contact")
+	director.advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
 	if enemy.action_state == "active" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		director._resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), CombatQueryScript.shape_contains(enemy.target_shape, director.player_position))
+		director.resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), CombatQueryScript.shape_contains(enemy.target_shape, director.player_position))
 	if previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		director._resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
+		director.resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
 	if enemy.action_state == "none":
-		director._commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else director._intent_for_enemy(enemy))
+		director.commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else director.intent_for_enemy(enemy))
 	else:
 		enemy.motion_state = "idle"
 
@@ -43,10 +43,10 @@ func start_requested_action(director: EncounterDirector, enemy: CombatEnemyState
 
 
 func start_melee_action(director: EncounterDirector, enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	var action := director._action_profile(enemy, "contact")
-	director._begin_action(enemy, "contact", int(action.get("windup_ticks", 0)))
+	var action := director.action_profile(enemy, "contact")
+	director.begin_action(enemy, "contact", int(action.get("windup_ticks", 0)))
 	enemy.facing = direction.normalized() if direction != Vector2.ZERO else enemy.position.direction_to(director.player_position)
 	if enemy.facing == Vector2.ZERO:
 		enemy.facing = Vector2.RIGHT
 	enemy.target_shape = {"type": "circle", "origin": enemy.position, "radius": EnemyTacticsScript.MELEE_ATTACK_RANGE}
-	director._emit_enemy_action_accepted(enemy)
+	director.emit_enemy_action_accepted(enemy)

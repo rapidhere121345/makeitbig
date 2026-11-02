@@ -44,9 +44,9 @@ func update_tick(director: EncounterDirector, enemy: CombatEnemyState, intent: D
 			enemy.left_hand_position = enemy.position + Vector2(-43.0, -8.0)
 			enemy.right_hand_position = enemy.position + Vector2(38.0, 12.0)
 		return
-	director._advance_action_state(enemy, director.BOSS_ACTIVE_TICKS, director.BOSS_RECOVERY_TICKS)
+	director.advance_action_state(enemy, director.BOSS_ACTIVE_TICKS, director.BOSS_RECOVERY_TICKS)
 	if enemy.action_state == "none":
-		var chosen := intent if not intent.is_empty() else director._intent_for_enemy(enemy)
+		var chosen := intent if not intent.is_empty() else director.intent_for_enemy(enemy)
 		var requested := String(chosen.get("request_action", ""))
 		if requested in ["slam", "sweep", "lane"]:
 			start_boss_action(director, enemy, requested, chosen.get("action_direction", Vector2.ZERO))
@@ -54,12 +54,12 @@ func update_tick(director: EncounterDirector, enemy: CombatEnemyState, intent: D
 				enemy.next_action_index += 1
 	if enemy.action_state == "active" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		director._resolve_hostile_attack(enemy, 1.8 if enemy.phase_id == "awakened" else 1.2, CombatQueryScript.shape_contains(enemy.target_shape, director.player_position))
+		director.resolve_hostile_attack(enemy, 1.8 if enemy.phase_id == "awakened" else 1.2, CombatQueryScript.shape_contains(enemy.target_shape, director.player_position))
 	update_boss_hands(enemy)
 
 
 func start_boss_action(director: EncounterDirector, enemy: CombatEnemyState, action: String, planned_direction: Vector2 = Vector2.ZERO) -> void:
-	director._begin_action(enemy, action, director.BOSS_WINDUP_TICKS)
+	director.begin_action(enemy, action, director.BOSS_WINDUP_TICKS)
 	var direction := planned_direction.normalized() if planned_direction != Vector2.ZERO else enemy.position.direction_to(director.player_position)
 	if direction == Vector2.ZERO:
 		direction = Vector2.LEFT
@@ -70,9 +70,9 @@ func start_boss_action(director: EncounterDirector, enemy: CombatEnemyState, act
 		"lane":
 			enemy.target_shape = {"type": "lane", "origin": enemy.position, "direction": direction, "length": 230.0, "width": 52.0}
 		_:
-			var target := director._clamp_to_arena(director.player_position, 28.0)
+			var target := director.clamp_to_arena(director.player_position, 28.0)
 			enemy.target_shape = {"type": "rect", "rect": Rect2(target - Vector2(38.0, 30.0), Vector2(76.0, 60.0))}
-	director._emit_enemy_action_accepted(enemy)
+	director.emit_enemy_action_accepted(enemy)
 
 
 func update_boss_hands(enemy: CombatEnemyState) -> void:

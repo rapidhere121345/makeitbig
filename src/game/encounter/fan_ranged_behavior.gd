@@ -20,16 +20,16 @@ func action_ids() -> Array[String]:
 
 func update_tick(director: EncounterDirector, enemy: CombatEnemyState, intent: Dictionary) -> void:
 	var previous_state := enemy.action_state
-	var action := director._action_profile(enemy, "fan")
-	director._advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
+	var action := director.action_profile(enemy, "fan")
+	director.advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
 	if enemy.action_state == "active" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		director._resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), EnemyTacticsScript.fan_attack_contains(enemy.target_shape, director.player_position))
+		director.resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), EnemyTacticsScript.fan_attack_contains(enemy.target_shape, director.player_position))
 	if previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		director._resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
+		director.resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
 	if enemy.action_state == "none":
-		director._commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else director._intent_for_enemy(enemy))
+		director.commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else director.intent_for_enemy(enemy))
 	else:
 		enemy.motion_state = "idle"
 
@@ -41,8 +41,8 @@ func start_requested_action(director: EncounterDirector, enemy: CombatEnemyState
 
 
 func start_fan_action(director: EncounterDirector, enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	var action := director._action_profile(enemy, "fan")
-	director._begin_action(enemy, "fan", int(action.get("windup_ticks", 0)))
+	var action := director.action_profile(enemy, "fan")
+	director.begin_action(enemy, "fan", int(action.get("windup_ticks", 0)))
 	var fan_direction := direction.normalized() if direction != Vector2.ZERO else enemy.position.direction_to(director.player_position)
 	if fan_direction == Vector2.ZERO:
 		fan_direction = enemy.facing
@@ -54,4 +54,4 @@ func start_fan_action(director: EncounterDirector, enemy: CombatEnemyState, dire
 	enemy.fan_half_angle = enemy.target_shape["half_angle"]
 	enemy.fan_radius = enemy.target_shape["radius"]
 	enemy.facing = enemy.fan_direction
-	director._emit_enemy_action_accepted(enemy)
+	director.emit_enemy_action_accepted(enemy)

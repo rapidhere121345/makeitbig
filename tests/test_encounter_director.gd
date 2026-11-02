@@ -171,7 +171,7 @@ func _initialize() -> void:
 	_expect(stream.snapshot().events.size() == 1, "director: hazard resolution bypassed the shared event stream", failures)
 
 	_expect(room_port.hazard_calls[0].source_id == "hazard/exposed_ground_zone" and room_port.hazard_calls[0].source_position == director.hazard_states[0].origin and room_port.hazard_calls[0].tick == 30, "director: hazard did not supply its authored source position/tick", failures)
-	director._resolve_hostile_attack(enemy, 11.0, true)
+	director.resolve_hostile_attack(enemy, 11.0, true)
 	_expect(player_port.calls.is_empty() and room_port.hostile_calls.size() == 1 and room_port.hostile_calls[0].source_position == enemy.position and room_port.hostile_calls[0].source_id == "enemy/1/melee_pursuer", "director: hostile attack bypassed the typed player contact queue", failures)
 	var other := CombatEnemyStateScript.new(Vector2(500.0, 200.0), 10.0, false, 2, "fan_ranged")
 	for boundary_tick in [0, 19, 20, 59, 60]:
@@ -187,7 +187,7 @@ func _initialize() -> void:
 	_expect(int(snapshot.get("snapshot_version", -1)) == 2 and (snapshot.get("enemies", []) as Array).size() == 1,
 		"director: tactics snapshot was not assembled from room-local state", failures)
 	var charger := CombatEnemyStateScript.new(Vector2(120.0, 200.0), 420.0, false, 3, "charging_raider")
-	var accepted := director._start_charger_action(charger, Vector2.RIGHT, 80.0)
+	var accepted: bool = director.behavior_for_kind("charging_raider").start_charger_action(director, charger, Vector2.RIGHT, 80.0)
 	_expect(accepted and charger.action_state == "windup", "director: charger action did not stay in encounter authority", failures)
 	_expect(room_port.collision_classes.has("ghost:3"), "director: charger ghost admission bypassed the typed collision-class operation", failures)
 	_expect(room_port.registered.is_empty(), "director: passive encounter update performed an unsolicited actor registration", failures)
@@ -196,10 +196,10 @@ func _initialize() -> void:
 	# leaves the actor idle instead of silently applying local motion.
 	room_port.fail_moves = true
 	var idle_before := enemy.position
-	director._commit_normal_enemy_intent(enemy, {"reason": "fixture_move", "move_direction": Vector2.RIGHT, "speed_scale": 1.0})
+	director.commit_normal_enemy_intent(enemy, {"reason": "fixture_move", "move_direction": Vector2.RIGHT, "speed_scale": 1.0})
 	_expect(enemy.position == idle_before and enemy.motion_state == "idle", "director: rejected movement receipt still moved the actor", failures)
 	room_port.fail_moves = false
-	director._commit_normal_enemy_intent(enemy, {"reason": "fixture_move", "move_direction": Vector2.RIGHT, "speed_scale": 1.0})
+	director.commit_normal_enemy_intent(enemy, {"reason": "fixture_move", "move_direction": Vector2.RIGHT, "speed_scale": 1.0})
 	_expect(enemy.position.x > idle_before.x and enemy.motion_state == "moving", "director: typed movement operation did not commit displacement", failures)
 
 	# Registration must fail closed: a rejected reinforcement never joins the
@@ -230,9 +230,9 @@ func _initialize() -> void:
 	# Invalid collision geometry fails closed: AI planning yields no intents
 	# rather than silently substituting other geometry.
 	room_port.bad_geometry = true
-	_expect(director._intent_for_enemy(enemy).is_empty(), "director: invalid collision geometry still produced enemy intents", failures)
+	_expect(director.intent_for_enemy(enemy).is_empty(), "director: invalid collision geometry still produced enemy intents", failures)
 	room_port.bad_geometry = false
-	_expect(not director._intent_for_enemy(enemy).is_empty(), "director: valid collision geometry produced no enemy intents", failures)
+	_expect(not director.intent_for_enemy(enemy).is_empty(), "director: valid collision geometry produced no enemy intents", failures)
 
 	# A garbage damage receipt must fail closed without crashing the tick.
 	var garbage_director = EncounterDirectorScript.new()
@@ -245,7 +245,7 @@ func _initialize() -> void:
 	garbage_director.set_context(30, Vector2(200.0, 200.0), Rect2(0.0, 0.0, 600.0, 400.0), garbage_stream, "rectangle_arena", "clear")
 	var garbage_enemy := CombatEnemyStateScript.new(Vector2(100.0, 200.0), 720.0, false, 1, "melee_pursuer")
 	garbage_director.enemies.append(garbage_enemy)
-	garbage_director._resolve_hostile_attack(garbage_enemy, 5.0, true)
+	garbage_director.resolve_hostile_attack(garbage_enemy, 5.0, true)
 	_expect(garbage_stream.latest("attack_resolved").get("outcome", "") == "avoided", "director: rejected player contact was reported as damage", failures)
 
 	# The director has one typed composition boundary. A missing/invalid room

@@ -22,30 +22,30 @@ func action_ids() -> Array[String]:
 
 func update_tick(director: EncounterDirector, enemy: CombatEnemyState, intent: Dictionary) -> void:
 	var previous_state := enemy.action_state
-	var action := director._action_profile(enemy, "charge")
-	director._advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
+	var action := director.action_profile(enemy, "charge")
+	director.advance_action_state(enemy, int(action.get("active_ticks", 0)), int(action.get("recovery_ticks", 0)))
 	if enemy.action_state == "active":
 		enemy.motion_state = "moving"
 		var before := enemy.position
 		var step := enemy.charge_length / float(maxi(1, int(action.get("active_ticks", 1))))
-		var movement_result := director._move_enemy_actor(enemy, enemy.charge_direction * step)
+		var movement_result := director.move_enemy_actor(enemy, enemy.charge_direction * step)
 		if not bool(movement_result.get("ok", false)):
 			enemy.motion_state = "idle"
 		if not enemy.impact_resolved:
 			var contact := CombatQueryScript.distance_to_segment(director.player_position, before, enemy.position) <= EnemyTacticsScript.CHARGER_CONTACT_RADIUS
 			if contact:
 				enemy.impact_resolved = true
-				director._resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), true)
+				director.resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), true)
 	elif previous_state == "active" and enemy.action_state == "recovery" and not enemy.impact_resolved:
 		enemy.impact_resolved = true
-		director._resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
+		director.resolve_hostile_attack(enemy, float(action.get("damage", 0.0)), false)
 	elif enemy.action_state == "none":
-		director._commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else director._intent_for_enemy(enemy))
+		director.commit_normal_enemy_intent(enemy, intent if not intent.is_empty() else director.intent_for_enemy(enemy))
 	else:
 		enemy.motion_state = "idle"
 
 
-## The charge arm of EncounterDirector._commit_normal_enemy_intent: the same
+## The charge arm of EncounterDirector.commit_normal_enemy_intent: the same
 ## direction/distance validation and the same invalid_charge_execution
 ## fallback, evaluated in the same order.
 func start_requested_action(director: EncounterDirector, enemy: CombatEnemyState, _action: String, intent: Dictionary) -> void:
@@ -62,16 +62,16 @@ func start_requested_action(director: EncounterDirector, enemy: CombatEnemyState
 func start_charger_action(director: EncounterDirector, enemy: CombatEnemyState, direction: Vector2, action_distance: float) -> bool:
 	if not is_finite(direction.x) or not is_finite(direction.y) or direction.is_zero_approx() or not is_finite(action_distance) or action_distance <= 0.0:
 		return false
-	var action := director._action_profile(enemy, "charge")
+	var action := director.action_profile(enemy, "charge")
 	if action.is_empty():
 		return false
-	director._begin_action(enemy, "charge", int(action.get("windup_ticks", 0)))
-	director._set_enemy_collision_class(enemy, &"ghost")
+	director.begin_action(enemy, "charge", int(action.get("windup_ticks", 0)))
+	director.set_enemy_collision_class(enemy, &"ghost")
 	enemy.charge_origin = enemy.position
 	enemy.charge_direction = direction.normalized()
 	enemy.facing = enemy.charge_direction
 	enemy.charge_length = action_distance
 	enemy.charge_width = EnemyTacticsScript.CHARGER_CONTACT_RADIUS * 2.0
 	enemy.target_shape = {"type": "lane", "origin": enemy.charge_origin, "direction": enemy.charge_direction, "length": enemy.charge_length, "width": enemy.charge_width}
-	director._emit_enemy_action_accepted(enemy)
+	director.emit_enemy_action_accepted(enemy)
 	return true

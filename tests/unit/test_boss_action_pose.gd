@@ -409,8 +409,8 @@ func _open_bridge_harness() -> bool:
 	# Isolate the recovery bridge's real enemy state machine. Every callback
 	# runs inside Simulation after the world tick and player motor commit.
 	bridge_fixture.drive(bridge_harness, {"enemy_step": func() -> void:
-		director._advance_action_state(enemy, Encounter.BOSS_ACTIVE_TICKS, Encounter.BOSS_RECOVERY_TICKS)
-		director._update_boss_hands(enemy)
+		director.advance_action_state(enemy, Encounter.BOSS_ACTIVE_TICKS, Encounter.BOSS_RECOVERY_TICKS)
+		director.behavior_for_kind("threshold_colossus").update_boss_hands(enemy)
 	})
 	return true
 
@@ -435,7 +435,7 @@ func _bridge_case(action: String, phase: int, facing: Vector2) -> bool:
 	bridge_harness.teleport_actor("ranger", enemy.position + facing * 200.0)
 	# Begin the real Encounter action at the currently committed world tick;
 	# subsequent cases keep advancing the same world instead of rewinding it.
-	bridge_harness.encounter_director._begin_action(enemy, action, Encounter.BOSS_WINDUP_TICKS)
+	bridge_harness.encounter_director.begin_action(enemy, action, Encounter.BOSS_WINDUP_TICKS)
 	enemy.facing = facing
 	var impact: int = enemy.impact_tick
 	var recovery_start: int = impact + Encounter.BOSS_ACTIVE_TICKS

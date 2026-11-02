@@ -412,7 +412,7 @@ func _quantize_position(value: Vector2) -> Vector2:
 	return Vector2(INF, INF)
 
 
-func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
+func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 	if room_port == null:
 		_room_dependency_failure("clamp_to_arena", "encounter_room_port_unavailable")
 		return value
@@ -423,7 +423,7 @@ func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 	return value
 
 
-func _move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
+func move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Dictionary:
 	if room_port == null:
 		return {"ok": false, "error": "move_room_unavailable"}
 	var result: Variant = room_port.move_enemy(enemy, displacement)
@@ -469,7 +469,7 @@ func _layout_spawn_offsets(id: String, count: int) -> Array[Vector2]:
 	return result
 
 
-func _set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> void:
+func set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> void:
 	if room_port == null:
 		_room_dependency_failure("set_enemy_collision_class", "encounter_room_port_unavailable")
 		return
@@ -546,7 +546,7 @@ func update_tick() -> void:
 		ordered = active_ordered
 	ordered.sort_custom(func(left: CombatEnemyState, right: CombatEnemyState) -> bool: return left.entity_id < right.entity_id)
 	for enemy: CombatEnemyState in ordered:
-		_finish_enemy_recovery_if_due(enemy)
+		finish_enemy_recovery_if_due(enemy)
 	var planned: Dictionary = enemy_tactics.plan(enemy_tactics_snapshot())
 	var intents := {}
 	if bool(planned.get("ok", false)):
@@ -777,7 +777,7 @@ func _update_enemy_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> voi
 	behavior_for_kind(enemy.kind_id).update_tick(self, enemy, intent)
 
 
-func _advance_action_state(enemy: CombatEnemyState, active_ticks: int, recovery_ticks: int) -> bool:
+func advance_action_state(enemy: CombatEnemyState, active_ticks: int, recovery_ticks: int) -> bool:
 	if enemy.action_state == "windup" and tick >= enemy.impact_tick:
 		enemy.action_state = "active"
 		enemy.state_started_tick = tick
@@ -788,12 +788,12 @@ func _advance_action_state(enemy: CombatEnemyState, active_ticks: int, recovery_
 		enemy.state_started_tick = tick
 		enemy.state_ends_tick = tick + recovery_ticks
 		return true
-	if _finish_enemy_recovery_if_due(enemy):
+	if finish_enemy_recovery_if_due(enemy):
 		return true
 	return false
 
 
-func _finish_enemy_recovery_if_due(enemy: CombatEnemyState) -> bool:
+func finish_enemy_recovery_if_due(enemy: CombatEnemyState) -> bool:
 	if enemy.action_state != "recovery" or tick < enemy.state_ends_tick:
 		return false
 	var was_charge := enemy.action_id == "charge"
@@ -813,13 +813,13 @@ func _finish_enemy_recovery_if_due(enemy: CombatEnemyState) -> bool:
 	enemy.target_shape = {}
 	enemy.stuck_ticks = 0
 	enemy.stuck_anchor = enemy.position
-	enemy.next_action_ready_tick = tick + _enemy_breath_ticks(enemy.kind_id)
+	enemy.next_action_ready_tick = tick + enemy_breath_ticks(enemy.kind_id)
 	if was_charge:
-		_set_enemy_collision_class(enemy, &"soft")
+		set_enemy_collision_class(enemy, &"soft")
 	return true
 
 
-func _begin_action(enemy: CombatEnemyState, action_id: String, windup_ticks: int) -> void:
+func begin_action(enemy: CombatEnemyState, action_id: String, windup_ticks: int) -> void:
 	enemy.action_id = action_id
 	enemy.action_instance_id = next_enemy_action_instance_id
 	next_enemy_action_instance_id += 1
@@ -833,7 +833,7 @@ func _begin_action(enemy: CombatEnemyState, action_id: String, windup_ticks: int
 	enemy.impact_resolved = false
 
 
-func _emit_enemy_action_accepted(enemy: CombatEnemyState) -> void:
+func emit_enemy_action_accepted(enemy: CombatEnemyState) -> void:
 	combat_event_stream.emit(tick, "action_accepted", {
 		"action_instance_id": enemy.action_instance_id,
 		"actor_id": "enemy/%d" % enemy.entity_id,
@@ -845,12 +845,12 @@ func _emit_enemy_action_accepted(enemy: CombatEnemyState) -> void:
 	})
 
 
-func _enemy_breath_ticks(kind_id: String) -> int:
+func enemy_breath_ticks(kind_id: String) -> int:
 	var profile: RefCounted = _resolve_enemy_profile(kind_id)
 	return int(profile.get("breath_ticks")) if profile != null else 0
 
 
-func _action_profile(enemy: CombatEnemyState, action_id: String) -> Dictionary:
+func action_profile(enemy: CombatEnemyState, action_id: String) -> Dictionary:
 	var profile: RefCounted = _profile_for_enemy(enemy)
 	if profile == null or not profile.has_method("action"):
 		return {}
@@ -858,7 +858,7 @@ func _action_profile(enemy: CombatEnemyState, action_id: String) -> Dictionary:
 	return value if value is Dictionary else {}
 
 
-func _intent_for_enemy(enemy: CombatEnemyState) -> Dictionary:
+func intent_for_enemy(enemy: CombatEnemyState) -> Dictionary:
 	var planned: Dictionary = enemy_tactics.plan(enemy_tactics_snapshot())
 	if not bool(planned.get("ok", false)):
 		return {}
@@ -868,37 +868,7 @@ func _intent_for_enemy(enemy: CombatEnemyState) -> Dictionary:
 	return {}
 
 
-## Compatibility routes to the per-archetype behaviors (migration item 9).
-## The bodies live in src/game/encounter/*_behavior.gd; these members keep the
-## existing mirror entry points (src/game/combat_room/enemy_ai_ticks.gd and
-## the isolated fixtures) on identical behavior.
-
-
-func _update_melee_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	behavior_for_kind("melee_pursuer").update_tick(self, enemy, intent)
-
-
-func _start_melee_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	(behavior_for_kind("melee_pursuer") as MeleePursuerBehavior).start_melee_action(self, enemy, direction)
-
-
-func _start_charger_action(enemy: CombatEnemyState, direction: Vector2, action_distance: float) -> bool:
-	return (behavior_for_kind("charging_raider") as ChargingRaiderBehavior).start_charger_action(self, enemy, direction, action_distance)
-
-
-func _update_charger_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	behavior_for_kind("charging_raider").update_tick(self, enemy, intent)
-
-
-func _start_fan_action(enemy: CombatEnemyState, direction: Vector2 = Vector2.ZERO) -> void:
-	(behavior_for_kind("fan_ranged") as FanRangedBehavior).start_fan_action(self, enemy, direction)
-
-
-func _update_fan_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	behavior_for_kind("fan_ranged").update_tick(self, enemy, intent)
-
-
-func _commit_normal_enemy_intent(enemy: CombatEnemyState, intent: Dictionary) -> void:
+func commit_normal_enemy_intent(enemy: CombatEnemyState, intent: Dictionary) -> void:
 	if intent.is_empty():
 		enemy.motion_state = "idle"
 		enemy.tactic_reason = "no_intent"
@@ -921,7 +891,7 @@ func _commit_normal_enemy_intent(enemy: CombatEnemyState, intent: Dictionary) ->
 		return
 	var base_speed: float = float(profile.get("move_speed"))
 	var before := enemy.position
-	var movement_result := _move_enemy_actor(enemy, direction * base_speed * speed_scale * SIM_STEP_SECONDS)
+	var movement_result := move_enemy_actor(enemy, direction * base_speed * speed_scale * SIM_STEP_SECONDS)
 	if not bool(movement_result.get("ok", false)):
 		enemy.motion_state = "idle"
 		## A committed move that lands nothing still ages the stuck clock: the
@@ -953,7 +923,7 @@ func _update_stuck_clock(enemy: CombatEnemyState) -> void:
 	enemy.stuck_ticks += 1
 
 
-func _resolve_hostile_attack(enemy: CombatEnemyState, amount: float, shape_hit: bool) -> void:
+func resolve_hostile_attack(enemy: CombatEnemyState, amount: float, shape_hit: bool) -> void:
 	var actor_id := "enemy/%d" % enemy.entity_id
 	var source_id := "boss/%s" % enemy.action_id if enemy.is_boss else "enemy/%d/%s" % [enemy.entity_id, enemy.kind_id]
 	combat_event_stream.emit(tick, "action_impact", {
@@ -974,15 +944,3 @@ func _resolve_hostile_attack(enemy: CombatEnemyState, amount: float, shape_hit: 
 		"outcome": outcome,
 		"contact_point": player_position,
 	})
-
-
-func _update_boss_tick(enemy: CombatEnemyState, intent: Dictionary = {}) -> void:
-	behavior_for_kind("threshold_colossus").update_tick(self, enemy, intent)
-
-
-func _start_boss_action(enemy: CombatEnemyState, action: String, planned_direction: Vector2 = Vector2.ZERO) -> void:
-	(behavior_for_kind("threshold_colossus") as ThresholdColossusBehavior).start_boss_action(self, enemy, action, planned_direction)
-
-
-func _update_boss_hands(enemy: CombatEnemyState) -> void:
-	(behavior_for_kind("threshold_colossus") as ThresholdColossusBehavior).update_boss_hands(enemy)

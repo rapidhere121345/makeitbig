@@ -112,7 +112,7 @@ func _run() -> void:
 	maximum_before.magnitude = 7.0
 	_expect(arena.boss_maximum.magnitude == 1.0e12 and arena.encounter_director.boss_maximum.magnitude == 1.0e12, "Main/Encounter exposed mutable outcome ledger values")
 	arena.sync_encounter_context()
-	arena.encounter_director._resolve_hostile_attack(target, 3.0, true)
+	arena.encounter_director.resolve_hostile_attack(target, 3.0, true)
 	# Hostile contacts are queued during the room phase and committed by the
 	# next fixed tick through RoomCombatPort; direct invocation must not bypass
 	# that boundary.
