@@ -18,6 +18,9 @@ const PlayerCombatRulesScript := preload("res://src/systems/player_combat_rules.
 const SmokeInputDriverScript := preload("res://src/game/diagnostics/smoke_input_driver.gd")
 const CombatSystemScript := preload("res://src/systems/combat_system.gd")
 const CombatSimulationScript := preload("res://src/systems/combat_simulation.gd")
+const ContentRegistryScript := preload("res://src/content/content_registry.gd")
+const JsonIO := preload("res://src/core/json_io.gd")
+const SimulationWorldScript := preload("res://src/runtime/world/simulation_world.gd")
 const BuildResolution := preload("res://src/game/application/build_resolution.gd")
 const CombatStatsSnapshotScript := preload("res://src/systems/combat_stats_snapshot.gd")
 const EncounterDirectorScript := preload("res://src/game/encounter_director.gd")
@@ -366,6 +369,44 @@ func fail_automation_smoke(reason: String) -> void:
 	automation_smoke_failure = reason
 	room_rules.fail(reason)
 	battle_report = String(room_rules.snapshot().report)
+
+
+## Creates the standalone simulation world on first use. A mounted room
+## replaces it with the SceneRuntime's world.
+func ensure_simulation_world() -> void:
+	if simulation_world != null:
+		return
+	simulation_world = SimulationWorldScript.new()
+	var configured = simulation_world.configure("combat/unmounted", 0, SIM_TICKS_PER_SECOND)
+	if not configured.ok:
+		push_error("simulation_world_initialization_failed:%s" % String(configured.error))
+
+
+## Digest of the authored combat content, consumed by CombatStateSnapshotBuilder
+## so a replay hash is tied to the content it ran against.
+func content_hash() -> String:
+	var source := FileAccess.get_file_as_string(ContentRegistryScript.PROXY_PATH)
+	source += "\n" + FileAccess.get_file_as_string(ContentRegistryScript.PRESET_PATH)
+	source += "\n" + FileAccess.get_file_as_string("res://content/early_campaign.json")
+	source += "\n" + FileAccess.get_file_as_string("res://content/early_items.json")
+	var context := HashingContext.new()
+	if context.start(HashingContext.HASH_SHA256) != OK:
+		return "unavailable"
+	if context.update(source.to_utf8_buffer()) != OK:
+		return "unavailable"
+	return context.finish().hex_encode()
+
+
+func preset_display_name(preset_id: String) -> String:
+	if not content_registry.presets.has(preset_id):
+		return preset_id
+	return "%s / %s" % [preset_id.capitalize(), String(content_registry.presets[preset_id].name)]
+
+
+## Fixture room used when a test session has no authored framework room.
+func load_test_room_fixture() -> Dictionary:
+	const FIXTURE_PATH := "res://content/rooms/combat/test_fixture.json"
+	return JsonIO.read_object(FIXTURE_PATH)
 
 
 ## Creates the room catalog on first use.

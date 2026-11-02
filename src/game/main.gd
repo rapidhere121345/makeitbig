@@ -18,7 +18,6 @@ const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.g
 const CombatEventStreamScript = preload("res://src/systems/combat_event_stream.gd")
 const PiercingArrowModelScript = preload("res://src/systems/piercing_arrow_model.gd")
 const ActorRegistryScript = preload("res://src/runtime/world/actor_registry.gd")
-const SimulationWorldScript = preload("res://src/runtime/world/simulation_world.gd")
 const SimOutcomeScript = preload("res://src/runtime/simulation/sim_outcome.gd")
 const CombatStateSnapshotBuilderScript = preload("res://src/game/combat_state_snapshot_builder.gd")
 const CombatEnemyStateScript = preload("res://src/runtime/world/combat_enemy_state.gd")
@@ -34,7 +33,6 @@ const CombatCommandSourceScript = preload("res://src/systems/combat_command_sour
 const MainCombatCommandSourcePortScript: Script = preload("res://src/game/main_combat_command_source_port.gd")
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const BuildResolution := preload("res://src/game/application/build_resolution.gd")
-const JsonIO := preload("res://src/core/json_io.gd")
 const MainCombatRoomPortScript := preload("res://src/game/ports/main_combat_room_port.gd")
 const RoomPhaseDomainScript := preload("res://src/game/ports/room_phase_domain.gd")
 const MainEncounterRoomPortScript := preload("res://src/game/ports/main_encounter_room_port.gd")
@@ -545,12 +543,7 @@ func _init() -> void:
 
 
 func _ensure_simulation_world() -> void:
-	if simulation_world != null:
-		return
-	simulation_world = SimulationWorldScript.new()
-	var configured = simulation_world.configure("combat/unmounted", 0, SIM_TICKS_PER_SECOND)
-	if not configured.ok:
-		push_error("simulation_world_initialization_failed:%s" % String(configured.error))
+	session.ensure_simulation_world()
 
 
 func ensure_room_catalog() -> void:
@@ -722,25 +715,9 @@ func _initialize_runtime() -> void:
 	proxy_prediction = "unknown"
 
 
-## Digest of the authored combat content, consumed by CombatStateSnapshotBuilder
-## so a replay hash is tied to the content it ran against.
+## Digest of the authored combat content (Callable-bound by the snapshot builder).
 func _content_hash() -> String:
-	var source := FileAccess.get_file_as_string(ContentRegistryScript.PROXY_PATH)
-	source += "\n" + FileAccess.get_file_as_string(ContentRegistryScript.PRESET_PATH)
-	source += "\n" + FileAccess.get_file_as_string("res://content/early_campaign.json")
-	source += "\n" + FileAccess.get_file_as_string("res://content/early_items.json")
-	var context := HashingContext.new()
-	if context.start(HashingContext.HASH_SHA256) != OK:
-		return "unavailable"
-	if context.update(source.to_utf8_buffer()) != OK:
-		return "unavailable"
-	return context.finish().hex_encode()
-
-
-func _preset_display_name(preset_id: String) -> String:
-	if not content_registry.presets.has(preset_id):
-		return preset_id
-	return "%s / %s" % [preset_id.capitalize(), String(content_registry.presets[preset_id].name)]
+	return session.content_hash()
 
 
 ## Puts a freshly constructed room into its idle state: no contract running,
@@ -790,7 +767,7 @@ func start_room() -> void:
 		simulation_world = scene_runtime.get("simulation")
 	if simulation_world != null:
 		simulation_world.reset_clock()
-	battle_report = "Deployed: %s / %s. Proxy mode and loadout are locked for this contract." % [_preset_display_name(selected_preset), selected_mode]
+	battle_report = "Deployed: %s / %s. Proxy mode and loadout are locked for this contract." % [session.preset_display_name(selected_preset), selected_mode]
 	var reset: Dictionary = combat_system.reset_room(BigValue.from_power10(12.0))
 	if not bool(reset.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(reset.get("error", "combat_room_reset_failed"))
@@ -805,7 +782,7 @@ func start_room() -> void:
 		return
 	var loot_room: Dictionary = framework_room.duplicate(true)
 	if loot_room.is_empty() and test_session:
-		loot_room = _load_test_room_fixture()
+		loot_room = session.load_test_room_fixture()
 	var loot_configured: Dictionary = session.configure_room_loot(loot_room)
 	if not bool(loot_configured.get("ok", false)):
 		last_save_message = "Deployment blocked: %s" % String(loot_configured.get("error", "room_loot_unavailable"))
@@ -825,7 +802,7 @@ func _spawn_wave() -> bool:
 	sync_encounter_context()
 	var spawn_room: Dictionary = framework_room.duplicate(true)
 	if spawn_room.is_empty() and test_session:
-		spawn_room = _load_test_room_fixture()
+		spawn_room = session.load_test_room_fixture()
 	var origin: Variant = _room_socket("combat/encounter-origin") if scene_runtime != null else _arena_rect().get_center()
 	if not origin is Vector2 or not (origin as Vector2).is_finite():
 		last_save_message = "Deployment blocked: missing_combat_encounter_origin"
@@ -872,11 +849,6 @@ func process_room_loot_pickups_tick() -> void:
 
 func settle_room_loot(outcome: String) -> Dictionary:
 	return session.settle_room_loot(outcome)
-
-
-func _load_test_room_fixture() -> Dictionary:
-	const FIXTURE_PATH := "res://content/rooms/combat/test_fixture.json"
-	return JsonIO.read_object(FIXTURE_PATH)
 
 
 ## Production encounter materialization for the mounted room. RoomEncounter
