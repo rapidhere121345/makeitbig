@@ -1,6 +1,6 @@
 # Room Session Design (redesign Step 2-4)
 
-Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 7 are implemented.
+Status: reviewed by the owner on 2026-11-02 (decisions below). Migration items 1 to 7 and 9 are implemented.
 
 ## Problem
 
@@ -208,7 +208,14 @@ becomes `kit.actor_spec().id`.
    directly. The migrated privates are deleted; `_walkable_geometry` stays as an
    alias because the snapshot builder still binds it by name.
 9. Split `EncounterDirector` into per-archetype behaviors (melee, charger,
-   ranged, boss) behind one interface (Step 4 of the redesign).
+   ranged, boss) behind one interface (Step 4 of the redesign). Done: the
+   stateless behaviors live in `src/game/encounter/` behind `EnemyBehavior`
+   (`melee_pursuer`, `charging_raider`, `fan_ranged`, `threshold_colossus`);
+   the director keeps the lifecycle, tick order and shared action helpers
+   (now public) and dispatches through kind/action registries, with the melee
+   behavior as the default for unknown kinds and unknown request actions
+   falling through to movement. Planning still in `EnemyTactics`, behind its
+   snapshot contract.
 
 The enemy records (`CombatEnemyState`) stay the session's own authoritative
 records for now; turning them into views over `SimEntityStore` is a later,
