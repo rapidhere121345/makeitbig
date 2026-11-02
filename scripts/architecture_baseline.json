@@ -1,0 +1,87 @@
+{
+  "layer_exceptions": {
+    "src/content/early_skill_registry.gd": [
+      "systems"
+    ],
+    "src/runtime/world/environment_object_definition.gd": [
+      "presentation"
+    ],
+    "src/runtime/world/room_presentation_port.gd": [
+      "presentation"
+    ],
+    "src/runtime/world/scene_runtime.gd": [
+      "presentation"
+    ],
+    "src/runtime/world/town_scene_root.gd": [
+      "presentation"
+    ],
+    "src/systems/combat_simulation.gd": [
+      "runtime"
+    ],
+    "src/systems/combat_system.gd": [
+      "runtime"
+    ],
+    "src/systems/enemy_tactics.gd": [
+      "runtime"
+    ],
+    "src/systems/player_combat_rules.gd": [
+      "runtime"
+    ],
+    "src/systems/player_motion_system.gd": [
+      "runtime"
+    ],
+    "src/systems/proxy_decision.gd": [
+      "runtime"
+    ],
+    "src/systems/proxy_navigation.gd": [
+      "runtime"
+    ]
+  },
+  "string_dispatch": {
+    "src/game/combat_room/actor_setup.gd": 7,
+    "src/game/combat_room/kernel_reconciler.gd": 2,
+    "src/game/combat_room/room_terminal.gd": 1,
+    "src/game/combat_room_runtime.gd": 13,
+    "src/game/combat_state_snapshot_builder.gd": 5,
+    "src/game/contract_run_controller.gd": 14,
+    "src/game/encounter_director.gd": 6,
+    "src/game/game_root.gd": 9,
+    "src/game/main.gd": 7,
+    "src/game/main_loot_placement_port.gd": 1,
+    "src/game/ports/main_encounter_room_port.gd": 2,
+    "src/game/root/auto_smoke_harness.gd": 2,
+    "src/game/root/contract_flow.gd": 2,
+    "src/game/root/display_settings.gd": 2,
+    "src/game/root/playtest_recorder.gd": 12,
+    "src/game/root/test_console_host.gd": 13,
+    "src/presentation/arena_actor_presenter.gd": 6,
+    "src/presentation/arena_presenter.gd": 10,
+    "src/presentation/base_hub_screen.gd": 3,
+    "src/presentation/combat_presentation_controller.gd": 10,
+    "src/presentation/facility/forge_page.gd": 4,
+    "src/presentation/facility/item_detail.gd": 1,
+    "src/presentation/facility/loadout_page.gd": 6,
+    "src/presentation/facility_screen.gd": 6,
+    "src/presentation/occlusion/occlusion_controller.gd": 3,
+    "src/presentation/town_presenter.gd": 2,
+    "src/runtime/combat/boss_arrow_flight.gd": 2,
+    "src/runtime/combat/boss_combat_domain.gd": 1,
+    "src/runtime/combat/combat_room_loot_rebuild.gd": 3,
+    "src/runtime/combat/damage_resolution.gd": 2,
+    "src/runtime/combat/death_settlement_request.gd": 1,
+    "src/runtime/combat/ranger_arrow_flight.gd": 2,
+    "src/runtime/simulation/sim_entity_store.gd": 3,
+    "src/runtime/world/player_combat_state.gd": 1,
+    "src/runtime/world/room_combat_port.gd": 13,
+    "src/runtime/world/room_encounter_port.gd": 8,
+    "src/runtime/world/room_manifest_validator.gd": 3,
+    "src/runtime/world/room_presentation_port.gd": 1,
+    "src/runtime/world/room_spatial_port.gd": 3,
+    "src/runtime/world/scene_runtime.gd": 16,
+    "src/runtime/world/town_controller.gd": 1,
+    "src/runtime/world/world_asset.gd": 1,
+    "src/runtime/world/world_presenter.gd": 1,
+    "src/systems/combat_simulation.gd": 3,
+    "src/systems/law_forge.gd": 1
+  }
+}

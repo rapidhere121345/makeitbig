@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Fast static checks: shell syntax, Python syntax, English-only policy,
+# architecture layering and string-dispatch ratchet,
 # generated-manifest freshness, and a bounded Godot parse check.
 # No test suite runs here; see scripts/test.sh for that.
 set -euo pipefail
@@ -30,6 +31,7 @@ print(f"PASS  {count} Python files parse")
 PY
 
 "$MIB_TEST_PYTHON" -B scripts/check_english.py
+"$MIB_TEST_PYTHON" -B scripts/check_architecture.py
 "$MIB_TEST_PYTHON" -B tools/world_manifest/author_ground_footprints.py --check
 "$MIB_TEST_PYTHON" -B tools/world_manifest/author_battlegrounds.py --check
 "$MIB_TEST_PYTHON" -B tools/world_manifest/author_town_expansion.py --check

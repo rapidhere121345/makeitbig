@@ -2,10 +2,31 @@
 
 Current architecture of the clean rebuild. Compatibility adapters are not
 carried: domain boundaries use typed records and fixed ports, and simulation
-code does not look up the SceneTree, a global gameplay singleton, or a
-string-keyed callback ABI. A general ECS is unnecessary; typed stores plus
-stable spatial indexes provide the required data locality without erasing
-ownership.
+code does not look up the SceneTree or a global gameplay singleton. A general
+ECS is unnecessary; typed stores plus stable spatial indexes provide the
+required data locality without erasing ownership.
+
+## Layers
+
+Each directory under `src/` is a layer and may only depend on the layers to its
+right:
+
+| Layer | May depend on |
+| --- | --- |
+| `core` | nothing |
+| `localization`, `persistence`, `content` | `core` |
+| `systems` (pure rules) | `core`, `content` |
+| `runtime` (room authority) | `core`, `content`, `systems` |
+| `presentation` | `core`, `content`, `localization`, `systems`, `runtime` |
+| `game` (composition, routes, application) | every other layer |
+
+A dependency is a `res://src/<layer>/` path or a reference to another layer's
+global `class_name`. `scripts/check_architecture.py` (run by `check.sh`)
+enforces the table. It also ratchets string dispatch (`has_method("x")`,
+`.call("x")`, `.call_deferred("x")`, `.callv("x")`), which typed ports should
+replace. Existing debt is listed in `scripts/architecture_baseline.json` and
+may only shrink: a new violation fails, an exception that is no longer needed
+fails, and `--update-baseline` records reductions but never growth.
 
 ## Runtime graph
 
