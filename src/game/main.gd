@@ -523,7 +523,11 @@ var room_hazards := RoomHazardsScript.new(self)
 var piercing_arrows := PiercingArrowsScript.new(self)
 var enemy_ai := EnemyAiTicksScript.new(self)
 var actor_setup := RoomActorSetupScript.new(self)
-var _player_commands := RoomPlayerCommandsScript.new(self)
+var player_commands := RoomPlayerCommandsScript.new(self)
+## Compatibility alias for `_player_commands` callers that are not migrated yet.
+var _player_commands: RoomPlayerCommandsScript:
+	get:
+		return player_commands
 var _terminal := RoomTerminalScript.new(self)
 var room_geometry := RoomGeometryScript.new(session)
 
@@ -650,7 +654,7 @@ func _process(delta: float) -> void:
 	for _index in ticks_to_run:
 		if not _can_simulate_tick():
 			break
-		_simulate_tick()
+		step_tick()
 		refresh_presentation()
 	# The display clock advances once per frame, regardless of tick batching.
 	snapshot = gameplay_snapshot()
@@ -738,7 +742,7 @@ func _reset_idle_state() -> void:
 
 
 func start_room() -> void:
-	if scene_runtime != null and (not scene_runtime.is_ready() or _arena_rect().size.x <= 0.0 or _arena_rect().size.y <= 0.0 or _collision_geometry(14.0).is_empty()):
+	if scene_runtime != null and (not scene_runtime.is_ready() or arena_rect().size.x <= 0.0 or arena_rect().size.y <= 0.0 or collision_geometry(14.0).is_empty()):
 		last_save_message = "Deployment blocked: native_room_geometry_unavailable"
 		return
 	if not startup_errors.is_empty():
@@ -810,7 +814,7 @@ func _spawn_wave() -> bool:
 	var spawn_room: Dictionary = framework_room.duplicate(true)
 	if spawn_room.is_empty() and test_session:
 		spawn_room = session.load_test_room_fixture()
-	var origin: Variant = _room_socket("combat/encounter-origin") if scene_runtime != null else _arena_rect().get_center()
+	var origin: Variant = room_socket("combat/encounter-origin") if scene_runtime != null else arena_rect().get_center()
 	if not origin is Vector2 or not (origin as Vector2).is_finite():
 		last_save_message = "Deployment blocked: missing_combat_encounter_origin"
 		in_arena = false
@@ -873,7 +877,7 @@ func reconcile_encounter_spawn(request: Variant, _context: Variant) -> Variant:
 	var archetype := String(request.archetype_id).strip_edges()
 	if archetype.is_empty():
 		return EncounterSpawnResultScript.failed(request, "invalid_encounter_archetype")
-	var position_value: Variant = _room_socket(String(request.socket_id))
+	var position_value: Variant = room_socket(String(request.socket_id))
 	if not position_value is Vector2 or not (position_value as Vector2).is_finite():
 		return EncounterSpawnResultScript.failed(request, "encounter_spawn_socket_unavailable")
 	var spawn_position: Vector2 = encounter_director.encounter_spawn_position(position_value)
@@ -928,11 +932,18 @@ func teleport_actor(actor_id: String, position: Vector2) -> Dictionary:
 	return result
 
 
-func _simulate_tick() -> void:
+## Runs one fixed simulation tick and applies the presentation events it logged.
+## The public driver entry for tests, tools and the per-frame loop.
+func step_tick() -> void:
 	var result: Dictionary = session.step()
 	if not bool(result.get("ok", false)):
 		push_error("combat_simulation_step_failed:%s" % String(result.get("error", "unknown")))
 	apply_presentation_events()
+
+
+## Compatibility alias for `_simulate_tick` callers that are not migrated yet.
+func _simulate_tick() -> void:
+	step_tick()
 
 
 ## Applies the presentation effects the authority logged since the last call.
@@ -949,7 +960,7 @@ func simulation_set_elapsed(value: float) -> void:
 ## the phase logic stays overridable by test subclasses; the work lives in the
 ## room collaborators.
 func simulation_collect_commands() -> Array[Dictionary]:
-	return _player_commands._simulation_collect_commands()
+	return player_commands._simulation_collect_commands()
 
 
 func update_enemies_tick() -> void:
@@ -1042,8 +1053,14 @@ func _framework_room_error() -> String:
 	return session.framework_room_error()
 
 
-func _semantic_state_hash(result: String) -> String:
+## Semantic replay hash of the room authority; `result` labels the check site.
+func state_hash(result: String) -> String:
 	return CombatStateSnapshotBuilderScript.hash_runtime(self, result)
+
+
+## Compatibility alias for `_semantic_state_hash` callers that are not migrated yet.
+func _semantic_state_hash(result: String) -> String:
+	return state_hash(result)
 
 
 func current_model() -> Dictionary:
@@ -1070,24 +1087,46 @@ func _is_skill_equipped(slot_index: int, expected_id: String) -> bool:
 	return session.is_skill_equipped(slot_index, expected_id)
 
 
-func _arena_rect() -> Rect2:
+## Room geometry accessors. The private names stay as compatibility aliases:
+## the snapshot builder binds `_walkable_geometry` by name.
+func arena_rect() -> Rect2:
 	return room_geometry.arena_rect()
 
 
-func _walkable_geometry(padding: float) -> Dictionary:
+func walkable_geometry(padding: float) -> Dictionary:
 	return room_geometry.walkable_geometry(padding)
 
 
-func _collision_geometry(radius: float) -> Dictionary:
+func collision_geometry(radius: float) -> Dictionary:
 	return room_geometry.collision_geometry(radius)
 
 
-func _room_socket(binding: String) -> Variant:
+func room_socket(binding: String) -> Variant:
 	return room_geometry.room_socket(binding)
 
 
-func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
+func clamp_to_arena(value: Vector2, padding: float) -> Vector2:
 	return room_geometry.clamp_to_arena(value, padding)
+
+
+func _arena_rect() -> Rect2:
+	return arena_rect()
+
+
+func _walkable_geometry(padding: float) -> Dictionary:
+	return walkable_geometry(padding)
+
+
+func _collision_geometry(radius: float) -> Dictionary:
+	return collision_geometry(radius)
+
+
+func _room_socket(binding: String) -> Variant:
+	return room_socket(binding)
+
+
+func _clamp_to_arena(value: Vector2, padding: float) -> Vector2:
+	return clamp_to_arena(value, padding)
 
 
 func _ensure_command_source() -> void:
@@ -1147,12 +1186,12 @@ func gameplay_snapshot() -> Dictionary:
 		"last_loot_pickup_command_receipt": last_loot_pickup_command_receipt.duplicate(true),
 		"proxy_prediction": proxy_prediction,
 		"selected_mode": selected_mode,
-		"arena_rect": _arena_rect(), "walkable_geometry": _walkable_geometry(14.0),
+		"arena_rect": arena_rect(), "walkable_geometry": walkable_geometry(14.0),
 		"presentation_geometry": room_geometry._presentation_geometry(),
 		"projectiles": projectiles,
 		"equipped_parameters": content_registry.preset_equipped_parameters if content_registry != null else {},
 		"model": current_model() if content_registry != null else {},
-		"proxy_failure": _player_commands._proxy_failure_snapshot(),
+		"proxy_failure": player_commands._proxy_failure_snapshot(),
 		"events": combat_event_stream.events_after(presentation.feedback.presentation_event_cursor) if combat_event_stream != null else [],
 	}, true)
 	return PresentationSnapshot.capture(values)
@@ -1172,7 +1211,7 @@ func actor_art_boxes(visual_ids: Array[String]) -> Dictionary:
 
 
 func refresh_presentation(delta: float = 0.0) -> void:
-	# Ticks stepped without _simulate_tick (tests, tools) leave events pending.
+	# Ticks stepped without step_tick (tests, tools) leave events pending.
 	apply_presentation_events()
 	var snapshot := gameplay_snapshot()
 	if delta > 0.0:
