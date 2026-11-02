@@ -114,8 +114,9 @@ each `tests/**/test_*.gd` that extends `SceneTree` (directly or through another
 aggregated by `tests/run_all.gd`, and a `test_*.gd` that is neither fails as an
 orphan. `SKIP_TESTS` in `scripts/test.sh` lists the display-only tests. Every test
 runs even after a failure; the summary names the failures and the exit status is
-non-zero. The gate has a total timeout (`MIB_TEST_TIMEOUT_SEC`, default 1800), a
-per-test timeout (`MIB_TEST_CASE_TIMEOUT_SEC`, default 600), a log
+non-zero. The gate has a total timeout (`MIB_TEST_TIMEOUT_SEC`, default 2400), a
+per-test timeout (`MIB_TEST_CASE_TIMEOUT_SEC`, default 600; the `SLOW_TESTS` in
+`scripts/test.sh` get `MIB_TEST_SLOW_CASE_TIMEOUT_SEC`, default 1200), a log
 (`MIB_TEST_LOG`, default `build/current/test.log`), and fails if any output line
 starts with `SCRIPT ERROR:`.
 

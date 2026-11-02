@@ -13,8 +13,9 @@
 # there fails the gate as an orphan.
 #
 # Overrides:
-#   MIB_TEST_TIMEOUT_SEC       total wall-clock limit for the gate (default 1800)
+#   MIB_TEST_TIMEOUT_SEC       total wall-clock limit for the gate (default 2400)
 #   MIB_TEST_CASE_TIMEOUT_SEC  limit for one Godot test or Python step (default 600)
+#   MIB_TEST_SLOW_CASE_TIMEOUT_SEC  limit for the SLOW_TESTS below (default 1200)
 #   MIB_TEST_LOG               tee'd log path (default build/current/test.log)
 set -uo pipefail
 
@@ -27,8 +28,9 @@ set +e
 mib_resolve_test_python || exit $?
 
 MIB_TEST_LOG="${MIB_TEST_LOG:-${MIB_PROJECT_ROOT}/build/current/test.log}"
-MIB_TEST_TIMEOUT_SEC="${MIB_TEST_TIMEOUT_SEC:-1800}"
+MIB_TEST_TIMEOUT_SEC="${MIB_TEST_TIMEOUT_SEC:-2400}"
 MIB_TEST_CASE_TIMEOUT_SEC="${MIB_TEST_CASE_TIMEOUT_SEC:-600}"
+MIB_TEST_SLOW_CASE_TIMEOUT_SEC="${MIB_TEST_SLOW_CASE_TIMEOUT_SEC:-1200}"
 
 # Outer layer: run the gate under a total timeout and capture the streamed
 # output. Exit codes stay authoritative, but a GDScript runtime error can leave
@@ -83,11 +85,27 @@ record() {  # record <status> <name>
   fi
 }
 
+# Acceptance suites whose full matrix legitimately runs close to the normal
+# per-case limit. test_repeatable_encounter_matrix plays 600 rooms (two
+# templates x seeds 0..99 x three rooms): about 8 minutes locally and 10 on
+# GitHub's Linux runners, where it timed out at 600s.
+SLOW_TESTS=(
+  tests/test_repeatable_encounter_matrix.gd
+)
+
+case_timeout() {  # case_timeout <name>: per-case limit in seconds
+  local slow
+  for slow in "${SLOW_TESTS[@]}"; do
+    [[ "$1" == "$slow" ]] && { echo "$MIB_TEST_SLOW_CASE_TIMEOUT_SEC"; return; }
+  done
+  echo "$MIB_TEST_CASE_TIMEOUT_SEC"
+}
+
 step() {  # step <name> <command...>: bounded run, never aborts the gate
   local name="$1"
   shift
   echo "[test] RUN   ${name}"
-  timeout --foreground --kill-after=10s "${MIB_TEST_CASE_TIMEOUT_SEC}s" "$@"
+  timeout --foreground --kill-after=10s "$(case_timeout "$name")s" "$@"
   record $? "$name"
 }
 

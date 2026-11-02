@@ -69,8 +69,8 @@ Through `./scripts/with_env.sh` (portable environment; UID 1000, never root):
 ```bash
 # one test (exit 0 and no "SCRIPT ERROR:" line means pass)
 timeout 600 ./scripts/with_env.sh godot --headless --path . --script res://tests/unit/test_collections.gd
-# full gate (about 10-15 minutes); must end with "test gate passed"
-MIB_TEST_TIMEOUT_SEC=2400 ./scripts/with_env.sh ./scripts/test.sh
+# full gate (about 20-25 minutes locally); must end with "test gate passed"
+./scripts/with_env.sh ./scripts/test.sh
 ```
 
 ## Replay golden hash
