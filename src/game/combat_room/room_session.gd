@@ -8,10 +8,11 @@ extends RefCounted
 ## no presentation code and holds no MainArena reference. It owns the simulation
 ## lifecycle, the combat and encounter context syncs, the player-event
 ## consumption, target and enemy queries, the contract start/idle resets, the
-## build freeze, room loot and the presentation event log. The fixed-tick phase
-## hooks stay on MainArena (RoomPhaseDomain dispatches to them) and delegate here
-## or to the combat_room collaborators that still take MainArena (see
-## docs/rebuild/ROOM_SESSION_DESIGN.md, migration items 3 to 6).
+## build freeze (through its ClassKit), room loot and the presentation event
+## log. The fixed-tick phase hooks stay on MainArena (RoomPhaseDomain dispatches
+## to them) and delegate here or to the combat_room collaborators that still
+## take MainArena (see docs/rebuild/ROOM_SESSION_DESIGN.md, migration items 3 to
+## 6).
 
 const CombatRoomLootScript := preload("res://src/game/combat_room_loot.gd")
 const CombatRoomRulesScript := preload("res://src/game/combat_room_rules.gd")
@@ -24,13 +25,13 @@ const CombatSimulationScript := preload("res://src/systems/combat_simulation.gd"
 const ContentRegistryScript := preload("res://src/content/content_registry.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const SimulationWorldScript := preload("res://src/runtime/world/simulation_world.gd")
-const BuildResolution := preload("res://src/game/application/build_resolution.gd")
 const CombatStatsSnapshotScript := preload("res://src/systems/combat_stats_snapshot.gd")
 const EncounterDirectorScript := preload("res://src/game/encounter_director.gd")
 const MainLootPlacementPortScript := preload("res://src/game/main_loot_placement_port.gd")
 const RoomCatalogScript := preload("res://src/runtime/world/room_catalog.gd")
 const CombatCommandProtocolScript := preload("res://src/systems/combat_command_protocol.gd")
 const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
+const RangerKitScript := preload("res://src/game/classes/ranger/ranger_kit.gd")
 
 ## Frozen gameplay constants of the Ranger's first chapter. MainArena re-exports
 ## them under the same names.
@@ -94,6 +95,11 @@ var command_intake: RoomCommandIntake = null
 var combat_event_stream
 var kernel_bindings := KernelBindingsScript.new()
 var room_loot := CombatRoomLootScript.new()
+## The room half of the player class (docs/rebuild/ROOM_SESSION_DESIGN.md,
+## "ClassKit"): the class-specific rules the session routes receipts, action
+## events and combat reports to. Owns no session reference; every kit call
+## passes the session.
+var kit: ClassKit = RangerKitScript.new()
 
 ## Mounted-room authorities adopted from SceneRuntime (or the standalone room
 ## assembly) and the typed ports built over them.
@@ -247,37 +253,9 @@ func is_skill_equipped(slot_index: int, expected_id: String) -> bool:
 
 
 ## Growth model of the frozen build (or the calibrated preset when no build is
-## locked), as the combat system consumes it.
+## locked), as the combat system consumes it. Class-specific; lives on the kit.
 func current_model() -> Dictionary:
-	var player := player_combat_state.snapshot(sim_tick)
-	if not locked_build.is_empty():
-		var event_value: Dictionary = locked_build.get("total_events", {})
-		var total_events := BigValue.from_components(
-			int(event_value.get("layer", 0)),
-			float(event_value.get("magnitude", 0.0))
-		)
-		if total_events != null:
-			var generations := int(locked_build.generation_count)
-			return {
-				"p": float(locked_build.final_parameters.p),
-				"R": float(locked_build.R),
-				"g": generations,
-				"generation_time": float(locked_build.generation_time),
-				"state": String(locked_build.growth_classification),
-				"total_events": total_events,
-				"total_events_float": float(locked_build.total_events_float),
-				"growth_snapshot_details": bool((player.get("talent_capabilities", {}) as Dictionary).get("growth_snapshot_details", false)),
-			}
-	var equipped: Dictionary = content_registry.preset_equipped_parameters
-	return PiercingArrowModel.evaluate(
-		locked_p,
-		float(equipped.shared_lifetime),
-		float(equipped.distance),
-		float(equipped.speed),
-		float(equipped.minimum_turn_time),
-		true,
-		true
-	)
+	return kit.growth_model(self)
 
 
 ## Authority half of the player domain's tick result: cast receipts and the
@@ -289,14 +267,10 @@ func consume_player_events(result: Dictionary) -> void:
 	var player: Dictionary = result["player"]
 	var action_player: Dictionary = result.get("action_player", player)
 	for receipt: Dictionary in result.get("receipts", []):
+		if kit.handle_receipt(self, receipt, player):
+			continue
 		var command: Dictionary = receipt.get("command", {})
-		if String(command.get("ability_id", "")) == "piercing_arrow":
-			var default_source := ATTACK_SOURCE_PROXY if selected_mode == "Auto" else ATTACK_SOURCE_ASSISTED
-			present_cast_receipt(receipt, default_source, int(command.get("sequence", -1)), true)
-		else:
-			if String(command.get("ability_id", "")) == "hunter_mark":
-				present_mark_receipt(receipt, player)
-			record_event(RoomPresentationEvent.command_discarded(int(command.get("sequence", -1))))
+		record_event(RoomPresentationEvent.command_discarded(int(command.get("sequence", -1))))
 	if result.has("protocol_receipts"):
 		last_command_receipts.assign((result["protocol_receipts"] as Array).duplicate(true))
 	sync_combat_context(action_player)
@@ -304,29 +278,8 @@ func consume_player_events(result: Dictionary) -> void:
 	sync_combat_context(player)
 
 
-## Records the Piercing Arrow receipt: the report text is authority, the input
-## feedback and request-source bookkeeping travel as a presentation event. When
-## `resolve_source` is set the view swaps `source` (the fallback) for the source
-## its input adapter registered for `sequence`.
-func present_cast_receipt(receipt: Dictionary, source: String, sequence: int = -1, resolve_source: bool = false) -> void:
-	var accepted := bool(receipt.get("accepted", false))
-	var status := String(receipt.get("status", ""))
-	if accepted:
-		battle_report = "Piercing Arrow buffered; waiting for an action window." if status in ["buffered", "replaced"] else "Drawing Piercing Arrow."
-	record_event(RoomPresentationEvent.cast_receipt(
-		sim_tick, sequence, source, resolve_source, accepted, status == "started",
-		not accepted and String(receipt.get("reason", "")) == "target_out_of_range" and selected_mode == "Manual",
-		int(receipt.get("request_id", 0)), int(receipt.get("replaced_request_id", 0)), int(receipt.get("action_instance_id", 0))))
-
-
-func present_mark_receipt(receipt: Dictionary, player: Dictionary) -> void:
-	if not bool(receipt.get("accepted", false)):
-		return
-	var target := enemy_by_entity_id(int(player["marked_entity_id"]))
-	if target != null and target.health > 0.0:
-		battle_report = "Hunter's Mark locked: %s." % target.public_label()
-
-
+## Explicit diagnostic cast: enters the same domain as device and replay
+## commands. The caller applies the logged presentation events afterwards.
 func process_player_action_events(events: Array, action_player: Dictionary) -> void:
 	for event: Dictionary in events:
 		var action_id := int(event.get("action_instance_id", 0))
@@ -334,28 +287,16 @@ func process_player_action_events(events: Array, action_player: Dictionary) -> v
 			"buffered_started", "action_started":
 				record_event(RoomPresentationEvent.action_request_bound(action_id, int(event.get("request_id", 0))))
 			"action_impact":
-				resolve_piercing_arrow(event, action_player)
+				kit.resolve_action_impact(self, event, action_player)
 			"action_ended", "action_interrupted":
 				record_event(RoomPresentationEvent.action_forgotten(action_id))
-
-
-## Resolves one released arrow against the combat system.
-func resolve_piercing_arrow(action_event: Dictionary, action_player: Dictionary) -> void:
-	sync_combat_context(action_player)
-	var previous_report := String(combat_system.battle_report)
-	var previous_event_id: int = combat_event_stream.latest_event_id()
-	combat_system.resolve_piercing_arrow(action_event)
-	adopt_combat_report(previous_report, previous_event_id)
 
 
 ## Explicit diagnostic cast: enters the same domain as device and replay
 ## commands. The caller applies the logged presentation events afterwards.
 func request_player_cast(ability_id: String, target_entity_id: int, direction: Vector2, source: String) -> Dictionary:
 	var receipt: Dictionary = player_combat_rules.request_cast(sim_tick, ability_id, target_entity_id, direction, read_only_targets())
-	if ability_id == "piercing_arrow":
-		present_cast_receipt(receipt, source)
-	elif ability_id == "hunter_mark":
-		present_mark_receipt(receipt, player_combat_state.snapshot(sim_tick))
+	kit.handle_diagnostic_receipt(self, ability_id, receipt, source)
 	process_player_action_events(receipt.get("action_events", []), player_combat_state.snapshot(sim_tick))
 	return receipt
 
@@ -428,28 +369,9 @@ func framework_room_error() -> String:
 
 ## Freezes the rule inputs of the contract: the resolved build (or the
 ## calibrated preset model), its payload, probability and targeting range.
+## Class-specific; lives on the kit.
 func freeze_room_build() -> void:
-	if BuildResolution.is_valid_resolved_build(framework_resolved_build):
-		locked_build = framework_resolved_build.duplicate(true)
-		locked_build["skills"] = (framework_active_build.get("skills", [String(locked_build.get("skill_id", "piercing_arrow"))]) as Array).duplicate()
-	else:
-		# The diagnostic model keeps its historical calibrated generation count;
-		# its gameplay range remains the old Main AUTO_RANGE, frozen for Rules.
-		var equipped: Dictionary = content_registry.preset_equipped_parameters
-		var preset_p := float(content_registry.presets[selected_preset].p)
-		var model: Dictionary = PiercingArrowModel.evaluate(preset_p, float(equipped.shared_lifetime), float(equipped.distance), float(equipped.speed), float(equipped.minimum_turn_time), true, true)
-		var events: BigValue = model.total_events
-		locked_build = {
-			"skills": ["piercing_arrow"], "talent_capabilities": {},
-			"final_parameters": {"p": preset_p, "T": float(equipped.shared_lifetime), "d": AUTO_RANGE, "v": float(equipped.speed), "turn": float(equipped.minimum_turn_time), "damage": BASE_PAYLOAD, "max_health": 100.0},
-			"total_events": {"layer": events.layer, "magnitude": events.magnitude},
-			"total_events_float": model.total_events_float, "generation_count": model.g,
-			"R": model.R, "generation_time": model.generation_time, "growth_classification": model.state,
-		}
-	var parameters: Dictionary = locked_build.final_parameters
-	locked_p = float(parameters.p)
-	locked_payload = float(parameters.damage)
-	locked_targeting_distance = float(parameters.d)
+	kit.freeze_build(self)
 
 
 ## Applies the room's combat-stat overlay to the frozen build.
@@ -590,16 +512,10 @@ func ensure_combat_system() -> void:
 
 
 ## Projectile speed the Ranger's arrows fly at: the frozen build's, else the
-## calibrated preset's. Never zero or non-finite.
+## calibrated preset's. Never zero or non-finite. Class-specific; lives on the
+## kit.
 func current_projectile_speed() -> float:
-	var speed := 0.0
-	if not locked_build.is_empty():
-		speed = float((locked_build.get("final_parameters", {}) as Dictionary).get("v", 0.0))
-	elif content_registry != null:
-		speed = float(content_registry.preset_equipped_parameters.get("speed", 0.0))
-	if not is_finite(speed) or speed <= 0.0:
-		return 1.0
-	return speed
+	return kit.projectile_speed(self)
 
 
 ## Pushes the player's pre-motor context into the combat system. The order of
@@ -631,7 +547,7 @@ func adopt_combat_report(previous_report: String, previous_event_id: int) -> voi
 		return
 	var fresh := report != previous_report
 	for event: Dictionary in combat_event_stream.events_after(previous_event_id):
-		if String(event.get("type", "")) == "projectile_spawned" or (String(event.get("type", "")) == "attack_resolved" and String(event.get("source_id", "")) == "ranger/piercing_arrow"):
+		if String(event.get("type", "")) == "projectile_spawned" or kit.owns_attack_event(event):
 			fresh = true
 	if fresh:
 		battle_report = report
