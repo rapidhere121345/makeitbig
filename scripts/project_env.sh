@@ -83,6 +83,10 @@ mkdir -p \
   "$XDG_CACHE_HOME/godot" \
   "$MIB_TEST_STATE_DIR" \
   "$MIB_PLAY_SESSION_DIR"
+# build/ holds toolchains, exports and scratch previews. Keep Godot's import
+# scan out of it so stray copies of project scripts never register as global
+# classes (a `hud_style.before.gd` copy once shadowed ArenaHudStyle).
+: > "${MIB_PROJECT_ROOT}/build/.gdignore"
 
 if [[ ! -e "$MIB_GODOT_TEMPLATE_DIR" && -f "$MIB_GODOT_TEMPLATE_FALLBACK/version.txt" ]]; then
   mkdir -p "$(dirname "$MIB_GODOT_TEMPLATE_DIR")"

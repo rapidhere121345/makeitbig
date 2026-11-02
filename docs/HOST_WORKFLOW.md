@@ -32,6 +32,14 @@ by `MIB_PORTABLE_ENV`), so agents can run one test without `source`:
 ./scripts/with_env.sh ./scripts/check.sh
 ```
 
+When the portable prefix is absent, `with_env.sh` falls back to an ignored
+project-local toolchain in `build/toolchain/` (official engine at
+`godot-4.7.2/Godot_v4.7.2-stable_linux.x86_64`, templates at
+`templates/4.7.2.stable`, and a Pillow venv at `python/`) if present; explicit
+`GODOT_BIN`/`MIB_GODOT_TEMPLATE_FALLBACK` settings win, and the engine pin is
+still verified. `project_env.sh` also writes `build/.gdignore` so Godot's import
+scan never registers scratch scripts under `build/` as global classes.
+
 The prefix chooses its matching loader and CPU
 libraries without changing global library paths. The project verifies the
 official engine's version and SHA256. Native-host fallbacks remain portable

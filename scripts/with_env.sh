@@ -19,6 +19,21 @@ MIB_PORTABLE_ENV="${MIB_PORTABLE_ENV:-/data/claude/workspace/.tools/make-it-big/
 if [[ -f "$MIB_PORTABLE_ENV" ]]; then
   # shellcheck source=/dev/null
   source "$MIB_PORTABLE_ENV"
+else
+  # Without the portable prefix, fall back to the ignored project-local
+  # toolchain (official engine, templates and a Pillow venv) when present.
+  # project_env.sh still verifies the engine version and SHA256.
+  local_toolchain="$(cd "${SCRIPT_DIR}/.." && pwd -P)/build/toolchain"
+  local_godot="${local_toolchain}/godot-4.7.2/Godot_v4.7.2-stable_linux.x86_64"
+  if [[ -z "${GODOT_BIN:-}" && -x "$local_godot" ]]; then
+    export GODOT_BIN="$local_godot"
+  fi
+  if [[ -z "${MIB_GODOT_TEMPLATE_FALLBACK:-}" && -f "${local_toolchain}/templates/4.7.2.stable/version.txt" ]]; then
+    export MIB_GODOT_TEMPLATE_FALLBACK="${local_toolchain}/templates/4.7.2.stable"
+  fi
+  if [[ -x "${local_toolchain}/python/bin/python3" ]]; then
+    export PATH="${local_toolchain}/python/bin:${PATH}"
+  fi
 fi
 # shellcheck source=project_env.sh
 source "${SCRIPT_DIR}/project_env.sh"
