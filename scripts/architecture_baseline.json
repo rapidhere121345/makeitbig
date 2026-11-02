@@ -38,7 +38,6 @@
     ]
   },
   "private_reach_ins": {
-    "src/game/combat_room_runtime.gd": 1,
     "src/presentation/facility/forge_page.gd": 125,
     "src/presentation/facility/item_detail.gd": 44,
     "src/presentation/facility/loadout_page.gd": 272,
@@ -50,7 +49,6 @@
   "string_dispatch": {
     "src/game/combat_room/actor_setup.gd": 6,
     "src/game/combat_room/room_terminal.gd": 1,
-    "src/game/combat_room_runtime.gd": 13,
     "src/game/combat_state_snapshot_builder.gd": 5,
     "src/game/contract_run_controller.gd": 14,
     "src/game/encounter_director.gd": 6,

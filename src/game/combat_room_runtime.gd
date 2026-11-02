@@ -25,6 +25,9 @@ var _finalized := false
 var _authored_content: Dictionary = {}
 var _authored_content_loaded := false
 var _room_instance: Node
+## The mounted room's script, cast once after mounting (null if the mounted
+## scene is not a MainArena).
+var _room: MainArena
 var room_catalog: RefCounted
 var scene_runtime: SceneRuntime
 
@@ -34,24 +37,24 @@ var room_instance: Node:
 
 
 func set_effects_volume(value: float) -> void:
-	if is_instance_valid(_room_instance) and _room_instance.has_method("set_effects_volume"):
-		_room_instance.call("set_effects_volume", value)
+	if _room_is_valid():
+		_room.set_effects_volume(value)
 
 
 func release_manual_controls() -> void:
-	if is_instance_valid(_room_instance) and _room_instance.has_method("release_manual_controls"):
-		_room_instance.call("release_manual_controls")
+	if _room_is_valid():
+		_room.release_manual_controls()
 
 
 func take_continuous_manual_input() -> RefCounted:
-	if is_instance_valid(_room_instance):
-		return _room_instance.call("take_continuous_manual_input") as RefCounted
+	if _room_is_valid():
+		return _room.take_continuous_manual_input()
 	return null
 
 
 func resume_continuous_manual_input(continued_input: RefCounted) -> void:
-	if is_instance_valid(_room_instance):
-		_room_instance.call("resume_continuous_manual_input", continued_input)
+	if _room_is_valid():
+		_room.resume_continuous_manual_input(continued_input)
 
 var current_config: Dictionary:
 	get:
@@ -155,15 +158,16 @@ func start_session(config: Dictionary) -> Dictionary:
 	if _room_instance == null or not _room_instance.is_node_ready():
 		_cleanup_room_instance()
 		return _error("room_not_ready")
-	if not _room_instance.has_method("start_room") or not _room_instance.has_signal("return_requested"):
+	_room = _room_instance as MainArena
+	if _room == null:
 		_cleanup_room_instance()
 		return _error("room_api_unavailable")
 
 	# A combat room has no persistence or contract-reward authority: the framework profile owns both.
 	_connect_return_requested()
 
-	_room_instance.set("selected_mode", mode)
-	_room_instance.set("selected_preset", preset_id)
+	_room.session.selected_mode = mode
+	_room.session.selected_preset = preset_id
 	# Bind the detached encounter before Main configures the mounted room.  Main
 	# then prepares the director metadata, registers only the player, and lets
 	# RoomEncounter materialize each enemy request in the structural window.
@@ -179,7 +183,7 @@ func start_session(config: Dictionary) -> Dictionary:
 		if not bool(encounter_configured.get("ok", false)):
 			_cleanup_room_instance()
 			return _error("room_runtime_start_failed", {"reason": String(encounter_configured.get("error", "invalid_encounter"))})
-		var spawn_port: Variant = _room_instance.get("encounter_spawn_port")
+		var spawn_port: Variant = _room.session.encounter_spawn_port
 		if spawn_port == null:
 			_cleanup_room_instance()
 			return _error("room_runtime_start_failed", {"reason": "encounter_spawn_port_unavailable"})
@@ -187,32 +191,37 @@ func start_session(config: Dictionary) -> Dictionary:
 		if not bool(encounter_bound.get("ok", false)):
 			_cleanup_room_instance()
 			return _error("room_runtime_start_failed", {"reason": String(encounter_bound.get("error", "encounter_bind_failed"))})
-	_room_instance.call("start_room")
-	if not bool(_room_instance.get("in_arena")):
-		var deployment_reason := String(_room_instance.get("last_save_message"))
+	_room.start_room()
+	if not _room.session.in_arena:
+		var deployment_reason := _room.last_save_message
 		_cleanup_room_instance()
 		return _error("room_runtime_start_failed", {"reason": deployment_reason})
 	set_process(true)
 	return {"ok": true}
 
 
-func _configure_room_instance(instance: Node) -> void:
+func configure_room_instance(instance: Node) -> void:
 	## SceneRuntime owns instantiation. This callback injects room context before
 	## the native scene enters the tree, so its _ready() cannot start a contextless
 	## session or create a second runtime authority.
 	_room_instance = instance
-	instance.set("test_session", true)
-	instance.set("presentation_enabled", bool(_current_config.get("presentation_enabled", true)))
-	instance.set("framework_room", (_current_config.get("room", {}) as Dictionary).duplicate(true))
-	instance.set("framework_seed", int(_current_config.get("seed", 0)))
-	instance.set("automation_smoke", bool(_current_config.get("automation_smoke", false)))
+	var room := instance as MainArena
+	if room == null:
+		# start_session rejects a mounted scene that is not a MainArena.
+		return
+	room.test_session = true
+	room.presentation_enabled = bool(_current_config.get("presentation_enabled", true))
+	var room_session := room.session
+	room_session.framework_room = (_current_config.get("room", {}) as Dictionary).duplicate(true)
+	room_session.framework_seed = int(_current_config.get("seed", 0))
+	room_session.automation_smoke = bool(_current_config.get("automation_smoke", false))
 	var framework_context: Dictionary = _current_config.get("framework_context", {})
 	var active_build: Variant = framework_context.get("active_build", {})
 	if active_build is Dictionary:
-		instance.set("framework_active_build", (active_build as Dictionary).duplicate(true))
-		instance.set("framework_resolved_build", (_current_config.get("resolved_build", {}) as Dictionary).duplicate(true))
-		instance.set("framework_resolved_proxy_build", (framework_context.get("resolved_proxy_build", {}) as Dictionary).duplicate(true))
-	instance.set("scene_runtime", scene_runtime)
+		room_session.framework_active_build = (active_build as Dictionary).duplicate(true)
+		room_session.framework_resolved_build = (_current_config.get("resolved_build", {}) as Dictionary).duplicate(true)
+		room_session.framework_resolved_proxy_build = (framework_context.get("resolved_proxy_build", {}) as Dictionary).duplicate(true)
+	room.scene_runtime = scene_runtime
 
 
 class RoomSetupPort extends "res://src/runtime/world/room_scene_setup_port.gd":
@@ -225,7 +234,7 @@ class RoomSetupPort extends "res://src/runtime/world/room_scene_setup_port.gd":
 
 	func setup(instance: Node) -> void:
 		if _owner != null and is_instance_valid(_owner):
-			_owner._configure_room_instance(instance)
+			_owner.configure_room_instance(instance)
 
 
 func _room_definition_data(room: Dictionary) -> Dictionary:
@@ -436,7 +445,7 @@ static func _encounter_roster(room: Dictionary) -> Array:
 func request_abandon() -> void:
 	if not _session_is_active():
 		return
-	if bool(_room_instance.get("battle_over")):
+	if _room.battle_over:
 		_finish_completed()
 		return
 	_finish_abandoned()
@@ -445,12 +454,12 @@ func request_abandon() -> void:
 func _process(_delta: float) -> void:
 	if not _session_is_active():
 		return
-	if bool(_room_instance.get("battle_over")):
+	if _room.battle_over:
 		# Victory and room settlement are separate phases when the room spawned
 		# loot. Keep the mounted room alive until the player explicitly leaves so
 		# queued pickups can commit against the room ledger. Defeat still closes
 		# immediately because its loot is forfeited.
-		if bool(_room_instance.get("battle_victory")) and bool(_room_instance.get("room_loot_window_open")):
+		if _room.battle_victory and _room.room_loot_window_open:
 			return
 		_finish_completed()
 
@@ -459,24 +468,22 @@ func _process(_delta: float) -> void:
 ## the published defeat clip is still on screen. Read it after completed(); it
 ## delays no signal, no settlement and no authoritative result.
 func defeat_presentation_ready() -> bool:
-	if _room_instance == null or not is_instance_valid(_room_instance):
+	if not _room_is_valid():
 		return true
-	if not _room_instance.has_method("defeat_route_ready"):
-		return true
-	return bool(_room_instance.call("defeat_route_ready"))
+	return _room.defeat_route_ready()
 
 
 func _on_return_requested() -> void:
 	if not _session_is_active():
 		return
-	if bool(_room_instance.get("battle_over")):
+	if _room.battle_over:
 		_finish_completed()
 		return
 	_finish_abandoned()
 
 
 func _finish_completed() -> void:
-	var victory := bool(_room_instance.get("battle_victory"))
+	var victory := _room.battle_victory
 	_finalize(&"completed", "victory" if victory else "defeat")
 
 
@@ -490,14 +497,14 @@ func _finalize(signal_name: StringName, outcome: String) -> void:
 	_finalized = true
 	set_process(false)
 	_disconnect_return_requested()
-	if is_instance_valid(_room_instance) and _room_instance.has_method("settle_room_loot"):
-		var loot_settlement: Variant = _room_instance.call("settle_room_loot", outcome)
+	if _room_is_valid():
+		var loot_settlement: Variant = _room.settle_room_loot(outcome)
 		if not loot_settlement is Dictionary or not bool((loot_settlement as Dictionary).get("ok", false)):
 			push_error("room_loot_settlement_failed:%s" % String((loot_settlement as Dictionary).get("error", "invalid_receipt")) if loot_settlement is Dictionary else "invalid_receipt")
 			return
 	if outcome == "abandoned":
 		release_manual_controls()
-		_room_instance.set_process(false)
+		_room.set_process(false)
 	var result := build_result(outcome)
 	if not bool(result.get("ok", true)):
 		push_error("room_result_projection_failed:%s" % String(result.error))
@@ -509,22 +516,22 @@ func _finalize(signal_name: StringName, outcome: String) -> void:
 
 
 func build_result(outcome: String) -> Dictionary:
-	if not is_instance_valid(_room_instance):
+	if not _room_is_valid():
 		return _error("room_instance_unavailable")
-	var state = _room_instance.get("player_combat_state")
-	if not state is Object or not state.has_method("snapshot"):
+	var state: PlayerCombatState = _room.player_combat_state
+	if state == null:
 		return _error("player_combat_state_unavailable")
-	var player: Dictionary = state.snapshot(int(_room_instance.get("sim_tick")))
+	var player: Dictionary = state.snapshot(_room.sim_tick)
 	var room_snapshot := {
-		"room_reward_snapshot": _room_instance.get("room_reward_snapshot"),
-		"room_loot_settlement": _room_instance.get("room_loot_settlement"),
-		"sim_tick": _room_instance.get("sim_tick"),
-		"elapsed": _room_instance.get("elapsed"),
-		"shots": _room_instance.get("shots"),
-		"arrow_hits": _room_instance.get("arrow_hits"),
-		"defeated": _room_instance.get("defeated"),
-		"battle_report": _room_instance.get("battle_report"),
-		"automation_smoke_failure": _room_instance.get("automation_smoke_failure"),
+		"room_reward_snapshot": _room.room_reward_snapshot,
+		"room_loot_settlement": _room.room_loot_settlement,
+		"sim_tick": _room.sim_tick,
+		"elapsed": _room.elapsed,
+		"shots": _room.shots,
+		"arrow_hits": _room.arrow_hits,
+		"defeated": _room.defeated,
+		"battle_report": _room.battle_report,
+		"automation_smoke_failure": _room.automation_smoke_failure,
 	}
 	for field: String in ["last_damage_source_id", "last_damage_tick"]:
 		if player.has(field):
@@ -533,21 +540,23 @@ func build_result(outcome: String) -> Dictionary:
 
 
 func _connect_return_requested() -> void:
-	var callback := Callable(self, "_on_return_requested")
-	if not _room_instance.is_connected("return_requested", callback):
-		_room_instance.connect("return_requested", callback)
+	if not _room.return_requested.is_connected(_on_return_requested):
+		_room.return_requested.connect(_on_return_requested)
 
 
 func _disconnect_return_requested() -> void:
-	if not is_instance_valid(_room_instance) or not _room_instance.has_signal("return_requested"):
+	if not _room_is_valid():
 		return
-	var callback := Callable(self, "_on_return_requested")
-	if _room_instance.is_connected("return_requested", callback):
-		_room_instance.disconnect("return_requested", callback)
+	if _room.return_requested.is_connected(_on_return_requested):
+		_room.return_requested.disconnect(_on_return_requested)
 
 
 func _session_is_active() -> bool:
-	return not _finalized and _room_instance != null and is_instance_valid(_room_instance)
+	return not _finalized and _room_is_valid()
+
+
+func _room_is_valid() -> bool:
+	return _room != null and is_instance_valid(_room)
 
 
 func _cleanup_room_instance() -> void:
@@ -560,6 +569,7 @@ func _cleanup_room_instance() -> void:
 		scene_runtime.queue_free()
 	scene_runtime = null
 	_room_instance = null
+	_room = null
 
 
 func _error(code: String, details: Dictionary = {}) -> Dictionary:
