@@ -1,7 +1,7 @@
 class_name CombatEnemyState
 extends RefCounted
 
-const StatusEffectLedgerScript := preload("res://src/game/status_effect_ledger.gd")
+const StatusEffectLedgerScript := preload("res://src/runtime/combat/entity_status_ledger.gd")
 
 ## Mutable room-local enemy state.
 ##

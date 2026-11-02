@@ -1,6 +1,6 @@
 extends SceneTree
 
-const Ledger := preload("res://src/game/status_effect_ledger.gd")
+const Ledger := preload("res://src/runtime/combat/entity_status_ledger.gd")
 const Enemy := preload("res://src/runtime/world/combat_enemy_state.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 

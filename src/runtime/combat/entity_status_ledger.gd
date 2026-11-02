@@ -6,6 +6,10 @@ extends RefCounted
 ## A ledger stores only resolved instances. Content and combat rules decide
 ## when to apply an effect; this object owns time ordering, expiry, stacking,
 ## and detached observation. It deliberately does not evaluate modifiers.
+##
+## One ledger per combat entity, keyed by effect id (CombatEnemyState). The
+## room-wide RuntimeStatusEffectLedger in status_effect_ledger.gd is keyed by
+## target and effect and also emits periodic hits.
 
 const STACK_POLICIES: Array[String] = ["replace", "refresh", "stack", "ignore"]
 const CoreResult := preload("res://src/core/result.gd")
