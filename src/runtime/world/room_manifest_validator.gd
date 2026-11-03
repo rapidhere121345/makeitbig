@@ -28,7 +28,7 @@ static func validate_native_scene(scene_value: Variant, asset_snapshot: Dictiona
 	if author_root == null or not author_root.has_method("validate_contract"):
 		instance.free()
 		return {"ok": false, "error": "native_scene_contract_missing"}
-	var contract_value: Variant = author_root.call("validate_contract", {
+	var contract_value: Variant = author_root.validate_contract({
 		"gameplay_source": String(asset_snapshot["manifest_path"]).get_file(),
 	})
 	if not contract_value is Dictionary or not bool((contract_value as Dictionary).get("ok", false)):

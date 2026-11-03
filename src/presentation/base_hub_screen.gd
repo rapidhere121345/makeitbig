@@ -611,10 +611,10 @@ func _open_settings() -> void:
 	var ancestor := get_parent()
 	while ancestor != null:
 		if ancestor.has_method("get_session_menu"):
-			var menu: Node = ancestor.call("get_session_menu")
+			var menu: Node = ancestor.get_session_menu()
 			if menu != null:
 				set_information_details_expanded(false)
-				menu.call("open_menu")
+				menu.open_menu()
 			return
 		ancestor = ancestor.get_parent()
 

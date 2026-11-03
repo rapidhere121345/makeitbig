@@ -556,7 +556,7 @@ func _render_route(route: String, payload: Dictionary = {}) -> void:
 			screen.connect("abandoned", _settle_arena_result)
 			_current_screen = screen
 			_mount_screen(screen)
-			var launch_result: Variant = screen.call("start_session", payload.duplicate(true))
+			var launch_result: Variant = screen.start_session(payload.duplicate(true))
 			display_settings.apply_route_preferences()
 			if not (launch_result is Dictionary) or not bool((launch_result as Dictionary).get("ok", false)):
 				var error_code := "room_runtime_start_failed"
@@ -636,13 +636,13 @@ func request_facility_back(destination: String, reviewed_item_id: String = "") -
 ## Presents the title screen with the given message when it is the current screen.
 func present_title(message: String) -> void:
 	if _current_screen != null and _current_screen.has_method("present"):
-		_current_screen.call("present", application_state.has_profile(), message)
+		_current_screen.present(application_state.has_profile(), message)
 
 
 ## Presents the base hub with the given message when it is the current screen.
 func present_base(message: String) -> void:
 	if _current_screen != null and _current_screen.has_method("present"):
-		_current_screen.call("present", application_state.profile, application_state.last_result, message, route_snapshots.campaign_contract_snapshot())
+		_current_screen.present(application_state.profile, application_state.last_result, message, route_snapshots.campaign_contract_snapshot())
 
 		_current_screen.present_adventure(application_state.character_snapshot(), application_state.story_snapshot())
 
@@ -655,7 +655,7 @@ func present_contract(message: String) -> void:
 			build_snapshot["resolved_build"] = application_state.resolved_build_snapshot().duplicate(true)
 		build_snapshot["auto_mode_unlocked"] = application_state.is_auto_mode_unlocked()
 		build_snapshot["campaign"] = route_snapshots.campaign_contract_snapshot()
-		_current_screen.call("present", application_state.profile, contract_flow.last_contract, message, build_snapshot)
+		_current_screen.present(application_state.profile, contract_flow.last_contract, message, build_snapshot)
 
 
 ## Presents a facility screen; context carries one-shot loadout focus hints.
@@ -676,7 +676,7 @@ func present_facility(facility_id: String, message: String, presentation_context
 				facility_data["resolved_build"] = application_state.resolved_build_snapshot().duplicate(true)
 		elif facility_id == SceneRouterScript.ROUTE_PROXY:
 			facility_data = application_state.early_game_snapshot()
-		_current_screen.call("present", facility_id, application_state.profile, application_state.last_result, message, facility_data)
+		_current_screen.present(facility_id, application_state.profile, application_state.last_result, message, facility_data)
 
 
 func _retire_current_screen() -> void:

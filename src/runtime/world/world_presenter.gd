@@ -64,7 +64,7 @@ func mount_world_scene(scene: PackedScene, setup: RoomSceneSetupPort = null, nat
 	if author_root == null:
 		instance.free()
 		return null
-	var validation: Variant = author_root.call("validate_contract")
+	var validation: Variant = author_root.validate_contract()
 	var expected := native_contract.duplicate(true)
 	expected.erase("native_contract_path")
 	if not validation is Dictionary or not bool((validation as Dictionary).get("ok", false)) or (validation as Dictionary).get("value", null) != expected:

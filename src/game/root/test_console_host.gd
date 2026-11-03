@@ -36,7 +36,7 @@ func ensure_test_console() -> void:
 	test_console.name = "TestConsole"
 	test_console.layer = 100
 	_root.add_child(test_console)
-	test_console.call("configure", Callable(self, "_test_console_snapshot"))
+	test_console.configure(Callable(self, "_test_console_snapshot"))
 
 
 ## True while the session menu is open, which pauses the deferred route clock.
@@ -88,7 +88,7 @@ func _pause_current_route() -> void:
 	_menu_paused_screen = _root.current_screen
 	_menu_previous_process_mode = _root.current_screen.process_mode
 	if _root.current_screen.has_method("release_manual_controls"):
-		_root.current_screen.call("release_manual_controls")
+		_root.current_screen.release_manual_controls()
 	# This stops the fixed clock at the route boundary. Time spent paused is not
 	# added to it, and other mounted roots/test fixtures keep their own lifetime.
 	_root.current_screen.process_mode = Node.PROCESS_MODE_DISABLED
@@ -101,21 +101,21 @@ func resume_current_route() -> void:
 		_root.get_presentation_viewport().render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	if is_instance_valid(_menu_paused_screen):
 		if _menu_paused_screen.has_method("release_manual_controls"):
-			_menu_paused_screen.call("release_manual_controls")
+			_menu_paused_screen.release_manual_controls()
 		_menu_paused_screen.process_mode = _menu_previous_process_mode
 	_menu_paused_screen = null
 
 
 func _abandon_from_menu() -> void:
 	if _root.current_route == SceneRouterScript.ROUTE_ARENA and _root.current_screen != null and _root.current_screen.has_method("request_abandon"):
-		_root.current_screen.call("request_abandon")
+		_root.current_screen.request_abandon()
 
 
 func refresh_test_console() -> void:
 	if test_console != null \
 		and test_console.has_method("is_console_open") \
-		and bool(test_console.call("is_console_open")):
-		test_console.call("refresh")
+		and bool(test_console.is_console_open()):
+		test_console.refresh()
 
 
 ## Raw ids, fingerprints, deterministic seeds, protocol unions and settlement
@@ -125,7 +125,7 @@ func _test_console_snapshot() -> Dictionary:
 	var window_size := Vector2i.ZERO
 	if _root.is_inside_tree() and _root.get_window() != null:
 		window_size = _root.get_window().size
-	var layout: Dictionary = _root.get_pixel_stage().call("layout_snapshot") if _root.get_pixel_stage() != null else {}
+	var layout: Dictionary = _root.get_pixel_stage().layout_snapshot() if _root.get_pixel_stage() != null else {}
 	var logical_size: Vector2i = layout.get("ui_logic_size", Vector2i(1280, 720))
 	var snapshot := {
 		"route": _root.current_route,
@@ -147,7 +147,7 @@ func _test_console_snapshot() -> Dictionary:
 			"prototype_debug": not _root.prototype_debug.dto.is_empty(),
 			"presentation_enabled": _root.presentation_enabled,
 		},
-		"log_path": _root.playtest_log.call("log_path") if _root.playtest_log != null and _root.playtest_log.has_method("log_path") else "",
+		"log_path": _root.playtest_log.log_path() if _root.playtest_log != null and _root.playtest_log.has_method("log_path") else "",
 		"sections": [
 			{"title": "Full current contract data", "content": _root.last_contract},
 			{"title": "Presentation layout", "content": layout.duplicate(true)},

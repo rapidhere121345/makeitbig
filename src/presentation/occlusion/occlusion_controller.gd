@@ -42,7 +42,7 @@ func adopt_plan(plan: Variant) -> Dictionary:
 	_plan = plan
 	_state.clear()
 	_occluder_state.clear()
-	for entry: Dictionary in plan.call("entries"):
+	for entry: Dictionary in plan.entries():
 		var stable_id := String(entry["stable_id"])
 		_state[stable_id] = {
 			"display_feet": entry["feet_anchor"],
@@ -62,7 +62,7 @@ func sync_plan(plan: Variant) -> Dictionary:
 	if not plan is PlanScript:
 		return {"ok": false, "errors": ["invalid_occlusion_plan"]}
 	var next_ids: Dictionary = {}
-	for entry: Dictionary in plan.call("entries"):
+	for entry: Dictionary in plan.entries():
 		next_ids[String(entry["stable_id"])] = true
 	var same_set: bool = next_ids.size() == _state.size()
 	if same_set:
@@ -72,7 +72,7 @@ func sync_plan(plan: Variant) -> Dictionary:
 				break
 	if not same_set:
 		return adopt_plan(plan)
-	for entry: Dictionary in plan.call("entries"):
+	for entry: Dictionary in plan.entries():
 		var state: Dictionary = _state[String(entry["stable_id"])]
 		var anchor: Vector2 = entry["feet_anchor"]
 		if anchor.is_finite():

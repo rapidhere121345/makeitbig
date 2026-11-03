@@ -69,7 +69,7 @@ func set_effects_volume(value: float) -> void:
 
 func apply_route_preferences() -> void:
 	if _root.current_screen != null and _root.current_screen.has_method("set_effects_volume"):
-		_root.current_screen.call("set_effects_volume", effects_volume)
+		_root.current_screen.set_effects_volume(effects_volume)
 
 
 ## Usable size of the current screen, or ZERO (no upper bound) when it is unknown.

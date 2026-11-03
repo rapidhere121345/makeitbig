@@ -55,12 +55,12 @@ var _effects_volume := 0.45
 func set_effects_volume(value: float) -> void:
 	_effects_volume = clampf(value, 0.0, 1.0)
 	if is_instance_valid(_current_runtime) and _current_runtime.has_method("set_effects_volume"):
-		_current_runtime.call("set_effects_volume", _effects_volume)
+		_current_runtime.set_effects_volume(_effects_volume)
 
 
 func release_manual_controls() -> void:
 	if is_instance_valid(_current_runtime) and _current_runtime.has_method("release_manual_controls"):
-		_current_runtime.call("release_manual_controls")
+		_current_runtime.release_manual_controls()
 
 
 func start_session(config: Dictionary) -> Dictionary:
@@ -88,7 +88,7 @@ func request_abandon() -> void:
 	if _finalized or _current_runtime == null or not is_instance_valid(_current_runtime):
 		return
 	if _current_runtime.has_method("request_abandon"):
-		_current_runtime.call("request_abandon")
+		_current_runtime.request_abandon()
 
 
 ## Presentation-only relay for the route layer: the arena screen mounted right
@@ -99,7 +99,7 @@ func defeat_presentation_ready() -> bool:
 		return true
 	if not _current_runtime.has_method("defeat_presentation_ready"):
 		return true
-	return bool(_current_runtime.call("defeat_presentation_ready"))
+	return bool(_current_runtime.defeat_presentation_ready())
 
 
 func _prepare_rooms(expected_count: int) -> Dictionary:
@@ -142,7 +142,7 @@ func _start_room(index: int, emit_change: bool, continued_input: RefCounted = nu
 	var room_config := _current_config.duplicate(true)
 	room_config["room_index"] = index
 	room_config["room"] = _rooms[index].duplicate(true)
-	var launch_result: Variant = runtime.call("start_session", room_config)
+	var launch_result: Variant = runtime.start_session(room_config)
 	set_effects_volume(_effects_volume)
 	if not (launch_result is Dictionary) or not bool((launch_result as Dictionary).get("ok", false)):
 		var error_code := ERROR_ROOM_RUNTIME_START_FAILED
@@ -151,7 +151,7 @@ func _start_room(index: int, emit_change: bool, continued_input: RefCounted = nu
 		_retire_current_runtime()
 		return _error(error_code)
 	if continued_input != null and runtime.has_method("resume_continuous_manual_input"):
-		runtime.call("resume_continuous_manual_input", continued_input)
+		runtime.resume_continuous_manual_input(continued_input)
 
 	if emit_change and not _finalized and _current_runtime == runtime and _current_room_index == index:
 		room_changed.emit(index, _rooms.size(), _rooms[index].duplicate(true))
@@ -192,7 +192,7 @@ func _on_runtime_completed(result: Dictionary, runtime: Node, index: int) -> voi
 				_apply_room_commit_to_context(committed as Dictionary)
 			var continued_input: RefCounted = null
 			if String(_current_config.get("mode", "")) == "Manual" and runtime.has_method("take_continuous_manual_input"):
-				continued_input = runtime.call("take_continuous_manual_input") as RefCounted
+				continued_input = runtime.take_continuous_manual_input() as RefCounted
 			_retire_current_runtime()
 			var next_started := _start_room(index + 1, true, continued_input)
 			if not bool(next_started.get("ok", false)):

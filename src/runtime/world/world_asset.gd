@@ -66,7 +66,7 @@ func matches_manifest(manifest_value: Variant) -> Dictionary:
 		return {"ok": false, "errors": asset_errors, "value": {}}
 	var manifest_payload: Variant = manifest_value
 	if manifest_value is SpatialManifestScript:
-		manifest_payload = manifest_value.call("snapshot")
+		manifest_payload = manifest_value.snapshot()
 	if not manifest_payload is Dictionary or not SpatialManifestScript.validate_data(manifest_payload).is_empty():
 		return {"ok": false, "errors": ["invalid_manifest"], "value": {}}
 	var manifest: Dictionary = manifest_payload

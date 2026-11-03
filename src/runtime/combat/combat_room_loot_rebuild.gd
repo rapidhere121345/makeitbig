@@ -136,7 +136,7 @@ func spawn(tick: int, raw_request: Variant) -> Dictionary:
 	if not position is Vector2 or not _placement_port.is_position_clear(position, float(slot["pickup_radius"])):
 		return CoreResult.failure("loot_spawn_position_blocked")
 	var source_id := "room_" + ("%s/%s" % [room_id, slot_id]).sha256_text()
-	var item: Variant = _materializer.call("generate_drop", root_seed, source_id, _drop_index, tags if not tags.is_empty() else slot["tags"], String(slot["guarantee_family"]))
+	var item: Variant = _materializer.generate_drop(root_seed, source_id, _drop_index, tags if not tags.is_empty() else slot["tags"], String(slot["guarantee_family"]))
 	if not item is Dictionary or (item as Dictionary).is_empty():
 		return CoreResult.failure("loot_generation_failed")
 	var entity_id := "loot/%s/%s" % [room_id, slot_id]

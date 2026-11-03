@@ -112,7 +112,7 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 	var manual_input_state: Dictionary = {}
 	var manual_input_value: Variant = _runtime_value(runtime, "manual_combat_input")
 	if String(_runtime_value(session, "selected_mode", "")) == "Manual" and bool(_runtime_value(session, "in_arena", false)) and not _battle_flag(session, "is_battle_over", "battle_over") and manual_input_value is Object:
-		var input_snapshot_value: Variant = (manual_input_value as Object).call("snapshot")
+		var input_snapshot_value: Variant = (manual_input_value as Object).snapshot()
 		if input_snapshot_value is Dictionary:
 			var input_state: Dictionary = input_snapshot_value as Dictionary
 			var pointer_sources_value: Variant = input_state.get("pointer_sources", {})

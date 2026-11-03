@@ -27,7 +27,7 @@ func start_session() -> void:
 		return
 	_session_started_msec = Time.get_ticks_msec()
 	_route_entered_msec = _session_started_msec
-	_root.playtest_log.call("start_session", {
+	_root.playtest_log.start_session({
 		"prototype": "early_game",
 		"profile_schema_version": ApplicationStateScript.SCHEMA_VERSION,
 		"content_versions": {
@@ -43,20 +43,20 @@ func record(event_id: String, payload: Dictionary = {}) -> void:
 		return
 	if _root.playtest_log == null or not _root.playtest_log.has_method("record"):
 		return
-	if _root.playtest_log.has_method("is_active") and not bool(_root.playtest_log.call("is_active")):
+	if _root.playtest_log.has_method("is_active") and not bool(_root.playtest_log.is_active()):
 		return
-	_root.playtest_log.call("record", event_id, payload.duplicate(true))
+	_root.playtest_log.record(event_id, payload.duplicate(true))
 
 
 func finish(reason: String) -> void:
 	if _root.playtest_log == null:
 		return
-	if _root.playtest_log.has_method("is_active") and not bool(_root.playtest_log.call("is_active")):
+	if _root.playtest_log.has_method("is_active") and not bool(_root.playtest_log.is_active()):
 		return
 	if _root.playtest_log.has_method("finish"):
-		_root.playtest_log.call("finish", {"reason": reason})
+		_root.playtest_log.finish({"reason": reason})
 	elif _root.playtest_log.has_method("close"):
-		_root.playtest_log.call("close")
+		_root.playtest_log.close()
 
 
 ## Starts the profile wall clock when a new profile is created.

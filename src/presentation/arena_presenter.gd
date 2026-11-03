@@ -144,7 +144,7 @@ func presentation_report() -> Dictionary:
 		},
 	}
 	if _world_view != null and _world_view.has_method("is_ready"):
-		report["world_view_ready"] = bool(_world_view.call("is_ready"))
+		report["world_view_ready"] = bool(_world_view.is_ready())
 	if _world_view != null and "pending_reason" in _world_view:
 		report["world_pending_reason"] = String(_world_view.get("pending_reason"))
 	_last_report = report.duplicate(true)
@@ -192,7 +192,7 @@ func _draw() -> void:
 		_last_draw_state = STATE_PRESENTATION_ERROR
 		_draw_presentation_error(viewport_rect)
 		return
-	if _world_view == null or not _world_view.has_method("is_ready") or not bool(_world_view.call("is_ready")):
+	if _world_view == null or not _world_view.has_method("is_ready") or not bool(_world_view.is_ready()):
 		_last_draw_state = STATE_PRESENTATION_ERROR
 		_last_error = _world_pending_reason()
 		_draw_presentation_error(viewport_rect)
@@ -201,14 +201,14 @@ func _draw() -> void:
 	var arena_rect: Rect2 = frame["arena_rect"]
 	var focus_gameplay: Vector2 = frame["focus_gameplay"]
 	if not bool(frame.get("camera_prepared", false)):
-		_world_view.call("begin_frame", viewport_rect, focus_gameplay, arena_rect)
+		_world_view.begin_frame(viewport_rect, focus_gameplay, arena_rect)
 	_reset_canvas_transform()
-	var world_transform: Transform2D = _world_view.call("world_transform")
+	var world_transform: Transform2D = _world_view.world_transform()
 	draw_set_transform_matrix(world_transform)
-	_world_view.call("draw_ground", self)
-	_world_view.call("draw_room_concept", self, String(frame["layout_id"]), int(frame["sim_tick"]), frame.get("presentation_geometry", frame.get("walkable_geometry", {})), bool(frame.get("room_cleared", false)))
-	_world_view.call("draw_decals", self)
-	_world_view.call("draw_structure_shadows", self)
+	_world_view.draw_ground(self)
+	_world_view.draw_room_concept(self, String(frame["layout_id"]), int(frame["sim_tick"]), frame.get("presentation_geometry", frame.get("walkable_geometry", {})), bool(frame.get("room_cleared", false)))
+	_world_view.draw_decals(self)
+	_world_view.draw_structure_shadows(self)
 	## Actors and telegraphs remain outside this first boundary. Their future pass
 	## must consume the same frame and use the transforms above.
 	_reset_canvas_transform()

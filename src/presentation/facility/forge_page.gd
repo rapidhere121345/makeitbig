@@ -299,11 +299,11 @@ func _finish_forge_backpack_exit() -> void:
 		return
 	var backpack: Node = _screen.find_child("EquipmentBackpack", true, false)
 	if backpack != null and backpack.has_method("inspected_item_id") \
-		and not String(backpack.call("inspected_item_id")).is_empty():
+		and not String(backpack.inspected_item_id()).is_empty():
 		return
 	_screen.forge_backpack_selection = ""
 	if backpack != null and backpack.has_method("select_item"):
-		backpack.call("select_item", String(_screen.facility_data.get("target_instance_id", "")))
+		backpack.select_item(String(_screen.facility_data.get("target_instance_id", "")))
 	_render_forge_backpack_detail("")
 
 

@@ -710,7 +710,7 @@ func _read_presentation_place(keep_candidate_offset := true) -> void:
 	if keep_candidate_offset and facility_root != null:
 		var candidates := facility_root.find_child("EquipmentBackpack", true, false)
 		if candidates != null and candidates.has_method("page_index"):
-			_pending_scroll_restore["EquipmentBackpackPage"] = int(candidates.call("page_index"))
+			_pending_scroll_restore["EquipmentBackpackPage"] = int(candidates.page_index())
 	var viewport := get_viewport()
 	if viewport != null:
 		var owner := viewport.gui_get_focus_owner()
@@ -758,7 +758,7 @@ func _restore_switched_place() -> void:
 		return
 	var candidates := facility_root.find_child("EquipmentBackpack", true, false)
 	if candidates != null and candidates.has_method("set_page"):
-		candidates.call("set_page", int(candidate_page))
+		candidates.set_page(int(candidate_page))
 
 
 ## The control the recorded identity names in the body that is on screen now, or null
@@ -864,7 +864,7 @@ func layout_report() -> Dictionary:
 func backpack_cell(instance_id: String) -> Control:
 	var backpack := find_child("EquipmentBackpack", true, false)
 	if backpack != null and backpack.has_method("get_cell"):
-		return backpack.call("get_cell", instance_id) as Control
+		return backpack.get_cell(instance_id) as Control
 	return null
 
 

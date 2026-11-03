@@ -398,29 +398,29 @@ func _apply_detached_occlusion(display_delta: float) -> void:
 		actor_presenter.apply_occlusion_alpha({})
 		_record_occlusion(false, "presentation_port_unavailable")
 		return
-	var plan_result: Dictionary = port_value.call("latest_occlusion_plan")
+	var plan_result: Dictionary = port_value.latest_occlusion_plan()
 	if not bool(plan_result.get("ok", false)):
 		actor_presenter.apply_occlusion_alpha({})
 		var errors: Array = (plan_result.get("errors", []) as Array).slice(0, 3)
 		_record_occlusion(false, "plan_unavailable", errors)
 		return
 	var plan: Variant = plan_result.get("value", null)
-	if plan == null or not bool(_occlusion.call("sync_plan", plan).get("ok", false)):
+	if plan == null or not bool(_occlusion.sync_plan(plan).get("ok", false)):
 		actor_presenter.apply_occlusion_alpha({})
 		_record_occlusion(false, "plan_sync_failed")
 		return
-	var entries: Array = plan.call("entries")
+	var entries: Array = plan.entries()
 	for entry: Variant in entries:
 		var stable_id := String((entry as Dictionary)["stable_id"])
-		var report: Dictionary = plan.call("occlusion_report", stable_id)
+		var report: Dictionary = plan.occlusion_report(stable_id)
 		if bool(report.get("ok", false)):
-			_occlusion.call("set_cover", stable_id, float(report.get("cover_fraction", 0.0)))
-	_occlusion.call("update", maxf(display_delta, 0.0))
+			_occlusion.set_cover(stable_id, float(report.get("cover_fraction", 0.0)))
+	_occlusion.update(maxf(display_delta, 0.0))
 	var alphas: Dictionary = {}
 	var occluded_ids: Array[String] = []
 	for entry: Variant in entries:
 		var stable_id := String((entry as Dictionary)["stable_id"])
-		var alpha: float = float(_occlusion.call("alpha", stable_id))
+		var alpha: float = float(_occlusion.alpha(stable_id))
 		alphas[stable_id] = alpha
 		if alpha < 0.999:
 			occluded_ids.append(stable_id)
@@ -472,8 +472,8 @@ func is_pointer_over_interface(point: Vector2 = Vector2(-INF, -INF)) -> bool:
 	# used by presentation tests still expose the original zero-argument query;
 	# preserve that contract instead of sending an invalid call into the double.
 	if _pointer_query_accepts_point(hud):
-		return bool(hud.call("is_pointer_over_interface", point))
-	return bool(hud.call("is_pointer_over_interface"))
+		return bool(hud.is_pointer_over_interface(point))
+	return bool(hud.is_pointer_over_interface())
 
 
 func _pointer_query_accepts_point(node: Object) -> bool:

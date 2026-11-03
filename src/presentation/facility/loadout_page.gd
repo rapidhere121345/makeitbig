@@ -546,18 +546,18 @@ func _finish_loadout_backpack_exit() -> void:
 		return
 	var backpack: Node = _screen.find_child("EquipmentBackpack", true, false)
 	if backpack != null and backpack.has_method("inspected_item_id") \
-		and not String(backpack.call("inspected_item_id")).is_empty():
+		and not String(backpack.inspected_item_id()).is_empty():
 		return
 	if not _screen.loadout_backpack_pinned_id.is_empty() \
 		and not _screen.inventory_item_by_id(_screen.loadout_backpack_items, _screen.loadout_backpack_pinned_id).is_empty():
 		_screen.loadout_backpack_selection = _screen.loadout_backpack_pinned_id
 		if backpack != null and backpack.has_method("select_item"):
-			backpack.call("select_item", _screen.loadout_backpack_pinned_id)
+			backpack.select_item(_screen.loadout_backpack_pinned_id)
 		_render_loadout_backpack_detail(_screen.loadout_backpack_pinned_id)
 		return
 	_screen.loadout_backpack_selection = ""
 	if backpack != null and backpack.has_method("select_item"):
-		backpack.call("select_item", _screen.loadout_backpack_equipped_id)
+		backpack.select_item(_screen.loadout_backpack_equipped_id)
 	_render_loadout_backpack_detail("")
 
 

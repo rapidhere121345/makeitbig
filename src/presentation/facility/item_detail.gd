@@ -85,7 +85,7 @@ func _on_item_detail_closed() -> void:
 	_screen.item_detail_return_focus = null
 	if return_focus != null and is_instance_valid(return_focus) and return_focus.is_visible_in_tree() \
 		and (not return_focus is BaseButton or not (return_focus as BaseButton).disabled):
-		return_focus.call_deferred("grab_focus")
+		return_focus.grab_focus.call_deferred()
 
 
 ## The snapshot's own base-item table entry for one owned item, or {} when the

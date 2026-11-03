@@ -548,7 +548,7 @@ func _encounter_socket_position(socket_id: String) -> Variant:
 
 
 func _encounter_spawn_radius() -> float:
-	if manifest != null and manifest.has_method("snapshot"):
+	if manifest != null:
 		var snapshot_value: Dictionary = manifest.snapshot()
 		for profile: Dictionary in snapshot_value.get("traversal_profiles", []):
 			if String(profile.get("profile_id", "")) == "standard":
