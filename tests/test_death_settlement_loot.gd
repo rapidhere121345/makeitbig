@@ -27,9 +27,12 @@ class AlwaysClearPlacement:
 
 
 class WallPlacementRoom:
+	extends RoomActorAccess
+
 	var divided := false
 
-	func is_position_clear(position: Vector2, radius: float) -> bool:
+	func is_position_clear(position: Vector2, radius_or_bounds: Variant, _optional_radius: float = -1.0) -> bool:
+		var radius := float(radius_or_bounds)
 		if divided:
 			# A narrow pocket and a separate open area across a solid wall.
 			return (position.x >= radius and position.x <= 32.0 - radius) or position.x >= 40.0 + radius

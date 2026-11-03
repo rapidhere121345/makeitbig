@@ -10,19 +10,21 @@ const EnemyProfileRegistryScript := preload("res://src/content/early_enemy_profi
 const Assert := preload("res://tests/helpers/assert.gd")
 
 class PlayerPort:
-	extends RefCounted
+	extends PlayerCombatRules
 	var calls: Array[Dictionary] = []
 	func apply_damage(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:
 		calls.append({"tick": tick, "amount": amount, "source_id": source_id, "source_position": source_position})
 		return {"accepted": true}
 
 class GarbageRulePort:
-	extends RefCounted
-	func apply_damage(_tick: int, _amount: float, _source_id: String, _source_position: Vector2) -> Variant:
-		return null
+	extends PlayerCombatRules
+	## Never called by the director: RoomPort rejects the player contact itself
+	## when this port is bound, which is the garbage-receipt path under test.
+	func apply_damage(_tick: int, _amount: float, _source_id: String, _source_position: Vector2) -> Dictionary:
+		return {}
 
 class OutcomePort:
-	extends RefCounted
+	extends CombatSystem
 	func outcome_snapshot() -> Dictionary:
 		return {"boss_damage": BigValue.from_float(0.0), "boss_maximum": BigValue.from_power10(12.0)}
 

@@ -141,7 +141,7 @@ static func validate_room(room: Variant, room_catalog: Variant) -> String:
 		var room_id_value: Variant = room_data.get("room_id")
 		if not room_id_value is String or String(room_id_value).strip_edges().is_empty():
 			return "invalid_room_id"
-	if room_catalog == null or not room_catalog.has_method("resolve"):
+	if not room_catalog is RoomCatalog:
 		return "room_catalog_unavailable"
 	var resolved: Variant = room_catalog.resolve(room_data)
 	if not resolved is Dictionary or not bool((resolved as Dictionary).get("ok", false)):
@@ -176,10 +176,10 @@ func bind_room(room: Variant) -> Dictionary:
 		return {"ok": false, "error": "encounter_room_port_unavailable"}
 	var typed_room: EncounterRoomPort = room
 	var rules_port: Variant = typed_room.player_rule_port
-	if not rules_port is RefCounted or not (rules_port as RefCounted).has_method("apply_damage"):
+	if not rules_port is PlayerCombatRules:
 		return {"ok": false, "error": "player_rule_port_unavailable"}
 	var outcome_port: Variant = typed_room.combat_outcome_port
-	if not outcome_port is RefCounted or not (outcome_port as RefCounted).has_method("outcome_snapshot"):
+	if not outcome_port is CombatSystem:
 		return {"ok": false, "error": "combat_outcome_port_unavailable"}
 	room_port = typed_room
 	player_rule_port = rules_port
@@ -189,7 +189,7 @@ func bind_room(room: Variant) -> Dictionary:
 
 
 func set_enemy_profile_registry(value: Variant) -> Dictionary:
-	if not value is RefCounted or not value.has_method("resolve"):
+	if not value is EarlyEnemyProfileRegistry:
 		return {"ok": false, "error": "enemy_profile_registry_unavailable"}
 	enemy_profile_registry = value
 	return {"ok": true, "error": ""}
@@ -752,7 +752,7 @@ func _resolve_enemy_profile(kind_id: String):
 	if not resolved is Dictionary or not bool((resolved as Dictionary).get("ok", false)):
 		return null
 	var value: Variant = (resolved as Dictionary).get("value", null)
-	if not value is RefCounted or not value.has_method("snapshot"):
+	if not value is EnemyCombatProfile:
 		return null
 	_enemy_profiles[kind_id] = value
 	return value
@@ -852,7 +852,7 @@ func enemy_breath_ticks(kind_id: String) -> int:
 
 func action_profile(enemy: CombatEnemyState, action_id: String) -> Dictionary:
 	var profile: RefCounted = _profile_for_enemy(enemy)
-	if profile == null or not profile.has_method("action"):
+	if not profile is EnemyCombatProfile:
 		return {}
 	var value: Variant = profile.action(action_id)
 	return value if value is Dictionary else {}

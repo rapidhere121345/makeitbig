@@ -68,7 +68,7 @@ func _check_battle_end() -> void:
 
 
 func _mounted_encounter_terminal_active() -> bool:
-	return _session.room_encounter_port != null and _session.room_encounter_port.encounter != null and _session.room_encounter_port.encounter.has_method("observe_terminal")
+	return _session.room_encounter_port != null and _session.room_encounter_port.encounter is RoomEncounter
 
 
 func _observe_mounted_encounter_terminal() -> Dictionary:

@@ -635,13 +635,13 @@ func request_facility_back(destination: String, reviewed_item_id: String = "") -
 
 ## Presents the title screen with the given message when it is the current screen.
 func present_title(message: String) -> void:
-	if _current_screen != null and _current_screen.has_method("present"):
+	if _current_screen is TitleScreenScript:
 		_current_screen.present(application_state.has_profile(), message)
 
 
 ## Presents the base hub with the given message when it is the current screen.
 func present_base(message: String) -> void:
-	if _current_screen != null and _current_screen.has_method("present"):
+	if _current_screen is BaseHubScreenScript:
 		_current_screen.present(application_state.profile, application_state.last_result, message, route_snapshots.campaign_contract_snapshot())
 
 		_current_screen.present_adventure(application_state.character_snapshot(), application_state.story_snapshot())
@@ -649,7 +649,7 @@ func present_base(message: String) -> void:
 
 ## Presents the contract board with the given message when it is the current screen.
 func present_contract(message: String) -> void:
-	if _current_screen != null and _current_screen.has_method("present"):
+	if _current_screen is ContractScreenScript:
 		var build_snapshot: Dictionary = application_state.early_game_snapshot().duplicate(true)
 		if bool(build_snapshot.get("ok", false)):
 			build_snapshot["resolved_build"] = application_state.resolved_build_snapshot().duplicate(true)
@@ -660,7 +660,7 @@ func present_contract(message: String) -> void:
 
 ## Presents a facility screen; context carries one-shot loadout focus hints.
 func present_facility(facility_id: String, message: String, presentation_context: Dictionary = {}) -> void:
-	if _current_screen != null and _current_screen.has_method("present"):
+	if _current_screen is FacilityScreenScript:
 		var facility_data: Dictionary = {}
 		if facility_id == SceneRouterScript.ROUTE_FORGE:
 			application_state.forge_ensure_context()

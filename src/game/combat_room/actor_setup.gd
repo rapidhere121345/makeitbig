@@ -88,13 +88,13 @@ func _configure_actor_registry() -> bool:
 		return false
 	_session.actor_registry.set_movement_policy_port(movement_policy_port)
 	var preserved_sim_tick := _session.sim_tick
-	if _session.actor_registry.has_method("reset_actors"):
+	if _session.actor_registry is RoomActorAccess:
 		var reset_result: Dictionary = _session.actor_registry.reset_actors()
 		if not bool(reset_result.get("ok", false)):
 			push_error("actor_registry_configuration_failed:actor_reset:%s" % str(reset_result))
 			_session.actor_registry_instance_id = ""
 			return false
-	if not _session.actor_registry.has_method("has_movement_boundary") or not bool(_session.actor_registry.has_movement_boundary()):
+	if not _session.actor_registry is RoomActorAccess or not bool(_session.actor_registry.has_movement_boundary()):
 		push_error("manifest_movement_boundary_missing:%s" % _session.layout_id)
 		push_error("actor_registry_configuration_failed:movement_boundary_missing")
 		_session.actor_registry_instance_id = ""
@@ -207,8 +207,8 @@ func _start_mounted_encounter() -> bool:
 	var encounter_domain: Variant = _session.scene_runtime.get("encounter_domain")
 	if encounter_domain == null:
 		return true
-	var phase := String(encounter_domain.snapshot().get("phase", "")) if encounter_domain.has_method("snapshot") else ""
-	if phase != "idle" and _session.sim_tick == 0 and encounter_domain.has_method("restart"):
+	var phase := String(encounter_domain.snapshot().get("phase", "")) if encounter_domain is RoomEncounter else ""
+	if phase != "idle" and _session.sim_tick == 0 and encounter_domain is RoomEncounter:
 		var restarted: Dictionary = encounter_domain.restart(_session.sim_tick)
 		if not bool(restarted.get("ok", false)):
 			_main.last_save_message = "Deployment blocked: %s" % String(restarted.get("error", "encounter_restart_failed"))
@@ -220,7 +220,7 @@ func _start_mounted_encounter() -> bool:
 			_main.last_save_message = "Deployment blocked: %s" % String(started.get("error", "encounter_start_failed"))
 			return false
 	var encounter_port = _session.scene_runtime.get("encounter_port")
-	if encounter_port != null and encounter_port.has_method("prime_spawn_requests"):
+	if encounter_port is RoomEncounterPort:
 		encounter_port.prime_spawn_requests(_session.sim_tick)
 	var materialized: Array[Dictionary] = _session.scene_runtime.materialize_encounter_spawns()
 	for result: Dictionary in materialized:
@@ -464,7 +464,7 @@ func move_enemy_actor(enemy: CombatEnemyState, displacement: Vector2) -> Diction
 
 
 func set_enemy_collision_class(enemy: CombatEnemyState, collision_class: StringName) -> bool:
-	if enemy == null or _session.actor_registry == null or not _session.actor_registry.has_method("set_collision_class"):
+	if enemy == null or not _session.actor_registry is RoomActorAccess:
 		return false
 	var result: Dictionary = _session.actor_registry.set_collision_class("enemy/%d" % enemy.entity_id, collision_class)
 	if not bool(result.get("ok", false)):

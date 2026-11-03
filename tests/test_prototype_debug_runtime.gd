@@ -22,10 +22,7 @@ const MAINLINE_NODE_IDS: Array[String] = [
 
 
 class FakeArena:
-	extends Node
-
-	signal completed(result: Dictionary)
-	signal abandoned(result: Dictionary)
+	extends ArenaRunNode
 
 	var config: Dictionary = {}
 	var started: bool = false
@@ -42,7 +39,7 @@ class FakeArena:
 
 
 class FakePlaytestLog:
-	extends RefCounted
+	extends PlaytestLog
 
 	var events: Array[Dictionary] = []
 	var active := false

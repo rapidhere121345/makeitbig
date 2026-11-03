@@ -1,8 +1,6 @@
 class_name ContractRunController
-extends Node
+extends ArenaRunNode
 
-signal completed(result: Dictionary)
-signal abandoned(result: Dictionary)
 signal room_changed(room_index: int, room_count: int, room: Dictionary)
 
 const DEFAULT_ROOM_RUNTIME_SCRIPT := preload("res://src/game/combat_room_runtime.gd")
@@ -54,12 +52,12 @@ var _effects_volume := 0.45
 
 func set_effects_volume(value: float) -> void:
 	_effects_volume = clampf(value, 0.0, 1.0)
-	if is_instance_valid(_current_runtime) and _current_runtime.has_method("set_effects_volume"):
+	if is_instance_valid(_current_runtime) and _current_runtime is ArenaRunNode:
 		_current_runtime.set_effects_volume(_effects_volume)
 
 
 func release_manual_controls() -> void:
-	if is_instance_valid(_current_runtime) and _current_runtime.has_method("release_manual_controls"):
+	if is_instance_valid(_current_runtime) and _current_runtime is ArenaRunNode:
 		_current_runtime.release_manual_controls()
 
 
@@ -87,7 +85,7 @@ func start_session(config: Dictionary) -> Dictionary:
 func request_abandon() -> void:
 	if _finalized or _current_runtime == null or not is_instance_valid(_current_runtime):
 		return
-	if _current_runtime.has_method("request_abandon"):
+	if _current_runtime is ArenaRunNode:
 		_current_runtime.request_abandon()
 
 
@@ -97,7 +95,7 @@ func request_abandon() -> void:
 func defeat_presentation_ready() -> bool:
 	if _current_runtime == null or not is_instance_valid(_current_runtime):
 		return true
-	if not _current_runtime.has_method("defeat_presentation_ready"):
+	if not _current_runtime is ArenaRunNode:
 		return true
 	return bool(_current_runtime.defeat_presentation_ready())
 
@@ -129,7 +127,7 @@ func _start_room(index: int, emit_change: bool, continued_input: RefCounted = nu
 	var runtime := _make_room_runtime()
 	if runtime == null:
 		return _error(ERROR_ROOM_RUNTIME_FACTORY_FAILED)
-	if not runtime.has_method("start_session") or not runtime.has_signal("completed") or not runtime.has_signal("abandoned"):
+	if not runtime is ArenaRunNode or not runtime.has_signal("completed") or not runtime.has_signal("abandoned"):
 		runtime.queue_free()
 		return _error(ERROR_ROOM_RUNTIME_API_UNAVAILABLE)
 
@@ -150,7 +148,7 @@ func _start_room(index: int, emit_change: bool, continued_input: RefCounted = nu
 			error_code = String((launch_result as Dictionary).get("error", error_code))
 		_retire_current_runtime()
 		return _error(error_code)
-	if continued_input != null and runtime.has_method("resume_continuous_manual_input"):
+	if continued_input != null and runtime is ArenaRunNode:
 		runtime.resume_continuous_manual_input(continued_input)
 
 	if emit_change and not _finalized and _current_runtime == runtime and _current_room_index == index:
@@ -191,7 +189,7 @@ func _on_runtime_completed(result: Dictionary, runtime: Node, index: int) -> voi
 					return
 				_apply_room_commit_to_context(committed as Dictionary)
 			var continued_input: RefCounted = null
-			if String(_current_config.get("mode", "")) == "Manual" and runtime.has_method("take_continuous_manual_input"):
+			if String(_current_config.get("mode", "")) == "Manual" and runtime is ArenaRunNode:
 				continued_input = runtime.take_continuous_manual_input() as RefCounted
 			_retire_current_runtime()
 			var next_started := _start_room(index + 1, true, continued_input)

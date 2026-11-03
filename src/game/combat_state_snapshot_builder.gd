@@ -30,13 +30,13 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 	var player := player_slice.duplicate(true)
 	if player.is_empty():
 		var domain: Variant = _runtime_value(session, "player_combat_state")
-		assert(domain != null and domain.has_method("snapshot"), "player_combat_state is required for an authoritative snapshot")
+		assert(domain is PlayerCombatState, "player_combat_state is required for an authoritative snapshot")
 		if domain == null:
 			return {}
 		player = domain.snapshot(int(_runtime_value(session, "sim_tick", 0)))
 	var combat: Variant = _runtime_value(session, "combat_system")
-	assert(combat is Object and combat.has_method("outcome_snapshot"), "combat_system outcome authority is required for an authoritative snapshot")
-	if not combat is Object or not combat.has_method("outcome_snapshot"):
+	assert(combat is CombatSystem, "combat_system outcome authority is required for an authoritative snapshot")
+	if not combat is CombatSystem:
 		return {}
 	var outcome: Dictionary = combat.outcome_snapshot()
 	var enemy_state: Array[Dictionary] = []
@@ -82,7 +82,7 @@ static func build_runtime_state(runtime: Object, result: String, player_slice: D
 			"x_millipixels": roundi(enemy.position.x * 1000.0),
 			"y_millipixels": roundi(enemy.position.y * 1000.0),
 		}
-		if enemy.has_method("status_effects_snapshot"):
+		if enemy is CombatEnemyState:
 			var effects: Variant = enemy.status_effects_snapshot(int(_runtime_value(session, "sim_tick", 0)))
 			if effects is Dictionary and bool((effects as Dictionary).get("ok", false)) and not ((effects as Dictionary).get("effects", []) as Array).is_empty():
 				enemy_entry["status_effects"] = CombatStateCodecScript.hash_safe(effects)

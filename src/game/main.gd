@@ -272,7 +272,7 @@ func _process(delta: float) -> void:
 		return
 	var snapshot := gameplay_snapshot()
 	presentation.advance_time(snapshot, delta)
-	if session.simulation_world == null or not session.simulation_world.has_method("ticks_for_frame"):
+	if not session.simulation_world is SimulationWorld:
 		push_error("simulation_world_unavailable")
 		return
 	var ticks_to_run: int = session.simulation_world.ticks_for_frame(delta)
@@ -322,7 +322,7 @@ func set_effects_volume(value: float) -> void:
 
 func _initialize_runtime() -> void:
 	_ensure_encounter_director()
-	if session.scene_runtime != null and session.scene_runtime.has_method("is_ready"):
+	if session.scene_runtime is SceneRuntime:
 		# A mounted Main adopts the SceneRuntime authorities before its first
 		# frame. The scene configures its simulation and actor access before
 		# this node enters the tree, so the LOADING lifecycle is not a fallback

@@ -1,8 +1,5 @@
 class_name CombatRoomRuntime
-extends Node
-
-signal completed(result: Dictionary)
-signal abandoned(result: Dictionary)
+extends ArenaRunNode
 
 const SceneRuntimeScript := preload("res://src/runtime/world/scene_runtime.gd")
 const RoomSceneSetupPortScript := preload("res://src/runtime/world/room_scene_setup_port.gd")

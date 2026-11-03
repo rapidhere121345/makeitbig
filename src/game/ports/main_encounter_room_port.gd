@@ -10,9 +10,9 @@ var _owner: MainArena = null
 func bind(owner: MainArena, rules: RefCounted, outcome: RefCounted) -> Dictionary:
 	if owner == null or not is_instance_valid(owner):
 		return {"ok": false, "error": "encounter_room_owner_unavailable"}
-	if rules == null or not rules.has_method("apply_damage"):
+	if not rules is PlayerCombatRules:
 		return {"ok": false, "error": "player_rule_port_unavailable"}
-	if outcome == null or not outcome.has_method("outcome_snapshot"):
+	if not outcome is CombatSystem:
 		return {"ok": false, "error": "combat_outcome_port_unavailable"}
 	_owner = owner
 	player_rule_port = rules

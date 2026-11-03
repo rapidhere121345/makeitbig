@@ -7,10 +7,7 @@ const CommitPortScript := preload("res://tests/helpers/callable_contract_room_co
 const Assert := preload("res://tests/helpers/assert.gd")
 
 class FakeArena:
-	extends Node
-
-	signal completed(result: Dictionary)
-	signal abandoned(result: Dictionary)
+	extends ArenaRunNode
 
 	var config: Dictionary = {}
 	var started := false

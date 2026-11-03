@@ -265,7 +265,7 @@ func defeat_window_holds_screen(completed_result: Dictionary) -> bool:
 		return false
 	if _root.current_screen == null or not is_instance_valid(_root.current_screen):
 		return false
-	if not _root.current_screen.has_method("defeat_presentation_ready"):
+	if not _root.current_screen is ArenaRunNode:
 		return false
 	return not bool(_root.current_screen.defeat_presentation_ready())
 
