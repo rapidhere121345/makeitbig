@@ -404,20 +404,20 @@ func _drawable_precedes(left: Dictionary, right: Dictionary) -> bool:
 ## ranger draw.  The fallback remains the conservative 48x48 cell; resolved
 ## action frames additionally carry their authored draw offset.
 func _set_hero_occlusion_box(frame: Dictionary, world_view: RefCounted) -> void:
-	if not world_view.has_method("set_hero_occlusion_box"):
+	if not world_view is ArenaWorldViewScript:
 		return
 	var feet: Vector2 = world_view.gameplay_to_world(frame["player_position"])
 	var action_frame: Dictionary = frame.get("ranger_frame", {})
 	if action_frame.is_empty() or bool(action_frame.get("fallback", true)):
 		var facing := _player_facing_name(frame.get("player_facing", Vector2.DOWN))
-		var idle_box: Rect2 = world_view.sprite_art_box("ranger.%s.idle" % facing, feet) if world_view.has_method("sprite_art_box") else Rect2()
+		var idle_box: Rect2 = world_view.sprite_art_box("ranger.%s.idle" % facing, feet)
 		world_view.set_hero_occlusion_box(idle_box if idle_box.size.x > 0.0 and idle_box.size.y > 0.0 else Rect2(feet - Vector2(24.0, 44.0), Vector2(48.0, 48.0)))
 		return
 	var rect: Rect2i = action_frame.get("rect", Rect2i())
 	var anchor: Vector2i = action_frame.get("anchor", RangerAnimationScript.DEFAULT_ANCHOR)
 	var draw_offset: Vector2i = action_frame.get("draw_offset", Vector2i.ZERO)
 	var texture: Texture2D = action_frame.get("texture")
-	if texture != null and world_view.has_method("frame_art_box"):
+	if texture != null:
 		var visible_box: Rect2 = world_view.frame_art_box(texture, Rect2(rect), feet, Vector2(anchor), Vector2(draw_offset), bool(action_frame.get("flip_x", false)))
 		if visible_box.size.x > 0.0 and visible_box.size.y > 0.0:
 			world_view.set_hero_occlusion_box(visible_box)
@@ -494,7 +494,7 @@ func _enemy_frame_art_box(action_frame: Dictionary, feet_world: Vector2, world_v
 	if rect.size.x <= 0 or rect.size.y <= 0:
 		return Rect2()
 	var anchor: Vector2i = action_frame.get("anchor", EnemyAnimationScript.DEFAULT_ANCHOR)
-	if world_view != null and world_view.has_method("frame_occlusion_descriptor"):
+	if world_view is ArenaWorldViewScript:
 		var visibility := _enemy_frame_occlusion_descriptor(action_frame, feet_world, world_view)
 		var visible_box: Rect2 = visibility.get("art_box", Rect2())
 		if visible_box.size.x > 0.0 and visible_box.size.y > 0.0:
@@ -506,7 +506,7 @@ func _enemy_frame_occlusion_descriptor(action_frame: Dictionary, feet_world: Vec
 	var rect: Rect2i = action_frame.get("rect", Rect2i())
 	var anchor: Vector2i = action_frame.get("anchor", EnemyAnimationScript.DEFAULT_ANCHOR)
 	var texture: Texture2D = action_frame.get("texture")
-	if world_view != null and world_view.has_method("frame_occlusion_descriptor"):
+	if world_view is ArenaWorldViewScript:
 		return world_view.frame_occlusion_descriptor(texture, Rect2(rect), feet_world, Vector2(anchor), Vector2.ZERO, bool(action_frame.get("flip_x", false)))
 	return {"art_box": Rect2((feet_world - Vector2(anchor)).round(), Vector2(rect.size)), "conservative": true}
 
@@ -516,7 +516,7 @@ func _enemy_occlusion_descriptor(frame: Dictionary, enemy: CombatEnemyState, fee
 	if not action_frame.is_empty():
 		return _enemy_frame_occlusion_descriptor(action_frame, feet_world, world_view)
 	var sprite_id := "enemy.%s.%s" % [_enemy_role_id(enemy), _enemy_pose_id(enemy)]
-	if world_view != null and world_view.has_method("sprite_occlusion_descriptor"):
+	if world_view is ArenaWorldViewScript:
 		return world_view.sprite_occlusion_descriptor(sprite_id, feet_world, enemy.facing.x < -0.001)
 	return {"art_box": Rect2(feet_world - Vector2(24.0, 44.0), Vector2(48.0, 48.0)), "conservative": true}
 

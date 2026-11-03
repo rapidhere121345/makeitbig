@@ -16,14 +16,7 @@
     "src/game/root/display_settings.gd": 1,
     "src/game/root/playtest_recorder.gd": 6,
     "src/game/root/test_console_host.gd": 5,
-    "src/presentation/arena_actor_presenter.gd": 6,
-    "src/presentation/arena_presenter.gd": 2,
     "src/presentation/base_hub_screen.gd": 1,
-    "src/presentation/combat_presentation_controller.gd": 1,
-    "src/presentation/facility/forge_page.gd": 2,
-    "src/presentation/facility/loadout_page.gd": 3,
-    "src/presentation/facility_screen.gd": 3,
-    "src/presentation/town_presenter.gd": 2,
     "src/runtime/combat/boss_arrow_flight.gd": 2,
     "src/runtime/combat/boss_combat_domain.gd": 1,
     "src/runtime/combat/combat_room_loot_rebuild.gd": 2,
@@ -39,7 +32,6 @@
     "src/runtime/world/room_presentation_port.gd": 1,
     "src/runtime/world/room_spatial_port.gd": 3,
     "src/runtime/world/scene_runtime.gd": 15,
-    "src/runtime/world/town_controller.gd": 1,
-    "src/systems/law_forge.gd": 1
+    "src/runtime/world/town_controller.gd": 1
   }
 }

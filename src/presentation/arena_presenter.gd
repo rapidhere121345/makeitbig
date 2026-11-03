@@ -143,7 +143,7 @@ func presentation_report() -> Dictionary:
 			"authority": "parent-owned read-only frame projection",
 		},
 	}
-	if _world_view != null and _world_view.has_method("is_ready"):
+	if _world_view is ArenaWorldViewScript:
 		report["world_view_ready"] = bool(_world_view.is_ready())
 	if _world_view != null and "pending_reason" in _world_view:
 		report["world_pending_reason"] = String(_world_view.get("pending_reason"))
@@ -192,7 +192,7 @@ func _draw() -> void:
 		_last_draw_state = STATE_PRESENTATION_ERROR
 		_draw_presentation_error(viewport_rect)
 		return
-	if _world_view == null or not _world_view.has_method("is_ready") or not bool(_world_view.is_ready()):
+	if not _world_view is ArenaWorldViewScript or not bool(_world_view.is_ready()):
 		_last_draw_state = STATE_PRESENTATION_ERROR
 		_last_error = _world_pending_reason()
 		_draw_presentation_error(viewport_rect)

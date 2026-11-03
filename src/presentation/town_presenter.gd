@@ -158,7 +158,7 @@ func attach(presenter: Variant, initial_state: Dictionary, presentation_runtime:
 ## any rejection fails the attach so a mounted town can never pass READY
 ## with a half-bound presentation domain.
 func _bind_actor_presentations(runtime: Variant) -> Array[String]:
-	if runtime == null or not runtime.has_method("bind_actor_presentation"):
+	if not runtime is SceneRuntime:
 		return ["town_presentation_runtime_invalid"]
 	var metadata := hero_visual_metadata()
 	var hero_rect: Array = metadata.get("rect", [])
@@ -251,7 +251,7 @@ func _sync_occlusion(display_delta: float) -> void:
 		_reset_occlusion("presentation_runtime_unbound")
 		return
 	var port: Variant = _presentation_runtime.get("presentation_port") if _presentation_runtime is Object else null
-	if port == null or not port.has_method("latest_occlusion_plan"):
+	if not port is RoomPresentationPort:
 		_reset_occlusion("presentation_port_unavailable")
 		return
 	var plan_result: Dictionary = port.latest_occlusion_plan()
