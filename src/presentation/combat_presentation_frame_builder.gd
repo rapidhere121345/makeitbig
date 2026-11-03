@@ -7,7 +7,7 @@ extends RefCounted
 const Snapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
 const RoomCatalog := preload("res://src/runtime/world/room_catalog.gd")
 const AimResolver := preload("res://src/systems/manual_aim_resolver.gd")
-const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
+const RangerSkillRulesScript := preload("res://src/content/ranger_skill_rules.gd")
 const PlayerActionTimelineScript := preload("res://src/systems/player_action_timeline.gd")
 const SIM_TICKS_PER_SECOND := RangerSkillRulesScript.TICKS_PER_SECOND
 const DODGE_DURATION_TICKS := RangerSkillRulesScript.DODGE_DURATION_TICKS

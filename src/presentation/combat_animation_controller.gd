@@ -8,7 +8,7 @@ extends RefCounted
 const RangerAnimationScript := preload("res://src/presentation/ranger_animation.gd")
 const EnemyAnimationScript := preload("res://src/presentation/enemy_animation.gd")
 const DefeatPresentationScript := preload("res://src/presentation/defeat_presentation.gd")
-const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
+const RangerSkillRulesScript := preload("res://src/content/ranger_skill_rules.gd")
 const PlayerActionTimelineScript := preload("res://src/systems/player_action_timeline.gd")
 const SIM_TICKS_PER_SECOND := RangerSkillRulesScript.TICKS_PER_SECOND
 const DODGE_DURATION_TICKS := RangerSkillRulesScript.DODGE_DURATION_TICKS

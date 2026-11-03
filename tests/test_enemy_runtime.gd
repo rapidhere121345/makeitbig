@@ -1,7 +1,7 @@
 extends SceneTree
 
 const PlayerFixture := preload("res://tests/helpers/player_domain_fixture.gd")
-const Skill := preload("res://src/systems/ranger_skill_rules.gd")
+const Skill := preload("res://src/content/ranger_skill_rules.gd")
 const Timeline := preload("res://src/systems/player_action_timeline.gd")
 const ApplicationStateScript := preload("res://src/game/application_state.gd")
 const TalentFixture := preload("res://tests/helpers/talent_runtime_fixture.gd")

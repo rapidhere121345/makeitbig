@@ -9,8 +9,8 @@ extends RefCounted
 ## boundary.  Query services subtract suppressed ids from static results and
 ## add overlay surfaces of their own.
 
-const Shape := preload("res://src/runtime/geometry/spatial_shape.gd")
-const Sweep := preload("res://src/runtime/geometry/spatial_sweep.gd")
+const Shape := preload("res://src/core/geometry/spatial_shape.gd")
+const Sweep := preload("res://src/core/geometry/spatial_sweep.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const Contact := preload("res://src/runtime/spatial/spatial_contact.gd")
 const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spatial_index.gd")

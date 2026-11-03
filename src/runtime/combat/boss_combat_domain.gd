@@ -2,8 +2,8 @@ class_name BossCombatDomain
 extends RefCounted
 
 const BigValueScript := preload("res://src/core/big_value.gd")
-const SweepScript := preload("res://src/runtime/geometry/spatial_sweep.gd")
-const ShapeScript := preload("res://src/runtime/geometry/spatial_shape.gd")
+const SweepScript := preload("res://src/core/geometry/spatial_sweep.gd")
+const ShapeScript := preload("res://src/core/geometry/spatial_shape.gd")
 const ContactScript := preload("res://src/runtime/spatial/spatial_contact.gd")
 const QueryScript := preload("res://src/runtime/combat/boss_attack_query.gd")
 const PathResultScript := preload("res://src/runtime/combat/boss_path_result.gd")

@@ -11,10 +11,10 @@ extends RefCounted
 signal impact_trace_requested(position: Vector2, direction: Vector2, generations: int)
 signal corpse_requested(visual: Dictionary)
 
-const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
+const CombatQueryScript := preload("res://src/core/geometry/combat_query.gd")
 const CombatArrowProjectileScript := preload("res://src/runtime/world/combat_arrow_projectile.gd")
 const PiercingArrowModelScript := preload("res://src/systems/piercing_arrow_model.gd")
-const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
+const RangerSkillRulesScript := preload("res://src/content/ranger_skill_rules.gd")
 const CombatSystemRoomPortScript := preload("res://src/runtime/combat/combat_system_room_port.gd")
 const CoreResult := preload("res://src/core/result.gd")
 

@@ -13,7 +13,7 @@ const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.g
 const CombatMarksScript := preload("res://src/presentation/combat_marks.gd")
 const PaletteScript := preload("res://src/presentation/combat_palette.gd")
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
-const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript := preload("res://src/core/geometry/arena_geometry.gd")
 const RoomCatalogScript := preload("res://src/runtime/world/room_catalog.gd")
 
 const FRAME_KEYS := {

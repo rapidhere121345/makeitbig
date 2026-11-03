@@ -2,8 +2,8 @@ extends RefCounted
 
 ## Static, footprint-aware routing for the proxy. The grid is only a planning
 ## aid; the actor motor remains the authority for every movement.
-const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
-const Sweep := preload("res://src/runtime/geometry/spatial_sweep.gd")
+const ArenaGeometry := preload("res://src/core/geometry/arena_geometry.gd")
+const Sweep := preload("res://src/core/geometry/spatial_sweep.gd")
 const STEP := 24.0
 const CLEARANCE := 15.0
 

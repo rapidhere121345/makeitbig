@@ -6,7 +6,7 @@ extends RefCounted
 ## publishes these queries (arena_rect(), walkable_geometry(), ...); room state
 ## is read from the RoomSession.
 
-const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript = preload("res://src/core/geometry/arena_geometry.gd")
 
 ## The room authority; read at use time, never cache its replaced members.
 var _session: RoomSession

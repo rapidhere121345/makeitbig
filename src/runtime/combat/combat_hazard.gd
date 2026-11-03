@@ -7,7 +7,7 @@ extends RefCounted
 ## suppression. It never applies damage itself; it asks the room port to stage
 ## a typed player contact for the fixed DAMAGE_STATUS phase.
 
-const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
+const CombatQueryScript := preload("res://src/core/geometry/combat_query.gd")
 
 const WARNING_TICKS: int = 30
 const ACTIVE_TICKS: int = 15

@@ -6,7 +6,7 @@ extends RefCounted
 ## generated environment plates supply the visible terrain; native sources
 ## retain authority over collision and sockets. Reused structure sprites
 ## keep their production anchors; no painted shape becomes collision authority.
-const Geometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Geometry := preload("res://src/core/geometry/arena_geometry.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const IDS: Array[String] = Geometry.BATTLEFIELDS

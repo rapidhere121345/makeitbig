@@ -8,7 +8,7 @@ extends EnemyBehavior
 ## per-enemy field lives on CombatEnemyState. The hash-visible strings
 ## ("charging_raider", "charge") are unchanged.
 
-const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
+const CombatQueryScript := preload("res://src/core/geometry/combat_query.gd")
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
 
 

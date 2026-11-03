@@ -3,8 +3,8 @@ extends RefCounted
 
 ## Player-only fixed-tick rules. No Main callbacks or mutable target objects.
 const State := preload("res://src/runtime/world/player_combat_state.gd")
-const Skill := preload("res://src/systems/ranger_skill_rules.gd")
-const Motion := preload("res://src/systems/player_motion_system.gd")
+const Skill := preload("res://src/content/ranger_skill_rules.gd")
+const Motion := preload("res://src/runtime/combat/player_motion_system.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const ArrowOrigin := preload("res://src/systems/ranger_arrow_origin.gd")
 const AimResolver := preload("res://src/systems/manual_aim_resolver.gd")

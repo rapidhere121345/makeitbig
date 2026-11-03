@@ -6,7 +6,7 @@ extends SceneTree
 ##   godot --headless --path . --script res://tests/test_player_motion_system.gd
 
 const State := preload("res://src/runtime/world/player_combat_state.gd")
-const Rules := preload("res://src/systems/player_combat_rules.gd")
+const Rules := preload("res://src/runtime/combat/player_combat_rules.gd")
 const Stream := preload("res://src/systems/combat_event_stream.gd")
 const SimulationWorldScript := preload("res://src/runtime/world/simulation_world.gd")
 const RoomActorAccessScript := preload("res://src/runtime/world/room_actor_access.gd")

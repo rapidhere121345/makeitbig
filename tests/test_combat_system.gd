@@ -1,6 +1,6 @@
 extends SceneTree
 
-const CombatSystemScript := preload("res://src/systems/combat_system.gd")
+const CombatSystemScript := preload("res://src/runtime/combat/combat_system.gd")
 const CombatEventStreamScript := preload("res://src/systems/combat_event_stream.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 const CombatArrowProjectileScript := preload("res://src/runtime/world/combat_arrow_projectile.gd")

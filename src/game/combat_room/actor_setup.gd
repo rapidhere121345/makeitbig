@@ -7,7 +7,7 @@ extends RefCounted
 ## owned by MainArena and is reached through the typed owner reference.
 
 const ArenaWorldViewScript := preload("res://src/presentation/arena_world_view.gd")
-const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript = preload("res://src/core/geometry/arena_geometry.gd")
 const ActorRegistryScript = preload("res://src/runtime/world/actor_registry.gd")
 const SimulationWorldScript = preload("res://src/runtime/world/simulation_world.gd")
 const StaticSpatialIndexScript = preload("res://src/runtime/spatial/static_spatial_index.gd")

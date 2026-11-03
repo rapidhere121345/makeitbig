@@ -1,7 +1,7 @@
 extends SceneTree
 
 const ArenaCombatPresenterScript := preload("res://src/presentation/arena_combat_presenter.gd")
-const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript := preload("res://src/core/geometry/arena_geometry.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 

@@ -3,7 +3,7 @@ extends SceneTree
 const ContentRegistryScript := preload("res://src/content/content_registry.gd")
 const ProxyBuildScript := preload("res://src/systems/proxy_build.gd")
 const ProxyIntentSystemScript := preload("res://src/systems/proxy_intent_system.gd")
-const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript := preload("res://src/core/geometry/arena_geometry.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 

@@ -8,7 +8,7 @@ extends EnemyBehavior
 ## lives on CombatEnemyState, so the state hash sees it. The hash-visible
 ## strings ("melee_pursuer", "melee_attack", "contact") are unchanged.
 
-const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
+const CombatQueryScript := preload("res://src/core/geometry/combat_query.gd")
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
 
 

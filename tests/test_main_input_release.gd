@@ -4,7 +4,7 @@ const Main := preload("res://src/game/main.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Items := preload("res://src/content/early_item_registry.gd")
 const Resolver := preload("res://src/systems/build_resolver.gd")
-const Skill := preload("res://src/systems/ranger_skill_rules.gd")
+const Skill := preload("res://src/content/ranger_skill_rules.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 class DrivenMain:

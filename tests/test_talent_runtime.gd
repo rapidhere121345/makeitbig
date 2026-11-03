@@ -1,6 +1,6 @@
 extends SceneTree
 
-const Skill := preload("res://src/systems/ranger_skill_rules.gd")
+const Skill := preload("res://src/content/ranger_skill_rules.gd")
 
 const Fixture := preload("res://tests/helpers/talent_runtime_fixture.gd")
 const Assert := preload("res://tests/helpers/assert.gd")

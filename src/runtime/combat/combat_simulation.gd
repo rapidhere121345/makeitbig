@@ -8,7 +8,7 @@ extends RefCounted
 ## snapshot. The room-domain owner consumes that snapshot and runs its room
 ## phases after publication. It may stage work for the next kernel tick, but it
 ## never submits a second authority tick.
-const Rules := preload("res://src/systems/player_combat_rules.gd")
+const Rules := preload("res://src/runtime/combat/player_combat_rules.gd")
 const CombatPhasePortScript := preload("res://src/runtime/combat/combat_phase_port.gd")
 
 ## This is the typed method boundary between the kernel tick and the mounted

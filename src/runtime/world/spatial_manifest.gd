@@ -1,7 +1,7 @@
 class_name SpatialManifest
 extends RefCounted
 
-const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript := preload("res://src/core/geometry/arena_geometry.gd")
 
 ## Pure, build-produced spatial data.  It describes authored relationships and
 ## channel capabilities; it never owns actors, node references or run state.

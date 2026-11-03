@@ -3,7 +3,7 @@ extends RefCounted
 
 ## One motor submission per real world tick, including a stationary tick.
 ## Mobility timers and actions belong to PlayerCombatRules, not callbacks.
-const Skill := preload("res://src/systems/ranger_skill_rules.gd")
+const Skill := preload("res://src/content/ranger_skill_rules.gd")
 const PlayerState := preload("res://src/runtime/world/player_combat_state.gd")
 const PLAYER_SPEED := 245.0
 const SIM_STEP_SECONDS := 1.0 / float(Skill.TICKS_PER_SECOND)

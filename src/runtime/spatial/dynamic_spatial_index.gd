@@ -11,8 +11,8 @@ extends RefCounted
 ## declared; a hurtbox-only body is invisible to movement no matter what its
 ## collision class is.
 
-const Shape := preload("res://src/runtime/geometry/spatial_shape.gd")
-const Sweep := preload("res://src/runtime/geometry/spatial_sweep.gd")
+const Shape := preload("res://src/core/geometry/spatial_shape.gd")
+const Sweep := preload("res://src/core/geometry/spatial_sweep.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const Contact := preload("res://src/runtime/spatial/spatial_contact.gd")
 

@@ -6,10 +6,10 @@ extends SceneTree
 ##   source scripts/project_env.sh
 ##   "$GODOT_BIN" --headless --path . --script res://tests/test_combat_simulation.gd
 
-const Simulation := preload("res://src/systems/combat_simulation.gd")
+const Simulation := preload("res://src/runtime/combat/combat_simulation.gd")
 const State := preload("res://src/runtime/world/player_combat_state.gd")
 const World := preload("res://src/runtime/world/simulation_world.gd")
-const Rules := preload("res://src/systems/player_combat_rules.gd")
+const Rules := preload("res://src/runtime/combat/player_combat_rules.gd")
 const Stream := preload("res://src/systems/combat_event_stream.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const PhasePort := preload("res://tests/helpers/callable_combat_phase_port.gd")

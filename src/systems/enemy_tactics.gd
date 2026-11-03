@@ -1,7 +1,7 @@
 class_name EnemyTactics
 extends RefCounted
 
-const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometry := preload("res://src/core/geometry/arena_geometry.gd")
 
 ## Deterministic, scene-free enemy intent planner.
 ##

@@ -11,7 +11,7 @@ extends RefCounted
 ## result.  An opaque world blocker wins a tie with a dynamic target at the
 ## same toi, so equal-toi targets behind the stopper are excluded.
 
-const Shape := preload("res://src/runtime/geometry/spatial_shape.gd")
+const Shape := preload("res://src/core/geometry/spatial_shape.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const Contact := preload("res://src/runtime/spatial/spatial_contact.gd")
 const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spatial_index.gd")

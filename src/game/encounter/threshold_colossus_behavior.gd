@@ -8,7 +8,7 @@ extends EnemyBehavior
 ## per-enemy field lives on CombatEnemyState. The hash-visible strings
 ## ("threshold_colossus", "slam", "sweep", "lane", phase ids) are unchanged.
 
-const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
+const CombatQueryScript := preload("res://src/core/geometry/combat_query.gd")
 
 
 func kind_id() -> String:

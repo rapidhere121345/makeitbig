@@ -14,8 +14,8 @@ const SCHEMA_VERSION: int = 1
 ## tangent and epsilon contacts always stay inside the broadphase.
 const BROADPHASE_MARGIN: float = 0.01
 
-const Shape := preload("res://src/runtime/geometry/spatial_shape.gd")
-const Sweep := preload("res://src/runtime/geometry/spatial_sweep.gd")
+const Shape := preload("res://src/core/geometry/spatial_shape.gd")
+const Sweep := preload("res://src/core/geometry/spatial_sweep.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const Contact := preload("res://src/runtime/spatial/spatial_contact.gd")
 

@@ -8,8 +8,8 @@ const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay
 const BodyCollisionPolicyScript := preload("res://src/runtime/spatial/body_collision_policy.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
 const ContinuousHitResolverScript := preload("res://src/runtime/spatial/continuous_hit_resolver.gd")
-const SpatialSweepScript := preload("res://src/runtime/geometry/spatial_sweep.gd")
-const ShapeScript := preload("res://src/runtime/geometry/spatial_shape.gd")
+const SpatialSweepScript := preload("res://src/core/geometry/spatial_sweep.gd")
+const ShapeScript := preload("res://src/core/geometry/spatial_shape.gd")
 const Fixtures := preload("res://tests/helpers/spatial_fixtures.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 

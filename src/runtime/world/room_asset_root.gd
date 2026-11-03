@@ -7,7 +7,7 @@ extends Node2D
 ## Geometry and sockets are authored here. SpatialManifest is derived from this
 ## scene-owned source contract; the component never owns simulation state.
 
-const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript := preload("res://src/core/geometry/arena_geometry.gd")
 const GEOMETRY_SOURCE := "arena.geometry.v1"
 const COORDINATE_CONVENTION := {"units": "design_pixel", "up": "negative_y", "scale": 1.0}
 const MOVEMENT_CHANNELS := {"movement": true, "navigation": true, "vision": true, "projectile": true, "occlusion": false}

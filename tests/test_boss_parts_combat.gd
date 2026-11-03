@@ -7,7 +7,7 @@ extends SceneTree
 ## fails closed. Normal-enemy and player-domain behavior stays asserted
 ## through the unchanged CombatSystem paths.
 
-const Combat := preload("res://src/systems/combat_system.gd")
+const Combat := preload("res://src/runtime/combat/combat_system.gd")
 const Enemy := preload("res://src/runtime/world/combat_enemy_state.gd")
 const Arrow := preload("res://src/runtime/world/combat_arrow_projectile.gd")
 const Stream := preload("res://src/systems/combat_event_stream.gd")

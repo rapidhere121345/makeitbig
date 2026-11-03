@@ -9,8 +9,8 @@ const DynamicSpatialIndexScript := preload("res://src/runtime/spatial/dynamic_sp
 const SpatialOverlayScript := preload("res://src/runtime/spatial/spatial_overlay.gd")
 const MovementResolverScript := preload("res://src/runtime/spatial/movement_resolver.gd")
 const Builder := preload("res://src/game/combat_state_snapshot_builder.gd")
-const Combat := preload("res://src/systems/combat_system.gd")
-const Rules := preload("res://src/systems/player_combat_rules.gd")
+const Combat := preload("res://src/runtime/combat/combat_system.gd")
+const Rules := preload("res://src/runtime/combat/player_combat_rules.gd")
 const Stream := preload("res://src/systems/combat_event_stream.gd")
 const Big := preload("res://src/core/big_value.gd")
 const RoomPort := preload("res://tests/helpers/callable_combat_system_room_port.gd")
@@ -33,7 +33,7 @@ class RoomSnapshotSource:
 
 
 func _initialize() -> void:
-	for resource_path: String in ["res://src/runtime/world/player_combat_state.gd", "res://src/systems/player_combat_rules.gd", "res://tests/test_player_combat_state.gd", "res://tests/test_player_combat_rules.gd"]:
+	for resource_path: String in ["res://src/runtime/world/player_combat_state.gd", "res://src/runtime/combat/player_combat_rules.gd", "res://tests/test_player_combat_state.gd", "res://tests/test_player_combat_rules.gd"]:
 		var uid := FileAccess.get_file_as_string(resource_path + ".uid").strip_edges()
 		_expect(ResourceUID.id_to_text(ResourceUID.text_to_id(uid)) == uid, "invalid UID sidecar: " + resource_path)
 	var spatial_port := RoomSpatialPortScript.new()

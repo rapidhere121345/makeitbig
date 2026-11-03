@@ -8,9 +8,9 @@ extends SceneTree
 const MainScript := preload("res://src/game/main.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Resolver := preload("res://src/systems/build_resolver.gd")
-const Motion := preload("res://src/systems/player_motion_system.gd")
+const Motion := preload("res://src/runtime/combat/player_motion_system.gd")
 
-const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript := preload("res://src/core/geometry/arena_geometry.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const SceneRuntimeScript := preload("res://src/runtime/world/scene_runtime.gd")
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")

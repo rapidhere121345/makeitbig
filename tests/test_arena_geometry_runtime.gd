@@ -1,6 +1,6 @@
 extends SceneTree
 
-const Geometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Geometry := preload("res://src/core/geometry/arena_geometry.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []

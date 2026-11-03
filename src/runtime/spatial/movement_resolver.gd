@@ -10,7 +10,7 @@ extends RefCounted
 ## Godot physics, and it returns the committed position; callers own applying
 ## it to presentation state.
 
-const Shape := preload("res://src/runtime/geometry/spatial_shape.gd")
+const Shape := preload("res://src/core/geometry/spatial_shape.gd")
 const Channels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const Contact := preload("res://src/runtime/spatial/spatial_contact.gd")
 const StaticSpatialIndexScript := preload("res://src/runtime/spatial/static_spatial_index.gd")

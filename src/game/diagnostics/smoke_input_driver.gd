@@ -5,8 +5,8 @@ extends RefCounted
 ## and emits the same protocol commands available to a player.
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const Timeline := preload("res://src/systems/player_action_timeline.gd")
-const Skill := preload("res://src/systems/ranger_skill_rules.gd")
-const Query := preload("res://src/runtime/geometry/combat_query.gd")
+const Skill := preload("res://src/content/ranger_skill_rules.gd")
+const Query := preload("res://src/core/geometry/combat_query.gd")
 
 
 func decide(observation: Dictionary, next_sequence: int) -> Dictionary:

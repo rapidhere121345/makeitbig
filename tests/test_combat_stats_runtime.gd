@@ -8,7 +8,7 @@ extends SceneTree
 
 const State := preload("res://src/runtime/world/player_combat_state.gd")
 const World := preload("res://src/runtime/world/simulation_world.gd")
-const Rules := preload("res://src/systems/player_combat_rules.gd")
+const Rules := preload("res://src/runtime/combat/player_combat_rules.gd")
 const Stream := preload("res://src/systems/combat_event_stream.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
 const RoomSpatialPortScript := preload("res://src/runtime/world/room_spatial_port.gd")

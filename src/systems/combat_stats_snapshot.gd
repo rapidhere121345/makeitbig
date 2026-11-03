@@ -6,7 +6,7 @@ extends RefCounted
 ## profile data during a fixed tick.
 
 const SCHEMA_VERSION: int = 1
-const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
+const RangerSkillRulesScript := preload("res://src/content/ranger_skill_rules.gd")
 const NUMERIC_FIELDS: Array[String] = [
 	"maximum_health", "damage", "projectile_speed", "targeting_distance",
 	"move_speed", "acceleration", "dodge_distance",

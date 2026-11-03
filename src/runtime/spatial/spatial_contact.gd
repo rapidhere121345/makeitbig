@@ -9,7 +9,7 @@ extends RefCounted
 ## implements the target contract that an opaque world blocker wins a tie with
 ## a target at the same toi.
 
-const Shape := preload("res://src/runtime/geometry/spatial_shape.gd")
+const Shape := preload("res://src/core/geometry/spatial_shape.gd")
 
 const KIND_STATIC_SURFACE := &"static_surface"
 const KIND_OVERLAY_SURFACE := &"overlay_surface"

@@ -29,6 +29,15 @@ ports and owners' public APIs should replace. Existing debt is listed in `script
 may only shrink: a new violation fails, an exception that is no longer needed
 fails, and `--update-baseline` records reductions but never growth.
 
+Placement follows the table: dependency-free geometry (`ArenaGeometry`,
+`SpatialShape`, `SpatialSweep`, `CombatQuery`) lives in `src/core/geometry/`
+so rules and runtime can share it; the room-authority combat code that drives
+runtime state and ports (`CombatSystem`, `CombatSimulation`,
+`PlayerCombatRules`, `PlayerMotionSystem`) lives in `src/runtime/combat/`; the
+Ranger's authored action numbers (`RangerSkillRules`) are content, so the skill
+registry can validate against them. `src/systems/` keeps pure rules that read
+only core and content.
+
 ## App shell
 
 `GameRoot` (`src/game/game_root.gd`) is the composition root: it owns the

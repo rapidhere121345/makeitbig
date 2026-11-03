@@ -12,11 +12,11 @@ extends RefCounted
 ## silently valid fallback for a missing or invalid room dependency;
 ## bind_room() is its only composition entry.
 
-const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
+const CombatQueryScript := preload("res://src/core/geometry/combat_query.gd")
 const CombatEnemyStateScript := preload("res://src/runtime/world/combat_enemy_state.gd")
 const EnemyCombatProfileScript := preload("res://src/content/enemy_combat_profile.gd")
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
-const ArenaGeometryScript := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript := preload("res://src/core/geometry/arena_geometry.gd")
 const HazardReadPortScript := preload("res://src/runtime/combat/combat_hazard_read_port.gd")
 const MeleePursuerBehaviorScript := preload("res://src/game/encounter/melee_pursuer_behavior.gd")
 const ChargingRaiderBehaviorScript := preload("res://src/game/encounter/charging_raider_behavior.gd")

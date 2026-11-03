@@ -3,7 +3,7 @@ extends SceneTree
 const NativeScene := preload("res://content/rooms/samples/concave_hole_passage.tscn")
 const Runtime := preload("res://src/runtime/world/scene_runtime.gd")
 const Spatial := preload("res://src/runtime/world/spatial_manifest.gd")
-const Arena := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Arena := preload("res://src/core/geometry/arena_geometry.gd")
 const SpatialChannels := preload("res://src/runtime/spatial/spatial_channels.gd")
 const SpatialContactScript := preload("res://src/runtime/spatial/spatial_contact.gd")
 const Assert := preload("res://tests/helpers/assert.gd")

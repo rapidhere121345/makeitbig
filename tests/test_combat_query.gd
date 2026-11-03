@@ -1,6 +1,6 @@
 extends SceneTree
 
-const CombatQueryScript := preload("res://src/runtime/geometry/combat_query.gd")
+const CombatQueryScript := preload("res://src/core/geometry/combat_query.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 var failures: Array[String] = []

@@ -5,9 +5,9 @@ extends RefCounted
 
 const ProxyBuild := preload("res://src/systems/proxy_build.gd")
 const Protocol := preload("res://src/systems/combat_command_protocol.gd")
-const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometry := preload("res://src/core/geometry/arena_geometry.gd")
 const Navigation := preload("res://src/systems/proxy_navigation.gd")
-const SpatialShape := preload("res://src/runtime/geometry/spatial_shape.gd")
+const SpatialShape := preload("res://src/core/geometry/spatial_shape.gd")
 
 const SNAPSHOT_VERSION := 3
 const STATE_VERSION := 1

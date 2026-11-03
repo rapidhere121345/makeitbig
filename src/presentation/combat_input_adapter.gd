@@ -8,7 +8,7 @@ signal report_requested(text: String)
 
 const ManualCombatInputScript := preload("res://src/presentation/manual_combat_input.gd")
 const ManualAimResolverScript := preload("res://src/systems/manual_aim_resolver.gd")
-const Rules := preload("res://src/systems/ranger_skill_rules.gd")
+const Rules := preload("res://src/content/ranger_skill_rules.gd")
 const CommandSource := preload("res://src/systems/combat_command_source.gd")
 const CommandSourcePort := preload("res://src/systems/combat_command_source_port.gd")
 const ATTACK_SOURCE_ASSISTED := "assisted"

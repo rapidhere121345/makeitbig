@@ -10,7 +10,7 @@ extends ClassKit
 
 const BuildResolution := preload("res://src/game/application/build_resolution.gd")
 const CombatStateCodecScript := preload("res://src/game/combat_state_codec.gd")
-const RangerSkillRulesScript := preload("res://src/systems/ranger_skill_rules.gd")
+const RangerSkillRulesScript := preload("res://src/content/ranger_skill_rules.gd")
 
 
 func class_id() -> String:

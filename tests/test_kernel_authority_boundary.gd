@@ -5,7 +5,7 @@ extends SceneTree
 ## gate keeps the orchestration boundary itself from regressing to a callback
 ## bag.
 
-const Simulation := preload("res://src/systems/combat_simulation.gd")
+const Simulation := preload("res://src/runtime/combat/combat_simulation.gd")
 const EncounterDirectorScript := preload("res://src/game/encounter_director.gd")
 const EncounterRoomPortScript := preload("res://src/runtime/combat/encounter_room_port.gd")
 const Assert := preload("res://tests/helpers/assert.gd")

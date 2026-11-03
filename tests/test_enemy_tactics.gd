@@ -1,7 +1,7 @@
 extends SceneTree
 
 const EnemyTacticsScript := preload("res://src/systems/enemy_tactics.gd")
-const ArenaGeometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometry := preload("res://src/core/geometry/arena_geometry.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 const DEFAULT_ARENA := Rect2(0.0, 0.0, 640.0, 480.0)

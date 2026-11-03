@@ -6,7 +6,7 @@ extends RefCounted
 
 const CONTENT_PATH := "res://content/early_skills.json"
 const EXPECTED_SCHEMA_VERSION := 1
-const RangerSkillRulesScript = preload("res://src/systems/ranger_skill_rules.gd")
+const RangerSkillRulesScript = preload("res://src/content/ranger_skill_rules.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const EXPECTED_TICKS_PER_SECOND := RangerSkillRulesScript.TICKS_PER_SECOND
 const SKILL_IDS: Array[String] = ["piercing_arrow", "hunter_mark", "dash", "basic_dodge"]

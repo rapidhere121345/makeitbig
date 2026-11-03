@@ -10,7 +10,7 @@ extends RefCounted
 ## Contact points lie on the contacted feature.  Callers classify blocking;
 ## this kernel only reports geometry.
 
-const Shape := preload("res://src/runtime/geometry/spatial_shape.gd")
+const Shape := preload("res://src/core/geometry/spatial_shape.gd")
 
 
 ## Earliest contact between a moving circle and a point obstacle.

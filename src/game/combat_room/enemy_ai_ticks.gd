@@ -7,7 +7,7 @@ extends RefCounted
 ## report. Encounter and room state stay owned by MainArena and are reached
 ## through the typed owner reference.
 
-const CombatQueryScript = preload("res://src/runtime/geometry/combat_query.gd")
+const CombatQueryScript = preload("res://src/core/geometry/combat_query.gd")
 
 var _main: MainArena
 ## The room authority; read at use time, never cache its replaced members.

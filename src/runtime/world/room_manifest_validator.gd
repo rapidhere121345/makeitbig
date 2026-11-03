@@ -8,7 +8,7 @@ const RoomDefinitionScript = preload("res://src/runtime/world/room_definition.gd
 const WorldAssetScript = preload("res://src/runtime/world/world_asset.gd")
 const SpatialManifestScript = preload("res://src/runtime/world/spatial_manifest.gd")
 const WorldPresenterScript = preload("res://src/runtime/world/world_presenter.gd")
-const ArenaGeometryScript = preload("res://src/runtime/geometry/arena_geometry.gd")
+const ArenaGeometryScript = preload("res://src/core/geometry/arena_geometry.gd")
 const StaticSpatialIndexScript = preload("res://src/runtime/spatial/static_spatial_index.gd")
 
 

@@ -4,7 +4,7 @@ extends RefCounted
 ## Player gameplay storage. Only PlayerCombatRules mutates _values/_timeline.
 ## Position has no stored alias: every observation reads the room registry.
 const Timeline := preload("res://src/systems/player_action_timeline.gd")
-const Skill := preload("res://src/systems/ranger_skill_rules.gd")
+const Skill := preload("res://src/content/ranger_skill_rules.gd")
 const Big := preload("res://src/core/big_value.gd")
 const CombatStats := preload("res://src/systems/combat_stats_snapshot.gd")
 

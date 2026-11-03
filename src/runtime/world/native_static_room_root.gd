@@ -3,7 +3,7 @@ extends Node2D
 
 ## Declarative native room source: one outer boundary, authored convex solids,
 ## and footprint-safe sockets. It owns no actor, motor, clock or runtime state.
-const Arena := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Arena := preload("res://src/core/geometry/arena_geometry.gd")
 const Spatial := preload("res://src/runtime/world/spatial_manifest.gd")
 const Query := preload("res://src/runtime/geometry/geometry_query.gd")
 const GROUPS: Array[String] = ["Ground", "GroundEffects", "SortRoot", "Foreground", "GeometrySources", "Sockets"]

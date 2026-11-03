@@ -4,7 +4,7 @@ extends RefCounted
 ## Shared bow socket values. Gameplay freezes the release offset using this
 ## spatial contract; views may project the same sockets at any display scale.
 ## No atlas, renderer, camera, node or presentation clock determines a launch.
-const Rules := preload("res://src/systems/ranger_skill_rules.gd")
+const Rules := preload("res://src/content/ranger_skill_rules.gd")
 const FOOT_ANCHOR := Vector2i(24, 44)
 const NATIVE_UNITS_PER_GAMEPLAY := 0.72
 const SHOOT_FRAMES := 4

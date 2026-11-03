@@ -1,8 +1,5 @@
 {
   "layer_exceptions": {
-    "src/content/early_skill_registry.gd": [
-      "systems"
-    ],
     "src/runtime/world/environment_object_definition.gd": [
       "presentation"
     ],
@@ -14,27 +11,6 @@
     ],
     "src/runtime/world/town_scene_root.gd": [
       "presentation"
-    ],
-    "src/systems/combat_simulation.gd": [
-      "runtime"
-    ],
-    "src/systems/combat_system.gd": [
-      "runtime"
-    ],
-    "src/systems/enemy_tactics.gd": [
-      "runtime"
-    ],
-    "src/systems/player_combat_rules.gd": [
-      "runtime"
-    ],
-    "src/systems/player_motion_system.gd": [
-      "runtime"
-    ],
-    "src/systems/proxy_decision.gd": [
-      "runtime"
-    ],
-    "src/systems/proxy_navigation.gd": [
-      "runtime"
     ]
   },
   "private_reach_ins": {
@@ -74,6 +50,7 @@
     "src/runtime/combat/boss_arrow_flight.gd": 2,
     "src/runtime/combat/boss_combat_domain.gd": 1,
     "src/runtime/combat/combat_room_loot_rebuild.gd": 3,
+    "src/runtime/combat/combat_simulation.gd": 3,
     "src/runtime/combat/damage_resolution.gd": 2,
     "src/runtime/combat/death_settlement_request.gd": 1,
     "src/runtime/combat/ranger_arrow_flight.gd": 2,
@@ -88,7 +65,6 @@
     "src/runtime/world/town_controller.gd": 1,
     "src/runtime/world/world_asset.gd": 1,
     "src/runtime/world/world_presenter.gd": 1,
-    "src/systems/combat_simulation.gd": 3,
     "src/systems/law_forge.gd": 1
   }
 }

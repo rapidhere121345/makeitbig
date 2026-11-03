@@ -3,7 +3,7 @@ extends SceneTree
 const Runtime := preload("res://src/game/combat_room_runtime.gd")
 const ItemRegistry := preload("res://src/content/early_item_registry.gd")
 const BuildResolver := preload("res://src/systems/build_resolver.gd")
-const Geometry := preload("res://src/runtime/geometry/arena_geometry.gd")
+const Geometry := preload("res://src/core/geometry/arena_geometry.gd")
 const Enemy := preload("res://src/runtime/world/combat_enemy_state.gd")
 
 const Controller := preload("res://src/presentation/combat_presentation_controller.gd")

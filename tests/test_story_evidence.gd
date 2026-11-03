@@ -3,7 +3,7 @@ extends SceneTree
 const State = preload("res://src/game/application_state.gd")
 const CombatRoomRuntimeScript = preload("res://src/game/combat_room_runtime.gd")
 const CombatFixture = preload("res://tests/helpers/talent_runtime_fixture.gd")
-const SkillRules = preload("res://src/systems/ranger_skill_rules.gd")
+const SkillRules = preload("res://src/content/ranger_skill_rules.gd")
 const Encounter = preload("res://src/game/encounter_director.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []

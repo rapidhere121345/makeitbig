@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Pure fixed-tick authority for the Ranger's Piercing Arrow action.
 
-const RangerSkillRules := preload("res://src/systems/ranger_skill_rules.gd")
+const RangerSkillRules := preload("res://src/content/ranger_skill_rules.gd")
 
 const SCHEMA: String = "makeitbig.player_action_timeline"
 const SCHEMA_VERSION: int = 1

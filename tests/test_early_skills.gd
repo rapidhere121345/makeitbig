@@ -1,7 +1,7 @@
 extends SceneTree
 
 const RegistryScript = preload("res://src/content/early_skill_registry.gd")
-const RulesScript = preload("res://src/systems/ranger_skill_rules.gd")
+const RulesScript = preload("res://src/content/ranger_skill_rules.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 
