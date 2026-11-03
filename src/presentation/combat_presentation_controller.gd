@@ -394,7 +394,7 @@ func _apply_detached_occlusion(display_delta: float) -> void:
 		return
 	var source: Variant = _runtime_source.get_ref() if _runtime_source != null else null
 	var port_value: Variant = source.get("presentation_port") if source != null else null
-	if port_value == null or not port_value.has_method("latest_occlusion_plan"):
+	if not port_value is RoomPresentationPort:
 		actor_presenter.apply_occlusion_alpha({})
 		_record_occlusion(false, "presentation_port_unavailable")
 		return

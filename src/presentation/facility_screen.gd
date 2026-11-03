@@ -709,7 +709,7 @@ func _read_presentation_place(keep_candidate_offset := true) -> void:
 		_pending_scroll_restore["FacilityCardsScroll"] = _cards_scroll.scroll_vertical
 	if keep_candidate_offset and facility_root != null:
 		var candidates := facility_root.find_child("EquipmentBackpack", true, false)
-		if candidates != null and candidates.has_method("page_index"):
+		if candidates is EquipmentBackpackGrid:
 			_pending_scroll_restore["EquipmentBackpackPage"] = int(candidates.page_index())
 	var viewport := get_viewport()
 	if viewport != null:
@@ -757,7 +757,7 @@ func _restore_switched_place() -> void:
 	if candidate_page == null or facility_root == null:
 		return
 	var candidates := facility_root.find_child("EquipmentBackpack", true, false)
-	if candidates != null and candidates.has_method("set_page"):
+	if candidates is EquipmentBackpackGrid:
 		candidates.set_page(int(candidate_page))
 
 
@@ -863,7 +863,7 @@ func layout_report() -> Dictionary:
 ## to know the grid's internal container hierarchy.
 func backpack_cell(instance_id: String) -> Control:
 	var backpack := find_child("EquipmentBackpack", true, false)
-	if backpack != null and backpack.has_method("get_cell"):
+	if backpack is EquipmentBackpackGrid:
 		return backpack.get_cell(instance_id) as Control
 	return null
 

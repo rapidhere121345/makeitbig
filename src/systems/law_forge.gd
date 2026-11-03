@@ -56,7 +56,7 @@ func validate_candidate(item: Variant, operation: String, candidate: Variant, qu
 
 
 func validate_request(item: Variant, operation: String) -> Dictionary:
-	if registry == null or not registry.has_method("validate_item_instance"):
+	if not registry is EarlyItemRegistry:
 		return CoreResult.failure("invalid_item")
 	if not item is Dictionary or not registry.validate_item_instance(item).is_empty():
 		return CoreResult.failure("invalid_item")

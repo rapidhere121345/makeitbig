@@ -545,18 +545,18 @@ func _finish_loadout_backpack_exit() -> void:
 		and (_screen.loadout_backpack_detail_region == focus_owner or _screen.loadout_backpack_detail_region.is_ancestor_of(focus_owner)):
 		return
 	var backpack: Node = _screen.find_child("EquipmentBackpack", true, false)
-	if backpack != null and backpack.has_method("inspected_item_id") \
+	if backpack is EquipmentBackpackGrid \
 		and not String(backpack.inspected_item_id()).is_empty():
 		return
 	if not _screen.loadout_backpack_pinned_id.is_empty() \
 		and not _screen.inventory_item_by_id(_screen.loadout_backpack_items, _screen.loadout_backpack_pinned_id).is_empty():
 		_screen.loadout_backpack_selection = _screen.loadout_backpack_pinned_id
-		if backpack != null and backpack.has_method("select_item"):
+		if backpack is EquipmentBackpackGrid:
 			backpack.select_item(_screen.loadout_backpack_pinned_id)
 		_render_loadout_backpack_detail(_screen.loadout_backpack_pinned_id)
 		return
 	_screen.loadout_backpack_selection = ""
-	if backpack != null and backpack.has_method("select_item"):
+	if backpack is EquipmentBackpackGrid:
 		backpack.select_item(_screen.loadout_backpack_equipped_id)
 	_render_loadout_backpack_detail("")
 

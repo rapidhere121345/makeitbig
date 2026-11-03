@@ -298,11 +298,11 @@ func _finish_forge_backpack_exit() -> void:
 		and (_screen.forge_backpack_detail_region == focus_owner or _screen.forge_backpack_detail_region.is_ancestor_of(focus_owner)):
 		return
 	var backpack: Node = _screen.find_child("EquipmentBackpack", true, false)
-	if backpack != null and backpack.has_method("inspected_item_id") \
+	if backpack is EquipmentBackpackGrid \
 		and not String(backpack.inspected_item_id()).is_empty():
 		return
 	_screen.forge_backpack_selection = ""
-	if backpack != null and backpack.has_method("select_item"):
+	if backpack is EquipmentBackpackGrid:
 		backpack.select_item(String(_screen.facility_data.get("target_instance_id", "")))
 	_render_forge_backpack_detail("")
 
