@@ -23,17 +23,18 @@ const Assert := preload("res://tests/helpers/assert.gd")
 var _worlds: Array[SimulationWorld] = []
 
 
-class FakeEncounter:
+class FakeEncounter extends RoomEncounterDomain:
 	var deaths: Array[Dictionary] = []
 
 	func step(_tick: int) -> Variant:
 		return null
 
-	func notify_death(entity_key: String, tick: int) -> void:
+	func notify_death(entity_key: String, tick: int) -> Variant:
 		deaths.append({"entity_key": entity_key, "tick": tick})
+		return null
 
 
-class FakePlayerRules:
+class FakePlayerRules extends PlayerCombatRules:
 	var calls: Array[Dictionary] = []
 
 	func apply_damage(tick: int, amount: float, source_id: String, source_position: Vector2) -> Dictionary:

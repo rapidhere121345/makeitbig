@@ -94,7 +94,7 @@ func snapshot() -> Dictionary:
 			"room_instance_id": latest_snapshot.room_instance_id,
 			"entity_count": latest_snapshot.entity_count(),
 		} if latest_snapshot != null else {},
-		"latest_frame": latest_frame.snapshot() if latest_frame != null and latest_frame.has_method("snapshot") else {},
+		"latest_frame": latest_frame.snapshot() if latest_frame is PresentationFrame else {},
 		"last_projection_errors": last_projection_errors.duplicate(),
 		"projector_bound": _projector != null,
 	}

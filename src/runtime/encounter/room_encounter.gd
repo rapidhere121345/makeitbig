@@ -1,5 +1,5 @@
 class_name RoomEncounter
-extends RefCounted
+extends RoomEncounterDomain
 
 const WaveScript := preload("res://src/runtime/encounter/wave_definition.gd")
 const SpawnRequestScript := preload("res://src/runtime/encounter/encounter_spawn_request.gd")

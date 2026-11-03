@@ -87,5 +87,5 @@ class TownSetupPort extends "res://src/runtime/world/room_scene_setup_port.gd":
 		return self
 
 	func setup(source: Node) -> void:
-		if source != null and source.has_method("bind_native_art"):
+		if source is TownSceneRoot:
 			source.bind_native_art()

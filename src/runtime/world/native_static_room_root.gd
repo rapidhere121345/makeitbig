@@ -1,5 +1,5 @@
 class_name NativeStaticRoomRoot
-extends Node2D
+extends NativeRoomAuthorRoot
 
 ## Declarative native room source: one outer boundary, authored convex solids,
 ## and footprint-safe sockets. It owns no actor, motor, clock or runtime state.

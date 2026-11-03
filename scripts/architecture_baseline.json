@@ -24,22 +24,7 @@
     "src/presentation/facility/loadout_page.gd": 3,
     "src/presentation/facility_screen.gd": 3,
     "src/presentation/town_presenter.gd": 2,
-    "src/runtime/combat/boss_arrow_flight.gd": 2,
-    "src/runtime/combat/boss_combat_domain.gd": 1,
-    "src/runtime/combat/combat_room_loot_rebuild.gd": 2,
-    "src/runtime/combat/combat_simulation.gd": 3,
-    "src/runtime/combat/damage_resolution.gd": 2,
-    "src/runtime/combat/death_settlement_request.gd": 1,
-    "src/runtime/combat/ranger_arrow_flight.gd": 2,
-    "src/runtime/simulation/sim_entity_store.gd": 3,
-    "src/runtime/world/player_combat_state.gd": 1,
-    "src/runtime/world/room_combat_port.gd": 13,
-    "src/runtime/world/room_encounter_port.gd": 8,
-    "src/runtime/world/room_manifest_validator.gd": 2,
-    "src/runtime/world/room_presentation_port.gd": 1,
-    "src/runtime/world/room_spatial_port.gd": 3,
-    "src/runtime/world/scene_runtime.gd": 15,
-    "src/runtime/world/town_controller.gd": 1,
+    "src/runtime/combat/combat_room_loot_rebuild.gd": 1,
     "src/systems/law_forge.gd": 1
   }
 }

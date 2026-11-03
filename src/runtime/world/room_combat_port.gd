@@ -92,7 +92,7 @@ func bind(actor_access: Variant) -> void:
 
 
 func bind_player_rule_port(port: Variant) -> Dictionary:
-	if port == null or not port.has_method("apply_damage"):
+	if not (port is PlayerCombatRules):
 		return CoreResult.failure("invalid_player_rule_port")
 	player_rule_port = port
 	return {"ok": true, "error": ""}
@@ -138,19 +138,19 @@ func bind_domains(
 	new_room_loot: Variant = null
 ) -> Dictionary:
 	if new_damage_resolution != null:
-		if not new_damage_resolution.has_method("resolve"):
+		if not (new_damage_resolution is DamageResolution):
 			return CoreResult.failure("invalid_damage_resolution")
 		damage_resolution = new_damage_resolution
 	if new_status_ledger != null:
-		if not new_status_ledger.has_method("apply") or not new_status_ledger.has_method("collect_periodic_hits"):
+		if not (new_status_ledger is RuntimeStatusEffectLedger):
 			return CoreResult.failure("invalid_status_ledger")
 		status_ledger = new_status_ledger
 	if new_death_settlement != null:
-		if not new_death_settlement.has_method("settle"):
+		if not (new_death_settlement is DeathSettlement):
 			return CoreResult.failure("invalid_death_settlement")
 		death_settlement = new_death_settlement
 	if new_room_loot != null:
-		if not new_room_loot.has_method("spawn"):
+		if not (new_room_loot is TargetCombatRoomLoot):
 			return CoreResult.failure("invalid_room_loot")
 		room_loot = new_room_loot
 	return {"ok": true, "error": ""}
@@ -228,7 +228,7 @@ func resolve(ctx: SimTickContext) -> void:
 		})
 
 	var result: Variant = damage_resolution.resolve(ctx.tick, raw_hits, targets)
-	if result == null or not result.has_method("snapshot"):
+	if not (result is DamageBatchResult):
 		last_batch = {"tick": ctx.tick, "outcomes": [], "deaths": [], "rejected": ["damage_resolution_invalid_result"]}
 		return
 	for outcome: Variant in result.outcomes:
@@ -320,7 +320,7 @@ func on_death(entity_view: SimEntityView, ctx: SimTickContext) -> Variant:
 			var loot_request: Variant = settled_snapshot.get("loot_spawn_request", {})
 			if room_loot != null and loot_request is Dictionary and not (loot_request as Dictionary).is_empty():
 				room_loot.spawn(ctx.tick, loot_request)
-	if actors.has_method("detach_dead_actor"):
+	if actors is RoomActorAccess:
 		actors.detach_dead_actor(entity_view.handle)
 	return notification
 
@@ -333,7 +333,7 @@ func combat_snapshot() -> Dictionary:
 		"last_boss_batch": last_boss_batch.duplicate(true),
 		"last_settlements": last_settlements.duplicate(true),
 		"last_boss_settlements": last_boss_settlements.duplicate(true),
-		"status": status_ledger.snapshot() if status_ledger != null and status_ledger.has_method("snapshot") else {},
+		"status": status_ledger.snapshot() if status_ledger is RuntimeStatusEffectLedger else {},
 	}
 
 
@@ -351,10 +351,10 @@ func _apply_status_requests(ctx: SimTickContext) -> void:
 	if status_ledger == null:
 		return
 	for application: SimStatusApplication in ctx.statuses.applications():
-		var target_key: String = String(actors.entity_key_for_handle(application.target)) if actors.has_method("entity_key_for_handle") else ""
+		var target_key: String = String(actors.entity_key_for_handle(application.target)) if actors is RoomActorAccess else ""
 		if target_key.is_empty():
 			continue
-		var source_key: String = String(actors.entity_key_for_handle(application.source)) if application.source != null and actors.has_method("entity_key_for_handle") else "system"
+		var source_key: String = String(actors.entity_key_for_handle(application.source)) if application.source != null and actors is RoomActorAccess else "system"
 		status_ledger.apply(
 			ctx.tick,
 			target_key,
@@ -369,10 +369,10 @@ func _apply_status_requests(ctx: SimTickContext) -> void:
 func _to_hit_record(hit: SimHit, tick: int, ordinal: int) -> Variant:
 	if hit == null or hit.target == null:
 		return null
-	var target_key: String = String(actors.entity_key_for_handle(hit.target)) if actors.has_method("entity_key_for_handle") else ""
+	var target_key: String = String(actors.entity_key_for_handle(hit.target)) if actors is RoomActorAccess else ""
 	if target_key.is_empty():
 		return null
-	var source_key: String = String(actors.entity_key_for_handle(hit.source)) if hit.source != null and actors.has_method("entity_key_for_handle") else "system"
+	var source_key: String = String(actors.entity_key_for_handle(hit.source)) if hit.source != null and actors is RoomActorAccess else "system"
 	var record: Variant = HitRecordScript.new()
 	record.tick = tick
 	record.attack_instance_id = hit.attack_instance_id if not hit.attack_instance_id.is_empty() else "sim/%d/%d" % [tick, ordinal]

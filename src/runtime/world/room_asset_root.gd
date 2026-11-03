@@ -1,5 +1,5 @@
 class_name RoomAssetRoot
-extends Node2D
+extends NativeRoomAuthorRoot
 
 ## Native authoring contract for a room scene.
 ##

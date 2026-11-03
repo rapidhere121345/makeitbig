@@ -27,7 +27,7 @@ var _request_sequence := 0
 
 func configure(identifier: String, seed: int, slot_definitions: Array, materializer: Object, placement_port: Variant) -> Dictionary:
 	reset()
-	if not _valid_id(identifier) or materializer == null or not materializer.has_method("generate_drop"):
+	if not _valid_id(identifier) or not (materializer is EquipmentDropGenerator):
 		return CoreResult.failure("invalid_loot_dependencies")
 	if not placement_port is RoomLootPlacementPortScript:
 		return CoreResult.failure("loot_placement_port_required")

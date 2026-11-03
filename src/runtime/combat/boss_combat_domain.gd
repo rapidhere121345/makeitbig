@@ -134,7 +134,7 @@ func query_path(query: Variant, resolver: Variant, source_key: String) -> BossPa
 	if not _valid_id(source_key):
 		result.errors.append("boss_query:source_unresolved")
 		return result
-	if resolver == null or not resolver.has_method("resolve_path"):
+	if not (resolver is ContinuousHitResolver):
 		result.errors.append("boss_query:resolver_unavailable")
 		return result
 	if not typed.target_key.is_empty() and not _targets.has(typed.target_key):

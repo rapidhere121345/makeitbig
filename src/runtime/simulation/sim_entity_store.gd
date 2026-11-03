@@ -215,7 +215,6 @@ func _resolve(handle: SimEntityHandle) -> SimOutcome:
 
 
 func _satisfies_contract(record: Variant) -> bool:
-	return record.has_method("set_entity_identity") \
-		and record.has_method("build_entity_view") \
-		and record.has_method("snapshot_payload") \
-		and record.get("alive") != null
+	# ActorState is the only record type that carries entity identity, view
+	# building and snapshot payload; its alive flag is always declared.
+	return record is ActorState

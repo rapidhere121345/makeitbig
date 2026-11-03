@@ -28,7 +28,7 @@ func resolve(tick: int, raw_hits: Array, raw_targets: Array) -> Variant:
 		return result
 	var targets: Dictionary = {}
 	for raw_target: Variant in raw_targets:
-		var parsed_target: Dictionary = TargetScript.from_data(raw_target.snapshot() if raw_target is Object and raw_target.has_method("snapshot") else raw_target)
+		var parsed_target: Dictionary = TargetScript.from_data(raw_target.snapshot() if raw_target is TargetScript else raw_target)
 		if not bool(parsed_target.get("ok", false)):
 			result.rejected.append({"reason": parsed_target.get("error", "invalid_target_view")})
 			continue
@@ -36,7 +36,7 @@ func resolve(tick: int, raw_hits: Array, raw_targets: Array) -> Variant:
 		targets[target.target_key] = target
 	var hits: Array = []
 	for raw_hit: Variant in raw_hits:
-		var parsed_hit: Dictionary = HitScript.from_data(raw_hit.snapshot() if raw_hit is Object and raw_hit.has_method("snapshot") else raw_hit)
+		var parsed_hit: Dictionary = HitScript.from_data(raw_hit.snapshot() if raw_hit is HitScript else raw_hit)
 		if not bool(parsed_hit.get("ok", false)):
 			result.rejected.append({"reason": parsed_hit.get("error", "invalid_hit")})
 			continue

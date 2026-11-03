@@ -228,7 +228,7 @@ func unmount() -> Dictionary:
 		presenter.unmount_world_scene()
 	_mounted_scene = null
 	_clear_actor_registrations()
-	if encounter_port != null and encounter_port.has_method("shutdown"):
+	if encounter_port is RoomEncounterPort:
 		encounter_port.shutdown()
 	_shutdown_simulation_kernel()
 	room_definition = null
@@ -278,7 +278,7 @@ func restart_room_instance(tick_rate: int = DEFAULT_TICK_RATE) -> Dictionary:
 		return {"ok": false, "error": "runtime_not_ready"}
 	if tick_rate <= 0 or simulation == null or entity_registry == null:
 		return {"ok": false, "error": "invalid_room_instance"}
-	if actor_registry != null and actor_registry.has_method("reset_actors"):
+	if actor_registry is RoomActorAccess:
 		var reset_result: Dictionary = actor_registry.reset_actors()
 		if not bool(reset_result.get("ok", false)):
 			return {"ok": false, "error": String(reset_result.get("error", "actor_reset_failed"))}
@@ -309,7 +309,7 @@ func restart_room_instance(tick_rate: int = DEFAULT_TICK_RATE) -> Dictionary:
 			return replacement_port
 		presentation_projector = replacement
 	if encounter_domain != null:
-		if encounter_domain.has_method("restart"):
+		if encounter_domain is RoomEncounter:
 			var encounter_restart: Dictionary = encounter_domain.restart(-1)
 			if not bool(encounter_restart.get("ok", false)):
 				return encounter_restart
@@ -328,7 +328,7 @@ func restart_room_instance(tick_rate: int = DEFAULT_TICK_RATE) -> Dictionary:
 ## Binds the room-owned encounter after simulation and actor access exist.
 ## SceneRuntime does not create spawn Nodes or decide encounter outcomes.
 func bind_encounter(domain: Variant, spawn_binding: RoomEncounterSpawnPort = null) -> Dictionary:
-	if encounter_port == null or domain == null or not domain.has_method("step") or not domain.has_method("notify_death"):
+	if encounter_port == null or not (domain is RoomEncounterDomain):
 		return {"ok": false, "error": "invalid_room_encounter_domain"}
 	var typed_binding: RoomEncounterSpawnPort = null
 	if spawn_binding == null:
@@ -423,7 +423,7 @@ func bind_actor_presentation(stable_id: String, visual_id: String, rank: int, ar
 
 
 func clear_actor_presentation_bindings() -> void:
-	if presentation_projector != null and presentation_projector.has_method("clear_actor_bindings"):
+	if presentation_projector is RoomPresentationProjector:
 		presentation_projector.clear_actor_bindings()
 
 
@@ -466,7 +466,7 @@ func step_tick() -> SimOutcome:
 ## phase. Both paths materialize exactly once, after the tick snapshot was
 ## published and before the next fixed tick reads the entity store.
 func materialize_encounter_spawns() -> Array[Dictionary]:
-	if not is_ready() or encounter_port == null or encounter_domain == null or not encounter_port.has_method("materialize_spawn_requests"):
+	if not is_ready() or encounter_port == null or encounter_domain == null or not (encounter_port is RoomEncounterPort):
 		return []
 	encounter_spawn_results.clear()
 	encounter_spawn_results = encounter_port.materialize_spawn_requests(simulation.tick)
@@ -481,19 +481,19 @@ func step() -> SimOutcome:
 
 
 func start_encounter(start_tick: int = -1) -> Dictionary:
-	if not is_ready() or encounter_domain == null or not encounter_domain.has_method("start"):
+	if not is_ready() or not (encounter_domain is RoomEncounter):
 		return {"ok": false, "error": "encounter_runtime_unavailable"}
 	var tick := simulation.tick if start_tick < 0 else start_tick
 	if tick != simulation.tick or tick < 0:
 		return {"ok": false, "error": "stale_encounter_tick"}
 	var started: Dictionary = encounter_domain.start(tick)
 	if bool(started.get("ok", false)):
-		encounter_step_result = encounter_domain.snapshot() if encounter_domain.has_method("snapshot") else {}
+		encounter_step_result = encounter_domain.snapshot() if encounter_domain is RoomEncounter else {}
 	return started
 
 
 func request_encounter_defeat(reason: String, tick: int = -1) -> Dictionary:
-	if not is_ready() or encounter_domain == null or not encounter_domain.has_method("request_defeat"):
+	if not is_ready() or not (encounter_domain is RoomEncounter):
 		return {"ok": false, "error": "encounter_runtime_unavailable"}
 	var effective_tick := simulation.tick if tick < 0 else tick
 	return encounter_domain.request_defeat(effective_tick, reason)
@@ -528,7 +528,7 @@ func spawn_encounter_request(request: EncounterSpawnRequest, _context: Dictionar
 		return EncounterSpawnResultScript.failed(request, String(registered.get("error", "actor_spawn_failed")))
 	var handle: SimEntityHandle = registered.get("handle", null)
 	var stable_key := int(registered.get("stable_key", 0))
-	var entity_key: String = actor_registry.entity_key_for_handle(handle) if handle != null and actor_registry.has_method("entity_key_for_handle") else "actor/%d" % stable_key
+	var entity_key: String = actor_registry.entity_key_for_handle(handle) if handle != null and actor_registry is RoomActorAccess else "actor/%d" % stable_key
 	return EncounterSpawnResultScript.spawned(
 		request,
 		handle,
@@ -609,11 +609,11 @@ func report() -> Dictionary:
 		"static_spatial_index": static_spatial_index.snapshot() if static_spatial_index != null else {},
 		"dynamic_spatial_index": dynamic_spatial_index.snapshot() if dynamic_spatial_index != null else {},
 		"spatial_overlay": spatial_overlay.snapshot() if spatial_overlay != null else {},
-		"combat_port": combat_port.combat_snapshot() if combat_port != null and combat_port.has_method("combat_snapshot") else {},
-		"encounter_port": encounter_port.snapshot() if encounter_port != null and encounter_port.has_method("snapshot") else {},
+		"combat_port": combat_port.combat_snapshot() if combat_port is RoomCombatPort else {},
+		"encounter_port": encounter_port.snapshot() if encounter_port is RoomEncounterPort else {},
 		"encounter_step": encounter_step_result.duplicate(true),
 		"encounter_spawn_results": encounter_spawn_results.duplicate(true),
-		"presentation_port": presentation_port.snapshot() if presentation_port != null and presentation_port.has_method("snapshot") else {},
+		"presentation_port": presentation_port.snapshot() if presentation_port is RoomPresentationPort else {},
 		"presentation_projector_bound": presentation_projector != null,
 		"presenter": presenter.presentation_report() if presenter != null else {},
 	}
@@ -663,7 +663,7 @@ func _reset_mount() -> void:
 	if presenter != null:
 		presenter.unmount_world_scene()
 	_clear_actor_registrations()
-	if encounter_port != null and encounter_port.has_method("shutdown"):
+	if encounter_port is RoomEncounterPort:
 		encounter_port.shutdown()
 	_shutdown_simulation_kernel()
 	_mounted_scene = null

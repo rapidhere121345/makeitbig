@@ -52,7 +52,7 @@ class FlightRecord:
 
 
 func configure(port: Variant) -> Dictionary:
-	if port == null or not port.has_method("queue_boss_path_query") or not port.has_method("take_boss_path_results"):
+	if not (port is RoomSpatialPort):
 		return CoreResult.failure("boss_flight_spatial_port_unavailable")
 	spatial_port = port
 	reset()

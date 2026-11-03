@@ -21,7 +21,7 @@ var can_drop := true
 
 
 static func from_data(value: Variant) -> Dictionary:
-	var raw: Variant = value.snapshot() if value is Object and value.has_method("snapshot") else value
+	var raw: Variant = value.snapshot() if value is DeathSettlementRequest else value
 	if not raw is Dictionary:
 		return CoreResult.failure("death_request_not_dictionary")
 	var source: Dictionary = raw

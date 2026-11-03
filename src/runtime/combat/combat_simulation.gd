@@ -59,7 +59,7 @@ var _step_in_progress: bool = false
 func configure(world, player_rules: Rules, room_domain) -> Dictionary:
 	if world == null or player_rules == null or int(world.tick_rate) != 30:
 		return {"ok": false, "error": "simulation_dependencies_unavailable"}
-	if not world.has_method("step_tick") or not world.has_method("latest_snapshot"):
+	if not (world is SimulationWorld):
 		return {"ok": false, "error": "kernel_tick_authority_unavailable"}
 	if room_domain == null or not room_domain is CombatPhasePortScript or not is_instance_valid(room_domain):
 		return {"ok": false, "error": "room_phase_owner_unavailable"}
@@ -126,7 +126,7 @@ func step() -> Dictionary:
 
 	var tick := int(_world.tick)
 	var snapshot = world_step.value if world_step.value != null else _world.latest_snapshot()
-	if snapshot == null or not snapshot.has_method("sha256_hex") or int(snapshot.tick) != tick:
+	if not (snapshot is SimSnapshot) or int(snapshot.tick) != tick:
 		_step_in_progress = false
 		return _authority_failure("kernel_snapshot_unavailable", tick)
 	last_kernel_snapshot = snapshot

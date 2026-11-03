@@ -1,5 +1,5 @@
 class_name TownSceneRoot
-extends Node2D
+extends NativeRoomAuthorRoot
 
 ## Native town author source. Geometry, sockets and routes live in this scene;
 ## its six-field manifest is a detached offline derivative checked before READY.

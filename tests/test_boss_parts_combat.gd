@@ -26,8 +26,8 @@ const Assert := preload("res://tests/helpers/assert.gd")
 var failures: Array[String] = []
 
 
-class StaticOnlyResolver extends RefCounted:
-	func resolve_path(_request: Dictionary) -> Dictionary:
+class StaticOnlyResolver extends ContinuousHitResolver:
+	func resolve_path(_request: Variant) -> Dictionary:
 		return {"ok": true, "contacts": []}
 
 

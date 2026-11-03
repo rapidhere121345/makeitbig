@@ -24,8 +24,8 @@ static func validate_native_scene(scene_value: Variant, asset_snapshot: Dictiona
 		return {"ok": false, "error": "native_scene_root_invalid"}
 	# Two explicit native authoring locations: a declarative scene root, or the
 	# RoomAsset component of a gameplay host. Neither is a legacy adapter.
-	var author_root: Node = instance if instance.has_method("validate_contract") else instance.get_node_or_null("RoomAsset")
-	if author_root == null or not author_root.has_method("validate_contract"):
+	var author_root: Node = instance if instance is NativeRoomAuthorRoot else instance.get_node_or_null("RoomAsset")
+	if not (author_root is NativeRoomAuthorRoot):
 		instance.free()
 		return {"ok": false, "error": "native_scene_contract_missing"}
 	var contract_value: Variant = author_root.validate_contract({

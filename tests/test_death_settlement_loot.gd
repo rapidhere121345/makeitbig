@@ -9,8 +9,8 @@ const MountedPlacementScript := preload("res://src/game/main_loot_placement_port
 const Assert := preload("res://tests/helpers/assert.gd")
 
 
-class FakeMaterializer:
-	func generate_drop(seed: int, stream_key: String, drop_index: int, tags: Array, guarantee_family: String) -> Dictionary:
+class FakeMaterializer extends EquipmentDropGenerator:
+	func generate_drop(seed: int, stream_key: String, drop_index: int, tags: Array, guarantee_family: String = "") -> Dictionary:
 		return {
 			"instance_id": "%s/%d" % [stream_key, drop_index],
 			"seed": seed,

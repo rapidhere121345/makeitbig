@@ -42,7 +42,7 @@ var last_terminal_result: RoomTerminalResult = null
 
 
 func bind(domain: Variant, room_instance: String = "", revision: int = -1) -> Dictionary:
-	if domain == null or not domain.has_method("step") or not domain.has_method("notify_death"):
+	if not (domain is RoomEncounterDomain):
 		return CoreResult.failure("invalid_room_encounter_domain")
 	encounter = domain
 	_room_instance_id = room_instance.strip_edges()
@@ -137,7 +137,7 @@ func _step_encounter(tick: int) -> void:
 	if encounter == null:
 		return
 	var result: Variant = encounter.step(tick)
-	if result == null or not result.has_method("snapshot"):
+	if not (result is EncounterStepResult):
 		_reject(tick, "invalid_encounter_step_result")
 		return
 	_last_tick = maxi(_last_tick, tick)
@@ -224,7 +224,7 @@ func on_spawned(
 			return CoreResult.failure("entity_handle_already_registered")
 	if _entity_to_binding.has(normalized_entity):
 		return CoreResult.failure("entity_key_already_registered")
-	var domain_result: Variant = encounter.notify_spawned(spawn_key, normalized_entity, tick) if encounter != null and encounter.has_method("notify_spawned") else null
+	var domain_result: Variant = encounter.notify_spawned(spawn_key, normalized_entity, tick) if encounter is RoomEncounter else null
 	if domain_result is Dictionary and not bool(domain_result.get("ok", false)):
 		return domain_result
 	var binding := {
@@ -260,7 +260,7 @@ func on_spawn_failed(spawn_key: String, tick: int, reason: String, room_instance
 	var normalized_reason := reason.strip_edges()
 	if normalized_reason.is_empty():
 		return CoreResult.failure("invalid_spawn_failure_reason")
-	var domain_result: Variant = encounter.notify_spawn_failed(spawn_key, tick, normalized_reason) if encounter != null and encounter.has_method("notify_spawn_failed") else null
+	var domain_result: Variant = encounter.notify_spawn_failed(spawn_key, tick, normalized_reason) if encounter is RoomEncounter else null
 	if domain_result is Dictionary and not bool(domain_result.get("ok", false)):
 		return domain_result
 	failed_spawn_notifications.append({
@@ -317,7 +317,7 @@ func observe_terminal(observation: RoomTerminalObservation) -> RoomTerminalResul
 		return _terminal_failure("stale_terminal_observation_context")
 	if not _accept_tick(observation.tick):
 		return _terminal_failure("stale_terminal_observation_tick")
-	if not encounter.has_method("observe_terminal"):
+	if not (encounter is RoomEncounter):
 		return _terminal_failure("terminal_authority_unavailable")
 	var result: Variant = encounter.observe_terminal(observation)
 	if result == null or not result is TerminalResultScript:
@@ -358,7 +358,7 @@ func snapshot() -> Dictionary:
 		"room_instance_id": _room_instance_id,
 		"world_revision": _world_revision,
 		"bound": _bound and not _shutdown,
-		"encounter": encounter.snapshot() if encounter != null and encounter.has_method("snapshot") else {},
+		"encounter": encounter.snapshot() if encounter is RoomEncounter else {},
 		"last_step": last_step.duplicate(true),
 		"pending_spawn_requests": _request_snapshots(pending_spawn_requests),
 		"spawned_notifications": spawned_notifications.duplicate(true),
@@ -492,7 +492,7 @@ func _terminal_failure(error_code: String) -> RoomTerminalResult:
 
 
 func _encounter_snapshot() -> Dictionary:
-	return encounter.snapshot() if encounter != null and encounter.has_method("snapshot") else {}
+	return encounter.snapshot() if encounter is RoomEncounter else {}
 
 
 func _request_snapshots(requests: Array) -> Array[Dictionary]:
