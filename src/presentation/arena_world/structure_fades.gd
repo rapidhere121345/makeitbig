@@ -5,7 +5,7 @@ extends RefCounted
 ## them, the hero sort entry and the detection rects.
 
 const PairedReveal := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
-const SortRelation = preload("res://src/presentation/occlusion_query.gd")
+const SortRelation = preload("res://src/runtime/projection/occlusion_query.gd")
 
 var _structure_fades: Dictionary = {}
 var _paired_materials: Dictionary = {}

@@ -38,8 +38,14 @@ Ranger's authored action numbers (`RangerSkillRules`) are content, so the skill
 registry can validate against them. The authored occlusion contract
 (`OcclusionAuthoring`: policy ids, detection-rect containment, fade volumes)
 and `TextureLoader` live in `src/content/art/`, so world mounts validate
-authored art without importing the presentation controllers. `src/systems/`
-keeps pure rules that read only core and content.
+authored art without importing the presentation controllers. The detached
+projection of authoritative snapshots into draw order
+(`RoomPresentationProjector`, `RoomPresentationBinding`, `PresentationFrame`,
+`OcclusionPlan` and the sort relation in `occlusion_query.gd`) lives in
+`src/runtime/projection/`: runtime publishes frames and plans through
+`RoomPresentationPort`, and presentation only consumes them. `src/systems/`
+keeps pure rules that read only core and content. The layer table currently
+has no exceptions.
 
 ## App shell
 

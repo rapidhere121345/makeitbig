@@ -1,15 +1,6 @@
 {
-  "layer_exceptions": {
-    "src/runtime/world/room_presentation_port.gd": [
-      "presentation"
-    ],
-    "src/runtime/world/scene_runtime.gd": [
-      "presentation"
-    ]
-  },
-  "private_reach_ins": {
-    "src/runtime/world/scene_runtime.gd": 1
-  },
+  "layer_exceptions": {},
+  "private_reach_ins": {},
   "string_dispatch": {
     "src/game/combat_room/actor_setup.gd": 6,
     "src/game/combat_room/room_terminal.gd": 1,

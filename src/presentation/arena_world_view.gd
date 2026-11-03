@@ -21,7 +21,7 @@ const PaletteScript = preload("res://src/presentation/combat_palette.gd")
 const AtmosphereScript = preload("res://src/presentation/scene_atmosphere.gd")
 const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
-const SortRelation = preload("res://src/presentation/occlusion_query.gd")
+const SortRelation = preload("res://src/runtime/projection/occlusion_query.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
 const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 ## Collaborators in src/presentation/arena_world/. The view keeps the frame state

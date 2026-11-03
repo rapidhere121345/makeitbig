@@ -12,7 +12,7 @@ extends RefCounted
 ## head/torso readability boxes. Presentation-only; nothing here writes the
 ## simulation, the scene, or any other piece.
 
-const SortRelation := preload("res://src/presentation/occlusion_query.gd")
+const SortRelation := preload("res://src/runtime/projection/occlusion_query.gd")
 
 const POLICY := OcclusionAuthoring.PRIMITIVE_FADE_POLICY
 ## Tunable fade contract: the settled roof opacity over a protected actor and

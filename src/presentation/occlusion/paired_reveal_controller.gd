@@ -17,7 +17,7 @@ extends RefCounted
 ## values; nothing here writes the simulation, the scene, or any other piece.
 
 const RevealShader := preload("res://src/presentation/occlusion/authored_reveal.gdshader")
-const SortRelation := preload("res://src/presentation/occlusion_query.gd")
+const SortRelation := preload("res://src/runtime/projection/occlusion_query.gd")
 const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const POLICY := OcclusionAuthoring.PAIRED_REVEAL_POLICY
 const DETECTION_GROW := OcclusionAuthoring.DETECTION_GROW

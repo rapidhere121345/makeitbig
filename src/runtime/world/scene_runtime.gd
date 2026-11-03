@@ -26,8 +26,8 @@ const RoomCombatPortScript = preload("res://src/runtime/world/room_combat_port.g
 const RoomEncounterPortScript = preload("res://src/runtime/world/room_encounter_port.gd")
 const RoomSceneSetupPortScript = preload("res://src/runtime/world/room_scene_setup_port.gd")
 const RoomPresentationPortScript = preload("res://src/runtime/world/room_presentation_port.gd")
-const RoomPresentationProjectorScript = preload("res://src/presentation/room_presentation_projector.gd")
-const RoomPresentationBindingScript = preload("res://src/presentation/room_presentation_binding.gd")
+const RoomPresentationProjectorScript = preload("res://src/runtime/projection/room_presentation_projector.gd")
+const RoomPresentationBindingScript = preload("res://src/runtime/projection/room_presentation_binding.gd")
 const EncounterSpawnRequestScript = preload("res://src/runtime/encounter/encounter_spawn_request.gd")
 const EncounterSpawnResultScript = preload("res://src/runtime/encounter/encounter_spawn_result.gd")
 const RoomTerminalObservationScript = preload("res://src/runtime/encounter/room_terminal_observation.gd")
@@ -502,7 +502,7 @@ func request_encounter_defeat(reason: String, tick: int = -1) -> Dictionary:
 ## Default production spawn binding.  It creates a real ActorState through the
 ## mounted RoomActorAccess; content-specific bindings can replace it through
 ## mount(..., encounter_spawn_binding_value) or bind_encounter().
-func _spawn_encounter_request(request: EncounterSpawnRequest, _context: Dictionary) -> Variant:
+func spawn_encounter_request(request: EncounterSpawnRequest, _context: Dictionary) -> Variant:
 	if request == null or actor_registry == null or not is_ready():
 		return EncounterSpawnResultScript.failed(request, "runtime_not_ready")
 	var socket_position: Variant = _encounter_socket_position(request.socket_id)
@@ -757,5 +757,5 @@ class DefaultEncounterSpawnPort extends "res://src/runtime/world/room_encounter_
 	func spawn(request: EncounterSpawnRequest, context: Dictionary) -> Variant:
 		if _owner == null or not is_instance_valid(_owner):
 			return EncounterSpawnResultScript.failed(request, "runtime_not_ready")
-		return _owner._spawn_encounter_request(request, context)
+		return _owner.spawn_encounter_request(request, context)
 

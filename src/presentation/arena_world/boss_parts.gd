@@ -4,7 +4,7 @@ extends RefCounted
 ## (body, core, two hands); the view supplies the sprite metadata, hero cell and
 ## cutaway budget, so each method takes it as its first argument.
 
-const SortRelation = preload("res://src/presentation/occlusion_query.gd")
+const SortRelation = preload("res://src/runtime/projection/occlusion_query.gd")
 
 const FORE_FADE: float = 0.45
 const BOSS_CORE_OFFSET := Vector2(0.0, -38.0)

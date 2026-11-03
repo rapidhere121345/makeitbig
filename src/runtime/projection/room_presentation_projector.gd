@@ -22,8 +22,8 @@ extends RefCounted
 ##   disagreeing between the row payload and the access snapshot is rejected;
 ## - room identity or world revision mismatch is rejected.
 
-const FrameScript := preload("res://src/presentation/presentation_frame.gd")
-const BindingScript := preload("res://src/presentation/room_presentation_binding.gd")
+const FrameScript := preload("res://src/runtime/projection/presentation_frame.gd")
+const BindingScript := preload("res://src/runtime/projection/room_presentation_binding.gd")
 const AccessScript := preload("res://src/runtime/world/room_actor_access.gd")
 const SnapshotScript := preload("res://src/runtime/simulation/sim_snapshot.gd")
 

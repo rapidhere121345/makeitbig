@@ -5,7 +5,7 @@ extends RefCounted
 ## describes the FULL state even while the revealed image is being drawn.
 ## All query inputs are detached presentation values; no gameplay writes.
 const RevealShader := preload("res://src/presentation/occlusion/authored_reveal.gdshader")
-const SortRelation := preload("res://src/presentation/occlusion_query.gd")
+const SortRelation := preload("res://src/runtime/projection/occlusion_query.gd")
 const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const ENTER_COVER := 0.12
 const EXIT_COVER := 0.04

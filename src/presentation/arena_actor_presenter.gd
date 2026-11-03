@@ -17,7 +17,7 @@ const EnemyAnimationScript := preload("res://src/presentation/enemy_animation.gd
 const BossActionPoseScript := preload("res://src/presentation/boss_action_pose.gd")
 const Snapshot := preload("res://src/presentation/combat_presentation_snapshot.gd")
 const PaletteScript := preload("res://src/presentation/combat_palette.gd")
-const SortRelation := preload("res://src/presentation/occlusion_query.gd")
+const SortRelation := preload("res://src/runtime/projection/occlusion_query.gd")
 
 const FRAME_KEYS := {
 	"presentation_enabled": "bool",

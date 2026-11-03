@@ -5,7 +5,7 @@ extends RefCounted
 ## cell drawing, so methods that need them take the view as their first argument
 ## (explicit dependency, no back-reference, no reference cycle).
 
-const SortRelation = preload("res://src/presentation/occlusion_query.gd")
+const SortRelation = preload("res://src/runtime/projection/occlusion_query.gd")
 
 ## Conservative cutaway: a ruin, the tower or the colossus that really covers the
 ## hero keeps its authored alpha everywhere except the hero's own overlap window,

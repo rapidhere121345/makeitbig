@@ -8,7 +8,7 @@ extends RefCounted
 ## simulation object and no channel data; every input is a plain value or
 ## a detached OcclusionPlan, so it has no way to write simulation state.
 
-const PlanScript = preload("res://src/presentation/occlusion/occlusion_plan.gd")
+const PlanScript = preload("res://src/runtime/projection/occlusion_plan.gd")
 
 const DEFAULT_ALPHA_RATE: float = 5.0
 const DEFAULT_FOLLOW_RATE: float = 20.0

@@ -7,7 +7,7 @@ extends SceneTree
 const BakeCore := preload("res://tools/world_manifest/bake_core.gd")
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const WorldAssetScript := preload("res://src/runtime/world/world_asset.gd")
-const OcclusionPlanScript := preload("res://src/presentation/occlusion/occlusion_plan.gd")
+const OcclusionPlanScript := preload("res://src/runtime/projection/occlusion_plan.gd")
 const OcclusionControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
 const Fixtures := preload("res://tests/helpers/world_asset_manifest_fixtures.gd")
 const EnvironmentDefinitionScript := preload("res://src/runtime/world/environment_object_definition.gd")

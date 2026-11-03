@@ -8,7 +8,7 @@ extends RefCounted
 ## entry without an art box is rejected instead of falling back to a
 ## collision rectangle or a placeholder actor.
 
-const SortRelation = preload("res://src/presentation/occlusion_query.gd")
+const SortRelation = preload("res://src/runtime/projection/occlusion_query.gd")
 
 const ENTRY_FIELDS: Array[String] = ["stable_id", "baseline_y", "rank", "feet_anchor", "art_box"]
 
@@ -76,7 +76,7 @@ static func build(entries_value: Variant) -> Dictionary:
 	canonical.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 		return SortRelation.precedes(left, right)
 	)
-	var plan: OcclusionPlan = load("res://src/presentation/occlusion/occlusion_plan.gd").new()
+	var plan: OcclusionPlan = load("res://src/runtime/projection/occlusion_plan.gd").new()
 	for entry: Dictionary in canonical:
 		var detached := entry.duplicate(true)
 		plan._entries.append(detached)

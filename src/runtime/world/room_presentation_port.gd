@@ -7,8 +7,8 @@ extends SimPresentationPort
 ## detached header-only frame; it never synthesizes actor visuals from
 ## gameplay geometry.
 
-const PresentationFrameScript := preload("res://src/presentation/presentation_frame.gd")
-const ProjectorScript := preload("res://src/presentation/room_presentation_projector.gd")
+const PresentationFrameScript := preload("res://src/runtime/projection/presentation_frame.gd")
+const ProjectorScript := preload("res://src/runtime/projection/room_presentation_projector.gd")
 
 var latest_snapshot: SimSnapshot = null
 var latest_frame: Variant = null

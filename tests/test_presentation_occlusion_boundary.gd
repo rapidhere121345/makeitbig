@@ -1,6 +1,6 @@
 extends SceneTree
 
-const FrameScript := preload("res://src/presentation/presentation_frame.gd")
+const FrameScript := preload("res://src/runtime/projection/presentation_frame.gd")
 const ControllerScript := preload("res://src/presentation/occlusion/occlusion_controller.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 

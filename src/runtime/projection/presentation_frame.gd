@@ -1,9 +1,9 @@
 class_name PresentationFrame
 extends RefCounted
 
-const SelfScript := preload("res://src/presentation/presentation_frame.gd")
-const OcclusionPlanScript := preload("res://src/presentation/occlusion/occlusion_plan.gd")
-const SortRelation := preload("res://src/presentation/occlusion_query.gd")
+const SelfScript := preload("res://src/runtime/projection/presentation_frame.gd")
+const OcclusionPlanScript := preload("res://src/runtime/projection/occlusion_plan.gd")
+const SortRelation := preload("res://src/runtime/projection/occlusion_query.gd")
 const CoreResult := preload("res://src/core/result.gd")
 
 const ENTRY_FIELDS: Array[String] = ["stable_id", "visual_id", "feet_anchor", "baseline_y", "rank", "art_box"]
