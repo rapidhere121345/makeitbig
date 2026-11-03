@@ -18,9 +18,9 @@ extends RefCounted
 
 const RevealShader := preload("res://src/presentation/occlusion/authored_reveal.gdshader")
 const SortRelation := preload("res://src/presentation/occlusion_query.gd")
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
-const POLICY := "paired_reveal"
-const DETECTION_GROW := 8.0
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
+const POLICY := OcclusionAuthoring.PAIRED_REVEAL_POLICY
+const DETECTION_GROW := OcclusionAuthoring.DETECTION_GROW
 const TRANSITION_SECONDS := 0.15
 const ENTER_COVERAGE := 0.08
 const EXIT_COVERAGE := 0.02
@@ -144,46 +144,11 @@ static func coverage_of(rect: Rect2, box: Rect2) -> float:
 	return clampf(rect.intersection(box).get_area() / box.get_area(), 0.0, 1.0)
 
 
-## The opaque-texel bounds of one texture image. Empty when nothing is
-## opaque; callers treat that as "no containment requirement to prove".
-static func occupied_aabb(image: Image) -> Rect2:
-	if image == null or image.is_empty():
-		return Rect2()
-	if image.is_compressed() and image.decompress() != OK:
-		return Rect2()
-	var min_p := Vector2i(1073741824, 1073741824)
-	var max_p := Vector2i(-1073741824, -1073741824)
-	for y: int in image.get_height():
-		for x: int in image.get_width():
-			if image.get_pixel(x, y).a > 0.0:
-				min_p.x = mini(min_p.x, x)
-				min_p.y = mini(min_p.y, y)
-				max_p.x = maxi(max_p.x, x)
-				max_p.y = maxi(max_p.y, y)
-	if max_p.x < min_p.x:
-		return Rect2()
-	return Rect2(Vector2(min_p), Vector2(max_p - min_p) + Vector2.ONE)
-
-
-## Shared fail-closed detection-rect check used by scene mounts, the baker
-## path and the author definition. Returns an error string or "".
-static func detection_rect_error(rect: Variant, opaque_image: Image) -> String:
-	if not rect is Rect2:
-		return "paired_reveal_missing_rect"
-	var area: Rect2 = rect
-	if not area.position.is_finite() or not area.size.is_finite() or area.size.x <= 0.0 or area.size.y <= 0.0:
-		return "paired_reveal_invalid_rect"
-	var occupied := occupied_aabb(opaque_image)
-	if occupied.has_area() and not area.encloses(occupied.grow(DETECTION_GROW)):
-		return "paired_reveal_rect_too_small"
-	return ""
-
-
 static func _validate_detection_rect(rect: Rect2, opaque_texture: Texture2D) -> String:
 	if not rect.position.is_finite() or not rect.size.is_finite() or rect.size.x <= 0.0 or rect.size.y <= 0.0:
 		return "paired_reveal_invalid_rect"
 	var image := opaque_texture.get_image() if opaque_texture != null else null
-	return detection_rect_error(rect, image)
+	return OcclusionAuthoring.detection_rect_error(rect, image)
 
 
 ## Fail-closed and detach paths: every registered piece returns to its

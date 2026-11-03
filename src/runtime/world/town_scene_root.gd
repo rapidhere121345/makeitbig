@@ -6,9 +6,7 @@ extends Node2D
 const SpatialManifestScript := preload("res://src/runtime/world/spatial_manifest.gd")
 const EnvironmentBaker := preload("res://src/runtime/world/environment_object_baker.gd")
 const EnvironmentDefinition := preload("res://src/runtime/world/environment_object_definition.gd")
-const PrimitiveFadeScript := preload("res://src/presentation/occlusion/primitive_fade_controller.gd")
-const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const GROUPS: Array[String] = ["Ground", "GroundEffects", "SortRoot", "Foreground", "GeometrySources", "Sockets"]
 
 @export var world_size := Vector2(1536, 960)
@@ -219,19 +217,19 @@ func _visual_fingerprint(sprite: Sprite2D, group: String, images: Dictionary) ->
 		"rank": int(sprite.get_meta("sort_rank", 0)), "stable_id": String(sprite.get_meta("sort_stable_id", sprite.get_meta("binding_id", ""))),
 		"centered": sprite.centered, "policy": policy, "full": {},
 	}
-	if policy == PrimitiveFadeScript.POLICY:
-		record["volumes"] = PrimitiveFadeScript.volumes_payload(sprite.get_meta("occlusion_volumes", []))
-	elif policy == PairedRevealScript.POLICY:
+	if policy == OcclusionAuthoring.PRIMITIVE_FADE_POLICY:
+		record["volumes"] = OcclusionAuthoring.volumes_payload(sprite.get_meta("occlusion_volumes", []))
+	elif policy == OcclusionAuthoring.PAIRED_REVEAL_POLICY:
 		var rect: Rect2 = sprite.get_meta("occlusion_rect", Rect2())
 		record["occlusion_rect"] = [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
 	var roles: Array[String] = ["full"]
 	if policy == "authored_variant":
 		roles = ["full", "variant", "mask"]
-	elif policy == PairedRevealScript.POLICY:
+	elif policy == OcclusionAuthoring.PAIRED_REVEAL_POLICY:
 		roles = ["full", "variant"]
 	for role: String in roles:
 		var path := full_path if role == "full" else String(sprite.get_meta("reveal_" + role + "_path", ""))
-		if role == "full" and policy in ["authored_variant", PairedRevealScript.POLICY] and String(sprite.get_meta("reveal_full_path", "")) != full_path:
+		if role == "full" and policy in ["authored_variant", OcclusionAuthoring.PAIRED_REVEAL_POLICY] and String(sprite.get_meta("reveal_full_path", "")) != full_path:
 			errors.append("invalid_modular_full_reference:" + String(sprite.name))
 		if not images.has(path):
 			images[path] = _image_fingerprint(path, sprite.texture if role == "full" else null)
@@ -274,7 +272,7 @@ func _paired_piece_errors(sprite: Sprite2D, id: String) -> Array[String]:
 		errors.append("missing_paired_reveal_paths:" + id)
 	elif String(sprite.get_meta("reveal_full_path", "")) != String(sprite.get_meta("texture_path", "")):
 		errors.append("invalid_paired_full_reference:" + id)
-	var rect_error := PairedRevealScript.detection_rect_error(sprite.get_meta("occlusion_rect", null), null)
+	var rect_error := OcclusionAuthoring.detection_rect_error(sprite.get_meta("occlusion_rect", null), null)
 	if not rect_error.is_empty():
 		errors.append(rect_error + ":" + id)
 	return errors
@@ -291,7 +289,7 @@ func _paired_reveal_scan() -> Dictionary:
 		if parent == null:
 			continue
 		for node: Node in parent.get_children():
-			if String(node.get_meta("reveal_policy", "")) != PairedRevealScript.POLICY:
+			if String(node.get_meta("reveal_policy", "")) != OcclusionAuthoring.PAIRED_REVEAL_POLICY:
 				continue
 			var id := String(node.get_meta("binding_id", String(node.name)))
 			var piece_errors := _paired_piece_errors(node as Sprite2D, id)
@@ -341,15 +339,15 @@ func _modular_layer_errors() -> Array[String]:
 				if node.z_index != 0 or not node.z_as_relative or not node.visible or node.modulate != Color.WHITE or node.self_modulate != Color.WHITE or node.material != null:
 					errors.append("unsupported_modular_visual_override:" + String(node.name))
 				var policy := String(node.get_meta("reveal_policy", ""))
-				if policy not in ["none", "authored_variant", PrimitiveFadeScript.POLICY, PairedRevealScript.POLICY]:
+				if policy not in ["none", "authored_variant", OcclusionAuthoring.PRIMITIVE_FADE_POLICY, OcclusionAuthoring.PAIRED_REVEAL_POLICY]:
 					errors.append("missing_modular_reveal_policy:" + String(node.name))
-				elif policy == PrimitiveFadeScript.POLICY:
+				elif policy == OcclusionAuthoring.PRIMITIVE_FADE_POLICY:
 					var volumes: Variant = node.get_meta("occlusion_volumes", [])
 					if not volumes is Array or (volumes as Array).is_empty():
 						errors.append("missing_modular_occlusion_volumes:" + String(node.name))
 					if node.has_meta("reveal_variant_path") or node.has_meta("reveal_full_path"):
 						errors.append("primitive_fade_policy_conflict:" + String(node.name))
-				elif policy == PairedRevealScript.POLICY:
+				elif policy == OcclusionAuthoring.PAIRED_REVEAL_POLICY:
 					errors.append_array(_paired_piece_errors(node as Sprite2D, String(node.name)))
 	return errors
 
@@ -365,7 +363,7 @@ func _primitive_fade_scan() -> Dictionary:
 		if parent == null:
 			continue
 		for node: Node in parent.get_children():
-			if String(node.get_meta("reveal_policy", "")) != PrimitiveFadeScript.POLICY:
+			if String(node.get_meta("reveal_policy", "")) != OcclusionAuthoring.PRIMITIVE_FADE_POLICY:
 				continue
 			var id := String(node.get_meta("binding_id", String(node.name)))
 			var volumes: Variant = node.get_meta("occlusion_volumes", [])
@@ -377,7 +375,7 @@ func _primitive_fade_scan() -> Dictionary:
 				continue
 			var malformed := false
 			for volume: Variant in volumes:
-				var invalid := PrimitiveFadeScript._validate_volume(volume)
+				var invalid := OcclusionAuthoring.volume_error(volume)
 				if not invalid.is_empty():
 					errors.append(invalid + ":" + id)
 					malformed = true

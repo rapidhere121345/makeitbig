@@ -35,8 +35,11 @@ so rules and runtime can share it; the room-authority combat code that drives
 runtime state and ports (`CombatSystem`, `CombatSimulation`,
 `PlayerCombatRules`, `PlayerMotionSystem`) lives in `src/runtime/combat/`; the
 Ranger's authored action numbers (`RangerSkillRules`) are content, so the skill
-registry can validate against them. `src/systems/` keeps pure rules that read
-only core and content.
+registry can validate against them. The authored occlusion contract
+(`OcclusionAuthoring`: policy ids, detection-rect containment, fade volumes)
+and `TextureLoader` live in `src/content/art/`, so world mounts validate
+authored art without importing the presentation controllers. `src/systems/`
+keeps pure rules that read only core and content.
 
 ## App shell
 

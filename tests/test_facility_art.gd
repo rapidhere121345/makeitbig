@@ -15,7 +15,7 @@ extends SceneTree
 
 const FacilityScreenScript = preload("res://src/presentation/facility_screen.gd")
 const FacilityArtScript = preload("res://src/presentation/facility_art.gd")
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
 
 const ICON_NATIVE_SIZE := Vector2i(32, 32)

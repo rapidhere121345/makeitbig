@@ -104,7 +104,7 @@ func _normalize_generated_sprite(view, sprite_id: String, raw: Dictionary) -> Di
 	if opaque.get_size() != canvas or variant.get_size() != canvas:
 		view.pending_reason = "ASSETS PENDING: %s pair must share the authored canvas" % sprite_id
 		return {}
-	if PairedReveal.detection_rect_error(occlusion, opaque.get_image()) != "":
+	if OcclusionAuthoring.detection_rect_error(occlusion, opaque.get_image()) != "":
 		view.pending_reason = "ASSETS PENDING: %s detection rect must contain occupied.grow(%d)" % [sprite_id, int(PairedReveal.DETECTION_GROW)]
 		return {}
 	var variant_image = variant.get_image()

@@ -9,7 +9,7 @@ const UiKit := preload("res://src/presentation/ui_kit.gd")
 const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const EXPLORATION_ART := ArtSets.UI_EXPLORATION_V01
 const CRAFTED_ART := ArtSets.UI_CRAFTED_V01
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 static var _materials: Dictionary = {}
 
 

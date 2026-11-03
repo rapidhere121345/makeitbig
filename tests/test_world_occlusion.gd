@@ -642,7 +642,7 @@ func _test_primitive_fade_controller() -> void:
 	_expect(not bool(controller.register_piece("", sprite, volumes).ok), "primitive fade: an empty stable id was accepted")
 	_expect(not bool(controller.register_piece("roof/none", null, volumes).ok), "primitive fade: a null sprite was accepted")
 	## Canonical volume payload shared by the fingerprint and the audit rows.
-	_expect(PrimitiveFadeScript.volumes_payload(volumes) == [
+	_expect(OcclusionAuthoring.volumes_payload(volumes) == [
 		{"type": "circle", "center": [0.0, 0.0], "radius": 12.0},
 		{"type": "polygon", "points": [[-20.0, -30.0], [20.0, -30.0], [20.0, -6.0], [-20.0, -6.0]]},
 	], "primitive fade: the volume payload left its canonical form")

@@ -20,7 +20,7 @@ extends RefCounted
 
 const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const ICON_ATLAS_PATH: String = ArtSets.EARLY_LOOP_V01 + "/atlas.json"
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const ICON_ATLAS_DIRECTORY: String = ArtSets.EARLY_LOOP_V01
 const MARK_SOURCES := {
 	"contract": {"path": ArtSets.GENERATED_WORLD_V02 + "/board_opaque.png", "size": Vector2i(112, 112)},

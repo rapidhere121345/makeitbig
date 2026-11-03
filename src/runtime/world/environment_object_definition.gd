@@ -1,8 +1,7 @@
 class_name EnvironmentObjectDefinition
 extends Resource
 
-const PairedRevealScript := preload("res://src/presentation/occlusion/paired_reveal_controller.gd")
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 
 ## Local author data only. Footprints describe contact; explicitly authored
 ## movement_envelopes become blockers without any additional inflation.
@@ -154,7 +153,7 @@ static func _check_reveal_policy(part: Dictionary, id: String) -> Array[String]:
 			else:
 				var texture := read_texture(String(part.get("full_path", "")))
 				if texture != null:
-					var occupied := PairedRevealScript.occupied_aabb(texture.get_image())
+					var occupied := OcclusionAuthoring.occupied_aabb(texture.get_image())
 					if occupied.has_area() and not (rect as Rect2).encloses(occupied.grow(PAIRED_REVEAL_DETECTION_GROW)):
 						errors.append("paired_occlusion_rect_too_small:" + id)
 		_:

@@ -16,7 +16,7 @@ extends Control
 
 const NATIVE_VIEW := Vector2i(640, 360)
 const JsonIO := preload("res://src/core/json_io.gd")
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const UiKit := preload("res://src/presentation/ui_kit.gd")
 const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const DISPLAY_SCALE := 2

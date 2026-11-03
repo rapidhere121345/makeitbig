@@ -1,15 +1,9 @@
 {
   "layer_exceptions": {
-    "src/runtime/world/environment_object_definition.gd": [
-      "presentation"
-    ],
     "src/runtime/world/room_presentation_port.gd": [
       "presentation"
     ],
     "src/runtime/world/scene_runtime.gd": [
-      "presentation"
-    ],
-    "src/runtime/world/town_scene_root.gd": [
       "presentation"
     ]
   },

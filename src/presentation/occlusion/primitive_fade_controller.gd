@@ -14,7 +14,7 @@ extends RefCounted
 
 const SortRelation := preload("res://src/presentation/occlusion_query.gd")
 
-const POLICY := "primitive_fade"
+const POLICY := OcclusionAuthoring.PRIMITIVE_FADE_POLICY
 ## Tunable fade contract: the settled roof opacity over a protected actor and
 ## the full open/close transition duration.
 const FADED_ALPHA := 0.25
@@ -45,7 +45,7 @@ func register_piece(stable_id: String, sprite: Sprite2D, volumes: Variant) -> Di
 		return {"ok": false, "error": "primitive_fade_missing_volumes:" + stable_id}
 	var checked: Array = []
 	for volume: Variant in volumes:
-		var error := _validate_volume(volume)
+		var error := OcclusionAuthoring.volume_error(volume)
 		if not error.is_empty():
 			return {"ok": false, "error": error + ":" + stable_id}
 		checked.append(volume)
@@ -183,60 +183,6 @@ func report() -> Dictionary:
 			"faded_alpha": FADED_ALPHA,
 			"transition_seconds": TRANSITION_SECONDS,
 			"actors": (state["actors"] as Dictionary).duplicate(true),
-			"volumes": volumes_payload(state["volumes"]),
+			"volumes": OcclusionAuthoring.volumes_payload(state["volumes"]),
 		}
 	return result
-
-
-## Deterministic plain-value payload of placement-translated volumes, shared
-## by the presenter audit and the scene-root presentation fingerprint.
-static func volumes_payload(volumes: Variant) -> Array:
-	var payload: Array = []
-	if not volumes is Array:
-		return payload
-	for volume: Variant in volumes:
-		if not volume is Dictionary:
-			continue
-		var data: Dictionary = volume
-		if data.get("type") == "circle":
-			var center: Vector2 = data.get("center", Vector2.INF)
-			payload.append({"type": "circle", "center": [center.x, center.y], "radius": float(data.get("radius", 0.0))})
-		elif data.get("type") == "polygon":
-			var points: Array = []
-			for point: Vector2 in data.get("points", PackedVector2Array()):
-				points.append([point.x, point.y])
-			payload.append({"type": "polygon", "points": points})
-	return payload
-
-
-static func _validate_volume(volume: Variant) -> String:
-	if not volume is Dictionary:
-		return "primitive_fade_invalid_volume"
-	var data: Dictionary = volume
-	if data.get("type") == "circle":
-		var center: Variant = data.get("center", null)
-		if not center is Vector2 or not (center as Vector2).is_finite():
-			return "primitive_fade_invalid_volume_center"
-		if not _positive(data.get("radius", null)):
-			return "primitive_fade_invalid_volume_radius"
-		return ""
-	if data.get("type") == "polygon":
-		var points: Variant = data.get("points", null)
-		if not points is PackedVector2Array:
-			return "primitive_fade_invalid_volume_polygon"
-		var packed: PackedVector2Array = points
-		if packed.size() < 3:
-			return "primitive_fade_invalid_volume_polygon"
-		for point: Vector2 in packed:
-			if not point.is_finite():
-				return "primitive_fade_invalid_volume_polygon"
-		## A collinear "polygon" still triangulates in this engine build,
-		## so a near-zero signed area is the real degeneracy test.
-		if Geometry2D.triangulate_polygon(packed).is_empty() or absf(_signed_area(packed)) <= 0.000001:
-			return "primitive_fade_degenerate_volume_polygon"
-		return ""
-	return "primitive_fade_unknown_volume_type"
-
-
-static func _positive(value: Variant) -> bool:
-	return (value is int or value is float) and is_finite(float(value)) and float(value) > 0.0

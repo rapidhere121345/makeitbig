@@ -23,7 +23,7 @@ const GroundingScript = preload("res://src/presentation/grounding_effects.gd")
 const RoomCatalogScript = preload("res://src/runtime/world/room_catalog.gd")
 const SortRelation = preload("res://src/presentation/occlusion_query.gd")
 const JsonIO := preload("res://src/core/json_io.gd")
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 ## Collaborators in src/presentation/arena_world/. The view keeps the frame state
 ## (camera, hero cell, sprite and texture tables) and passes itself to the ones
 ## that need it, so nothing holds a reference back to the view. The parameter

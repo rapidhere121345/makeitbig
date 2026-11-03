@@ -2,7 +2,7 @@ extends SceneTree
 ## Shared texture loader gate (src/presentation/art/texture_loader.gd).
 ##   godot --headless --path . --script res://tests/unit/test_texture_loader.gd
 
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const TEMP_DIR := "user://texture_loader_test"
 const IMPORTED_PNG := "res://art/production/p1/hamlet_life_v01/residents.png"
 const IMPORTED_SIZE := Vector2i(192, 240)

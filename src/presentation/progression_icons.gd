@@ -9,7 +9,7 @@ extends RefCounted
 
 const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const ATLAS_DIRECTORY := ArtSets.ICON_EXPANSION_V01
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const ATLAS_PATH := ArtSets.ICON_EXPANSION_V01 + "/atlas.json"
 const SCHEMA_VERSION := 1
 const NATIVE_ICON_SIZE := Vector2i(32, 32)

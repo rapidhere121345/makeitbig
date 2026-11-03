@@ -30,7 +30,7 @@ extends RefCounted
 const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const LIFE_DIR := ArtSets.ACTORS_V02 + "/residents/"
 const JsonIO := preload("res://src/core/json_io.gd")
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const LIFE_ATLAS_PATH := LIFE_DIR + "atlas.json"
 const LIFE_MANIFEST_PATH := LIFE_DIR + "life.json"
 const SCHEMA_VERSION := 1

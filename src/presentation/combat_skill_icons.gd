@@ -6,7 +6,7 @@ extends RefCounted
 
 const ArtSets := preload("res://src/presentation/art/art_sets.gd")
 const ATLAS_PATH: String = ArtSets.WORLD_POLISH_V01 + "/combat_atlas.json"
-const TextureLoader := preload("res://src/presentation/art/texture_loader.gd")
+const TextureLoader := preload("res://src/content/art/texture_loader.gd")
 const ATLAS_DIRECTORY: String = ArtSets.WORLD_POLISH_V01
 const NATIVE_ICON_SIZE := Vector2i(32, 32)
 const DISPLAY_ICON_SIZE := Vector2i(64, 64)
