@@ -31,18 +31,18 @@ func _add_full_item_detail_button(parent: Container, item: Dictionary, title_tex
 
 
 func _show_item_detail(title_text: String, detail_text: String, source: Control) -> void:
-	if _screen._item_detail_dialog == null or _screen._item_detail_dialog_text == null:
+	if _screen.item_detail_dialog == null or _screen.item_detail_dialog_text == null:
 		return
-	_screen._item_detail_return_focus = source
-	_screen._item_detail_dialog.title = "Full Equipment Details · %s" % title_text
-	_screen._item_detail_dialog.dialog_text = ""
-	_screen._item_detail_dialog_text.text = detail_text
-	_screen._item_detail_scroll.scroll_vertical = 0
+	_screen.item_detail_return_focus = source
+	_screen.item_detail_dialog.title = "Full Equipment Details · %s" % title_text
+	_screen.item_detail_dialog.dialog_text = ""
+	_screen.item_detail_dialog_text.text = detail_text
+	_screen.item_detail_scroll.scroll_vertical = 0
 	var target_size := _item_detail_target_size()
-	_screen._item_detail_dialog.min_size = target_size
-	_screen._item_detail_dialog.size = target_size
+	_screen.item_detail_dialog.min_size = target_size
+	_screen.item_detail_dialog.size = target_size
 	_layout_item_detail_dialog()
-	_screen._item_detail_dialog.popup_centered_clamped(target_size, 0.95)
+	_screen.item_detail_dialog.popup_centered_clamped(target_size, 0.95)
 	call_deferred("_layout_item_detail_dialog")
 
 
@@ -57,32 +57,32 @@ func _item_detail_target_size() -> Vector2i:
 
 
 func _layout_item_detail_dialog() -> void:
-	if _screen._item_detail_dialog == null or _screen._item_detail_scroll == null or _screen._item_detail_dialog_text == null:
+	if _screen.item_detail_dialog == null or _screen.item_detail_scroll == null or _screen.item_detail_dialog_text == null:
 		return
 	var body_position := Vector2(20.0, 44.0)
-	var body_size := Vector2(maxf(0.0, _screen._item_detail_dialog.size.x - 40.0), maxf(0.0, _screen._item_detail_dialog.size.y - 116.0))
-	_screen._item_detail_scroll.position = body_position
-	_screen._item_detail_scroll.size = body_size
+	var body_size := Vector2(maxf(0.0, _screen.item_detail_dialog.size.x - 40.0), maxf(0.0, _screen.item_detail_dialog.size.y - 116.0))
+	_screen.item_detail_scroll.position = body_position
+	_screen.item_detail_scroll.size = body_size
 	var content_width := maxf(0.0, body_size.x - 18.0)
-	_screen._item_detail_dialog_text.custom_minimum_size = Vector2(content_width, 0.0)
-	_screen._item_detail_dialog_text.size = Vector2(content_width, 0.0)
+	_screen.item_detail_dialog_text.custom_minimum_size = Vector2(content_width, 0.0)
+	_screen.item_detail_dialog_text.size = Vector2(content_width, 0.0)
 	call_deferred("_fit_item_detail_text")
 
 
 func _fit_item_detail_text() -> void:
-	if _screen._item_detail_scroll == null or _screen._item_detail_dialog_text == null:
+	if _screen.item_detail_scroll == null or _screen.item_detail_dialog_text == null:
 		return
-	var content_width: float = maxf(0.0, _screen._item_detail_scroll.size.x - 18.0)
-	_screen._item_detail_dialog_text.custom_minimum_size = Vector2(content_width, 0.0)
-	_screen._item_detail_dialog_text.size = Vector2(content_width, 0.0)
-	var wrapped_height: float = _screen._item_detail_dialog_text.get_minimum_size().y
-	_screen._item_detail_dialog_text.custom_minimum_size = Vector2(content_width, wrapped_height)
-	_screen._item_detail_dialog_text.size = Vector2(content_width, wrapped_height)
+	var content_width: float = maxf(0.0, _screen.item_detail_scroll.size.x - 18.0)
+	_screen.item_detail_dialog_text.custom_minimum_size = Vector2(content_width, 0.0)
+	_screen.item_detail_dialog_text.size = Vector2(content_width, 0.0)
+	var wrapped_height: float = _screen.item_detail_dialog_text.get_minimum_size().y
+	_screen.item_detail_dialog_text.custom_minimum_size = Vector2(content_width, wrapped_height)
+	_screen.item_detail_dialog_text.size = Vector2(content_width, wrapped_height)
 
 
 func _on_item_detail_closed() -> void:
-	var return_focus: Control = _screen._item_detail_return_focus
-	_screen._item_detail_return_focus = null
+	var return_focus: Control = _screen.item_detail_return_focus
+	_screen.item_detail_return_focus = null
 	if return_focus != null and is_instance_valid(return_focus) and return_focus.is_visible_in_tree() \
 		and (not return_focus is BaseButton or not (return_focus as BaseButton).disabled):
 		return_focus.call_deferred("grab_focus")
@@ -91,13 +91,13 @@ func _on_item_detail_closed() -> void:
 ## The snapshot's own base-item table entry for one owned item, or {} when the
 ## snapshot carries no entry: the page never invents a base it was not given.
 func _base_item_data(item: Dictionary) -> Dictionary:
-	return UiKit.as_dictionary(_screen._equipment_model.base_items.get(String(item.get("base_item_id", "")), {}))
+	return UiKit.as_dictionary(_screen.equipment_model.base_items.get(String(item.get("base_item_id", "")), {}))
 
 
 ## The player-facing name of one owned item, or its base id when the snapshot has
 ## no published name for it. Never a shortened or invented label.
 func _item_display_name(item: Dictionary) -> String:
-	return _screen._equipment_model.display_name(item)
+	return _screen.equipment_model.display_name(item)
 
 
 ## The complete raw reference line of one item: every field the snapshot holds,
@@ -111,7 +111,7 @@ func _item_detail_text(item: Dictionary) -> String:
 		if raw_modifier is Dictionary:
 			modifiers.append(FacilityItemText.modifier_text(raw_modifier))
 	var affixes: Array[String] = []
-	var families := UiKit.as_dictionary(_screen._facility_data.get("affix_families", {}))
+	var families := UiKit.as_dictionary(_screen.facility_data.get("affix_families", {}))
 	var affix_index := 1
 	for raw_affix in UiKit.as_array(item.get("affixes", [])):
 		if not raw_affix is Dictionary:
@@ -154,7 +154,7 @@ func _raw_fields_are_long(item: Dictionary) -> bool:
 
 func _raw_entry_count(item: Dictionary) -> int:
 	var base_id := String(item.get("base_item_id", ""))
-	var base := UiKit.as_dictionary(UiKit.as_dictionary(_screen._facility_data.get("base_items", {})).get(base_id, {}))
+	var base := UiKit.as_dictionary(UiKit.as_dictionary(_screen.facility_data.get("base_items", {})).get(base_id, {}))
 	# Internal parameter entries only: the base's own modifiers plus the item's
 	# affixes. The rune and the law are single short fields that stay readable, so
 	# they never push a block over the budget on their own.
@@ -175,7 +175,7 @@ func _field_block_key(kind: String, owner_id: String) -> String:
 
 
 func _field_block_open(kind: String, owner_id: String) -> bool:
-	return bool(_screen._open_field_blocks.get(_field_block_key(kind, owner_id), false))
+	return bool(_screen.open_field_blocks.get(_field_block_key(kind, owner_id), false))
 
 
 func _field_block_toggle(kind: String, owner_id: String) -> Button:
@@ -199,13 +199,13 @@ func _on_field_block_toggled(kind: String, owner_id: String) -> void:
 	if kind.is_empty() or owner_id.is_empty():
 		return
 	var key := _field_block_key(kind, owner_id)
-	_screen._open_field_blocks[key] = not bool(_screen._open_field_blocks.get(key, false))
-	if _screen._built:
-		_screen._apply_presentation()
+	_screen.open_field_blocks[key] = not bool(_screen.open_field_blocks.get(key, false))
+	if _screen.built:
+		_screen.apply_presentation()
 
 
 func _affix_effect_text(family: Dictionary, tier: int) -> String:
-	return _screen._readable_build.format_affix({"family_id": String(family.get("id", "")), "tier": tier})
+	return _screen.readable_build.format_affix({"family_id": String(family.get("id", "")), "tier": tier})
 
 
 func _inventory_item_by_id(inventory: Array, instance_id: String) -> Dictionary:
@@ -218,15 +218,15 @@ func _inventory_item_by_id(inventory: Array, instance_id: String) -> Dictionary:
 
 
 func _on_salvage_confirmed() -> void:
-	if _screen._pending_salvage.is_empty():
+	if _screen.pending_salvage.is_empty():
 		return
-	var instance_id := String(_screen._pending_salvage.get("instance_id", ""))
-	_screen._pending_salvage = {}
+	var instance_id := String(_screen.pending_salvage.get("instance_id", ""))
+	_screen.pending_salvage = {}
 	_screen.action_requested.emit("loadout", "salvage_item", {"instance_id": instance_id})
 
 
 func _on_salvage_canceled() -> void:
-	_screen._pending_salvage = {}
+	_screen.pending_salvage = {}
 
 
 ## Difference summary for one forge inventory item, rendered as the button's second
@@ -236,4 +236,4 @@ func _on_salvage_canceled() -> void:
 ## instance_id. Up to two affixes as family_name + Chinese tier, then a "+N" overflow; with
 ## no affixes it falls back to rune/law; with neither it says "No Affixes".
 func _item_difference_summary_text(item: Dictionary) -> String:
-	return _screen._equipment_model.compact_difference(item)
+	return _screen.equipment_model.compact_difference(item)

@@ -8,12 +8,6 @@
     ]
   },
   "private_reach_ins": {
-    "src/presentation/facility/forge_page.gd": 125,
-    "src/presentation/facility/item_detail.gd": 44,
-    "src/presentation/facility/loadout_page.gd": 272,
-    "src/presentation/facility/proxy_page.gd": 13,
-    "src/presentation/facility/training_page.gd": 17,
-    "src/presentation/result/result_loot_panel.gd": 23,
     "src/runtime/world/scene_runtime.gd": 1
   },
   "string_dispatch": {

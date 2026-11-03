@@ -58,7 +58,7 @@ func _run() -> void:
 	_expect(not dialog.visible and toggle.has_focus(), "Closing filters did not restore their opener")
 	bar.reset_query()
 	await _settle()
-	_expect(actions.is_empty() and data == original and screen._facility_data == original,
+	_expect(actions.is_empty() and data == original and screen.facility_data == original,
 		"Inspecting/filtering inventory mutated equipment or emitted a domain action")
 	screen.queue_free()
 	await process_frame

@@ -18,7 +18,7 @@ func _run() -> void:
 		for route in ["loadout","forge"]:
 			screen.present(route,{}, {}, "",fixture._real_loadout_snapshot() if route == "loadout" else fixture._forge_snapshot(true))
 			for frame in range(12): await process_frame
-			print("LAYOUT ",route," ",size," root=",screen.size," frame=",screen._layout_frame)
+			print("LAYOUT ",route," ",size," root=",screen.size," frame=",screen.layout_frame)
 			for node in screen.find_children("*","ScrollContainer",true,false):
 				var scroll := node as ScrollContainer
 				# Facility workspaces, detail readers and dropdowns expose long
@@ -50,7 +50,7 @@ func _run() -> void:
 			else:
 				_check_forge_composition(screen,size)
 			if route == "forge":
-				var before := JSON.stringify(screen._facility_data)
+				var before := JSON.stringify(screen.facility_data)
 				var events: Array = []
 				var listener := func(f,a,p): events.append([f,a,p])
 				screen.action_requested.connect(listener)
@@ -63,12 +63,12 @@ func _run() -> void:
 				events.clear()
 				if reveal == null: failures.append("forge reveal is missing")
 				if reveal != null: reveal.pressed.emit()
-				var after_reveal := JSON.stringify(screen._facility_data)
+				var after_reveal := JSON.stringify(screen.facility_data)
 				if events.size() != 1 or String(events[0][1]) != "forge_reveal" or before != after_reveal or not (events[0][2] as Dictionary).has("revision") or (events[0][2] as Dictionary).has("affix_index"):
 					failures.append("free reveal did not emit once with only a revision without mutating presentation state: size=%s events=%s state_changed=%s disabled=%s operation=%s block=%s can_start=%s" % [
 						str(size), str(events), str(before != after_reveal), str(reveal.disabled if reveal != null else true),
-						String(screen.get("_forge_operation")),
-						String(screen._forge_operation_block_reason(String(screen.get("_forge_operation")))), str(screen._forge_can_start()),
+						String(screen.get("forge_operation")),
+						String(screen._forge_operation_block_reason(String(screen.get("forge_operation")))), str(screen._forge_can_start()),
 					])
 				events.clear()
 				screen.present("forge", {}, {}, "", fixture._forge_snapshot(true, true))

@@ -355,7 +355,7 @@ func _check_readable_filters_and_skill_entry() -> void:
 			and dodge.text == "Dodge\nShift 1.17s",
 			"readable loadout: compact actions did not keep the name and key/cooldown on stable separate lines")
 		_expect(not dodge.text.contains("Sh\nift")
-			and screen._compact_skill_text({"name":"Roll", "key_bindings":["Space"], "cooldown_ticks":13}, 1) == "Roll\nSpace 0.43s",
+			and screen.compact_skill_text({"name":"Roll", "key_bindings":["Space"], "cooldown_ticks":13}, 1) == "Roll\nSpace 0.43s",
 			"readable loadout: a named binding can still split across lines")
 		for action: Button in [piercing, mark, dash, dodge]:
 			var minimum := action.get_combined_minimum_size()
@@ -388,7 +388,7 @@ func _check_readable_filters_and_skill_entry() -> void:
 		"readable loadout: required filters and sort controls are incomplete")
 	var filter_dialog := screen.find_child("CandidateFilterDialog", true, false) as AcceptDialog
 	if filter_dialog != null: filter_dialog.hide()
-	var data_before: Dictionary = screen._facility_data.duplicate(true)
+	var data_before: Dictionary = screen.facility_data.duplicate(true)
 	piercing = screen.get_action_button("SkillSummary_piercing_arrow")
 	mark = screen.get_action_button("SkillSummary_hunter_mark")
 	if piercing != null: piercing.pressed.emit()
@@ -422,14 +422,14 @@ func _check_readable_filters_and_skill_entry() -> void:
 		await _settle_frames()
 		_expect(skill_scroll.scroll_vertical >= int(scroll_end),
 			"readable loadout: internal skill scroll could not reach the complete description's end")
-	_expect(screen._facility_data == data_before,
+	_expect(screen.facility_data == data_before,
 		"readable loadout: opening or scrolling a skill description changed the page payload")
 	if close_button != null:
 		close_button.pressed.emit()
 		await _settle_frames()
 	_expect(skill_dialog == null or not skill_dialog.visible,
 		"readable loadout: the fixed close button did not close the skill dialog")
-	_expect(screen._facility_data == data_before,
+	_expect(screen.facility_data == data_before,
 		"readable loadout: closing a skill description changed the page payload")
 	if mark != null: mark.pressed.emit()
 	await _settle_frames()

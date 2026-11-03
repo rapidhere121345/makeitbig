@@ -85,13 +85,13 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	_expect(bool(game.complete_tutorial().get("ok", false)) and game.current_route == "base", "game root: tutorial did not reach base", failures)
 
 	_expect(bool(game.open_facility("loadout").get("ok", false)), "game root: loadout did not open", failures)
-	var loadout_data: Dictionary = game.current_screen.get("_facility_data")
+	var loadout_data: Dictionary = game.current_screen.get("facility_data")
 	_expect(loadout_data.has("active_build") and loadout_data.has("training"), "game root: loadout did not receive early-game snapshot", failures)
 	loadout_data.active_build["preset_id"] = "tampered"
 	_expect(String(game.application_state.active_build_snapshot().active_build.preset_id) == "convergent", "game root: facility snapshot leaked into application state", failures)
 	var selected: Dictionary = game.request_facility_action("loadout", "select_ranger_build", {"preset_id": "exponential"})
 	_expect(bool(selected.get("ok", false)) and String(game.application_state.active_build_snapshot().active_build.preset_id) == "exponential", "game root: ranger Build selection was not routed", failures)
-	loadout_data = game.current_screen.get("_facility_data")
+	loadout_data = game.current_screen.get("facility_data")
 	var equip_previews: Dictionary = loadout_data.get("equip_previews", {})
 	var fixed_start_preview: Dictionary = equip_previews.get("fixed_start_main_hand", {})
 	_expect(bool(fixed_start_preview.get("ok", false))
@@ -132,7 +132,7 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	_expect(bool(game.cancel_contract().get("ok", false)), "game root: locked contract could not be cancelled", failures)
 
 	_expect(bool(game.open_facility("training").get("ok", false)), "game root: training did not open", failures)
-	var training_data: Dictionary = game.current_screen.get("_facility_data")
+	var training_data: Dictionary = game.current_screen.get("facility_data")
 	_expect(training_data.has("available_builds")
 		and String((training_data.get("resolved_build", {}) as Dictionary).get("build_fingerprint", "")).length() == 64,
 		"game root: training did not receive the current resolved Build", failures)
@@ -140,7 +140,7 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	_expect(bool(trial.get("ok", false)) and String((trial.report as Dictionary).preset_id) == "exponential", "game root: training trial was not routed for active Build", failures)
 	_expect(bool(game.leave_facility().get("ok", false)), "game root: training did not return to base", failures)
 	_expect(bool(game.open_facility("proxy").get("ok", false)), "game root: proxy did not open", failures)
-	var proxy_data: Dictionary = game.current_screen.get("_facility_data")
+	var proxy_data: Dictionary = game.current_screen.get("facility_data")
 	_expect(proxy_data.has("proxy") and not bool((proxy_data.proxy as Dictionary).unlocked), "game root: proxy did not receive locked early-game snapshot", failures)
 	_expect(bool(game.leave_facility().get("ok", false)), "game root: proxy did not return to base", failures)
 
@@ -205,7 +205,7 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	_expect(not game.application_state.is_auto_mode_unlocked(), "game root: pre-Boss mainline victory unlocked Auto", failures)
 
 	_expect(bool(game.open_facility("loadout").get("ok", false)), "game root: rewarded loadout did not open", failures)
-	var rewarded_loadout: Dictionary = game.current_screen.get("_facility_data")
+	var rewarded_loadout: Dictionary = game.current_screen.get("facility_data")
 	var salvage_previews: Dictionary = rewarded_loadout.get("salvage_previews", {})
 	var salvage_id := ""
 	for raw_item in (rewarded_loadout.get("inventory_equipment", []) as Array):
@@ -225,7 +225,7 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 			and (game.application_state.profile.inventory.equipment as Array).size() == inventory_before - 1
 			and int((game.application_state.profile.resources.law_tallies as Dictionary).get(salvage_operation, 0)) == tallies_before + 1,
 			"game root: confirmed salvage did not remove one campaign drop and refund its Law Tally", failures)
-		var refreshed_loadout: Dictionary = game.current_screen.get("_facility_data")
+		var refreshed_loadout: Dictionary = game.current_screen.get("facility_data")
 		_expect(not (refreshed_loadout.get("salvage_previews", {}) as Dictionary).has(salvage_id)
 			and String(game.request_facility_action("loadout", "salvage_item", {"instance_id": salvage_id}).get("error", "")) == "item_not_owned",
 			"game root: salvaged item remained actionable or could be salvaged twice", failures)
@@ -282,7 +282,7 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 	var forge_before: Dictionary = game.application_state.forge_snapshot()
 	var forge_target_id := String(forge_before.target_instance_id)
 	var forge_target_name := String((forge_before.target_item as Dictionary).get("base_name", ""))
-	var presented_forge: Dictionary = game.current_screen.get("_facility_data")
+	var presented_forge: Dictionary = game.current_screen.get("facility_data")
 	var forge_mirror_properties: Array[String] = []
 	for property in game.get_property_list():
 		if String((property as Dictionary).get("name", "")) in ["_forge_affix_index", "_forge_target_instance_id"]:
@@ -291,13 +291,13 @@ func _test_complete_route_loop_and_resume(failures: Array[String]) -> void:
 		and not presented_forge.has("affix_index") and not (presented_forge.get("context", {}) as Dictionary).has("affix_index"),
 		"game root: forge context retained mirrored selected-affix state", failures)
 	var operation_selected: Dictionary = game.request_facility_action("forge", "select_forge_operation", {"operation": "rewrite"})
-	presented_forge = game.current_screen.get("_facility_data")
+	presented_forge = game.current_screen.get("facility_data")
 	_expect(bool(operation_selected.get("ok", false)) and String(presented_forge.operation) == "rewrite"
 		and not presented_forge.has("affix_index") and not (presented_forge.get("context", {}) as Dictionary).has("affix_index"),
 		"game root: operation intent was not presented without selected-affix state", failures)
 	game.request_facility_action("forge", "select_forge_operation", {"operation": "inscribe"})
 	var target_selected: Dictionary = game.request_facility_action("forge", "select_forge_item", {"instance_id": forge_target_id})
-	_expect(bool(target_selected.get("ok", false)) and String((game.current_screen.get("_facility_data") as Dictionary).target_instance_id) == forge_target_id,
+	_expect(bool(target_selected.get("ok", false)) and String((game.current_screen.get("facility_data") as Dictionary).target_instance_id) == forge_target_id,
 		"game root: target intent did not round-trip through ApplicationState", failures)
 	var premature_commit: Dictionary = game.request_facility_action("forge", "forge_commit", {})
 	var forge_status := String(game.current_screen.get("_status_message"))
@@ -432,7 +432,7 @@ func _test_proxy_player_flow(failures: Array[String]) -> void:
 	game.leave_result()
 
 	game.open_facility("proxy")
-	var proxy_before: Dictionary = game.current_screen.get("_facility_data")
+	var proxy_before: Dictionary = game.current_screen.get("facility_data")
 	var catalog_before: Dictionary = (proxy_before.proxy as Dictionary).catalog
 	_expect(catalog_before.has("marking_prism")
 		and String((catalog_before.marking_prism as Dictionary).name) == "Mark Prism",
@@ -552,9 +552,9 @@ func _test_result_drop_review_route(failures: Array[String]) -> void:
 	_expect(bool(reviewed.get("ok", false)) and game.current_route == "loadout",
 		"game root review: owned drop did not open loadout", failures)
 	if game.current_route == "loadout" and game.current_screen != null:
-		var facility_data: Dictionary = game.current_screen.get("_facility_data")
+		var facility_data: Dictionary = game.current_screen.get("facility_data")
 		var review_context: Dictionary = facility_data.get("initial_focus", {}) if facility_data.get("initial_focus", {}) is Dictionary else {}
-		var focused_slot := String(game.current_screen.get("_focus_slot"))
+		var focused_slot := String(game.current_screen.get("focus_slot"))
 		_expect(review_context == {"review_instance_id": "review:drop/1", "focus_slot": "gloves", "return_route": "result"}
 			and focused_slot == "gloves",
 			"game root review: loadout did not carry the exact settled candidate context=%s focus=%s" % [str(review_context), focused_slot], failures)
@@ -563,7 +563,7 @@ func _test_result_drop_review_route(failures: Array[String]) -> void:
 	game.request_facility_back("result")
 	_expect(game.current_route == "result", "game root review: comparison could not return to the settlement decision", failures)
 	game.review_result_drop("review:drop/1", "gloves")
-	_expect(game.current_route == "loadout" and String(game.current_screen.get("_focus_slot")) == "gloves",
+	_expect(game.current_route == "loadout" and String(game.current_screen.get("focus_slot")) == "gloves",
 		"game root review: returning to the same settled drop lost its exact loadout target", failures)
 	_destroy_game(game)
 

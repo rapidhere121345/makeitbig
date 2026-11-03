@@ -61,8 +61,8 @@ func _run() -> void:
 	_expect(text.contains("Preset A") and not text.contains("Exponential") and not text.contains("EXPONENTIAL"), "facility: unverified build title leaked its growth conclusion", failures)
 	_expect(text.contains("Continuation Chance: 0.61") and text.contains("Growth Conclusion: Unverified"), "facility: unverified build did not expose the readable continuation chance while withholding the conclusion", failures)
 	_expect(text.contains("Skill: Piercing Arrow") and text.contains("Rune: Breeding Split") and text.contains("Law: Pack Hunt Mark"), "facility: ranger component names were not rendered", failures)
-	_expect(screen._compact_skill_text({"name":"Roll", "key_bindings":["Space"], "cooldown_ticks":13}, 1) == "Roll\nSpace 0.43s"
-		and screen._compact_skill_text({"name":"Dodge", "key_bindings":["Shift"], "cooldown_ticks":35}, 1) == "Dodge\nShift 1.17s",
+	_expect(screen.compact_skill_text({"name":"Roll", "key_bindings":["Space"], "cooldown_ticks":13}, 1) == "Roll\nSpace 0.43s"
+		and screen.compact_skill_text({"name":"Dodge", "key_bindings":["Shift"], "cooldown_ticks":35}, 1) == "Dodge\nShift 1.17s",
 		"facility: compact skill text no longer keeps complete key words on its second line", failures)
 	var actions: Array[Dictionary] = []
 	screen.action_requested.connect(func(facility_id: String, action_id: String, payload: Dictionary) -> void:

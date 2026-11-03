@@ -54,18 +54,20 @@ const BASE_BUTTON_TEXT := "Return to Hub"
 const ENDING_BUTTON_TEXT := "View Epilogue"
 const CONTRACT_BUTTON_TEXT := "Depart Again"
 
-var _built := false
-var _result: Dictionary = {}
+## Page context: state and handlers the result loot panel reads and
+## calls through these public names.
+var built := false
+var result: Dictionary = {}
 var _contract: Dictionary = {}
 ## Live ownership/equipment is separate from the immutable settlement receipt.
-var _current_profile: Dictionary = {}
-var _art = FacilityArtScript.new()
+var current_profile: Dictionary = {}
+var art = FacilityArtScript.new()
 var _art_error := ""
 ## The read-only content table that names base items and affix families, or null
 ## when this package cannot read it -- every id then stays raw on the card.
 var _item_registry: Variant = null
-var _player_readable = PlayerReadableBuildScript.new()
-var _equipment_model: EquipmentPresentationModelScript = null
+var player_readable = PlayerReadableBuildScript.new()
+var equipment_model: EquipmentPresentationModelScript = null
 var _detail_visible := false
 var _detail_panel: PanelContainer
 var _detail_button: Button
@@ -83,23 +85,23 @@ var _contract_button: Button
 func _ready() -> void:
 	_build_ui()
 	_apply_presentation()
-	_focus_default_action.call_deferred()
+	focus_default_action.call_deferred()
 
 
 func present(result: Dictionary, contract: Dictionary = {}, current_profile: Dictionary = {}) -> void:
-	_result = result.duplicate(true)
+	self.result = result.duplicate(true)
 	_contract = contract.duplicate(true)
-	_current_profile = current_profile.duplicate(true)
-	_equipment_model = EquipmentPresentationModelScript.new(_player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "Unknown Equipment")
-	if _built:
+	self.current_profile = current_profile.duplicate(true)
+	equipment_model = EquipmentPresentationModelScript.new(player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "Unknown Equipment")
+	if built:
 		_apply_presentation()
-		_focus_default_action()
+		focus_default_action()
 
 
 func _build_ui() -> void:
-	if _built:
+	if built:
 		return
-	_built = true
+	built = true
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	theme = ShellThemeScript.create()
 	_load_art()
@@ -191,7 +193,7 @@ func _build_footer(root: Control) -> void:
 	footer.add_child(_ending_button)
 
 
-func _focus_default_action() -> void:
+func focus_default_action() -> void:
 	if not is_inside_tree(): return
 	if _ending_button != null and _ending_button.visible:
 		_ending_button.grab_focus()
@@ -216,17 +218,17 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _apply_presentation() -> void:
-	var outcome := String(_result.get("outcome", "unknown")).to_lower()
+	var outcome := String(result.get("outcome", "unknown")).to_lower()
 	var is_final_victory := outcome == "final_victory"
-	_report.apply_header(_result, outcome)
+	_report.apply_header(result, outcome)
 	_ending_button.visible = is_final_victory
 	_contract_button.visible = not is_final_victory
 	_base_button.size_flags_stretch_ratio = 0.75 if is_final_victory else 1.3
 	ResultWidgetsScript.set_button_primary(_base_button, not is_final_victory)
 	ResultWidgetsScript.set_button_primary(_ending_button, is_final_victory)
-	_report.apply_report(_result, _contract)
-	_loot.apply(_result, UiKit.as_dictionary(_result.get("rewards", {})))
-	_report.apply_headline(_result, outcome, _loot.equipment_drop_entries.size(), _loot.proxy_component_count)
+	_report.apply_report(result, _contract)
+	_loot.apply(result, UiKit.as_dictionary(result.get("rewards", {})))
+	_report.apply_headline(result, outcome, _loot.equipment_drop_entries.size(), _loot.proxy_component_count)
 
 
 ## The authoritative instance id, whole. A display that shortens an id hides the one
@@ -249,9 +251,9 @@ func _sync_detail_visibility() -> void:
 ## the reason for the detail block; every card keeps its text either way.
 func _load_art() -> void:
 	_art_error = ""
-	if _art.load_art():
+	if art.load_art():
 		return
-	_art_error = String(_art.pending_reason)
+	_art_error = String(art.pending_reason)
 
 
 ## Read-only load of the content table that names base items and affix families. A
@@ -262,8 +264,8 @@ func _load_item_names() -> void:
 	if not registry.load_all().is_empty():
 		return
 	_item_registry = registry
-	_player_readable = PlayerReadableBuildScript.new(registry)
-	_equipment_model = EquipmentPresentationModelScript.new(_player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "Unknown Equipment")
+	player_readable = PlayerReadableBuildScript.new(registry)
+	equipment_model = EquipmentPresentationModelScript.new(player_readable, _registry_rows("base_items"), _registry_rows("affix_families"), {}, "Unknown Equipment")
 
 
 ## ---- public surface used by the router, the harness and the tests ----
@@ -290,7 +292,7 @@ func get_run_facts_text() -> String:
 ## The settlement payload as this screen received it, for evidence capture: the
 ## copy on screen can be read back against the authority that produced it.
 func get_presented_result() -> Dictionary:
-	return _result.duplicate(true)
+	return result.duplicate(true)
 
 
 func get_presented_contract() -> Dictionary:
@@ -298,11 +300,11 @@ func get_presented_contract() -> Dictionary:
 
 
 func get_detail_text() -> String:
-	var rewards := UiKit.as_dictionary(_result.get("rewards", {}))
+	var rewards := UiKit.as_dictionary(result.get("rewards", {}))
 	var drop_field_texts: Array[String] = []
-	for entry in ResultTextScript.equipment_entries(_result, rewards):
+	for entry in ResultTextScript.equipment_entries(result, rewards):
 		drop_field_texts.append(_loot.equipment_field_text(entry))
-	return "\n".join(ResultTextScript.detail_lines(_result, _contract, _art_error) + ResultTextScript.detail_raw_lines(_result, drop_field_texts))
+	return "\n".join(ResultTextScript.detail_lines(result, _contract, _art_error) + ResultTextScript.detail_raw_lines(result, drop_field_texts))
 
 
 func set_detail_visible(value: bool) -> void:
@@ -338,7 +340,7 @@ func get_equipment_card_summaries() -> Array[String]:
 
 ## Kept as a forwarder: the unit tests read the route nodes the screen would draw.
 func _reported_route_steps() -> Array:
-	return ResultTextScript.reported_route_steps(_result)
+	return ResultTextScript.reported_route_steps(result)
 
 
 func _on_base_pressed() -> void:
@@ -349,7 +351,7 @@ func _on_contract_pressed() -> void:
 	contract_requested.emit()
 
 
-func _on_review_drop_pressed(instance_id: String, slot: String) -> void:
+func on_review_drop_pressed(instance_id: String, slot: String) -> void:
 	loadout_review_requested.emit(instance_id, slot)
 
 

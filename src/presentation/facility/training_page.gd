@@ -29,15 +29,15 @@ func _init(screen) -> void:
 func _build_training() -> void:
 	var resolved := _training_resolved_build()
 	if resolved.is_empty():
-		var unavailable: VBoxContainer = _screen._section("Training Data Unavailable", "TrainingUnavailable")
+		var unavailable: VBoxContainer = _screen.section("Training Data Unavailable", "TrainingUnavailable")
 		unavailable.add_child(FacilityWidgets.body_label("The current build cannot be resolved: stats, connected interfaces, and growth conclusions are unavailable."))
-		_screen._add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
+		_screen.add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
 		return
-	var training := UiKit.as_dictionary(_screen._facility_data.get("training", {}))
+	var training := UiKit.as_dictionary(_screen.facility_data.get("training", {}))
 	var fingerprint := String(resolved.get("build_fingerprint", "")).strip_edges()
 	var matched := FacilityItemText.matched_training_report(training, fingerprint)
 	var verified := not matched.is_empty()
-	var row: HBoxContainer = _screen._page_lead_row()
+	var row: HBoxContainer = _screen.page_lead_row()
 	var current_panel: VBoxContainer = FacilityWidgets.section_in(row, "Current Build", "TrainingActiveBuild")
 	var growth_conclusion := "Unverified"
 	if verified:
@@ -64,7 +64,7 @@ func _build_training() -> void:
 	else:
 		report_panel.add_child(FacilityWidgets.note_label("These readings come from the current build's training results."))
 	_build_training_details(resolved, training, fingerprint, verified)
-	_screen._add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
+	_screen.add_payload_action("Run Training Trial", "run_training_trial", {}, "RunTrainingTrial")
 
 
 func _training_card(parent: Container, title_text: String, value_text: String, _focused: bool, node_name: String) -> PanelContainer:
@@ -87,20 +87,20 @@ func _training_card(parent: Container, title_text: String, value_text: String, _
 ## unfolding the loadout's detail block never unfolds this one. Nothing is removed
 ## from the page: the surface states the conclusion, the fold keeps the evidence.
 func _build_training_details(resolved: Dictionary, training: Dictionary, fingerprint: String, verified: bool) -> void:
-	var section: VBoxContainer = _screen._section("Reference Data", "TrainingReferenceData")
+	var section: VBoxContainer = _screen.section("Reference Data", "TrainingReferenceData")
 	var toggle := Button.new()
 	toggle.name = "TrainingDetailsToggle"
-	toggle.text = "Hide Training Details" if _screen._training_details_open else "Show Training Details (Final Stats / Full Curve)"
+	toggle.text = "Hide Training Details" if _screen.training_details_open else "Show Training Details (Final Stats / Full Curve)"
 	toggle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toggle.pressed.connect(_on_training_details_toggled)
 	section.add_child(toggle)
-	if not _screen._training_details_open:
+	if not _screen.training_details_open:
 		return
 	var parameters := UiKit.as_dictionary(resolved.get("final_parameters", {}))
 	var parameter_lines: Array[String] = []
 	for parameter in PlayerReadableBuildScript.PARAMETER_ORDER:
-		parameter_lines.append(_screen._readable_build.format_parameter(parameter, parameters.get(parameter, null)))
+		parameter_lines.append(_screen.readable_build.format_parameter(parameter, parameters.get(parameter, null)))
 	FacilityWidgets.fact_label(section, "Final Stats", "  ·  ".join(parameter_lines))
 	FacilityWidgets.fact_label(section, "Connected Interfaces", FacilityItemText.training_interface_text(resolved.get("connected_interfaces", [])))
 	FacilityWidgets.fact_label(section, "Missing Interfaces", FacilityItemText.training_interface_text(resolved.get("missing_interfaces", [])))
@@ -108,9 +108,9 @@ func _build_training_details(resolved: Dictionary, training: Dictionary, fingerp
 
 
 func _on_training_details_toggled() -> void:
-	_screen._training_details_open = not _screen._training_details_open
-	if _screen._built:
-		_screen._apply_presentation()
+	_screen.training_details_open = not _screen.training_details_open
+	if _screen.built:
+		_screen.apply_presentation()
 
 
 ## The generational trace of the matching report and nothing else. No report, a
@@ -126,7 +126,7 @@ func _add_growth_trace(parent: Container, matched: Dictionary) -> void:
 	trace.name = "TrainingGrowthTrace"
 	parent.add_child(trace)
 	trace.present(points)
-	_screen._training_trace = trace
+	_screen.training_trace = trace
 	var axis: Label = FacilityWidgets.note_label(trace.axis_caption())
 	axis.name = "TrainingGrowthTraceAxis"
 	parent.add_child(axis)
@@ -137,9 +137,9 @@ func _add_growth_trace(parent: Container, matched: Dictionary) -> void:
 
 ## The generational trace the training page really drew, for tests and the report.
 func training_trace_report() -> Dictionary:
-	if _screen._training_trace == null:
+	if _screen.training_trace == null:
 		return {"present": false, "drawing": false}
-	var report: Dictionary = _screen._training_trace.trace_report()
+	var report: Dictionary = _screen.training_trace.trace_report()
 	report["present"] = true
 	return report
 
@@ -148,7 +148,7 @@ func training_trace_report() -> Dictionary:
 ## training verification/report fields. It never reads available_builds,
 ## last_result, or the profile, and it never recomputes a Build.
 func _training_resolved_build() -> Dictionary:
-	var value: Variant = _screen._facility_data.get("resolved_build", null)
+	var value: Variant = _screen.facility_data.get("resolved_build", null)
 	if not value is Dictionary:
 		return {}
 	var resolved: Dictionary = value

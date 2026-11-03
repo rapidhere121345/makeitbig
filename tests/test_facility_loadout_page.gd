@@ -325,7 +325,7 @@ func _run() -> void:
 	review_snapshot["return_route"] = "result"
 	screen.present("loadout", {}, {}, "Drop located; compare it and decide whether to equip it.", review_snapshot)
 	var review_back := screen.find_child("ReturnToBaseButton", true, false) as Button
-	_expect(String(screen.get("_focus_slot")) == "main_hand"
+	_expect(String(screen.get("focus_slot")) == "main_hand"
 		and screen.find_child("ReviewedDrop_loot_bow_2", true, false) != null
 		and screen.backpack_cell("loot:bow/2") != null and screen.backpack_detail().visible
 		and review_back != null and review_back.text == "Results" and review_back.tooltip_text == "Return to Results"
@@ -427,9 +427,9 @@ func _run() -> void:
 	filter_inventory.append({"instance_id": "loot:bow/3", "base_item_id": "swift_recurve_bow", "slot": "main_hand", "affixes": [{"family_id": "piercing_continuation", "tier": 3}], "rune_id": "", "law_id": ""})
 	filter_inventory.append({"instance_id": "loot:gloves/2", "base_item_id": "turnfeather_gloves", "slot": "gloves", "affixes": [{"family_id": "maximum_health", "tier": 2}], "rune_id": "", "law_id": ""})
 	filter_inventory.append({"instance_id": "loot:ring/2", "base_item_id": "vitality_ring", "slot": "ring_1", "affixes": [{"family_id": "piercing_continuation", "tier": 2}], "rune_id": "", "law_id": ""})
-	screen._focus_slot = "main_hand"
-	screen._candidate_query.keyword = "Keep Keyword"
-	screen._candidate_query.min_tier = 2
+	screen.focus_slot = "main_hand"
+	screen.candidate_query.keyword = "Keep Keyword"
+	screen.candidate_query.min_tier = 2
 	screen.present("loadout", {}, {}, "", filter_snapshot)
 	var family_filter: OptionButton = screen.find_child("CandidateFamilyFilter", true, false) as OptionButton
 	var piercing_index := -1
@@ -440,22 +440,22 @@ func _run() -> void:
 				break
 	if family_filter != null and piercing_index >= 0:
 		family_filter.item_selected.emit(piercing_index)
-	_expect(screen._candidate_query.family == "piercing_continuation", "facility: the family filter did not select a present family", failures)
+	_expect(screen.candidate_query.family == "piercing_continuation", "facility: the family filter did not select a present family", failures)
 	var gloves_focus := screen.get_action_button("SlotFocus_gloves")
 	if gloves_focus != null:
 		gloves_focus.pressed.emit()
-	_expect(screen._candidate_query.family.is_empty() and screen._candidate_query.keyword == "Keep Keyword" and screen._candidate_query.min_tier == 2,
+	_expect(screen.candidate_query.family.is_empty() and screen.candidate_query.keyword == "Keep Keyword" and screen.candidate_query.min_tier == 2,
 		"facility: switching to a slot without the filtered family did not clear only that family filter", failures)
 	var cleared_filter_toggle := screen.get_action_button("CandidateFiltersToggle")
 	_expect(cleared_filter_toggle != null and not cleared_filter_toggle.tooltip_text.contains("Piercing Arrow Continuation Chance"),
 		"facility: the open filter toggle still named the cleared family", failures)
-	screen._candidate_query.family = "piercing_continuation"
-	screen._candidate_query.keyword = "Vitality"
-	screen._candidate_query.min_tier = 2
+	screen.candidate_query.family = "piercing_continuation"
+	screen.candidate_query.keyword = "Vitality"
+	screen.candidate_query.min_tier = 2
 	var ring_focus := screen.get_action_button("SlotFocus_ring_1")
 	if ring_focus != null:
 		ring_focus.pressed.emit()
-	_expect(screen._candidate_query.family == "piercing_continuation" and screen._candidate_query.keyword == "Vitality" and screen._candidate_query.min_tier == 2,
+	_expect(screen.candidate_query.family == "piercing_continuation" and screen.candidate_query.keyword == "Vitality" and screen.candidate_query.min_tier == 2,
 		"facility: switching to a slot with the filtered family lost an active filter", failures)
 	var retained_filter_toggle := screen.get_action_button("CandidateFiltersToggle")
 	_expect(retained_filter_toggle != null and retained_filter_toggle.text.contains("Filter")
@@ -467,13 +467,13 @@ func _run() -> void:
 	_expect(retained_filter_toggle != null and retained_filter_toggle.text.contains("Filter")
 		and retained_filter_toggle.tooltip_text.contains("Affix family: Piercing Arrow Continuation Chance"),
 		"facility: the collapsed filter toggle hid the active family name", failures)
-	screen._candidate_query.family = ""
-	screen._candidate_query.keyword = "Vitality"
-	screen._candidate_query.min_tier = 2
-	screen._candidate_query.requires_rune = true
-	screen._candidate_query.requires_law = true
-	screen._candidate_query.requires_salvage = true
-	screen._candidate_query.sort = "highest_tier"
+	screen.candidate_query.family = ""
+	screen.candidate_query.keyword = "Vitality"
+	screen.candidate_query.min_tier = 2
+	screen.candidate_query.requires_rune = true
+	screen.candidate_query.requires_law = true
+	screen.candidate_query.requires_salvage = true
+	screen.candidate_query.sort = "highest_tier"
 	screen.present("loadout", {}, {}, "", filter_snapshot)
 	var complete_filter_toggle := screen.get_action_button("CandidateFiltersToggle")
 	_expect(complete_filter_toggle != null and complete_filter_toggle.tooltip_text.contains("Keyword: Vitality")
@@ -483,14 +483,14 @@ func _run() -> void:
 		"facility: the collapsed filter toggle omitted an active filter or sort", failures)
 	_expect(screen.get_visible_text().contains("Click Reset to view all"),
 		"facility: an empty filtered candidate list did not point back to folded filters", failures)
-	screen._candidate_query.family = ""
-	screen._candidate_query.keyword = ""
-	screen._candidate_query.min_tier = 0
-	screen._candidate_query.requires_rune = false
-	screen._candidate_query.requires_law = false
-	screen._candidate_query.requires_salvage = false
-	screen._candidate_query.sort = "name"
-	screen._focus_slot = "main_hand"
+	screen.candidate_query.family = ""
+	screen.candidate_query.keyword = ""
+	screen.candidate_query.min_tier = 0
+	screen.candidate_query.requires_rune = false
+	screen.candidate_query.requires_law = false
+	screen.candidate_query.requires_salvage = false
+	screen.candidate_query.sort = "name"
+	screen.focus_slot = "main_hand"
 	screen.present("loadout", {}, {}, "", _real_loadout_snapshot())
 
 	# Long identifiers never return to the player page; readable names and actions

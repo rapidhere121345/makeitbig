@@ -262,7 +262,7 @@ func sync_page_size() -> void:
 		return
 	_equipment_page_size = page_size
 	_equipment_page = 0
-	if _screen._built:
+	if _screen.built:
 		_render_equipment_cards()
 
 
@@ -270,7 +270,7 @@ func _apply_first_skill_cue() -> void:
 	if _skill_cue_label == null:
 		return
 	var lines: Array[String] = []
-	for cue in ResultTextScript.first_skill_cues(_screen._result):
+	for cue in ResultTextScript.first_skill_cues(_screen.result):
 		if _skill_ready_in_build(String(cue.skill_id), int(cue.slot_index)):
 			lines.append("First-clear skill unlock: %s (%s · %s) · %s" % [cue.name, cue.key, cue.slot, cue.hint])
 		else:
@@ -286,7 +286,7 @@ func _skill_ready_in_build(skill_id: String, slot_index: int) -> bool:
 	## Readiness comes from the resolved loadout, not the reward tag: the skill
 	## must sit in its own hotkey slot (the grant can no-op when that slot is
 	## occupied), mirroring main.gd's _is_skill_equipped(slot_index, skill_id).
-	var active := UiKit.as_dictionary(_screen._current_profile.get("active_build", {}))
+	var active := UiKit.as_dictionary(_screen.current_profile.get("active_build", {}))
 	var skills: Variant = active.get("skills", [])
 	if not (skills is Array):
 		return false
@@ -296,19 +296,19 @@ func _skill_ready_in_build(skill_id: String, slot_index: int) -> bool:
 
 func _render_core_rewards(rewards: Dictionary) -> void:
 	UiKit.clear_children_immediate(_core_rewards)
-	_core_rewards.visible = ResultTextScript.is_first_proxy_unlock(_screen._result, rewards)
+	_core_rewards.visible = ResultTextScript.is_first_proxy_unlock(_screen.result, rewards)
 	if not _core_rewards.visible:
 		return
 	# Only the actual first-unlock record may display the fixed reward set.
 	# Explicit future/partial payloads are not padded to four granted objects.
-	var granted_names := ResultTextScript.proxy_core_names(_screen._result, rewards)
-	var featured := equipment_drop_entries.is_empty() and ResultTextScript.proxy_component_entries(_screen._result).is_empty()
+	var granted_names := ResultTextScript.proxy_core_names(_screen.result, rewards)
+	var featured := equipment_drop_entries.is_empty() and ResultTextScript.proxy_component_entries(_screen.result).is_empty()
 	_core_rewards.add_theme_constant_override("v_separation", 12 if featured else 4)
 	for core_id in ResultTextScript.FIXED_CORE_IDS:
 		var core_name := String(ResultTextScript.PROXY_CORE_LABELS[core_id])
 		if not core_name in granted_names:
 			continue
-		var texture: Texture2D = _screen._art.icon("core." + core_id)
+		var texture: Texture2D = _screen.art.icon("core." + core_id)
 		if texture == null:
 			continue
 		var reward := PanelContainer.new()
@@ -442,7 +442,7 @@ func _equipment_card(entry: Dictionary, entry_index: int = 0) -> PanelContainer:
 	var base_item_id := String(entry.get("base_item_id", "")).strip_edges()
 	var subject_texture: Texture2D = null
 	if not base_item_id.is_empty():
-		subject_texture = _screen._art.icon("equipment.%s" % base_item_id)
+		subject_texture = _screen.art.icon("equipment.%s" % base_item_id)
 	if subject_texture != null:
 		var subject := ResultWidgetsScript.icon_node(subject_texture)
 		subject.name = BASE_ICON_NODE_NAME
@@ -459,7 +459,7 @@ func _equipment_card(entry: Dictionary, entry_index: int = 0) -> PanelContainer:
 	var slot := String(entry.get("slot", "")).strip_edges()
 	var slot_texture: Texture2D = null
 	if not slot.is_empty():
-		slot_texture = _screen._art.icon("equipment_slot.%s" % slot)
+		slot_texture = _screen.art.icon("equipment_slot.%s" % slot)
 	if slot_texture != null:
 		## The slot is an identity badge at its native 32px cell, so it never reads
 		## as a second image of the same size competing with the dropped item.
@@ -498,8 +498,8 @@ func _equipment_card(entry: Dictionary, entry_index: int = 0) -> PanelContainer:
 		review_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		review_button.custom_minimum_size = Vector2(188.0, 0.0)
 		ResultWidgetsScript.set_button_primary(review_button, true)
-		review_button.tooltip_text = "%s; open Loadout to inspect this %s item" % [_equipment_status_text(entry), _screen._player_readable.slot_label(slot)]
-		review_button.pressed.connect(_screen._on_review_drop_pressed.bind(instance_id, slot))
+		review_button.tooltip_text = "%s; open Loadout to inspect this %s item" % [_equipment_status_text(entry), _screen.player_readable.slot_label(slot)]
+		review_button.pressed.connect(_screen.on_review_drop_pressed.bind(instance_id, slot))
 		body.add_child(review_button)
 	var summary := Label.new()
 	summary.name = CARD_TEXT_NODE_NAME
@@ -515,14 +515,14 @@ func _equipment_card(entry: Dictionary, entry_index: int = 0) -> PanelContainer:
 ## Ownership and equipment come from the current profile, independently of the
 ## immutable item record in the settlement receipt.
 func _equipment_state(entry: Dictionary) -> String:
-	if _screen._current_profile.is_empty():
+	if _screen.current_profile.is_empty():
 		return "unknown"
 	var instance_id := String(entry.get("instance_id", ""))
-	var active := UiKit.as_dictionary(_screen._current_profile.get("active_build", {}))
+	var active := UiKit.as_dictionary(_screen.current_profile.get("active_build", {}))
 	var equipped := UiKit.as_dictionary(active.get("equipped_item_ids", {}))
 	if not instance_id.is_empty() and String(equipped.get(String(entry.get("slot", "")), "")) == instance_id:
 		return "equipped"
-	var inventory := UiKit.as_dictionary(_screen._current_profile.get("inventory", {}))
+	var inventory := UiKit.as_dictionary(_screen.current_profile.get("inventory", {}))
 	var items: Variant = inventory.get("equipment", [])
 	if items is Array:
 		for item: Variant in items:
@@ -540,7 +540,7 @@ func _equipment_status_text(entry: Dictionary) -> String:
 
 
 func _equipment_summary_text(entry: Dictionary) -> String:
-	var affixes: Array[String] = _screen._equipment_model.affix_labels(entry.get("affixes", []), true)
+	var affixes: Array[String] = _screen.equipment_model.affix_labels(entry.get("affixes", []), true)
 	return "%s\nAffixes: %s" % [
 		_equipment_status_summary(entry),
 		", ".join(affixes) if not affixes.is_empty() else "No Record",
@@ -549,10 +549,10 @@ func _equipment_summary_text(entry: Dictionary) -> String:
 
 func _equipment_status_summary(entry: Dictionary) -> String:
 	match _equipment_state(entry):
-		"equipped": return "%s · Equipped" % _screen._player_readable.slot_label(String(entry.get("slot", "")))
-		"owned": return "%s · Stored, Not Equipped" % _screen._player_readable.slot_label(String(entry.get("slot", "")))
-		"missing": return "%s · No longer in backpack; acquisition record retained" % _screen._player_readable.slot_label(String(entry.get("slot", "")))
-	return "%s · Inventory state not read" % _screen._player_readable.slot_label(String(entry.get("slot", "")))
+		"equipped": return "%s · Equipped" % _screen.player_readable.slot_label(String(entry.get("slot", "")))
+		"owned": return "%s · Stored, Not Equipped" % _screen.player_readable.slot_label(String(entry.get("slot", "")))
+		"missing": return "%s · No longer in backpack; acquisition record retained" % _screen.player_readable.slot_label(String(entry.get("slot", "")))
+	return "%s · Inventory state not read" % _screen.player_readable.slot_label(String(entry.get("slot", "")))
 
 
 func _equipment_full_text(entry: Dictionary) -> String:
@@ -560,7 +560,7 @@ func _equipment_full_text(entry: Dictionary) -> String:
 	var replacement := UiKit.as_dictionary(entry.get("equipped_parameters", {}))
 	var historical_preview := "\nEquipment preview at acquisition:" if not current.is_empty() or not replacement.is_empty() else ""
 	return "At acquisition: added to equipment storage\n%s%s\n%s" % [
-		_equipment_status_text(entry), historical_preview, _screen._player_readable.format_item(entry, current, replacement),
+		_equipment_status_text(entry), historical_preview, _screen.player_readable.format_item(entry, current, replacement),
 	]
 
 
@@ -568,7 +568,7 @@ func _equipment_full_text(entry: Dictionary) -> String:
 ## base id, affixes by their raw family ids, the untruncated instance id and the
 ## rest of the item record. This is what get_equipment_card_texts reads back.
 func equipment_field_text(entry: Dictionary) -> String:
-	return _screen._equipment_model.result_audit(entry)
+	return _screen.equipment_model.result_audit(entry)
 
 
 func _clear_equipment_cards() -> void:
@@ -612,7 +612,7 @@ func close_equipment_detail() -> void:
 	if restored_focus != null and is_instance_valid(restored_focus) and _screen.is_ancestor_of(restored_focus):
 		restored_focus.grab_focus()
 	else:
-		_screen._focus_default_action()
+		_screen.focus_default_action()
 
 
 func _on_equipment_detail_pressed(entry_index: int) -> void:
@@ -650,7 +650,7 @@ func _set_equipment_page(page: int, focus_after_render: Control = null) -> void:
 ## first, then the published base item of the content table. Unknown raw ids stay
 ## in the folded diagnostic text instead of leaking onto the player-facing card.
 func _item_display_name(entry: Dictionary) -> String:
-	return _screen._equipment_model.display_name(entry)
+	return _screen.equipment_model.display_name(entry)
 
 
 func get_equipment_card_count() -> int:

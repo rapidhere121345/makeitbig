@@ -38,25 +38,25 @@ func _init(screen) -> void:
 
 
 func _build_proxy() -> void:
-	var proxy := UiKit.as_dictionary(_screen._facility_data.get("proxy", {}))
-	var progression := UiKit.as_dictionary(_screen._facility_data.get("progression", {}))
+	var proxy := UiKit.as_dictionary(_screen.facility_data.get("proxy", {}))
+	var progression := UiKit.as_dictionary(_screen.facility_data.get("progression", {}))
 	var unlocked := bool(proxy.get("unlocked", progression.get("proxy_unlocked", false)))
 	if not unlocked:
 		_build_proxy_core_strip(CORE_ORDER.duplicate(), false)
-		var locked: VBoxContainer = _screen._section("Proxy Bay · Sealed", "ProxyLocked")
+		var locked: VBoxContainer = _screen.section("Proxy Bay · Sealed", "ProxyLocked")
 		locked.add_child(FacilityWidgets.body_label("Unlock requirement: defeat the Threshold Colossus in Manual.\nAuto cannot be selected before the first kill."))
 		locked.add_child(FacilityWidgets.note_label("Actions and configuration are unavailable while sealed."))
-		var capability: VBoxContainer = _screen._section("Abilities After Unlock", "ProxyUnlockPreview")
+		var capability: VBoxContainer = _screen.section("Abilities After Unlock", "ProxyUnlockPreview")
 		capability.add_child(FacilityWidgets.body_label("The first-kill reward previews four Common cores: find the nearest target -> maintain distance along the shortest viable path (retreat at close range) -> cast skill slot 1."))
 		return
 	var core_ids := _proxy_core_ids(proxy)
 	_build_proxy_core_strip(core_ids, true)
-	var status: VBoxContainer = _screen._section("Auto Available", "ProxyAuto")
+	var status: VBoxContainer = _screen.section("Auto Available", "ProxyAuto")
 	status.add_child(FacilityWidgets.body_label("The Proxy Bay is unlocked for Auto contracts. Your four-slot build freezes at contract start; later changes do not affect an active contract."))
 	status.add_child(FacilityWidgets.note_label("Attachments Not Yet Available"))
 	_build_proxy_inventory(proxy, core_ids)
 	_build_proxy_distance_settings(proxy, core_ids)
-	var progress: VBoxContainer = _screen._section("Early Progress", "ProxyProgress")
+	var progress: VBoxContainer = _screen.section("Early Progress", "ProxyProgress")
 	FacilityWidgets.fact_label(progress, "Auto Wins", str(int(progression.get("auto_contract_wins", 0))))
 	FacilityWidgets.fact_label(progress, "Early Chapter Complete", "Yes" if bool(progression.get("early_game_complete", false)) else "No")
 
@@ -68,7 +68,7 @@ func _build_proxy_core_strip(core_ids: Array[String], unlocked: bool) -> void:
 	var heading := "First-Kill Reward · Four Common Cores (Sealed Preview)"
 	if unlocked:
 		heading = "Current Assembly · Perception -> Action -> Execution -> Memory"
-	var section: VBoxContainer = FacilityWidgets.section_in(_screen._page_lead_row(), heading, "ProxyCoreStrip")
+	var section: VBoxContainer = FacilityWidgets.section_in(_screen.page_lead_row(), heading, "ProxyCoreStrip")
 	var row: HBoxContainer = FacilityWidgets.make_row("ProxyCoreRow")
 	section.add_child(row)
 	for core_id in core_ids:
@@ -83,8 +83,8 @@ func _proxy_core_cell(core_id: String, unlocked: bool) -> PanelContainer:
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 6)
 	cell.add_child(content)
-	var canonical: String = _screen._art.canonical_id("proxy_core", core_id)
-	var texture: Texture2D = _screen._body_icon_texture(canonical)
+	var canonical: String = _screen.art.canonical_id("proxy_core", core_id)
+	var texture: Texture2D = _screen.body_icon_texture(canonical)
 	if texture != null:
 		var icon: TextureRect = FacilityWidgets.icon_node(texture, FacilityArtScript.ICON_NATIVE_SIZE, true)
 		icon.name = "%s_%s" % ["CoreIcon" if unlocked else "RewardCoreIcon", UiKit.stable_node_token(canonical)]
@@ -119,7 +119,7 @@ func _proxy_core_ids(proxy: Dictionary) -> Array[String]:
 
 
 func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> void:
-	var section: VBoxContainer = _screen._section("Core Inventory and Protocols", "ProxyInventory")
+	var section: VBoxContainer = _screen.section("Core Inventory and Protocols", "ProxyInventory")
 	var catalog := UiKit.as_dictionary(proxy.get("catalog", {}))
 	var owned := {}
 	for value in UiKit.as_array(proxy.get("inventory", [])):
@@ -151,14 +151,14 @@ func _build_proxy_inventory(proxy: Dictionary, installed_ids: Array[String]) -> 
 			button.text = "Install in %s" % String(PROXY_SLOT_LABELS.get(slot, slot))
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			button.pressed.connect(_screen._on_payload_action_pressed.bind("equip_proxy_core", {"core_id": core_id}))
+			button.pressed.connect(_screen.on_payload_action_pressed.bind("equip_proxy_core", {"core_id": core_id}))
 			row.add_child(button)
 
 
 func _build_proxy_distance_settings(proxy: Dictionary, installed_ids: Array[String]) -> void:
 	if "distance_keeping_gait" not in installed_ids:
 		return
-	var section: VBoxContainer = _screen._section("Distance Band", "ProxyDistanceBand")
+	var section: VBoxContainer = _screen.section("Distance Band", "ProxyDistanceBand")
 	section.add_child(FacilityWidgets.note_label("All distance bands scale with Piercing Arrow's actual range."))
 	var settings := UiKit.as_dictionary(UiKit.as_dictionary(proxy.get("build", {})).get("settings", {}))
 	var current := String(UiKit.as_dictionary(settings.get("distance_keeping_gait", {})).get("distance_band", "mid"))
@@ -173,7 +173,7 @@ func _build_proxy_distance_settings(proxy: Dictionary, installed_ids: Array[Stri
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		if band != current:
-			button.pressed.connect(_screen._on_payload_action_pressed.bind("configure_proxy_core", {"core_id": "distance_keeping_gait", "settings": {"distance_band": band}}))
+			button.pressed.connect(_screen.on_payload_action_pressed.bind("configure_proxy_core", {"core_id": "distance_keeping_gait", "settings": {"distance_band": band}}))
 		section.add_child(button)
 
 
