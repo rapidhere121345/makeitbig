@@ -610,7 +610,7 @@ func _compact_button(text: String, node_name: String) -> Button:
 func _open_settings() -> void:
 	var ancestor := get_parent()
 	while ancestor != null:
-		if ancestor.has_method("get_session_menu"):
+		if ancestor is SessionMenuHost:
 			var menu: Node = ancestor.get_session_menu()
 			if menu != null:
 				set_information_details_expanded(false)

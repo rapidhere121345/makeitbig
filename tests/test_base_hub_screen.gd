@@ -23,7 +23,7 @@ class MenuProbe extends Node:
 		opened += 1
 
 
-class MenuHost extends Node:
+class MenuHost extends SessionMenuHost:
 	var menu := MenuProbe.new()
 	func get_session_menu() -> Node:
 		return menu

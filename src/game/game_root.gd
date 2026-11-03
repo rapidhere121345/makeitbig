@@ -1,5 +1,5 @@
 class_name GameRoot
-extends Node
+extends SessionMenuHost
 
 ## The application shell: it owns routing, the mounted screen and the save, and
 ## composes the helper modules in src/game/root/, each of which owns the state of

@@ -108,7 +108,7 @@ func spawn(tick: int, raw_request: Variant) -> Dictionary:
 		return CoreResult.failure("loot_not_configured")
 	if not _settlement.is_empty():
 		return CoreResult.failure("loot_already_settled")
-	var raw: Variant = raw_request.snapshot() if raw_request is Object and raw_request.has_method("snapshot") else raw_request
+	var raw: Variant = raw_request
 	if not raw is Dictionary:
 		return CoreResult.failure("loot_spawn_request_not_dictionary")
 	var request: Dictionary = raw

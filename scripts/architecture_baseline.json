@@ -1,16 +1,5 @@
 {
   "layer_exceptions": {},
   "private_reach_ins": {},
-  "string_dispatch": {
-    "src/presentation/arena_actor_presenter.gd": 6,
-    "src/presentation/arena_presenter.gd": 2,
-    "src/presentation/base_hub_screen.gd": 1,
-    "src/presentation/combat_presentation_controller.gd": 1,
-    "src/presentation/facility/forge_page.gd": 2,
-    "src/presentation/facility/loadout_page.gd": 3,
-    "src/presentation/facility_screen.gd": 3,
-    "src/presentation/town_presenter.gd": 2,
-    "src/runtime/combat/combat_room_loot_rebuild.gd": 1,
-    "src/systems/law_forge.gd": 1
-  }
+  "string_dispatch": {}
 }
