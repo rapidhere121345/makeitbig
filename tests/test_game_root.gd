@@ -5,7 +5,7 @@ const Assert := preload("res://tests/helpers/assert.gd")
 const TEST_DIRECTORY: String = "user://makeitbig-game-root-tests"
 
 class FakeArena:
-	extends ArenaRunNode
+	extends "res://src/game/arena_run_node.gd"
 
 	var config: Dictionary = {}
 	var started: bool = false
@@ -22,7 +22,7 @@ class FakeArena:
 
 
 class FakePlaytestLog:
-	extends PlaytestLog
+	extends "res://src/game/playtest_log.gd"
 
 	var events: Array[Dictionary] = []
 	var active := false
