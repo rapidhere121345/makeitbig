@@ -15,7 +15,7 @@ class DrivenMain:
 	func simulation_collect_commands() -> Array[Dictionary]:
 		if supplied_mobility.is_empty():
 			return []
-		var command: Dictionary = player_commands._dodge_command(supplied_direction) if supplied_mobility == "dodge" else player_commands._cast_command("dash", 0, supplied_direction)
+		var command: Dictionary = player_commands.dodge_command(supplied_direction) if supplied_mobility == "dodge" else player_commands.cast_command("dash", 0, supplied_direction)
 		supplied_mobility = ""
 		last_supplied_command = command.duplicate(true)
 		return [command]

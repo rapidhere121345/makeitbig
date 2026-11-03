@@ -9,6 +9,13 @@ const ContractPlanScript := preload("res://src/game/contract_plan.gd")
 const SnapshotBuilder := preload("res://src/game/combat_state_snapshot_builder.gd")
 const StateCodec := preload("res://src/game/combat_state_codec.gd")
 const Assert := preload("res://tests/helpers/assert.gd")
+## Expected early-enemy numbers, authored in content/early_enemy_profiles.json.
+const CHARGE_ACTIVE_TICKS := 10
+const EARLY_NORMAL_HEALTH_BY_KIND := {
+	"melee_pursuer": 720.0,
+	"charging_raider": 420.0,
+	"fan_ranged": 240.0,
+}
 
 
 var fixture := PlayerFixture.new()
@@ -122,14 +129,14 @@ func _test_charger_sequence(arena: Node, failures: Array[String]) -> void:
 	fixture.drive(arena, {"enemy_step": func() -> void: arena.enemy_ai._update_charger_tick(charger)})
 	fixture.advance_to(arena, charger.impact_tick - 1)
 	var active_steps := 0
-	while charger.action_state != "recovery" and arena.session.sim_tick <= charger.impact_tick + arena.CHARGE_ACTIVE_TICKS:
+	while charger.action_state != "recovery" and arena.session.sim_tick <= charger.impact_tick + CHARGE_ACTIVE_TICKS:
 		var before: Vector2 = charger.position
 		fixture.step(arena)
 		if charger.action_state == "active":
 			active_steps += 1
 			_expect(charger.position.distance_to(before) > 0.01, "charger: direct sequence swallowed an active body step", failures)
 	var after_impact: float = arena.player_health
-	_expect(active_steps == arena.CHARGE_ACTIVE_TICKS, "charger: direct sequence did not execute all active ticks", failures)
+	_expect(active_steps == CHARGE_ACTIVE_TICKS, "charger: direct sequence did not execute all active ticks", failures)
 	_expect(charger.action_state == "recovery" and charger.impact_resolved and is_equal_approx(after_impact, 89.0), "charger: moving body did not complete with one contact hit", failures)
 	fixture.step(arena)
 	_expect(is_equal_approx(arena.player_health, after_impact), "charger: impact dealt damage more than once", failures)
@@ -313,7 +320,7 @@ func _test_room_rosters_and_layouts(arena: Node, failures: Array[String]) -> voi
 
 func _test_public_proxy_geometry_snapshot(arena: Node, failures: Array[String]) -> void:
 	arena = _configure_room(arena, "ring", "clear", ["melee_pursuer", "charging_raider", "fan_ranged"])
-	var snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
+	var snapshot: Dictionary = arena.player_commands.public_proxy_snapshot()
 	var geometry: Dictionary = snapshot.get("walkable_geometry", {})
 	_expect(int(snapshot.get("snapshot_version", -1)) == arena.ProxyDecisionScript.SNAPSHOT_VERSION, "public proxy snapshot did not use ProxyDecision's version constant", failures)
 	_expect(not geometry.is_empty() and String(geometry.get("kind", "")) == "ring"
@@ -504,7 +511,7 @@ func _test_ring_charger_path_runtime(arena: Node, failures: Array[String]) -> vo
 	_expect(launch_tick >= 1 and launch_tick <= 600, "ring runtime: charger did not launch within 600 ticks", failures)
 	_expect(player_after_init_direct_moves == 0, "ring runtime: test moved the player after fixture initialization", failures)
 	_expect(launch_count == 1 and completed_cycles == 1 and charge_action_instance_ids.size() == 1, "ring runtime: first legal charge did not complete exactly one action cycle", failures)
-	_expect(active_steps == arena.CHARGE_ACTIVE_TICKS and active_nonzero_steps == active_steps, "ring runtime: first legal charge did not move on every active tick", failures)
+	_expect(active_steps == CHARGE_ACTIVE_TICKS and active_nonzero_steps == active_steps, "ring runtime: first legal charge did not move on every active tick", failures)
 	_expect(active_swallowed_steps == 0, "ring runtime: charge active lost %d body steps to ring projection" % active_swallowed_steps, failures)
 	_expect(absf(active_displacement - frozen_distance_sum) <= 0.05, "ring runtime: body displacement did not equal frozen action distances", failures)
 	_expect(maximum_setup_stalled_run <= 4, "ring runtime: setup stalled for %d consecutive ticks" % maximum_setup_stalled_run, failures)
@@ -565,7 +572,7 @@ func _test_charger_padding_edge_runtime(arena: Node, failures: Array[String]) ->
 			authoritative_resolution = String(event.get("outcome", "")) == "damage"
 	_expect(start_tick > 0 and start_tick < 600, "padding runtime: legal edge target did not start charge", failures)
 	_expect(is_equal_approx(frozen_charge_length, 98.0), "padding runtime: Main did not freeze the projected 98px distance", failures)
-	_expect(active_steps == arena.CHARGE_ACTIVE_TICKS and active_nonzero_steps == arena.CHARGE_ACTIVE_TICKS and active_swallowed_steps == 0 and recovery_tick > start_tick, "padding runtime: charge did not move on all 10 active ticks", failures)
+	_expect(active_steps == CHARGE_ACTIVE_TICKS and active_nonzero_steps == CHARGE_ACTIVE_TICKS and active_swallowed_steps == 0 and recovery_tick > start_tick, "padding runtime: charge did not move on all 10 active ticks", failures)
 	## The frozen length still targets the 2px-inset contact, but the motor can
 	## only travel to the padded boundary for the charger's registered
 	## footprint, so the expected body displacement is the reachable portion of
@@ -705,13 +712,13 @@ func _test_hazards(arena: Node, failures: Array[String]) -> void:
 func _test_hazard_decision_boundaries(arena: Node, failures: Array[String]) -> void:
 	for hazard_id in ["exposed_ground_zone", "moving_fireline"]:
 		arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", [hazard_id])
-		fixture.advance_to(arena, arena.HAZARD_WARNING_TICKS - 1)
+		fixture.advance_to(arena, arena.session.encounter_director.HAZARD_WARNING_TICKS - 1)
 		fixture.drive(arena, {"enemies": true})
 		fixture.step(arena)
 		var state: Dictionary = arena.hazard_states[0]
-		_expect(int(state.cycle_tick) == arena.HAZARD_WARNING_TICKS and String(state.phase) == "active", "%s decision boundary: enemy planning retained the previous tick hazard phase" % hazard_id, failures)
+		_expect(int(state.cycle_tick) == arena.session.encounter_director.HAZARD_WARNING_TICKS and String(state.phase) == "active", "%s decision boundary: enemy planning retained the previous tick hazard phase" % hazard_id, failures)
 	arena = _configure_room(arena, "rectangle_arena", "clear", ["melee_pursuer"], "", ["moving_fireline"])
-	fixture.advance_to(arena, arena.HAZARD_WARNING_TICKS + arena.HAZARD_ACTIVE_TICKS - 1)
+	fixture.advance_to(arena, arena.session.encounter_director.HAZARD_WARNING_TICKS + arena.session.encounter_director.HAZARD_ACTIVE_TICKS - 1)
 	var fireline: Dictionary = arena.hazard_states[0]
 	arena.teleport_actor("ranger", fireline.origin + Vector2(0.0, fireline.length * 0.5))
 	_expect(arena.session.smoke_input_driver.requires_dodge({"player": arena.session.player_combat_state.snapshot(arena.session.sim_tick), "hazards": arena.hazard_states.duplicate(true), "boss": {"impact_tick": arena.session.encounter_director.boss.impact_tick, "target_shape": arena.session.encounter_director.boss.target_shape.duplicate(true)} if arena.session.encounter_director.boss != null else {}}), "moving_fireline decision boundary: player logic ignored the final active tick", failures)
@@ -795,7 +802,7 @@ func _test_early_durability_and_first_hunt(arena: Node, failures: Array[String])
 	for kind_id: String in ["melee_pursuer", "charging_raider", "fan_ranged"]:
 		arena = _configure_room(arena, "rectangle_arena", "clear", [kind_id])
 		var normal_health: float = arena.session.encounter_director.enemies[0].health
-		_expect(normal_health == float(arena.EARLY_NORMAL_HEALTH_BY_KIND[kind_id]),
+		_expect(normal_health == float(EARLY_NORMAL_HEALTH_BY_KIND[kind_id]),
 			"early durability: normal %s did not use its role's base health" % kind_id, failures)
 		arena = _configure_room(arena, "rectangle_arena", "hunt_elite", [kind_id])
 		_expect(arena.session.encounter_director.enemies[0].health >= 1000.0 and arena.session.encounter_director.enemies[0].health > normal_health * 2.0,

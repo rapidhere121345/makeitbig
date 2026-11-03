@@ -24,7 +24,7 @@ class DrivenMain:
 	func test_collect_commands() -> Array[Dictionary]:
 		var commands: Array[Dictionary] = []
 		if requested_movement != Vector2.ZERO:
-			commands.append(player_commands._move_command(requested_movement, 1.0))
+			commands.append(player_commands.move_command(requested_movement, 1.0))
 		return commands
 	func test_update_enemies_tick() -> void:
 		if drive_enemy_outward:
@@ -405,7 +405,7 @@ func _test_ring_boss_target(arena: Node) -> void:
 
 func _test_public_proxy_geometry(arena: Node) -> void:
 	_configure_room(arena, "ring", ["melee_pursuer"])
-	var snapshot: Dictionary = arena.player_commands._public_proxy_snapshot()
+	var snapshot: Dictionary = arena.player_commands.public_proxy_snapshot()
 	var geometry: Dictionary = snapshot.get("walkable_geometry", {})
 	_expect(String(geometry.get("kind", "")) == "ring", "ring: published proxy geometry lost the annulus")
 	_expect(not geometry.has("layout_id"), "ring: published proxy geometry leaked the room layout id")

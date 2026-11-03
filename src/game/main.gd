@@ -67,38 +67,6 @@ const FATE_SEED: int = RoomSessionScript.FATE_SEED
 const ENEMY_HIT_FLASH_TICKS: int = 3
 const MAX_ACTIVE_PIERCING_PROJECTILES: int = 16
 # Early campaign durability only; movement, action timing and Boss authority stay separate.
-const EARLY_NORMAL_HEALTH_BY_KIND := {
-	"melee_pursuer": 720.0,
-	"charging_raider": 420.0,
-	"fan_ranged": 240.0,
-}
-const EARLY_ELITE_HEALTH_BY_KIND := {
-	"melee_pursuer": 1600.0,
-	"charging_raider": 1300.0,
-	"fan_ranged": 1000.0,
-}
-const MELEE_MOVE_SPEED: float = 72.0
-const CHARGER_MOVE_SPEED: float = 62.0
-const FAN_MOVE_SPEED: float = 58.0
-const MELEE_WINDUP_TICKS: int = 5
-const MELEE_ACTIVE_TICKS: int = 1
-const MELEE_RECOVERY_TICKS: int = 11
-const CHARGE_WINDUP_TICKS: int = 18
-const CHARGE_ACTIVE_TICKS: int = 10
-const CHARGE_RECOVERY_TICKS: int = 22
-const FAN_WINDUP_TICKS: int = 21
-const FAN_ACTIVE_TICKS: int = 1
-const FAN_RECOVERY_TICKS: int = 28
-const BOSS_TRANSITION_TICKS: int = 30
-const BOSS_WINDUP_TICKS: int = 24
-const BOSS_ACTIVE_TICKS: int = 1
-const BOSS_RECOVERY_TICKS: int = 24
-const HAZARD_WARNING_TICKS: int = 30
-const HAZARD_ACTIVE_TICKS: int = 15
-const HAZARD_CYCLE_TICKS: int = 90
-const ELITE_BARRIER_PERIOD_TICKS: int = 60
-const ELITE_BARRIER_ACTIVE_TICKS: int = 20
-const TIMED_BREAK_BONUS_TICKS: int = 900
 const ATTACK_SOURCE_ASSISTED: String = RoomSessionScript.ATTACK_SOURCE_ASSISTED
 const ATTACK_SOURCE_POINTER: String = RoomSessionScript.ATTACK_SOURCE_POINTER
 const ATTACK_SOURCE_PROXY: String = RoomSessionScript.ATTACK_SOURCE_PROXY
@@ -607,7 +575,7 @@ func simulation_set_elapsed(value: float) -> void:
 ## the phase logic stays overridable by test subclasses; the work lives in the
 ## room collaborators.
 func simulation_collect_commands() -> Array[Dictionary]:
-	return player_commands._simulation_collect_commands()
+	return player_commands.simulation_collect_commands()
 
 
 func update_enemies_tick() -> void:
@@ -804,7 +772,7 @@ func gameplay_snapshot() -> Dictionary:
 		"projectiles": projectiles,
 		"equipped_parameters": session.content_registry.preset_equipped_parameters if session.content_registry != null else {},
 		"model": current_model() if session.content_registry != null else {},
-		"proxy_failure": player_commands._proxy_failure_snapshot(),
+		"proxy_failure": player_commands.proxy_failure_snapshot(),
 		"events": session.combat_event_stream.events_after(presentation.feedback.presentation_event_cursor) if session.combat_event_stream != null else [],
 	}, true)
 	return PresentationSnapshot.capture(values)

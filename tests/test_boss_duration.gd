@@ -146,11 +146,11 @@ func _run() -> void:
 
 func _moving_fireline_near_next_tick(arena: Node) -> bool:
 	var next_tick := int(arena.session.sim_tick) + 1
-	var cycle_tick := next_tick % int(arena.HAZARD_CYCLE_TICKS)
-	if cycle_tick < int(arena.HAZARD_WARNING_TICKS) or cycle_tick >= int(arena.HAZARD_WARNING_TICKS + arena.HAZARD_ACTIVE_TICKS):
+	var cycle_tick := next_tick % int(arena.session.encounter_director.HAZARD_CYCLE_TICKS)
+	if cycle_tick < int(arena.session.encounter_director.HAZARD_WARNING_TICKS) or cycle_tick >= int(arena.session.encounter_director.HAZARD_WARNING_TICKS + arena.session.encounter_director.HAZARD_ACTIVE_TICKS):
 		return false
 	var rect: Rect2 = arena.arena_rect()
-	var progress := float(cycle_tick) / float(int(arena.HAZARD_CYCLE_TICKS) - 1)
+	var progress := float(cycle_tick) / float(int(arena.session.encounter_director.HAZARD_CYCLE_TICKS) - 1)
 	var line_x := lerpf(rect.position.x, rect.end.x, progress)
 	var dodge_step := SkillRules.DODGE_SPEED * float(arena.SIM_STEP_SECONDS)
 	var player: Dictionary = arena.session.player_combat_state.snapshot(arena.session.sim_tick)
