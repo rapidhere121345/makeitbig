@@ -27,7 +27,18 @@ enforces the table. It also ratchets string dispatch (`has_method("x")`,
 (`_root._x`, `_main._x`, `_screen._x`, `_owner._x`, `_host._x`), which typed
 ports and owners' public APIs should replace. Existing debt is listed in `scripts/architecture_baseline.json` and
 may only shrink: a new violation fails, an exception that is no longer needed
-fails, and `--update-baseline` records reductions but never growth.
+fails, and `--update-baseline` records reductions but never growth. The
+baseline is empty: there are no layer exceptions, string dispatch or private
+reach-ins left.
+
+Optional or swappable collaborators are checked by type (`x is RoomEncounter`),
+never by method name. When several implementations share a contract they
+extend a small base class whose defaults equal "capability absent":
+`ArenaRunNode` (arena screen, room runtime and their test doubles),
+`RoomEncounterDomain` (encounter step and death notification),
+`NativeRoomAuthorRoot` (room, static-room and town scene roots) and
+`SessionMenuHost` (the ancestor that owns the session menu). Test doubles
+extend the real class or one of these bases.
 
 Placement follows the table: dependency-free geometry (`ArenaGeometry`,
 `SpatialShape`, `SpatialSweep`, `CombatQuery`) lives in `src/core/geometry/`
