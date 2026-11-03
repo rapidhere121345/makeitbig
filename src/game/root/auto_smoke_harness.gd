@@ -212,7 +212,7 @@ func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, set
 		boss_result = _root.application_state.last_result.duplicate(true)
 		if _root.capture.requested_stage() == "boss":
 			# Settled already: photograph Result before leaving it.
-			_auto_smoke_capture_stage.call_deferred("boss")
+			_auto_smoke_capture_stage.bind("boss").call_deferred()
 			return
 		_auto_smoke_advance_after_boss_result()
 		return
@@ -239,7 +239,7 @@ func _continue_auto_smoke(completed_stage: String, arena_result: Dictionary, set
 		return
 	if _root.capture.requested_stage() == "auto":
 		# Settle first, photograph Result, and only then open the Ending.
-		_auto_smoke_capture_stage.call_deferred("auto")
+		_auto_smoke_capture_stage.bind("auto").call_deferred()
 		return
 	_auto_smoke_finish_after_auto_result()
 

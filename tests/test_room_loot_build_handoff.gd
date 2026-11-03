@@ -13,10 +13,7 @@ const Assert := preload("res://tests/helpers/assert.gd")
 
 
 class FakeArena:
-	extends Node
-
-	signal completed(result: Dictionary)
-	signal abandoned(result: Dictionary)
+	extends ArenaRunNode
 
 	var config: Dictionary = {}
 	var started := false

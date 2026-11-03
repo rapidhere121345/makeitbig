@@ -87,7 +87,7 @@ func _pause_current_route() -> void:
 		return
 	_menu_paused_screen = _root.current_screen
 	_menu_previous_process_mode = _root.current_screen.process_mode
-	if _root.current_screen.has_method("release_manual_controls"):
+	if _root.current_screen is ArenaRunNode:
 		_root.current_screen.release_manual_controls()
 	# This stops the fixed clock at the route boundary. Time spent paused is not
 	# added to it, and other mounted roots/test fixtures keep their own lifetime.
@@ -100,20 +100,20 @@ func resume_current_route() -> void:
 	if _root.get_pixel_stage() != null:
 		_root.get_presentation_viewport().render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
 	if is_instance_valid(_menu_paused_screen):
-		if _menu_paused_screen.has_method("release_manual_controls"):
+		if _menu_paused_screen is ArenaRunNode:
 			_menu_paused_screen.release_manual_controls()
 		_menu_paused_screen.process_mode = _menu_previous_process_mode
 	_menu_paused_screen = null
 
 
 func _abandon_from_menu() -> void:
-	if _root.current_route == SceneRouterScript.ROUTE_ARENA and _root.current_screen != null and _root.current_screen.has_method("request_abandon"):
+	if _root.current_route == SceneRouterScript.ROUTE_ARENA and _root.current_screen is ArenaRunNode:
 		_root.current_screen.request_abandon()
 
 
 func refresh_test_console() -> void:
 	if test_console != null \
-		and test_console.has_method("is_console_open") \
+		and test_console is TestConsoleScript \
 		and bool(test_console.is_console_open()):
 		test_console.refresh()
 
@@ -147,7 +147,7 @@ func _test_console_snapshot() -> Dictionary:
 			"prototype_debug": not _root.prototype_debug.dto.is_empty(),
 			"presentation_enabled": _root.presentation_enabled,
 		},
-		"log_path": _root.playtest_log.log_path() if _root.playtest_log != null and _root.playtest_log.has_method("log_path") else "",
+		"log_path": _root.playtest_log.log_path() if _root.playtest_log is PlaytestLog else "",
 		"sections": [
 			{"title": "Full current contract data", "content": _root.last_contract},
 			{"title": "Presentation layout", "content": layout.duplicate(true)},

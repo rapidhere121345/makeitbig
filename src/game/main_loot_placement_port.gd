@@ -11,7 +11,7 @@ var _room: Variant = null
 
 
 func configure(room: Variant) -> Dictionary:
-	if room == null or not room.has_method("is_position_clear"):
+	if not (room is SceneRuntime or room is RoomActorAccess):
 		_room = null
 		return {"ok": false, "error": "loot_placement_room_unavailable"}
 	_room = room

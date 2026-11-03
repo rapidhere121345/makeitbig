@@ -68,7 +68,7 @@ func set_effects_volume(value: float) -> void:
 
 
 func apply_route_preferences() -> void:
-	if _root.current_screen != null and _root.current_screen.has_method("set_effects_volume"):
+	if _root.current_screen is ArenaRunNode:
 		_root.current_screen.set_effects_volume(effects_volume)
 
 

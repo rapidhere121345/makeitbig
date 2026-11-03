@@ -4,10 +4,7 @@ const GAME_ROOT_SCENE = preload("res://src/game/game_root.tscn")
 const TEST_DIRECTORY: String = "user://makeitbig-game-flow-smoke"
 
 class FakeArena:
-	extends Node
-
-	signal completed(result: Dictionary)
-	signal abandoned(result: Dictionary)
+	extends ArenaRunNode
 
 	var config: Dictionary = {}
 

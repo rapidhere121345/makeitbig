@@ -44,10 +44,7 @@ const TEST_SAVE_DIRECTORY: String = "user://makeitbig-defeat-window-tests"
 ## no authoritative state: it only reports defeat readiness on demand, so the
 ## route layer can be exercised without a battle.
 class DeathScreen:
-	extends Node
-
-	signal completed(result: Dictionary)
-	signal abandoned(result: Dictionary)
+	extends ArenaRunNode
 
 	## false = the published defeat clip is still playing on this screen.
 	var clip_ready := false
@@ -72,7 +69,7 @@ class DeathScreen:
 
 
 class FakePlaytestLog:
-	extends RefCounted
+	extends PlaytestLog
 
 	var events: Array[Dictionary] = []
 	var active := false
